@@ -1,117 +1,183 @@
 <script lang="ts">
-  type LessonStep = {
-    title: string;
-    body: string;
-  };
+  type Suit = "C" | "D" | "H" | "S";
 
-  type Contract = {
+  type Card = {
     id: string;
-    title: string;
-    objective: string;
-    steps: LessonStep[];
+    rank: string;
+    suit: Suit;
+    label: string;
   };
 
-  const contracts: Contract[] = [
-    {
-      id: "no_hearts",
-      title: "No Hearts",
-      objective: "Avoid winning tricks that contain hearts.",
-      steps: [
-        {
-          title: "Follow suit first",
-          body: "When a suit is led, every player who has that suit must play it."
-        },
-        {
-          title: "Count the danger",
-          body: "Every heart in the trick becomes a penalty for the player who wins it."
-        },
-        {
-          title: "Use voids well",
-          body: "If you cannot follow suit, you can discard a dangerous card or save control for later."
-        }
-      ]
-    },
-    {
-      id: "no_queens",
-      title: "No Queens",
-      objective: "Avoid winning tricks that contain queens.",
-      steps: [
-        {
-          title: "Read loaded tricks",
-          body: "A queen only hurts when you capture it, so the winner of the trick matters more than who played it."
-        }
-      ]
-    },
-    {
-      id: "barbu",
-      title: "Barbu",
-      objective: "Avoid taking the king of hearts.",
-      steps: [
-        {
-          title: "Track one card",
-          body: "The king of hearts is the central threat, so remember whether hearts have been led and who may be void."
-        }
-      ]
-    }
+  type TableCard = {
+    seat: "Tutor" | "Left" | "You" | "Right";
+    card: Card;
+  };
+
+  const hand: Card[] = [
+    { id: "2C", rank: "2", suit: "C", label: "2C" },
+    { id: "KC", rank: "K", suit: "C", label: "KC" },
+    { id: "8H", rank: "8", suit: "H", label: "8H" },
+    { id: "QS", rank: "Q", suit: "S", label: "QS" }
   ];
 
-  let selectedId = contracts[0].id;
+  const openingTable: TableCard[] = [
+    { seat: "Tutor", card: { id: "9C", rank: "9", suit: "C", label: "9C" } },
+    { seat: "Left", card: { id: "4H", rank: "4", suit: "H", label: "4H" } }
+  ];
 
-  $: selected = contracts.find((contract) => contract.id === selectedId) ?? contracts[0];
+  const rightCard: TableCard = {
+    seat: "Right",
+    card: { id: "AC", rank: "A", suit: "C", label: "AC" }
+  };
+
+  const legalCardIds = new Set(["2C", "KC"]);
+  const suitNames: Record<Suit, string> = {
+    C: "clubs",
+    D: "diamonds",
+    H: "hearts",
+    S: "spades"
+  };
+
+  let selectedCardId = "";
+  let playedCardId = "";
+
+  $: selectedCard = hand.find((card) => card.id === selectedCardId);
+  $: playedCard = hand.find((card) => card.id === playedCardId);
+  $: isSelectedLegal = selectedCard ? legalCardIds.has(selectedCard.id) : false;
+  $: completedTable = playedCard ? [...openingTable, { seat: "You" as const, card: playedCard }, rightCard] : openingTable;
+  $: explanation = buildExplanation(selectedCard, playedCard);
+  $: resultText = playedCard
+    ? "Right wins with AC and takes 1 heart penalty from Left's 4H."
+    : "The led suit is clubs. You hold clubs, so only club cards are legal.";
+
+  function selectCard(card: Card) {
+    if (playedCardId) {
+      return;
+    }
+
+    selectedCardId = card.id;
+  }
+
+  function playSelectedCard() {
+    if (!selectedCard || !isSelectedLegal) {
+      return;
+    }
+
+    playedCardId = selectedCard.id;
+  }
+
+  function resetTrick() {
+    selectedCardId = "";
+    playedCardId = "";
+  }
+
+  function cardClasses(card: Card) {
+    return {
+      heart: card.suit === "H",
+      legal: legalCardIds.has(card.id) && !playedCardId,
+      illegal: !legalCardIds.has(card.id) && !playedCardId,
+      selected: selectedCardId === card.id,
+      played: playedCardId === card.id
+    };
+  }
+
+  function buildExplanation(selected: Card | undefined, played: Card | undefined) {
+    if (played) {
+      if (played.id === "KC") {
+        return "KC follows clubs and cannot beat AC, so it safely leaves your hand while Right absorbs the heart penalty.";
+      }
+
+      return "2C follows clubs and keeps you clear of the trick. Right's AC still wins the heart penalty.";
+    }
+
+    if (!selected) {
+      return "Clubs were led. Left is void in clubs and discarded a heart, making this trick dangerous to win.";
+    }
+
+    if (!legalCardIds.has(selected.id)) {
+      return `${selected.label} is not legal here because you still have clubs. Follow suit before discarding ${suitNames[selected.suit]}.`;
+    }
+
+    if (selected.id === "KC") {
+      return "KC is legal and strong, but AC is still out on the right. That makes KC a useful safe discard in this exact trick.";
+    }
+
+    return "2C is legal and low. It follows suit without any chance of winning while AC remains to your right.";
+  }
 </script>
 
 <main class="app-shell">
-  <section class="topbar" aria-label="Current game">
+  <header class="topbar" aria-label="Current game">
     <div>
-      <p class="family">Hearts family</p>
+      <p class="eyebrow">Hearts family</p>
       <h1>Barbu</h1>
     </div>
-    <div class="score-pill">4 players</div>
-  </section>
-
-  <section class="practice-table" aria-label="Guided trick preview">
-    <div class="seat north">Tutor</div>
-    <div class="seat west">Left</div>
-    <div class="trick">
-      <button class="card danger" type="button" aria-label="King of hearts">KH</button>
-      <button class="card" type="button" aria-label="Nine of clubs">9C</button>
-      <button class="card" type="button" aria-label="Ace of clubs">AC</button>
-      <button class="card heart" type="button" aria-label="Four of hearts">4H</button>
+    <div class="contract-status">
+      <span>No Hearts</span>
+      <strong>1 penalty in trick</strong>
     </div>
-    <div class="seat east">Right</div>
-    <div class="seat south">You</div>
+  </header>
+
+  <section class="mode-row" aria-label="Learning mode">
+    <button class="mode-tab active" type="button">Practice</button>
+    <button class="mode-tab" type="button">Learn</button>
+    <button class="mode-tab" type="button">Rules</button>
   </section>
 
-  <section class="lesson-layout">
-    <nav class="contract-list" aria-label="Barbu contracts">
-      {#each contracts as contract}
-        <button
-          class:active={contract.id === selected.id}
-          type="button"
-          on:click={() => (selectedId = contract.id)}
-        >
-          <span>{contract.title}</span>
-          <small>{contract.objective}</small>
-        </button>
-      {/each}
-    </nav>
+  <section class="learning-surface" aria-label="Guided No Hearts trick">
+    <section class="practice-table" aria-label="Card table">
+      <div class="seat north">Tutor</div>
+      <div class="seat west">Left</div>
+      <div class="seat east">Right</div>
+      <div class="seat south">You</div>
 
-    <article class="lesson-panel">
-      <p class="mode">Learn</p>
-      <h2>{selected.title}</h2>
-      <p class="objective">{selected.objective}</p>
-
-      <div class="steps">
-        {#each selected.steps as step, index}
-          <section class="step">
-            <span>{index + 1}</span>
-            <div>
-              <h3>{step.title}</h3>
-              <p>{step.body}</p>
+      <div class="table-cards">
+        {#each completedTable as play}
+          <div class:pending-right={play.seat === "Right" && !playedCard} class="table-play">
+            <span>{play.seat}</span>
+            <div class:heart={play.card.suit === "H"} class="card table-card">
+              <b>{play.card.rank}</b>
+              <small>{play.card.suit}</small>
             </div>
-          </section>
+          </div>
         {/each}
       </div>
-    </article>
+    </section>
+
+    <section class="lesson-panel" aria-label="Current lesson">
+      <div class="lesson-heading">
+        <p class="eyebrow">No Hearts</p>
+        <h2>Follow clubs without taking the heart</h2>
+      </div>
+
+      <p class="result">{resultText}</p>
+      <p class="explanation">{explanation}</p>
+
+      <div class="hand" aria-label="Your hand">
+        {#each hand as card}
+          <button
+            aria-pressed={selectedCardId === card.id}
+            class:heart={card.suit === "H"}
+            class:illegal={cardClasses(card).illegal}
+            class:legal={cardClasses(card).legal}
+            class:played={cardClasses(card).played}
+            class:selected={cardClasses(card).selected}
+            class="card hand-card"
+            onclick={() => selectCard(card)}
+            type="button"
+          >
+            <b>{card.rank}</b>
+            <small>{card.suit}</small>
+          </button>
+        {/each}
+      </div>
+
+      <div class="action-row">
+        <button class="secondary-action" onclick={resetTrick} type="button">Reset</button>
+        <button class="primary-action" disabled={!isSelectedLegal || !!playedCardId} onclick={playSelectedCard} type="button">
+          Play selected
+        </button>
+      </div>
+    </section>
   </section>
 </main>
