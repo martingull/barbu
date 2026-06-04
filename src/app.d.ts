@@ -1,6 +1,6 @@
 declare module "*.svelte" {
-  import type { ComponentType } from "svelte";
+  import type { Component } from "svelte";
 
-  const component: ComponentType;
+  const component: Component;
   export default component;
 }
