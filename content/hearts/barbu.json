@@ -1,0 +1,40 @@
+{
+  "id": "barbu",
+  "title": "Barbu",
+  "family": "hearts",
+  "players": 4,
+  "teachingPath": [
+    {
+      "id": "trick_taking_basics",
+      "title": "Trick-taking basics",
+      "goal": "Understand leading, following suit, and winning a trick."
+    },
+    {
+      "id": "avoidance",
+      "title": "Avoidance play",
+      "goal": "Learn why winning the wrong trick can be bad."
+    },
+    {
+      "id": "contracts",
+      "title": "Contracts",
+      "goal": "See how Barbu changes the danger cards from hand to hand."
+    }
+  ],
+  "contracts": [
+    {
+      "id": "no_hearts",
+      "title": "No Hearts",
+      "objective": "Avoid winning tricks that contain hearts."
+    },
+    {
+      "id": "no_queens",
+      "title": "No Queens",
+      "objective": "Avoid winning tricks that contain queens."
+    },
+    {
+      "id": "barbu",
+      "title": "Barbu",
+      "objective": "Avoid winning the king of hearts."
+    }
+  ]
+}

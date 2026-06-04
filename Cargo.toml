@@ -1,0 +1,11 @@
+[workspace]
+members = [
+    "crates/barbu-core",
+    "src-tauri",
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license = "MIT"
+repository = "https://example.invalid/barbu"
