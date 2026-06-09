@@ -98,10 +98,10 @@
   $: completedTable = playedCard
     ? [...currentTrick.tableBeforeChoice, { seat: "You" as const, card: playedCard }, ...currentTrick.tableAfterChoice]
     : currentTrick.tableBeforeChoice;
-  $: tutorCard = cardAt("Tutor");
-  $: leftCard = cardAt("Left");
-  $: rightTableCard = cardAt("Right");
-  $: youTableCard = cardAt("You");
+  $: tutorCard = cardAt(completedTable, "Tutor");
+  $: leftCard = cardAt(completedTable, "Left");
+  $: rightTableCard = cardAt(completedTable, "Right");
+  $: youTableCard = cardAt(completedTable, "You");
   $: explanation = buildExplanation(selectedCard, playedCard);
   $: resultText = playedCard ? currentTrick.afterResult : currentTrick.beforeResult;
   $: isLastTrick = trickIndex === guidedTricks.length - 1;
@@ -132,8 +132,8 @@
     resetTrick();
   }
 
-  function cardAt(seat: Seat) {
-    return completedTable.find((play) => play.seat === seat)?.card;
+  function cardAt(table: TableCard[], seat: Seat) {
+    return table.find((play) => play.seat === seat)?.card;
   }
 
   function cardClasses(card: Card) {
