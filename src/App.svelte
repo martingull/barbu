@@ -48,7 +48,7 @@
   $: explanation = buildExplanation(selectedCard, playedCard);
   $: resultText = playedCard
     ? "Right wins with AC and takes 1 heart penalty from Left's 4H."
-    : "The led suit is clubs. You hold clubs, so only club cards are legal.";
+    : "Tutor led 9C. Left could not follow clubs and discarded 4H.";
 
   function selectCard(card: Card) {
     if (playedCardId) {
@@ -71,6 +71,10 @@
     playedCardId = "";
   }
 
+  function cardAt(seat: TableCard["seat"]) {
+    return completedTable.find((play) => play.seat === seat)?.card;
+  }
+
   function cardClasses(card: Card) {
     return {
       heart: card.suit === "H",
@@ -91,7 +95,7 @@
     }
 
     if (!selected) {
-      return "Clubs were led. Left is void in clubs and discarded a heart, making this trick dangerous to win.";
+      return "The led suit is clubs. You hold clubs, so only 2C and KC are legal. The heart belongs to Left, not Tutor.";
     }
 
     if (!legalCardIds.has(selected.id)) {
@@ -131,16 +135,44 @@
       <div class="seat east">Right</div>
       <div class="seat south">You</div>
 
-      <div class="table-cards">
-        {#each completedTable as play}
-          <div class:pending-right={play.seat === "Right" && !playedCard} class="table-play">
-            <span>{play.seat}</span>
-            <div class:heart={play.card.suit === "H"} class="card table-card">
-              <b>{play.card.rank}</b>
-              <small>{play.card.suit}</small>
-            </div>
+      <div class="played-slot tutor-slot">
+        {#if cardAt("Tutor") as card}
+          <div class:heart={card.suit === "H"} class="card table-card">
+            <b>{card.rank}</b>
+            <small>{card.suit}</small>
           </div>
-        {/each}
+        {/if}
+      </div>
+
+      <div class="played-slot left-slot">
+        {#if cardAt("Left") as card}
+          <div class:heart={card.suit === "H"} class="card table-card">
+            <b>{card.rank}</b>
+            <small>{card.suit}</small>
+          </div>
+        {/if}
+      </div>
+
+      <div class="played-slot right-slot">
+        {#if cardAt("Right") as card}
+          <div class:heart={card.suit === "H"} class="card table-card">
+            <b>{card.rank}</b>
+            <small>{card.suit}</small>
+          </div>
+        {:else}
+          <div class="pending-card">AC</div>
+        {/if}
+      </div>
+
+      <div class="played-slot you-slot">
+        {#if cardAt("You") as card}
+          <div class:heart={card.suit === "H"} class="card table-card">
+            <b>{card.rank}</b>
+            <small>{card.suit}</small>
+          </div>
+        {:else}
+          <div class="pending-card">You</div>
+        {/if}
       </div>
     </section>
 
@@ -173,10 +205,15 @@
       </div>
 
       <div class="action-row">
-        <button class="secondary-action" onclick={resetTrick} type="button">Reset</button>
-        <button class="primary-action" disabled={!isSelectedLegal || !!playedCardId} onclick={playSelectedCard} type="button">
-          Play selected
-        </button>
+        {#if playedCard}
+          <button class="secondary-action" onclick={resetTrick} type="button">Reset</button>
+          <button class="primary-action" onclick={resetTrick} type="button">Try other card</button>
+        {:else}
+          <button class="secondary-action" onclick={resetTrick} type="button">Reset</button>
+          <button class="primary-action" disabled={!isSelectedLegal} onclick={playSelectedCard} type="button">
+            Play selected
+          </button>
+        {/if}
       </div>
     </section>
   </section>

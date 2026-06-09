@@ -159,26 +159,39 @@ h2 {
   grid-row: 3;
 }
 
-.table-cards {
+.played-slot {
   display: grid;
+  place-items: center;
+  min-width: 72px;
+  min-height: 98px;
+}
+
+.tutor-slot {
   grid-column: 2;
   grid-row: 2;
-  grid-template-columns: repeat(2, minmax(86px, 118px));
-  place-content: center;
-  gap: 14px;
+  align-self: start;
+  padding-top: 44px;
 }
 
-.table-play {
-  display: grid;
-  justify-items: center;
-  gap: 6px;
-  min-width: 86px;
+.left-slot {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: start;
+  padding-left: 30px;
 }
 
-.table-play span {
-  color: rgba(255, 255, 255, 0.86);
-  font-size: 0.76rem;
-  font-weight: 800;
+.right-slot {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
+  padding-right: 30px;
+}
+
+.you-slot {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: end;
+  padding-bottom: 44px;
 }
 
 .card {
@@ -214,8 +227,16 @@ h2 {
   width: 76px;
 }
 
-.pending-right {
-  opacity: 0.58;
+.pending-card {
+  display: grid;
+  width: 76px;
+  aspect-ratio: 5 / 7;
+  place-items: center;
+  border: 1px dashed rgba(255, 255, 255, 0.54);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 0.9rem;
+  font-weight: 900;
 }
 
 .lesson-panel {
@@ -359,13 +380,28 @@ h2 {
     grid-template-rows: 34px 236px 34px;
   }
 
-  .table-cards {
-    grid-template-columns: repeat(2, minmax(70px, 92px));
-    gap: 10px;
-  }
-
   .table-card {
     width: 64px;
+  }
+
+  .pending-card {
+    width: 64px;
+  }
+
+  .tutor-slot {
+    padding-top: 26px;
+  }
+
+  .left-slot {
+    padding-left: 10px;
+  }
+
+  .right-slot {
+    padding-right: 10px;
+  }
+
+  .you-slot {
+    padding-bottom: 26px;
   }
 
   .lesson-panel {
