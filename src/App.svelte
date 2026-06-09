@@ -45,6 +45,10 @@
   $: playedCard = hand.find((card) => card.id === playedCardId);
   $: isSelectedLegal = selectedCard ? legalCardIds.has(selectedCard.id) : false;
   $: completedTable = playedCard ? [...openingTable, { seat: "You" as const, card: playedCard }, rightCard] : openingTable;
+  $: tutorCard = cardAt("Tutor");
+  $: leftCard = cardAt("Left");
+  $: rightTableCard = cardAt("Right");
+  $: youTableCard = cardAt("You");
   $: explanation = buildExplanation(selectedCard, playedCard);
   $: resultText = playedCard
     ? "Right wins with AC and takes 1 heart penalty from Left's 4H."
@@ -136,28 +140,28 @@
       <div class="seat south">You</div>
 
       <div class="played-slot tutor-slot">
-        {#if cardAt("Tutor") as card}
-          <div class:heart={card.suit === "H"} class="card table-card">
-            <b>{card.rank}</b>
-            <small>{card.suit}</small>
+        {#if tutorCard}
+          <div class:heart={tutorCard.suit === "H"} class="card table-card">
+            <b>{tutorCard.rank}</b>
+            <small>{tutorCard.suit}</small>
           </div>
         {/if}
       </div>
 
       <div class="played-slot left-slot">
-        {#if cardAt("Left") as card}
-          <div class:heart={card.suit === "H"} class="card table-card">
-            <b>{card.rank}</b>
-            <small>{card.suit}</small>
+        {#if leftCard}
+          <div class:heart={leftCard.suit === "H"} class="card table-card">
+            <b>{leftCard.rank}</b>
+            <small>{leftCard.suit}</small>
           </div>
         {/if}
       </div>
 
       <div class="played-slot right-slot">
-        {#if cardAt("Right") as card}
-          <div class:heart={card.suit === "H"} class="card table-card">
-            <b>{card.rank}</b>
-            <small>{card.suit}</small>
+        {#if rightTableCard}
+          <div class:heart={rightTableCard.suit === "H"} class="card table-card">
+            <b>{rightTableCard.rank}</b>
+            <small>{rightTableCard.suit}</small>
           </div>
         {:else}
           <div class="pending-card">AC</div>
@@ -165,10 +169,10 @@
       </div>
 
       <div class="played-slot you-slot">
-        {#if cardAt("You") as card}
-          <div class:heart={card.suit === "H"} class="card table-card">
-            <b>{card.rank}</b>
-            <small>{card.suit}</small>
+        {#if youTableCard}
+          <div class:heart={youTableCard.suit === "H"} class="card table-card">
+            <b>{youTableCard.rank}</b>
+            <small>{youTableCard.suit}</small>
           </div>
         {:else}
           <div class="pending-card">You</div>
