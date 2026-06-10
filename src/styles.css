@@ -324,6 +324,22 @@ button {
   font-weight: 900;
 }
 
+.completion-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.reset-progress-action {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgba(245, 241, 207, 0.68);
+  border-radius: 8px;
+  background: transparent;
+  color: #f5f1cf;
+  font-weight: 900;
+}
+
 .contract-list {
   display: grid;
   gap: 8px;
@@ -1011,6 +1027,16 @@ h2 {
   .continue-action {
     width: 100%;
     margin-top: 12px;
+  }
+
+  .completion-actions {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .reset-progress-action {
+    width: 100%;
   }
 
   .contract-list {

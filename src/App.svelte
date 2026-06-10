@@ -147,7 +147,8 @@
   $: isLastTrick = trickIndex === activeTricks.length - 1;
   $: playablePathSteps = barbuPathSteps.filter((step) => step.action !== "planned");
   $: completedCount = playablePathSteps.filter((step) => completedPathSteps[step.id]).length;
-  $: nextPathStep = playablePathSteps.find((step) => !completedPathSteps[step.id]) ?? playablePathSteps[0];
+  $: nextPathStep = playablePathSteps.find((step) => !completedPathSteps[step.id]);
+  $: isCourseComplete = completedCount === playablePathSteps.length;
   $: lessonOutcome = selectedCard && (playedCard || !isSelectedLegal) ? buildLessonOutcome(selectedCard, playedCard) : "";
 
   function loadCourseProgress() {
@@ -221,6 +222,11 @@
   }
 
   function continueCourse() {
+    if (isCourseComplete || !nextPathStep) {
+      openBarbuTable();
+      return;
+    }
+
     startPathStep(nextPathStep);
   }
 
@@ -288,6 +294,10 @@
     }
 
     openBarbuTable();
+  }
+
+  function resetCourseProgress() {
+    saveCourseProgress({});
   }
 
   function cardAt(table: TableCard[], seat: Seat) {
@@ -453,7 +463,9 @@
         <p class="eyebrow">Coach and opponent</p>
         <h2 id="barbu-table-title">Barbu sets the contract. You learn by playing the decision.</h2>
         <p>
-          Start with compact guided tricks, then move into generated drills as the rules become automatic.
+          {isCourseComplete
+            ? "You have cleared the first Barbu table. Review the contracts, or reset the path when you want another pass."
+            : "Start with compact guided tricks, then move into generated drills as the rules become automatic."}
         </p>
         <div class="course-progress" aria-label="Course progress">
           <span>{completedCount} / {playablePathSteps.length} complete</span>
@@ -461,9 +473,16 @@
             <div class="progress-fill" style={`width: ${(completedCount / playablePathSteps.length) * 100}%`}></div>
           </div>
         </div>
-        <button class="continue-action" onclick={continueCourse} type="button">
-          Continue: {nextPathStep.title}
-        </button>
+        {#if isCourseComplete}
+          <div class="completion-actions">
+            <button class="continue-action" onclick={() => startLesson(guidedLessons[0].id)} type="button">Review No Hearts</button>
+            <button class="reset-progress-action" onclick={resetCourseProgress} type="button">Reset path</button>
+          </div>
+        {:else if nextPathStep}
+          <button class="continue-action" onclick={continueCourse} type="button">
+            Continue: {nextPathStep.title}
+          </button>
+        {/if}
       </div>
 
       <div class="contract-list" aria-label="Available contracts">
@@ -486,7 +505,7 @@
       <div class="path-grid">
         {#each barbuPathSteps as step, index}
           <button
-            class:active={step.id === nextPathStep.id && !completedPathSteps[step.id]}
+            class:active={step.id === nextPathStep?.id && !completedPathSteps[step.id]}
             class:complete={completedPathSteps[step.id]}
             class:planned={step.action === "planned"}
             class="path-card"
@@ -503,7 +522,7 @@
                 Complete
               {:else if step.action === "planned"}
                 Planned
-              {:else if step.id === nextPathStep.id}
+              {:else if step.id === nextPathStep?.id}
                 Next
               {:else}
                 Open
@@ -629,7 +648,10 @@
         </div>
 
         <div class="action-row">
-          {#if playedCard}
+          {#if generatedPracticeError}
+            <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
+            <button class="primary-action" onclick={finishLesson} type="button">Mark practiced</button>
+          {:else if playedCard}
             <button class="secondary-action" onclick={resetTrick} type="button">Reset</button>
             {#if isLastTrick}
               <button class="primary-action" onclick={finishLesson} type="button">Finish lesson</button>

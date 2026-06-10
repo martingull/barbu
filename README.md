@@ -23,6 +23,8 @@ The intended loop is:
 
 The app should borrow learning patterns from chess tutor apps at the level of structure: named coach/opponent, level-like progression, quick correction, and repeated practice. It should not copy proprietary visual design, wording, characters, or lesson content.
 
+Use [FEATURES.md](./FEATURES.md) as the product control document for current scope, near-term roadmap, non-goals, and parked ideas.
+
 ## Stack
 
 - Rust workspace for deterministic card and rules logic.

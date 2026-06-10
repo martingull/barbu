@@ -62,4 +62,27 @@ test("training path can start generated practice shell", async ({ page }) => {
   await expect(
     page.getByText("Generated drills need the Tauri runtime. Use the fixed lesson here, or run the app with Tauri.")
   ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Mark practiced" })).toBeVisible();
+});
+
+test("completed course does not loop back to the first lesson", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      "barbu.courseProgress.v1",
+      JSON.stringify({
+        "meet-contract": true,
+        "spot-danger": true,
+        "play-trick": true,
+        "generated-drill": true
+      })
+    );
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: /Barbu/ }).click();
+
+  await expect(page.getByText("4 / 4 complete")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Review No Hearts" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Reset path" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Continue: Meet the contract/ })).toHaveCount(0);
 });
