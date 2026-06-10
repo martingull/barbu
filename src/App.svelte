@@ -7,6 +7,8 @@
 
   type PathAction = "lesson" | "generated" | "planned";
 
+  type LessonOutcome = "Correct" | "Penalty avoided" | "Legal but risky" | "Illegal";
+
   type CatalogGame = {
     id: string;
     family: string;
@@ -61,6 +63,7 @@
   ];
 
   const learningSteps = ["Concepts", "Examples", "Guided tricks", "Practice", "Review"];
+  const progressStorageKey = "barbu.courseProgress.v1";
 
   const barbuPathSteps: BarbuPathStep[] = [
     {
@@ -117,6 +120,8 @@
   let practiceSeed = 1;
   let selectedLessonId = guidedLessons[0].id;
   let activeTricks: GuidedTrick[] = guidedLessons[0].tricks;
+  let activePathStepId = "";
+  let completedPathSteps: Record<string, boolean> = loadCourseProgress();
   let usingGeneratedPractice = false;
   let generatedPracticeError = "";
 
@@ -140,6 +145,31 @@
   $: explanation = generatedPracticeError || buildExplanation(selectedCard, playedCard);
   $: resultText = playedCard ? currentTrick.afterResult : currentTrick.beforeResult;
   $: isLastTrick = trickIndex === activeTricks.length - 1;
+  $: playablePathSteps = barbuPathSteps.filter((step) => step.action !== "planned");
+  $: completedCount = playablePathSteps.filter((step) => completedPathSteps[step.id]).length;
+  $: nextPathStep = playablePathSteps.find((step) => !completedPathSteps[step.id]) ?? playablePathSteps[0];
+  $: lessonOutcome = selectedCard && (playedCard || !isSelectedLegal) ? buildLessonOutcome(selectedCard, playedCard) : "";
+
+  function loadCourseProgress() {
+    if (typeof localStorage === "undefined") {
+      return {};
+    }
+
+    try {
+      const storedProgress = localStorage.getItem(progressStorageKey);
+      return storedProgress ? (JSON.parse(storedProgress) as Record<string, boolean>) : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveCourseProgress(nextProgress: Record<string, boolean>) {
+    completedPathSteps = nextProgress;
+
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(progressStorageKey, JSON.stringify(nextProgress));
+    }
+  }
 
   function selectCard(card: Card) {
     if (playedCardId) {
@@ -180,12 +210,18 @@
 
   function startLesson(lessonId: string) {
     selectLesson(lessonId);
+    activePathStepId = barbuPathSteps.find((step) => step.lessonId === lessonId)?.id ?? "";
     appView = "lesson";
   }
 
   async function startGeneratedDrill() {
+    activePathStepId = "generated-drill";
     appView = "lesson";
     await loadGeneratedDrill();
+  }
+
+  function continueCourse() {
+    startPathStep(nextPathStep);
   }
 
   function startPathStep(step: BarbuPathStep) {
@@ -246,6 +282,14 @@
     resetTrick();
   }
 
+  function finishLesson() {
+    if (activePathStepId) {
+      saveCourseProgress({ ...completedPathSteps, [activePathStepId]: true });
+    }
+
+    openBarbuTable();
+  }
+
   function cardAt(table: TableCard[], seat: Seat) {
     return table.find((play) => play.seat === seat)?.card;
   }
@@ -274,6 +318,40 @@
     }
 
     return currentTrick.playedExplanations[selected.id] ?? `${selected.label} is legal here.`;
+  }
+
+  function buildLessonOutcome(selected: Card, played: Card | undefined): LessonOutcome {
+    if (!legalCardIds.has(selected.id)) {
+      return "Illegal";
+    }
+
+    if (!played) {
+      return "Correct";
+    }
+
+    const playedExplanation = currentTrick.playedExplanations[played.id]?.toLowerCase() ?? "";
+
+    if (
+      playedExplanation.includes("ideal") ||
+      playedExplanation.includes("safely") ||
+      playedExplanation.includes("clear") ||
+      playedExplanation.includes("cannot win") ||
+      playedExplanation.includes("stays below") ||
+      playedExplanation.includes("acceptable")
+    ) {
+      return "Penalty avoided";
+    }
+
+    if (
+      playedExplanation.includes("captures") ||
+      playedExplanation.includes("misses") ||
+      playedExplanation.includes("keeps") ||
+      playedExplanation.includes("wins the trick")
+    ) {
+      return "Legal but risky";
+    }
+
+    return "Correct";
   }
 
   function guidedTrickFromGeneratedScenario(scenario: GeneratedPracticeScenario): GuidedTrick {
@@ -366,7 +444,7 @@
       </div>
       <div class="contract-status">
         <span>King of Cards</span>
-        <strong>{guidedLessons.length} contracts</strong>
+        <strong>{completedCount} of {playablePathSteps.length} complete</strong>
       </div>
     </header>
 
@@ -377,6 +455,15 @@
         <p>
           Start with compact guided tricks, then move into generated drills as the rules become automatic.
         </p>
+        <div class="course-progress" aria-label="Course progress">
+          <span>{completedCount} / {playablePathSteps.length} complete</span>
+          <div class="progress-track">
+            <div class="progress-fill" style={`width: ${(completedCount / playablePathSteps.length) * 100}%`}></div>
+          </div>
+        </div>
+        <button class="continue-action" onclick={continueCourse} type="button">
+          Continue: {nextPathStep.title}
+        </button>
       </div>
 
       <div class="contract-list" aria-label="Available contracts">
@@ -399,6 +486,8 @@
       <div class="path-grid">
         {#each barbuPathSteps as step, index}
           <button
+            class:active={step.id === nextPathStep.id && !completedPathSteps[step.id]}
+            class:complete={completedPathSteps[step.id]}
             class:planned={step.action === "planned"}
             class="path-card"
             disabled={step.action === "planned"}
@@ -409,6 +498,17 @@
             <span class="path-step">{step.step}</span>
             <strong>{step.title}</strong>
             <small>{step.summary}</small>
+            <span class="path-status">
+              {#if completedPathSteps[step.id]}
+                Complete
+              {:else if step.action === "planned"}
+                Planned
+              {:else if step.id === nextPathStep.id}
+                Next
+              {:else}
+                Open
+              {/if}
+            </span>
           </button>
         {/each}
       </div>
@@ -503,6 +603,11 @@
 
         <p class="result">{resultText}</p>
         <p class="explanation">{explanation}</p>
+        {#if lessonOutcome}
+          <p class:warning={lessonOutcome === "Illegal" || lessonOutcome === "Legal but risky"} class="outcome">
+            {lessonOutcome}
+          </p>
+        {/if}
 
         <div class="hand" aria-label="Your hand">
           {#each hand as card}
@@ -526,9 +631,11 @@
         <div class="action-row">
           {#if playedCard}
             <button class="secondary-action" onclick={resetTrick} type="button">Reset</button>
-            <button class="primary-action" onclick={nextTrick} type="button">
-              {isLastTrick ? "Restart lesson" : "Next trick"}
-            </button>
+            {#if isLastTrick}
+              <button class="primary-action" onclick={finishLesson} type="button">Finish lesson</button>
+            {:else}
+              <button class="primary-action" onclick={nextTrick} type="button">Next trick</button>
+            {/if}
           {:else}
             <button class="secondary-action" onclick={resetTrick} type="button">Reset</button>
             <button class="primary-action" disabled={!isSelectedLegal} onclick={playSelectedCard} type="button">

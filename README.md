@@ -45,6 +45,7 @@ content/             Structured game and lesson content
 
 - A catalog/welcome screen that treats Barbu as the first table in a broader card-game curriculum.
 - A Barbu table screen with contract entry points and a five-step training path.
+- Local course progress, a continue action, and compact outcome labels for guided card decisions.
 - Fixed authored Barbu lessons for No Hearts, No Queens, and King of Hearts.
 - Generated No Hearts follow-suit drills from Rust using deterministic seeds.
 - Rule validation, trick winners, scoring, and generated-practice outcomes live in `barbu-core`.

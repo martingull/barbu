@@ -279,12 +279,49 @@ button {
   line-height: 1.12;
 }
 
-.barbu-card p:last-child {
+.barbu-card > p:not(.eyebrow) {
   max-width: 500px;
   margin: 12px 0 0;
   color: #e7eee1;
   font-weight: 700;
   line-height: 1.42;
+}
+
+.course-progress {
+  display: grid;
+  gap: 7px;
+  margin-top: 16px;
+}
+
+.course-progress span {
+  color: #f2f7ee;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.progress-track {
+  overflow: hidden;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: #f5f1cf;
+}
+
+.continue-action {
+  justify-self: start;
+  min-height: 42px;
+  margin-top: 16px;
+  padding: 0 14px;
+  border: 1px solid #f5f1cf;
+  border-radius: 8px;
+  background: #f5f1cf;
+  color: #21372d;
+  font-weight: 900;
 }
 
 .contract-list {
@@ -355,6 +392,16 @@ button {
   cursor: pointer;
 }
 
+.path-card.active {
+  border-color: #284f40;
+  background: #edf4e7;
+}
+
+.path-card.complete {
+  border-color: #7fa372;
+  background: #f2f7ee;
+}
+
 .path-card.planned {
   color: #697366;
 }
@@ -380,7 +427,8 @@ button {
 }
 
 .path-card strong,
-.path-card small {
+.path-card small,
+.path-status {
   grid-column: 1 / -1;
 }
 
@@ -394,6 +442,18 @@ button {
   font-size: 0.82rem;
   font-weight: 650;
   line-height: 1.32;
+}
+
+.path-status {
+  align-self: end;
+  width: fit-content;
+  margin-top: auto;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #e3e7da;
+  color: #43503f;
+  font-size: 0.72rem;
+  font-weight: 900;
 }
 
 .topbar {
@@ -684,6 +744,22 @@ h2 {
   line-height: 1.48;
 }
 
+.outcome {
+  width: fit-content;
+  margin-bottom: 0;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #dfe8d9;
+  color: #284f40;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.outcome.warning {
+  background: #f2e5dc;
+  color: #9a342e;
+}
+
 .hand {
   display: grid;
   grid-template-columns: repeat(4, minmax(58px, 86px));
@@ -923,9 +999,18 @@ h2 {
     font-size: 1.22rem;
   }
 
-  .barbu-card p:last-child {
+  .barbu-card > p:not(.eyebrow) {
     margin-top: 8px;
     font-size: 0.9rem;
+  }
+
+  .course-progress {
+    margin-top: 12px;
+  }
+
+  .continue-action {
+    width: 100%;
+    margin-top: 12px;
   }
 
   .contract-list {
