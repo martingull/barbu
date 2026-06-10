@@ -136,7 +136,10 @@ mod tests {
             .result_for(Card::new(Rank::Queen, Suit::Spades))
             .expect("queen of spades is the only legal play");
 
-        assert_eq!(lesson.legal_player_cards(), vec![Card::new(Rank::Queen, Suit::Spades)]);
+        assert_eq!(
+            lesson.legal_player_cards(),
+            vec![Card::new(Rank::Queen, Suit::Spades)]
+        );
         assert_eq!(result.winner, 2);
         assert_eq!(result.penalty, 0);
     }

@@ -26,3 +26,25 @@ export type GuidedTrick = {
   pendingBySeat: Partial<Record<Seat, string>>;
   playedExplanations: Partial<Record<string, string>>;
 };
+
+export type GeneratedPracticeScenario = {
+  id: string;
+  title: string;
+  contract: string;
+  ledSuit: Suit;
+  prompt: string;
+  tableBeforeChoice: TableCard[];
+  playerHand: Card[];
+  tableAfterChoice: TableCard[];
+  legalCardIds: string[];
+  outcomes: GeneratedPracticeOutcome[];
+};
+
+export type GeneratedPracticeOutcome = {
+  cardId: string;
+  isLegal: boolean;
+  winner: Seat | "Unknown" | null;
+  penalty: number | null;
+  explanation: string;
+  completedTrick: TableCard[] | null;
+};

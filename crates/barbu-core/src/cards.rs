@@ -88,7 +88,12 @@ impl Card {
 
 impl fmt::Display for Card {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(formatter, "{}{}", self.rank.short_name(), self.suit.short_name())
+        write!(
+            formatter,
+            "{}{}",
+            self.rank.short_name(),
+            self.suit.short_name()
+        )
     }
 }
 

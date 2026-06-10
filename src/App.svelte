@@ -1,6 +1,7 @@
 <script lang="ts">
+  import { invoke } from "@tauri-apps/api/core";
   import { noHeartsGuidedTricks } from "./lessons/noHearts";
-  import type { Card, Seat, Suit, TableCard } from "./lessonTypes";
+  import type { Card, GeneratedPracticeScenario, GuidedTrick, Seat, Suit, TableCard } from "./lessonTypes";
 
   const suitNames: Record<Suit, string> = {
     C: "clubs",
@@ -12,8 +13,12 @@
   let trickIndex = 0;
   let selectedCardId = "";
   let playedCardId = "";
+  let practiceSeed = 1;
+  let activeTricks: GuidedTrick[] = noHeartsGuidedTricks;
+  let usingGeneratedPractice = false;
+  let generatedPracticeError = "";
 
-  $: currentTrick = noHeartsGuidedTricks[trickIndex];
+  $: currentTrick = activeTricks[trickIndex];
   $: legalCardIds = new Set(currentTrick.legalCardIds);
   $: hand = currentTrick.hand;
   $: selectedCard = hand.find((card) => card.id === selectedCardId);
@@ -26,9 +31,9 @@
   $: leftCard = cardAt(completedTable, "Left");
   $: rightTableCard = cardAt(completedTable, "Right");
   $: youTableCard = cardAt(completedTable, "You");
-  $: explanation = buildExplanation(selectedCard, playedCard);
+  $: explanation = generatedPracticeError || buildExplanation(selectedCard, playedCard);
   $: resultText = playedCard ? currentTrick.afterResult : currentTrick.beforeResult;
-  $: isLastTrick = trickIndex === noHeartsGuidedTricks.length - 1;
+  $: isLastTrick = trickIndex === activeTricks.length - 1;
 
   function selectCard(card: Card) {
     if (playedCardId) {
@@ -49,6 +54,32 @@
   function resetTrick() {
     selectedCardId = "";
     playedCardId = "";
+  }
+
+  function showFixedLesson() {
+    activeTricks = noHeartsGuidedTricks;
+    usingGeneratedPractice = false;
+    generatedPracticeError = "";
+    trickIndex = 0;
+    resetTrick();
+  }
+
+  async function loadGeneratedDrill() {
+    generatedPracticeError = "";
+
+    try {
+      const scenario = await invoke<GeneratedPracticeScenario>("generate_no_hearts_follow_suit", {
+        seed: practiceSeed
+      });
+
+      practiceSeed += 1;
+      activeTricks = [guidedTrickFromGeneratedScenario(scenario)];
+      usingGeneratedPractice = true;
+      trickIndex = 0;
+      resetTrick();
+    } catch {
+      generatedPracticeError = "Generated drills need the Tauri runtime. Use the fixed lesson here, or run the app with Tauri.";
+    }
   }
 
   function nextTrick() {
@@ -85,6 +116,33 @@
 
     return currentTrick.playedExplanations[selected.id] ?? `${selected.label} is legal here.`;
   }
+
+  function guidedTrickFromGeneratedScenario(scenario: GeneratedPracticeScenario): GuidedTrick {
+    return {
+      title: scenario.title,
+      beforeResult: scenario.prompt,
+      afterResult: "Generated drill complete. Check the explanation for the winner and penalty.",
+      emptyExplanation: scenario.prompt,
+      legalCardIds: scenario.legalCardIds,
+      hand: scenario.playerHand,
+      tableBeforeChoice: scenario.tableBeforeChoice,
+      tableAfterChoice: scenario.tableAfterChoice,
+      pendingBySeat: pendingSeatsForGeneratedScenario(scenario),
+      playedExplanations: Object.fromEntries(
+        scenario.outcomes.map((outcome) => [outcome.cardId, outcome.explanation])
+      )
+    };
+  }
+
+  function pendingSeatsForGeneratedScenario(scenario: GeneratedPracticeScenario) {
+    const pendingBySeat: Partial<Record<Seat, string>> = { You: "You" };
+
+    for (const play of scenario.tableAfterChoice) {
+      pendingBySeat[play.seat] = play.card.label;
+    }
+
+    return pendingBySeat;
+  }
 </script>
 
 <main class="app-shell">
@@ -95,12 +153,13 @@
     </div>
     <div class="contract-status">
       <span>No Hearts</span>
-      <strong>Trick {trickIndex + 1} of {noHeartsGuidedTricks.length}</strong>
+      <strong>Trick {trickIndex + 1} of {activeTricks.length}</strong>
     </div>
   </header>
 
   <section class="mode-row" aria-label="Learning mode">
-    <button class="mode-tab active" type="button">Practice</button>
+    <button class:active={!usingGeneratedPractice} class="mode-tab" onclick={showFixedLesson} type="button">Practice</button>
+    <button class:active={usingGeneratedPractice} class="mode-tab" onclick={loadGeneratedDrill} type="button">Generated</button>
     <button class="mode-tab" type="button">Learn</button>
     <button class="mode-tab" type="button">Rules</button>
   </section>
