@@ -6,6 +6,8 @@ Guidance for coding agents working in this repository.
 
 Barbu is an iPhone-first card-game app for learning, practicing, and exploring classic card games. The first curriculum is Barbu in the Hearts family of card games, with room to expand to more games later.
 
+Treat Barbu as the first game in a broader card-game catalog, not as the permanent product boundary. Favor structures that can later support other Hearts variants, then other families such as Whist and Bridge.
+
 This is intended as a real App Store product, not a throwaway learning project. Code changes should keep maintainability, automated verification, product polish, and eventual monetization in mind.
 
 The app should teach games as structured knowledge and guided play, not as static rule pages. Favor a progression like:
@@ -32,6 +34,7 @@ Keep game logic independent of the UI. The frontend may present and explain rule
 
 - Put reusable card and rules code in `crates/barbu-core`.
 - Put generated practice logic in Rust, not in the Svelte component layer.
+- Keep guided lessons in catalog-like modules so more games and families can be added without rewriting the interaction surface.
 - Keep Tauri command handlers thin; they should adapt app requests to core APIs.
 - Keep Svelte components focused on presentation and interaction.
 - Treat `content/` as structured source material for lessons and game metadata.

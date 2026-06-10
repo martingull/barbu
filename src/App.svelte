@@ -1,6 +1,6 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
-  import { noHeartsGuidedTricks } from "./lessons/noHearts";
+  import { guidedLessons } from "./lessons/catalog";
   import type { Card, GeneratedPracticeScenario, GuidedTrick, Seat, Suit, TableCard } from "./lessonTypes";
 
   const suitNames: Record<Suit, string> = {
@@ -14,10 +14,15 @@
   let selectedCardId = "";
   let playedCardId = "";
   let practiceSeed = 1;
-  let activeTricks: GuidedTrick[] = noHeartsGuidedTricks;
+  let selectedLessonId = guidedLessons[0].id;
+  let activeTricks: GuidedTrick[] = guidedLessons[0].tricks;
   let usingGeneratedPractice = false;
   let generatedPracticeError = "";
 
+  $: selectedLesson = guidedLessons.find((lesson) => lesson.id === selectedLessonId) ?? guidedLessons[0];
+  $: familyLabel = usingGeneratedPractice ? "Hearts" : selectedLesson.family;
+  $: gameLabel = usingGeneratedPractice ? "Generated practice" : selectedLesson.game;
+  $: contractLabel = usingGeneratedPractice ? "No Hearts" : selectedLesson.contract;
   $: currentTrick = activeTricks[trickIndex];
   $: legalCardIds = new Set(currentTrick.legalCardIds);
   $: hand = currentTrick.hand;
@@ -56,8 +61,23 @@
     playedCardId = "";
   }
 
+  function selectLesson(lessonId: string) {
+    const lesson = guidedLessons.find((item) => item.id === lessonId);
+
+    if (!lesson) {
+      return;
+    }
+
+    selectedLessonId = lesson.id;
+    activeTricks = lesson.tricks;
+    usingGeneratedPractice = false;
+    generatedPracticeError = "";
+    trickIndex = 0;
+    resetTrick();
+  }
+
   function showFixedLesson() {
-    activeTricks = noHeartsGuidedTricks;
+    activeTricks = selectedLesson.tricks;
     usingGeneratedPractice = false;
     generatedPracticeError = "";
     trickIndex = 0;
@@ -148,14 +168,28 @@
 <main class="app-shell">
   <header class="topbar" aria-label="Current game">
     <div>
-      <p class="eyebrow">Hearts family</p>
-      <h1>Barbu</h1>
+      <p class="eyebrow">{familyLabel} family</p>
+      <h1>{gameLabel}</h1>
     </div>
     <div class="contract-status">
-      <span>No Hearts</span>
+      <span>{contractLabel}</span>
       <strong>Trick {trickIndex + 1} of {activeTricks.length}</strong>
     </div>
   </header>
+
+  <section class="lesson-row" aria-label="Guided Barbu lessons">
+    {#each guidedLessons as lesson}
+      <button
+        class:active={!usingGeneratedPractice && selectedLessonId === lesson.id}
+        class="lesson-chip"
+        onclick={() => selectLesson(lesson.id)}
+        type="button"
+      >
+        <span>{lesson.contract}</span>
+        <small>{lesson.summary}</small>
+      </button>
+    {/each}
+  </section>
 
   <section class="mode-row" aria-label="Learning mode">
     <button class:active={!usingGeneratedPractice} class="mode-tab" onclick={showFixedLesson} type="button">Practice</button>
@@ -214,7 +248,7 @@
 
     <section class="lesson-panel" aria-label="Current lesson">
       <div class="lesson-heading">
-        <p class="eyebrow">No Hearts</p>
+        <p class="eyebrow">{contractLabel}</p>
         <h2>{currentTrick.title}</h2>
       </div>
 

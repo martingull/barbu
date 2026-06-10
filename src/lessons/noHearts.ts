@@ -1,4 +1,4 @@
-import type { GuidedTrick } from "../lessonTypes";
+import type { GuidedLesson, GuidedTrick } from "../lessonTypes";
 
 export const noHeartsGuidedTricks: GuidedTrick[] = [
   {
@@ -49,3 +49,13 @@ export const noHeartsGuidedTricks: GuidedTrick[] = [
     }
   }
 ];
+
+export const noHeartsLesson: GuidedLesson = {
+  id: "barbu-no-hearts",
+  family: "Hearts",
+  game: "Barbu",
+  contract: "No Hearts",
+  title: "Avoid heart penalties",
+  summary: "Follow suit while avoiding tricks that contain hearts.",
+  tricks: noHeartsGuidedTricks
+};

@@ -27,6 +27,16 @@ export type GuidedTrick = {
   playedExplanations: Partial<Record<string, string>>;
 };
 
+export type GuidedLesson = {
+  id: string;
+  family: string;
+  game: string;
+  contract: string;
+  title: string;
+  summary: string;
+  tricks: GuidedTrick[];
+};
+
 export type GeneratedPracticeScenario = {
   id: string;
   title: string;
