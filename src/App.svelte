@@ -446,9 +446,9 @@
       {/each}
     </section>
   {:else if appView === "barbuTable"}
-    <header class="topbar" aria-label="Barbu table">
+    <header class="topbar table-topbar" aria-label="Barbu table">
       <button class="back-button" onclick={openCatalog} type="button">Games</button>
-      <div>
+      <div class="table-title">
         <p class="eyebrow">Hearts family</p>
         <h1>Barbu's table</h1>
       </div>
@@ -480,7 +480,7 @@
           </div>
         {:else if nextPathStep}
           <button class="continue-action" onclick={continueCourse} type="button">
-            Continue: {nextPathStep.title}
+            Continue with {nextPathStep.title}
           </button>
         {/if}
       </div>

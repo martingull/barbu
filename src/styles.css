@@ -480,6 +480,10 @@ button {
   padding: 4px 0 14px;
 }
 
+.table-title {
+  min-width: 0;
+}
+
 .back-button {
   min-height: 42px;
   padding: 0 12px;
@@ -1078,6 +1082,37 @@ h2 {
   .topbar {
     align-items: start;
     gap: 10px;
+  }
+
+  .table-topbar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    padding-bottom: 16px;
+  }
+
+  .table-topbar .back-button {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .table-topbar .contract-status {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    min-width: 0;
+    max-width: 176px;
+  }
+
+  .table-title {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    padding-top: 6px;
+  }
+
+  .table-title h1 {
+    font-size: 2.28rem;
+    line-height: 0.96;
   }
 
   h1 {
