@@ -2,7 +2,26 @@
 
 An iPhone-first card-game app for learning, practicing, and exploring classic card games. The first curriculum is Barbu in the Hearts family, with room to expand to more games later.
 
+The product concept is that the player learns by sitting down against Barbu, a King of Cards figure who introduces games, sets contracts, reacts to play, and raises the difficulty over time. Barbu should function as a coach and opponent: enough personality to give the app identity, but never at the expense of clear rules, fast practice, and accurate feedback.
+
 This is intended as a real App Store product, not a throwaway experiment. The codebase should keep product quality, automated verification, and future monetization in mind from the start.
+
+## Learning Model
+
+Barbu combines two complementary teaching layers:
+
+- A Parlett-style reference layer for structured game knowledge: object, players, cards, deal, play, scoring, variants, and tactical ideas.
+- A hybrid practice layer inspired by strong mobile chess tutors: short concepts, puzzle-sized decisions, guided tricks, generated drills, immediate feedback, and visible progression.
+
+The intended loop is:
+
+1. Concepts
+2. Examples
+3. Guided tricks or hands
+4. Practice
+5. Review
+
+The app should borrow learning patterns from chess tutor apps at the level of structure: named coach/opponent, level-like progression, quick correction, and repeated practice. It should not copy proprietary visual design, wording, characters, or lesson content.
 
 ## Stack
 
@@ -24,6 +43,8 @@ content/             Structured game and lesson content
 
 ## Current Product Shape
 
+- A catalog/welcome screen that treats Barbu as the first table in a broader card-game curriculum.
+- A Barbu table screen with contract entry points and a five-step training path.
 - Fixed authored Barbu lessons for No Hearts, No Queens, and King of Hearts.
 - Generated No Hearts follow-suit drills from Rust using deterministic seeds.
 - Rule validation, trick winners, scoring, and generated-practice outcomes live in `barbu-core`.

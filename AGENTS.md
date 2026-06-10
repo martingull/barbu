@@ -6,11 +6,13 @@ Guidance for coding agents working in this repository.
 
 Barbu is an iPhone-first card-game app for learning, practicing, and exploring classic card games. The first curriculum is Barbu in the Hearts family of card games, with room to expand to more games later.
 
+The product concept is that the player learns by sitting down against Barbu, a "King of Cards" figure who introduces games, sets contracts, reacts to play, and gradually raises the difficulty. Treat this persona as a teaching and progression device, not as an excuse to hide rules or make the interface theatrical at the cost of clarity.
+
 Treat Barbu as the first game in a broader card-game catalog, not as the permanent product boundary. Favor structures that can later support other Hearts variants, then other families such as Whist and Bridge.
 
 This is intended as a real App Store product, not a throwaway learning project. Code changes should keep maintainability, automated verification, product polish, and eventual monetization in mind.
 
-The app should teach games as structured knowledge and guided play, not as static rule pages. Favor a progression like:
+The app should teach games as structured knowledge and guided play, not as static rule pages. Use a hybrid learning model inspired by strong mobile chess tutors: short explanations, immediate card decisions, feedback tied to the decision, generated drills, and visible progression through mastery levels. Favor a progression like:
 
 1. Concepts
 2. Examples
@@ -18,7 +20,7 @@ The app should teach games as structured knowledge and guided play, not as stati
 4. Practice
 5. Review
 
-Use Parlett-style organization as inspiration, but write original explanations and app copy.
+Use Parlett-style organization as inspiration for the reference layer, but write original explanations and app copy. A game reference should be structured around object, players, cards, deal, play, scoring, variants, and tactical ideas. The guided learning layer should translate that reference material into interactive decisions.
 
 ## Stack
 
@@ -34,6 +36,7 @@ Keep game logic independent of the UI. The frontend may present and explain rule
 
 - Put reusable card and rules code in `crates/barbu-core`.
 - Put generated practice logic in Rust, not in the Svelte component layer.
+- Model the Barbu/King-of-Cards teaching persona as content or lesson metadata where possible, not as scattered hardcoded strings.
 - Keep guided lessons in catalog-like modules so more games and families can be added without rewriting the interaction surface.
 - Keep Tauri command handlers thin; they should adapt app requests to core APIs.
 - Keep Svelte components focused on presentation and interaction.
@@ -48,10 +51,13 @@ The app is a learning tool, not a marketing site. The first screen should be the
 Prefer clear, compact, touch-friendly layouts:
 
 - game/family navigation
+- a sense of sitting down at Barbu's table
 - contract or lesson selection
 - guided card table
 - concise explanations tied to the current decision
 - visible practice feedback
+
+Borrow learning patterns from successful chess tutor apps at the pattern level only: named opponent/coach, level-like progression, puzzle-sized decisions, fast correction, and practice loops. Do not copy proprietary visual design, wording, characters, or lesson content.
 
 Avoid purely decorative UI and avoid copying book text.
 

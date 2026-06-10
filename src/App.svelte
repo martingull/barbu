@@ -3,6 +3,106 @@
   import { guidedLessons } from "./lessons/catalog";
   import type { Card, GeneratedPracticeScenario, GuidedTrick, Seat, Suit, TableCard } from "./lessonTypes";
 
+  type AppView = "catalog" | "barbuTable" | "lesson";
+
+  type PathAction = "lesson" | "generated" | "planned";
+
+  type CatalogGame = {
+    id: string;
+    family: string;
+    title: string;
+    status: "Ready" | "Planned";
+    summary: string;
+    lessonCount: number;
+  };
+
+  type BarbuPathStep = {
+    id: string;
+    step: string;
+    title: string;
+    summary: string;
+    action: PathAction;
+    lessonId?: string;
+  };
+
+  const gameCatalog: CatalogGame[] = [
+    {
+      id: "barbu",
+      family: "Hearts",
+      title: "Barbu",
+      status: "Ready",
+      summary: "Contract trick-taking with focused avoidance lessons.",
+      lessonCount: guidedLessons.length
+    },
+    {
+      id: "hearts",
+      family: "Hearts",
+      title: "Hearts",
+      status: "Planned",
+      summary: "Plain-trick foundations before the contracts expand.",
+      lessonCount: 0
+    },
+    {
+      id: "whist",
+      family: "Whist",
+      title: "Whist",
+      status: "Planned",
+      summary: "Partnership trick play and long-suit development.",
+      lessonCount: 0
+    },
+    {
+      id: "bridge",
+      family: "Bridge",
+      title: "Bridge",
+      status: "Planned",
+      summary: "Declarer play, defense, and bidding concepts.",
+      lessonCount: 0
+    }
+  ];
+
+  const learningSteps = ["Concepts", "Examples", "Guided tricks", "Practice", "Review"];
+
+  const barbuPathSteps: BarbuPathStep[] = [
+    {
+      id: "meet-contract",
+      step: "Concept",
+      title: "Meet the contract",
+      summary: "Barbu names the danger cards and the object before play begins.",
+      action: "lesson",
+      lessonId: "barbu-no-hearts"
+    },
+    {
+      id: "spot-danger",
+      step: "Example",
+      title: "Spot the danger",
+      summary: "Read the table, identify who is likely to take the penalty, then choose.",
+      action: "lesson",
+      lessonId: "barbu-no-queens"
+    },
+    {
+      id: "play-trick",
+      step: "Guided trick",
+      title: "Play the trick",
+      summary: "Make the legal play and get immediate feedback from Barbu.",
+      action: "lesson",
+      lessonId: "barbu-king-of-hearts"
+    },
+    {
+      id: "generated-drill",
+      step: "Practice",
+      title: "Generated drill",
+      summary: "Practice fresh No Hearts follow-suit situations from the Rust engine.",
+      action: "generated"
+    },
+    {
+      id: "review",
+      step: "Review",
+      title: "Review the hand",
+      summary: "Coming next: summarize mistakes, penalties, and contract habits.",
+      action: "planned"
+    }
+  ];
+
   const suitNames: Record<Suit, string> = {
     C: "clubs",
     D: "diamonds",
@@ -10,6 +110,7 @@
     S: "spades"
   };
 
+  let appView: AppView = "catalog";
   let trickIndex = 0;
   let selectedCardId = "";
   let playedCardId = "";
@@ -59,6 +160,43 @@
   function resetTrick() {
     selectedCardId = "";
     playedCardId = "";
+  }
+
+  function openCatalog() {
+    appView = "catalog";
+  }
+
+  function openBarbuTable() {
+    appView = "barbuTable";
+  }
+
+  function openGame(gameId: string) {
+    if (gameId !== "barbu") {
+      return;
+    }
+
+    openBarbuTable();
+  }
+
+  function startLesson(lessonId: string) {
+    selectLesson(lessonId);
+    appView = "lesson";
+  }
+
+  async function startGeneratedDrill() {
+    appView = "lesson";
+    await loadGeneratedDrill();
+  }
+
+  function startPathStep(step: BarbuPathStep) {
+    if (step.action === "lesson" && step.lessonId) {
+      startLesson(step.lessonId);
+      return;
+    }
+
+    if (step.action === "generated") {
+      void startGeneratedDrill();
+    }
   }
 
   function selectLesson(lessonId: string) {
@@ -166,127 +304,238 @@
 </script>
 
 <main class="app-shell">
-  <header class="topbar" aria-label="Current game">
-    <div>
-      <p class="eyebrow">{familyLabel} family</p>
-      <h1>{gameLabel}</h1>
-    </div>
-    <div class="contract-status">
-      <span>{contractLabel}</span>
-      <strong>Trick {trickIndex + 1} of {activeTricks.length}</strong>
-    </div>
-  </header>
-
-  <section class="lesson-row" aria-label="Guided Barbu lessons">
-    {#each guidedLessons as lesson}
-      <button
-        class:active={!usingGeneratedPractice && selectedLessonId === lesson.id}
-        class="lesson-chip"
-        onclick={() => selectLesson(lesson.id)}
-        type="button"
-      >
-        <span>{lesson.contract}</span>
-        <small>{lesson.summary}</small>
-      </button>
-    {/each}
-  </section>
-
-  <section class="mode-row" aria-label="Learning mode">
-    <button class:active={!usingGeneratedPractice} class="mode-tab" onclick={showFixedLesson} type="button">Practice</button>
-    <button class:active={usingGeneratedPractice} class="mode-tab" onclick={loadGeneratedDrill} type="button">Generated</button>
-    <button class="mode-tab" type="button">Learn</button>
-    <button class="mode-tab" type="button">Rules</button>
-  </section>
-
-  <section class="learning-surface" aria-label="Guided No Hearts trick">
-    <section class="practice-table" aria-label="Card table">
-      <div class="seat north">Tutor</div>
-      <div class="seat west">Left</div>
-      <div class="seat east">Right</div>
-      <div class="seat south">You</div>
-
-      <div class="played-slot tutor-slot">
-        {#if tutorCard}
-          <div class:heart={tutorCard.suit === "H"} class="card table-card">
-            <b>{tutorCard.rank}</b>
-            <small>{tutorCard.suit}</small>
-          </div>
-        {/if}
+  {#if appView === "catalog"}
+    <section class="welcome-screen" aria-labelledby="catalog-title">
+      <div class="welcome-copy">
+        <p class="eyebrow">Card game catalog</p>
+        <h1 id="catalog-title">Choose a table</h1>
+        <p class="intro">
+          Start with Barbu, then branch into related trick-taking games as the curriculum grows.
+        </p>
       </div>
 
-      <div class="played-slot left-slot">
-        {#if leftCard}
-          <div class:heart={leftCard.suit === "H"} class="card table-card">
-            <b>{leftCard.rank}</b>
-            <small>{leftCard.suit}</small>
-          </div>
-        {/if}
-      </div>
-
-      <div class="played-slot right-slot">
-        {#if rightTableCard}
-          <div class:heart={rightTableCard.suit === "H"} class="card table-card">
-            <b>{rightTableCard.rank}</b>
-            <small>{rightTableCard.suit}</small>
-          </div>
-        {:else if currentTrick.pendingBySeat.Right}
-          <div class="pending-card">{currentTrick.pendingBySeat.Right}</div>
-        {/if}
-      </div>
-
-      <div class="played-slot you-slot">
-        {#if youTableCard}
-          <div class:heart={youTableCard.suit === "H"} class="card table-card">
-            <b>{youTableCard.rank}</b>
-            <small>{youTableCard.suit}</small>
-          </div>
-        {:else if currentTrick.pendingBySeat.You}
-          <div class="pending-card">{currentTrick.pendingBySeat.You}</div>
-        {/if}
+      <div class="welcome-table" aria-hidden="true">
+        <div class="mini-card mini-card-one"><b>Q</b><small>H</small></div>
+        <div class="mini-card mini-card-two"><b>K</b><small>C</small></div>
+        <div class="mini-card mini-card-three"><b>A</b><small>S</small></div>
       </div>
     </section>
 
-    <section class="lesson-panel" aria-label="Current lesson">
-      <div class="lesson-heading">
-        <p class="eyebrow">{contractLabel}</p>
-        <h2>{currentTrick.title}</h2>
+    <section class="catalog-section" aria-label="Games">
+      <div class="section-heading">
+        <p class="eyebrow">Games</p>
+        <h2>Learning paths</h2>
       </div>
 
-      <p class="result">{resultText}</p>
-      <p class="explanation">{explanation}</p>
-
-      <div class="hand" aria-label="Your hand">
-        {#each hand as card}
+      <div class="game-grid">
+        {#each gameCatalog as game}
           <button
-            aria-pressed={selectedCardId === card.id}
-            class:heart={card.suit === "H"}
-            class:illegal={cardClasses(card).illegal}
-            class:legal={cardClasses(card).legal}
-            class:played={cardClasses(card).played}
-            class:selected={cardClasses(card).selected}
-            class="card hand-card"
-            onclick={() => selectCard(card)}
+            class:ready={game.status === "Ready"}
+            class="game-card"
+            disabled={game.status !== "Ready"}
+            onclick={() => openGame(game.id)}
             type="button"
           >
-            <b>{card.rank}</b>
-            <small>{card.suit}</small>
+            <span class="game-family">{game.family}</span>
+            <strong>{game.title}</strong>
+            <span class="game-summary">{game.summary}</span>
+            <span class="game-footer">
+              <span>{game.status}</span>
+              <span>{game.lessonCount} lessons</span>
+            </span>
           </button>
         {/each}
       </div>
+    </section>
 
-      <div class="action-row">
-        {#if playedCard}
-          <button class="secondary-action" onclick={resetTrick} type="button">Reset</button>
-          <button class="primary-action" onclick={nextTrick} type="button">
-            {isLastTrick ? "Restart lesson" : "Next trick"}
+    <section class="progression-section" aria-label="Lesson progression">
+      {#each learningSteps as step, index}
+        <div class="progression-step">
+          <span>{index + 1}</span>
+          <strong>{step}</strong>
+        </div>
+      {/each}
+    </section>
+  {:else if appView === "barbuTable"}
+    <header class="topbar" aria-label="Barbu table">
+      <button class="back-button" onclick={openCatalog} type="button">Games</button>
+      <div>
+        <p class="eyebrow">Hearts family</p>
+        <h1>Barbu's table</h1>
+      </div>
+      <div class="contract-status">
+        <span>King of Cards</span>
+        <strong>{guidedLessons.length} contracts</strong>
+      </div>
+    </header>
+
+    <section class="table-room" aria-labelledby="barbu-table-title">
+      <div class="barbu-card">
+        <p class="eyebrow">Coach and opponent</p>
+        <h2 id="barbu-table-title">Barbu sets the contract. You learn by playing the decision.</h2>
+        <p>
+          Start with compact guided tricks, then move into generated drills as the rules become automatic.
+        </p>
+      </div>
+
+      <div class="contract-list" aria-label="Available contracts">
+        {#each guidedLessons as lesson}
+          <button class="contract-card" onclick={() => startLesson(lesson.id)} type="button">
+            <span>{lesson.contract}</span>
+            <strong>{lesson.title}</strong>
+            <small>{lesson.summary}</small>
           </button>
-        {:else}
-          <button class="secondary-action" onclick={resetTrick} type="button">Reset</button>
-          <button class="primary-action" disabled={!isSelectedLegal} onclick={playSelectedCard} type="button">
-            Play selected
-          </button>
-        {/if}
+        {/each}
       </div>
     </section>
-  </section>
+
+    <section class="path-section" aria-label="Barbu lesson path">
+      <div class="section-heading">
+        <p class="eyebrow">Training path</p>
+        <h2>Learn the table in five passes</h2>
+      </div>
+
+      <div class="path-grid">
+        {#each barbuPathSteps as step, index}
+          <button
+            class:planned={step.action === "planned"}
+            class="path-card"
+            disabled={step.action === "planned"}
+            onclick={() => startPathStep(step)}
+            type="button"
+          >
+            <span class="path-index">{index + 1}</span>
+            <span class="path-step">{step.step}</span>
+            <strong>{step.title}</strong>
+            <small>{step.summary}</small>
+          </button>
+        {/each}
+      </div>
+    </section>
+  {:else}
+    <header class="topbar" aria-label="Current game">
+      <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
+      <div>
+        <p class="eyebrow">{familyLabel} family</p>
+        <h1>{gameLabel}</h1>
+      </div>
+      <div class="contract-status">
+        <span>{contractLabel}</span>
+        <strong>Trick {trickIndex + 1} of {activeTricks.length}</strong>
+      </div>
+    </header>
+
+    <section class="lesson-row" aria-label="Guided Barbu lessons">
+      {#each guidedLessons as lesson}
+        <button
+          class:active={!usingGeneratedPractice && selectedLessonId === lesson.id}
+          class="lesson-chip"
+          onclick={() => selectLesson(lesson.id)}
+          type="button"
+        >
+          <span>{lesson.contract}</span>
+          <small>{lesson.summary}</small>
+        </button>
+      {/each}
+    </section>
+
+    <section class="mode-row" aria-label="Learning mode">
+      <button class:active={!usingGeneratedPractice} class="mode-tab" onclick={showFixedLesson} type="button">Practice</button>
+      <button class:active={usingGeneratedPractice} class="mode-tab" onclick={loadGeneratedDrill} type="button">Generated</button>
+      <button class="mode-tab" type="button">Learn</button>
+      <button class="mode-tab" type="button">Rules</button>
+    </section>
+
+    <section class="learning-surface" aria-label="Guided trick">
+      <section class="practice-table" aria-label="Card table">
+        <div class="seat north">Tutor</div>
+        <div class="seat west">Left</div>
+        <div class="seat east">Right</div>
+        <div class="seat south">You</div>
+
+        <div class="played-slot tutor-slot">
+          {#if tutorCard}
+            <div class:heart={tutorCard.suit === "H"} class="card table-card">
+              <b>{tutorCard.rank}</b>
+              <small>{tutorCard.suit}</small>
+            </div>
+          {/if}
+        </div>
+
+        <div class="played-slot left-slot">
+          {#if leftCard}
+            <div class:heart={leftCard.suit === "H"} class="card table-card">
+              <b>{leftCard.rank}</b>
+              <small>{leftCard.suit}</small>
+            </div>
+          {/if}
+        </div>
+
+        <div class="played-slot right-slot">
+          {#if rightTableCard}
+            <div class:heart={rightTableCard.suit === "H"} class="card table-card">
+              <b>{rightTableCard.rank}</b>
+              <small>{rightTableCard.suit}</small>
+            </div>
+          {:else if currentTrick.pendingBySeat.Right}
+            <div class="pending-card">{currentTrick.pendingBySeat.Right}</div>
+          {/if}
+        </div>
+
+        <div class="played-slot you-slot">
+          {#if youTableCard}
+            <div class:heart={youTableCard.suit === "H"} class="card table-card">
+              <b>{youTableCard.rank}</b>
+              <small>{youTableCard.suit}</small>
+            </div>
+          {:else if currentTrick.pendingBySeat.You}
+            <div class="pending-card">{currentTrick.pendingBySeat.You}</div>
+          {/if}
+        </div>
+      </section>
+
+      <section class="lesson-panel" aria-label="Current lesson">
+        <div class="lesson-heading">
+          <p class="eyebrow">{contractLabel}</p>
+          <h2>{currentTrick.title}</h2>
+        </div>
+
+        <p class="result">{resultText}</p>
+        <p class="explanation">{explanation}</p>
+
+        <div class="hand" aria-label="Your hand">
+          {#each hand as card}
+            <button
+              aria-pressed={selectedCardId === card.id}
+              class:heart={card.suit === "H"}
+              class:illegal={cardClasses(card).illegal}
+              class:legal={cardClasses(card).legal}
+              class:played={cardClasses(card).played}
+              class:selected={cardClasses(card).selected}
+              class="card hand-card"
+              onclick={() => selectCard(card)}
+              type="button"
+            >
+              <b>{card.rank}</b>
+              <small>{card.suit}</small>
+            </button>
+          {/each}
+        </div>
+
+        <div class="action-row">
+          {#if playedCard}
+            <button class="secondary-action" onclick={resetTrick} type="button">Reset</button>
+            <button class="primary-action" onclick={nextTrick} type="button">
+              {isLastTrick ? "Restart lesson" : "Next trick"}
+            </button>
+          {:else}
+            <button class="secondary-action" onclick={resetTrick} type="button">Reset</button>
+            <button class="primary-action" disabled={!isSelectedLegal} onclick={playSelectedCard} type="button">
+              Play selected
+            </button>
+          {/if}
+        </div>
+      </section>
+    </section>
+  {/if}
 </main>
