@@ -1,0 +1,54 @@
+version: "3"
+
+tasks:
+  install:
+    desc: Install frontend dependencies
+    cmds:
+      - npm install
+
+  dev:
+    desc: Run the browser development server
+    cmds:
+      - npm run dev
+
+  build:
+    desc: Build the Svelte frontend
+    cmds:
+      - npm run build
+
+  core:test:
+    desc: Run Rust tests for the card and rules engine
+    cmds:
+      - cargo test --manifest-path crates/barbu-core/Cargo.toml
+
+  tauri:check:
+    desc: Check the Tauri app crate
+    cmds:
+      - cargo check -p barbu-app
+
+  fmt:
+    desc: Format Rust code
+    cmds:
+      - cargo fmt
+
+  verify:
+    desc: Run the current project verification suite
+    deps:
+      - core:test
+      - build
+      - tauri:check
+
+  tauri:dev:
+    desc: Run the Tauri desktop development app
+    cmds:
+      - npm run tauri:dev
+
+  ios:dev:
+    desc: Run the Tauri iOS development target
+    cmds:
+      - npm run tauri:ios
+
+  android:dev:
+    desc: Run the Tauri Android development target
+    cmds:
+      - npm run tauri:android
