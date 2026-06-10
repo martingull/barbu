@@ -16,6 +16,11 @@ tasks:
     cmds:
       - npm run build
 
+  ui:test:
+    desc: Run browser interaction smoke tests
+    cmds:
+      - npm run test:e2e
+
   core:test:
     desc: Run Rust tests for the card and rules engine
     cmds:
@@ -36,6 +41,7 @@ tasks:
     deps:
       - core:test
       - build
+      - ui:test
       - tauri:check
 
   tauri:dev:

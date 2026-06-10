@@ -73,6 +73,7 @@ Use the Taskfile as the canonical command surface:
 
 ```sh
 task core:test
+task ui:test
 task build
 task tauri:check
 task verify
@@ -82,11 +83,11 @@ Current automated coverage:
 
 - Rust unit tests for cards, trick-taking, scoring, fixed guided tricks, and generated follow-suit drills.
 - Frontend production build.
+- Playwright browser smoke tests for the catalog, Barbu table, lesson flow, and generated-practice fallback on iPhone XR and desktop Chrome.
 - Tauri app crate check.
 
 Next testing layers to add:
 
-- Browser interaction tests for the guided lesson flow.
 - Tauri command tests for generated practice scenarios.
 - iOS simulator smoke tests before TestFlight.
 - StoreKit sandbox tests once monetization is introduced.

@@ -67,12 +67,13 @@ Use `Taskfile.yml` as the canonical command surface. Run focused checks after ch
 
 ```sh
 task core:test
+task ui:test
 task build
 task tauri:check
 task verify
 ```
 
-For UI-only changes, `npm run build` is usually the minimum. For rules or scoring changes, run the core Rust tests.
+For UI-only changes, `npm run build` plus `task ui:test` is usually the minimum. For rules or scoring changes, run the core Rust tests.
 
 Generated drills require the Tauri runtime. Browser-only localhost can test authored lessons and frontend rendering, but Rust-backed commands need `task tauri:dev`.
 
@@ -98,7 +99,7 @@ Manual game-play testing is useful for feel, but should not be the main safety n
 Preferred automation path:
 
 - Rust unit tests for rules, scoring, generation, and outcome explanations.
-- Browser interaction tests for authored lesson flows.
+- Browser interaction tests for authored lesson flows, including iPhone XR smoke coverage through Playwright.
 - Tauri command tests for generated scenarios.
 - iOS simulator smoke tests before TestFlight.
 - StoreKit sandbox tests once paid features are introduced.

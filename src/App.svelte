@@ -236,6 +236,7 @@
       trickIndex = 0;
       resetTrick();
     } catch {
+      usingGeneratedPractice = true;
       generatedPracticeError = "Generated drills need the Tauri runtime. Use the fixed lesson here, or run the app with Tauri.";
     }
   }
