@@ -23,6 +23,10 @@ export const noQueensGuidedTricks: GuidedTrick[] = [
     playedExplanations: {
       "3D": "3D follows diamonds and cannot win. Right's AD captures the queen, so the penalty goes to Right.",
       KD: "KD follows diamonds and beats QD, but AD is still to your right. Right will overtake and collect the queen."
+    },
+    cardOutcomes: {
+      "3D": "best",
+      KD: "safe"
     }
   },
   {
@@ -46,6 +50,9 @@ export const noQueensGuidedTricks: GuidedTrick[] = [
     pendingBySeat: { You: "You" },
     playedExplanations: {
       KC: "KC is forced because clubs were led. It wins the trick and captures QC, which is exactly the situation this contract teaches you to anticipate earlier."
+    },
+    cardOutcomes: {
+      KC: "forced"
     }
   }
 ];

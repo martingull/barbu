@@ -14,6 +14,8 @@ export type TableCard = {
   card: Card;
 };
 
+export type GuidedCardOutcome = "best" | "safe" | "risky" | "forced" | "penalty";
+
 export type GuidedTrick = {
   title: string;
   beforeResult: string;
@@ -25,6 +27,7 @@ export type GuidedTrick = {
   tableAfterChoice: TableCard[];
   pendingBySeat: Partial<Record<Seat, string>>;
   playedExplanations: Partial<Record<string, string>>;
+  cardOutcomes: Partial<Record<string, GuidedCardOutcome>>;
 };
 
 export type GuidedLesson = {

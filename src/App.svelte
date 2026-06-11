@@ -1,14 +1,22 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
+  import CardTable from "./CardTable.svelte";
   import { guidedLessons } from "./lessons/catalog";
-  import type { Card, GeneratedPracticeScenario, GuidedTrick, Seat, Suit, TableCard } from "./lessonTypes";
+  import type {
+    Card,
+    GeneratedPracticeOutcome,
+    GeneratedPracticeScenario,
+    GuidedCardOutcome,
+    GuidedTrick,
+    Seat,
+    Suit,
+    TableCard
+  } from "./lessonTypes";
 
   type AppView = "catalog" | "barbuTable" | "courseContent" | "lesson";
 
   type PathAction = "lesson" | "generated" | "planned";
   type CourseStage = "concept" | "example" | "review";
-
-  type LessonOutcome = "Correct" | "Penalty avoided" | "Legal but risky" | "Illegal";
 
   type CatalogGame = {
     id: string;
@@ -65,6 +73,14 @@
 
   const learningSteps = ["Concepts", "Examples", "Guided tricks", "Practice", "Review"];
   const progressStorageKey = "barbu.courseProgress.v1";
+  const outcomeLabels: Record<GuidedCardOutcome | "illegal", string> = {
+    best: "Best play",
+    safe: "Safe play",
+    risky: "Legal but risky",
+    forced: "Forced play",
+    penalty: "Penalty taken",
+    illegal: "Illegal"
+  };
 
   const barbuPathSteps: BarbuPathStep[] = [
     {
@@ -113,6 +129,11 @@
     H: "hearts",
     S: "spades"
   };
+  const noHeartsExampleTable: TableCard[] = [
+    { seat: "Tutor", card: { id: "9C", rank: "9", suit: "C", label: "9C" } },
+    { seat: "Left", card: { id: "4H", rank: "4", suit: "H", label: "4H" } },
+    { seat: "Right", card: { id: "AC", rank: "A", suit: "C", label: "AC" } }
+  ];
 
   let appView: AppView = "catalog";
   let trickIndex = 0;
@@ -140,10 +161,6 @@
   $: completedTable = playedCard
     ? [...currentTrick.tableBeforeChoice, { seat: "You" as const, card: playedCard }, ...currentTrick.tableAfterChoice]
     : currentTrick.tableBeforeChoice;
-  $: tutorCard = cardAt(completedTable, "Tutor");
-  $: leftCard = cardAt(completedTable, "Left");
-  $: rightTableCard = cardAt(completedTable, "Right");
-  $: youTableCard = cardAt(completedTable, "You");
   $: explanation = generatedPracticeError || buildExplanation(selectedCard, playedCard);
   $: resultText = playedCard ? currentTrick.afterResult : currentTrick.beforeResult;
   $: isLastTrick = trickIndex === activeTricks.length - 1;
@@ -336,10 +353,6 @@
     saveCourseProgress({});
   }
 
-  function cardAt(table: TableCard[], seat: Seat) {
-    return table.find((play) => play.seat === seat)?.card;
-  }
-
   function cardClasses(card: Card) {
     return {
       heart: card.suit === "H",
@@ -366,38 +379,16 @@
     return currentTrick.playedExplanations[selected.id] ?? `${selected.label} is legal here.`;
   }
 
-  function buildLessonOutcome(selected: Card, played: Card | undefined): LessonOutcome {
+  function buildLessonOutcome(selected: Card, played: Card | undefined) {
     if (!legalCardIds.has(selected.id)) {
-      return "Illegal";
+      return outcomeLabels.illegal;
     }
 
     if (!played) {
-      return "Correct";
+      return "";
     }
 
-    const playedExplanation = currentTrick.playedExplanations[played.id]?.toLowerCase() ?? "";
-
-    if (
-      playedExplanation.includes("ideal") ||
-      playedExplanation.includes("safely") ||
-      playedExplanation.includes("clear") ||
-      playedExplanation.includes("cannot win") ||
-      playedExplanation.includes("stays below") ||
-      playedExplanation.includes("acceptable")
-    ) {
-      return "Penalty avoided";
-    }
-
-    if (
-      playedExplanation.includes("captures") ||
-      playedExplanation.includes("misses") ||
-      playedExplanation.includes("keeps") ||
-      playedExplanation.includes("wins the trick")
-    ) {
-      return "Legal but risky";
-    }
-
-    return "Correct";
+    return outcomeLabels[currentTrick.cardOutcomes[played.id] ?? "safe"];
   }
 
   function guidedTrickFromGeneratedScenario(scenario: GeneratedPracticeScenario): GuidedTrick {
@@ -413,8 +404,19 @@
       pendingBySeat: pendingSeatsForGeneratedScenario(scenario),
       playedExplanations: Object.fromEntries(
         scenario.outcomes.map((outcome) => [outcome.cardId, outcome.explanation])
+      ),
+      cardOutcomes: Object.fromEntries(
+        scenario.outcomes.map((outcome) => [outcome.cardId, guidedOutcomeFromGeneratedOutcome(outcome)])
       )
     };
+  }
+
+  function guidedOutcomeFromGeneratedOutcome(outcome: GeneratedPracticeOutcome): GuidedCardOutcome {
+    if (outcome.penalty && outcome.penalty > 0) {
+      return "penalty";
+    }
+
+    return outcome.winner === "You" ? "risky" : "safe";
   }
 
   function pendingSeatsForGeneratedScenario(scenario: GeneratedPracticeScenario) {
@@ -624,12 +626,11 @@
           </p>
         </div>
 
-        <div class="example-table" aria-label="No Hearts example table">
-          <div class="example-card"><b>9</b><small>C</small><span>Tutor</span></div>
-          <div class="example-card heart"><b>4</b><small>H</small><span>Left</span></div>
-          <div class="example-choice">You: follow clubs</div>
-          <div class="example-card"><b>A</b><small>C</small><span>Right</span></div>
-        </div>
+        <CardTable
+          ariaLabel="No Hearts example table"
+          pendingBySeat={{ You: "follow clubs" }}
+          tableCards={noHeartsExampleTable}
+        />
       {:else}
         <div class="course-copy">
           <p class="eyebrow">Review</p>
@@ -704,52 +705,7 @@
     </section>
 
     <section class="learning-surface" aria-label="Guided trick">
-      <section class="practice-table" aria-label="Card table">
-        <div class="seat north">Tutor</div>
-        <div class="seat west">Left</div>
-        <div class="seat east">Right</div>
-        <div class="seat south">You</div>
-
-        <div class="played-slot tutor-slot">
-          {#if tutorCard}
-            <div class:heart={tutorCard.suit === "H"} class="card table-card">
-              <b>{tutorCard.rank}</b>
-              <small>{tutorCard.suit}</small>
-            </div>
-          {/if}
-        </div>
-
-        <div class="played-slot left-slot">
-          {#if leftCard}
-            <div class:heart={leftCard.suit === "H"} class="card table-card">
-              <b>{leftCard.rank}</b>
-              <small>{leftCard.suit}</small>
-            </div>
-          {/if}
-        </div>
-
-        <div class="played-slot right-slot">
-          {#if rightTableCard}
-            <div class:heart={rightTableCard.suit === "H"} class="card table-card">
-              <b>{rightTableCard.rank}</b>
-              <small>{rightTableCard.suit}</small>
-            </div>
-          {:else if currentTrick.pendingBySeat.Right}
-            <div class="pending-card">{currentTrick.pendingBySeat.Right}</div>
-          {/if}
-        </div>
-
-        <div class="played-slot you-slot">
-          {#if youTableCard}
-            <div class:heart={youTableCard.suit === "H"} class="card table-card">
-              <b>{youTableCard.rank}</b>
-              <small>{youTableCard.suit}</small>
-            </div>
-          {:else if currentTrick.pendingBySeat.You}
-            <div class="pending-card">{currentTrick.pendingBySeat.You}</div>
-          {/if}
-        </div>
-      </section>
+      <CardTable ariaLabel="Card table" pendingBySeat={currentTrick.pendingBySeat} tableCards={completedTable} />
 
       <section class="lesson-panel" aria-label="Current lesson">
         <div class="lesson-heading">
@@ -760,7 +716,10 @@
         <p class="result">{resultText}</p>
         <p class="explanation">{explanation}</p>
         {#if lessonOutcome}
-          <p class:warning={lessonOutcome === "Illegal" || lessonOutcome === "Legal but risky"} class="outcome">
+          <p
+            class:warning={lessonOutcome === "Illegal" || lessonOutcome === "Legal but risky" || lessonOutcome === "Penalty taken"}
+            class="outcome"
+          >
             {lessonOutcome}
           </p>
         {/if}

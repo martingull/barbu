@@ -29,12 +29,12 @@ test("guided lesson accepts a legal card play", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Play selected" })).toBeEnabled();
   await page.getByRole("button", { name: "Play selected" }).click();
 
-  await expect(page.getByText("Penalty avoided")).toBeVisible();
+  await expect(page.getByText("Best play")).toBeVisible();
   await expect(page.getByText("Right wins with AC and takes 1 heart penalty from Left's 4H.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Next trick" })).toBeVisible();
 });
 
-test("finishing a lesson advances course progress", async ({ page }) => {
+test("finishing a lesson advances course progress", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
   await page.getByRole("button", { name: /Continue with Meet the contract/ }).click();
@@ -44,6 +44,8 @@ test("finishing a lesson advances course progress", async ({ page }) => {
   await page.getByRole("button", { name: "See example" }).click();
 
   await expect(page.getByRole("heading", { name: /Left has played 4H/ })).toBeVisible();
+  await expect(page.getByLabel("No Hearts example table")).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("no-hearts-example.png"), fullPage: true });
   await page.getByRole("button", { name: "Play guided trick" }).click();
 
   await page.getByRole("button", { name: "2 C" }).click();

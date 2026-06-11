@@ -49,7 +49,9 @@ content/             Structured game and lesson content
 - A Barbu table screen with contract entry points and a five-step training path.
 - Local course progress, a continue action, and compact outcome labels for guided card decisions.
 - No Hearts course content with concept, example, guided play, and review screens.
+- Shared card table renderer for course examples and guided play.
 - Fixed authored Barbu lessons for No Hearts, No Queens, and King of Hearts.
+- Structured outcome metadata for authored guided card choices.
 - Generated No Hearts follow-suit drills from Rust using deterministic seeds.
 - Rule validation, trick winners, scoring, and generated-practice outcomes live in `barbu-core`.
 - The Svelte app renders authored or generated scenarios and should avoid duplicating rules where Rust can provide them.

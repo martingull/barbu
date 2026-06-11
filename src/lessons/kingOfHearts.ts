@@ -23,6 +23,10 @@ export const kingOfHeartsGuidedTricks: GuidedTrick[] = [
     playedExplanations: {
       "2H": "2H follows hearts and stays below KH. Left keeps the trick and takes the king.",
       AH: "AH follows hearts but wins the trick. That captures KH, which is the card you are trying to avoid."
+    },
+    cardOutcomes: {
+      "2H": "best",
+      AH: "penalty"
     }
   },
   {
@@ -48,6 +52,11 @@ export const kingOfHeartsGuidedTricks: GuidedTrick[] = [
       KH: "KH is legal because you are void in spades. Discarding it here is ideal because Left already controls the trick with AS.",
       "4D": "4D is legal, but it keeps KH in your hand for a later and possibly worse moment.",
       "8C": "8C is legal, but it misses the chance to unload the contract card while someone else is winning."
+    },
+    cardOutcomes: {
+      KH: "best",
+      "4D": "risky",
+      "8C": "risky"
     }
   }
 ];

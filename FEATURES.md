@@ -23,8 +23,10 @@ The app should feel like a real tutor:
 - Continue action for the next unfinished step.
 - Completed-course state with review and reset actions.
 - No Hearts course content with concept, example, guided play, and review screens.
+- Shared card table renderer for course examples and guided play.
 - Guided trick table for authored Barbu lessons.
 - Authored lessons for No Hearts, No Queens, and King of Hearts.
+- Structured outcome metadata for authored guided card choices.
 - Compact outcome labels for guided decisions.
 - Generated No Hearts follow-suit drill via Rust/Tauri.
 - Browser fallback for generated drills when Tauri is unavailable.
@@ -41,7 +43,7 @@ These are the next product increments that keep the app coherent.
    - Keep copy short and original.
 
 2. Outcome Model in Core
-   - Move decision grading out of string matching in Svelte.
+   - Promote authored outcome metadata into shared content or Rust primitives.
    - Return structured outcomes from lesson data or Rust: correct, safe, risky, illegal, penalty.
    - Use the same model for authored and generated practice.
 

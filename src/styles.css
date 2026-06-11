@@ -540,63 +540,6 @@ button {
   line-height: 1.2;
 }
 
-.example-table {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  align-content: center;
-  min-height: 300px;
-  padding: 16px;
-  border: 1px solid #b9c4b1;
-  border-radius: 8px;
-  background:
-    radial-gradient(circle at center, rgba(255, 255, 255, 0.18), transparent 58%),
-    #315f4d;
-}
-
-.example-card {
-  display: grid;
-  grid-template-rows: 1fr auto auto;
-  min-height: 128px;
-  padding: 12px;
-  border: 1px solid #d7dccf;
-  border-radius: 8px;
-  background: #fbfcf8;
-  color: #18211b;
-}
-
-.example-card.heart {
-  color: #a83232;
-}
-
-.example-card b {
-  font-size: 1.5rem;
-  line-height: 1;
-}
-
-.example-card small {
-  justify-self: end;
-  font-size: 1rem;
-  font-weight: 900;
-}
-
-.example-card span {
-  color: #53604d;
-  font-size: 0.78rem;
-  font-weight: 900;
-}
-
-.example-choice {
-  display: grid;
-  grid-column: 1 / -1;
-  min-height: 58px;
-  place-items: center;
-  border: 1px dashed rgba(255, 255, 255, 0.58);
-  border-radius: 8px;
-  color: #f7faf3;
-  font-weight: 900;
-}
-
 .course-actions {
   display: flex;
   grid-column: 1 / -1;
@@ -741,82 +684,6 @@ h2 {
   align-items: stretch;
 }
 
-.practice-table {
-  display: grid;
-  grid-template-columns: 68px minmax(240px, 1fr) 68px;
-  grid-template-rows: 42px minmax(330px, 1fr) 42px;
-  align-items: center;
-  min-height: 460px;
-  border: 1px solid #bec8b6;
-  border-radius: 8px;
-  background:
-    radial-gradient(circle at center, rgba(255, 255, 255, 0.18), transparent 56%),
-    #386b54;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
-}
-
-.seat {
-  color: #f3f7ef;
-  font-size: 0.84rem;
-  font-weight: 900;
-  text-align: center;
-}
-
-.north {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-.west {
-  grid-column: 1;
-  grid-row: 2;
-}
-
-.east {
-  grid-column: 3;
-  grid-row: 2;
-}
-
-.south {
-  grid-column: 2;
-  grid-row: 3;
-}
-
-.played-slot {
-  display: grid;
-  place-items: center;
-  min-width: 72px;
-  min-height: 98px;
-}
-
-.tutor-slot {
-  grid-column: 2;
-  grid-row: 2;
-  align-self: start;
-  padding-top: 44px;
-}
-
-.left-slot {
-  grid-column: 2;
-  grid-row: 2;
-  justify-self: start;
-  padding-left: 30px;
-}
-
-.right-slot {
-  grid-column: 2;
-  grid-row: 2;
-  justify-self: end;
-  padding-right: 30px;
-}
-
-.you-slot {
-  grid-column: 2;
-  grid-row: 2;
-  align-self: end;
-  padding-bottom: 44px;
-}
-
 .card {
   display: grid;
   grid-template-rows: 1fr auto;
@@ -844,22 +711,6 @@ h2 {
 
 .card.heart {
   color: #a83232;
-}
-
-.table-card {
-  width: 76px;
-}
-
-.pending-card {
-  display: grid;
-  width: 76px;
-  aspect-ratio: 5 / 7;
-  place-items: center;
-  border: 1px dashed rgba(255, 255, 255, 0.54);
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.76);
-  font-size: 0.9rem;
-  font-weight: 900;
 }
 
 .lesson-panel {
@@ -1022,14 +873,8 @@ h2 {
     grid-template-columns: 1fr;
   }
 
-  .practice-table,
   .lesson-panel {
     min-height: auto;
-  }
-
-  .practice-table {
-    grid-template-columns: 52px minmax(210px, 1fr) 52px;
-    grid-template-rows: 38px 270px 38px;
   }
 }
 
@@ -1233,11 +1078,6 @@ h2 {
     padding: 10px;
   }
 
-  .example-table {
-    min-height: 0;
-    padding: 12px;
-  }
-
   .course-actions {
     display: grid;
     grid-template-columns: 0.8fr 1fr;
@@ -1291,35 +1131,6 @@ h2 {
   .back-button {
     min-height: 38px;
     padding: 0 10px;
-  }
-
-  .practice-table {
-    grid-template-columns: 44px minmax(188px, 1fr) 44px;
-    grid-template-rows: 34px 236px 34px;
-  }
-
-  .table-card {
-    width: 64px;
-  }
-
-  .pending-card {
-    width: 64px;
-  }
-
-  .tutor-slot {
-    padding-top: 26px;
-  }
-
-  .left-slot {
-    padding-left: 10px;
-  }
-
-  .right-slot {
-    padding-right: 10px;
-  }
-
-  .you-slot {
-    padding-bottom: 26px;
   }
 
   .lesson-panel {

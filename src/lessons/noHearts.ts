@@ -23,6 +23,10 @@ export const noHeartsGuidedTricks: GuidedTrick[] = [
     playedExplanations: {
       "2C": "2C follows clubs and keeps you clear of the trick. Right's AC still wins the heart penalty.",
       KC: "KC follows clubs and cannot beat AC, so it safely leaves your hand while Right absorbs the heart penalty."
+    },
+    cardOutcomes: {
+      "2C": "best",
+      KC: "safe"
     }
   },
   {
@@ -46,6 +50,9 @@ export const noHeartsGuidedTricks: GuidedTrick[] = [
     pendingBySeat: { You: "You" },
     playedExplanations: {
       QS: "QS is the only legal card because spades were led. Winning is acceptable here because the trick contains no hearts."
+    },
+    cardOutcomes: {
+      QS: "forced"
     }
   }
 ];
