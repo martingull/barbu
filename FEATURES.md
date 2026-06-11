@@ -22,6 +22,7 @@ The app should feel like a real tutor:
 - Local course progress for the playable Barbu path.
 - Continue action for the next unfinished step.
 - Completed-course state with review and reset actions.
+- No Hearts course content with concept, example, guided play, and review screens.
 - Guided trick table for authored Barbu lessons.
 - Authored lessons for No Hearts, No Queens, and King of Hearts.
 - Compact outcome labels for guided decisions.
@@ -34,7 +35,7 @@ The app should feel like a real tutor:
 These are the next product increments that keep the app coherent.
 
 1. Course Content v1
-   - Replace placeholder path labels with real lesson nodes.
+   - Expand real lesson nodes beyond the first No Hearts course.
    - Add one concept screen before each guided trick.
    - Add one review screen after each contract.
    - Keep copy short and original.

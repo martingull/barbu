@@ -3,9 +3,10 @@
   import { guidedLessons } from "./lessons/catalog";
   import type { Card, GeneratedPracticeScenario, GuidedTrick, Seat, Suit, TableCard } from "./lessonTypes";
 
-  type AppView = "catalog" | "barbuTable" | "lesson";
+  type AppView = "catalog" | "barbuTable" | "courseContent" | "lesson";
 
   type PathAction = "lesson" | "generated" | "planned";
+  type CourseStage = "concept" | "example" | "review";
 
   type LessonOutcome = "Correct" | "Penalty avoided" | "Legal but risky" | "Illegal";
 
@@ -121,6 +122,7 @@
   let selectedLessonId = guidedLessons[0].id;
   let activeTricks: GuidedTrick[] = guidedLessons[0].tricks;
   let activePathStepId = "";
+  let activeCourseStage: CourseStage = "concept";
   let completedPathSteps: Record<string, boolean> = loadCourseProgress();
   let usingGeneratedPractice = false;
   let generatedPracticeError = "";
@@ -215,6 +217,29 @@
     appView = "lesson";
   }
 
+  function startNoHeartsCourse() {
+    activePathStepId = "meet-contract";
+    activeCourseStage = "concept";
+    appView = "courseContent";
+  }
+
+  function continueCourseContent() {
+    if (activeCourseStage === "concept") {
+      activeCourseStage = "example";
+      return;
+    }
+
+    if (activeCourseStage === "example") {
+      startLesson("barbu-no-hearts");
+      return;
+    }
+
+    if (activeCourseStage === "review") {
+      saveCourseProgress({ ...completedPathSteps, [activePathStepId]: true });
+      openBarbuTable();
+    }
+  }
+
   async function startGeneratedDrill() {
     activePathStepId = "generated-drill";
     appView = "lesson";
@@ -231,6 +256,11 @@
   }
 
   function startPathStep(step: BarbuPathStep) {
+    if (step.id === "meet-contract") {
+      startNoHeartsCourse();
+      return;
+    }
+
     if (step.action === "lesson" && step.lessonId) {
       startLesson(step.lessonId);
       return;
@@ -289,6 +319,12 @@
   }
 
   function finishLesson() {
+    if (activePathStepId === "meet-contract") {
+      activeCourseStage = "review";
+      appView = "courseContent";
+      return;
+    }
+
     if (activePathStepId) {
       saveCourseProgress({ ...completedPathSteps, [activePathStepId]: true });
     }
@@ -530,6 +566,107 @@
             </span>
           </button>
         {/each}
+      </div>
+    </section>
+  {:else if appView === "courseContent"}
+    <header class="topbar" aria-label="No Hearts course">
+      <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
+      <div>
+        <p class="eyebrow">No Hearts</p>
+        <h1>{activeCourseStage === "review" ? "Review" : "Meet the contract"}</h1>
+      </div>
+      <div class="contract-status">
+        <span>Course</span>
+        <strong>
+          {#if activeCourseStage === "concept"}
+            Concept
+          {:else if activeCourseStage === "example"}
+            Example
+          {:else}
+            Review
+          {/if}
+        </strong>
+      </div>
+    </header>
+
+    <section class="course-screen" aria-label="No Hearts course content">
+      {#if activeCourseStage === "concept"}
+        <div class="course-copy">
+          <p class="eyebrow">Concept</p>
+          <h2>In No Hearts, hearts are cargo you do not want to collect.</h2>
+          <p>
+            A heart only hurts the player who wins the trick containing it. Your first job is to follow suit
+            legally while steering heart tricks toward someone else.
+          </p>
+        </div>
+
+        <div class="course-points" aria-label="No Hearts concept points">
+          <div>
+            <span>1</span>
+            <strong>Follow the led suit when you can.</strong>
+          </div>
+          <div>
+            <span>2</span>
+            <strong>Do not panic when someone else throws a heart.</strong>
+          </div>
+          <div>
+            <span>3</span>
+            <strong>Ask who is winning before choosing your card.</strong>
+          </div>
+        </div>
+      {:else if activeCourseStage === "example"}
+        <div class="course-copy">
+          <p class="eyebrow">Example</p>
+          <h2>Left has played 4H into a club trick. The danger is real, but it is not yours yet.</h2>
+          <p>
+            Tutor led clubs. You still hold clubs, so Barbu expects you to follow clubs. If Right wins with
+            AC, Right takes the heart penalty, not you.
+          </p>
+        </div>
+
+        <div class="example-table" aria-label="No Hearts example table">
+          <div class="example-card"><b>9</b><small>C</small><span>Tutor</span></div>
+          <div class="example-card heart"><b>4</b><small>H</small><span>Left</span></div>
+          <div class="example-choice">You: follow clubs</div>
+          <div class="example-card"><b>A</b><small>C</small><span>Right</span></div>
+        </div>
+      {:else}
+        <div class="course-copy">
+          <p class="eyebrow">Review</p>
+          <h2>No Hearts starts with one habit: locate the trick winner before worrying about the heart.</h2>
+          <p>
+            You followed suit, watched who controlled the trick, and avoided taking the heart yourself.
+            That is the first Barbu table habit.
+          </p>
+        </div>
+
+        <div class="course-points" aria-label="No Hearts review points">
+          <div>
+            <span>OK</span>
+            <strong>Hearts score against the trick winner.</strong>
+          </div>
+          <div>
+            <span>OK</span>
+            <strong>Following suit can still be safe.</strong>
+          </div>
+          <div>
+            <span>OK</span>
+            <strong>Winning a clean trick is different from winning a heart trick.</strong>
+          </div>
+        </div>
+      {/if}
+
+      <div class="course-actions">
+        <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
+        <button class="primary-action" onclick={continueCourseContent} type="button">
+          {#if activeCourseStage === "concept"}
+            See example
+          {:else if activeCourseStage === "example"}
+            Play guided trick
+          {:else}
+            Finish No Hearts
+          {/if}
+        </button>
       </div>
     </section>
   {:else}
