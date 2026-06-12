@@ -23,6 +23,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Game catalog with Barbu as the first playable table.
 - Barbu table with contract entry points.
 - Five-step training path: concept, example, guided trick, practice, review.
+- Daily table drill with three quick card decisions, immediate feedback, and a compact result.
 - Local course progress for the playable Barbu path.
 - Continue action for the next unfinished step.
 - Completed-course state with review and reset actions.
@@ -46,22 +47,27 @@ These are the next product increments that keep the app coherent.
    - Keep each authored contract on the same concept, example, guided play, review structure.
    - Keep copy short and original.
 
-2. Outcome Model in Core
+2. Drill Loop v2
+   - Generate rotating three-decision drill sets from Rust.
+   - Track attempts, clean decisions, and replay results locally.
+   - Keep explanations to one sentence unless the player asks for more.
+
+3. Outcome Model in Core
    - Promote authored outcome metadata into shared content or Rust primitives.
    - Return structured outcomes from lesson data or Rust: correct, safe, risky, illegal, penalty.
    - Use the same model for authored and generated practice.
 
-3. Generated Practice Expansion
+4. Generated Practice Expansion
    - Add generated drills for No Queens and King of Hearts.
    - Keep commands thin and deterministic.
    - Add Rust tests for every drill generator.
 
-4. Progress Model v2
+5. Progress Model v2
    - Store completion by lesson node, not only path step.
    - Track attempts, last result, and review due state.
    - Keep it local until the app needs sync or accounts.
 
-5. Reference Layer v1
+6. Reference Layer v1
    - Add structured reference pages for the next supported games using Parlett as the baseline source.
    - Continue expanding object, players, cards, deal, play, scoring, variants, and tactical ideas.
    - Link reference sections from lessons without making rules pages the main flow.

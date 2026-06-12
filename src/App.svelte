@@ -15,7 +15,7 @@
   } from "./lessonTypes";
   import type { GameReference } from "./referenceCatalog";
 
-  type AppView = "catalog" | "barbuTable" | "reference" | "courseContent" | "lesson";
+  type AppView = "catalog" | "barbuTable" | "reference" | "courseContent" | "lesson" | "drill" | "drillResult";
 
   type PathAction = "lesson" | "generated" | "planned";
   type CourseStage = "concept" | "example" | "review";
@@ -69,6 +69,18 @@
     review: CoursePanel & { points: CoursePoint[] };
   };
 
+  type DrillStep = {
+    contract: string;
+    title: string;
+    trick: GuidedTrick;
+  };
+
+  type DrillResult = {
+    cardLabel: string;
+    outcome: GuidedCardOutcome | "illegal";
+    clean: boolean;
+  };
+
   const gameCatalog: CatalogGame[] = [
     {
       id: "barbu",
@@ -114,6 +126,7 @@
     penalty: "Penalty taken",
     illegal: "Illegal"
   };
+  const cleanDrillOutcomes: Array<GuidedCardOutcome | "illegal"> = ["best", "safe", "forced"];
 
   const barbuPathSteps: BarbuPathStep[] = [
     {
@@ -253,11 +266,20 @@
       }
     }
   ];
+  const drillSteps: DrillStep[] = guidedLessons.map((lesson) => ({
+    contract: lesson.contract,
+    title: lesson.title,
+    trick: lesson.tricks[0]
+  }));
 
   let appView: AppView = "catalog";
   let trickIndex = 0;
   let selectedCardId = "";
   let playedCardId = "";
+  let drillIndex = 0;
+  let drillSelectedCardId = "";
+  let drillCheckedCardId = "";
+  let drillResults: DrillResult[] = [];
   let practiceSeed = 1;
   let selectedLessonId = guidedLessons[0].id;
   let activeTricks: GuidedTrick[] = guidedLessons[0].tricks;
@@ -292,6 +314,23 @@
   $: lessonOutcome = selectedCard && (playedCard || !isSelectedLegal) ? buildLessonOutcome(selectedCard, playedCard) : "";
   $: activeCourse = courseCatalog.find((course) => course.id === activeCourseId) ?? courseCatalog[0];
   $: activeReference = referenceCatalog.find((reference) => reference.id === activeReferenceId) ?? referenceCatalog[0];
+  $: currentDrill = drillSteps[drillIndex] ?? drillSteps[0];
+  $: currentDrillTrick = currentDrill.trick;
+  $: drillLegalCardIds = new Set(currentDrillTrick.legalCardIds);
+  $: drillSelectedCard = currentDrillTrick.hand.find((card) => card.id === drillSelectedCardId);
+  $: drillCheckedCard = currentDrillTrick.hand.find((card) => card.id === drillCheckedCardId);
+  $: isDrillSelectionLegal = drillSelectedCard ? drillLegalCardIds.has(drillSelectedCard.id) : false;
+  $: isDrillCheckedLegal = drillCheckedCard ? drillLegalCardIds.has(drillCheckedCard.id) : false;
+  $: drillCompletedTable = drillCheckedCard && isDrillCheckedLegal
+    ? [
+        ...currentDrillTrick.tableBeforeChoice,
+        { seat: "You" as const, card: drillCheckedCard },
+        ...currentDrillTrick.tableAfterChoice
+      ]
+    : currentDrillTrick.tableBeforeChoice;
+  $: drillOutcome = drillCheckedCard ? buildDrillOutcome(drillCheckedCard) : "";
+  $: drillFeedback = drillCheckedCard ? buildDrillFeedback(drillCheckedCard) : currentDrillTrick.emptyExplanation;
+  $: cleanDrillCount = drillResults.filter((result) => result.clean).length;
 
   function loadCourseProgress() {
     if (typeof localStorage === "undefined") {
@@ -335,6 +374,11 @@
     playedCardId = "";
   }
 
+  function resetDrillDecision() {
+    drillSelectedCardId = "";
+    drillCheckedCardId = "";
+  }
+
   function openCatalog() {
     appView = "catalog";
   }
@@ -360,6 +404,13 @@
     }
 
     openBarbuTable();
+  }
+
+  function startDailyDrill() {
+    drillIndex = 0;
+    drillResults = [];
+    resetDrillDecision();
+    appView = "drill";
   }
 
   function startLesson(lessonId: string) {
@@ -505,6 +556,77 @@
 
   function resetCourseProgress() {
     saveCourseProgress({});
+  }
+
+  function selectDrillCard(card: Card) {
+    if (drillCheckedCardId) {
+      return;
+    }
+
+    drillSelectedCardId = card.id;
+  }
+
+  function checkDrillAnswer() {
+    if (!drillSelectedCard || drillCheckedCardId) {
+      return;
+    }
+
+    const outcome = buildDrillOutcomeKey(drillSelectedCard);
+
+    drillCheckedCardId = drillSelectedCard.id;
+    drillResults = [
+      ...drillResults,
+      {
+        cardLabel: drillSelectedCard.label,
+        outcome,
+        clean: cleanDrillOutcomes.includes(outcome)
+      }
+    ];
+  }
+
+  function continueDrill() {
+    if (drillIndex === drillSteps.length - 1) {
+      appView = "drillResult";
+      return;
+    }
+
+    drillIndex += 1;
+    resetDrillDecision();
+  }
+
+  function drillCardClasses(card: Card) {
+    return {
+      heart: card.suit === "H",
+      legal: drillLegalCardIds.has(card.id) && !drillCheckedCardId,
+      illegal: !drillLegalCardIds.has(card.id) && !drillCheckedCardId,
+      selected: drillSelectedCardId === card.id,
+      played: drillCheckedCardId === card.id
+    };
+  }
+
+  function buildDrillOutcomeKey(card: Card): GuidedCardOutcome | "illegal" {
+    if (!drillLegalCardIds.has(card.id)) {
+      return "illegal";
+    }
+
+    return currentDrillTrick.cardOutcomes[card.id] ?? "safe";
+  }
+
+  function buildDrillOutcome(card: Card) {
+    return outcomeLabels[buildDrillOutcomeKey(card)];
+  }
+
+  function buildDrillFeedback(card: Card) {
+    if (!drillLegalCardIds.has(card.id)) {
+      return `${card.label} is off suit while you still have a legal card.`;
+    }
+
+    return firstSentence(currentDrillTrick.playedExplanations[card.id] ?? "That legal play completes the trick.");
+  }
+
+  function firstSentence(text: string) {
+    const match = text.match(/.*?[.!?](?:\s|$)/);
+    return (match?.[0] ?? text).trim();
   }
 
   function cardClasses(card: Card) {
@@ -670,6 +792,7 @@
           </div>
         </div>
         <div class="table-actions">
+          <button class="drill-action" onclick={startDailyDrill} type="button">Start drill</button>
           <button class="reference-action" onclick={() => openReference("barbu")} type="button">Reference</button>
           {#if isCourseComplete}
             <button class="continue-action" onclick={() => startLesson(guidedLessons[0].id)} type="button">Review No Hearts</button>
@@ -895,6 +1018,123 @@
             Finish {activeCourse.contract}
           {/if}
         </button>
+      </div>
+    </section>
+  {:else if appView === "drill"}
+    <header class="topbar" aria-label="Daily table drill">
+      <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
+      <div>
+        <p class="eyebrow">Daily table drill</p>
+        <h1>Play the decision</h1>
+      </div>
+      <div class="contract-status">
+        <span>{currentDrill.contract}</span>
+        <strong>Decision {drillIndex + 1} of {drillSteps.length}</strong>
+      </div>
+    </header>
+
+    <section class="drill-surface" aria-label="Daily table drill">
+      <div class="drill-track" aria-label="Drill progress">
+        {#each drillSteps as step, index}
+          <span
+            class:active={index === drillIndex}
+            class:complete={index < drillResults.length}
+            aria-label={`Decision ${index + 1}: ${step.contract}`}
+          >
+            {index + 1}
+          </span>
+        {/each}
+      </div>
+
+      <CardTable ariaLabel="Drill card table" pendingBySeat={currentDrillTrick.pendingBySeat} tableCards={drillCompletedTable} />
+
+      <section class="lesson-panel drill-panel" aria-label="Drill decision">
+        <div class="lesson-heading">
+          <p class="eyebrow">{currentDrill.contract}</p>
+          <h2>{currentDrillTrick.title}</h2>
+        </div>
+
+        <p class="result">{currentDrillTrick.beforeResult}</p>
+        <p class="explanation">{drillFeedback}</p>
+        {#if drillOutcome}
+          <p
+            class:warning={drillOutcome === "Illegal" || drillOutcome === "Legal but risky" || drillOutcome === "Penalty taken"}
+            class="outcome"
+          >
+            {drillOutcome}
+          </p>
+        {/if}
+
+        <div class="hand" aria-label="Your drill hand">
+          {#each currentDrillTrick.hand as card}
+            <button
+              aria-pressed={drillSelectedCardId === card.id}
+              class:heart={drillCardClasses(card).heart}
+              class:illegal={drillCardClasses(card).illegal}
+              class:legal={drillCardClasses(card).legal}
+              class:played={drillCardClasses(card).played}
+              class:selected={drillCardClasses(card).selected}
+              class="card hand-card"
+              onclick={() => selectDrillCard(card)}
+              type="button"
+            >
+              <b>{card.rank}</b>
+              <small>{card.suit}</small>
+            </button>
+          {/each}
+        </div>
+
+        <div class="action-row">
+          {#if drillCheckedCard}
+            <button class="primary-action" onclick={continueDrill} type="button">
+              {drillIndex === drillSteps.length - 1 ? "Finish drill" : "Next decision"}
+            </button>
+          {:else}
+            <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
+            <button class="primary-action" disabled={!drillSelectedCard} onclick={checkDrillAnswer} type="button">
+              Check answer
+            </button>
+          {/if}
+        </div>
+      </section>
+    </section>
+  {:else if appView === "drillResult"}
+    <header class="topbar" aria-label="Drill result">
+      <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
+      <div>
+        <p class="eyebrow">Daily table drill</p>
+        <h1>Drill complete</h1>
+      </div>
+      <div class="contract-status">
+        <span>Score</span>
+        <strong>{cleanDrillCount} of {drillSteps.length} clean</strong>
+      </div>
+    </header>
+
+    <section class="drill-result-screen" aria-label="Drill results">
+      <div class="drill-score-card">
+        <p class="eyebrow">Result</p>
+        <h2>{cleanDrillCount} / {drillSteps.length} clean decisions</h2>
+        <p>
+          {cleanDrillCount === drillSteps.length
+            ? "Clean table. Barbu is ready to raise the pressure."
+            : "Run the table again and make the legal card automatic."}
+        </p>
+      </div>
+
+      <div class="drill-result-list" aria-label="Decision results">
+        {#each drillResults as result, index}
+          <div>
+            <span>{index + 1}</span>
+            <strong>{result.cardLabel}</strong>
+            <small>{outcomeLabels[result.outcome]}</small>
+          </div>
+        {/each}
+      </div>
+
+      <div class="course-actions">
+        <button class="secondary-action" onclick={startDailyDrill} type="button">Try again</button>
+        <button class="primary-action" onclick={continueCourse} type="button">Continue path</button>
       </div>
     </section>
   {:else}

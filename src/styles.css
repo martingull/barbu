@@ -336,6 +336,16 @@ button {
   margin-top: 0;
 }
 
+.drill-action {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid #f5f1cf;
+  border-radius: 8px;
+  background: #f5f1cf;
+  color: #21372d;
+  font-weight: 900;
+}
+
 .reference-action {
   min-height: 42px;
   padding: 0 14px;
@@ -847,6 +857,124 @@ h2 {
   align-items: stretch;
 }
 
+.drill-surface {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(330px, 0.92fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.drill-track {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: 8px;
+  justify-content: center;
+}
+
+.drill-track span {
+  display: grid;
+  width: 34px;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid #c7d0c0;
+  border-radius: 999px;
+  background: #fbfcf8;
+  color: #43503f;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.drill-track span.active {
+  border-color: #284f40;
+  background: #284f40;
+  color: #ffffff;
+}
+
+.drill-track span.complete {
+  border-color: #7fa372;
+  background: #dfe8d9;
+  color: #284f40;
+}
+
+.drill-panel {
+  min-height: 460px;
+}
+
+.drill-result-screen {
+  display: grid;
+  grid-template-columns: minmax(0, 0.78fr) minmax(320px, 1fr);
+  gap: 14px;
+}
+
+.drill-score-card {
+  display: grid;
+  align-content: end;
+  min-height: 230px;
+  padding: 18px;
+  border: 1px solid #b9c4b1;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(9, 34, 24, 0.34)),
+    #315f4d;
+  color: #f7faf3;
+}
+
+.drill-score-card .eyebrow {
+  color: #dbe7d1;
+}
+
+.drill-score-card h2 {
+  max-width: 460px;
+  font-size: 1.65rem;
+}
+
+.drill-score-card p:last-child {
+  margin: 12px 0 0;
+  color: #e7eee1;
+  font-weight: 750;
+  line-height: 1.42;
+}
+
+.drill-result-list {
+  display: grid;
+  gap: 8px;
+}
+
+.drill-result-list div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 70px;
+  padding: 12px;
+  border: 1px solid #c7d0c0;
+  border-radius: 8px;
+  background: #fbfcf8;
+}
+
+.drill-result-list span {
+  display: grid;
+  width: 32px;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 999px;
+  background: #284f40;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.drill-result-list strong {
+  color: #17201a;
+  font-size: 1rem;
+}
+
+.drill-result-list small {
+  color: #9a342e;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
 .card {
   display: grid;
   grid-template-rows: 1fr auto;
@@ -1041,6 +1169,11 @@ h2 {
     grid-template-columns: 1fr;
   }
 
+  .drill-surface,
+  .drill-result-screen {
+    grid-template-columns: 1fr;
+  }
+
   .lesson-panel {
     min-height: auto;
   }
@@ -1193,6 +1326,10 @@ h2 {
     width: 100%;
   }
 
+  .drill-action {
+    width: 100%;
+  }
+
   .reset-progress-action {
     width: 100%;
   }
@@ -1241,6 +1378,27 @@ h2 {
   .reference-card.compact {
     min-height: 0;
     padding: 12px;
+  }
+
+  .drill-track span {
+    width: 30px;
+  }
+
+  .drill-score-card {
+    min-height: 168px;
+    padding: 14px;
+  }
+
+  .drill-score-card h2 {
+    font-size: 1.26rem;
+  }
+
+  .drill-result-list div {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .drill-result-list small {
+    grid-column: 2;
   }
 
   .path-card {
