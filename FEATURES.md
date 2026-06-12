@@ -34,7 +34,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Authored lessons for No Hearts, No Queens, and King of Hearts.
 - Structured outcome metadata for authored guided card choices.
 - Compact outcome labels for guided decisions.
-- Generated No Hearts follow-suit drill via Rust/Tauri.
+- Generated No Hearts follow-suit drill and three-decision daily drill set via Rust/Tauri.
 - Browser fallback for generated drills when Tauri is unavailable.
 - Playwright smoke tests for catalog, Barbu table, lesson flow, generated fallback, and course-complete behavior.
 
@@ -48,7 +48,7 @@ These are the next product increments that keep the app coherent.
    - Keep copy short and original.
 
 2. Drill Loop v2
-   - Generate rotating three-decision drill sets from Rust.
+   - Mix No Queens and King of Hearts generated scenarios into the Rust drill set.
    - Track attempts, clean decisions, and replay results locally.
    - Keep explanations to one sentence unless the player asks for more.
 

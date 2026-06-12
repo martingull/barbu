@@ -17,6 +17,12 @@ fn generate_no_hearts_follow_suit(seed: u64) -> PracticeScenarioDto {
     PracticeScenarioDto::from_core(&scenario)
 }
 
+#[tauri::command]
+fn generate_daily_drill_set(seed: u64) -> PracticeDrillSetDto {
+    let drill_set = barbu_core::generate_daily_drill_set(seed);
+    PracticeDrillSetDto::from_core(&drill_set)
+}
+
 #[derive(serde::Serialize)]
 struct GameSummary {
     id: &'static str,
@@ -24,6 +30,28 @@ struct GameSummary {
     family: &'static str,
     players: u8,
     contract_count: usize,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PracticeDrillSetDto {
+    id: String,
+    title: String,
+    scenarios: Vec<PracticeScenarioDto>,
+}
+
+impl PracticeDrillSetDto {
+    fn from_core(drill_set: &barbu_core::PracticeDrillSet) -> Self {
+        Self {
+            id: drill_set.id.clone(),
+            title: drill_set.title.clone(),
+            scenarios: drill_set
+                .scenarios
+                .iter()
+                .map(PracticeScenarioDto::from_core)
+                .collect(),
+        }
+    }
 }
 
 #[derive(serde::Serialize)]
@@ -162,6 +190,7 @@ pub fn run() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             current_game,
+            generate_daily_drill_set,
             generate_no_hearts_follow_suit
         ])
         .run(tauri::generate_context!())

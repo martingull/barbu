@@ -13,6 +13,13 @@ pub struct PracticeScenario {
     pub table_after_choice: Vec<PlayedCard>,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PracticeDrillSet {
+    pub id: String,
+    pub title: String,
+    pub scenarios: Vec<PracticeScenario>,
+}
+
 impl PracticeScenario {
     pub fn legal_player_cards(&self) -> Vec<Card> {
         legal_cards(&self.player_hand, Some(self.led_suit))
@@ -135,6 +142,16 @@ pub fn generate_no_hearts_follow_suit(seed: u64) -> PracticeScenario {
     }
 }
 
+pub fn generate_daily_drill_set(seed: u64) -> PracticeDrillSet {
+    PracticeDrillSet {
+        id: format!("daily-table-drill-{seed}"),
+        title: "Daily table drill".to_string(),
+        scenarios: (0..3)
+            .map(|offset| generate_no_hearts_follow_suit(seed.saturating_mul(3) + offset))
+            .collect(),
+    }
+}
+
 fn choose(rng: &mut DeterministicRng, values: &[Rank]) -> Rank {
     values[rng.next_usize(values.len())]
 }
@@ -209,6 +226,22 @@ mod tests {
             generate_no_hearts_follow_suit(42),
             generate_no_hearts_follow_suit(42)
         );
+    }
+
+    #[test]
+    fn daily_drill_set_generator_is_deterministic() {
+        assert_eq!(generate_daily_drill_set(9), generate_daily_drill_set(9));
+    }
+
+    #[test]
+    fn daily_drill_set_contains_three_generated_scenarios() {
+        let drill_set = generate_daily_drill_set(13);
+
+        assert_eq!(drill_set.scenarios.len(), 3);
+        assert!(drill_set
+            .scenarios
+            .iter()
+            .all(|scenario| scenario.contract == "No Hearts"));
     }
 
     #[test]

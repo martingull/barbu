@@ -53,6 +53,12 @@ export type GeneratedPracticeScenario = {
   outcomes: GeneratedPracticeOutcome[];
 };
 
+export type GeneratedDrillSet = {
+  id: string;
+  title: string;
+  scenarios: GeneratedPracticeScenario[];
+};
+
 export type GeneratedPracticeOutcome = {
   cardId: string;
   isLegal: boolean;

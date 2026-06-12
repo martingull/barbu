@@ -5,6 +5,7 @@
   import { referenceCatalog } from "./referenceCatalog";
   import type {
     Card,
+    GeneratedDrillSet,
     GeneratedPracticeOutcome,
     GeneratedPracticeScenario,
     GuidedCardOutcome,
@@ -280,6 +281,8 @@
   let drillSelectedCardId = "";
   let drillCheckedCardId = "";
   let drillResults: DrillResult[] = [];
+  let activeDrillSteps: DrillStep[] = drillSteps;
+  let drillSetTitle = "Daily table drill";
   let practiceSeed = 1;
   let selectedLessonId = guidedLessons[0].id;
   let activeTricks: GuidedTrick[] = guidedLessons[0].tricks;
@@ -314,7 +317,7 @@
   $: lessonOutcome = selectedCard && (playedCard || !isSelectedLegal) ? buildLessonOutcome(selectedCard, playedCard) : "";
   $: activeCourse = courseCatalog.find((course) => course.id === activeCourseId) ?? courseCatalog[0];
   $: activeReference = referenceCatalog.find((reference) => reference.id === activeReferenceId) ?? referenceCatalog[0];
-  $: currentDrill = drillSteps[drillIndex] ?? drillSteps[0];
+  $: currentDrill = activeDrillSteps[drillIndex] ?? activeDrillSteps[0] ?? drillSteps[0];
   $: currentDrillTrick = currentDrill.trick;
   $: drillLegalCardIds = new Set(currentDrillTrick.legalCardIds);
   $: drillSelectedCard = currentDrillTrick.hand.find((card) => card.id === drillSelectedCardId);
@@ -406,11 +409,29 @@
     openBarbuTable();
   }
 
-  function startDailyDrill() {
+  async function startDailyDrill() {
     drillIndex = 0;
     drillResults = [];
+    activeDrillSteps = drillSteps;
+    drillSetTitle = "Daily table drill";
     resetDrillDecision();
     appView = "drill";
+
+    try {
+      const drillSet = await invoke<GeneratedDrillSet>("generate_daily_drill_set", {
+        seed: practiceSeed
+      });
+
+      practiceSeed += 1;
+      activeDrillSteps = drillSet.scenarios.map(drillStepFromGeneratedScenario);
+      drillSetTitle = drillSet.title;
+      drillIndex = 0;
+      drillResults = [];
+      resetDrillDecision();
+    } catch {
+      activeDrillSteps = drillSteps;
+      drillSetTitle = "Daily table drill";
+    }
   }
 
   function startLesson(lessonId: string) {
@@ -585,7 +606,7 @@
   }
 
   function continueDrill() {
-    if (drillIndex === drillSteps.length - 1) {
+    if (drillIndex === activeDrillSteps.length - 1) {
       appView = "drillResult";
       return;
     }
@@ -627,6 +648,14 @@
   function firstSentence(text: string) {
     const match = text.match(/.*?[.!?](?:\s|$)/);
     return (match?.[0] ?? text).trim();
+  }
+
+  function drillStepFromGeneratedScenario(scenario: GeneratedPracticeScenario): DrillStep {
+    return {
+      contract: scenario.contract,
+      title: scenario.title,
+      trick: guidedTrickFromGeneratedScenario(scenario)
+    };
   }
 
   function cardClasses(card: Card) {
@@ -792,7 +821,7 @@
           </div>
         </div>
         <div class="table-actions">
-          <button class="drill-action" onclick={startDailyDrill} type="button">Start drill</button>
+          <button class="drill-action" onclick={() => void startDailyDrill()} type="button">Start drill</button>
           <button class="reference-action" onclick={() => openReference("barbu")} type="button">Reference</button>
           {#if isCourseComplete}
             <button class="continue-action" onclick={() => startLesson(guidedLessons[0].id)} type="button">Review No Hearts</button>
@@ -1024,18 +1053,18 @@
     <header class="topbar" aria-label="Daily table drill">
       <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
       <div>
-        <p class="eyebrow">Daily table drill</p>
+        <p class="eyebrow">{drillSetTitle}</p>
         <h1>Play the decision</h1>
       </div>
       <div class="contract-status">
         <span>{currentDrill.contract}</span>
-        <strong>Decision {drillIndex + 1} of {drillSteps.length}</strong>
+        <strong>Decision {drillIndex + 1} of {activeDrillSteps.length}</strong>
       </div>
     </header>
 
     <section class="drill-surface" aria-label="Daily table drill">
       <div class="drill-track" aria-label="Drill progress">
-        {#each drillSteps as step, index}
+        {#each activeDrillSteps as step, index}
           <span
             class:active={index === drillIndex}
             class:complete={index < drillResults.length}
@@ -1087,7 +1116,7 @@
         <div class="action-row">
           {#if drillCheckedCard}
             <button class="primary-action" onclick={continueDrill} type="button">
-              {drillIndex === drillSteps.length - 1 ? "Finish drill" : "Next decision"}
+              {drillIndex === activeDrillSteps.length - 1 ? "Finish drill" : "Next decision"}
             </button>
           {:else}
             <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
@@ -1102,21 +1131,21 @@
     <header class="topbar" aria-label="Drill result">
       <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
       <div>
-        <p class="eyebrow">Daily table drill</p>
+        <p class="eyebrow">{drillSetTitle}</p>
         <h1>Drill complete</h1>
       </div>
       <div class="contract-status">
         <span>Score</span>
-        <strong>{cleanDrillCount} of {drillSteps.length} clean</strong>
+        <strong>{cleanDrillCount} of {activeDrillSteps.length} clean</strong>
       </div>
     </header>
 
     <section class="drill-result-screen" aria-label="Drill results">
       <div class="drill-score-card">
         <p class="eyebrow">Result</p>
-        <h2>{cleanDrillCount} / {drillSteps.length} clean decisions</h2>
+        <h2>{cleanDrillCount} / {activeDrillSteps.length} clean decisions</h2>
         <p>
-          {cleanDrillCount === drillSteps.length
+          {cleanDrillCount === activeDrillSteps.length
             ? "Clean table. Barbu is ready to raise the pressure."
             : "Run the table again and make the legal card automatic."}
         </p>
@@ -1133,7 +1162,7 @@
       </div>
 
       <div class="course-actions">
-        <button class="secondary-action" onclick={startDailyDrill} type="button">Try again</button>
+        <button class="secondary-action" onclick={() => void startDailyDrill()} type="button">Try again</button>
         <button class="primary-action" onclick={continueCourse} type="button">Continue path</button>
       </div>
     </section>
