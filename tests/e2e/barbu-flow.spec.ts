@@ -67,35 +67,32 @@ test("Barbu reference exposes baseline rules and varieties", async ({ page }, te
   await page.screenshot({ path: testInfo.outputPath("barbu-reference.png"), fullPage: true });
 });
 
-test("daily table drill gives three quick decisions and a result", async ({ page }, testInfo) => {
+test("Play Barbu gives three quick decisions and a result", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
-  await page.getByRole("button", { name: "Start drill" }).click();
+  await page.getByRole("button", { name: "Play Barbu" }).click();
 
-  await expect(page.getByRole("heading", { name: "Play the decision" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Play Barbu" })).toBeVisible();
   await expect(page.getByText("Decision 1 of 3")).toBeVisible();
 
-  await page.getByRole("button", { name: "2 C" }).click();
+  await page.locator(".hand-card.legal").first().click();
   await page.getByRole("button", { name: "Check answer" }).click();
   await expect(page.getByText("Best play")).toBeVisible();
-  await expect(page.getByText("2C follows clubs")).toBeVisible();
-  await page.getByRole("button", { name: "Next decision" }).click();
+  await page.getByRole("button", { name: "Next table" }).click();
 
   await expect(page.getByText("Decision 2 of 3")).toBeVisible();
-  await page.getByRole("button", { name: "3 D" }).click();
+  await page.locator(".hand-card.legal").first().click();
   await page.getByRole("button", { name: "Check answer" }).click();
   await expect(page.getByText("Best play")).toBeVisible();
-  await expect(page.getByText("3D follows diamonds")).toBeVisible();
-  await page.getByRole("button", { name: "Next decision" }).click();
+  await page.getByRole("button", { name: "Next table" }).click();
 
   await expect(page.getByText("Decision 3 of 3")).toBeVisible();
-  await page.getByRole("button", { name: "2 H" }).click();
+  await page.locator(".hand-card.legal").first().click();
   await page.getByRole("button", { name: "Check answer" }).click();
   await expect(page.getByText("Best play")).toBeVisible();
-  await expect(page.getByText("2H follows hearts")).toBeVisible();
-  await page.getByRole("button", { name: "Finish drill" }).click();
+  await page.getByRole("button", { name: "Finish game" }).click();
 
-  await expect(page.getByRole("heading", { name: "Drill complete" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Game complete" })).toBeVisible();
   await expect(page.getByText("3 / 3 clean decisions")).toBeVisible();
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Continue path" })).toBeVisible();

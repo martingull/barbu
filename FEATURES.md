@@ -23,7 +23,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Game catalog with Barbu as the first playable table.
 - Barbu table with contract entry points.
 - Five-step training path: concept, example, guided trick, practice, review.
-- Daily table drill with three quick card decisions, immediate feedback, and a compact result.
+- Play Barbu mode with three quick No Hearts decisions, immediate feedback, and a compact result.
 - Local course progress for the playable Barbu path.
 - Continue action for the next unfinished step.
 - Completed-course state with review and reset actions.
@@ -34,8 +34,8 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Authored lessons for No Hearts, No Queens, and King of Hearts.
 - Structured outcome metadata for authored guided card choices.
 - Compact outcome labels for guided decisions.
-- Generated No Hearts follow-suit drill and three-decision daily drill set via Rust/Tauri.
-- Browser fallback for generated drills when Tauri is unavailable.
+- Generated No Hearts follow-suit drill and three-decision Play Barbu set via Rust/Tauri.
+- Browser generated fallback for Play Barbu when Tauri is unavailable.
 - Playwright smoke tests for catalog, Barbu table, lesson flow, generated fallback, and course-complete behavior.
 
 ## Near-Term Roadmap

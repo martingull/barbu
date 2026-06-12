@@ -1,5 +1,6 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
+  import { generateBrowserNoHeartsDrillSteps } from "./browserDrillFallback";
   import CardTable from "./CardTable.svelte";
   import { guidedLessons } from "./lessons/catalog";
   import { referenceCatalog } from "./referenceCatalog";
@@ -282,7 +283,7 @@
   let drillCheckedCardId = "";
   let drillResults: DrillResult[] = [];
   let activeDrillSteps: DrillStep[] = drillSteps;
-  let drillSetTitle = "Daily table drill";
+  let drillSetTitle = "Play Barbu";
   let practiceSeed = 1;
   let selectedLessonId = guidedLessons[0].id;
   let activeTricks: GuidedTrick[] = guidedLessons[0].tricks;
@@ -412,10 +413,8 @@
   async function startDailyDrill() {
     drillIndex = 0;
     drillResults = [];
-    activeDrillSteps = drillSteps;
-    drillSetTitle = "Daily table drill";
+    drillSetTitle = "Play Barbu";
     resetDrillDecision();
-    appView = "drill";
 
     try {
       const drillSet = await invoke<GeneratedDrillSet>("generate_daily_drill_set", {
@@ -425,13 +424,16 @@
       practiceSeed += 1;
       activeDrillSteps = drillSet.scenarios.map(drillStepFromGeneratedScenario);
       drillSetTitle = drillSet.title;
-      drillIndex = 0;
-      drillResults = [];
-      resetDrillDecision();
     } catch {
-      activeDrillSteps = drillSteps;
-      drillSetTitle = "Daily table drill";
+      activeDrillSteps = generateBrowserNoHeartsDrillSteps(practiceSeed);
+      practiceSeed += 1;
+      drillSetTitle = "Play Barbu";
     }
+
+    drillIndex = 0;
+    drillResults = [];
+    resetDrillDecision();
+    appView = "drill";
   }
 
   function startLesson(lessonId: string) {
@@ -717,7 +719,7 @@
   }
 
   function guidedOutcomeFromGeneratedOutcome(outcome: GeneratedPracticeOutcome): GuidedCardOutcome {
-    if (outcome.penalty && outcome.penalty > 0) {
+    if (outcome.winner === "You" && outcome.penalty && outcome.penalty > 0) {
       return "penalty";
     }
 
@@ -821,7 +823,7 @@
           </div>
         </div>
         <div class="table-actions">
-          <button class="drill-action" onclick={() => void startDailyDrill()} type="button">Start drill</button>
+          <button class="drill-action" onclick={() => void startDailyDrill()} type="button">Play Barbu</button>
           <button class="reference-action" onclick={() => openReference("barbu")} type="button">Reference</button>
           {#if isCourseComplete}
             <button class="continue-action" onclick={() => startLesson(guidedLessons[0].id)} type="button">Review No Hearts</button>
@@ -1050,11 +1052,11 @@
       </div>
     </section>
   {:else if appView === "drill"}
-    <header class="topbar" aria-label="Daily table drill">
+    <header class="topbar" aria-label="Play Barbu">
       <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
       <div>
         <p class="eyebrow">{drillSetTitle}</p>
-        <h1>Play the decision</h1>
+        <h1>Play Barbu</h1>
       </div>
       <div class="contract-status">
         <span>{currentDrill.contract}</span>
@@ -1062,7 +1064,7 @@
       </div>
     </header>
 
-    <section class="drill-surface" aria-label="Daily table drill">
+    <section class="drill-surface" aria-label="Play Barbu game">
       <div class="drill-track" aria-label="Drill progress">
         {#each activeDrillSteps as step, index}
           <span
@@ -1116,7 +1118,7 @@
         <div class="action-row">
           {#if drillCheckedCard}
             <button class="primary-action" onclick={continueDrill} type="button">
-              {drillIndex === activeDrillSteps.length - 1 ? "Finish drill" : "Next decision"}
+              {drillIndex === activeDrillSteps.length - 1 ? "Finish game" : "Next table"}
             </button>
           {:else}
             <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
@@ -1132,7 +1134,7 @@
       <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
       <div>
         <p class="eyebrow">{drillSetTitle}</p>
-        <h1>Drill complete</h1>
+        <h1>Game complete</h1>
       </div>
       <div class="contract-status">
         <span>Score</span>

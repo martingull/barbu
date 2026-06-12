@@ -144,8 +144,8 @@ pub fn generate_no_hearts_follow_suit(seed: u64) -> PracticeScenario {
 
 pub fn generate_daily_drill_set(seed: u64) -> PracticeDrillSet {
     PracticeDrillSet {
-        id: format!("daily-table-drill-{seed}"),
-        title: "Daily table drill".to_string(),
+        id: format!("play-barbu-{seed}"),
+        title: "Play Barbu".to_string(),
         scenarios: (0..3)
             .map(|offset| generate_no_hearts_follow_suit(seed.saturating_mul(3) + offset))
             .collect(),
