@@ -266,6 +266,50 @@
           { marker: "OK", text: "Forced queen captures should be anticipated earlier." }
         ]
       }
+    },
+    {
+      id: "king-of-hearts",
+      pathStepId: "play-trick",
+      lessonId: "barbu-king-of-hearts",
+      contract: "King of Hearts",
+      title: "Avoid the king",
+      concept: {
+        heading: "In King of Hearts, one card carries the danger.",
+        body:
+          "The king of hearts only hurts the player who wins the trick containing it. Your job is to notice when KH is on the table, then avoid becoming the trick winner.",
+        points: [
+          { marker: "1", text: "Follow suit when you can." },
+          { marker: "2", text: "Track whether KH is in the trick." },
+          { marker: "3", text: "Duck under KH or discard it when someone else is winning." }
+        ]
+      },
+      example: {
+        heading: "Tutor leads hearts. Right plays KH into the trick.",
+        body:
+          "Hearts are the led suit, so hearts must be followed. The danger is not holding a heart; the danger is winning the trick that contains KH.",
+        sequence: [
+          { label: "Lead", text: "Tutor plays 10H, so hearts are the led suit." },
+          { label: "Then", text: "Right follows with KH, the contract card." },
+          { label: "Your turn", text: "You can follow low and leave KH with Right." }
+        ],
+        ariaLabel: "King of Hearts example table",
+        tableCards: [
+          { seat: "Tutor", card: { id: "10H", rank: "10", suit: "H", label: "10H" } },
+          { seat: "Right", card: { id: "KH", rank: "K", suit: "H", label: "KH" } },
+          { seat: "Left", card: { id: "QH", rank: "Q", suit: "H", label: "QH" } }
+        ],
+        pendingBySeat: { You: "follow hearts" }
+      },
+      review: {
+        heading: "King of Hearts is about one dangerous capture, not every heart.",
+        body:
+          "You practiced ducking under KH and unloading it when you are void. The table habit is simple: locate KH, then ask who wins this trick.",
+        points: [
+          { marker: "OK", text: "KH penalizes the player who wins its trick." },
+          { marker: "OK", text: "A low heart can be the best legal card." },
+          { marker: "OK", text: "Discarding KH is strong when another player already controls the trick." }
+        ]
+      }
     }
   ];
   const drillSteps: DrillStep[] = guidedLessons.map((lesson) => ({

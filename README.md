@@ -53,7 +53,7 @@ content/             Structured game and lesson content
 - A Barbu table screen with contract entry points and a five-step training path.
 - Play Barbu mode with three quick No Hearts decisions, immediate feedback, and a compact result; Tauri builds use Rust-generated scenarios, while browser runs use a local generated fallback.
 - Local course progress, a continue action, and compact outcome labels for guided card decisions.
-- Shared course content flow for No Hearts and No Queens with concept, example, guided play, and review screens.
+- Shared course content flow for No Hearts, No Queens, and King of Hearts with concept, example, guided play, and review screens.
 - Shared card table renderer for course examples and guided play.
 - Barbu reference screen grounded in the Parlett baseline, including play direction, contracts, scoring, and variants.
 - Fixed authored Barbu lessons for No Hearts, No Queens, and King of Hearts.

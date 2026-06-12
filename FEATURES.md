@@ -27,7 +27,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Local course progress for the playable Barbu path.
 - Continue action for the next unfinished step.
 - Completed-course state with review and reset actions.
-- Shared course content flow for No Hearts and No Queens with concept, example, guided play, and review screens.
+- Shared course content flow for No Hearts, No Queens, and King of Hearts with concept, example, guided play, and review screens.
 - Shared card table renderer for course examples and guided play.
 - Barbu reference screen with Parlett baseline, play direction, contracts, scoring, and varieties.
 - Guided trick table for authored Barbu lessons.
@@ -43,7 +43,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 These are the next product increments that keep the app coherent.
 
 1. Course Content v1
-   - Add course content for King of Hearts and generated practice.
+   - Add course content for generated practice.
    - Keep each authored contract on the same concept, example, guided play, review structure.
    - Keep copy short and original.
 

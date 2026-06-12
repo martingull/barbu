@@ -172,6 +172,45 @@ test("No Queens course has concept example play and review", async ({ page }) =>
   await expect(page.getByRole("button", { name: /Spot the danger/ })).toContainText("Complete");
 });
 
+test("King of Hearts course has concept example play and review", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      "barbu.courseProgress.v1",
+      JSON.stringify({ "meet-contract": true, "spot-danger": true })
+    );
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: /Continue with Play the trick/ }).click();
+
+  await expect(page.getByRole("heading", { name: "Avoid the king" })).toBeVisible();
+  await expect(page.getByText("one card carries the danger")).toBeVisible();
+  await page.getByRole("button", { name: "See example" }).click();
+
+  await expect(page.getByRole("heading", { name: /Tutor leads hearts/ })).toBeVisible();
+  await expect(page.getByLabel("King of Hearts trick sequence")).toContainText("Tutor plays 10H");
+  await expect(page.getByLabel("King of Hearts trick sequence")).toContainText("Right follows with KH");
+  await expect(page.getByLabel("King of Hearts example table")).toBeVisible();
+  await page.getByRole("button", { name: "Play guided trick" }).click();
+
+  await page.getByRole("button", { name: "2 H" }).click();
+  await page.getByRole("button", { name: "Play selected" }).click();
+  await page.getByRole("button", { name: "Next trick" }).click();
+
+  await page.getByRole("button", { name: "K H" }).click();
+  await page.getByRole("button", { name: "Play selected" }).click();
+  await page.getByRole("button", { name: "Finish lesson" }).click();
+
+  await expect(page.getByRole("heading", { name: "Review" })).toBeVisible();
+  await expect(page.getByText("locate KH, then ask who wins this trick")).toBeVisible();
+  await page.getByRole("button", { name: "Finish King of Hearts" }).click();
+
+  await expect(page.getByText("3 / 4 complete")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Continue with Generated drill/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Play the trick/ })).toContainText("Complete");
+});
+
 test("training path can start generated practice shell", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
