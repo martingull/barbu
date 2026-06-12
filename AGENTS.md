@@ -24,6 +24,10 @@ The app should teach games as structured knowledge and guided play, not as stati
 
 Use Parlett's organization as the source structure for the reference layer, but write original explanations and app copy. A game reference should be structured around object, players, cards, deal, play, scoring, variants, and tactical ideas. The guided learning layer should translate that reference material into interactive decisions.
 
+## Learning Experience
+
+The primary learning loop is: play first, get fast feedback, read a tiny explanation, repeat, then use reference material only when needed. The product should feel closer to Duolingo or a strong chess tutor than to a rulebook: active, short, progressive, and lightly playful. Do not let reference pages or technical correctness move the main lesson path away from card decisions.
+
 ## Stack
 
 - Rust workspace for deterministic game logic.

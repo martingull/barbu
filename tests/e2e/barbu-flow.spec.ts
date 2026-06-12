@@ -51,6 +51,22 @@ test("No Hearts example shows clockwise order after Tutor leads", async ({ page 
   await expect(sequence).not.toContainText("Left has no club and discards 4H");
 });
 
+test("Barbu reference exposes baseline rules and varieties", async ({ page }, testInfo) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Reference" }).click();
+
+  await expect(page.getByRole("heading", { name: "Barbu reference" })).toBeVisible();
+  await expect(page.getByText("David Parlett, The Penguin Book of Card Games")).toBeVisible();
+  await expect(page.getByText("Tutor -> Right -> You -> Left when Tutor leads")).toBeVisible();
+  await expect(page.getByText("Follow the led suit when you can")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Current Barbu contracts" })).toBeVisible();
+  await expect(page.getByLabel("Contract reference").getByText("No Hearts")).toBeVisible();
+  await expect(page.getByText("Future Varieties")).toBeVisible();
+
+  await page.screenshot({ path: testInfo.outputPath("barbu-reference.png"), fullPage: true });
+});
+
 test("finishing a lesson advances course progress", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();

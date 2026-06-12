@@ -16,6 +16,8 @@ The app should feel like a real tutor:
 - Rules explained through decisions.
 - Reference material available when needed, not used as the main experience.
 
+The default loop is: play first, get fast feedback, read a tiny explanation, repeat, then consult reference only when useful. Duolingo and strong chess tutor apps are the feel benchmark: active, progressive, lightly playful, and built around doing rather than reading.
+
 ## Current Feature Set
 
 - Game catalog with Barbu as the first playable table.
@@ -26,6 +28,7 @@ The app should feel like a real tutor:
 - Completed-course state with review and reset actions.
 - Shared course content flow for No Hearts and No Queens with concept, example, guided play, and review screens.
 - Shared card table renderer for course examples and guided play.
+- Barbu reference screen with Parlett baseline, play direction, contracts, scoring, and varieties.
 - Guided trick table for authored Barbu lessons.
 - Authored lessons for No Hearts, No Queens, and King of Hearts.
 - Structured outcome metadata for authored guided card choices.
@@ -59,8 +62,8 @@ These are the next product increments that keep the app coherent.
    - Keep it local until the app needs sync or accounts.
 
 5. Reference Layer v1
-   - Add structured reference pages from `content/` using Parlett as the baseline source.
-   - Include object, players, cards, deal, play, scoring, variants, and tactical ideas.
+   - Add structured reference pages for the next supported games using Parlett as the baseline source.
+   - Continue expanding object, players, cards, deal, play, scoring, variants, and tactical ideas.
    - Link reference sections from lessons without making rules pages the main flow.
 
 ## Later Roadmap
@@ -90,6 +93,7 @@ These are the next product increments that keep the app coherent.
 - The first screen is always the learning experience, not marketing.
 - Every new feature should answer: what is the next useful card decision?
 - Rules, terminology, and play order should start from Parlett before local assumptions.
+- Reference material should support the lesson path, not replace learn-by-doing.
 - Add game logic to Rust when it affects legality, scoring, outcomes, generation, or reusable lesson state.
 - Keep Svelte focused on presentation and interaction.
 - Keep Barbu's voice concise. Personality should clarify, not distract.

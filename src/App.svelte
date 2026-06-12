@@ -2,6 +2,7 @@
   import { invoke } from "@tauri-apps/api/core";
   import CardTable from "./CardTable.svelte";
   import { guidedLessons } from "./lessons/catalog";
+  import { referenceCatalog } from "./referenceCatalog";
   import type {
     Card,
     GeneratedPracticeOutcome,
@@ -12,8 +13,9 @@
     Suit,
     TableCard
   } from "./lessonTypes";
+  import type { GameReference } from "./referenceCatalog";
 
-  type AppView = "catalog" | "barbuTable" | "courseContent" | "lesson";
+  type AppView = "catalog" | "barbuTable" | "reference" | "courseContent" | "lesson";
 
   type PathAction = "lesson" | "generated" | "planned";
   type CourseStage = "concept" | "example" | "review";
@@ -261,6 +263,7 @@
   let activeTricks: GuidedTrick[] = guidedLessons[0].tricks;
   let activePathStepId = "";
   let activeCourseId = courseCatalog[0].id;
+  let activeReferenceId = referenceCatalog[0].id;
   let activeCourseStage: CourseStage = "concept";
   let completedPathSteps: Record<string, boolean> = loadCourseProgress();
   let usingGeneratedPractice = false;
@@ -288,6 +291,7 @@
   $: isCourseComplete = completedCount === playablePathSteps.length;
   $: lessonOutcome = selectedCard && (playedCard || !isSelectedLegal) ? buildLessonOutcome(selectedCard, playedCard) : "";
   $: activeCourse = courseCatalog.find((course) => course.id === activeCourseId) ?? courseCatalog[0];
+  $: activeReference = referenceCatalog.find((reference) => reference.id === activeReferenceId) ?? referenceCatalog[0];
 
   function loadCourseProgress() {
     if (typeof localStorage === "undefined") {
@@ -337,6 +341,17 @@
 
   function openBarbuTable() {
     appView = "barbuTable";
+  }
+
+  function openReference(referenceId = "barbu") {
+    const reference = referenceCatalog.find((item) => item.id === referenceId);
+
+    if (!reference) {
+      return;
+    }
+
+    activeReferenceId = reference.id;
+    appView = "reference";
   }
 
   function openGame(gameId: string) {
@@ -567,6 +582,10 @@
 
     return pendingBySeat;
   }
+
+  function factsForSection(section: GameReference["sections"][number]) {
+    return section.facts ?? [];
+  }
 </script>
 
 <main class="app-shell">
@@ -650,16 +669,17 @@
             <div class="progress-fill" style={`width: ${(completedCount / playablePathSteps.length) * 100}%`}></div>
           </div>
         </div>
-        {#if isCourseComplete}
-          <div class="completion-actions">
+        <div class="table-actions">
+          <button class="reference-action" onclick={() => openReference("barbu")} type="button">Reference</button>
+          {#if isCourseComplete}
             <button class="continue-action" onclick={() => startLesson(guidedLessons[0].id)} type="button">Review No Hearts</button>
             <button class="reset-progress-action" onclick={resetCourseProgress} type="button">Reset path</button>
-          </div>
-        {:else if nextPathStep}
-          <button class="continue-action" onclick={continueCourse} type="button">
-            Continue with {nextPathStep.title}
-          </button>
-        {/if}
+          {:else if nextPathStep}
+            <button class="continue-action" onclick={continueCourse} type="button">
+              Continue with {nextPathStep.title}
+            </button>
+          {/if}
+        </div>
       </div>
 
       <div class="contract-list" aria-label="Available contracts">
@@ -707,6 +727,82 @@
             </span>
           </button>
         {/each}
+      </div>
+    </section>
+  {:else if appView === "reference"}
+    <header class="topbar" aria-label={`${activeReference.title} reference`}>
+      <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
+      <div>
+        <p class="eyebrow">{activeReference.family} family</p>
+        <h1>{activeReference.title} reference</h1>
+      </div>
+      <div class="contract-status">
+        <span>Baseline</span>
+        <strong>Parlett</strong>
+      </div>
+    </header>
+
+    <section class="reference-screen" aria-label="Game reference">
+      <section class="reference-overview" aria-label={`${activeReference.title} overview`}>
+        <p class="eyebrow">Reference source</p>
+        <h2>{activeReference.baseline}</h2>
+        <p>{activeReference.overview}</p>
+      </section>
+
+      <section class="reference-sections" aria-label={`${activeReference.title} reference sections`}>
+        {#each activeReference.sections as section}
+          <article class="reference-card">
+            <p class="eyebrow">{section.title}</p>
+            <p>{section.body}</p>
+            {#if factsForSection(section).length}
+              <dl>
+                {#each factsForSection(section) as fact}
+                  <div>
+                    <dt>{fact.label}</dt>
+                    <dd>{fact.value}</dd>
+                  </div>
+                {/each}
+              </dl>
+            {/if}
+          </article>
+        {/each}
+      </section>
+
+      <section class="reference-list" aria-label="Contract reference">
+        <div class="section-heading">
+          <p class="eyebrow">Contracts</p>
+          <h2>Current Barbu contracts</h2>
+        </div>
+        <div class="reference-list-grid">
+          {#each activeReference.contracts as contract}
+            <article class="reference-card compact">
+              <p class="eyebrow">{contract.title}</p>
+              <h3>{contract.objective}</h3>
+              <p>{contract.scoring}</p>
+              <small>{contract.lesson}</small>
+            </article>
+          {/each}
+        </div>
+      </section>
+
+      <section class="reference-list" aria-label="Variants and varieties">
+        <div class="section-heading">
+          <p class="eyebrow">Varieties</p>
+          <h2>How this can grow</h2>
+        </div>
+        <div class="reference-list-grid">
+          {#each activeReference.variants as variant}
+            <article class="reference-card compact">
+              <p class="eyebrow">{variant.title}</p>
+              <p>{variant.note}</p>
+            </article>
+          {/each}
+        </div>
+      </section>
+
+      <div class="course-actions">
+        <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
+        <button class="primary-action" onclick={continueCourse} type="button">Continue path</button>
       </div>
     </section>
   {:else if appView === "courseContent"}

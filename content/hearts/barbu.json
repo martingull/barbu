@@ -2,7 +2,19 @@
   "id": "barbu",
   "title": "Barbu",
   "family": "hearts",
+  "baseline": "David Parlett, The Penguin Book of Card Games",
   "players": 4,
+  "reference": {
+    "object": "Play each deal under the current contract and avoid the penalty cards or tricks named by that contract.",
+    "cards": "Standard 52-card pack.",
+    "deal": "The app currently teaches from guided positions before full deals are introduced.",
+    "play": {
+      "direction": "clockwise",
+      "followSuit": "A player who can follow the led suit must do so.",
+      "appSeatOrderFromTutorLead": ["Tutor", "Right", "You", "Left"]
+    },
+    "scoring": "Penalty scoring depends on the active contract and applies to the player who wins the trick containing the penalty card."
+  },
   "teachingPath": [
     {
       "id": "trick_taking_basics",
@@ -24,17 +36,32 @@
     {
       "id": "no_hearts",
       "title": "No Hearts",
-      "objective": "Avoid winning tricks that contain hearts."
+      "objective": "Avoid winning tricks that contain hearts.",
+      "scoring": "Hearts penalize the trick winner."
     },
     {
       "id": "no_queens",
       "title": "No Queens",
-      "objective": "Avoid winning tricks that contain queens."
+      "objective": "Avoid winning tricks that contain queens.",
+      "scoring": "Queens penalize the trick winner."
     },
     {
       "id": "barbu",
       "title": "Barbu",
-      "objective": "Avoid winning the king of hearts."
+      "objective": "Avoid winning the king of hearts.",
+      "scoring": "The king of hearts penalizes the player who captures it."
+    }
+  ],
+  "variants": [
+    {
+      "id": "parlett_baseline",
+      "title": "Parlett baseline",
+      "note": "Rules and descriptions start here unless a product variant is documented."
+    },
+    {
+      "id": "learning_table",
+      "title": "Learning table",
+      "note": "The current app uses authored tricks and generated drills before full contract deals."
     }
   ]
 }

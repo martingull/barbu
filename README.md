@@ -25,6 +25,8 @@ The app should borrow learning patterns from chess tutor apps at the level of st
 
 Parlett is the baseline for rules and descriptions, but app copy must be original and adapted for interactive learning rather than copied from the book.
 
+The main experience should still be learn-by-doing: play first, get fast feedback, read a tiny explanation, repeat, and open reference material only when needed. The desired feel is closer to Duolingo or a strong chess tutor than to a rules encyclopedia.
+
 Use [FEATURES.md](./FEATURES.md) as the product control document for current scope, near-term roadmap, non-goals, and parked ideas.
 
 ## Stack
@@ -52,6 +54,7 @@ content/             Structured game and lesson content
 - Local course progress, a continue action, and compact outcome labels for guided card decisions.
 - Shared course content flow for No Hearts and No Queens with concept, example, guided play, and review screens.
 - Shared card table renderer for course examples and guided play.
+- Barbu reference screen grounded in the Parlett baseline, including play direction, contracts, scoring, and variants.
 - Fixed authored Barbu lessons for No Hearts, No Queens, and King of Hearts.
 - Structured outcome metadata for authored guided card choices.
 - Generated No Hearts follow-suit drills from Rust using deterministic seeds.

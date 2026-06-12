@@ -324,10 +324,26 @@ button {
   font-weight: 900;
 }
 
+.table-actions,
 .completion-actions {
   display: flex;
   gap: 8px;
   margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.table-actions .continue-action {
+  margin-top: 0;
+}
+
+.reference-action {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgba(245, 241, 207, 0.68);
+  border-radius: 8px;
+  background: transparent;
+  color: #f5f1cf;
+  font-weight: 900;
 }
 
 .reset-progress-action {
@@ -544,6 +560,110 @@ button {
 .trick-sequence strong {
   color: #273229;
   font-size: 0.95rem;
+  line-height: 1.22;
+}
+
+.reference-screen {
+  display: grid;
+  gap: 14px;
+}
+
+.reference-overview {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid #b9c4b1;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(9, 34, 24, 0.34)),
+    #315f4d;
+  color: #f7faf3;
+}
+
+.reference-overview .eyebrow {
+  color: #dbe7d1;
+}
+
+.reference-overview h2 {
+  max-width: 720px;
+  font-size: 1.46rem;
+}
+
+.reference-overview p:last-child {
+  max-width: 780px;
+  margin-bottom: 0;
+  color: #e7eee1;
+  font-weight: 750;
+  line-height: 1.42;
+}
+
+.reference-sections,
+.reference-list-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.reference-list {
+  display: grid;
+  gap: 10px;
+}
+
+.reference-card {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  min-height: 224px;
+  padding: 14px;
+  border: 1px solid #c7d0c0;
+  border-radius: 8px;
+  background: #fbfcf8;
+}
+
+.reference-card.compact {
+  min-height: 178px;
+}
+
+.reference-card p:not(.eyebrow),
+.reference-card small {
+  margin-bottom: 0;
+  color: #42503f;
+  font-weight: 700;
+  line-height: 1.38;
+}
+
+.reference-card h3 {
+  margin: 0;
+  color: #17201a;
+  font-size: 1.02rem;
+  line-height: 1.16;
+}
+
+.reference-card dl {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+}
+
+.reference-card dl div {
+  display: grid;
+  gap: 2px;
+  padding-top: 7px;
+  border-top: 1px solid #dfe5d8;
+}
+
+.reference-card dt {
+  color: #9a342e;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.reference-card dd {
+  margin: 0;
+  color: #273229;
+  font-size: 0.9rem;
+  font-weight: 900;
   line-height: 1.22;
 }
 
@@ -904,6 +1024,11 @@ h2 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .reference-sections,
+  .reference-list-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .course-screen {
     grid-template-columns: 1fr;
   }
@@ -1057,10 +1182,15 @@ h2 {
     margin-top: 12px;
   }
 
+  .table-actions,
   .completion-actions {
     display: grid;
     gap: 8px;
     margin-top: 12px;
+  }
+
+  .reference-action {
+    width: 100%;
   }
 
   .reset-progress-action {
@@ -1088,6 +1218,29 @@ h2 {
 
   .path-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reference-overview {
+    padding: 14px;
+  }
+
+  .reference-overview h2 {
+    font-size: 1.18rem;
+  }
+
+  .reference-overview p:last-child {
+    font-size: 0.9rem;
+  }
+
+  .reference-sections,
+  .reference-list-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reference-card,
+  .reference-card.compact {
+    min-height: 0;
+    padding: 12px;
   }
 
   .path-card {
