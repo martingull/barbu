@@ -504,6 +504,49 @@ button {
   line-height: 1.45;
 }
 
+.example-copy-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.example-copy-stack .course-copy {
+  min-height: 210px;
+}
+
+.example-table {
+  min-width: 0;
+}
+
+.trick-sequence {
+  display: grid;
+  gap: 8px;
+}
+
+.trick-sequence div {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 58px;
+  padding: 11px 12px;
+  border: 1px solid #c7d0c0;
+  border-radius: 8px;
+  background: #fbfcf8;
+}
+
+.trick-sequence span {
+  color: #284f40;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.trick-sequence strong {
+  color: #273229;
+  font-size: 0.95rem;
+  line-height: 1.22;
+}
+
 .course-points {
   display: grid;
   gap: 8px;
@@ -1071,6 +1114,24 @@ h2 {
 
   .course-copy p:last-child {
     font-size: 0.9rem;
+  }
+
+  .example-copy-stack .course-copy {
+    min-height: 0;
+  }
+
+  .trick-sequence div {
+    grid-template-columns: 72px minmax(0, 1fr);
+    min-height: 54px;
+    padding: 10px;
+  }
+
+  .trick-sequence span {
+    font-size: 0.68rem;
+  }
+
+  .trick-sequence strong {
+    font-size: 0.86rem;
   }
 
   .course-points div {

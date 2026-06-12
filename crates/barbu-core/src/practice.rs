@@ -126,7 +126,7 @@ pub fn generate_no_hearts_follow_suit(seed: u64) -> PracticeScenario {
         contract: "No Hearts".to_string(),
         led_suit,
         prompt: format!(
-            "Tutor led {lead_card}. Left is void in {} and discarded {heart_card}. Choose a legal card.",
+            "Tutor led {lead_card}. Right is void in {} and discarded {heart_card}. Choose a legal card.",
             suit_name(led_suit)
         ),
         table_before_choice: vec![PlayedCard::new(0, lead_card), PlayedCard::new(1, heart_card)],
@@ -157,9 +157,9 @@ fn join_cards(cards: &[Card]) -> String {
 fn player_name(player: PlayerIndex) -> &'static str {
     match player {
         0 => "Tutor",
-        1 => "Left",
+        1 => "Right",
         2 => "You",
-        3 => "Right",
+        3 => "Left",
         _ => "The winner",
     }
 }

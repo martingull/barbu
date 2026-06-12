@@ -3,8 +3,8 @@ import type { GuidedLesson, GuidedTrick } from "../lessonTypes";
 export const noQueensGuidedTricks: GuidedTrick[] = [
   {
     title: "Do not capture a queen",
-    beforeResult: "Tutor led 8D. Left followed with QD, loading the trick with a queen.",
-    afterResult: "Right wins with AD and takes the queen penalty.",
+    beforeResult: "Tutor led 8D. Right followed with QD, loading the trick with a queen.",
+    afterResult: "Left wins with AD and takes the queen penalty.",
     emptyExplanation:
       "Diamonds were led. You have diamonds, so you must follow. The queen is dangerous only for the player who wins this trick.",
     legalCardIds: ["3D", "KD"],
@@ -16,13 +16,13 @@ export const noQueensGuidedTricks: GuidedTrick[] = [
     ],
     tableBeforeChoice: [
       { seat: "Tutor", card: { id: "8D", rank: "8", suit: "D", label: "8D" } },
-      { seat: "Left", card: { id: "QD", rank: "Q", suit: "D", label: "QD" } }
+      { seat: "Right", card: { id: "QD", rank: "Q", suit: "D", label: "QD" } }
     ],
-    tableAfterChoice: [{ seat: "Right", card: { id: "AD", rank: "A", suit: "D", label: "AD" } }],
-    pendingBySeat: { Right: "AD", You: "You" },
+    tableAfterChoice: [{ seat: "Left", card: { id: "AD", rank: "A", suit: "D", label: "AD" } }],
+    pendingBySeat: { Left: "AD", You: "You" },
     playedExplanations: {
-      "3D": "3D follows diamonds and cannot win. Right's AD captures the queen, so the penalty goes to Right.",
-      KD: "KD follows diamonds and beats QD, but AD is still to your right. Right will overtake and collect the queen."
+      "3D": "3D follows diamonds and cannot win. Left's AD captures the queen, so the penalty goes to Left.",
+      KD: "KD follows diamonds and beats QD, but Left still has AD waiting after you. Left will overtake and collect the queen."
     },
     cardOutcomes: {
       "3D": "best",

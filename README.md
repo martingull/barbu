@@ -10,7 +10,7 @@ This is intended as a real App Store product, not a throwaway experiment. The co
 
 Barbu combines two complementary teaching layers:
 
-- A Parlett-style reference layer for structured game knowledge: object, players, cards, deal, play, scoring, variants, and tactical ideas.
+- A reference layer grounded in David Parlett's *The Penguin Book of Card Games*: object, players, cards, deal, play, scoring, variants, and tactical ideas.
 - A hybrid practice layer inspired by strong mobile chess tutors: short concepts, puzzle-sized decisions, guided tricks, generated drills, immediate feedback, and visible progression.
 
 The intended loop is:
@@ -22,6 +22,8 @@ The intended loop is:
 5. Review
 
 The app should borrow learning patterns from chess tutor apps at the level of structure: named coach/opponent, level-like progression, quick correction, and repeated practice. It should not copy proprietary visual design, wording, characters, or lesson content.
+
+Parlett is the baseline for rules and descriptions, but app copy must be original and adapted for interactive learning rather than copied from the book.
 
 Use [FEATURES.md](./FEATURES.md) as the product control document for current scope, near-term roadmap, non-goals, and parked ideas.
 
@@ -48,7 +50,7 @@ content/             Structured game and lesson content
 - A catalog/welcome screen that treats Barbu as the first table in a broader card-game curriculum.
 - A Barbu table screen with contract entry points and a five-step training path.
 - Local course progress, a continue action, and compact outcome labels for guided card decisions.
-- No Hearts course content with concept, example, guided play, and review screens.
+- Shared course content flow for No Hearts and No Queens with concept, example, guided play, and review screens.
 - Shared card table renderer for course examples and guided play.
 - Fixed authored Barbu lessons for No Hearts, No Queens, and King of Hearts.
 - Structured outcome metadata for authored guided card choices.

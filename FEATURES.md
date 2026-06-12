@@ -6,6 +6,8 @@ This document controls product growth. It is a place to decide what belongs in t
 
 Barbu is an iPhone-first learning app for classic card games. The player sits at Barbu's table against the King of Cards, learns one decision at a time, and gradually moves from guided tricks to confident play.
 
+David Parlett's *The Penguin Book of Card Games* is the baseline reference for how supported games are played and described. Product variants are allowed only when they are deliberate and documented.
+
 The app should feel like a real tutor:
 
 - Short sessions.
@@ -22,7 +24,7 @@ The app should feel like a real tutor:
 - Local course progress for the playable Barbu path.
 - Continue action for the next unfinished step.
 - Completed-course state with review and reset actions.
-- No Hearts course content with concept, example, guided play, and review screens.
+- Shared course content flow for No Hearts and No Queens with concept, example, guided play, and review screens.
 - Shared card table renderer for course examples and guided play.
 - Guided trick table for authored Barbu lessons.
 - Authored lessons for No Hearts, No Queens, and King of Hearts.
@@ -37,9 +39,8 @@ The app should feel like a real tutor:
 These are the next product increments that keep the app coherent.
 
 1. Course Content v1
-   - Expand real lesson nodes beyond the first No Hearts course.
-   - Add one concept screen before each guided trick.
-   - Add one review screen after each contract.
+   - Add course content for King of Hearts and generated practice.
+   - Keep each authored contract on the same concept, example, guided play, review structure.
    - Keep copy short and original.
 
 2. Outcome Model in Core
@@ -58,7 +59,7 @@ These are the next product increments that keep the app coherent.
    - Keep it local until the app needs sync or accounts.
 
 5. Reference Layer v1
-   - Add Parlett-style structured reference pages from `content/`.
+   - Add structured reference pages from `content/` using Parlett as the baseline source.
    - Include object, players, cards, deal, play, scoring, variants, and tactical ideas.
    - Link reference sections from lessons without making rules pages the main flow.
 
@@ -88,6 +89,7 @@ These are the next product increments that keep the app coherent.
 
 - The first screen is always the learning experience, not marketing.
 - Every new feature should answer: what is the next useful card decision?
+- Rules, terminology, and play order should start from Parlett before local assumptions.
 - Add game logic to Rust when it affects legality, scoring, outcomes, generation, or reusable lesson state.
 - Keep Svelte focused on presentation and interaction.
 - Keep Barbu's voice concise. Personality should clarify, not distract.

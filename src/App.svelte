@@ -36,6 +36,37 @@
     lessonId?: string;
   };
 
+  type CoursePanel = {
+    heading: string;
+    body: string;
+  };
+
+  type CoursePoint = {
+    marker: string;
+    text: string;
+  };
+
+  type CourseSequenceStep = {
+    label: string;
+    text: string;
+  };
+
+  type CourseContent = {
+    id: string;
+    pathStepId: string;
+    lessonId: string;
+    contract: string;
+    title: string;
+    concept: CoursePanel & { points: CoursePoint[] };
+    example: CoursePanel & {
+      sequence: CourseSequenceStep[];
+      ariaLabel: string;
+      tableCards: TableCard[];
+      pendingBySeat: Partial<Record<Seat, string>>;
+    };
+    review: CoursePanel & { points: CoursePoint[] };
+  };
+
   const gameCatalog: CatalogGame[] = [
     {
       id: "barbu",
@@ -129,10 +160,96 @@
     H: "hearts",
     S: "spades"
   };
-  const noHeartsExampleTable: TableCard[] = [
-    { seat: "Tutor", card: { id: "9C", rank: "9", suit: "C", label: "9C" } },
-    { seat: "Left", card: { id: "4H", rank: "4", suit: "H", label: "4H" } },
-    { seat: "Right", card: { id: "AC", rank: "A", suit: "C", label: "AC" } }
+
+  const courseCatalog: CourseContent[] = [
+    {
+      id: "no-hearts",
+      pathStepId: "meet-contract",
+      lessonId: "barbu-no-hearts",
+      contract: "No Hearts",
+      title: "Meet the contract",
+      concept: {
+        heading: "In No Hearts, hearts are cargo you do not want to collect.",
+        body:
+          "A heart only hurts the player who wins the trick containing it. Your first job is to follow suit legally while steering heart tricks toward someone else.",
+        points: [
+          { marker: "1", text: "Follow the led suit when you can." },
+          { marker: "2", text: "Do not panic when someone else throws a heart." },
+          { marker: "3", text: "Ask who is winning before choosing your card." }
+        ]
+      },
+      example: {
+        heading: "Tutor leads clubs. Right discards a heart into that trick.",
+        body:
+          "The first card in a trick sets the suit everyone must follow when they can. Right did not open hearts here; Right failed to follow clubs and threw a heart away.",
+        sequence: [
+          { label: "Lead", text: "Tutor plays 9C, so clubs are the led suit." },
+          { label: "Then", text: "Right has no club and discards 4H." },
+          { label: "Your turn", text: "You still have clubs, so you must follow clubs." }
+        ],
+        ariaLabel: "No Hearts example table",
+        tableCards: [
+          { seat: "Tutor", card: { id: "9C", rank: "9", suit: "C", label: "9C" } },
+          { seat: "Right", card: { id: "4H", rank: "4", suit: "H", label: "4H" } },
+          { seat: "Left", card: { id: "AC", rank: "A", suit: "C", label: "AC" } }
+        ],
+        pendingBySeat: { You: "follow clubs" }
+      },
+      review: {
+        heading: "No Hearts starts with one habit: locate the trick winner before worrying about the heart.",
+        body:
+          "You followed suit, watched who controlled the trick, and avoided taking the heart yourself. That is the first Barbu table habit.",
+        points: [
+          { marker: "OK", text: "Hearts score against the trick winner." },
+          { marker: "OK", text: "Following suit can still be safe." },
+          { marker: "OK", text: "Winning a clean trick is different from winning a heart trick." }
+        ]
+      }
+    },
+    {
+      id: "no-queens",
+      pathStepId: "spot-danger",
+      lessonId: "barbu-no-queens",
+      contract: "No Queens",
+      title: "Spot the danger",
+      concept: {
+        heading: "In No Queens, queens are only dangerous when they land in a trick you win.",
+        body:
+          "A queen sitting on the table is not automatically your penalty. Before you play, identify the current winner and whether your card would overtake the trick.",
+        points: [
+          { marker: "1", text: "Follow suit first." },
+          { marker: "2", text: "Find the highest card in the led suit." },
+          { marker: "3", text: "Avoid becoming the player who captures the queen." }
+        ]
+      },
+      example: {
+        heading: "Tutor leads diamonds. Right follows with QD, loading the trick.",
+        body:
+          "The first card sets diamonds as the led suit. The queen is dangerous, but only the player who wins the trick takes the queen penalty.",
+        sequence: [
+          { label: "Lead", text: "Tutor plays 8D, so diamonds are the led suit." },
+          { label: "Then", text: "Right follows diamonds with QD." },
+          { label: "Your turn", text: "You must follow diamonds without taking control." }
+        ],
+        ariaLabel: "No Queens example table",
+        tableCards: [
+          { seat: "Tutor", card: { id: "8D", rank: "8", suit: "D", label: "8D" } },
+          { seat: "Right", card: { id: "QD", rank: "Q", suit: "D", label: "QD" } },
+          { seat: "Left", card: { id: "AD", rank: "A", suit: "D", label: "AD" } }
+        ],
+        pendingBySeat: { You: "follow diamonds" }
+      },
+      review: {
+        heading: "No Queens rewards patience: do not overtake a queen trick unless the rules force you.",
+        body:
+          "You practiced separating the scary card from the player who actually wins the trick. That is the key tactical idea behind No Queens.",
+        points: [
+          { marker: "OK", text: "Queens are penalties only for the trick winner." },
+          { marker: "OK", text: "A lower card can be the best legal card." },
+          { marker: "OK", text: "Forced queen captures should be anticipated earlier." }
+        ]
+      }
+    }
   ];
 
   let appView: AppView = "catalog";
@@ -143,6 +260,7 @@
   let selectedLessonId = guidedLessons[0].id;
   let activeTricks: GuidedTrick[] = guidedLessons[0].tricks;
   let activePathStepId = "";
+  let activeCourseId = courseCatalog[0].id;
   let activeCourseStage: CourseStage = "concept";
   let completedPathSteps: Record<string, boolean> = loadCourseProgress();
   let usingGeneratedPractice = false;
@@ -169,6 +287,7 @@
   $: nextPathStep = playablePathSteps.find((step) => !completedPathSteps[step.id]);
   $: isCourseComplete = completedCount === playablePathSteps.length;
   $: lessonOutcome = selectedCard && (playedCard || !isSelectedLegal) ? buildLessonOutcome(selectedCard, playedCard) : "";
+  $: activeCourse = courseCatalog.find((course) => course.id === activeCourseId) ?? courseCatalog[0];
 
   function loadCourseProgress() {
     if (typeof localStorage === "undefined") {
@@ -234,10 +353,28 @@
     appView = "lesson";
   }
 
-  function startNoHeartsCourse() {
-    activePathStepId = "meet-contract";
+  function startCourse(courseId: string) {
+    const course = courseCatalog.find((item) => item.id === courseId);
+
+    if (!course) {
+      return;
+    }
+
+    activeCourseId = course.id;
+    activePathStepId = course.pathStepId;
     activeCourseStage = "concept";
     appView = "courseContent";
+  }
+
+  function startCourseForLesson(lessonId: string) {
+    const course = courseCatalog.find((item) => item.lessonId === lessonId);
+
+    if (course) {
+      startCourse(course.id);
+      return;
+    }
+
+    startLesson(lessonId);
   }
 
   function continueCourseContent() {
@@ -247,7 +384,7 @@
     }
 
     if (activeCourseStage === "example") {
-      startLesson("barbu-no-hearts");
+      startLesson(activeCourse.lessonId);
       return;
     }
 
@@ -273,8 +410,10 @@
   }
 
   function startPathStep(step: BarbuPathStep) {
-    if (step.id === "meet-contract") {
-      startNoHeartsCourse();
+    const course = courseCatalog.find((item) => item.pathStepId === step.id);
+
+    if (course) {
+      startCourse(course.id);
       return;
     }
 
@@ -336,7 +475,7 @@
   }
 
   function finishLesson() {
-    if (activePathStepId === "meet-contract") {
+    if (courseCatalog.some((course) => course.pathStepId === activePathStepId)) {
       activeCourseStage = "review";
       appView = "courseContent";
       return;
@@ -525,7 +664,7 @@
 
       <div class="contract-list" aria-label="Available contracts">
         {#each guidedLessons as lesson}
-          <button class="contract-card" onclick={() => startLesson(lesson.id)} type="button">
+          <button class="contract-card" onclick={() => startCourseForLesson(lesson.id)} type="button">
             <span>{lesson.contract}</span>
             <strong>{lesson.title}</strong>
             <small>{lesson.summary}</small>
@@ -571,11 +710,11 @@
       </div>
     </section>
   {:else if appView === "courseContent"}
-    <header class="topbar" aria-label="No Hearts course">
+    <header class="topbar" aria-label={`${activeCourse.contract} course`}>
       <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
       <div>
-        <p class="eyebrow">No Hearts</p>
-        <h1>{activeCourseStage === "review" ? "Review" : "Meet the contract"}</h1>
+        <p class="eyebrow">{activeCourse.contract}</p>
+        <h1>{activeCourseStage === "review" ? "Review" : activeCourse.title}</h1>
       </div>
       <div class="contract-status">
         <span>Course</span>
@@ -591,69 +730,61 @@
       </div>
     </header>
 
-    <section class="course-screen" aria-label="No Hearts course content">
+    <section class="course-screen" aria-label={`${activeCourse.contract} course content`}>
       {#if activeCourseStage === "concept"}
         <div class="course-copy">
           <p class="eyebrow">Concept</p>
-          <h2>In No Hearts, hearts are cargo you do not want to collect.</h2>
-          <p>
-            A heart only hurts the player who wins the trick containing it. Your first job is to follow suit
-            legally while steering heart tricks toward someone else.
-          </p>
+          <h2>{activeCourse.concept.heading}</h2>
+          <p>{activeCourse.concept.body}</p>
         </div>
 
-        <div class="course-points" aria-label="No Hearts concept points">
-          <div>
-            <span>1</span>
-            <strong>Follow the led suit when you can.</strong>
-          </div>
-          <div>
-            <span>2</span>
-            <strong>Do not panic when someone else throws a heart.</strong>
-          </div>
-          <div>
-            <span>3</span>
-            <strong>Ask who is winning before choosing your card.</strong>
-          </div>
+        <div class="course-points" aria-label={`${activeCourse.contract} concept points`}>
+          {#each activeCourse.concept.points as point}
+            <div>
+              <span>{point.marker}</span>
+              <strong>{point.text}</strong>
+            </div>
+          {/each}
         </div>
       {:else if activeCourseStage === "example"}
-        <div class="course-copy">
-          <p class="eyebrow">Example</p>
-          <h2>Left has played 4H into a club trick. The danger is real, but it is not yours yet.</h2>
-          <p>
-            Tutor led clubs. You still hold clubs, so Barbu expects you to follow clubs. If Right wins with
-            AC, Right takes the heart penalty, not you.
-          </p>
+        <div class="example-copy-stack">
+          <div class="course-copy">
+            <p class="eyebrow">Example</p>
+            <h2>{activeCourse.example.heading}</h2>
+            <p>{activeCourse.example.body}</p>
+          </div>
+
+          <div class="trick-sequence" aria-label={`${activeCourse.contract} trick sequence`}>
+            {#each activeCourse.example.sequence as step}
+              <div>
+                <span>{step.label}</span>
+                <strong>{step.text}</strong>
+              </div>
+            {/each}
+          </div>
         </div>
 
-        <CardTable
-          ariaLabel="No Hearts example table"
-          pendingBySeat={{ You: "follow clubs" }}
-          tableCards={noHeartsExampleTable}
-        />
+        <div class="example-table">
+          <CardTable
+            ariaLabel={activeCourse.example.ariaLabel}
+            pendingBySeat={activeCourse.example.pendingBySeat}
+            tableCards={activeCourse.example.tableCards}
+          />
+        </div>
       {:else}
         <div class="course-copy">
           <p class="eyebrow">Review</p>
-          <h2>No Hearts starts with one habit: locate the trick winner before worrying about the heart.</h2>
-          <p>
-            You followed suit, watched who controlled the trick, and avoided taking the heart yourself.
-            That is the first Barbu table habit.
-          </p>
+          <h2>{activeCourse.review.heading}</h2>
+          <p>{activeCourse.review.body}</p>
         </div>
 
-        <div class="course-points" aria-label="No Hearts review points">
-          <div>
-            <span>OK</span>
-            <strong>Hearts score against the trick winner.</strong>
-          </div>
-          <div>
-            <span>OK</span>
-            <strong>Following suit can still be safe.</strong>
-          </div>
-          <div>
-            <span>OK</span>
-            <strong>Winning a clean trick is different from winning a heart trick.</strong>
-          </div>
+        <div class="course-points" aria-label={`${activeCourse.contract} review points`}>
+          {#each activeCourse.review.points as point}
+            <div>
+              <span>{point.marker}</span>
+              <strong>{point.text}</strong>
+            </div>
+          {/each}
         </div>
       {/if}
 
@@ -665,7 +796,7 @@
           {:else if activeCourseStage === "example"}
             Play guided trick
           {:else}
-            Finish No Hearts
+            Finish {activeCourse.contract}
           {/if}
         </button>
       </div>

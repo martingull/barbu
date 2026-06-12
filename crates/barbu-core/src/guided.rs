@@ -4,9 +4,9 @@ use crate::trick::{legal_cards, score_no_hearts_trick, trick_winner, PlayedCard,
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Seat {
     Tutor,
-    Left,
-    You,
     Right,
+    You,
+    Left,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -119,7 +119,7 @@ mod tests {
     }
 
     #[test]
-    fn first_no_hearts_trick_result_gives_penalty_to_right_player() {
+    fn first_no_hearts_trick_result_gives_penalty_to_left_player() {
         let lesson = first_no_hearts_trick();
         let result = lesson
             .result_for(Card::new(Rank::King, Suit::Clubs))

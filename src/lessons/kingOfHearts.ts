@@ -3,7 +3,7 @@ import type { GuidedLesson, GuidedTrick } from "../lessonTypes";
 export const kingOfHeartsGuidedTricks: GuidedTrick[] = [
   {
     title: "Let someone else take the king",
-    beforeResult: "Tutor led 10H. Left played KH, putting the contract card into the trick.",
+    beforeResult: "Tutor led 10H. Right played KH, putting the contract card into the trick.",
     afterResult: "The king of hearts is in this trick. Check the explanation to see who captured it.",
     emptyExplanation:
       "Hearts were led. You have hearts, so you must follow. The goal is not to win the trick containing KH.",
@@ -16,12 +16,12 @@ export const kingOfHeartsGuidedTricks: GuidedTrick[] = [
     ],
     tableBeforeChoice: [
       { seat: "Tutor", card: { id: "10H", rank: "10", suit: "H", label: "10H" } },
-      { seat: "Left", card: { id: "KH", rank: "K", suit: "H", label: "KH" } }
+      { seat: "Right", card: { id: "KH", rank: "K", suit: "H", label: "KH" } }
     ],
-    tableAfterChoice: [{ seat: "Right", card: { id: "QH", rank: "Q", suit: "H", label: "QH" } }],
-    pendingBySeat: { Right: "QH", You: "You" },
+    tableAfterChoice: [{ seat: "Left", card: { id: "QH", rank: "Q", suit: "H", label: "QH" } }],
+    pendingBySeat: { Left: "QH", You: "You" },
     playedExplanations: {
-      "2H": "2H follows hearts and stays below KH. Left keeps the trick and takes the king.",
+      "2H": "2H follows hearts and stays below KH. Right keeps the trick and takes the king.",
       AH: "AH follows hearts but wins the trick. That captures KH, which is the card you are trying to avoid."
     },
     cardOutcomes: {
@@ -31,8 +31,8 @@ export const kingOfHeartsGuidedTricks: GuidedTrick[] = [
   },
   {
     title: "Discard the king when you are void",
-    beforeResult: "Right led 6S. Tutor and Left followed spades. You have no spades.",
-    afterResult: "Left wins with AS. Your KH is safely discarded into a trick you do not win.",
+    beforeResult: "Left led 6S. Tutor and Right followed spades. You have no spades.",
+    afterResult: "Right wins with AS. Your KH is safely discarded into a trick you do not win.",
     emptyExplanation:
       "You cannot follow spades, so any card is legal. This is a chance to get rid of the dangerous king.",
     legalCardIds: ["KH", "4D", "8C"],
@@ -42,14 +42,14 @@ export const kingOfHeartsGuidedTricks: GuidedTrick[] = [
       { id: "8C", rank: "8", suit: "C", label: "8C" }
     ],
     tableBeforeChoice: [
-      { seat: "Right", card: { id: "6S", rank: "6", suit: "S", label: "6S" } },
+      { seat: "Left", card: { id: "6S", rank: "6", suit: "S", label: "6S" } },
       { seat: "Tutor", card: { id: "10S", rank: "10", suit: "S", label: "10S" } },
-      { seat: "Left", card: { id: "AS", rank: "A", suit: "S", label: "AS" } }
+      { seat: "Right", card: { id: "AS", rank: "A", suit: "S", label: "AS" } }
     ],
     tableAfterChoice: [],
     pendingBySeat: { You: "You" },
     playedExplanations: {
-      KH: "KH is legal because you are void in spades. Discarding it here is ideal because Left already controls the trick with AS.",
+      KH: "KH is legal because you are void in spades. Discarding it here is ideal because Right already controls the trick with AS.",
       "4D": "4D is legal, but it keeps KH in your hand for a later and possibly worse moment.",
       "8C": "8C is legal, but it misses the chance to unload the contract card while someone else is winning."
     },

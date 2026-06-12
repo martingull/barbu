@@ -150,9 +150,9 @@ impl CardDto {
 fn player_name(player: barbu_core::PlayerIndex) -> &'static str {
     match player {
         0 => "Tutor",
-        1 => "Left",
+        1 => "Right",
         2 => "You",
-        3 => "Right",
+        3 => "Left",
         _ => "Unknown",
     }
 }
