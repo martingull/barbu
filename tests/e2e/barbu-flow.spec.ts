@@ -97,10 +97,20 @@ test("Play Barbu gives three mixed-contract decisions and a result", async ({ pa
 
   await expect(page.getByRole("heading", { name: "Game complete" })).toBeVisible();
   await expect(page.getByText("3 / 3 clean decisions")).toBeVisible();
+  await expect(page.getByLabel("Contract results").getByText("No Hearts")).toBeVisible();
+  await expect(page.getByLabel("Contract results").getByText("No Queens")).toBeVisible();
+  await expect(page.getByLabel("Contract results").getByText("King of Hearts")).toBeVisible();
+  await expect(page.getByLabel("Recent Play Barbu attempts")).toContainText("3 / 3 clean");
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Replay No Hearts" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Continue path" })).toBeVisible();
 
   await page.screenshot({ path: testInfo.outputPath("play-barbu-result.png"), fullPage: true });
+
+  await page.getByRole("button", { name: "Replay No Hearts" }).click();
+  await expect(page.getByRole("heading", { name: "Play Barbu" })).toBeVisible();
+  await expect(page.getByText("Decision 1 of 1")).toBeVisible();
+  await expect(page.getByText("No Hearts").first()).toBeVisible();
 });
 
 test("finishing a lesson advances course progress", async ({ page }, testInfo) => {

@@ -52,6 +52,7 @@ content/             Structured game and lesson content
 - A catalog/welcome screen that treats Barbu as the first table in a broader card-game curriculum.
 - A Barbu table screen with contract entry points and a five-step training path.
 - Play Barbu mode with three quick mixed-contract decisions, immediate feedback, and a compact result; Tauri builds use Rust-generated scenarios, while browser runs use a local generated fallback.
+- Local Play Barbu result history with contract-level summaries and focused replay for the weakest contract.
 - Local course progress, a continue action, and compact outcome labels for guided card decisions.
 - Shared course content flow for No Hearts, No Queens, and King of Hearts with concept, example, guided play, and review screens.
 - Shared card table renderer for course examples and guided play.

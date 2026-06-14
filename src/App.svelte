@@ -78,9 +78,23 @@
   };
 
   type DrillResult = {
+    contract: string;
     cardLabel: string;
     outcome: GuidedCardOutcome | "illegal";
     clean: boolean;
+  };
+
+  type PlayBarbuAttempt = {
+    id: string;
+    completedAt: string;
+    results: DrillResult[];
+  };
+
+  type ContractResultSummary = {
+    contract: string;
+    clean: number;
+    total: number;
+    outcome: GuidedCardOutcome | "illegal";
   };
 
   const gameCatalog: CatalogGame[] = [
@@ -121,6 +135,8 @@
   const learningSteps = ["Concepts", "Examples", "Guided tricks", "Practice", "Review"];
   const progressStorageKey = "barbu.courseProgress.v1";
   const practiceSeedStorageKey = "barbu.practiceSeed.v1";
+  const playBarbuHistoryStorageKey = "barbu.playHistory.v1";
+  const maxStoredPlayBarbuAttempts = 8;
   const outcomeLabels: Record<GuidedCardOutcome | "illegal", string> = {
     best: "Best play",
     safe: "Safe play",
@@ -337,6 +353,7 @@
   let activeReferenceId = referenceCatalog[0].id;
   let activeCourseStage: CourseStage = "concept";
   let completedPathSteps: Record<string, boolean> = loadCourseProgress();
+  let playBarbuHistory: PlayBarbuAttempt[] = loadPlayBarbuHistory();
   let usingGeneratedPractice = false;
   let generatedPracticeError = "";
 
@@ -380,6 +397,9 @@
   $: drillOutcome = drillCheckedCard ? buildDrillOutcome(drillCheckedCard) : "";
   $: drillFeedback = drillCheckedCard ? buildDrillFeedback(drillCheckedCard) : currentDrillTrick.emptyExplanation;
   $: cleanDrillCount = drillResults.filter((result) => result.clean).length;
+  $: currentContractResults = summarizeContractResults(drillResults);
+  $: weakContract = weakestContractFromResults(currentContractResults);
+  $: recentPlayBarbuAttempts = playBarbuHistory.slice(0, 3);
 
   function loadCourseProgress() {
     if (typeof localStorage === "undefined") {
@@ -399,6 +419,27 @@
 
     if (typeof localStorage !== "undefined") {
       localStorage.setItem(progressStorageKey, JSON.stringify(nextProgress));
+    }
+  }
+
+  function loadPlayBarbuHistory(): PlayBarbuAttempt[] {
+    if (typeof localStorage === "undefined") {
+      return [];
+    }
+
+    try {
+      const storedHistory = localStorage.getItem(playBarbuHistoryStorageKey);
+      return storedHistory ? (JSON.parse(storedHistory) as PlayBarbuAttempt[]) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function savePlayBarbuHistory(nextHistory: PlayBarbuAttempt[]) {
+    playBarbuHistory = nextHistory.slice(0, maxStoredPlayBarbuAttempts);
+
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(playBarbuHistoryStorageKey, JSON.stringify(playBarbuHistory));
     }
   }
 
@@ -498,6 +539,41 @@
     } catch {
       activeDrillSteps = generateBrowserPlayBarbuDrillSteps(seed);
       drillSetTitle = "Play Barbu";
+    }
+
+    drillIndex = 0;
+    drillResults = [];
+    resetDrillDecision();
+    appView = "drill";
+  }
+
+  async function replayWeakContract() {
+    const replayContract = weakContract;
+
+    if (!replayContract) {
+      await startDailyDrill();
+      return;
+    }
+
+    drillIndex = 0;
+    drillResults = [];
+    drillSetTitle = `Replay ${replayContract}`;
+    resetDrillDecision();
+    const seed = usePracticeSeed();
+
+    try {
+      const drillSet = await invoke<GeneratedDrillSet>("generate_daily_drill_set", {
+        seed
+      });
+      activeDrillSteps = drillSet.scenarios
+        .map(drillStepFromGeneratedScenario)
+        .filter((step) => step.contract === replayContract);
+    } catch {
+      activeDrillSteps = generateBrowserPlayBarbuDrillSteps(seed).filter((step) => step.contract === replayContract);
+    }
+
+    if (activeDrillSteps.length === 0) {
+      activeDrillSteps = drillSteps.filter((step) => step.contract === replayContract);
     }
 
     drillIndex = 0;
@@ -670,6 +746,7 @@
     drillResults = [
       ...drillResults,
       {
+        contract: currentDrill.contract,
         cardLabel: drillSelectedCard.label,
         outcome,
         clean: cleanDrillOutcomes.includes(outcome)
@@ -679,6 +756,7 @@
 
   function continueDrill() {
     if (drillIndex === activeDrillSteps.length - 1) {
+      saveCompletedDrillSession();
       appView = "drillResult";
       return;
     }
@@ -728,6 +806,70 @@
       title: scenario.title,
       trick: guidedTrickFromGeneratedScenario(scenario)
     };
+  }
+
+  function saveCompletedDrillSession() {
+    if (drillResults.length === 0) {
+      return;
+    }
+
+    savePlayBarbuHistory([
+      {
+        id: `${Date.now()}-${drillResults.length}`,
+        completedAt: new Date().toISOString(),
+        results: drillResults
+      },
+      ...playBarbuHistory
+    ]);
+  }
+
+  function summarizeContractResults(results: DrillResult[]): ContractResultSummary[] {
+    const summaries = new Map<string, ContractResultSummary>();
+
+    for (const result of results) {
+      const summary = summaries.get(result.contract) ?? {
+        contract: result.contract,
+        clean: 0,
+        total: 0,
+        outcome: result.outcome
+      };
+
+      summary.total += 1;
+      summary.clean += result.clean ? 1 : 0;
+      summary.outcome = worstOutcome(summary.outcome, result.outcome);
+      summaries.set(result.contract, summary);
+    }
+
+    return Array.from(summaries.values());
+  }
+
+  function weakestContractFromResults(summaries: ContractResultSummary[]) {
+    if (summaries.length === 0) {
+      return "";
+    }
+
+    return [...summaries].sort((left, right) => {
+      const leftRate = left.clean / left.total;
+      const rightRate = right.clean / right.total;
+      return leftRate - rightRate || outcomeSeverity(right.outcome) - outcomeSeverity(left.outcome);
+    })[0].contract;
+  }
+
+  function worstOutcome(left: GuidedCardOutcome | "illegal", right: GuidedCardOutcome | "illegal") {
+    return outcomeSeverity(right) > outcomeSeverity(left) ? right : left;
+  }
+
+  function outcomeSeverity(outcome: GuidedCardOutcome | "illegal") {
+    const severity: Record<GuidedCardOutcome | "illegal", number> = {
+      best: 0,
+      safe: 0,
+      forced: 1,
+      risky: 2,
+      penalty: 3,
+      illegal: 4
+    };
+
+    return severity[outcome];
   }
 
   function cardClasses(card: Card) {
@@ -1231,14 +1373,40 @@
         {#each drillResults as result, index}
           <div>
             <span>{index + 1}</span>
-            <strong>{result.cardLabel}</strong>
+            <strong>{result.contract}</strong>
             <small>{outcomeLabels[result.outcome]}</small>
+            <em>{result.cardLabel}</em>
           </div>
         {/each}
       </div>
 
+      <div class="contract-result-list" aria-label="Contract results">
+        {#each currentContractResults as result}
+          <div>
+            <span>{result.clean === result.total ? "Clean" : outcomeLabels[result.outcome]}</span>
+            <strong>{result.contract}</strong>
+            <small>{result.clean} / {result.total} clean</small>
+          </div>
+        {/each}
+      </div>
+
+      {#if recentPlayBarbuAttempts.length}
+        <div class="recent-attempt-list" aria-label="Recent Play Barbu attempts">
+          <p class="eyebrow">Recent tables</p>
+          {#each recentPlayBarbuAttempts as attempt}
+            <div>
+              <strong>{attempt.results.filter((result) => result.clean).length} / {attempt.results.length} clean</strong>
+              <small>{attempt.results.map((result) => result.contract).join(" · ")}</small>
+            </div>
+          {/each}
+        </div>
+      {/if}
+
       <div class="course-actions">
         <button class="secondary-action" onclick={() => void startDailyDrill()} type="button">Try again</button>
+        <button class="secondary-action" onclick={() => void replayWeakContract()} type="button">
+          Replay {weakContract || "table"}
+        </button>
         <button class="primary-action" onclick={continueCourse} type="button">Continue path</button>
       </div>
     </section>

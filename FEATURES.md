@@ -24,6 +24,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Barbu table with contract entry points.
 - Five-step training path: concept, example, guided trick, practice, review.
 - Play Barbu mode with three quick mixed-contract decisions, immediate feedback, and a compact result.
+- Local Play Barbu result history with contract-level summaries and focused replay for the weakest contract.
 - Local course progress for the playable Barbu path.
 - Continue action for the next unfinished step.
 - Completed-course state with review and reset actions.
@@ -48,7 +49,7 @@ These are the next product increments that keep the app coherent.
    - Keep copy short and original.
 
 2. Drill Loop v2
-   - Track attempts, clean decisions, and replay results locally.
+   - Expand recent-attempt display into a small habit loop.
    - Keep explanations to one sentence unless the player asks for more.
 
 3. Outcome Model in Core
@@ -88,6 +89,7 @@ These are the next product increments that keep the app coherent.
 - No full multiplayer.
 - No account system.
 - No cloud sync.
+- No server backend for progress or practice history.
 - No subscription plumbing.
 - No large decorative redesign.
 - No AI opponent until rules, scoring, and lesson progression are stable.

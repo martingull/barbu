@@ -975,6 +975,62 @@ h2 {
   font-weight: 900;
 }
 
+.drill-result-list em {
+  grid-column: 2 / -1;
+  color: #53604d;
+  font-size: 0.82rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.contract-result-list,
+.recent-attempt-list {
+  display: grid;
+  gap: 8px;
+}
+
+.contract-result-list div,
+.recent-attempt-list div {
+  display: grid;
+  gap: 4px;
+  min-height: 62px;
+  padding: 12px;
+  border: 1px solid #c7d0c0;
+  border-radius: 8px;
+  background: #f2f5ed;
+}
+
+.contract-result-list span {
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #dfe8d9;
+  color: #284f40;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.contract-result-list strong,
+.recent-attempt-list strong {
+  color: #17201a;
+  font-size: 0.98rem;
+}
+
+.contract-result-list small,
+.recent-attempt-list small {
+  color: #53604d;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.recent-attempt-list {
+  grid-column: 1 / -1;
+}
+
+.recent-attempt-list .eyebrow {
+  margin: 4px 0 0;
+}
+
 .card {
   display: grid;
   grid-template-rows: 1fr auto;
