@@ -25,6 +25,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Five-step training path: concept, example, guided trick, practice, review.
 - Play Barbu mode with three quick mixed-contract decisions, immediate feedback, and a compact result.
 - Training path practice step connected to Play Barbu completion.
+- Review step with latest Play Barbu score, weakest-contract advice, recent attempts, and replay actions.
 - Local Play Barbu result history with contract-level summaries and focused replay for the weakest contract.
 - Local course progress for the playable Barbu path.
 - Continue action for the next unfinished step.
@@ -44,31 +45,26 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 
 These are the next product increments that keep the app coherent.
 
-1. Course Content v1
-   - Add course content for generated practice.
-   - Keep each authored contract on the same concept, example, guided play, review structure.
-   - Keep copy short and original.
-
-2. Drill Loop v2
+1. Drill Loop v2
    - Expand recent-attempt display into a small habit loop.
    - Keep explanations to one sentence unless the player asks for more.
 
-3. Outcome Model in Core
+2. Outcome Model in Core
    - Promote authored outcome metadata into shared content or Rust primitives.
    - Return structured outcomes from lesson data or Rust: correct, safe, risky, illegal, penalty.
    - Use the same model for authored and generated practice.
 
-4. Generated Practice Expansion
+3. Generated Practice Expansion
    - Expand generated drills beyond one pattern per contract.
    - Keep commands thin and deterministic.
    - Add Rust tests for every drill generator.
 
-5. Progress Model v2
+4. Progress Model v2
    - Store completion by lesson node, not only path step.
    - Track attempts, last result, and review due state.
    - Keep it local until the app needs sync or accounts.
 
-6. Reference Layer v1
+5. Reference Layer v1
    - Add structured reference pages for the next supported games using Parlett as the baseline source.
    - Continue expanding object, players, cards, deal, play, scoring, variants, and tactical ideas.
    - Link reference sections from lessons without making rules pages the main flow.

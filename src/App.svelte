@@ -17,9 +17,17 @@
   } from "./lessonTypes";
   import type { GameReference } from "./referenceCatalog";
 
-  type AppView = "catalog" | "barbuTable" | "reference" | "courseContent" | "lesson" | "drill" | "drillResult";
+  type AppView =
+    | "catalog"
+    | "barbuTable"
+    | "reference"
+    | "courseContent"
+    | "lesson"
+    | "drill"
+    | "drillResult"
+    | "pathReview";
 
-  type PathAction = "lesson" | "generated" | "planned";
+  type PathAction = "lesson" | "generated" | "review" | "planned";
   type CourseStage = "concept" | "example" | "review";
 
   type CatalogGame = {
@@ -183,8 +191,8 @@
       id: "review",
       step: "Review",
       title: "Review the hand",
-      summary: "Coming next: summarize mistakes, penalties, and contract habits.",
-      action: "planned"
+      summary: "Review your latest table and choose what to practice next.",
+      action: "review"
     }
   ];
 
@@ -400,6 +408,12 @@
   $: currentContractResults = summarizeContractResults(drillResults);
   $: weakContract = weakestContractFromResults(currentContractResults);
   $: recentPlayBarbuAttempts = playBarbuHistory.slice(0, 3);
+  $: latestPlayBarbuAttempt = playBarbuHistory[0];
+  $: reviewResults = latestPlayBarbuAttempt?.results ?? [];
+  $: reviewContractResults = summarizeContractResults(reviewResults);
+  $: reviewWeakContract = weakestContractFromResults(reviewContractResults);
+  $: reviewCleanCount = reviewResults.filter((result) => result.clean).length;
+  $: reviewAdvice = adviceForContract(reviewWeakContract);
 
   function loadCourseProgress() {
     if (typeof localStorage === "undefined") {
@@ -514,6 +528,11 @@
     appView = "reference";
   }
 
+  function openPathReview() {
+    activePathStepId = "review";
+    appView = "pathReview";
+  }
+
   function openGame(gameId: string) {
     if (gameId !== "barbu") {
       return;
@@ -556,6 +575,21 @@
       return;
     }
 
+    await startContractReplay(replayContract);
+  }
+
+  async function replayReviewWeakContract() {
+    const replayContract = reviewWeakContract;
+
+    if (!replayContract) {
+      await startDailyDrill();
+      return;
+    }
+
+    await startContractReplay(replayContract);
+  }
+
+  async function startContractReplay(replayContract: string) {
     drillIndex = 0;
     drillResults = [];
     drillSetTitle = `Replay ${replayContract}`;
@@ -658,6 +692,11 @@
 
     if (step.action === "generated") {
       void startGeneratedDrill();
+      return;
+    }
+
+    if (step.action === "review") {
+      openPathReview();
     }
   }
 
@@ -724,6 +763,11 @@
 
   function resetCourseProgress() {
     saveCourseProgress({});
+  }
+
+  function finishPathReview() {
+    saveCourseProgress({ ...completedPathSteps, review: true });
+    openBarbuTable();
   }
 
   function selectDrillCard(card: Card) {
@@ -872,6 +916,22 @@
     };
 
     return severity[outcome];
+  }
+
+  function adviceForContract(contract: string) {
+    if (contract === "No Hearts") {
+      return "Before choosing, ask who is winning the trick and whether a heart is already loaded.";
+    }
+
+    if (contract === "No Queens") {
+      return "Find the queen, then avoid becoming the player who captures that trick.";
+    }
+
+    if (contract === "King of Hearts") {
+      return "Track KH first; low hearts and safe discards are usually your escape route.";
+    }
+
+    return "Play another table to give Barbu enough decisions to review.";
   }
 
   function cardClasses(card: Card) {
@@ -1044,7 +1104,7 @@
           <button class="drill-action" onclick={() => void startDailyDrill()} type="button">Play Barbu</button>
           <button class="reference-action" onclick={() => openReference("barbu")} type="button">Reference</button>
           {#if isCourseComplete}
-            <button class="continue-action" onclick={() => startLesson(guidedLessons[0].id)} type="button">Review No Hearts</button>
+            <button class="continue-action" onclick={openPathReview} type="button">Review results</button>
             <button class="reset-progress-action" onclick={resetCourseProgress} type="button">Reset path</button>
           {:else if nextPathStep}
             <button class="continue-action" onclick={continueCourse} type="button">
@@ -1410,6 +1470,73 @@
           Replay {weakContract || "table"}
         </button>
         <button class="primary-action" onclick={continueCourse} type="button">Continue path</button>
+      </div>
+    </section>
+  {:else if appView === "pathReview"}
+    <header class="topbar" aria-label="Barbu review">
+      <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
+      <div>
+        <p class="eyebrow">Review</p>
+        <h1>Review the hand</h1>
+      </div>
+      <div class="contract-status">
+        <span>Latest</span>
+        <strong>{reviewCleanCount} of {reviewResults.length} clean</strong>
+      </div>
+    </header>
+
+    <section class="drill-result-screen" aria-label="Review results">
+      <div class="drill-score-card">
+        <p class="eyebrow">Latest table</p>
+        <h2>
+          {#if reviewResults.length}
+            {reviewCleanCount} / {reviewResults.length} clean decisions
+          {:else}
+            No table yet
+          {/if}
+        </h2>
+        <p>{reviewAdvice}</p>
+      </div>
+
+      {#if reviewContractResults.length}
+        <div class="contract-result-list" aria-label="Review contract results">
+          {#each reviewContractResults as result}
+            <div>
+              <span>{result.clean === result.total ? "Clean" : outcomeLabels[result.outcome]}</span>
+              <strong>{result.contract}</strong>
+              <small>{result.clean} / {result.total} clean</small>
+            </div>
+          {/each}
+        </div>
+      {:else}
+        <div class="contract-result-list" aria-label="Review contract results">
+          <div>
+            <span>Ready</span>
+            <strong>Play Barbu</strong>
+            <small>Finish a practice table to unlock review feedback.</small>
+          </div>
+        </div>
+      {/if}
+
+      {#if recentPlayBarbuAttempts.length}
+        <div class="recent-attempt-list" aria-label="Review recent attempts">
+          <p class="eyebrow">Recent tables</p>
+          {#each recentPlayBarbuAttempts as attempt}
+            <div>
+              <strong>{attempt.results.filter((result) => result.clean).length} / {attempt.results.length} clean</strong>
+              <small>{attempt.results.map((result) => result.contract).join(" · ")}</small>
+            </div>
+          {/each}
+        </div>
+      {/if}
+
+      <div class="course-actions">
+        <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
+        <button class="secondary-action" onclick={() => void replayReviewWeakContract()} type="button">
+          Replay {reviewWeakContract || "table"}
+        </button>
+        <button class="secondary-action" onclick={() => void startDailyDrill("generated-drill")} type="button">Play Barbu</button>
+        <button class="primary-action" onclick={finishPathReview} type="button">Finish review</button>
       </div>
     </section>
   {:else}

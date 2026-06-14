@@ -143,7 +143,7 @@ test("finishing a lesson advances course progress", async ({ page }, testInfo) =
   await page.getByRole("button", { name: "Finish No Hearts" }).click();
 
   await expect(page.getByRole("heading", { name: "Barbu's table" })).toBeVisible();
-  await expect(page.getByText("1 / 4 complete")).toBeVisible();
+  await expect(page.getByText("1 / 5 complete")).toBeVisible();
   await expect(page.getByRole("button", { name: /Continue with Spot the danger/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Meet the contract/ })).toContainText("Complete");
 });
@@ -180,7 +180,7 @@ test("No Queens course has concept example play and review", async ({ page }) =>
   await expect(page.getByText("No Queens rewards patience")).toBeVisible();
   await page.getByRole("button", { name: "Finish No Queens" }).click();
 
-  await expect(page.getByText("2 / 4 complete")).toBeVisible();
+  await expect(page.getByText("2 / 5 complete")).toBeVisible();
   await expect(page.getByRole("button", { name: /Continue with Play the trick/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Spot the danger/ })).toContainText("Complete");
 });
@@ -219,7 +219,7 @@ test("King of Hearts course has concept example play and review", async ({ page 
   await expect(page.getByText("locate KH, then ask who wins this trick")).toBeVisible();
   await page.getByRole("button", { name: "Finish King of Hearts" }).click();
 
-  await expect(page.getByText("3 / 4 complete")).toBeVisible();
+  await expect(page.getByText("3 / 5 complete")).toBeVisible();
   await expect(page.getByRole("button", { name: /Continue with Practice table/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Play the trick/ })).toContainText("Complete");
 });
@@ -251,8 +251,14 @@ test("training path practice step starts Play Barbu and marks completion", async
   await expect(page.getByRole("heading", { name: "Game complete" })).toBeVisible();
   await page.getByRole("button", { name: "Continue path" }).click();
 
-  await expect(page.getByText("4 / 4 complete")).toBeVisible();
-  await expect(page.getByRole("button", { name: /Practice table/ })).toContainText("Complete");
+  await expect(page.getByRole("heading", { name: "Review the hand" })).toBeVisible();
+  await expect(page.getByLabel("Review contract results")).toContainText("No Hearts");
+  await expect(page.getByLabel("Review recent attempts")).toContainText("3 / 3 clean");
+  await expect(page.getByRole("button", { name: "Replay No Hearts" })).toBeVisible();
+  await page.getByRole("button", { name: "Finish review" }).click();
+
+  await expect(page.getByText("5 / 5 complete")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Review the hand/ })).toContainText("Complete");
 });
 
 test("completed course does not loop back to the first lesson", async ({ page }) => {
@@ -263,7 +269,8 @@ test("completed course does not loop back to the first lesson", async ({ page })
         "meet-contract": true,
         "spot-danger": true,
         "play-trick": true,
-        "generated-drill": true
+        "generated-drill": true,
+        review: true
       })
     );
   });
@@ -271,8 +278,8 @@ test("completed course does not loop back to the first lesson", async ({ page })
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
 
-  await expect(page.getByText("4 / 4 complete")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Review No Hearts" })).toBeVisible();
+  await expect(page.getByText("5 / 5 complete")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Review results" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Reset path" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Continue with Meet the contract/ })).toHaveCount(0);
 });
