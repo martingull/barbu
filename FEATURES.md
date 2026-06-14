@@ -23,7 +23,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Game catalog with Barbu as the first playable table.
 - Barbu table with contract entry points.
 - Five-step training path: concept, example, guided trick, practice, review.
-- Play Barbu mode with three quick No Hearts decisions, immediate feedback, and a compact result.
+- Play Barbu mode with three quick mixed-contract decisions, immediate feedback, and a compact result.
 - Local course progress for the playable Barbu path.
 - Continue action for the next unfinished step.
 - Completed-course state with review and reset actions.
@@ -34,7 +34,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Authored lessons for No Hearts, No Queens, and King of Hearts.
 - Structured outcome metadata for authored guided card choices.
 - Compact outcome labels for guided decisions.
-- Generated No Hearts follow-suit drill and three-decision Play Barbu set via Rust/Tauri.
+- Generated No Hearts, No Queens, and King of Hearts Play Barbu set via Rust/Tauri.
 - Browser generated fallback for Play Barbu when Tauri is unavailable.
 - Playwright smoke tests for catalog, Barbu table, lesson flow, generated fallback, and course-complete behavior.
 
@@ -48,7 +48,6 @@ These are the next product increments that keep the app coherent.
    - Keep copy short and original.
 
 2. Drill Loop v2
-   - Mix No Queens and King of Hearts generated scenarios into the Rust drill set.
    - Track attempts, clean decisions, and replay results locally.
    - Keep explanations to one sentence unless the player asks for more.
 
@@ -58,7 +57,7 @@ These are the next product increments that keep the app coherent.
    - Use the same model for authored and generated practice.
 
 4. Generated Practice Expansion
-   - Add generated drills for No Queens and King of Hearts.
+   - Expand generated drills beyond one pattern per contract.
    - Keep commands thin and deterministic.
    - Add Rust tests for every drill generator.
 

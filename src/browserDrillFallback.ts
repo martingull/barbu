@@ -8,7 +8,7 @@ type BrowserDrillStep = {
 
 type Rank = "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "J" | "Q" | "K" | "A";
 
-const ledSuits: Suit[] = ["C", "D", "S"];
+const nonHeartSuits: Suit[] = ["C", "D", "S"];
 const suitNames: Record<Suit, string> = {
   C: "clubs",
   D: "diamonds",
@@ -32,13 +32,17 @@ const rankOrder: Record<Rank, number> = {
   A: 14
 };
 
-export function generateBrowserNoHeartsDrillSteps(seed: number): BrowserDrillStep[] {
-  return [0, 1, 2].map((offset) => generatedNoHeartsStep(seed * 3 + offset));
+export function generateBrowserPlayBarbuDrillSteps(seed: number): BrowserDrillStep[] {
+  return [
+    generatedNoHeartsStep(seed * 3),
+    generatedNoQueensStep(seed * 3 + 1),
+    generatedKingOfHeartsStep(seed * 3 + 2)
+  ];
 }
 
 function generatedNoHeartsStep(seed: number): BrowserDrillStep {
   const rng = new DeterministicRng(seed);
-  const ledSuit = choose(rng, ledSuits);
+  const ledSuit = choose(rng, nonHeartSuits);
   const leadCard = card(choose(rng, ["7", "8", "9", "10"]), ledSuit);
   const heartCard = card(choose(rng, ["4", "5", "6", "7"]), "H");
   const lowPlayerCard = card(choose(rng, ["2", "3", "4", "5"]), ledSuit);
@@ -71,6 +75,85 @@ function generatedNoHeartsStep(seed: number): BrowserDrillStep {
       cardOutcomes: {
         [lowPlayerCard.id]: "best",
         [highPlayerCard.id]: "safe"
+      }
+    }
+  };
+}
+
+function generatedNoQueensStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const ledSuit = choose(rng, nonHeartSuits);
+  const leadCard = card(choose(rng, ["5", "6", "7", "8"]), ledSuit);
+  const queenCard = card("Q", ledSuit);
+  const rightCard = card(choose(rng, ["7", "8", "9", "10"]), ledSuit);
+  const lowPlayerCard = card(choose(rng, ["2", "3", "4"]), ledSuit);
+  const highPlayerCard = card(choose(rng, ["K", "A"]), ledSuit);
+  const offSuitCard = card(choose(rng, ["4", "5", "6", "7"]), firstNonMatchingSuit(ledSuit, "H"));
+  const playerHand = [lowPlayerCard, highPlayerCard, card("9", "H"), offSuitCard].sort(compareCards);
+  const ledSuitName = suitNames[ledSuit];
+
+  return {
+    contract: "No Queens",
+    title: "Duck the queen trick",
+    trick: {
+      title: "Duck the queen trick",
+      beforeResult: `Left led ${leadCard.label}. Tutor played ${queenCard.label}. Right followed ${rightCard.label}.`,
+      afterResult: `The trick contains ${queenCard.label}. The winner takes the queen penalty.`,
+      emptyExplanation: `${capitalize(ledSuitName)} were led. Choose a ${ledSuitName} card without capturing the queen.`,
+      legalCardIds: [lowPlayerCard.id, highPlayerCard.id],
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Left", card: leadCard },
+        { seat: "Tutor", card: queenCard },
+        { seat: "Right", card: rightCard }
+      ],
+      tableAfterChoice: [],
+      pendingBySeat: { You: "You" },
+      playedExplanations: {
+        [lowPlayerCard.id]: `${lowPlayerCard.label} follows ${ledSuitName} and leaves the queen with Tutor.`,
+        [highPlayerCard.id]: `${highPlayerCard.label} follows ${ledSuitName} but captures ${queenCard.label}.`
+      },
+      cardOutcomes: {
+        [lowPlayerCard.id]: "best",
+        [highPlayerCard.id]: "penalty"
+      }
+    }
+  };
+}
+
+function generatedKingOfHeartsStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const leadCard = card(choose(rng, ["9", "10", "J"]), "H");
+  const kingCard = card("K", "H");
+  const lowPlayerCard = card(choose(rng, ["2", "3", "4", "5"]), "H");
+  const highPlayerCard = card("A", "H");
+  const leftCard = card("Q", "H");
+  const offSuitCard = card(choose(rng, ["7", "8", "9", "10"]), choose(rng, nonHeartSuits));
+  const playerHand = [lowPlayerCard, highPlayerCard, card("Q", "S"), offSuitCard].sort(compareCards);
+
+  return {
+    contract: "King of Hearts",
+    title: "Stay under the king",
+    trick: {
+      title: "Stay under the king",
+      beforeResult: `Tutor led ${leadCard.label}. Right played ${kingCard.label}, the contract card.`,
+      afterResult: `The trick contains ${kingCard.label}. The winner takes the king of hearts penalty.`,
+      emptyExplanation: "Hearts were led. Choose a heart that does not capture KH.",
+      legalCardIds: [lowPlayerCard.id, highPlayerCard.id],
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Tutor", card: leadCard },
+        { seat: "Right", card: kingCard }
+      ],
+      tableAfterChoice: [{ seat: "Left", card: leftCard }],
+      pendingBySeat: { Left: leftCard.label, You: "You" },
+      playedExplanations: {
+        [lowPlayerCard.id]: `${lowPlayerCard.label} follows hearts and stays below KH.`,
+        [highPlayerCard.id]: `${highPlayerCard.label} follows hearts but captures KH.`
+      },
+      cardOutcomes: {
+        [lowPlayerCard.id]: "best",
+        [highPlayerCard.id]: "penalty"
       }
     }
   };

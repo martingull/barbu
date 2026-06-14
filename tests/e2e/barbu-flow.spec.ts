@@ -67,12 +67,13 @@ test("Barbu reference exposes baseline rules and varieties", async ({ page }, te
   await page.screenshot({ path: testInfo.outputPath("barbu-reference.png"), fullPage: true });
 });
 
-test("Play Barbu gives three quick decisions and a result", async ({ page }, testInfo) => {
+test("Play Barbu gives three mixed-contract decisions and a result", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
   await page.getByRole("button", { name: "Play Barbu" }).click();
 
   await expect(page.getByRole("heading", { name: "Play Barbu" })).toBeVisible();
+  await expect(page.getByText("No Hearts").first()).toBeVisible();
   await expect(page.getByText("Decision 1 of 3")).toBeVisible();
 
   await page.locator(".hand-card.legal").first().click();
@@ -80,12 +81,14 @@ test("Play Barbu gives three quick decisions and a result", async ({ page }, tes
   await expect(page.getByText("Best play")).toBeVisible();
   await page.getByRole("button", { name: "Next table" }).click();
 
+  await expect(page.getByText("No Queens").first()).toBeVisible();
   await expect(page.getByText("Decision 2 of 3")).toBeVisible();
   await page.locator(".hand-card.legal").first().click();
   await page.getByRole("button", { name: "Check answer" }).click();
   await expect(page.getByText("Best play")).toBeVisible();
   await page.getByRole("button", { name: "Next table" }).click();
 
+  await expect(page.getByText("King of Hearts").first()).toBeVisible();
   await expect(page.getByText("Decision 3 of 3")).toBeVisible();
   await page.locator(".hand-card.legal").first().click();
   await page.getByRole("button", { name: "Check answer" }).click();
@@ -97,7 +100,7 @@ test("Play Barbu gives three quick decisions and a result", async ({ page }, tes
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Continue path" })).toBeVisible();
 
-  await page.screenshot({ path: testInfo.outputPath("daily-drill-result.png"), fullPage: true });
+  await page.screenshot({ path: testInfo.outputPath("play-barbu-result.png"), fullPage: true });
 });
 
 test("finishing a lesson advances course progress", async ({ page }, testInfo) => {

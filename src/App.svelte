@@ -1,6 +1,6 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
-  import { generateBrowserNoHeartsDrillSteps } from "./browserDrillFallback";
+  import { generateBrowserPlayBarbuDrillSteps } from "./browserDrillFallback";
   import CardTable from "./CardTable.svelte";
   import { guidedLessons } from "./lessons/catalog";
   import { referenceCatalog } from "./referenceCatalog";
@@ -120,6 +120,7 @@
 
   const learningSteps = ["Concepts", "Examples", "Guided tricks", "Practice", "Review"];
   const progressStorageKey = "barbu.courseProgress.v1";
+  const practiceSeedStorageKey = "barbu.practiceSeed.v1";
   const outcomeLabels: Record<GuidedCardOutcome | "illegal", string> = {
     best: "Best play",
     safe: "Safe play",
@@ -159,7 +160,7 @@
       id: "generated-drill",
       step: "Practice",
       title: "Generated drill",
-      summary: "Practice fresh No Hearts follow-suit situations from the Rust engine.",
+      summary: "Practice a fresh generated table from the Rust engine.",
       action: "generated"
     },
     {
@@ -328,7 +329,7 @@
   let drillResults: DrillResult[] = [];
   let activeDrillSteps: DrillStep[] = drillSteps;
   let drillSetTitle = "Play Barbu";
-  let practiceSeed = 1;
+  let practiceSeed = loadPracticeSeed();
   let selectedLessonId = guidedLessons[0].id;
   let activeTricks: GuidedTrick[] = guidedLessons[0].tricks;
   let activePathStepId = "";
@@ -401,6 +402,32 @@
     }
   }
 
+  function loadPracticeSeed() {
+    if (typeof localStorage === "undefined") {
+      return 1;
+    }
+
+    const storedSeed = Number(localStorage.getItem(practiceSeedStorageKey));
+
+    if (Number.isInteger(storedSeed) && storedSeed > 0) {
+      return storedSeed;
+    }
+
+    const dateSeed = Math.floor(Date.now() / 1000) % 1_000_000;
+    return Math.max(1, dateSeed);
+  }
+
+  function usePracticeSeed() {
+    const seed = practiceSeed;
+    practiceSeed += 1;
+
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(practiceSeedStorageKey, String(practiceSeed));
+    }
+
+    return seed;
+  }
+
   function selectCard(card: Card) {
     if (playedCardId) {
       return;
@@ -459,18 +486,17 @@
     drillResults = [];
     drillSetTitle = "Play Barbu";
     resetDrillDecision();
+    const seed = usePracticeSeed();
 
     try {
       const drillSet = await invoke<GeneratedDrillSet>("generate_daily_drill_set", {
-        seed: practiceSeed
+        seed
       });
 
-      practiceSeed += 1;
       activeDrillSteps = drillSet.scenarios.map(drillStepFromGeneratedScenario);
       drillSetTitle = drillSet.title;
     } catch {
-      activeDrillSteps = generateBrowserNoHeartsDrillSteps(practiceSeed);
-      practiceSeed += 1;
+      activeDrillSteps = generateBrowserPlayBarbuDrillSteps(seed);
       drillSetTitle = "Play Barbu";
     }
 
@@ -765,6 +791,10 @@
   function guidedOutcomeFromGeneratedOutcome(outcome: GeneratedPracticeOutcome): GuidedCardOutcome {
     if (outcome.winner === "You" && outcome.penalty && outcome.penalty > 0) {
       return "penalty";
+    }
+
+    if (outcome.winner && outcome.winner !== "You" && outcome.penalty && outcome.penalty > 0) {
+      return "best";
     }
 
     return outcome.winner === "You" ? "risky" : "safe";

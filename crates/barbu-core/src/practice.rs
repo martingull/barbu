@@ -6,11 +6,19 @@ pub struct PracticeScenario {
     pub id: String,
     pub title: String,
     pub contract: String,
+    pub contract_kind: PracticeContractKind,
     pub led_suit: Suit,
     pub prompt: String,
     pub table_before_choice: Vec<PlayedCard>,
     pub player_hand: Vec<Card>,
     pub table_after_choice: Vec<PlayedCard>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PracticeContractKind {
+    NoHearts,
+    NoQueens,
+    KingOfHearts,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -62,7 +70,7 @@ impl PracticeScenario {
             .completed_trick(player_card)
             .expect("legal card should complete the trick");
         let winner = trick_winner(&completed_trick).expect("completed trick should have a winner");
-        let penalty = score_no_hearts_trick(&completed_trick);
+        let penalty = score_practice_trick(self.contract_kind, &completed_trick);
         let winner_name = player_name(winner);
 
         PracticeOutcome {
@@ -74,18 +82,18 @@ impl PracticeScenario {
             completed_trick: Some(completed_trick),
             explanation: if penalty == 0 {
                 format!(
-                    "{} follows {}. {} wins the trick, and no hearts were played.",
+                    "{} follows {}. {} wins the trick, and no penalty card was captured.",
                     player_card,
                     suit_name(self.led_suit),
                     winner_name
                 )
             } else {
                 format!(
-                    "{} follows {}. {} wins the trick and takes {} heart penalty.",
+                    "{} follows {}. {} wins the trick and takes {}.",
                     player_card,
                     suit_name(self.led_suit),
                     winner_name,
-                    penalty
+                    penalty_label(self.contract_kind, penalty)
                 )
             },
         }
@@ -131,6 +139,7 @@ pub fn generate_no_hearts_follow_suit(seed: u64) -> PracticeScenario {
         id: format!("no-hearts-follow-suit-{seed}"),
         title: "Follow suit with a heart at risk".to_string(),
         contract: "No Hearts".to_string(),
+        contract_kind: PracticeContractKind::NoHearts,
         led_suit,
         prompt: format!(
             "Tutor led {lead_card}. Right is void in {} and discarded {heart_card}. Choose a legal card.",
@@ -142,17 +151,104 @@ pub fn generate_no_hearts_follow_suit(seed: u64) -> PracticeScenario {
     }
 }
 
+pub fn generate_no_queens_capture(seed: u64) -> PracticeScenario {
+    let mut rng = DeterministicRng::new(seed);
+    let led_suits = [Suit::Clubs, Suit::Diamonds, Suit::Spades];
+    let led_suit = led_suits[rng.next_usize(led_suits.len())];
+    let off_suit = first_non_matching_suit(led_suit, Suit::Hearts);
+
+    let lead_rank = choose(&mut rng, &[Rank::Five, Rank::Six, Rank::Seven, Rank::Eight]);
+    let right_rank = choose(&mut rng, &[Rank::Seven, Rank::Eight, Rank::Nine, Rank::Ten]);
+    let low_player_rank = choose(&mut rng, &[Rank::Two, Rank::Three, Rank::Four]);
+    let high_player_rank = choose(&mut rng, &[Rank::King, Rank::Ace]);
+    let off_rank = choose(&mut rng, &[Rank::Four, Rank::Five, Rank::Six, Rank::Seven]);
+
+    let lead_card = Card::new(lead_rank, led_suit);
+    let queen_card = Card::new(Rank::Queen, led_suit);
+    let right_card = Card::new(right_rank, led_suit);
+
+    let mut player_hand = vec![
+        Card::new(low_player_rank, led_suit),
+        Card::new(high_player_rank, led_suit),
+        Card::new(Rank::Nine, Suit::Hearts),
+        Card::new(off_rank, off_suit),
+    ];
+    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+
+    PracticeScenario {
+        id: format!("no-queens-capture-{seed}"),
+        title: "Duck the queen trick".to_string(),
+        contract: "No Queens".to_string(),
+        contract_kind: PracticeContractKind::NoQueens,
+        led_suit,
+        prompt: format!(
+            "Left led {lead_card}. Tutor played {queen_card}. Right followed {right_card}. Choose without capturing the queen."
+        ),
+        table_before_choice: vec![
+            PlayedCard::new(3, lead_card),
+            PlayedCard::new(0, queen_card),
+            PlayedCard::new(1, right_card),
+        ],
+        player_hand,
+        table_after_choice: vec![],
+    }
+}
+
+pub fn generate_king_of_hearts_capture(seed: u64) -> PracticeScenario {
+    let mut rng = DeterministicRng::new(seed);
+
+    let lead_rank = choose(&mut rng, &[Rank::Nine, Rank::Ten, Rank::Jack]);
+    let low_player_rank = choose(&mut rng, &[Rank::Two, Rank::Three, Rank::Four, Rank::Five]);
+    let off_suit = choose_suit(&mut rng, &[Suit::Clubs, Suit::Diamonds, Suit::Spades]);
+    let off_rank = choose(&mut rng, &[Rank::Seven, Rank::Eight, Rank::Nine, Rank::Ten]);
+
+    let lead_card = Card::new(lead_rank, Suit::Hearts);
+    let king_card = Card::new(Rank::King, Suit::Hearts);
+    let left_card = Card::new(Rank::Queen, Suit::Hearts);
+
+    let mut player_hand = vec![
+        Card::new(low_player_rank, Suit::Hearts),
+        Card::new(Rank::Ace, Suit::Hearts),
+        Card::new(Rank::Queen, Suit::Spades),
+        Card::new(off_rank, off_suit),
+    ];
+    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+
+    PracticeScenario {
+        id: format!("king-of-hearts-capture-{seed}"),
+        title: "Stay under the king".to_string(),
+        contract: "King of Hearts".to_string(),
+        contract_kind: PracticeContractKind::KingOfHearts,
+        led_suit: Suit::Hearts,
+        prompt: format!(
+            "Tutor led {lead_card}. Right played {king_card}, the contract card. Choose a heart without capturing it."
+        ),
+        table_before_choice: vec![
+            PlayedCard::new(0, lead_card),
+            PlayedCard::new(1, king_card),
+        ],
+        player_hand,
+        table_after_choice: vec![PlayedCard::new(3, left_card)],
+    }
+}
+
 pub fn generate_daily_drill_set(seed: u64) -> PracticeDrillSet {
     PracticeDrillSet {
         id: format!("play-barbu-{seed}"),
         title: "Play Barbu".to_string(),
-        scenarios: (0..3)
-            .map(|offset| generate_no_hearts_follow_suit(seed.saturating_mul(3) + offset))
-            .collect(),
+        scenarios: vec![
+            generate_no_hearts_follow_suit(seed.saturating_mul(3)),
+            generate_no_queens_capture(seed.saturating_mul(3) + 1),
+            generate_king_of_hearts_capture(seed.saturating_mul(3) + 2),
+        ],
     }
 }
 
 fn choose(rng: &mut DeterministicRng, values: &[Rank]) -> Rank {
+    values[rng.next_usize(values.len())]
+}
+
+fn choose_suit(rng: &mut DeterministicRng, values: &[Suit]) -> Suit {
     values[rng.next_usize(values.len())]
 }
 
@@ -169,6 +265,34 @@ fn join_cards(cards: &[Card]) -> String {
         .map(ToString::to_string)
         .collect::<Vec<String>>()
         .join(" or ")
+}
+
+fn score_practice_trick(contract_kind: PracticeContractKind, played_cards: &[PlayedCard]) -> i32 {
+    match contract_kind {
+        PracticeContractKind::NoHearts => score_no_hearts_trick(played_cards),
+        PracticeContractKind::NoQueens => played_cards
+            .iter()
+            .filter(|played| played.card.rank == Rank::Queen)
+            .count() as i32,
+        PracticeContractKind::KingOfHearts => {
+            if played_cards
+                .iter()
+                .any(|played| played.card == Card::new(Rank::King, Suit::Hearts))
+            {
+                1
+            } else {
+                0
+            }
+        }
+    }
+}
+
+fn penalty_label(contract_kind: PracticeContractKind, penalty: i32) -> String {
+    match contract_kind {
+        PracticeContractKind::NoHearts => format!("{penalty} heart penalty"),
+        PracticeContractKind::NoQueens => format!("{penalty} queen penalty"),
+        PracticeContractKind::KingOfHearts => "the king of hearts penalty".to_string(),
+    }
 }
 
 fn player_name(player: PlayerIndex) -> &'static str {
@@ -238,10 +362,9 @@ mod tests {
         let drill_set = generate_daily_drill_set(13);
 
         assert_eq!(drill_set.scenarios.len(), 3);
-        assert!(drill_set
-            .scenarios
-            .iter()
-            .all(|scenario| scenario.contract == "No Hearts"));
+        assert_eq!(drill_set.scenarios[0].contract, "No Hearts");
+        assert_eq!(drill_set.scenarios[1].contract, "No Queens");
+        assert_eq!(drill_set.scenarios[2].contract, "King of Hearts");
     }
 
     #[test]
@@ -280,5 +403,32 @@ mod tests {
         assert_eq!(outcome.winner, Some(3));
         assert_eq!(outcome.penalty, Some(1));
         assert!(outcome.explanation.contains("heart penalty"));
+    }
+
+    #[test]
+    fn generated_no_queens_drill_can_penalize_player_capture() {
+        let scenario = generate_no_queens_capture(23);
+        let high_card = scenario
+            .legal_player_cards()
+            .into_iter()
+            .find(|card| card.rank > Rank::Queen)
+            .expect("scenario should include a queen-capturing card");
+        let outcome = scenario.outcome_for(high_card);
+
+        assert!(outcome.is_legal);
+        assert_eq!(outcome.winner, Some(2));
+        assert_eq!(outcome.penalty, Some(1));
+        assert!(outcome.explanation.contains("queen penalty"));
+    }
+
+    #[test]
+    fn generated_king_of_hearts_drill_can_penalize_player_capture() {
+        let scenario = generate_king_of_hearts_capture(29);
+        let outcome = scenario.outcome_for(Card::new(Rank::Ace, Suit::Hearts));
+
+        assert!(outcome.is_legal);
+        assert_eq!(outcome.winner, Some(2));
+        assert_eq!(outcome.penalty, Some(1));
+        assert!(outcome.explanation.contains("king of hearts penalty"));
     }
 }
