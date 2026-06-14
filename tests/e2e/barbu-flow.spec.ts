@@ -31,7 +31,7 @@ test("guided lesson accepts a legal card play", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Play selected" })).toBeEnabled();
   await page.getByRole("button", { name: "Play selected" }).click();
 
-  await expect(page.getByText("Best play")).toBeVisible();
+  await expect(page.getByText("Good")).toBeVisible();
   await expect(page.getByText("Left wins with AC and takes 1 heart penalty from Right's 4H.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Next trick" })).toBeVisible();
 });
@@ -60,9 +60,9 @@ test("Barbu reference exposes baseline rules and varieties", async ({ page }, te
   await expect(page.getByText("David Parlett, The Penguin Book of Card Games")).toBeVisible();
   await expect(page.getByText("Tutor -> Right -> You -> Left when Tutor leads")).toBeVisible();
   await expect(page.getByText("Follow the led suit when you can")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Current Barbu contracts" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Barbu contracts" })).toBeVisible();
   await expect(page.getByLabel("Contract reference").getByText("No Hearts")).toBeVisible();
-  await expect(page.getByText("Future Varieties")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Documented variations" })).toBeVisible();
 
   await page.screenshot({ path: testInfo.outputPath("barbu-reference.png"), fullPage: true });
 });
@@ -78,21 +78,21 @@ test("Play Barbu gives three mixed-contract decisions and a result", async ({ pa
 
   await page.locator(".hand-card.legal").first().click();
   await page.getByRole("button", { name: "Check answer" }).click();
-  await expect(page.getByText("Best play")).toBeVisible();
+  await expect(page.getByText("Good")).toBeVisible();
   await page.getByRole("button", { name: "Next table" }).click();
 
   await expect(page.getByText("No Queens").first()).toBeVisible();
   await expect(page.getByText("Decision 2 of 3")).toBeVisible();
   await page.locator(".hand-card.legal").first().click();
   await page.getByRole("button", { name: "Check answer" }).click();
-  await expect(page.getByText("Best play")).toBeVisible();
+  await expect(page.getByText("Good")).toBeVisible();
   await page.getByRole("button", { name: "Next table" }).click();
 
   await expect(page.getByText("King of Hearts").first()).toBeVisible();
   await expect(page.getByText("Decision 3 of 3")).toBeVisible();
   await page.locator(".hand-card.legal").first().click();
   await page.getByRole("button", { name: "Check answer" }).click();
-  await expect(page.getByText("Best play")).toBeVisible();
+  await expect(page.getByText("Good")).toBeVisible();
   await page.getByRole("button", { name: "Finish game" }).click();
 
   await expect(page.getByRole("heading", { name: "Game complete" })).toBeVisible();

@@ -25,7 +25,7 @@ export const kingOfHeartsGuidedTricks: GuidedTrick[] = [
       AH: "AH follows hearts but wins the trick. That captures KH, which is the card you are trying to avoid."
     },
     cardOutcomes: {
-      "2H": "best",
+      "2H": "good",
       AH: "penalty"
     }
   },
@@ -54,7 +54,7 @@ export const kingOfHeartsGuidedTricks: GuidedTrick[] = [
       "8C": "8C is legal, but it misses the chance to unload the contract card while someone else is winning."
     },
     cardOutcomes: {
-      KH: "best",
+      KH: "good",
       "4D": "risky",
       "8C": "risky"
     }

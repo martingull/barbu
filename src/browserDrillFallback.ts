@@ -73,8 +73,8 @@ function generatedNoHeartsStep(seed: number): BrowserDrillStep {
         [highPlayerCard.id]: `${highPlayerCard.label} follows ${ledSuitName} and stays below ${leftWinner.label}.`
       },
       cardOutcomes: {
-        [lowPlayerCard.id]: "best",
-        [highPlayerCard.id]: "safe"
+        [lowPlayerCard.id]: "good",
+        [highPlayerCard.id]: "good"
       }
     }
   };
@@ -114,7 +114,7 @@ function generatedNoQueensStep(seed: number): BrowserDrillStep {
         [highPlayerCard.id]: `${highPlayerCard.label} follows ${ledSuitName} but captures ${queenCard.label}.`
       },
       cardOutcomes: {
-        [lowPlayerCard.id]: "best",
+        [lowPlayerCard.id]: "good",
         [highPlayerCard.id]: "penalty"
       }
     }
@@ -152,7 +152,7 @@ function generatedKingOfHeartsStep(seed: number): BrowserDrillStep {
         [highPlayerCard.id]: `${highPlayerCard.label} follows hearts but captures KH.`
       },
       cardOutcomes: {
-        [lowPlayerCard.id]: "best",
+        [lowPlayerCard.id]: "good",
         [highPlayerCard.id]: "penalty"
       }
     }

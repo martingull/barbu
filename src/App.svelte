@@ -7,7 +7,6 @@
   import type {
     Card,
     GeneratedDrillSet,
-    GeneratedPracticeOutcome,
     GeneratedPracticeScenario,
     GuidedCardOutcome,
     GuidedTrick,
@@ -146,14 +145,12 @@
   const playBarbuHistoryStorageKey = "barbu.playHistory.v1";
   const maxStoredPlayBarbuAttempts = 8;
   const outcomeLabels: Record<GuidedCardOutcome | "illegal", string> = {
-    best: "Best play",
-    safe: "Safe play",
-    risky: "Legal but risky",
-    forced: "Forced play",
-    penalty: "Penalty taken",
+    good: "Good",
+    risky: "Risky",
+    penalty: "Penalty",
     illegal: "Illegal"
   };
-  const cleanDrillOutcomes: Array<GuidedCardOutcome | "illegal"> = ["best", "safe", "forced"];
+  const cleanDrillOutcomes: Array<GuidedCardOutcome | "illegal"> = ["good"];
 
   const barbuPathSteps: BarbuPathStep[] = [
     {
@@ -443,10 +440,37 @@
 
     try {
       const storedHistory = localStorage.getItem(playBarbuHistoryStorageKey);
-      return storedHistory ? (JSON.parse(storedHistory) as PlayBarbuAttempt[]) : [];
+      return storedHistory ? normalizePlayBarbuHistory(JSON.parse(storedHistory) as PlayBarbuAttempt[]) : [];
     } catch {
       return [];
     }
+  }
+
+  function normalizePlayBarbuHistory(history: PlayBarbuAttempt[]) {
+    return history.map((attempt) => ({
+      ...attempt,
+      results: attempt.results.map((result) => {
+        const outcome = normalizeStoredOutcome(result.outcome);
+
+        return {
+          ...result,
+          outcome,
+          clean: cleanDrillOutcomes.includes(outcome)
+        };
+      })
+    }));
+  }
+
+  function normalizeStoredOutcome(outcome: string): GuidedCardOutcome | "illegal" {
+    if (outcome === "best" || outcome === "safe" || outcome === "forced" || outcome === "good") {
+      return "good";
+    }
+
+    if (outcome === "risky" || outcome === "penalty" || outcome === "illegal") {
+      return outcome;
+    }
+
+    return "risky";
   }
 
   function savePlayBarbuHistory(nextHistory: PlayBarbuAttempt[]) {
@@ -826,7 +850,7 @@
       return "illegal";
     }
 
-    return currentDrillTrick.cardOutcomes[card.id] ?? "safe";
+    return currentDrillTrick.cardOutcomes[card.id] ?? "good";
   }
 
   function buildDrillOutcome(card: Card) {
@@ -907,12 +931,10 @@
 
   function outcomeSeverity(outcome: GuidedCardOutcome | "illegal") {
     const severity: Record<GuidedCardOutcome | "illegal", number> = {
-      best: 0,
-      safe: 0,
-      forced: 1,
-      risky: 2,
-      penalty: 3,
-      illegal: 4
+      good: 0,
+      risky: 1,
+      penalty: 2,
+      illegal: 3
     };
 
     return severity[outcome];
@@ -969,7 +991,7 @@
       return "";
     }
 
-    return outcomeLabels[currentTrick.cardOutcomes[played.id] ?? "safe"];
+    return outcomeLabels[currentTrick.cardOutcomes[played.id] ?? "good"];
   }
 
   function guidedTrickFromGeneratedScenario(scenario: GeneratedPracticeScenario): GuidedTrick {
@@ -987,21 +1009,9 @@
         scenario.outcomes.map((outcome) => [outcome.cardId, outcome.explanation])
       ),
       cardOutcomes: Object.fromEntries(
-        scenario.outcomes.map((outcome) => [outcome.cardId, guidedOutcomeFromGeneratedOutcome(outcome)])
+        scenario.outcomes.map((outcome) => [outcome.cardId, outcome.outcomeKind])
       )
     };
-  }
-
-  function guidedOutcomeFromGeneratedOutcome(outcome: GeneratedPracticeOutcome): GuidedCardOutcome {
-    if (outcome.winner === "You" && outcome.penalty && outcome.penalty > 0) {
-      return "penalty";
-    }
-
-    if (outcome.winner && outcome.winner !== "You" && outcome.penalty && outcome.penalty > 0) {
-      return "best";
-    }
-
-    return outcome.winner === "You" ? "risky" : "safe";
   }
 
   function pendingSeatsForGeneratedScenario(scenario: GeneratedPracticeScenario) {
@@ -1026,7 +1036,7 @@
         <p class="eyebrow">Card game catalog</p>
         <h1 id="catalog-title">Choose a table</h1>
         <p class="intro">
-          Start with Barbu, then branch into related trick-taking games as the curriculum grows.
+          Start with Barbu. More core games, families, and documented varieties can be added as the curriculum grows.
         </p>
       </div>
 
@@ -1039,7 +1049,7 @@
 
     <section class="catalog-section" aria-label="Games">
       <div class="section-heading">
-        <p class="eyebrow">Games</p>
+        <p class="eyebrow">Core games</p>
         <h2>Learning paths</h2>
       </div>
 
@@ -1114,7 +1124,11 @@
         </div>
       </div>
 
-      <div class="contract-list" aria-label="Available contracts">
+      <div class="contract-list" aria-label="Core Barbu contracts">
+        <div class="section-heading">
+          <p class="eyebrow">Core game</p>
+          <h2>Barbu contracts</h2>
+        </div>
         {#each guidedLessons as lesson}
           <button class="contract-card" onclick={() => startCourseForLesson(lesson.id)} type="button">
             <span>{lesson.contract}</span>
@@ -1202,8 +1216,8 @@
 
       <section class="reference-list" aria-label="Contract reference">
         <div class="section-heading">
-          <p class="eyebrow">Contracts</p>
-          <h2>Current Barbu contracts</h2>
+          <p class="eyebrow">Core game</p>
+          <h2>Barbu contracts</h2>
         </div>
         <div class="reference-list-grid">
           {#each activeReference.contracts as contract}
@@ -1219,8 +1233,8 @@
 
       <section class="reference-list" aria-label="Variants and varieties">
         <div class="section-heading">
-          <p class="eyebrow">Varieties</p>
-          <h2>How this can grow</h2>
+          <p class="eyebrow">Varieties of play</p>
+          <h2>Documented variations</h2>
         </div>
         <div class="reference-list-grid">
           {#each activeReference.variants as variant}
@@ -1367,7 +1381,7 @@
         <p class="explanation">{drillFeedback}</p>
         {#if drillOutcome}
           <p
-            class:warning={drillOutcome === "Illegal" || drillOutcome === "Legal but risky" || drillOutcome === "Penalty taken"}
+            class:warning={drillOutcome === "Illegal" || drillOutcome === "Risky" || drillOutcome === "Penalty"}
             class="outcome"
           >
             {drillOutcome}
@@ -1586,7 +1600,7 @@
         <p class="explanation">{explanation}</p>
         {#if lessonOutcome}
           <p
-            class:warning={lessonOutcome === "Illegal" || lessonOutcome === "Legal but risky" || lessonOutcome === "Penalty taken"}
+            class:warning={lessonOutcome === "Illegal" || lessonOutcome === "Risky" || lessonOutcome === "Penalty"}
             class="outcome"
           >
             {lessonOutcome}

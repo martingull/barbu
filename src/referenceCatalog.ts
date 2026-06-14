@@ -42,7 +42,7 @@ export const referenceCatalog: GameReference[] = [
     family: "Hearts",
     baseline: "David Parlett, The Penguin Book of Card Games",
     overview:
-      "Barbu is a contract trick-taking game. The app starts with avoidance contracts because they teach the core habit: read the led suit, follow legally, and avoid taking the wrong trick.",
+      "Barbu is a core contract trick-taking game. The app teaches the core game first, then keeps varieties separate as documented changes to rules, scoring, deal order, or table customs.",
     sections: [
       {
         id: "object",
@@ -78,7 +78,7 @@ export const referenceCatalog: GameReference[] = [
         id: "deal",
         title: "Deal",
         body:
-          "A full reference deal belongs in the rules layer. The teaching path currently begins after a deal, with small table positions chosen to teach one rule or contract idea at a time.",
+          "A full reference deal belongs to the core game rules layer. The teaching path currently begins after a deal, with small table positions chosen to teach one rule or contract idea at a time.",
         facts: [
           { label: "App scope now", value: "Guided tricks and generated drills" },
           { label: "Later scope", value: "Full hands and contract sequencing" }
@@ -133,19 +133,19 @@ export const referenceCatalog: GameReference[] = [
     variants: [
       {
         id: "parlett-baseline",
-        title: "Parlett Baseline",
+        title: "Core Baseline",
         note:
-          "Rules, terminology, play direction, and contract descriptions start from Parlett before the app adapts them into lessons."
+          "The core Barbu game starts from Parlett for rules, terminology, play direction, and contract descriptions before the app adapts them into lessons."
       },
       {
         id: "learning-table",
-        title: "Learning Table",
+        title: "Teaching Variety",
         note:
           "The current app uses small authored positions and generated drills before full deals. Any simplification should preserve the baseline rule being taught."
       },
       {
         id: "future-varieties",
-        title: "Future Varieties",
+        title: "Future Varieties Of Play",
         note:
           "Later game varieties can change contract order, scoring, or table customs, but those differences should be documented in this reference layer."
       }

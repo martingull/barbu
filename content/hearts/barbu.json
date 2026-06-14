@@ -2,6 +2,7 @@
   "id": "barbu",
   "title": "Barbu",
   "family": "hearts",
+  "gameType": "core",
   "baseline": "David Parlett, The Penguin Book of Card Games",
   "players": 4,
   "reference": {
@@ -55,12 +56,12 @@
   "variants": [
     {
       "id": "parlett_baseline",
-      "title": "Parlett baseline",
-      "note": "Rules and descriptions start here unless a product variant is documented."
+      "title": "Core baseline",
+      "note": "Rules and descriptions start here unless a documented variety changes them."
     },
     {
       "id": "learning_table",
-      "title": "Learning table",
+      "title": "Teaching variety",
       "note": "The current app uses authored tricks and generated drills before full contract deals."
     }
   ]

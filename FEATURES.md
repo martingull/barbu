@@ -30,9 +30,10 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Local course progress for the playable Barbu path.
 - Continue action for the next unfinished step.
 - Completed-course state with review and reset actions.
+- Shared learner-facing outcome model: good, risky, penalty, and illegal.
 - Shared course content flow for No Hearts, No Queens, and King of Hearts with concept, example, guided play, and review screens.
 - Shared card table renderer for course examples and guided play.
-- Barbu reference screen with Parlett baseline, play direction, contracts, scoring, and varieties.
+- Barbu reference screen with Parlett baseline, play direction, core contracts, scoring, and documented varieties.
 - Guided trick table for authored Barbu lessons.
 - Authored lessons for No Hearts, No Queens, and King of Hearts.
 - Structured outcome metadata for authored guided card choices.
@@ -49,10 +50,10 @@ These are the next product increments that keep the app coherent.
    - Expand recent-attempt display into a small habit loop.
    - Keep explanations to one sentence unless the player asks for more.
 
-2. Outcome Model in Core
-   - Promote authored outcome metadata into shared content or Rust primitives.
-   - Return structured outcomes from lesson data or Rust: correct, safe, risky, illegal, penalty.
-   - Use the same model for authored and generated practice.
+2. Core Game And Variety Model
+   - Add structured metadata for core games, varieties, and teaching variants.
+   - Keep core rules separate from rule/scoring/table-custom variations.
+   - Make it easy to add new games without treating every variety as a separate top-level game.
 
 3. Generated Practice Expansion
    - Expand generated drills beyond one pattern per contract.
@@ -97,6 +98,7 @@ These are the next product increments that keep the app coherent.
 - The first screen is always the learning experience, not marketing.
 - Every new feature should answer: what is the next useful card decision?
 - Rules, terminology, and play order should start from Parlett before local assumptions.
+- Keep core games distinct from varieties of play; varieties should document what changes from the core game.
 - Reference material should support the lesson path, not replace learn-by-doing.
 - Add game logic to Rust when it affects legality, scoring, outcomes, generation, or reusable lesson state.
 - Keep Svelte focused on presentation and interaction.

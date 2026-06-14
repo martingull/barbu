@@ -21,6 +21,25 @@ pub enum PracticeContractKind {
     KingOfHearts,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PracticeOutcomeKind {
+    Good,
+    Risky,
+    Penalty,
+    Illegal,
+}
+
+impl PracticeOutcomeKind {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            PracticeOutcomeKind::Good => "good",
+            PracticeOutcomeKind::Risky => "risky",
+            PracticeOutcomeKind::Penalty => "penalty",
+            PracticeOutcomeKind::Illegal => "illegal",
+        }
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PracticeDrillSet {
     pub id: String,
@@ -57,6 +76,7 @@ impl PracticeScenario {
 
             return PracticeOutcome {
                 player_card,
+                outcome_kind: PracticeOutcomeKind::Illegal,
                 is_legal: false,
                 legal_cards,
                 winner: None,
@@ -75,6 +95,7 @@ impl PracticeScenario {
 
         PracticeOutcome {
             player_card,
+            outcome_kind: practice_outcome_kind(winner, penalty),
             is_legal: true,
             legal_cards,
             winner: Some(winner),
@@ -103,6 +124,7 @@ impl PracticeScenario {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PracticeOutcome {
     pub player_card: Card,
+    pub outcome_kind: PracticeOutcomeKind,
     pub is_legal: bool,
     pub legal_cards: Vec<Card>,
     pub winner: Option<PlayerIndex>,
@@ -295,6 +317,16 @@ fn penalty_label(contract_kind: PracticeContractKind, penalty: i32) -> String {
     }
 }
 
+fn practice_outcome_kind(winner: PlayerIndex, penalty: i32) -> PracticeOutcomeKind {
+    if winner == 2 && penalty > 0 {
+        PracticeOutcomeKind::Penalty
+    } else if winner == 2 {
+        PracticeOutcomeKind::Risky
+    } else {
+        PracticeOutcomeKind::Good
+    }
+}
+
 fn player_name(player: PlayerIndex) -> &'static str {
     match player {
         0 => "Tutor",
@@ -390,6 +422,7 @@ mod tests {
         let outcome = scenario.outcome_for(off_suit_card);
 
         assert!(!outcome.is_legal);
+        assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Illegal);
         assert!(outcome.explanation.contains("not legal"));
     }
 
@@ -400,9 +433,37 @@ mod tests {
         let outcome = scenario.outcome_for(legal_card);
 
         assert!(outcome.is_legal);
+        assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Good);
         assert_eq!(outcome.winner, Some(3));
         assert_eq!(outcome.penalty, Some(1));
         assert!(outcome.explanation.contains("heart penalty"));
+    }
+
+    #[test]
+    fn generated_outcome_can_be_risky_without_penalty() {
+        let scenario = PracticeScenario {
+            id: "risky-clean-win".to_string(),
+            title: "Win a clean trick".to_string(),
+            contract: "No Hearts".to_string(),
+            contract_kind: PracticeContractKind::NoHearts,
+            led_suit: Suit::Clubs,
+            prompt: "Clubs were led and no heart is in the trick.".to_string(),
+            table_before_choice: vec![
+                PlayedCard::new(0, Card::new(Rank::Seven, Suit::Clubs)),
+                PlayedCard::new(1, Card::new(Rank::Eight, Suit::Clubs)),
+            ],
+            player_hand: vec![
+                Card::new(Rank::Ace, Suit::Clubs),
+                Card::new(Rank::Two, Suit::Spades),
+            ],
+            table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Nine, Suit::Clubs))],
+        };
+        let outcome = scenario.outcome_for(Card::new(Rank::Ace, Suit::Clubs));
+
+        assert!(outcome.is_legal);
+        assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Risky);
+        assert_eq!(outcome.winner, Some(2));
+        assert_eq!(outcome.penalty, Some(0));
     }
 
     #[test]
@@ -416,6 +477,7 @@ mod tests {
         let outcome = scenario.outcome_for(high_card);
 
         assert!(outcome.is_legal);
+        assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Penalty);
         assert_eq!(outcome.winner, Some(2));
         assert_eq!(outcome.penalty, Some(1));
         assert!(outcome.explanation.contains("queen penalty"));
@@ -427,6 +489,7 @@ mod tests {
         let outcome = scenario.outcome_for(Card::new(Rank::Ace, Suit::Hearts));
 
         assert!(outcome.is_legal);
+        assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Penalty);
         assert_eq!(outcome.winner, Some(2));
         assert_eq!(outcome.penalty, Some(1));
         assert!(outcome.explanation.contains("king of hearts penalty"));

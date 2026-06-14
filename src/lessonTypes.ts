@@ -14,7 +14,7 @@ export type TableCard = {
   card: Card;
 };
 
-export type GuidedCardOutcome = "best" | "safe" | "risky" | "forced" | "penalty";
+export type GuidedCardOutcome = "good" | "risky" | "penalty";
 
 export type GuidedTrick = {
   title: string;
@@ -61,6 +61,7 @@ export type GeneratedDrillSet = {
 
 export type GeneratedPracticeOutcome = {
   cardId: string;
+  outcomeKind: GuidedCardOutcome | "illegal";
   isLegal: boolean;
   winner: Seat | "Unknown" | null;
   penalty: number | null;
