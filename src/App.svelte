@@ -175,8 +175,8 @@
     {
       id: "generated-drill",
       step: "Practice",
-      title: "Generated drill",
-      summary: "Practice a fresh generated table from the Rust engine.",
+      title: "Practice table",
+      summary: "Play a mixed Barbu table and review the contract results.",
       action: "generated"
     },
     {
@@ -522,7 +522,8 @@
     openBarbuTable();
   }
 
-  async function startDailyDrill() {
+  async function startDailyDrill(pathStepId = "") {
+    activePathStepId = pathStepId;
     drillIndex = 0;
     drillResults = [];
     drillSetTitle = "Play Barbu";
@@ -630,9 +631,7 @@
   }
 
   async function startGeneratedDrill() {
-    activePathStepId = "generated-drill";
-    appView = "lesson";
-    await loadGeneratedDrill();
+    await startDailyDrill("generated-drill");
   }
 
   function continueCourse() {
@@ -757,6 +756,9 @@
   function continueDrill() {
     if (drillIndex === activeDrillSteps.length - 1) {
       saveCompletedDrillSession();
+      if (activePathStepId === "generated-drill") {
+        saveCourseProgress({ ...completedPathSteps, "generated-drill": true });
+      }
       appView = "drillResult";
       return;
     }

@@ -24,6 +24,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Barbu table with contract entry points.
 - Five-step training path: concept, example, guided trick, practice, review.
 - Play Barbu mode with three quick mixed-contract decisions, immediate feedback, and a compact result.
+- Training path practice step connected to Play Barbu completion.
 - Local Play Barbu result history with contract-level summaries and focused replay for the weakest contract.
 - Local course progress for the playable Barbu path.
 - Continue action for the next unfinished step.

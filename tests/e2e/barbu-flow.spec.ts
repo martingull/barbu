@@ -220,20 +220,39 @@ test("King of Hearts course has concept example play and review", async ({ page 
   await page.getByRole("button", { name: "Finish King of Hearts" }).click();
 
   await expect(page.getByText("3 / 4 complete")).toBeVisible();
-  await expect(page.getByRole("button", { name: /Continue with Generated drill/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Continue with Practice table/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Play the trick/ })).toContainText("Complete");
 });
 
-test("training path can start generated practice shell", async ({ page }) => {
+test("training path practice step starts Play Barbu and marks completion", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      "barbu.courseProgress.v1",
+      JSON.stringify({
+        "meet-contract": true,
+        "spot-danger": true,
+        "play-trick": true
+      })
+    );
+  });
+
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
-  await page.getByRole("button", { name: /Generated drill/ }).click();
+  await page.getByRole("button", { name: /Continue with Practice table/ }).click();
 
-  await expect(page.getByRole("heading", { name: "Generated practice" })).toBeVisible();
-  await expect(
-    page.getByText("Generated drills need the Tauri runtime. Use the fixed lesson here, or run the app with Tauri.")
-  ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Mark practiced" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Play Barbu" })).toBeVisible();
+
+  for (const buttonName of ["Next table", "Next table", "Finish game"]) {
+    await page.locator(".hand-card.legal").first().click();
+    await page.getByRole("button", { name: "Check answer" }).click();
+    await page.getByRole("button", { name: buttonName }).click();
+  }
+
+  await expect(page.getByRole("heading", { name: "Game complete" })).toBeVisible();
+  await page.getByRole("button", { name: "Continue path" }).click();
+
+  await expect(page.getByText("4 / 4 complete")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Practice table/ })).toContainText("Complete");
 });
 
 test("completed course does not loop back to the first lesson", async ({ page }) => {
