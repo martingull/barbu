@@ -40,6 +40,29 @@ impl PracticeOutcomeKind {
     }
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PracticeOutcomeReason {
+    FollowedSuit,
+    VoidDiscard,
+    AvoidedPenalty,
+    CapturedPenalty,
+    WonCleanTrick,
+    OffSuit,
+}
+
+impl PracticeOutcomeReason {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            PracticeOutcomeReason::FollowedSuit => "followed_suit",
+            PracticeOutcomeReason::VoidDiscard => "void_discard",
+            PracticeOutcomeReason::AvoidedPenalty => "avoided_penalty",
+            PracticeOutcomeReason::CapturedPenalty => "captured_penalty",
+            PracticeOutcomeReason::WonCleanTrick => "won_clean_trick",
+            PracticeOutcomeReason::OffSuit => "off_suit",
+        }
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PracticeDrillSet {
     pub id: String,
@@ -77,6 +100,7 @@ impl PracticeScenario {
             return PracticeOutcome {
                 player_card,
                 outcome_kind: PracticeOutcomeKind::Illegal,
+                reason: PracticeOutcomeReason::OffSuit,
                 is_legal: false,
                 legal_cards,
                 winner: None,
@@ -96,6 +120,7 @@ impl PracticeScenario {
         PracticeOutcome {
             player_card,
             outcome_kind: practice_outcome_kind(winner, penalty),
+            reason: practice_outcome_reason(self.led_suit, player_card, winner, penalty),
             is_legal: true,
             legal_cards,
             winner: Some(winner),
@@ -125,6 +150,7 @@ impl PracticeScenario {
 pub struct PracticeOutcome {
     pub player_card: Card,
     pub outcome_kind: PracticeOutcomeKind,
+    pub reason: PracticeOutcomeReason,
     pub is_legal: bool,
     pub legal_cards: Vec<Card>,
     pub winner: Option<PlayerIndex>,
@@ -327,6 +353,25 @@ fn practice_outcome_kind(winner: PlayerIndex, penalty: i32) -> PracticeOutcomeKi
     }
 }
 
+fn practice_outcome_reason(
+    led_suit: Suit,
+    player_card: Card,
+    winner: PlayerIndex,
+    penalty: i32,
+) -> PracticeOutcomeReason {
+    if winner == 2 && penalty > 0 {
+        PracticeOutcomeReason::CapturedPenalty
+    } else if winner != 2 && penalty > 0 {
+        PracticeOutcomeReason::AvoidedPenalty
+    } else if winner == 2 {
+        PracticeOutcomeReason::WonCleanTrick
+    } else if player_card.suit != led_suit {
+        PracticeOutcomeReason::VoidDiscard
+    } else {
+        PracticeOutcomeReason::FollowedSuit
+    }
+}
+
 fn player_name(player: PlayerIndex) -> &'static str {
     match player {
         0 => "Tutor",
@@ -423,6 +468,7 @@ mod tests {
 
         assert!(!outcome.is_legal);
         assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Illegal);
+        assert_eq!(outcome.reason, PracticeOutcomeReason::OffSuit);
         assert!(outcome.explanation.contains("not legal"));
     }
 
@@ -434,6 +480,7 @@ mod tests {
 
         assert!(outcome.is_legal);
         assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Good);
+        assert_eq!(outcome.reason, PracticeOutcomeReason::AvoidedPenalty);
         assert_eq!(outcome.winner, Some(3));
         assert_eq!(outcome.penalty, Some(1));
         assert!(outcome.explanation.contains("heart penalty"));
@@ -462,8 +509,36 @@ mod tests {
 
         assert!(outcome.is_legal);
         assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Risky);
+        assert_eq!(outcome.reason, PracticeOutcomeReason::WonCleanTrick);
         assert_eq!(outcome.winner, Some(2));
         assert_eq!(outcome.penalty, Some(0));
+    }
+
+    #[test]
+    fn generated_outcome_tracks_void_discard() {
+        let scenario = PracticeScenario {
+            id: "void-discard".to_string(),
+            title: "Discard while void".to_string(),
+            contract: "No Queens".to_string(),
+            contract_kind: PracticeContractKind::NoQueens,
+            led_suit: Suit::Clubs,
+            prompt: "Clubs were led and you are void.".to_string(),
+            table_before_choice: vec![
+                PlayedCard::new(0, Card::new(Rank::Seven, Suit::Clubs)),
+                PlayedCard::new(1, Card::new(Rank::Eight, Suit::Clubs)),
+            ],
+            player_hand: vec![
+                Card::new(Rank::Two, Suit::Diamonds),
+                Card::new(Rank::Queen, Suit::Hearts),
+            ],
+            table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Ace, Suit::Clubs))],
+        };
+        let outcome = scenario.outcome_for(Card::new(Rank::Two, Suit::Diamonds));
+
+        assert!(outcome.is_legal);
+        assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Good);
+        assert_eq!(outcome.reason, PracticeOutcomeReason::VoidDiscard);
+        assert_eq!(outcome.winner, Some(3));
     }
 
     #[test]
@@ -478,6 +553,7 @@ mod tests {
 
         assert!(outcome.is_legal);
         assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Penalty);
+        assert_eq!(outcome.reason, PracticeOutcomeReason::CapturedPenalty);
         assert_eq!(outcome.winner, Some(2));
         assert_eq!(outcome.penalty, Some(1));
         assert!(outcome.explanation.contains("queen penalty"));
@@ -490,6 +566,7 @@ mod tests {
 
         assert!(outcome.is_legal);
         assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Penalty);
+        assert_eq!(outcome.reason, PracticeOutcomeReason::CapturedPenalty);
         assert_eq!(outcome.winner, Some(2));
         assert_eq!(outcome.penalty, Some(1));
         assert!(outcome.explanation.contains("king of hearts penalty"));

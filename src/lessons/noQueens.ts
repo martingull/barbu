@@ -27,6 +27,10 @@ export const noQueensGuidedTricks: GuidedTrick[] = [
     cardOutcomes: {
       "3D": "good",
       KD: "good"
+    },
+    cardReasons: {
+      "3D": "avoided_penalty",
+      KD: "avoided_penalty"
     }
   },
   {
@@ -52,7 +56,10 @@ export const noQueensGuidedTricks: GuidedTrick[] = [
       KC: "KC is forced because clubs were led. It wins the trick and captures QC, which is exactly the situation this contract teaches you to anticipate earlier."
     },
     cardOutcomes: {
-      KC: "good"
+      KC: "penalty"
+    },
+    cardReasons: {
+      KC: "captured_penalty"
     }
   }
 ];

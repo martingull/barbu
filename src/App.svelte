@@ -10,6 +10,7 @@
     GeneratedPracticeScenario,
     GuidedCardOutcome,
     GuidedTrick,
+    PracticeReason,
     Seat,
     Suit,
     TableCard
@@ -88,6 +89,7 @@
     contract: string;
     cardLabel: string;
     outcome: GuidedCardOutcome | "illegal";
+    reason: PracticeReason;
     clean: boolean;
   };
 
@@ -455,6 +457,7 @@
         return {
           ...result,
           outcome,
+          reason: normalizeStoredReason(result.reason, outcome),
           clean: cleanDrillOutcomes.includes(outcome)
         };
       })
@@ -471,6 +474,29 @@
     }
 
     return "risky";
+  }
+
+  function normalizeStoredReason(reason: string | undefined, outcome: GuidedCardOutcome | "illegal"): PracticeReason {
+    if (
+      reason === "followed_suit" ||
+      reason === "void_discard" ||
+      reason === "avoided_penalty" ||
+      reason === "captured_penalty" ||
+      reason === "won_clean_trick" ||
+      reason === "off_suit"
+    ) {
+      return reason;
+    }
+
+    if (outcome === "illegal") {
+      return "off_suit";
+    }
+
+    if (outcome === "penalty") {
+      return "captured_penalty";
+    }
+
+    return outcome === "risky" ? "won_clean_trick" : "followed_suit";
   }
 
   function savePlayBarbuHistory(nextHistory: PlayBarbuAttempt[]) {
@@ -808,6 +834,7 @@
     }
 
     const outcome = buildDrillOutcomeKey(drillSelectedCard);
+    const reason = buildDrillReasonKey(drillSelectedCard, outcome);
 
     drillCheckedCardId = drillSelectedCard.id;
     drillResults = [
@@ -816,6 +843,7 @@
         contract: currentDrill.contract,
         cardLabel: drillSelectedCard.label,
         outcome,
+        reason,
         clean: cleanDrillOutcomes.includes(outcome)
       }
     ];
@@ -855,6 +883,14 @@
 
   function buildDrillOutcome(card: Card) {
     return outcomeLabels[buildDrillOutcomeKey(card)];
+  }
+
+  function buildDrillReasonKey(card: Card, outcome: GuidedCardOutcome | "illegal"): PracticeReason {
+    if (!drillLegalCardIds.has(card.id)) {
+      return "off_suit";
+    }
+
+    return currentDrillTrick.cardReasons?.[card.id] ?? normalizeStoredReason(undefined, outcome);
   }
 
   function buildDrillFeedback(card: Card) {
@@ -1010,6 +1046,9 @@
       ),
       cardOutcomes: Object.fromEntries(
         scenario.outcomes.map((outcome) => [outcome.cardId, outcome.outcomeKind])
+      ),
+      cardReasons: Object.fromEntries(
+        scenario.outcomes.map((outcome) => [outcome.cardId, outcome.reason])
       )
     };
   }

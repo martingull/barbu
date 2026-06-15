@@ -28,6 +28,8 @@ Use Parlett's organization as the source structure for the reference layer, but 
 
 The primary learning loop is: play first, get fast feedback, read a tiny explanation, repeat, then use reference material only when needed. The product should feel closer to Duolingo or a strong chess tutor than to a rulebook: active, short, progressive, and lightly playful. Do not let reference pages or technical correctness move the main lesson path away from card decisions.
 
+Keep learner-facing outcome labels simple: `good`, `risky`, `penalty`, and `illegal`. Preserve deeper explanation through structured reason tags such as `followed_suit`, `avoided_penalty`, `captured_penalty`, `won_clean_trick`, `void_discard`, and `off_suit`. The outcome is for fast feedback; the reason tag is for review, explanations, and future AI tutor behavior.
+
 ## Stack
 
 - Rust workspace for deterministic game logic.

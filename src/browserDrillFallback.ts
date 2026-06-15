@@ -75,6 +75,10 @@ function generatedNoHeartsStep(seed: number): BrowserDrillStep {
       cardOutcomes: {
         [lowPlayerCard.id]: "good",
         [highPlayerCard.id]: "good"
+      },
+      cardReasons: {
+        [lowPlayerCard.id]: "avoided_penalty",
+        [highPlayerCard.id]: "avoided_penalty"
       }
     }
   };
@@ -116,6 +120,10 @@ function generatedNoQueensStep(seed: number): BrowserDrillStep {
       cardOutcomes: {
         [lowPlayerCard.id]: "good",
         [highPlayerCard.id]: "penalty"
+      },
+      cardReasons: {
+        [lowPlayerCard.id]: "avoided_penalty",
+        [highPlayerCard.id]: "captured_penalty"
       }
     }
   };
@@ -154,6 +162,10 @@ function generatedKingOfHeartsStep(seed: number): BrowserDrillStep {
       cardOutcomes: {
         [lowPlayerCard.id]: "good",
         [highPlayerCard.id]: "penalty"
+      },
+      cardReasons: {
+        [lowPlayerCard.id]: "avoided_penalty",
+        [highPlayerCard.id]: "captured_penalty"
       }
     }
   };

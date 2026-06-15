@@ -15,6 +15,13 @@ export type TableCard = {
 };
 
 export type GuidedCardOutcome = "good" | "risky" | "penalty";
+export type PracticeReason =
+  | "followed_suit"
+  | "void_discard"
+  | "avoided_penalty"
+  | "captured_penalty"
+  | "won_clean_trick"
+  | "off_suit";
 
 export type GuidedTrick = {
   title: string;
@@ -28,6 +35,7 @@ export type GuidedTrick = {
   pendingBySeat: Partial<Record<Seat, string>>;
   playedExplanations: Partial<Record<string, string>>;
   cardOutcomes: Partial<Record<string, GuidedCardOutcome>>;
+  cardReasons?: Partial<Record<string, PracticeReason>>;
 };
 
 export type GuidedLesson = {
@@ -62,6 +70,7 @@ export type GeneratedDrillSet = {
 export type GeneratedPracticeOutcome = {
   cardId: string;
   outcomeKind: GuidedCardOutcome | "illegal";
+  reason: PracticeReason;
   isLegal: boolean;
   winner: Seat | "Unknown" | null;
   penalty: number | null;

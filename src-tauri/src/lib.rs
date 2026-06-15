@@ -115,6 +115,7 @@ impl PracticeScenarioDto {
 struct PracticeOutcomeDto {
     card_id: String,
     outcome_kind: String,
+    reason: String,
     is_legal: bool,
     winner: Option<String>,
     penalty: Option<i32>,
@@ -127,6 +128,7 @@ impl PracticeOutcomeDto {
         Self {
             card_id: outcome.player_card.to_string(),
             outcome_kind: outcome.outcome_kind.as_str().to_string(),
+            reason: outcome.reason.as_str().to_string(),
             is_legal: outcome.is_legal,
             winner: outcome.winner.map(player_name).map(str::to_string),
             penalty: outcome.penalty,

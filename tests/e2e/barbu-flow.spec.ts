@@ -97,6 +97,15 @@ test("Play Barbu gives three mixed-contract decisions and a result", async ({ pa
 
   await expect(page.getByRole("heading", { name: "Game complete" })).toBeVisible();
   await expect(page.getByText("3 / 3 clean decisions")).toBeVisible();
+  const storedAttempt = await page.evaluate(() => {
+    const history = JSON.parse(localStorage.getItem("barbu.playHistory.v1") ?? "[]");
+    return history[0];
+  });
+  expect(storedAttempt.results.map((result: { reason: string }) => result.reason)).toEqual([
+    "avoided_penalty",
+    "avoided_penalty",
+    "avoided_penalty"
+  ]);
   await expect(page.getByLabel("Contract results").getByText("No Hearts")).toBeVisible();
   await expect(page.getByLabel("Contract results").getByText("No Queens")).toBeVisible();
   await expect(page.getByLabel("Contract results").getByText("King of Hearts")).toBeVisible();

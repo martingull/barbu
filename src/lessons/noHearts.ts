@@ -27,6 +27,10 @@ export const noHeartsGuidedTricks: GuidedTrick[] = [
     cardOutcomes: {
       "2C": "good",
       KC: "good"
+    },
+    cardReasons: {
+      "2C": "avoided_penalty",
+      KC: "avoided_penalty"
     }
   },
   {
@@ -53,6 +57,9 @@ export const noHeartsGuidedTricks: GuidedTrick[] = [
     },
     cardOutcomes: {
       QS: "good"
+    },
+    cardReasons: {
+      QS: "won_clean_trick"
     }
   }
 ];

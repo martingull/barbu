@@ -27,6 +27,10 @@ export const kingOfHeartsGuidedTricks: GuidedTrick[] = [
     cardOutcomes: {
       "2H": "good",
       AH: "penalty"
+    },
+    cardReasons: {
+      "2H": "avoided_penalty",
+      AH: "captured_penalty"
     }
   },
   {
@@ -57,6 +61,11 @@ export const kingOfHeartsGuidedTricks: GuidedTrick[] = [
       KH: "good",
       "4D": "risky",
       "8C": "risky"
+    },
+    cardReasons: {
+      KH: "void_discard",
+      "4D": "void_discard",
+      "8C": "void_discard"
     }
   }
 ];

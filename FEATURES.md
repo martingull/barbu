@@ -30,7 +30,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Local course progress for the playable Barbu path.
 - Continue action for the next unfinished step.
 - Completed-course state with review and reset actions.
-- Shared learner-facing outcome model: good, risky, penalty, and illegal.
+- Shared learner-facing outcome model: good, risky, penalty, and illegal, with separate reason tags for review and future tutor explanations.
 - Shared course content flow for No Hearts, No Queens, and King of Hearts with concept, example, guided play, and review screens.
 - Shared card table renderer for course examples and guided play.
 - Barbu reference screen with Parlett baseline, play direction, core contracts, scoring, and documented varieties.
@@ -48,6 +48,7 @@ These are the next product increments that keep the app coherent.
 
 1. Drill Loop v2
    - Expand recent-attempt display into a small habit loop.
+   - Use stored reason tags to explain why a decision was good, risky, or penalized.
    - Keep explanations to one sentence unless the player asks for more.
 
 2. Core Game And Variety Model
