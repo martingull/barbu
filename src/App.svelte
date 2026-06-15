@@ -106,6 +106,11 @@
     outcome: GuidedCardOutcome | "illegal";
   };
 
+  type ReviewInsight = {
+    contract: string;
+    message: string;
+  };
+
   const gameCatalog: CatalogGame[] = [
     {
       id: "barbu",
@@ -412,7 +417,9 @@
   $: reviewContractResults = summarizeContractResults(reviewResults);
   $: reviewWeakContract = weakestContractFromResults(reviewContractResults);
   $: reviewCleanCount = reviewResults.filter((result) => result.clean).length;
-  $: reviewAdvice = adviceForContract(reviewWeakContract);
+  $: reviewInsight = buildReviewInsight(recentPlayBarbuAttempts);
+  $: reviewAdvice = reviewInsight.message;
+  $: reviewReplayContract = reviewInsight.contract || reviewWeakContract;
 
   function loadCourseProgress() {
     if (typeof localStorage === "undefined") {
@@ -629,7 +636,7 @@
   }
 
   async function replayReviewWeakContract() {
-    const replayContract = reviewWeakContract;
+    const replayContract = reviewReplayContract;
 
     if (!replayContract) {
       await startDailyDrill();
@@ -990,6 +997,69 @@
     }
 
     return "Play another table to give Barbu enough decisions to review.";
+  }
+
+  function buildReviewInsight(attempts: PlayBarbuAttempt[]): ReviewInsight {
+    const recentResults = attempts.flatMap((attempt) => attempt.results);
+
+    if (recentResults.length === 0) {
+      return {
+        contract: "",
+        message: "Play a practice table to give Barbu enough decisions to review."
+      };
+    }
+
+    const priority: PracticeReason[] = [
+      "off_suit",
+      "captured_penalty",
+      "won_clean_trick",
+      "void_discard",
+      "avoided_penalty",
+      "followed_suit"
+    ];
+    const reason = priority.find((candidate) => recentResults.some((result) => result.reason === candidate));
+    const result = reason ? recentResults.find((item) => item.reason === reason) : undefined;
+    const contract = result?.contract ?? "";
+
+    if (reason === "off_suit") {
+      return {
+        contract,
+        message: "Check the led suit before choosing. Off-suit cards are only allowed when you are void."
+      };
+    }
+
+    if (reason === "captured_penalty") {
+      return {
+        contract,
+        message: "You captured a penalty. Before playing high, ask who wins the trick if you stay low."
+      };
+    }
+
+    if (reason === "won_clean_trick") {
+      return {
+        contract,
+        message: "You won a clean trick. That is legal, but keep checking whether the trick is actually dangerous."
+      };
+    }
+
+    if (reason === "void_discard") {
+      return {
+        contract,
+        message: "You used a void turn to discard. Keep looking for chances to shed danger when someone else controls the trick."
+      };
+    }
+
+    if (reason === "avoided_penalty") {
+      return {
+        contract,
+        message: "You avoided the penalty card. Keep locating the trick winner before choosing your card."
+      };
+    }
+
+    return {
+      contract,
+      message: "You followed suit well. Keep repeating the table until reading the winner feels automatic."
+    };
   }
 
   function cardClasses(card: Card) {
@@ -1586,7 +1656,7 @@
       <div class="course-actions">
         <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
         <button class="secondary-action" onclick={() => void replayReviewWeakContract()} type="button">
-          Replay {reviewWeakContract || "table"}
+          Replay {reviewReplayContract || "table"}
         </button>
         <button class="secondary-action" onclick={() => void startDailyDrill("generated-drill")} type="button">Play Barbu</button>
         <button class="primary-action" onclick={finishPathReview} type="button">Finish review</button>

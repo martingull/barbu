@@ -26,6 +26,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Play Barbu mode with three quick mixed-contract decisions, immediate feedback, and a compact result.
 - Training path practice step connected to Play Barbu completion.
 - Review step with latest Play Barbu score, weakest-contract advice, recent attempts, and replay actions.
+- Reason-based review advice that turns recent practice tags into one short next-step correction.
 - Local Play Barbu result history with contract-level summaries and focused replay for the weakest contract.
 - Local course progress for the playable Barbu path.
 - Continue action for the next unfinished step.
@@ -48,7 +49,7 @@ These are the next product increments that keep the app coherent.
 
 1. Drill Loop v2
    - Expand recent-attempt display into a small habit loop.
-   - Use stored reason tags to explain why a decision was good, risky, or penalized.
+   - Use stored reason tags to refine replay recommendations and review timing.
    - Keep explanations to one sentence unless the player asks for more.
 
 2. Core Game And Variety Model

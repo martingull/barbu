@@ -1512,8 +1512,28 @@ h2 {
   }
 
   .topbar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: start;
-    gap: 10px;
+    gap: 8px 10px;
+    padding-bottom: 14px;
+  }
+
+  .topbar > div:not(.contract-status) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    min-width: 0;
+  }
+
+  .topbar > .back-button {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .topbar > .contract-status {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
   }
 
   .table-topbar {

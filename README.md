@@ -54,6 +54,7 @@ content/             Structured game and lesson content
 - Play Barbu mode with three quick mixed-contract decisions, immediate feedback, and a compact result; Tauri builds use Rust-generated scenarios, while browser runs use a local generated fallback.
 - The training path practice step launches Play Barbu and marks the path step complete after a finished table.
 - Review step with latest Play Barbu score, weakest-contract advice, recent attempts, and replay actions.
+- Reason-based review advice that turns recent practice tags into one short next-step correction.
 - Local Play Barbu result history with contract-level summaries and focused replay for the weakest contract.
 - Local course progress, a continue action, and compact outcome labels for guided card decisions.
 - Shared learner-facing outcome model: good, risky, penalty, and illegal, with separate reason tags for review and future tutor explanations.

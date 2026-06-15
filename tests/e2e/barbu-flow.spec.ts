@@ -194,7 +194,7 @@ test("No Queens course has concept example play and review", async ({ page }) =>
   await expect(page.getByRole("button", { name: /Spot the danger/ })).toContainText("Complete");
 });
 
-test("King of Hearts course has concept example play and review", async ({ page }) => {
+test("King of Hearts course has concept example play and review", async ({ page }, testInfo) => {
   await page.addInitScript(() => {
     localStorage.setItem(
       "barbu.courseProgress.v1",
@@ -208,6 +208,7 @@ test("King of Hearts course has concept example play and review", async ({ page 
 
   await expect(page.getByRole("heading", { name: "Avoid the king" })).toBeVisible();
   await expect(page.getByText("one card carries the danger")).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("king-of-hearts-concept.png"), fullPage: true });
   await page.getByRole("button", { name: "See example" }).click();
 
   await expect(page.getByRole("heading", { name: /Tutor leads hearts/ })).toBeVisible();
@@ -263,6 +264,7 @@ test("training path practice step starts Play Barbu and marks completion", async
   await expect(page.getByRole("heading", { name: "Review the hand" })).toBeVisible();
   await expect(page.getByLabel("Review contract results")).toContainText("No Hearts");
   await expect(page.getByLabel("Review recent attempts")).toContainText("3 / 3 clean");
+  await expect(page.getByText("You avoided the penalty card")).toBeVisible();
   await expect(page.getByRole("button", { name: "Replay No Hearts" })).toBeVisible();
   await page.getByRole("button", { name: "Finish review" }).click();
 
