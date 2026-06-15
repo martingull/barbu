@@ -11,8 +11,11 @@ pub use guided::{
 };
 pub use learning::{barbu_learning_path, ContractLesson, GameLesson, LessonStep};
 pub use practice::{
-    generate_daily_drill_set, generate_king_of_hearts_capture, generate_no_hearts_follow_suit,
-    generate_no_queens_capture, PracticeContractKind, PracticeDrillSet, PracticeOutcome,
-    PracticeOutcomeKind, PracticeOutcomeReason, PracticeScenario,
+    generate_daily_drill_set, generate_king_of_hearts_capture, generate_king_of_hearts_practice,
+    generate_king_of_hearts_void_discard, generate_no_hearts_follow_suit,
+    generate_no_hearts_practice, generate_no_hearts_void_discard, generate_no_queens_capture,
+    generate_no_queens_practice, generate_no_queens_void_discard, PracticeContractKind,
+    PracticeDrillSet, PracticeOutcome, PracticeOutcomeKind, PracticeOutcomeReason,
+    PracticeScenario,
 };
 pub use trick::{legal_cards, score_no_hearts_trick, trick_winner, PlayedCard, PlayerIndex};

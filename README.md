@@ -64,7 +64,7 @@ content/             Structured game and lesson content
 - Barbu reference screen grounded in the Parlett baseline, with core contracts kept separate from documented varieties of play.
 - Fixed authored Barbu lessons for No Hearts, No Queens, and King of Hearts.
 - Structured outcome metadata for authored guided card choices.
-- Generated No Hearts, No Queens, and King of Hearts drills from Rust using deterministic seeds.
+- Generated No Hearts, No Queens, and King of Hearts drills from Rust using deterministic seeds and multiple local scenario patterns per contract.
 - Rule validation, trick winners, scoring, and generated-practice outcomes live in `barbu-core`.
 - The Svelte app renders authored or generated scenarios and should avoid duplicating rules where Rust can provide them.
 - Barbu is the first Hearts-family core game, not the app boundary. The lesson/catalog structure should be able to grow toward other core games and documented varieties first, then other families such as Whist or Bridge later.

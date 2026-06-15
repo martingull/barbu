@@ -199,6 +199,64 @@ pub fn generate_no_hearts_follow_suit(seed: u64) -> PracticeScenario {
     }
 }
 
+pub fn generate_no_hearts_practice(seed: u64) -> PracticeScenario {
+    if seed % 2 == 0 {
+        generate_no_hearts_follow_suit(seed)
+    } else {
+        generate_no_hearts_void_discard(seed)
+    }
+}
+
+pub fn generate_no_hearts_void_discard(seed: u64) -> PracticeScenario {
+    let mut rng = DeterministicRng::new(seed);
+    let led_suit = choose_suit(&mut rng, &[Suit::Clubs, Suit::Diamonds, Suit::Spades]);
+    let discard_suit = first_non_matching_suit(led_suit, Suit::Hearts);
+
+    let lead_card = Card::new(
+        choose(&mut rng, &[Rank::Six, Rank::Seven, Rank::Eight]),
+        led_suit,
+    );
+    let right_card = Card::new(
+        choose(&mut rng, &[Rank::Nine, Rank::Ten, Rank::Jack]),
+        led_suit,
+    );
+    let left_card = Card::new(Rank::Ace, led_suit);
+    let heart_card = Card::new(
+        choose(&mut rng, &[Rank::Four, Rank::Five, Rank::Six]),
+        Suit::Hearts,
+    );
+    let discard_card = Card::new(
+        choose(&mut rng, &[Rank::Two, Rank::Three, Rank::Four]),
+        discard_suit,
+    );
+
+    let mut player_hand = vec![
+        discard_card,
+        Card::new(Rank::Queen, discard_suit),
+        heart_card,
+        Card::new(Rank::Eight, Suit::Hearts),
+    ];
+    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+
+    PracticeScenario {
+        id: format!("no-hearts-void-discard-{seed}"),
+        title: "Discard while void in the led suit".to_string(),
+        contract: "No Hearts".to_string(),
+        contract_kind: PracticeContractKind::NoHearts,
+        led_suit,
+        prompt: format!(
+            "Tutor led {lead_card}. Right followed {right_card}. You have no {}. Choose a discard.",
+            suit_name(led_suit)
+        ),
+        table_before_choice: vec![
+            PlayedCard::new(0, lead_card),
+            PlayedCard::new(1, right_card),
+        ],
+        player_hand,
+        table_after_choice: vec![PlayedCard::new(3, left_card)],
+    }
+}
+
 pub fn generate_no_queens_capture(seed: u64) -> PracticeScenario {
     let mut rng = DeterministicRng::new(seed);
     let led_suits = [Suit::Clubs, Suit::Diamonds, Suit::Spades];
@@ -242,6 +300,54 @@ pub fn generate_no_queens_capture(seed: u64) -> PracticeScenario {
     }
 }
 
+pub fn generate_no_queens_practice(seed: u64) -> PracticeScenario {
+    if seed % 2 == 0 {
+        generate_no_queens_capture(seed)
+    } else {
+        generate_no_queens_void_discard(seed)
+    }
+}
+
+pub fn generate_no_queens_void_discard(seed: u64) -> PracticeScenario {
+    let mut rng = DeterministicRng::new(seed);
+    let led_suit = choose_suit(&mut rng, &[Suit::Clubs, Suit::Diamonds, Suit::Spades]);
+    let discard_suit = first_non_matching_suit(led_suit, Suit::Hearts);
+
+    let lead_card = Card::new(
+        choose(&mut rng, &[Rank::Five, Rank::Six, Rank::Seven]),
+        led_suit,
+    );
+    let queen_card = Card::new(Rank::Queen, led_suit);
+    let left_card = Card::new(Rank::Ace, led_suit);
+    let discard_card = Card::new(
+        choose(&mut rng, &[Rank::Two, Rank::Three, Rank::Four]),
+        discard_suit,
+    );
+
+    let mut player_hand = vec![
+        discard_card,
+        Card::new(Rank::King, discard_suit),
+        Card::new(Rank::Queen, Suit::Hearts),
+        Card::new(Rank::Eight, Suit::Hearts),
+    ];
+    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+
+    PracticeScenario {
+        id: format!("no-queens-void-discard-{seed}"),
+        title: "Discard when the queen is already loose".to_string(),
+        contract: "No Queens".to_string(),
+        contract_kind: PracticeContractKind::NoQueens,
+        led_suit,
+        prompt: format!(
+            "Tutor led {lead_card}. Right played {queen_card}. You are void in {}. Choose a discard.",
+            suit_name(led_suit)
+        ),
+        table_before_choice: vec![PlayedCard::new(0, lead_card), PlayedCard::new(1, queen_card)],
+        player_hand,
+        table_after_choice: vec![PlayedCard::new(3, left_card)],
+    }
+}
+
 pub fn generate_king_of_hearts_capture(seed: u64) -> PracticeScenario {
     let mut rng = DeterministicRng::new(seed);
 
@@ -280,14 +386,66 @@ pub fn generate_king_of_hearts_capture(seed: u64) -> PracticeScenario {
     }
 }
 
+pub fn generate_king_of_hearts_practice(seed: u64) -> PracticeScenario {
+    if seed % 2 == 0 {
+        generate_king_of_hearts_capture(seed)
+    } else {
+        generate_king_of_hearts_void_discard(seed)
+    }
+}
+
+pub fn generate_king_of_hearts_void_discard(seed: u64) -> PracticeScenario {
+    let mut rng = DeterministicRng::new(seed);
+    let first_discard_suit = choose_suit(&mut rng, &[Suit::Clubs, Suit::Diamonds, Suit::Spades]);
+    let second_discard_suit = first_non_matching_suit(first_discard_suit, Suit::Hearts);
+
+    let lead_card = Card::new(
+        choose(&mut rng, &[Rank::Eight, Rank::Nine, Rank::Ten]),
+        Suit::Hearts,
+    );
+    let first_discard = Card::new(
+        choose(&mut rng, &[Rank::Two, Rank::Three, Rank::Four]),
+        first_discard_suit,
+    );
+    let second_discard = Card::new(
+        choose(&mut rng, &[Rank::Seven, Rank::Eight, Rank::Nine]),
+        second_discard_suit,
+    );
+
+    let mut player_hand = vec![
+        first_discard,
+        second_discard,
+        Card::new(Rank::Queen, Suit::Spades),
+        Card::new(Rank::Ace, Suit::Clubs),
+    ];
+    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+
+    PracticeScenario {
+        id: format!("king-of-hearts-void-discard-{seed}"),
+        title: "Escape the king when you are void".to_string(),
+        contract: "King of Hearts".to_string(),
+        contract_kind: PracticeContractKind::KingOfHearts,
+        led_suit: Suit::Hearts,
+        prompt: format!(
+            "Tutor led {lead_card}. Right played KH. You have no hearts, so choose any discard."
+        ),
+        table_before_choice: vec![
+            PlayedCard::new(0, lead_card),
+            PlayedCard::new(1, Card::new(Rank::King, Suit::Hearts)),
+        ],
+        player_hand,
+        table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Ace, Suit::Hearts))],
+    }
+}
+
 pub fn generate_daily_drill_set(seed: u64) -> PracticeDrillSet {
     PracticeDrillSet {
         id: format!("play-barbu-{seed}"),
         title: "Play Barbu".to_string(),
         scenarios: vec![
-            generate_no_hearts_follow_suit(seed.saturating_mul(3)),
-            generate_no_queens_capture(seed.saturating_mul(3) + 1),
-            generate_king_of_hearts_capture(seed.saturating_mul(3) + 2),
+            generate_no_hearts_practice(seed.saturating_mul(3)),
+            generate_no_queens_practice(seed.saturating_mul(3) + 1),
+            generate_king_of_hearts_practice(seed.saturating_mul(3) + 2),
         ],
     }
 }
@@ -445,6 +603,19 @@ mod tests {
     }
 
     #[test]
+    fn daily_drill_set_varies_scenario_patterns_by_seed() {
+        let first_set = generate_daily_drill_set(13);
+        let next_set = generate_daily_drill_set(14);
+
+        assert!(first_set.scenarios[0].id.contains("void-discard"));
+        assert!(next_set.scenarios[0].id.contains("follow-suit"));
+        assert!(first_set.scenarios[1].id.contains("capture"));
+        assert!(next_set.scenarios[1].id.contains("void-discard"));
+        assert!(first_set.scenarios[2].id.contains("void-discard"));
+        assert!(next_set.scenarios[2].id.contains("capture"));
+    }
+
+    #[test]
     fn generated_follow_suit_drill_requires_led_suit() {
         let scenario = generate_no_hearts_follow_suit(7);
         let legal_cards = scenario.legal_player_cards();
@@ -484,6 +655,24 @@ mod tests {
         assert_eq!(outcome.winner, Some(3));
         assert_eq!(outcome.penalty, Some(1));
         assert!(outcome.explanation.contains("heart penalty"));
+    }
+
+    #[test]
+    fn generated_no_hearts_void_drill_allows_any_discard() {
+        let scenario = generate_no_hearts_void_discard(31);
+        let legal_cards = scenario.legal_player_cards();
+        let discard = legal_cards
+            .iter()
+            .copied()
+            .find(|card| card.suit != Suit::Hearts)
+            .expect("void scenario should include a non-heart discard");
+        let outcome = scenario.outcome_for(discard);
+
+        assert_eq!(legal_cards, scenario.player_hand);
+        assert!(outcome.is_legal);
+        assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Good);
+        assert_eq!(outcome.reason, PracticeOutcomeReason::VoidDiscard);
+        assert_ne!(outcome.winner, Some(2));
     }
 
     #[test]
@@ -560,6 +749,19 @@ mod tests {
     }
 
     #[test]
+    fn generated_no_queens_void_drill_avoids_the_queen_trick() {
+        let scenario = generate_no_queens_void_discard(33);
+        let discard = scenario.legal_player_cards()[0];
+        let outcome = scenario.outcome_for(discard);
+
+        assert_eq!(scenario.legal_player_cards(), scenario.player_hand);
+        assert!(outcome.is_legal);
+        assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Good);
+        assert_ne!(outcome.winner, Some(2));
+        assert_eq!(outcome.penalty, Some(1));
+    }
+
+    #[test]
     fn generated_king_of_hearts_drill_can_penalize_player_capture() {
         let scenario = generate_king_of_hearts_capture(29);
         let outcome = scenario.outcome_for(Card::new(Rank::Ace, Suit::Hearts));
@@ -570,5 +772,19 @@ mod tests {
         assert_eq!(outcome.winner, Some(2));
         assert_eq!(outcome.penalty, Some(1));
         assert!(outcome.explanation.contains("king of hearts penalty"));
+    }
+
+    #[test]
+    fn generated_king_of_hearts_void_drill_allows_any_discard() {
+        let scenario = generate_king_of_hearts_void_discard(35);
+        let discard = scenario.legal_player_cards()[0];
+        let outcome = scenario.outcome_for(discard);
+
+        assert_eq!(scenario.legal_player_cards(), scenario.player_hand);
+        assert!(outcome.is_legal);
+        assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Good);
+        assert_eq!(outcome.reason, PracticeOutcomeReason::AvoidedPenalty);
+        assert_eq!(outcome.winner, Some(3));
+        assert_eq!(outcome.penalty, Some(1));
     }
 }

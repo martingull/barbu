@@ -39,7 +39,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Authored lessons for No Hearts, No Queens, and King of Hearts.
 - Structured outcome metadata for authored guided card choices.
 - Compact outcome labels for guided decisions.
-- Generated No Hearts, No Queens, and King of Hearts Play Barbu set via Rust/Tauri.
+- Generated No Hearts, No Queens, and King of Hearts Play Barbu set via Rust/Tauri, with multiple local scenario patterns per contract.
 - Browser generated fallback for Play Barbu when Tauri is unavailable.
 - Playwright smoke tests for catalog, Barbu table, lesson flow, generated fallback, and course-complete behavior.
 
@@ -52,8 +52,8 @@ These are the next product increments that keep the app coherent.
    - Use stored reason tags to refine replay recommendations and review timing.
    - Keep explanations to one sentence unless the player asks for more.
 
-2. Generated Practice Expansion
-   - Expand generated drills beyond one pattern per contract.
+2. Generated Practice Expansion v2
+   - Add more scenario families for each supported contract.
    - Keep commands thin and deterministic.
    - Add Rust tests for every drill generator.
 

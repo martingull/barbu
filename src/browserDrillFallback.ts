@@ -1,4 +1,4 @@
-import type { Card, GuidedTrick, Suit } from "./lessonTypes";
+import type { Card, GuidedCardOutcome, GuidedTrick, PracticeReason, Suit } from "./lessonTypes";
 
 type BrowserDrillStep = {
   contract: string;
@@ -41,6 +41,10 @@ export function generateBrowserPlayBarbuDrillSteps(seed: number): BrowserDrillSt
 }
 
 function generatedNoHeartsStep(seed: number): BrowserDrillStep {
+  return seed % 2 === 0 ? generatedNoHeartsFollowSuitStep(seed) : generatedNoHeartsVoidDiscardStep(seed);
+}
+
+function generatedNoHeartsFollowSuitStep(seed: number): BrowserDrillStep {
   const rng = new DeterministicRng(seed);
   const ledSuit = choose(rng, nonHeartSuits);
   const leadCard = card(choose(rng, ["7", "8", "9", "10"]), ledSuit);
@@ -84,7 +88,57 @@ function generatedNoHeartsStep(seed: number): BrowserDrillStep {
   };
 }
 
+function generatedNoHeartsVoidDiscardStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const ledSuit = choose(rng, nonHeartSuits);
+  const discardSuit = firstNonMatchingSuit(ledSuit, "H");
+  const leadCard = card(choose(rng, ["6", "7", "8"]), ledSuit);
+  const rightCard = card(choose(rng, ["9", "10", "J"]), ledSuit);
+  const leftWinner = card("A", ledSuit);
+  const heartCard = card(choose(rng, ["4", "5", "6"]), "H");
+  const lowDiscard = card(choose(rng, ["2", "3", "4"]), discardSuit);
+  const highDiscard = card("Q", discardSuit);
+  const playerHand = [lowDiscard, highDiscard, heartCard, card("8", "H")].sort(compareCards);
+  const ledSuitName = suitNames[ledSuit];
+  const legalCardIds = playerHand.map((card) => card.id);
+
+  return {
+    contract: "No Hearts",
+    title: "Discard while void",
+    trick: {
+      title: "Discard while void in the led suit",
+      beforeResult: `Tutor led ${leadCard.label}. Right followed ${rightCard.label}. You have no ${ledSuitName}.`,
+      afterResult: `Left wins with ${leftWinner.label}. Your discard cannot win the led-suit trick.`,
+      emptyExplanation: `You are void in ${ledSuitName}. Any card is legal.`,
+      legalCardIds,
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Tutor", card: leadCard },
+        { seat: "Right", card: rightCard }
+      ],
+      tableAfterChoice: [{ seat: "Left", card: leftWinner }],
+      pendingBySeat: { Left: leftWinner.label, You: "You" },
+      playedExplanations: Object.fromEntries(
+        playerHand.map((playerCard) => [
+          playerCard.id,
+          playerCard.suit === "H"
+            ? `${playerCard.label} is a legal heart discard because you are void in ${ledSuitName}.`
+            : `${playerCard.label} is a legal safe discard because you are void in ${ledSuitName}.`
+        ])
+      ),
+      cardOutcomes: cardOutcomesFor(playerHand, "good"),
+      cardReasons: cardReasonsFor(playerHand, (playerCard) =>
+        playerCard.suit === "H" ? "avoided_penalty" : "void_discard"
+      )
+    }
+  };
+}
+
 function generatedNoQueensStep(seed: number): BrowserDrillStep {
+  return seed % 2 === 0 ? generatedNoQueensCaptureStep(seed) : generatedNoQueensVoidDiscardStep(seed);
+}
+
+function generatedNoQueensCaptureStep(seed: number): BrowserDrillStep {
   const rng = new DeterministicRng(seed);
   const ledSuit = choose(rng, nonHeartSuits);
   const leadCard = card(choose(rng, ["5", "6", "7", "8"]), ledSuit);
@@ -129,7 +183,57 @@ function generatedNoQueensStep(seed: number): BrowserDrillStep {
   };
 }
 
+function generatedNoQueensVoidDiscardStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const ledSuit = choose(rng, nonHeartSuits);
+  const discardSuit = firstNonMatchingSuit(ledSuit, "H");
+  const leadCard = card(choose(rng, ["5", "6", "7"]), ledSuit);
+  const queenCard = card("Q", ledSuit);
+  const leftWinner = card("A", ledSuit);
+  const lowDiscard = card(choose(rng, ["2", "3", "4"]), discardSuit);
+  const highDiscard = card("K", discardSuit);
+  const playerQueen = card("Q", "H");
+  const playerHand = [lowDiscard, highDiscard, playerQueen, card("8", "H")].sort(compareCards);
+  const ledSuitName = suitNames[ledSuit];
+  const legalCardIds = playerHand.map((card) => card.id);
+
+  return {
+    contract: "No Queens",
+    title: "Discard while void",
+    trick: {
+      title: "Discard when the queen is already loose",
+      beforeResult: `Tutor led ${leadCard.label}. Right played ${queenCard.label}. You are void in ${ledSuitName}.`,
+      afterResult: `Left wins with ${leftWinner.label}. Any queen in this trick goes to Left.`,
+      emptyExplanation: `You have no ${ledSuitName}. Any discard is legal.`,
+      legalCardIds,
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Tutor", card: leadCard },
+        { seat: "Right", card: queenCard }
+      ],
+      tableAfterChoice: [{ seat: "Left", card: leftWinner }],
+      pendingBySeat: { Left: leftWinner.label, You: "You" },
+      playedExplanations: Object.fromEntries(
+        playerHand.map((playerCard) => [
+          playerCard.id,
+          playerCard.rank === "Q"
+            ? `${playerCard.label} is legal because you are void; Left still wins the trick.`
+            : `${playerCard.label} is a legal discard because you are void in ${ledSuitName}.`
+        ])
+      ),
+      cardOutcomes: cardOutcomesFor(playerHand, "good"),
+      cardReasons: cardReasonsFor(playerHand, (playerCard) =>
+        playerCard.rank === "Q" ? "avoided_penalty" : "void_discard"
+      )
+    }
+  };
+}
+
 function generatedKingOfHeartsStep(seed: number): BrowserDrillStep {
+  return seed % 2 === 0 ? generatedKingOfHeartsCaptureStep(seed) : generatedKingOfHeartsVoidDiscardStep(seed);
+}
+
+function generatedKingOfHeartsCaptureStep(seed: number): BrowserDrillStep {
   const rng = new DeterministicRng(seed);
   const leadCard = card(choose(rng, ["9", "10", "J"]), "H");
   const kingCard = card("K", "H");
@@ -169,6 +273,54 @@ function generatedKingOfHeartsStep(seed: number): BrowserDrillStep {
       }
     }
   };
+}
+
+function generatedKingOfHeartsVoidDiscardStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const firstDiscardSuit = choose(rng, nonHeartSuits);
+  const secondDiscardSuit = firstNonMatchingSuit(firstDiscardSuit, "H");
+  const leadCard = card(choose(rng, ["8", "9", "10"]), "H");
+  const kingCard = card("K", "H");
+  const leftWinner = card("A", "H");
+  const firstDiscard = card(choose(rng, ["2", "3", "4"]), firstDiscardSuit);
+  const secondDiscard = card(choose(rng, ["7", "8", "9"]), secondDiscardSuit);
+  const playerHand = [firstDiscard, secondDiscard, card("Q", "S"), card("A", "C")].sort(compareCards);
+  const legalCardIds = playerHand.map((card) => card.id);
+
+  return {
+    contract: "King of Hearts",
+    title: "Escape while void",
+    trick: {
+      title: "Escape the king when you are void",
+      beforeResult: `Tutor led ${leadCard.label}. Right played ${kingCard.label}. You have no hearts.`,
+      afterResult: `Left wins with ${leftWinner.label} and takes the king of hearts penalty.`,
+      emptyExplanation: "You are void in hearts. Any discard is legal.",
+      legalCardIds,
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Tutor", card: leadCard },
+        { seat: "Right", card: kingCard }
+      ],
+      tableAfterChoice: [{ seat: "Left", card: leftWinner }],
+      pendingBySeat: { Left: leftWinner.label, You: "You" },
+      playedExplanations: Object.fromEntries(
+        playerHand.map((playerCard) => [
+          playerCard.id,
+          `${playerCard.label} is legal because you have no hearts. Left, not you, captures KH.`
+        ])
+      ),
+      cardOutcomes: cardOutcomesFor(playerHand, "good"),
+      cardReasons: cardReasonsFor(playerHand, () => "avoided_penalty")
+    }
+  };
+}
+
+function cardOutcomesFor(cards: Card[], outcome: GuidedCardOutcome) {
+  return Object.fromEntries(cards.map((card) => [card.id, outcome])) as Partial<Record<string, GuidedCardOutcome>>;
+}
+
+function cardReasonsFor(cards: Card[], reasonFor: (card: Card) => PracticeReason) {
+  return Object.fromEntries(cards.map((card) => [card.id, reasonFor(card)])) as Partial<Record<string, PracticeReason>>;
 }
 
 function card(rank: Rank, suit: Suit): Card {

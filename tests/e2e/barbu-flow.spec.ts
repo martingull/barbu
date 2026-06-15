@@ -105,11 +105,9 @@ test("Play Barbu gives three mixed-contract decisions and a result", async ({ pa
     const history = JSON.parse(localStorage.getItem("barbu.playHistory.v1") ?? "[]");
     return history[0];
   });
-  expect(storedAttempt.results.map((result: { reason: string }) => result.reason)).toEqual([
-    "avoided_penalty",
-    "avoided_penalty",
-    "avoided_penalty"
-  ]);
+  const storedReasons = storedAttempt.results.map((result: { reason: string }) => result.reason);
+  expect(storedReasons).toHaveLength(3);
+  expect(storedReasons.every((reason: string) => ["avoided_penalty", "void_discard"].includes(reason))).toBe(true);
   await expect(page.getByLabel("Contract results").getByText("No Hearts")).toBeVisible();
   await expect(page.getByLabel("Contract results").getByText("No Queens")).toBeVisible();
   await expect(page.getByLabel("Contract results").getByText("King of Hearts")).toBeVisible();
@@ -268,8 +266,8 @@ test("training path practice step starts Play Barbu and marks completion", async
   await expect(page.getByRole("heading", { name: "Review the hand" })).toBeVisible();
   await expect(page.getByLabel("Review contract results")).toContainText("No Hearts");
   await expect(page.getByLabel("Review recent attempts")).toContainText("3 / 3 clean");
-  await expect(page.getByText("You avoided the penalty card")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Replay No Hearts" })).toBeVisible();
+  await expect(page.getByText(/You (avoided the penalty card|used a void turn to discard)/)).toBeVisible();
+  await expect(page.getByRole("button", { name: /Replay (No Hearts|No Queens|King of Hearts)/ })).toBeVisible();
   await page.getByRole("button", { name: "Finish review" }).click();
 
   await expect(page.getByText("5 / 5 complete")).toBeVisible();
