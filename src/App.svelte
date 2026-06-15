@@ -1,15 +1,18 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
+  import { playBrowserNoHeartsCard, startBrowserNoHeartsHand } from "./browserHandFallback";
   import { generateBrowserPlayBarbuDrillSteps } from "./browserDrillFallback";
   import CardTable from "./CardTable.svelte";
   import { guidedLessons } from "./lessons/catalog";
   import { referenceCatalog } from "./referenceCatalog";
   import type {
     Card,
+    CompletedHandTrick,
     GeneratedDrillSet,
     GeneratedPracticeScenario,
     GuidedCardOutcome,
     GuidedTrick,
+    NoHeartsHandState,
     PracticeReason,
     Seat,
     Suit,
@@ -25,6 +28,7 @@
     | "lesson"
     | "drill"
     | "drillResult"
+    | "noHeartsHand"
     | "pathReview";
 
   type PathAction = "lesson" | "generated" | "review" | "planned";
@@ -406,6 +410,10 @@
   let playBarbuHistory: PlayBarbuAttempt[] = loadPlayBarbuHistory();
   let usingGeneratedPractice = false;
   let generatedPracticeError = "";
+  let noHeartsHand: NoHeartsHandState | null = null;
+  let noHeartsSelectedCardId = "";
+  let noHeartsHandError = "";
+  let usingBrowserNoHeartsHand = false;
 
   $: selectedLesson = guidedLessons.find((lesson) => lesson.id === selectedLessonId) ?? guidedLessons[0];
   $: familyLabel = usingGeneratedPractice ? "Hearts" : selectedLesson.family;
@@ -458,6 +466,17 @@
   $: reviewInsight = buildReviewInsight(recentPlayBarbuAttempts);
   $: reviewAdvice = reviewInsight.message;
   $: reviewReplayContract = reviewInsight.contract || reviewWeakContract;
+  $: noHeartsLegalCardIds = new Set(noHeartsHand?.legalCardIds ?? []);
+  $: noHeartsSelectedCard = noHeartsHand?.playerHand.find((card) => card.id === noHeartsSelectedCardId);
+  $: noHeartsLastCompletedTrick = noHeartsHand?.completedTricks[noHeartsHand.completedTricks.length - 1];
+  $: noHeartsLastFeedback = noHeartsLastCompletedTrick ? noHeartsTrickFeedback(noHeartsLastCompletedTrick) : "";
+  $: noHeartsVisibleTableCards = noHeartsHand?.currentTrick.length
+    ? noHeartsHand.currentTrick
+    : (noHeartsLastCompletedTrick?.cards ?? []);
+  $: noHeartsPendingBySeat =
+    noHeartsHand?.status === "in_progress" && noHeartsHand.currentPlayer === "You" && noHeartsHand.currentTrick.length < 4
+      ? { You: "You" }
+      : {};
 
   function loadCourseProgress() {
     if (typeof localStorage === "undefined") {
@@ -644,6 +663,91 @@
       return entry.status === "Documented" ? "Reference only" : "Not scheduled";
     }
     return "No lessons yet";
+  }
+
+  async function startNoHeartsHand() {
+    const seed = usePracticeSeed();
+    noHeartsSelectedCardId = "";
+    noHeartsHandError = "";
+
+    try {
+      noHeartsHand = await invoke<NoHeartsHandState>("start_no_hearts_hand", { seed });
+      usingBrowserNoHeartsHand = false;
+    } catch {
+      noHeartsHand = startBrowserNoHeartsHand(seed);
+      usingBrowserNoHeartsHand = true;
+    }
+
+    appView = "noHeartsHand";
+  }
+
+  function selectNoHeartsHandCard(card: Card) {
+    if (!noHeartsHand || noHeartsHand.status === "complete") {
+      return;
+    }
+
+    noHeartsSelectedCardId = card.id;
+  }
+
+  async function playNoHeartsHandCard() {
+    if (!noHeartsHand || !noHeartsSelectedCard) {
+      return;
+    }
+
+    noHeartsHandError = "";
+
+    if (usingBrowserNoHeartsHand) {
+      noHeartsHand = playBrowserNoHeartsCard(noHeartsHand, noHeartsSelectedCard.id);
+      noHeartsSelectedCardId = "";
+      return;
+    }
+
+    try {
+      noHeartsHand = await invoke<NoHeartsHandState>("play_no_hearts_hand_card", {
+        state: noHeartsHand,
+        cardId: noHeartsSelectedCard.id
+      });
+      noHeartsSelectedCardId = "";
+    } catch (error) {
+      noHeartsHandError = typeof error === "string" ? error : "That card could not be played.";
+    }
+  }
+
+  function noHeartsHandCardClasses(card: Card) {
+    return {
+      heart: card.suit === "H",
+      legal: noHeartsLegalCardIds.has(card.id),
+      illegal: !noHeartsLegalCardIds.has(card.id),
+      selected: noHeartsSelectedCardId === card.id
+    };
+  }
+
+  function noHeartsTrickOutcomeLabel(trick: CompletedHandTrick) {
+    if (trick.outcome === "captured_penalty") {
+      return "Penalty";
+    }
+    if (trick.outcome === "avoided_penalty") {
+      return "Avoided";
+    }
+    if (trick.outcome === "won_clean_trick") {
+      return "Clean win";
+    }
+    return "Clear";
+  }
+
+  function noHeartsTrickFeedback(trick: CompletedHandTrick) {
+    const heartText = `${trick.penalty} ${trick.penalty === 1 ? "heart" : "hearts"}`;
+
+    if (trick.outcome === "captured_penalty") {
+      return `You won the trick and took ${heartText}. Risky: your card became the highest card in the led suit.`;
+    }
+    if (trick.outcome === "avoided_penalty") {
+      return `${trick.winner} won the trick and took ${heartText}. Good: you stayed out of the penalty trick.`;
+    }
+    if (trick.outcome === "won_clean_trick") {
+      return "You won a clean trick. Legal, but keep checking whether hearts can still enter the trick.";
+    }
+    return `${trick.winner} won a clean trick. No hearts moved, so you stayed clear.`;
   }
 
   async function startDailyDrill(pathStepId = "") {
@@ -1294,6 +1398,7 @@
         </div>
         <div class="table-actions">
           <button class="drill-action" onclick={() => void startDailyDrill()} type="button">Play Barbu</button>
+          <button class="drill-action" onclick={() => void startNoHeartsHand()} type="button">No Hearts hand</button>
           <button class="reference-action" onclick={() => openReference("barbu")} type="button">Reference</button>
           {#if isCourseComplete}
             <button class="continue-action" onclick={openPathReview} type="button">Review results</button>
@@ -1525,6 +1630,124 @@
         </button>
       </div>
     </section>
+  {:else if appView === "noHeartsHand"}
+    <header class="topbar" aria-label="No Hearts hand">
+      <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
+      <div>
+        <p class="eyebrow">Full-hand skeleton</p>
+        <h1>No Hearts hand</h1>
+      </div>
+      <div class="contract-status">
+        <span>{noHeartsHand?.status === "complete" ? "Complete" : `Trick ${noHeartsHand?.trickNumber ?? 1}`}</span>
+        <strong>{noHeartsHand?.playerPenalty ?? 0} hearts</strong>
+      </div>
+    </header>
+
+    {#if noHeartsHand}
+      <section class="full-hand-surface" aria-label="No Hearts full hand">
+        <div class="full-hand-summary" aria-label="No Hearts hand score">
+          <div>
+            <span>Your score</span>
+            <strong>{noHeartsHand.playerPenalty}</strong>
+          </div>
+          <div>
+            <span>Hearts played</span>
+            <strong>{noHeartsHand.totalPenalty} / 13</strong>
+          </div>
+          <div>
+            <span>Tricks</span>
+            <strong>{noHeartsHand.completedTricks.length} / 13</strong>
+          </div>
+        </div>
+
+        <CardTable
+          ariaLabel="No Hearts hand table"
+          pendingBySeat={noHeartsPendingBySeat}
+          tableCards={noHeartsVisibleTableCards}
+        />
+
+        <section class="lesson-panel full-hand-panel" aria-label="No Hearts hand decision">
+          <div class="lesson-heading">
+            <p class="eyebrow">{usingBrowserNoHeartsHand ? "Local browser hand" : "Rust hand"}</p>
+            <h2>{noHeartsHand.status === "complete" ? "Hand complete" : "Choose your card"}</h2>
+          </div>
+
+          <p class="result">{noHeartsHand.prompt}</p>
+          {#if noHeartsLastFeedback}
+            <p class:warning={noHeartsLastCompletedTrick?.outcome === "captured_penalty"} class="outcome">
+              {noHeartsLastFeedback}
+            </p>
+          {/if}
+          {#if noHeartsHandError}
+            <p class="outcome warning">{noHeartsHandError}</p>
+          {:else if noHeartsHand.status === "complete"}
+            <p class="explanation">
+              {noHeartsHand.playerPenalty === 0
+                ? "Clean hand. You avoided every heart trick."
+                : `You captured ${noHeartsHand.playerPenalty} heart ${noHeartsHand.playerPenalty === 1 ? "penalty" : "penalties"}.`}
+            </p>
+          {:else}
+            <p class="explanation">
+              {noHeartsSelectedCard
+                ? noHeartsLegalCardIds.has(noHeartsSelectedCard.id)
+                  ? `${noHeartsSelectedCard.label} is legal here.`
+                  : `${noHeartsSelectedCard.label} is off suit while you still have a legal card.`
+                : "Legal cards are highlighted. Barbu's table will finish the trick after you play."}
+            </p>
+          {/if}
+
+          <div class="hand full-hand-cards" aria-label="Your No Hearts hand">
+            {#each noHeartsHand.playerHand as card}
+              <button
+                aria-pressed={noHeartsSelectedCardId === card.id}
+                class:heart={noHeartsHandCardClasses(card).heart}
+                class:illegal={noHeartsHandCardClasses(card).illegal}
+                class:legal={noHeartsHandCardClasses(card).legal}
+                class:selected={noHeartsHandCardClasses(card).selected}
+                class="card hand-card full-hand-card"
+                disabled={noHeartsHand.status === "complete"}
+                onclick={() => selectNoHeartsHandCard(card)}
+                type="button"
+              >
+                <b>{card.rank}</b>
+                <small>{card.suit}</small>
+              </button>
+            {/each}
+          </div>
+
+          {#if noHeartsHand.completedTricks.length}
+            <div class="completed-trick-list" aria-label="Completed No Hearts tricks">
+              <p class="eyebrow">Recent tricks</p>
+              {#each noHeartsHand.completedTricks.slice(-3).reverse() as trick}
+                <div>
+                  <span>{noHeartsTrickOutcomeLabel(trick)}</span>
+                  <strong>{trick.winner} won</strong>
+                  <small>{trick.penalty} hearts</small>
+                  <em>{noHeartsTrickFeedback(trick)}</em>
+                </div>
+              {/each}
+            </div>
+          {/if}
+
+          <div class="action-row">
+            {#if noHeartsHand.status === "complete"}
+              <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
+              <button class="primary-action" onclick={() => void startNoHeartsHand()} type="button">New hand</button>
+            {:else}
+              <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
+              <button
+                class="primary-action"
+                disabled={!noHeartsSelectedCard || !noHeartsLegalCardIds.has(noHeartsSelectedCard.id)}
+                onclick={() => void playNoHeartsHandCard()}
+                type="button"
+              >
+                Play card
+              </button>
+            {/if}
+          </div>
+        </section>
+      </section>
+    {/if}
   {:else if appView === "drill"}
     <header class="topbar" aria-label="Play Barbu">
       <button class="back-button" onclick={openBarbuTable} type="button">Table</button>

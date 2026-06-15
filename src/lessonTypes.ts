@@ -77,3 +77,31 @@ export type GeneratedPracticeOutcome = {
   explanation: string;
   completedTrick: TableCard[] | null;
 };
+
+export type HandStatus = "in_progress" | "complete";
+
+export type CompletedHandTrick = {
+  cards: TableCard[];
+  winner: Seat | "Unknown";
+  winnerIndex: number;
+  penalty: number;
+  outcome: "captured_penalty" | "avoided_penalty" | "won_clean_trick" | "stayed_clear";
+};
+
+export type NoHeartsHandState = {
+  id: string;
+  contract: "No Hearts";
+  hands: Card[][];
+  currentPlayerIndex: number;
+  currentPlayer: Seat | "Unknown";
+  currentTrick: TableCard[];
+  completedTricks: CompletedHandTrick[];
+  playerHand: Card[];
+  legalCardIds: string[];
+  playerPenalty: number;
+  totalPenalty: number;
+  cardsRemaining: number;
+  trickNumber: number;
+  status: HandStatus;
+  prompt: string;
+};

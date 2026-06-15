@@ -916,6 +916,98 @@ h2 {
   min-height: 460px;
 }
 
+.full-hand-surface {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(330px, 0.92fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.full-hand-summary {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.full-hand-summary div {
+  display: grid;
+  gap: 4px;
+  min-height: 66px;
+  padding: 12px;
+  border: 1px solid #c7d0c0;
+  border-radius: 8px;
+  background: #fbfcf8;
+}
+
+.full-hand-summary span {
+  color: #60705a;
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.full-hand-summary strong {
+  color: #17201a;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.full-hand-panel {
+  min-height: 460px;
+}
+
+.full-hand-cards {
+  grid-template-columns: repeat(5, minmax(52px, 1fr));
+}
+
+.completed-trick-list {
+  display: grid;
+  gap: 7px;
+}
+
+.completed-trick-list div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 58px;
+  padding: 8px 10px;
+  border: 1px solid #c7d0c0;
+  border-radius: 8px;
+  background: #f4f6ef;
+}
+
+.completed-trick-list span {
+  width: fit-content;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #dfe8d9;
+  color: #284f40;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.completed-trick-list strong,
+.completed-trick-list small {
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.completed-trick-list small {
+  color: #9a342e;
+}
+
+.completed-trick-list em {
+  grid-column: 1 / -1;
+  color: #53604d;
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 750;
+  line-height: 1.32;
+}
+
 .drill-result-screen {
   display: grid;
   grid-template-columns: minmax(0, 0.78fr) minmax(320px, 1fr);
@@ -1242,6 +1334,7 @@ h2 {
   }
 
   .drill-surface,
+  .full-hand-surface,
   .drill-result-screen {
     grid-template-columns: 1fr;
   }
@@ -1605,6 +1698,14 @@ h2 {
   .hand {
     grid-template-columns: repeat(4, minmax(52px, 1fr));
     gap: 8px;
+  }
+
+  .full-hand-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .full-hand-cards {
+    grid-template-columns: repeat(4, minmax(52px, 1fr));
   }
 
   .card b {

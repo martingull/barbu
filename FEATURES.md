@@ -24,6 +24,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Barbu table with contract entry points.
 - Five-step training path: concept, example, guided trick, practice, review.
 - Play Barbu mode with three quick mixed-contract decisions, immediate feedback, and a compact result.
+- No Hearts full-hand skeleton with a deterministic local deal, legal-card play, simple auto opponents, hand scoring, and short per-trick feedback.
 - Training path practice step connected to Play Barbu completion.
 - Review step with latest Play Barbu score, weakest-contract advice, recent attempts, and replay actions.
 - Reason-based review advice that turns recent practice tags into one short next-step correction.
@@ -62,12 +63,17 @@ These are the next product increments that keep the app coherent.
    - Keep core rules separate from rule/scoring/table-custom variations.
    - Let varieties link to their parent core game instead of becoming separate top-level products.
 
-4. Progress Model v2
+4. Full-Hand Play v2
+   - Improve No Hearts opponent policy beyond lowest legal card.
+   - Add stronger tactical feedback after each completed trick.
+   - Decide when full hands should enter the learning path instead of living as separate practice.
+
+5. Progress Model v2
    - Store completion by lesson node, not only path step.
    - Track attempts, last result, and review due state.
    - Keep it local until the app needs sync or accounts.
 
-5. Reference Layer v1
+6. Reference Layer v1
    - Add structured reference pages for the next supported games using Parlett as the baseline source.
    - Continue expanding object, players, cards, deal, play, scoring, variants, and tactical ideas.
    - Link reference sections from lessons without making rules pages the main flow.

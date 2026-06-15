@@ -124,6 +124,33 @@ test("Play Barbu gives three mixed-contract decisions and a result", async ({ pa
   await expect(page.getByText("No Hearts").first()).toBeVisible();
 });
 
+test("No Hearts hand plays through thirteen tricks", async ({ page }, testInfo) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "No Hearts hand" }).click();
+
+  await expect(page.getByRole("heading", { name: "No Hearts hand" })).toBeVisible();
+  await expect(page.getByLabel("No Hearts hand score")).toContainText("Your score");
+  await expect(page.getByLabel("No Hearts hand table")).toBeVisible();
+
+  for (let decision = 0; decision < 13; decision += 1) {
+    await page.locator(".full-hand-card.legal").first().click();
+    await expect(page.getByRole("button", { name: "Play card" })).toBeEnabled();
+    await page.getByRole("button", { name: "Play card" }).click();
+
+    if (decision === 0) {
+      await expect(page.locator(".full-hand-panel p.outcome").filter({ hasText: /(won the trick|won a clean trick)/ })).toBeVisible();
+    }
+  }
+
+  await expect(page.getByRole("heading", { name: "Hand complete" })).toBeVisible();
+  await expect(page.getByLabel("No Hearts hand score")).toContainText("13 / 13");
+  await expect(page.getByLabel("Completed No Hearts tricks")).toContainText(/(Avoided|Penalty|Clean win|Clear)/);
+  await expect(page.getByRole("button", { name: "New hand" })).toBeVisible();
+
+  await page.screenshot({ path: testInfo.outputPath("no-hearts-hand.png"), fullPage: true });
+});
+
 test("finishing a lesson advances course progress", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
