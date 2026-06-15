@@ -49,7 +49,8 @@ content/             Structured game and lesson content
 
 ## Current Product Shape
 
-- A catalog/welcome screen that treats Barbu as the first table in a broader card-game curriculum.
+- A catalog/welcome screen that treats Barbu as the first playable core game in a broader card-game curriculum.
+- Core games and varieties of play are separated in the catalog so teaching variants and later rule variations stay attached to their parent game.
 - A Barbu table screen with contract entry points and a five-step training path.
 - Play Barbu mode with three quick mixed-contract decisions, immediate feedback, and a compact result; Tauri builds use Rust-generated scenarios, while browser runs use a local generated fallback.
 - The training path practice step launches Play Barbu and marks the path step complete after a finished table.

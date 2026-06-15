@@ -4,7 +4,11 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: "Choose a table" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Core games" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Varieties of play" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Barbu/ })).toBeVisible();
+  await expect(page.getByText("Barbu Learning Table")).toBeVisible();
+  await expect(page.getByText("Variety of Barbu").first()).toBeVisible();
 
   await page.screenshot({ path: testInfo.outputPath("catalog.png"), fullPage: true });
 

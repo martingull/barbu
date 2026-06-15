@@ -30,13 +30,19 @@
   type PathAction = "lesson" | "generated" | "review" | "planned";
   type CourseStage = "concept" | "example" | "review";
 
-  type CatalogGame = {
+  type CatalogStatus = "Ready" | "Planned" | "Documented";
+  type CatalogEntryKind = "core" | "variety";
+
+  type CatalogEntry = {
     id: string;
     family: string;
     title: string;
-    status: "Ready" | "Planned";
+    kind: CatalogEntryKind;
+    status: CatalogStatus;
     summary: string;
+    baseline: string;
     lessonCount: number;
+    coreGameId?: string;
   };
 
   type BarbuPathStep = {
@@ -111,41 +117,73 @@
     message: string;
   };
 
-  const gameCatalog: CatalogGame[] = [
+  const catalogEntries: CatalogEntry[] = [
     {
       id: "barbu",
       family: "Hearts",
       title: "Barbu",
+      kind: "core",
       status: "Ready",
-      summary: "Contract trick-taking with focused avoidance lessons.",
+      summary: "Contract trick-taking against the King of Cards.",
+      baseline: "Parlett baseline",
       lessonCount: guidedLessons.length
     },
     {
       id: "hearts",
       family: "Hearts",
       title: "Hearts",
+      kind: "core",
       status: "Planned",
       summary: "Plain-trick foundations before the contracts expand.",
+      baseline: "Parlett baseline",
       lessonCount: 0
     },
     {
       id: "whist",
       family: "Whist",
       title: "Whist",
+      kind: "core",
       status: "Planned",
       summary: "Partnership trick play and long-suit development.",
+      baseline: "Parlett baseline",
       lessonCount: 0
     },
     {
       id: "bridge",
       family: "Bridge",
       title: "Bridge",
+      kind: "core",
       status: "Planned",
       summary: "Declarer play, defense, and bidding concepts.",
+      baseline: "Parlett baseline",
       lessonCount: 0
+    },
+    {
+      id: "barbu-learning-table",
+      family: "Hearts",
+      title: "Barbu Learning Table",
+      kind: "variety",
+      status: "Documented",
+      summary: "The app's teaching version: puzzle-sized decisions before full hands.",
+      baseline: "Variety of Barbu",
+      lessonCount: guidedLessons.length,
+      coreGameId: "barbu"
+    },
+    {
+      id: "barbu-full-hand",
+      family: "Hearts",
+      title: "Full-Hand Barbu",
+      kind: "variety",
+      status: "Planned",
+      summary: "A later table for complete hands, scoring runs, and opponent behavior.",
+      baseline: "Variety of Barbu",
+      lessonCount: 0,
+      coreGameId: "barbu"
     }
   ];
 
+  const coreGameCatalog = catalogEntries.filter((entry) => entry.kind === "core");
+  const varietyCatalog = catalogEntries.filter((entry) => entry.kind === "variety");
   const learningSteps = ["Concepts", "Examples", "Guided tricks", "Practice", "Review"];
   const progressStorageKey = "barbu.courseProgress.v1";
   const practiceSeedStorageKey = "barbu.practiceSeed.v1";
@@ -596,6 +634,16 @@
     }
 
     openBarbuTable();
+  }
+
+  function catalogDetailLabel(entry: CatalogEntry) {
+    if (entry.lessonCount > 0) {
+      return `${entry.lessonCount} ${entry.lessonCount === 1 ? "lesson" : "lessons"}`;
+    }
+    if (entry.kind === "variety") {
+      return entry.status === "Documented" ? "Reference only" : "Not scheduled";
+    }
+    return "No lessons yet";
   }
 
   async function startDailyDrill(pathStepId = "") {
@@ -1145,7 +1193,8 @@
         <p class="eyebrow">Card game catalog</p>
         <h1 id="catalog-title">Choose a table</h1>
         <p class="intro">
-          Start with Barbu. More core games, families, and documented varieties can be added as the curriculum grows.
+          Start with the core Barbu table. Teaching varieties and future rule variations stay attached to their parent
+          game as the curriculum grows.
         </p>
       </div>
 
@@ -1158,13 +1207,14 @@
 
     <section class="catalog-section" aria-label="Games">
       <div class="section-heading">
-        <p class="eyebrow">Core games</p>
-        <h2>Learning paths</h2>
+        <p class="eyebrow">Learning paths</p>
+        <h2>Core games</h2>
       </div>
 
       <div class="game-grid">
-        {#each gameCatalog as game}
+        {#each coreGameCatalog as game}
           <button
+            aria-label={game.status === "Ready" ? `Open ${game.title}` : `${game.title} planned`}
             class:ready={game.status === "Ready"}
             class="game-card"
             disabled={game.status !== "Ready"}
@@ -1174,11 +1224,34 @@
             <span class="game-family">{game.family}</span>
             <strong>{game.title}</strong>
             <span class="game-summary">{game.summary}</span>
+            <span class="game-baseline">{game.baseline}</span>
             <span class="game-footer">
               <span>{game.status}</span>
-              <span>{game.lessonCount} lessons</span>
+              <span>{catalogDetailLabel(game)}</span>
             </span>
           </button>
+        {/each}
+      </div>
+    </section>
+
+    <section class="catalog-section" aria-label="Varieties of play">
+      <div class="section-heading">
+        <p class="eyebrow">Game variations</p>
+        <h2>Varieties of play</h2>
+      </div>
+
+      <div class="game-grid variety-grid">
+        {#each varietyCatalog as variety}
+          <article aria-label={`${variety.title} ${variety.status}`} class="game-card variety-card">
+            <span class="game-family">{variety.family}</span>
+            <strong>{variety.title}</strong>
+            <span class="game-summary">{variety.summary}</span>
+            <span class="game-baseline">{variety.baseline}</span>
+            <span class="game-footer">
+              <span>{variety.status}</span>
+              <span>{catalogDetailLabel(variety)}</span>
+            </span>
+          </article>
         {/each}
       </div>
     </section>

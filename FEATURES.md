@@ -20,7 +20,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 
 ## Current Feature Set
 
-- Game catalog with Barbu as the first playable table.
+- Game catalog with Barbu as the first playable core game and documented varieties kept under their parent game.
 - Barbu table with contract entry points.
 - Five-step training path: concept, example, guided trick, practice, review.
 - Play Barbu mode with three quick mixed-contract decisions, immediate feedback, and a compact result.
@@ -52,15 +52,15 @@ These are the next product increments that keep the app coherent.
    - Use stored reason tags to refine replay recommendations and review timing.
    - Keep explanations to one sentence unless the player asks for more.
 
-2. Core Game And Variety Model
-   - Add structured metadata for core games, varieties, and teaching variants.
-   - Keep core rules separate from rule/scoring/table-custom variations.
-   - Make it easy to add new games without treating every variety as a separate top-level game.
-
-3. Generated Practice Expansion
+2. Generated Practice Expansion
    - Expand generated drills beyond one pattern per contract.
    - Keep commands thin and deterministic.
    - Add Rust tests for every drill generator.
+
+3. Core Game And Variety Model v2
+   - Move catalog metadata toward content-backed data as more games are added.
+   - Keep core rules separate from rule/scoring/table-custom variations.
+   - Let varieties link to their parent core game instead of becoming separate top-level products.
 
 4. Progress Model v2
    - Store completion by lesson node, not only path step.

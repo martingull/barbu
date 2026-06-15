@@ -153,6 +153,10 @@ button {
   gap: 10px;
 }
 
+.variety-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .game-card {
   display: grid;
   gap: 10px;
@@ -173,6 +177,11 @@ button {
 
 .game-card:disabled {
   color: #697366;
+}
+
+.variety-card {
+  background: #f4f6ef;
+  border-style: dashed;
 }
 
 .game-family {
@@ -196,6 +205,13 @@ button {
   font-size: 0.9rem;
   font-weight: 650;
   line-height: 1.34;
+}
+
+.game-baseline {
+  color: #6e7768;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 .game-footer {
@@ -1317,6 +1333,7 @@ h2 {
 
   .game-card strong,
   .game-summary,
+  .game-baseline,
   .game-footer {
     grid-column: 1 / -1;
   }
