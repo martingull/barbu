@@ -1,4 +1,4 @@
-import type { Card, CompletedHandTrick, NoHeartsHandState, Seat, Suit, TableCard } from "./lessonTypes";
+import type { Card, CompletedHandTrick, FullHandContract, FullHandState, Seat, Suit, TableCard } from "./lessonTypes";
 
 type Rank = "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "J" | "Q" | "K" | "A";
 
@@ -22,7 +22,15 @@ const rankOrder: Record<Rank, number> = {
 const suitOrder: Record<Suit, number> = { C: 0, D: 1, H: 2, S: 3 };
 const playerNames: Array<Seat> = ["Tutor", "Right", "You", "Left"];
 
-export function startBrowserNoHeartsHand(seed: number): NoHeartsHandState {
+export function startBrowserNoHeartsHand(seed: number): FullHandState {
+  return startBrowserFullHand("No Hearts", seed);
+}
+
+export function startBrowserNoQueensHand(seed: number): FullHandState {
+  return startBrowserFullHand("No Queens", seed);
+}
+
+function startBrowserFullHand(contract: FullHandContract, seed: number): FullHandState {
   const deck = standardDeck();
   const rng = new DeterministicRng(seed);
 
@@ -36,9 +44,9 @@ export function startBrowserNoHeartsHand(seed: number): NoHeartsHandState {
   hands.forEach((hand) => hand.sort(compareCards));
 
   return advanceToPlayerTurn(
-    hydrateNoHeartsState({
-      id: `browser-no-hearts-hand-${seed}`,
-      contract: "No Hearts",
+    hydrateFullHandState({
+      id: `browser-${contract.toLowerCase().replace(/\s+/g, "-")}-hand-${seed}`,
+      contract,
       hands,
       currentPlayerIndex: 0,
       currentPlayer: "Tutor",
@@ -56,7 +64,15 @@ export function startBrowserNoHeartsHand(seed: number): NoHeartsHandState {
   );
 }
 
-export function playBrowserNoHeartsCard(state: NoHeartsHandState, cardId: string): NoHeartsHandState {
+export function playBrowserNoHeartsCard(state: FullHandState, cardId: string): FullHandState {
+  return playBrowserFullHandCard(state, cardId);
+}
+
+export function playBrowserNoQueensCard(state: FullHandState, cardId: string): FullHandState {
+  return playBrowserFullHandCard(state, cardId);
+}
+
+function playBrowserFullHandCard(state: FullHandState, cardId: string): FullHandState {
   const selectedCard = state.hands[2].find((card) => card.id === cardId);
 
   if (!selectedCard || state.status === "complete" || state.currentPlayerIndex !== 2) {
@@ -72,7 +88,7 @@ export function playBrowserNoHeartsCard(state: NoHeartsHandState, cardId: string
   return advanceToPlayerTurn(nextState);
 }
 
-function advanceToPlayerTurn(state: NoHeartsHandState): NoHeartsHandState {
+function advanceToPlayerTurn(state: FullHandState): FullHandState {
   const nextState = cloneState(state);
 
   while (nextState.status === "in_progress" && nextState.currentPlayerIndex !== 2) {
@@ -86,10 +102,10 @@ function advanceToPlayerTurn(state: NoHeartsHandState): NoHeartsHandState {
     playCardForCurrentPlayer(nextState, card);
   }
 
-  return hydrateNoHeartsState(nextState);
+  return hydrateFullHandState(nextState);
 }
 
-function playCardForCurrentPlayer(state: NoHeartsHandState, card: Card) {
+function playCardForCurrentPlayer(state: FullHandState, card: Card) {
   const hand = state.hands[state.currentPlayerIndex];
   const cardIndex = hand.findIndex((heldCard) => heldCard.id === card.id);
 
@@ -109,9 +125,9 @@ function playCardForCurrentPlayer(state: NoHeartsHandState, card: Card) {
   state.currentPlayer = playerNames[state.currentPlayerIndex];
 }
 
-function completeTrick(state: NoHeartsHandState) {
+function completeTrick(state: FullHandState) {
   const winnerIndex = trickWinner(state.currentTrick);
-  const penalty = state.currentTrick.filter((played) => played.card.suit === "H").length;
+  const penalty = scoreTrick(state.contract, state.currentTrick);
 
   state.completedTricks.push({
     cards: [...state.currentTrick],
@@ -142,7 +158,7 @@ function completedTrickOutcome(winnerIndex: number, penalty: number): CompletedH
   return "stayed_clear";
 }
 
-function hydrateNoHeartsState(state: NoHeartsHandState): NoHeartsHandState {
+function hydrateFullHandState(state: FullHandState): FullHandState {
   const playerHand = state.hands[2];
   const legal = state.status === "in_progress" && state.currentPlayerIndex === 2 ? legalCards(playerHand, ledSuit(state)) : [];
   const playerPenalty = state.completedTricks
@@ -163,14 +179,72 @@ function hydrateNoHeartsState(state: NoHeartsHandState): NoHeartsHandState {
   };
 }
 
-function chooseOpponentCard(state: NoHeartsHandState) {
+function chooseOpponentCard(state: FullHandState) {
   const legal = legalCards(state.hands[state.currentPlayerIndex], ledSuit(state));
+  const led = ledSuit(state);
 
-  if (!ledSuit(state)) {
-    return legal.find((card) => card.suit !== "H") ?? legal[0];
+  if (!legal.length) {
+    return undefined;
   }
 
-  return legal[0];
+  if (!led) {
+    return lowestCard(legal.filter((card) => !isPenaltyCard(state.contract, card))) ?? lowestCard(legal);
+  }
+
+  const followsSuit = legal.every((card) => card.suit === led);
+
+  if (!followsSuit) {
+    return highestCard(legal.filter((card) => isPenaltyCard(state.contract, card))) ?? highestCard(legal);
+  }
+
+  if (state.currentTrick.some((played) => isPenaltyCard(state.contract, played.card))) {
+    return highestCard(legal.filter((card) => !cardWouldWinTrick(state, card))) ?? lowestCard(legal);
+  }
+
+  return lowestCard(legal);
+}
+
+function cardWouldWinTrick(state: FullHandState, card: Card) {
+  const led = ledSuit(state);
+
+  if (!led) {
+    return true;
+  }
+  if (card.suit !== led) {
+    return false;
+  }
+
+  const currentWinner = state.currentTrick
+    .filter((played) => played.card.suit === led)
+    .reduce((winner, played) =>
+      rankOrder[played.card.rank as Rank] > rankOrder[winner.card.rank as Rank] ? played : winner
+    );
+
+  return rankOrder[card.rank as Rank] > rankOrder[currentWinner.card.rank as Rank];
+}
+
+function lowestCard(cards: Card[]) {
+  return cards.slice().sort(compareByRankThenSuit)[0];
+}
+
+function highestCard(cards: Card[]) {
+  return cards.slice().sort(compareByRankThenSuit).pop();
+}
+
+function compareByRankThenSuit(left: Card, right: Card) {
+  return rankOrder[left.rank as Rank] - rankOrder[right.rank as Rank] || suitOrder[left.suit] - suitOrder[right.suit];
+}
+
+function scoreTrick(contract: FullHandContract, cards: TableCard[]) {
+  if (contract === "No Queens") {
+    return cards.filter((played) => played.card.rank === "Q").length;
+  }
+
+  return cards.filter((played) => played.card.suit === "H").length;
+}
+
+function isPenaltyCard(contract: FullHandContract, card: Card) {
+  return contract === "No Queens" ? card.rank === "Q" : card.suit === "H";
 }
 
 function legalCards(hand: Card[], led: Suit | undefined) {
@@ -182,7 +256,7 @@ function legalCards(hand: Card[], led: Suit | undefined) {
   return suitedCards.length ? suitedCards : hand;
 }
 
-function ledSuit(state: NoHeartsHandState): Suit | undefined {
+function ledSuit(state: FullHandState): Suit | undefined {
   return state.currentTrick[0]?.card.suit;
 }
 
@@ -197,9 +271,10 @@ function trickWinner(cards: TableCard[]) {
   return playerNames.indexOf(winner.seat);
 }
 
-function promptForState(state: NoHeartsHandState, playerPenalty: number) {
+function promptForState(state: FullHandState, playerPenalty: number) {
   if (state.status === "complete") {
-    return `Hand complete. You took ${playerPenalty} heart penalties.`;
+    const penaltyName = state.contract === "No Queens" ? "queen" : "heart";
+    return `Hand complete. You took ${playerPenalty} ${playerPenalty === 1 ? penaltyName : `${penaltyName}s`}.`;
   }
 
   const led = ledSuit(state);
@@ -228,7 +303,7 @@ function suitName(suit: Suit) {
   return { C: "Clubs", D: "Diamonds", H: "Hearts", S: "Spades" }[suit];
 }
 
-function cloneState(state: NoHeartsHandState): NoHeartsHandState {
+function cloneState(state: FullHandState): FullHandState {
   return {
     ...state,
     hands: state.hands.map((hand) => [...hand]),

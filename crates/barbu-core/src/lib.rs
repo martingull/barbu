@@ -11,8 +11,9 @@ pub use guided::{
     GuidedTrickResult, Seat,
 };
 pub use hand::{
-    play_no_hearts_card, start_no_hearts_hand, CompletedTrick, HandStatus, HandTrickOutcome,
-    NoHeartsHandState,
+    play_no_hearts_card, play_no_queens_card, play_trick_taking_card, start_no_hearts_hand,
+    start_no_queens_hand, start_trick_taking_hand, CompletedTrick, HandStatus, HandTrickOutcome,
+    NoHeartsHandState, NoQueensHandState, OpponentPolicyFn, TrickScoreFn, TrickTakingHandState,
 };
 pub use learning::{barbu_learning_path, ContractLesson, GameLesson, LessonStep};
 pub use practice::{

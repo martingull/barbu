@@ -88,9 +88,11 @@ export type CompletedHandTrick = {
   outcome: "captured_penalty" | "avoided_penalty" | "won_clean_trick" | "stayed_clear";
 };
 
-export type NoHeartsHandState = {
+export type FullHandContract = "No Hearts" | "No Queens";
+
+export type FullHandState = {
   id: string;
-  contract: "No Hearts";
+  contract: FullHandContract;
   hands: Card[][];
   currentPlayerIndex: number;
   currentPlayer: Seat | "Unknown";
@@ -105,3 +107,5 @@ export type NoHeartsHandState = {
   status: HandStatus;
   prompt: string;
 };
+
+export type NoHeartsHandState = FullHandState;

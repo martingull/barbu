@@ -24,21 +24,33 @@ fn generate_daily_drill_set(seed: u64) -> PracticeDrillSetDto {
 }
 
 #[tauri::command]
-fn start_no_hearts_hand(seed: u64) -> NoHeartsHandDto {
+fn start_no_hearts_hand(seed: u64) -> FullHandDto {
     let state = barbu_core::start_no_hearts_hand(seed);
-    NoHeartsHandDto::from_core(&state)
+    FullHandDto::from_core(&state, "No Hearts", "heart")
 }
 
 #[tauri::command]
-fn play_no_hearts_hand_card(
-    state: NoHeartsHandDto,
-    card_id: String,
-) -> Result<NoHeartsHandDto, String> {
+fn play_no_hearts_hand_card(state: FullHandDto, card_id: String) -> Result<FullHandDto, String> {
     let state = state.to_core()?;
     let card = card_from_label(&card_id)?;
     let next_state = barbu_core::play_no_hearts_card(state, card)?;
 
-    Ok(NoHeartsHandDto::from_core(&next_state))
+    Ok(FullHandDto::from_core(&next_state, "No Hearts", "heart"))
+}
+
+#[tauri::command]
+fn start_no_queens_hand(seed: u64) -> FullHandDto {
+    let state = barbu_core::start_no_queens_hand(seed);
+    FullHandDto::from_core(&state, "No Queens", "queen")
+}
+
+#[tauri::command]
+fn play_no_queens_hand_card(state: FullHandDto, card_id: String) -> Result<FullHandDto, String> {
+    let state = state.to_core()?;
+    let card = card_from_label(&card_id)?;
+    let next_state = barbu_core::play_no_queens_card(state, card)?;
+
+    Ok(FullHandDto::from_core(&next_state, "No Queens", "queen"))
 }
 
 #[derive(serde::Serialize)]
@@ -163,7 +175,7 @@ impl PracticeOutcomeDto {
 
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
-struct NoHeartsHandDto {
+struct FullHandDto {
     id: String,
     contract: String,
     hands: Vec<Vec<CardDto>>,
@@ -181,11 +193,15 @@ struct NoHeartsHandDto {
     prompt: String,
 }
 
-impl NoHeartsHandDto {
-    fn from_core(state: &barbu_core::NoHeartsHandState) -> Self {
+impl FullHandDto {
+    fn from_core(
+        state: &barbu_core::TrickTakingHandState,
+        contract: &'static str,
+        penalty_name: &'static str,
+    ) -> Self {
         Self {
             id: state.id.clone(),
-            contract: "No Hearts".to_string(),
+            contract: contract.to_string(),
             hands: state
                 .hands
                 .iter()
@@ -219,14 +235,14 @@ impl NoHeartsHandDto {
             cards_remaining: state.cards_remaining(),
             trick_number: state.trick_number(),
             status: state.status.as_str().to_string(),
-            prompt: hand_prompt(state),
+            prompt: hand_prompt(state, penalty_name),
         }
     }
 
-    fn to_core(&self) -> Result<barbu_core::NoHeartsHandState, String> {
+    fn to_core(&self) -> Result<barbu_core::TrickTakingHandState, String> {
         let hands = hands_from_dto(&self.hands)?;
 
-        Ok(barbu_core::NoHeartsHandState {
+        Ok(barbu_core::TrickTakingHandState {
             id: self.id.clone(),
             hands,
             current_player: self.current_player_index,
@@ -387,11 +403,18 @@ fn card_from_label(label: &str) -> Result<barbu_core::Card, String> {
     Ok(barbu_core::Card::new(rank, suit))
 }
 
-fn hand_prompt(state: &barbu_core::NoHeartsHandState) -> String {
+fn hand_prompt(state: &barbu_core::TrickTakingHandState, penalty_name: &str) -> String {
     if state.status == barbu_core::HandStatus::Complete {
+        let plural = if state.player_penalty() == 1 {
+            penalty_name.to_string()
+        } else {
+            format!("{penalty_name}s")
+        };
+
         return format!(
-            "Hand complete. You took {} heart penalties.",
-            state.player_penalty()
+            "Hand complete. You took {} {}.",
+            state.player_penalty(),
+            plural
         );
     }
 
@@ -445,7 +468,9 @@ pub fn run() {
             generate_daily_drill_set,
             generate_no_hearts_follow_suit,
             play_no_hearts_hand_card,
-            start_no_hearts_hand
+            play_no_queens_hand_card,
+            start_no_hearts_hand,
+            start_no_queens_hand
         ])
         .run(tauri::generate_context!())
         .expect("error while running Tauri application");
