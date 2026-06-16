@@ -1,4 +1,13 @@
 import { expect, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
+
+async function expectNoPageScroll(page: Page) {
+  await expect
+    .poll(async () =>
+      page.evaluate(() => Math.max(document.body.scrollHeight, document.documentElement.scrollHeight) <= window.innerHeight + 1)
+    )
+    .toBe(true);
+}
 
 test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await page.goto("/");
@@ -132,11 +141,10 @@ test("No Hearts hand plays through thirteen tricks", async ({ page }, testInfo) 
   await expect(page.getByRole("heading", { name: "No Hearts hand" })).toBeVisible();
   await expect(page.getByLabel("No Hearts hand score")).toContainText("Your score");
   await expect(page.getByLabel("No Hearts hand table")).toBeVisible();
+  await expectNoPageScroll(page);
 
   for (let decision = 0; decision < 13; decision += 1) {
-    await page.locator(".full-hand-card.legal").first().click();
-    await expect(page.getByRole("button", { name: "Play card" })).toBeEnabled();
-    await page.getByRole("button", { name: "Play card" }).click();
+    await page.locator(".full-hand-card.legal").first().dblclick();
 
     if (decision === 0) {
       await expect(page.locator(".full-hand-panel p.outcome").filter({ hasText: /(won the trick|won a clean trick)/ })).toBeVisible();
@@ -159,11 +167,10 @@ test("No Queens hand plays through thirteen tricks", async ({ page }, testInfo) 
   await expect(page.getByRole("heading", { name: "No Queens hand" })).toBeVisible();
   await expect(page.getByLabel("No Queens hand score")).toContainText("queens played");
   await expect(page.getByLabel("No Queens hand table")).toBeVisible();
+  await expectNoPageScroll(page);
 
   for (let decision = 0; decision < 13; decision += 1) {
-    await page.locator(".full-hand-card.legal").first().click();
-    await expect(page.getByRole("button", { name: "Play card" })).toBeEnabled();
-    await page.getByRole("button", { name: "Play card" }).click();
+    await page.locator(".full-hand-card.legal").first().dblclick();
   }
 
   await expect(page.getByRole("heading", { name: "Hand complete" })).toBeVisible();

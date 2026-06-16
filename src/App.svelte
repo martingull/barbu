@@ -420,6 +420,8 @@
   let fullHandSelectedCardId = "";
   let fullHandError = "";
   let usingBrowserFullHand = false;
+  let lastFullHandTapCardId = "";
+  let lastFullHandTapAt = 0;
 
   $: selectedLesson = guidedLessons.find((lesson) => lesson.id === selectedLessonId) ?? guidedLessons[0];
   $: familyLabel = usingGeneratedPractice ? "Hearts" : selectedLesson.family;
@@ -678,6 +680,8 @@
     const seed = usePracticeSeed();
     fullHandSelectedCardId = "";
     fullHandError = "";
+    lastFullHandTapCardId = "";
+    lastFullHandTapAt = 0;
 
     try {
       fullHand = await invoke<FullHandState>(contract === "No Queens" ? "start_no_queens_hand" : "start_no_hearts_hand", {
@@ -692,16 +696,25 @@
     appView = "fullHand";
   }
 
-  function selectFullHandCard(card: Card) {
+  async function selectFullHandCard(card: Card) {
     if (!fullHand || fullHand.status === "complete") {
       return;
     }
 
+    const now = Date.now();
+    const isDoubleTap = lastFullHandTapCardId === card.id && now - lastFullHandTapAt < 450;
+
     fullHandSelectedCardId = card.id;
+    lastFullHandTapCardId = card.id;
+    lastFullHandTapAt = now;
+
+    if (isDoubleTap && fullHandLegalCardIds.has(card.id)) {
+      await playFullHandCard(card.id);
+    }
   }
 
-  async function playFullHandCard() {
-    if (!fullHand || !fullHandSelectedCard) {
+  async function playFullHandCard(cardId = fullHandSelectedCard?.id) {
+    if (!fullHand || !cardId || !fullHandLegalCardIds.has(cardId)) {
       return;
     }
 
@@ -710,9 +723,11 @@
     if (usingBrowserFullHand) {
       fullHand =
         fullHand.contract === "No Queens"
-          ? playBrowserNoQueensCard(fullHand, fullHandSelectedCard.id)
-          : playBrowserNoHeartsCard(fullHand, fullHandSelectedCard.id);
+          ? playBrowserNoQueensCard(fullHand, cardId)
+          : playBrowserNoHeartsCard(fullHand, cardId);
       fullHandSelectedCardId = "";
+      lastFullHandTapCardId = "";
+      lastFullHandTapAt = 0;
       return;
     }
 
@@ -721,10 +736,12 @@
         fullHand.contract === "No Queens" ? "play_no_queens_hand_card" : "play_no_hearts_hand_card",
         {
           state: fullHand,
-          cardId: fullHandSelectedCard.id
+          cardId
         }
       );
       fullHandSelectedCardId = "";
+      lastFullHandTapCardId = "";
+      lastFullHandTapAt = 0;
     } catch (error) {
       fullHandError = typeof error === "string" ? error : "That card could not be played.";
     }
@@ -1657,7 +1674,11 @@
       </div>
     </section>
   {:else if appView === "fullHand"}
-    <header class="topbar" aria-label={`${fullHand?.contract ?? "Barbu"} hand`}>
+    <header
+      class:compact-play={fullHand?.status !== "complete"}
+      class="topbar"
+      aria-label={`${fullHand?.contract ?? "Barbu"} hand`}
+    >
       <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
       <div>
         <p class="eyebrow">Full-hand skeleton</p>
@@ -1670,7 +1691,11 @@
     </header>
 
     {#if fullHand}
-      <section class="full-hand-surface" aria-label={`${fullHand.contract} full hand`}>
+      <section
+        class:compact-play={fullHand.status !== "complete"}
+        class="full-hand-surface"
+        aria-label={`${fullHand.contract} full hand`}
+      >
         <div class="full-hand-summary" aria-label={`${fullHand.contract} hand score`}>
           <div>
             <span>Your score</span>
@@ -1732,7 +1757,7 @@
                 class:selected={fullHandCardClasses(card).selected}
                 class="card hand-card full-hand-card"
                 disabled={fullHand.status === "complete"}
-                onclick={() => selectFullHandCard(card)}
+                onclick={() => void selectFullHandCard(card)}
                 type="button"
               >
                 <b>{card.rank}</b>

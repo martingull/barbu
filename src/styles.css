@@ -961,6 +961,23 @@ h2 {
   grid-template-columns: repeat(5, minmax(52px, 1fr));
 }
 
+.full-hand-surface.compact-play .full-hand-panel {
+  gap: 10px;
+}
+
+.full-hand-surface.compact-play .explanation {
+  min-height: 0;
+}
+
+.full-hand-surface.compact-play .full-hand-cards {
+  grid-template-columns: repeat(7, minmax(46px, 1fr));
+  gap: 8px;
+}
+
+.full-hand-surface.compact-play .hand-card.selected {
+  transform: translateY(-2px);
+}
+
 .completed-trick-list {
   display: grid;
   gap: 7px;
@@ -1708,6 +1725,133 @@ h2 {
     grid-template-columns: repeat(4, minmax(52px, 1fr));
   }
 
+  .topbar.compact-play {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 8px;
+  }
+
+  .topbar.compact-play > div:not(.contract-status) {
+    grid-column: 2;
+    grid-row: 1;
+    padding-top: 0;
+  }
+
+  .topbar.compact-play > .back-button {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .topbar.compact-play > .contract-status {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .topbar.compact-play .eyebrow {
+    display: none;
+  }
+
+  .topbar.compact-play h1 {
+    font-size: 1.28rem;
+    line-height: 1.05;
+  }
+
+  .topbar.compact-play .contract-status {
+    min-width: 92px;
+    padding: 6px 8px;
+  }
+
+  .full-hand-surface.compact-play {
+    gap: 8px;
+  }
+
+  .full-hand-surface.compact-play .full-hand-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .full-hand-surface.compact-play .full-hand-summary div {
+    min-height: 0;
+    padding: 8px;
+  }
+
+  .full-hand-surface.compact-play .full-hand-summary span {
+    font-size: 0.62rem;
+  }
+
+  .full-hand-surface.compact-play .full-hand-summary strong {
+    font-size: 1.02rem;
+  }
+
+  .full-hand-surface.compact-play .card-table {
+    grid-template-columns: 40px minmax(188px, 1fr) 40px;
+    grid-template-rows: 28px 208px 28px;
+  }
+
+  .full-hand-surface.compact-play .table-card,
+  .full-hand-surface.compact-play .pending-card {
+    width: 56px;
+  }
+
+  .full-hand-surface.compact-play .table-card b {
+    padding: 7px 7px 0;
+    font-size: 1.14rem;
+  }
+
+  .full-hand-surface.compact-play .table-card small {
+    padding: 0 7px 7px;
+    font-size: 0.86rem;
+  }
+
+  .full-hand-surface.compact-play .tutor-slot {
+    padding-top: 22px;
+  }
+
+  .full-hand-surface.compact-play .left-slot {
+    padding-left: 6px;
+  }
+
+  .full-hand-surface.compact-play .right-slot {
+    padding-right: 6px;
+  }
+
+  .full-hand-surface.compact-play .you-slot {
+    padding-bottom: 22px;
+  }
+
+  .full-hand-surface.compact-play .full-hand-panel {
+    gap: 8px;
+    min-height: 0;
+    padding: 10px;
+  }
+
+  .full-hand-surface.compact-play .lesson-heading {
+    display: none;
+  }
+
+  .full-hand-surface.compact-play .result,
+  .full-hand-surface.compact-play .explanation,
+  .full-hand-surface.compact-play .outcome {
+    font-size: 0.78rem;
+    line-height: 1.28;
+  }
+
+  .full-hand-surface.compact-play .explanation {
+    min-height: 0;
+    padding: 8px 10px;
+  }
+
+  .full-hand-surface.compact-play .full-hand-cards {
+    grid-template-columns: repeat(7, minmax(38px, 1fr));
+    gap: 5px;
+  }
+
+  .full-hand-surface.compact-play .hand-card.selected {
+    transform: translateY(-2px);
+  }
+
   .card b {
     padding: 7px 7px 0;
     font-size: 1.22rem;
@@ -1731,5 +1875,9 @@ h2 {
 
   .game-card {
     min-height: 0;
+  }
+
+  .full-hand-surface.compact-play .full-hand-cards {
+    grid-template-columns: repeat(6, minmax(38px, 1fr));
   }
 }
