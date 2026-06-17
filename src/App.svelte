@@ -10,6 +10,7 @@
   } from "./browserHandFallback";
   import { generateBrowserPlayBarbuDrillSteps } from "./browserDrillFallback";
   import CardTable from "./CardTable.svelte";
+  import TablePlaySurface from "./TablePlaySurface.svelte";
   import { guidedLessons } from "./lessons/catalog";
   import { referenceCatalog } from "./referenceCatalog";
   import type {
@@ -210,6 +211,7 @@
   const practiceSeedStorageKey = "barbu.practiceSeed.v1";
   const playBarbuHistoryStorageKey = "barbu.playHistory.v1";
   const maxStoredPlayBarbuAttempts = 8;
+  const fullHandContracts: FullHandContract[] = ["No Hearts", "No Queens", "King of Hearts"];
   const outcomeLabels: Record<GuidedCardOutcome | "illegal", string> = {
     good: "Good",
     risky: "Risky",
@@ -503,6 +505,13 @@
   $: fullHandPenaltyPlayedLabel = fullHandContractMeta.playedLabel;
   $: fullHandPlayerPenaltyLabel =
     fullHand?.playerPenalty === 1 ? fullHandPenaltyName : fullHandPenaltyPlural;
+  $: fullHandCleanWinCount =
+    fullHand?.completedTricks.filter((trick) => trick.winnerIndex === 2 && trick.penalty === 0).length ?? 0;
+  $: fullHandBarbuPenalty = fullHand ? fullHand.totalPenalty - fullHand.playerPenalty : 0;
+  $: fullHandResultTitle = fullHand ? fullHandResultHeading(fullHand) : "";
+  $: fullHandResultSummary = fullHand ? fullHandResultText(fullHand) : "";
+  $: fullHandBestTrick = fullHand ? fullHandBestTrickLabel(fullHand) : "";
+  $: fullHandWorstTrick = fullHand ? fullHandWorstTrickLabel(fullHand) : "";
 
   function loadCourseProgress() {
     if (typeof localStorage === "undefined") {
@@ -823,6 +832,16 @@
     void startFullHand("King of Hearts");
   }
 
+  function startNextFullHand() {
+    if (!fullHand) {
+      return;
+    }
+
+    const currentIndex = fullHandContracts.indexOf(fullHand.contract);
+    const nextContract = fullHandContracts[(currentIndex + 1) % fullHandContracts.length] ?? "No Hearts";
+    void startFullHand(nextContract);
+  }
+
   function fullHandCardClasses(card: Card) {
     return {
       heart: card.suit === "H",
@@ -830,19 +849,6 @@
       illegal: !fullHandLegalCardIds.has(card.id),
       selected: fullHandSelectedCardId === card.id
     };
-  }
-
-  function fullHandTrickOutcomeLabel(trick: CompletedHandTrick) {
-    if (trick.outcome === "captured_penalty") {
-      return "Penalty";
-    }
-    if (trick.outcome === "avoided_penalty") {
-      return "Avoided";
-    }
-    if (trick.outcome === "won_clean_trick") {
-      return "Clean win";
-    }
-    return "Clear";
   }
 
   function fullHandTrickFeedback(trick: CompletedHandTrick) {
@@ -864,6 +870,58 @@
       return `${trick.winner} won a clean trick. KH did not move, so you stayed clear.`;
     }
     return `${trick.winner} won a clean trick. No ${fullHandPenaltyPlural} moved, so you stayed clear.`;
+  }
+
+  function fullHandResultHeading(hand: FullHandState) {
+    if (hand.playerPenalty === 0) {
+      return "Clean hand";
+    }
+    if (hand.playerPenalty === hand.totalPenalty) {
+      return "Barbu caught you";
+    }
+    return "Damage limited";
+  }
+
+  function fullHandResultText(hand: FullHandState) {
+    if (hand.playerPenalty === 0) {
+      return hand.contract === "King of Hearts"
+        ? "You kept KH out of your tricks."
+        : `You avoided every ${fullHandPenaltyName}.`;
+    }
+
+    const youTook = formatFullHandPenalty(hand.playerPenalty);
+    const barbuTook = formatFullHandPenalty(hand.totalPenalty - hand.playerPenalty);
+
+    if (hand.playerPenalty === hand.totalPenalty) {
+      return `You took ${youTook}. Replay the contract and look for one duck or discard.`;
+    }
+
+    return `You took ${youTook}. Barbu absorbed ${barbuTook}.`;
+  }
+
+  function fullHandBestTrickLabel(hand: FullHandState) {
+    const avoided = hand.completedTricks
+      .filter((trick) => trick.penalty > 0 && trick.winnerIndex !== 2)
+      .sort((left, right) => right.penalty - left.penalty)[0];
+
+    if (avoided) {
+      return `${avoided.winner} took ${formatFullHandPenalty(avoided.penalty)}`;
+    }
+
+    const cleanWin = hand.completedTricks.find((trick) => trick.winnerIndex === 2 && trick.penalty === 0);
+    return cleanWin ? "You won a clean trick" : "No escape trick";
+  }
+
+  function fullHandWorstTrickLabel(hand: FullHandState) {
+    const captured = hand.completedTricks
+      .filter((trick) => trick.penalty > 0 && trick.winnerIndex === 2)
+      .sort((left, right) => right.penalty - left.penalty)[0];
+
+    return captured ? `You took ${formatFullHandPenalty(captured.penalty)}` : "No penalty tricks";
+  }
+
+  function formatFullHandPenalty(value: number) {
+    return `${value} ${value === 1 ? fullHandPenaltyName : fullHandPenaltyPlural}`;
   }
 
   async function startDailyDrill(pathStepId = "") {
@@ -1749,72 +1807,86 @@
       </div>
     </section>
   {:else if appView === "fullHand"}
-    <header
-      class:compact-play={fullHand?.status !== "complete"}
-      class="topbar"
-      aria-label={`${fullHand?.contract ?? "Barbu"} hand`}
-    >
-      <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
-      <div>
-        <p class="eyebrow">Full-hand skeleton</p>
-        <h1>{fullHand?.contract ?? "Barbu"} hand</h1>
-      </div>
-      <div class="contract-status">
-        <span>{fullHand?.status === "complete" ? "Complete" : `Trick ${fullHand?.trickNumber ?? 1}`}</span>
-        <strong>{fullHand?.playerPenalty ?? 0} {fullHandPlayerPenaltyLabel}</strong>
-      </div>
-    </header>
-
     {#if fullHand}
-      <section
-        class:compact-play={fullHand.status !== "complete"}
-        class="full-hand-surface"
-        aria-label={`${fullHand.contract} full hand`}
+      <TablePlaySurface
+        mode={fullHand.status === "complete" ? "result" : "play"}
+        ariaLabel={`${fullHand.contract} full hand`}
+        title={`${fullHand.contract} hand`}
+        eyebrow="Full-hand skeleton"
+        statusLabel={fullHand.status === "complete" ? "Complete" : `Trick ${fullHand.trickNumber}`}
+        statusValue={`${fullHand.playerPenalty} ${fullHandPlayerPenaltyLabel}`}
+        tableAriaLabel={`${fullHand.contract} hand table`}
+        pendingBySeat={fullHandPendingBySeat}
+        tableCards={fullHandVisibleTableCards}
+        panelAriaLabel={`${fullHand.contract} hand decision`}
+        onBack={openBarbuTable}
       >
-        <div class="full-hand-summary" aria-label={`${fullHand.contract} hand score`}>
-          <div>
-            <span>Your score</span>
-            <strong>{fullHand.playerPenalty}</strong>
+        {#snippet summary()}
+          <div class="full-hand-summary" aria-label={`${fullHand.contract} hand score`}>
+            <div>
+              <span>Your score</span>
+              <strong>{fullHand.playerPenalty}</strong>
+            </div>
+            <div>
+              <span>{fullHandPenaltyPlayedLabel}</span>
+              <strong>{fullHand.totalPenalty} / {fullHandPenaltyTotal}</strong>
+            </div>
+            <div>
+              <span>Tricks</span>
+              <strong>{fullHand.completedTricks.length} / 13</strong>
+            </div>
           </div>
-          <div>
-            <span>{fullHandPenaltyPlayedLabel}</span>
-            <strong>{fullHand.totalPenalty} / {fullHandPenaltyTotal}</strong>
-          </div>
-          <div>
-            <span>Tricks</span>
-            <strong>{fullHand.completedTricks.length} / 13</strong>
-          </div>
-        </div>
+        {/snippet}
 
-        <CardTable
-          ariaLabel={`${fullHand.contract} hand table`}
-          pendingBySeat={fullHandPendingBySeat}
-          tableCards={fullHandVisibleTableCards}
-        />
+        {#snippet panel()}
+          {#if fullHand.status === "complete"}
+            <div class="lesson-heading">
+              <p class="eyebrow">Result</p>
+              <h2>{fullHandResultTitle}</h2>
+            </div>
 
-        <section class="lesson-panel full-hand-panel" aria-label={`${fullHand.contract} hand decision`}>
-          <div class="lesson-heading">
-            <p class="eyebrow">{usingBrowserFullHand ? "Local browser hand" : "Rust hand"}</p>
-            <h2>{fullHand.status === "complete" ? "Hand complete" : "Choose your card"}</h2>
-          </div>
+            <p class="result">{fullHandResultSummary}</p>
 
-          <p class="result">{fullHand.prompt}</p>
-          {#if fullHandLastFeedback}
-            <p class:warning={fullHandLastCompletedTrick?.outcome === "captured_penalty"} class="outcome">
-              {fullHandLastFeedback}
-            </p>
-          {/if}
-          {#if fullHandError}
-            <p class="outcome warning">{fullHandError}</p>
-          {:else if fullHand.status === "complete"}
-            <p class="explanation">
-              {fullHand.playerPenalty === 0
-                ? fullHand.contract === "King of Hearts"
-                  ? "Clean hand. You avoided the king of hearts."
-                  : `Clean hand. You avoided every ${fullHandPenaltyName} trick.`
-                : `You captured ${fullHand.playerPenalty} ${fullHand.playerPenalty === 1 ? fullHandPenaltyName : fullHandPenaltyPlural}.`}
-            </p>
+            <div class="full-hand-result-grid" aria-label={`${fullHand.contract} result summary`}>
+              <div>
+                <span>You took</span>
+                <strong>{formatFullHandPenalty(fullHand.playerPenalty)}</strong>
+              </div>
+              <div>
+                <span>Barbu took</span>
+                <strong>{formatFullHandPenalty(fullHandBarbuPenalty)}</strong>
+              </div>
+              <div>
+                <span>Clean wins</span>
+                <strong>{fullHandCleanWinCount}</strong>
+              </div>
+            </div>
+
+            <div class="full-hand-result-tricks" aria-label={`${fullHand.contract} key tricks`}>
+              <div>
+                <span>Best escape</span>
+                <strong>{fullHandBestTrick}</strong>
+              </div>
+              <div>
+                <span>Costliest trick</span>
+                <strong>{fullHandWorstTrick}</strong>
+              </div>
+            </div>
           {:else}
+            <div class="lesson-heading">
+              <p class="eyebrow">{usingBrowserFullHand ? "Local browser hand" : "Rust hand"}</p>
+              <h2>Choose your card</h2>
+            </div>
+
+            <p class="result">{fullHand.prompt}</p>
+            {#if fullHandLastFeedback}
+              <p class:warning={fullHandLastCompletedTrick?.outcome === "captured_penalty"} class="outcome">
+                {fullHandLastFeedback}
+              </p>
+            {/if}
+            {#if fullHandError}
+              <p class="outcome warning">{fullHandError}</p>
+            {/if}
             <p class="explanation">
               {fullHandSelectedCard
                 ? fullHandLegalCardIds.has(fullHandSelectedCard.id)
@@ -1822,37 +1894,22 @@
                   : `${fullHandSelectedCard.label} is off suit while you still have a legal card.`
                 : "Legal cards are highlighted. Barbu's table will finish the trick after you play."}
             </p>
-          {/if}
 
-          <div class="hand full-hand-cards" aria-label={`Your ${fullHand.contract} hand`}>
-            {#each fullHand.playerHand as card}
-              <button
-                aria-pressed={fullHandSelectedCardId === card.id}
-                class:heart={fullHandCardClasses(card).heart}
-                class:illegal={fullHandCardClasses(card).illegal}
-                class:legal={fullHandCardClasses(card).legal}
-                class:selected={fullHandCardClasses(card).selected}
-                class="card hand-card full-hand-card"
-                disabled={fullHand.status === "complete"}
-                onclick={() => void selectFullHandCard(card)}
-                type="button"
-              >
-                <b>{card.rank}</b>
-                <small>{card.suit}</small>
-              </button>
-            {/each}
-          </div>
-
-          {#if fullHand.completedTricks.length}
-            <div class="completed-trick-list" aria-label={`Completed ${fullHand.contract} tricks`}>
-              <p class="eyebrow">Recent tricks</p>
-              {#each fullHand.completedTricks.slice(-3).reverse() as trick}
-                <div>
-                  <span>{fullHandTrickOutcomeLabel(trick)}</span>
-                  <strong>{trick.winner} won</strong>
-                  <small>{trick.penalty} {trick.penalty === 1 ? fullHandPenaltyName : fullHandPenaltyPlural}</small>
-                  <em>{fullHandTrickFeedback(trick)}</em>
-                </div>
+            <div class="hand full-hand-cards" aria-label={`Your ${fullHand.contract} hand`}>
+              {#each fullHand.playerHand as card}
+                <button
+                  aria-pressed={fullHandSelectedCardId === card.id}
+                  class:heart={fullHandCardClasses(card).heart}
+                  class:illegal={fullHandCardClasses(card).illegal}
+                  class:legal={fullHandCardClasses(card).legal}
+                  class:selected={fullHandCardClasses(card).selected}
+                  class="card hand-card full-hand-card"
+                  onclick={() => void selectFullHandCard(card)}
+                  type="button"
+                >
+                  <b>{card.rank}</b>
+                  <small>{card.suit}</small>
+                </button>
               {/each}
             </div>
           {/if}
@@ -1860,7 +1917,8 @@
           <div class="action-row">
             {#if fullHand.status === "complete"}
               <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
-              <button class="primary-action" onclick={() => void startFullHand(fullHand.contract)} type="button">New hand</button>
+              <button class="secondary-action" onclick={() => void startNextFullHand()} type="button">Try another</button>
+              <button class="primary-action" onclick={() => void startFullHand(fullHand.contract)} type="button">Replay</button>
             {:else}
               <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
               <button
@@ -1873,38 +1931,38 @@
               </button>
             {/if}
           </div>
-        </section>
-      </section>
+        {/snippet}
+      </TablePlaySurface>
     {/if}
   {:else if appView === "drill"}
-    <header class="topbar" aria-label="Play Barbu">
-      <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
-      <div>
-        <p class="eyebrow">{drillSetTitle}</p>
-        <h1>Play Barbu</h1>
-      </div>
-      <div class="contract-status">
-        <span>{currentDrill.contract}</span>
-        <strong>Decision {drillIndex + 1} of {activeDrillSteps.length}</strong>
-      </div>
-    </header>
+    <TablePlaySurface
+      mode="play"
+      ariaLabel="Play Barbu game"
+      title="Play Barbu"
+      eyebrow={drillSetTitle}
+      statusLabel={currentDrill.contract}
+      statusValue={`Decision ${drillIndex + 1} of ${activeDrillSteps.length}`}
+      tableAriaLabel="Drill card table"
+      pendingBySeat={currentDrillTrick.pendingBySeat}
+      tableCards={drillCompletedTable}
+      panelAriaLabel="Drill decision"
+      onBack={openBarbuTable}
+    >
+      {#snippet track()}
+        <div class="drill-track" aria-label="Drill progress">
+          {#each activeDrillSteps as step, index}
+            <span
+              class:active={index === drillIndex}
+              class:complete={index < drillResults.length}
+              aria-label={`Decision ${index + 1}: ${step.contract}`}
+            >
+              {index + 1}
+            </span>
+          {/each}
+        </div>
+      {/snippet}
 
-    <section class="drill-surface" aria-label="Play Barbu game">
-      <div class="drill-track" aria-label="Drill progress">
-        {#each activeDrillSteps as step, index}
-          <span
-            class:active={index === drillIndex}
-            class:complete={index < drillResults.length}
-            aria-label={`Decision ${index + 1}: ${step.contract}`}
-          >
-            {index + 1}
-          </span>
-        {/each}
-      </div>
-
-      <CardTable ariaLabel="Drill card table" pendingBySeat={currentDrillTrick.pendingBySeat} tableCards={drillCompletedTable} />
-
-      <section class="lesson-panel drill-panel" aria-label="Drill decision">
+      {#snippet panel()}
         <div class="lesson-heading">
           <p class="eyebrow">{currentDrill.contract}</p>
           <h2>{currentDrillTrick.title}</h2>
@@ -1921,7 +1979,7 @@
           </p>
         {/if}
 
-        <div class="hand" aria-label="Your drill hand">
+        <div class="hand drill-hand" aria-label="Your drill hand">
           {#each currentDrillTrick.hand as card}
             <button
               aria-pressed={drillSelectedCardId === card.id}
@@ -1952,8 +2010,8 @@
             </button>
           {/if}
         </div>
-      </section>
-    </section>
+      {/snippet}
+    </TablePlaySurface>
   {:else if appView === "drillResult"}
     <header class="topbar" aria-label="Drill result">
       <button class="back-button" onclick={openBarbuTable} type="button">Table</button>

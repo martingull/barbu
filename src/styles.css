@@ -873,7 +873,7 @@ h2 {
   align-items: stretch;
 }
 
-.drill-surface {
+.table-play-surface {
   display: grid;
   grid-template-columns: minmax(0, 1.08fr) minmax(330px, 0.92fr);
   gap: 16px;
@@ -912,15 +912,16 @@ h2 {
   color: #284f40;
 }
 
-.drill-panel {
+.table-play-panel {
   min-height: 460px;
 }
 
-.full-hand-surface {
-  display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(330px, 0.92fr);
-  gap: 16px;
-  align-items: stretch;
+.table-play-surface.compact-play .table-play-panel {
+  gap: 10px;
+}
+
+.table-play-surface.compact-play .explanation {
+  min-height: 0;
 }
 
 .full-hand-summary {
@@ -953,76 +954,57 @@ h2 {
   line-height: 1;
 }
 
-.full-hand-panel {
-  min-height: 460px;
-}
-
 .full-hand-cards {
   grid-template-columns: repeat(5, minmax(52px, 1fr));
 }
 
-.full-hand-surface.compact-play .full-hand-panel {
-  gap: 10px;
-}
-
-.full-hand-surface.compact-play .explanation {
-  min-height: 0;
-}
-
-.full-hand-surface.compact-play .full-hand-cards {
+.table-play-surface.compact-play .full-hand-cards {
   grid-template-columns: repeat(7, minmax(46px, 1fr));
   gap: 8px;
 }
 
-.full-hand-surface.compact-play .hand-card.selected {
+.table-play-surface.compact-play .hand-card.selected {
   transform: translateY(-2px);
 }
 
-.completed-trick-list {
+.full-hand-result-grid,
+.full-hand-result-tricks {
   display: grid;
-  gap: 7px;
+  gap: 8px;
 }
 
-.completed-trick-list div {
+.full-hand-result-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.full-hand-result-grid div,
+.full-hand-result-tricks div {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: center;
-  min-height: 58px;
-  padding: 8px 10px;
+  gap: 4px;
+  min-height: 64px;
+  padding: 10px;
   border: 1px solid #c7d0c0;
   border-radius: 8px;
   background: #f4f6ef;
 }
 
-.completed-trick-list span {
-  width: fit-content;
-  padding: 3px 7px;
-  border-radius: 999px;
-  background: #dfe8d9;
-  color: #284f40;
-  font-size: 0.7rem;
+.full-hand-result-grid span,
+.full-hand-result-tricks span {
+  color: #60705a;
+  font-size: 0.68rem;
   font-weight: 900;
   text-transform: uppercase;
 }
 
-.completed-trick-list strong,
-.completed-trick-list small {
-  font-size: 0.82rem;
-  font-weight: 900;
+.full-hand-result-grid strong,
+.full-hand-result-tricks strong {
+  color: #17201a;
+  font-size: 0.98rem;
+  line-height: 1.12;
 }
 
-.completed-trick-list small {
-  color: #9a342e;
-}
-
-.completed-trick-list em {
-  grid-column: 1 / -1;
-  color: #53604d;
-  font-size: 0.78rem;
-  font-style: normal;
-  font-weight: 750;
-  line-height: 1.32;
+.full-hand-result-tricks {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .drill-result-screen {
@@ -1350,8 +1332,7 @@ h2 {
     grid-template-columns: 1fr;
   }
 
-  .drill-surface,
-  .full-hand-surface,
+  .table-play-surface,
   .drill-result-screen {
     grid-template-columns: 1fr;
   }
@@ -1763,93 +1744,214 @@ h2 {
     padding: 6px 8px;
   }
 
-  .full-hand-surface.compact-play {
+  .topbar.compact-result {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 8px;
+  }
+
+  .topbar.compact-result > div:not(.contract-status) {
+    grid-column: 2;
+    grid-row: 1;
+    padding-top: 0;
+  }
+
+  .topbar.compact-result > .back-button {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .topbar.compact-result > .contract-status {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .topbar.compact-result .eyebrow {
+    display: none;
+  }
+
+  .topbar.compact-result h1 {
+    font-size: 1.24rem;
+    line-height: 1.05;
+  }
+
+  .topbar.compact-result .contract-status {
+    min-width: 88px;
+    padding: 6px 8px;
+  }
+
+  .table-play-surface.compact-play,
+  .table-play-surface.compact-result {
     gap: 8px;
   }
 
-  .full-hand-surface.compact-play .full-hand-summary {
+  .table-play-surface.compact-play .drill-track {
+    gap: 6px;
+  }
+
+  .table-play-surface.compact-play .drill-track span {
+    width: 26px;
+    font-size: 0.7rem;
+  }
+
+  .table-play-surface .full-hand-summary {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
   }
 
-  .full-hand-surface.compact-play .full-hand-summary div {
+  .table-play-surface .full-hand-summary div {
     min-height: 0;
     padding: 8px;
   }
 
-  .full-hand-surface.compact-play .full-hand-summary span {
+  .table-play-surface .full-hand-summary span {
     font-size: 0.62rem;
   }
 
-  .full-hand-surface.compact-play .full-hand-summary strong {
+  .table-play-surface .full-hand-summary strong {
     font-size: 1.02rem;
   }
 
-  .full-hand-surface.compact-play .card-table {
+  .table-play-surface.compact-play .card-table {
     grid-template-columns: 40px minmax(188px, 1fr) 40px;
     grid-template-rows: 28px 208px 28px;
   }
 
-  .full-hand-surface.compact-play .table-card,
-  .full-hand-surface.compact-play .pending-card {
+  .table-play-surface.compact-result .card-table {
+    grid-template-columns: 40px minmax(188px, 1fr) 40px;
+    grid-template-rows: 28px 182px 28px;
+  }
+
+  .table-play-surface .table-card,
+  .table-play-surface .pending-card {
     width: 56px;
   }
 
-  .full-hand-surface.compact-play .table-card b {
+  .table-play-surface .table-card b {
     padding: 7px 7px 0;
     font-size: 1.14rem;
   }
 
-  .full-hand-surface.compact-play .table-card small {
+  .table-play-surface .table-card small {
     padding: 0 7px 7px;
     font-size: 0.86rem;
   }
 
-  .full-hand-surface.compact-play .tutor-slot {
+  .table-play-surface .tutor-slot {
     padding-top: 22px;
   }
 
-  .full-hand-surface.compact-play .left-slot {
+  .table-play-surface .left-slot {
     padding-left: 6px;
   }
 
-  .full-hand-surface.compact-play .right-slot {
+  .table-play-surface .right-slot {
     padding-right: 6px;
   }
 
-  .full-hand-surface.compact-play .you-slot {
+  .table-play-surface .you-slot {
     padding-bottom: 22px;
   }
 
-  .full-hand-surface.compact-play .full-hand-panel {
+  .table-play-surface .table-play-panel {
     gap: 8px;
     min-height: 0;
     padding: 10px;
   }
 
-  .full-hand-surface.compact-play .lesson-heading {
+  .table-play-surface.compact-play .lesson-heading {
     display: none;
   }
 
-  .full-hand-surface.compact-play .result,
-  .full-hand-surface.compact-play .explanation,
-  .full-hand-surface.compact-play .outcome {
+  .table-play-surface.compact-result .lesson-heading {
+    gap: 0;
+  }
+
+  .table-play-surface.compact-result .lesson-heading .eyebrow {
+    display: none;
+  }
+
+  .table-play-surface.compact-play .result,
+  .table-play-surface.compact-play .explanation,
+  .table-play-surface.compact-play .outcome,
+  .table-play-surface.compact-result .result {
     font-size: 0.78rem;
     line-height: 1.28;
   }
 
-  .full-hand-surface.compact-play .explanation {
+  .table-play-surface.compact-result .lesson-heading h2 {
+    font-size: 1.12rem;
+  }
+
+  .table-play-surface.compact-result .full-hand-result-grid,
+  .table-play-surface.compact-result .full-hand-result-tricks {
+    gap: 6px;
+  }
+
+  .table-play-surface.compact-result .full-hand-result-grid div,
+  .table-play-surface.compact-result .full-hand-result-tricks div {
+    min-height: 0;
+    padding: 8px;
+  }
+
+  .table-play-surface.compact-result .full-hand-result-grid span,
+  .table-play-surface.compact-result .full-hand-result-tricks span {
+    font-size: 0.6rem;
+  }
+
+  .table-play-surface.compact-result .full-hand-result-grid strong,
+  .table-play-surface.compact-result .full-hand-result-tricks strong {
+    font-size: 0.8rem;
+    line-height: 1.12;
+  }
+
+  .table-play-surface.compact-result .action-row {
+    grid-template-columns: 0.72fr 1fr 0.82fr;
+    gap: 6px;
+  }
+
+  .table-play-surface.compact-result .primary-action,
+  .table-play-surface.compact-result .secondary-action {
+    min-height: 38px;
+    padding: 0 8px;
+    font-size: 0.84rem;
+  }
+
+  .table-play-surface.compact-play .explanation {
     min-height: 0;
     padding: 8px 10px;
   }
 
-  .full-hand-surface.compact-play .full-hand-cards {
-    grid-template-columns: repeat(7, minmax(38px, 1fr));
-    gap: 5px;
+  .table-play-surface.compact-play .drill-hand {
+    grid-template-columns: repeat(4, minmax(42px, 1fr));
+    gap: 6px;
   }
 
-  .full-hand-surface.compact-play .hand-card.selected {
+  .table-play-surface.compact-play .hand-card.selected {
     transform: translateY(-2px);
+  }
+
+  .table-play-surface.compact-play .action-row {
+    grid-template-columns: 0.8fr 1fr;
+    gap: 6px;
+  }
+
+  .table-play-surface.compact-play .primary-action,
+  .table-play-surface.compact-play .secondary-action {
+    min-height: 38px;
+    padding: 0 10px;
+    font-size: 0.84rem;
+  }
+
+  .table-play-surface.compact-play .primary-action:only-child {
+    grid-column: 1 / -1;
+  }
+
+  .table-play-surface.compact-play .full-hand-cards {
+    grid-template-columns: repeat(7, minmax(38px, 1fr));
+    gap: 5px;
   }
 
   .card b {
@@ -1877,7 +1979,7 @@ h2 {
     min-height: 0;
   }
 
-  .full-hand-surface.compact-play .full-hand-cards {
+  .table-play-surface.compact-play .full-hand-cards {
     grid-template-columns: repeat(6, minmax(38px, 1fr));
   }
 }
