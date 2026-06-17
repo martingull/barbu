@@ -34,6 +34,10 @@ export function startBrowserKingOfHeartsHand(seed: number): FullHandState {
   return startBrowserFullHand("King of Hearts", seed);
 }
 
+export function startBrowserNoLastTwoHand(seed: number): FullHandState {
+  return startBrowserFullHand("No Last Two", seed);
+}
+
 function startBrowserFullHand(contract: FullHandContract, seed: number): FullHandState {
   const deck = standardDeck();
   const rng = new DeterministicRng(seed);
@@ -77,6 +81,10 @@ export function playBrowserNoQueensCard(state: FullHandState, cardId: string): F
 }
 
 export function playBrowserKingOfHeartsCard(state: FullHandState, cardId: string): FullHandState {
+  return playBrowserFullHandCard(state, cardId);
+}
+
+export function playBrowserNoLastTwoCard(state: FullHandState, cardId: string): FullHandState {
   return playBrowserFullHandCard(state, cardId);
 }
 
@@ -135,7 +143,7 @@ function playCardForCurrentPlayer(state: FullHandState, card: Card) {
 
 function completeTrick(state: FullHandState) {
   const winnerIndex = trickWinner(state.currentTrick);
-  const penalty = scoreTrick(state.contract, state.currentTrick);
+  const penalty = scoreTrick(state, state.currentTrick);
 
   state.completedTricks.push({
     cards: [...state.currentTrick],
@@ -205,6 +213,10 @@ function chooseOpponentCard(state: FullHandState) {
     return highestCard(legal.filter((card) => isPenaltyCard(state.contract, card))) ?? highestCard(legal);
   }
 
+  if (state.contract === "No Last Two" && state.completedTricks.length >= 11) {
+    return highestCard(legal.filter((card) => !cardWouldWinTrick(state, card))) ?? lowestCard(legal);
+  }
+
   if (state.currentTrick.some((played) => isPenaltyCard(state.contract, played.card))) {
     return highestCard(legal.filter((card) => !cardWouldWinTrick(state, card))) ?? lowestCard(legal);
   }
@@ -243,11 +255,14 @@ function compareByRankThenSuit(left: Card, right: Card) {
   return rankOrder[left.rank as Rank] - rankOrder[right.rank as Rank] || suitOrder[left.suit] - suitOrder[right.suit];
 }
 
-function scoreTrick(contract: FullHandContract, cards: TableCard[]) {
-  if (contract === "No Queens") {
+function scoreTrick(state: FullHandState, cards: TableCard[]) {
+  if (state.contract === "No Last Two") {
+    return state.completedTricks.length >= 11 ? 1 : 0;
+  }
+  if (state.contract === "No Queens") {
     return cards.filter((played) => played.card.rank === "Q").length;
   }
-  if (contract === "King of Hearts") {
+  if (state.contract === "King of Hearts") {
     return cards.filter((played) => isKingOfHearts(played.card)).length;
   }
 
@@ -255,6 +270,9 @@ function scoreTrick(contract: FullHandContract, cards: TableCard[]) {
 }
 
 function isPenaltyCard(contract: FullHandContract, card: Card) {
+  if (contract === "No Last Two") {
+    return false;
+  }
   if (contract === "No Queens") {
     return card.rank === "Q";
   }
@@ -295,7 +313,14 @@ function trickWinner(cards: TableCard[]) {
 
 function promptForState(state: FullHandState, playerPenalty: number) {
   if (state.status === "complete") {
-    const penaltyName = state.contract === "No Queens" ? "queen" : state.contract === "King of Hearts" ? "king" : "heart";
+    const penaltyName =
+      state.contract === "No Queens"
+        ? "queen"
+        : state.contract === "King of Hearts"
+          ? "king"
+          : state.contract === "No Last Two"
+            ? "last trick"
+            : "heart";
     return `Hand complete. You took ${playerPenalty} ${playerPenalty === 1 ? penaltyName : `${penaltyName}s`}.`;
   }
 

@@ -51,6 +51,12 @@
       "title": "Barbu",
       "objective": "Avoid winning the king of hearts.",
       "scoring": "The king of hearts penalizes the player who captures it."
+    },
+    {
+      "id": "no_last_two",
+      "title": "No Last Two",
+      "objective": "Avoid winning either of the final two tricks.",
+      "scoring": "Each of the last two tricks penalizes its winner."
     }
   ],
   "variants": [

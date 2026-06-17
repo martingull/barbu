@@ -103,7 +103,8 @@ export const referenceCatalog: GameReference[] = [
         facts: [
           { label: "No Hearts", value: "Hearts penalize the trick winner" },
           { label: "No Queens", value: "Queens penalize the trick winner" },
-          { label: "King of Hearts", value: "The king of hearts is the danger card" }
+          { label: "King of Hearts", value: "The king of hearts is the danger card" },
+          { label: "No Last Two", value: "The final two tricks penalize their winners" }
         ]
       }
     ],
@@ -128,6 +129,13 @@ export const referenceCatalog: GameReference[] = [
         objective: "Avoid capturing the king of hearts.",
         scoring: "The player who wins the trick containing the king of hearts takes the contract penalty.",
         lesson: "Watch whether your card captures the trick or safely leaves the danger with someone else."
+      },
+      {
+        id: "no-last-two",
+        title: "No Last Two",
+        objective: "Avoid winning either of the final two tricks.",
+        scoring: "Each of the last two tricks belongs to its winner as a penalty.",
+        lesson: "Early tricks are setup; late leads and high cards become dangerous when only two tricks remain."
       }
     ],
     variants: [

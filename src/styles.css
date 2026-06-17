@@ -1821,7 +1821,7 @@ h2 {
 
   .table-play-surface.compact-result .card-table {
     grid-template-columns: 40px minmax(188px, 1fr) 40px;
-    grid-template-rows: 28px 182px 28px;
+    grid-template-rows: 28px 208px 28px;
   }
 
   .table-play-surface .table-card,

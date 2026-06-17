@@ -3,9 +3,11 @@
   import {
     playBrowserKingOfHeartsCard,
     playBrowserNoHeartsCard,
+    playBrowserNoLastTwoCard,
     playBrowserNoQueensCard,
     startBrowserKingOfHeartsHand,
     startBrowserNoHeartsHand,
+    startBrowserNoLastTwoHand,
     startBrowserNoQueensHand
   } from "./browserHandFallback";
   import { generateBrowserPlayBarbuDrillSteps } from "./browserDrillFallback";
@@ -211,7 +213,7 @@
   const practiceSeedStorageKey = "barbu.practiceSeed.v1";
   const playBarbuHistoryStorageKey = "barbu.playHistory.v1";
   const maxStoredPlayBarbuAttempts = 8;
-  const fullHandContracts: FullHandContract[] = ["No Hearts", "No Queens", "King of Hearts"];
+  const fullHandContracts: FullHandContract[] = ["No Hearts", "No Queens", "King of Hearts", "No Last Two"];
   const outcomeLabels: Record<GuidedCardOutcome | "illegal", string> = {
     good: "Good",
     risky: "Risky",
@@ -721,6 +723,16 @@
         playCommand: "play_king_of_hearts_hand_card"
       };
     }
+    if (contract === "No Last Two") {
+      return {
+        penaltyName: "last trick",
+        penaltyPlural: "last tricks",
+        penaltyTotal: 2,
+        playedLabel: "last tricks played",
+        startCommand: "start_no_last_two_hand",
+        playCommand: "play_no_last_two_hand_card"
+      };
+    }
 
     return {
       penaltyName: "heart",
@@ -739,6 +751,9 @@
     if (contract === "King of Hearts") {
       return startBrowserKingOfHeartsHand(seed);
     }
+    if (contract === "No Last Two") {
+      return startBrowserNoLastTwoHand(seed);
+    }
 
     return startBrowserNoHeartsHand(seed);
   }
@@ -749,6 +764,9 @@
     }
     if (state.contract === "King of Hearts") {
       return playBrowserKingOfHeartsCard(state, cardId);
+    }
+    if (state.contract === "No Last Two") {
+      return playBrowserNoLastTwoCard(state, cardId);
     }
 
     return playBrowserNoHeartsCard(state, cardId);
@@ -832,6 +850,10 @@
     void startFullHand("King of Hearts");
   }
 
+  function startNoLastTwoHand() {
+    void startFullHand("No Last Two");
+  }
+
   function startNextFullHand() {
     if (!fullHand) {
       return;
@@ -864,10 +886,16 @@
       if (fullHand?.contract === "King of Hearts") {
         return "You won a clean trick. Legal, but keep checking whether KH can still enter the trick.";
       }
+      if (fullHand?.contract === "No Last Two") {
+        return "You won a clean trick. Legal, but the final two tricks are the ones that score.";
+      }
       return `You won a clean trick. Legal, but keep checking whether ${fullHandPenaltyPlural} can still enter the trick.`;
     }
     if (fullHand?.contract === "King of Hearts") {
       return `${trick.winner} won a clean trick. KH did not move, so you stayed clear.`;
+    }
+    if (fullHand?.contract === "No Last Two") {
+      return `${trick.winner} won a clean trick. The final-two danger has not scored here.`;
     }
     return `${trick.winner} won a clean trick. No ${fullHandPenaltyPlural} moved, so you stayed clear.`;
   }
@@ -886,6 +914,8 @@
     if (hand.playerPenalty === 0) {
       return hand.contract === "King of Hearts"
         ? "You kept KH out of your tricks."
+        : hand.contract === "No Last Two"
+          ? "You avoided both final tricks."
         : `You avoided every ${fullHandPenaltyName}.`;
     }
 
@@ -1575,6 +1605,7 @@
           <button class="drill-action" onclick={() => void startNoHeartsHand()} type="button">No Hearts hand</button>
           <button class="drill-action" onclick={() => void startNoQueensHand()} type="button">No Queens hand</button>
           <button class="drill-action" onclick={() => void startKingOfHeartsHand()} type="button">King of Hearts hand</button>
+          <button class="drill-action" onclick={() => void startNoLastTwoHand()} type="button">No Last Two hand</button>
           <button class="reference-action" onclick={() => openReference("barbu")} type="button">Reference</button>
           {#if isCourseComplete}
             <button class="continue-action" onclick={openPathReview} type="button">Review results</button>

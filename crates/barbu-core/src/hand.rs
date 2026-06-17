@@ -1,11 +1,12 @@
 use crate::cards::{standard_deck, Card, Rank, Suit};
 use crate::trick::{legal_cards, score_no_hearts_trick, trick_winner, PlayedCard, PlayerIndex};
 
-pub type TrickScoreFn = fn(&[PlayedCard]) -> i32;
+pub type TrickScoreFn = fn(&TrickTakingHandState, &[PlayedCard]) -> i32;
 pub type OpponentPolicyFn = fn(&TrickTakingHandState) -> Option<Card>;
 pub type NoHeartsHandState = TrickTakingHandState;
 pub type NoQueensHandState = TrickTakingHandState;
 pub type KingOfHeartsHandState = TrickTakingHandState;
+pub type NoLastTwoHandState = TrickTakingHandState;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TrickTakingHandState {
@@ -151,7 +152,7 @@ pub fn start_no_hearts_hand(seed: u64) -> NoHeartsHandState {
     advance_to_player_turn(
         state,
         2,
-        score_no_hearts_trick,
+        score_no_hearts_hand_trick,
         choose_no_hearts_opponent_card,
     )
 }
@@ -164,7 +165,7 @@ pub fn play_no_hearts_card(
         state,
         player_card,
         2,
-        score_no_hearts_trick,
+        score_no_hearts_hand_trick,
         choose_no_hearts_opponent_card,
     )
 }
@@ -212,6 +213,29 @@ pub fn play_king_of_hearts_card(
         2,
         score_king_of_hearts_trick,
         choose_king_of_hearts_opponent_card,
+    )
+}
+
+pub fn start_no_last_two_hand(seed: u64) -> NoLastTwoHandState {
+    let state = start_trick_taking_hand(format!("no-last-two-hand-{seed}"), seed, 0);
+    advance_to_player_turn(
+        state,
+        2,
+        score_no_last_two_trick,
+        choose_no_last_two_opponent_card,
+    )
+}
+
+pub fn play_no_last_two_card(
+    state: NoLastTwoHandState,
+    player_card: Card,
+) -> Result<NoLastTwoHandState, String> {
+    play_trick_taking_card(
+        state,
+        player_card,
+        2,
+        score_no_last_two_trick,
+        choose_no_last_two_opponent_card,
     )
 }
 
@@ -297,7 +321,7 @@ fn play_card_for_current_player(
 fn complete_trick(state: &mut TrickTakingHandState, score_trick: TrickScoreFn) {
     let cards = state.current_trick.clone();
     let winner = trick_winner(&cards).expect("a four-card trick should have a winner");
-    let penalty = score_trick(&cards);
+    let penalty = score_trick(state, &cards);
 
     state.completed_tricks.push(CompletedTrick {
         cards,
@@ -410,18 +434,57 @@ fn choose_king_of_hearts_opponent_card(state: &TrickTakingHandState) -> Option<C
     lowest_card(&legal)
 }
 
-fn score_no_queens_trick(cards: &[PlayedCard]) -> i32 {
+fn choose_no_last_two_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
+    let hand = &state.hands[state.current_player];
+    let legal = legal_cards(hand, state.led_suit());
+    let led_suit = state.led_suit();
+
+    if legal.is_empty() {
+        return None;
+    }
+
+    if led_suit.is_none() {
+        return lowest_card(&legal);
+    }
+
+    let follows_suit = legal.iter().all(|card| Some(card.suit) == led_suit);
+
+    if !follows_suit {
+        return highest_card(&legal);
+    }
+
+    if state.completed_tricks.len() >= 11 {
+        return highest_card_matching(&legal, |card| !card_would_win_trick(state, card))
+            .or_else(|| lowest_card(&legal));
+    }
+
+    lowest_card(&legal)
+}
+
+fn score_no_hearts_hand_trick(_state: &TrickTakingHandState, cards: &[PlayedCard]) -> i32 {
+    score_no_hearts_trick(cards)
+}
+
+fn score_no_queens_trick(_state: &TrickTakingHandState, cards: &[PlayedCard]) -> i32 {
     cards
         .iter()
         .filter(|played| played.card.rank == Rank::Queen)
         .count() as i32
 }
 
-fn score_king_of_hearts_trick(cards: &[PlayedCard]) -> i32 {
+fn score_king_of_hearts_trick(_state: &TrickTakingHandState, cards: &[PlayedCard]) -> i32 {
     cards
         .iter()
         .filter(|played| is_king_of_hearts(played.card))
         .count() as i32
+}
+
+fn score_no_last_two_trick(state: &TrickTakingHandState, _cards: &[PlayedCard]) -> i32 {
+    if state.completed_tricks.len() >= 11 {
+        1
+    } else {
+        0
+    }
 }
 
 fn is_king_of_hearts(card: Card) -> bool {
@@ -690,6 +753,7 @@ mod tests {
 
     #[test]
     fn no_queens_trick_scores_one_penalty_per_queen() {
+        let state = start_trick_taking_hand("score-no-queens".to_string(), 3, 0);
         let trick = vec![
             PlayedCard::new(0, Card::new(Rank::Queen, Suit::Clubs)),
             PlayedCard::new(1, Card::new(Rank::Two, Suit::Clubs)),
@@ -697,7 +761,7 @@ mod tests {
             PlayedCard::new(3, Card::new(Rank::Ace, Suit::Clubs)),
         ];
 
-        assert_eq!(score_no_queens_trick(&trick), 2);
+        assert_eq!(score_no_queens_trick(&state, &trick), 2);
     }
 
     #[test]
@@ -782,6 +846,7 @@ mod tests {
 
     #[test]
     fn king_of_hearts_trick_scores_only_the_king_of_hearts() {
+        let state = start_trick_taking_hand("score-king-of-hearts".to_string(), 5, 0);
         let trick = vec![
             PlayedCard::new(0, Card::new(Rank::Queen, Suit::Hearts)),
             PlayedCard::new(1, Card::new(Rank::King, Suit::Hearts)),
@@ -789,7 +854,7 @@ mod tests {
             PlayedCard::new(3, Card::new(Rank::Ace, Suit::Hearts)),
         ];
 
-        assert_eq!(score_king_of_hearts_trick(&trick), 1);
+        assert_eq!(score_king_of_hearts_trick(&state, &trick), 1);
     }
 
     #[test]
@@ -915,11 +980,55 @@ mod tests {
         assert_eq!(state.total_penalty(), 13);
     }
 
+    #[test]
+    fn no_last_two_scores_only_the_final_two_tricks() {
+        let trick = vec![
+            PlayedCard::new(0, Card::new(Rank::Two, Suit::Clubs)),
+            PlayedCard::new(1, Card::new(Rank::Three, Suit::Clubs)),
+            PlayedCard::new(2, Card::new(Rank::Four, Suit::Clubs)),
+            PlayedCard::new(3, Card::new(Rank::Five, Suit::Clubs)),
+        ];
+        let mut state = start_trick_taking_hand("score-no-last-two".to_string(), 29, 0);
+
+        state.completed_tricks = repeat_clean_tricks(10);
+        assert_eq!(score_no_last_two_trick(&state, &trick), 0);
+
+        state.completed_tricks = repeat_clean_tricks(11);
+        assert_eq!(score_no_last_two_trick(&state, &trick), 1);
+
+        state.completed_tricks = repeat_clean_tricks(12);
+        assert_eq!(score_no_last_two_trick(&state, &trick), 1);
+    }
+
+    #[test]
+    fn no_last_two_hand_can_be_completed_by_playing_first_legal_card() {
+        let mut state = start_no_last_two_hand(31);
+
+        while state.status == HandStatus::InProgress {
+            let legal_card = state.legal_player_cards()[0];
+            state = play_no_last_two_card(state, legal_card).expect("first legal card should play");
+        }
+
+        assert_eq!(state.completed_tricks.len(), 13);
+        assert_eq!(state.cards_remaining(), 0);
+        assert_eq!(state.total_penalty(), 2);
+    }
+
     fn score_completed_tricks(state: &NoHeartsHandState) -> i32 {
         state
             .completed_tricks
             .iter()
             .map(|trick| score_no_hearts_trick(&trick.cards))
             .sum()
+    }
+
+    fn repeat_clean_tricks(count: usize) -> Vec<CompletedTrick> {
+        (0..count)
+            .map(|_| CompletedTrick {
+                cards: Vec::new(),
+                winner: 0,
+                penalty: 0,
+            })
+            .collect()
     }
 }

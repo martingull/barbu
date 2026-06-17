@@ -74,7 +74,10 @@ test("Barbu reference exposes baseline rules and varieties", async ({ page }, te
   await expect(page.getByText("Tutor -> Right -> You -> Left when Tutor leads")).toBeVisible();
   await expect(page.getByText("Follow the led suit when you can")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Barbu contracts" })).toBeVisible();
-  await expect(page.getByLabel("Contract reference").getByText("No Hearts")).toBeVisible();
+  await expect(page.getByLabel("Contract reference").getByText("No Hearts", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Contract reference").getByText("No Queens", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Contract reference").getByText("King of Hearts", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Contract reference").getByText("No Last Two", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Documented variations" })).toBeVisible();
 
   await page.screenshot({ path: testInfo.outputPath("barbu-reference.png"), fullPage: true });
@@ -240,6 +243,36 @@ test("King of Hearts hand plays through thirteen tricks", async ({ page }, testI
   await expectNoPageScroll(page);
 
   await page.screenshot({ path: testInfo.outputPath("king-of-hearts-hand.png"), fullPage: true });
+});
+
+test("No Last Two hand plays through thirteen tricks", async ({ page }, testInfo) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "No Last Two hand" }).click();
+
+  await expect(page.getByRole("heading", { name: "No Last Two hand" })).toBeVisible();
+  await expect(page.getByLabel("No Last Two hand score")).toContainText("last tricks played");
+  await expect(page.getByLabel("No Last Two hand table")).toBeVisible();
+  const activeTable = await page.getByLabel("No Last Two hand table").boundingBox();
+  expect(activeTable).not.toBeNull();
+  await expectNoPageScroll(page);
+
+  for (let decision = 0; decision < 13; decision += 1) {
+    await page.locator(".full-hand-card.legal").first().dblclick();
+  }
+
+  await expect(page.getByRole("heading", { name: /Clean hand|Damage limited|Barbu caught you/ })).toBeVisible();
+  await expect(page.getByLabel("No Last Two hand score")).toContainText("2 / 2");
+  await expect(page.getByLabel("No Last Two result summary")).toContainText("Barbu took");
+  await expect(page.getByLabel("No Last Two key tricks")).toContainText("Costliest trick");
+  const resultTable = await page.getByLabel("No Last Two hand table").boundingBox();
+  expect(resultTable).not.toBeNull();
+  expect(Math.round(resultTable?.height ?? 0)).toBe(Math.round(activeTable?.height ?? -1));
+  await expect(page.getByRole("button", { name: "Replay" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Try another" })).toBeVisible();
+  await expectNoPageScroll(page);
+
+  await page.screenshot({ path: testInfo.outputPath("no-last-two-hand.png"), fullPage: true });
 });
 
 test("finishing a lesson advances course progress", async ({ page }, testInfo) => {
