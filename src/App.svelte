@@ -1,8 +1,10 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
   import {
+    playBrowserKingOfHeartsCard,
     playBrowserNoHeartsCard,
     playBrowserNoQueensCard,
+    startBrowserKingOfHeartsHand,
     startBrowserNoHeartsHand,
     startBrowserNoQueensHand
   } from "./browserHandFallback";
@@ -125,6 +127,15 @@
   type ReviewInsight = {
     contract: string;
     message: string;
+  };
+
+  type FullHandContractMeta = {
+    penaltyName: string;
+    penaltyPlural: string;
+    penaltyTotal: number;
+    playedLabel: string;
+    startCommand: string;
+    playCommand: string;
   };
 
   const catalogEntries: CatalogEntry[] = [
@@ -485,9 +496,13 @@
     fullHand?.status === "in_progress" && fullHand.currentPlayer === "You" && fullHand.currentTrick.length < 4
       ? { You: "You" }
       : {};
-  $: fullHandPenaltyName = fullHand?.contract === "No Queens" ? "queen" : "heart";
-  $: fullHandPenaltyPlural = fullHandPenaltyName === "queen" ? "queens" : "hearts";
-  $: fullHandPenaltyTotal = fullHand?.contract === "No Queens" ? 4 : 13;
+  $: fullHandContractMeta = fullHandMeta(fullHand?.contract ?? "No Hearts");
+  $: fullHandPenaltyName = fullHandContractMeta.penaltyName;
+  $: fullHandPenaltyPlural = fullHandContractMeta.penaltyPlural;
+  $: fullHandPenaltyTotal = fullHandContractMeta.penaltyTotal;
+  $: fullHandPenaltyPlayedLabel = fullHandContractMeta.playedLabel;
+  $: fullHandPlayerPenaltyLabel =
+    fullHand?.playerPenalty === 1 ? fullHandPenaltyName : fullHandPenaltyPlural;
 
   function loadCourseProgress() {
     if (typeof localStorage === "undefined") {
@@ -676,20 +691,75 @@
     return "No lessons yet";
   }
 
+  function fullHandMeta(contract: FullHandContract): FullHandContractMeta {
+    if (contract === "No Queens") {
+      return {
+        penaltyName: "queen",
+        penaltyPlural: "queens",
+        penaltyTotal: 4,
+        playedLabel: "queens played",
+        startCommand: "start_no_queens_hand",
+        playCommand: "play_no_queens_hand_card"
+      };
+    }
+    if (contract === "King of Hearts") {
+      return {
+        penaltyName: "king",
+        penaltyPlural: "kings",
+        penaltyTotal: 1,
+        playedLabel: "king played",
+        startCommand: "start_king_of_hearts_hand",
+        playCommand: "play_king_of_hearts_hand_card"
+      };
+    }
+
+    return {
+      penaltyName: "heart",
+      penaltyPlural: "hearts",
+      penaltyTotal: 13,
+      playedLabel: "hearts played",
+      startCommand: "start_no_hearts_hand",
+      playCommand: "play_no_hearts_hand_card"
+    };
+  }
+
+  function startBrowserFullHand(contract: FullHandContract, seed: number) {
+    if (contract === "No Queens") {
+      return startBrowserNoQueensHand(seed);
+    }
+    if (contract === "King of Hearts") {
+      return startBrowserKingOfHeartsHand(seed);
+    }
+
+    return startBrowserNoHeartsHand(seed);
+  }
+
+  function playBrowserFullHand(state: FullHandState, cardId: string) {
+    if (state.contract === "No Queens") {
+      return playBrowserNoQueensCard(state, cardId);
+    }
+    if (state.contract === "King of Hearts") {
+      return playBrowserKingOfHeartsCard(state, cardId);
+    }
+
+    return playBrowserNoHeartsCard(state, cardId);
+  }
+
   async function startFullHand(contract: FullHandContract) {
     const seed = usePracticeSeed();
     fullHandSelectedCardId = "";
     fullHandError = "";
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
+    const metadata = fullHandMeta(contract);
 
     try {
-      fullHand = await invoke<FullHandState>(contract === "No Queens" ? "start_no_queens_hand" : "start_no_hearts_hand", {
+      fullHand = await invoke<FullHandState>(metadata.startCommand, {
         seed
       });
       usingBrowserFullHand = false;
     } catch {
-      fullHand = contract === "No Queens" ? startBrowserNoQueensHand(seed) : startBrowserNoHeartsHand(seed);
+      fullHand = startBrowserFullHand(contract, seed);
       usingBrowserFullHand = true;
     }
 
@@ -721,10 +791,7 @@
     fullHandError = "";
 
     if (usingBrowserFullHand) {
-      fullHand =
-        fullHand.contract === "No Queens"
-          ? playBrowserNoQueensCard(fullHand, cardId)
-          : playBrowserNoHeartsCard(fullHand, cardId);
+      fullHand = playBrowserFullHand(fullHand, cardId);
       fullHandSelectedCardId = "";
       lastFullHandTapCardId = "";
       lastFullHandTapAt = 0;
@@ -732,13 +799,10 @@
     }
 
     try {
-      fullHand = await invoke<FullHandState>(
-        fullHand.contract === "No Queens" ? "play_no_queens_hand_card" : "play_no_hearts_hand_card",
-        {
-          state: fullHand,
-          cardId
-        }
-      );
+      fullHand = await invoke<FullHandState>(fullHandMeta(fullHand.contract).playCommand, {
+        state: fullHand,
+        cardId
+      });
       fullHandSelectedCardId = "";
       lastFullHandTapCardId = "";
       lastFullHandTapAt = 0;
@@ -753,6 +817,10 @@
 
   function startNoQueensHand() {
     void startFullHand("No Queens");
+  }
+
+  function startKingOfHeartsHand() {
+    void startFullHand("King of Hearts");
   }
 
   function fullHandCardClasses(card: Card) {
@@ -787,7 +855,13 @@
       return `${trick.winner} won the trick and took ${penaltyText}. Good: you stayed out of the penalty trick.`;
     }
     if (trick.outcome === "won_clean_trick") {
+      if (fullHand?.contract === "King of Hearts") {
+        return "You won a clean trick. Legal, but keep checking whether KH can still enter the trick.";
+      }
       return `You won a clean trick. Legal, but keep checking whether ${fullHandPenaltyPlural} can still enter the trick.`;
+    }
+    if (fullHand?.contract === "King of Hearts") {
+      return `${trick.winner} won a clean trick. KH did not move, so you stayed clear.`;
     }
     return `${trick.winner} won a clean trick. No ${fullHandPenaltyPlural} moved, so you stayed clear.`;
   }
@@ -1442,6 +1516,7 @@
           <button class="drill-action" onclick={() => void startDailyDrill()} type="button">Play Barbu</button>
           <button class="drill-action" onclick={() => void startNoHeartsHand()} type="button">No Hearts hand</button>
           <button class="drill-action" onclick={() => void startNoQueensHand()} type="button">No Queens hand</button>
+          <button class="drill-action" onclick={() => void startKingOfHeartsHand()} type="button">King of Hearts hand</button>
           <button class="reference-action" onclick={() => openReference("barbu")} type="button">Reference</button>
           {#if isCourseComplete}
             <button class="continue-action" onclick={openPathReview} type="button">Review results</button>
@@ -1686,7 +1761,7 @@
       </div>
       <div class="contract-status">
         <span>{fullHand?.status === "complete" ? "Complete" : `Trick ${fullHand?.trickNumber ?? 1}`}</span>
-        <strong>{fullHand?.playerPenalty ?? 0} {fullHandPenaltyPlural}</strong>
+        <strong>{fullHand?.playerPenalty ?? 0} {fullHandPlayerPenaltyLabel}</strong>
       </div>
     </header>
 
@@ -1702,7 +1777,7 @@
             <strong>{fullHand.playerPenalty}</strong>
           </div>
           <div>
-            <span>{fullHandPenaltyPlural} played</span>
+            <span>{fullHandPenaltyPlayedLabel}</span>
             <strong>{fullHand.totalPenalty} / {fullHandPenaltyTotal}</strong>
           </div>
           <div>
@@ -1734,7 +1809,9 @@
           {:else if fullHand.status === "complete"}
             <p class="explanation">
               {fullHand.playerPenalty === 0
-                ? `Clean hand. You avoided every ${fullHandPenaltyName} trick.`
+                ? fullHand.contract === "King of Hearts"
+                  ? "Clean hand. You avoided the king of hearts."
+                  : `Clean hand. You avoided every ${fullHandPenaltyName} trick.`
                 : `You captured ${fullHand.playerPenalty} ${fullHand.playerPenalty === 1 ? fullHandPenaltyName : fullHandPenaltyPlural}.`}
             </p>
           {:else}

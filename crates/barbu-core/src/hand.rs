@@ -5,6 +5,7 @@ pub type TrickScoreFn = fn(&[PlayedCard]) -> i32;
 pub type OpponentPolicyFn = fn(&TrickTakingHandState) -> Option<Card>;
 pub type NoHeartsHandState = TrickTakingHandState;
 pub type NoQueensHandState = TrickTakingHandState;
+pub type KingOfHeartsHandState = TrickTakingHandState;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TrickTakingHandState {
@@ -191,6 +192,29 @@ pub fn play_no_queens_card(
     )
 }
 
+pub fn start_king_of_hearts_hand(seed: u64) -> KingOfHeartsHandState {
+    let state = start_trick_taking_hand(format!("king-of-hearts-hand-{seed}"), seed, 0);
+    advance_to_player_turn(
+        state,
+        2,
+        score_king_of_hearts_trick,
+        choose_king_of_hearts_opponent_card,
+    )
+}
+
+pub fn play_king_of_hearts_card(
+    state: KingOfHeartsHandState,
+    player_card: Card,
+) -> Result<KingOfHeartsHandState, String> {
+    play_trick_taking_card(
+        state,
+        player_card,
+        2,
+        score_king_of_hearts_trick,
+        choose_king_of_hearts_opponent_card,
+    )
+}
+
 pub fn play_trick_taking_card(
     mut state: TrickTakingHandState,
     player_card: Card,
@@ -354,11 +378,54 @@ fn choose_no_queens_opponent_card(state: &TrickTakingHandState) -> Option<Card> 
     lowest_card(&legal)
 }
 
+fn choose_king_of_hearts_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
+    let hand = &state.hands[state.current_player];
+    let legal = legal_cards(hand, state.led_suit());
+    let led_suit = state.led_suit();
+
+    if legal.is_empty() {
+        return None;
+    }
+
+    if led_suit.is_none() {
+        return lowest_card_matching(&legal, |card| !is_king_of_hearts(card))
+            .or_else(|| lowest_card(&legal));
+    }
+
+    let follows_suit = legal.iter().all(|card| Some(card.suit) == led_suit);
+
+    if !follows_suit {
+        return highest_card_matching(&legal, is_king_of_hearts).or_else(|| highest_card(&legal));
+    }
+
+    if state
+        .current_trick
+        .iter()
+        .any(|played| is_king_of_hearts(played.card))
+    {
+        return highest_card_matching(&legal, |card| !card_would_win_trick(state, card))
+            .or_else(|| lowest_card(&legal));
+    }
+
+    lowest_card(&legal)
+}
+
 fn score_no_queens_trick(cards: &[PlayedCard]) -> i32 {
     cards
         .iter()
         .filter(|played| played.card.rank == Rank::Queen)
         .count() as i32
+}
+
+fn score_king_of_hearts_trick(cards: &[PlayedCard]) -> i32 {
+    cards
+        .iter()
+        .filter(|played| is_king_of_hearts(played.card))
+        .count() as i32
+}
+
+fn is_king_of_hearts(card: Card) -> bool {
+    card.rank == Rank::King && card.suit == Suit::Hearts
 }
 
 fn card_would_win_trick(state: &TrickTakingHandState, card: Card) -> bool {
@@ -711,6 +778,113 @@ mod tests {
             choose_no_queens_opponent_card(&state),
             Some(Card::new(Rank::Queen, Suit::Spades))
         );
+    }
+
+    #[test]
+    fn king_of_hearts_trick_scores_only_the_king_of_hearts() {
+        let trick = vec![
+            PlayedCard::new(0, Card::new(Rank::Queen, Suit::Hearts)),
+            PlayedCard::new(1, Card::new(Rank::King, Suit::Hearts)),
+            PlayedCard::new(2, Card::new(Rank::King, Suit::Spades)),
+            PlayedCard::new(3, Card::new(Rank::Ace, Suit::Hearts)),
+        ];
+
+        assert_eq!(score_king_of_hearts_trick(&trick), 1);
+    }
+
+    #[test]
+    fn king_of_hearts_opponent_leads_lowest_non_king_of_hearts() {
+        let state = KingOfHeartsHandState {
+            id: "opponent-lead-king-of-hearts".to_string(),
+            hands: [
+                vec![
+                    Card::new(Rank::King, Suit::Hearts),
+                    Card::new(Rank::Two, Suit::Diamonds),
+                    Card::new(Rank::Three, Suit::Hearts),
+                ],
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+            ],
+            current_player: 0,
+            current_trick: Vec::new(),
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_king_of_hearts_opponent_card(&state),
+            Some(Card::new(Rank::Two, Suit::Diamonds))
+        );
+    }
+
+    #[test]
+    fn king_of_hearts_opponent_ducks_king_loaded_trick_when_possible() {
+        let state = KingOfHeartsHandState {
+            id: "opponent-duck-king-of-hearts".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Six, Suit::Hearts),
+                    Card::new(Rank::Ace, Suit::Hearts),
+                ],
+            ],
+            current_player: 3,
+            current_trick: vec![
+                PlayedCard::new(0, Card::new(Rank::Seven, Suit::Hearts)),
+                PlayedCard::new(1, Card::new(Rank::King, Suit::Hearts)),
+            ],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_king_of_hearts_opponent_card(&state),
+            Some(Card::new(Rank::Six, Suit::Hearts))
+        );
+    }
+
+    #[test]
+    fn king_of_hearts_opponent_discards_king_of_hearts_when_void() {
+        let state = KingOfHeartsHandState {
+            id: "opponent-discard-king-of-hearts".to_string(),
+            hands: [
+                Vec::new(),
+                vec![
+                    Card::new(Rank::King, Suit::Hearts),
+                    Card::new(Rank::Queen, Suit::Hearts),
+                    Card::new(Rank::Three, Suit::Diamonds),
+                ],
+                Vec::new(),
+                Vec::new(),
+            ],
+            current_player: 1,
+            current_trick: vec![PlayedCard::new(0, Card::new(Rank::Seven, Suit::Clubs))],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_king_of_hearts_opponent_card(&state),
+            Some(Card::new(Rank::King, Suit::Hearts))
+        );
+    }
+
+    #[test]
+    fn king_of_hearts_hand_can_be_completed_by_playing_first_legal_card() {
+        let mut state = start_king_of_hearts_hand(23);
+
+        while state.status == HandStatus::InProgress {
+            let legal_card = state.legal_player_cards()[0];
+            state =
+                play_king_of_hearts_card(state, legal_card).expect("first legal card should play");
+        }
+
+        assert_eq!(state.completed_tricks.len(), 13);
+        assert_eq!(state.cards_remaining(), 0);
+        assert_eq!(state.total_penalty(), 1);
     }
 
     #[test]

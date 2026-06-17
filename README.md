@@ -53,8 +53,8 @@ content/             Structured game and lesson content
 - Core games and varieties of play are separated in the catalog so teaching variants and later rule variations stay attached to their parent game.
 - A Barbu table screen with contract entry points and a five-step training path.
 - Play Barbu mode with three quick mixed-contract decisions, immediate feedback, and a compact result; Tauri builds use Rust-generated scenarios, while browser runs use a local generated fallback.
-- No Hearts and No Queens full-hand skeletons with deterministic local deals, legal-card play, simple tactical auto opponents, hand scoring, and short per-trick feedback.
-- Generic trick-taking hand engine for full-hand deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts and No Queens as the first contract adapters.
+- No Hearts, No Queens, and King of Hearts full-hand skeletons with deterministic local deals, legal-card play, simple tactical auto opponents, hand scoring, and short per-trick feedback.
+- Generic trick-taking hand engine for full-hand deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, and King of Hearts as the first contract adapters.
 - The training path practice step launches Play Barbu and marks the path step complete after a finished table.
 - Review step with latest Play Barbu score, weakest-contract advice, recent attempts, and replay actions.
 - Reason-based review advice that turns recent practice tags into one short next-step correction.
@@ -67,7 +67,8 @@ content/             Structured game and lesson content
 - Fixed authored Barbu lessons for No Hearts, No Queens, and King of Hearts.
 - Structured outcome metadata for authored guided card choices.
 - Generated No Hearts, No Queens, and King of Hearts drills from Rust using deterministic seeds and multiple local scenario patterns per contract.
-- Rule validation, trick winners, full-hand state, scoring, and generated-practice outcomes live in `barbu-core`.
+- Rule validation, trick winners, full-hand state, contract penalty tracking, and generated-practice outcomes live in `barbu-core`.
+- Full Barbu settlement scoring is not implemented yet; current full-hand play tracks the local contract penalty for the hand being practiced.
 - The Svelte app renders authored or generated scenarios and should avoid duplicating rules where Rust can provide them.
 - Barbu is the first Hearts-family core game, not the app boundary. The lesson/catalog structure should be able to grow toward other core games and documented varieties first, then other families such as Whist or Bridge later.
 

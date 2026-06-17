@@ -88,7 +88,7 @@ export type CompletedHandTrick = {
   outcome: "captured_penalty" | "avoided_penalty" | "won_clean_trick" | "stayed_clear";
 };
 
-export type FullHandContract = "No Hearts" | "No Queens";
+export type FullHandContract = "No Hearts" | "No Queens" | "King of Hearts";
 
 export type FullHandState = {
   id: string;

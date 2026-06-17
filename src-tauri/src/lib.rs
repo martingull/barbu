@@ -53,6 +53,28 @@ fn play_no_queens_hand_card(state: FullHandDto, card_id: String) -> Result<FullH
     Ok(FullHandDto::from_core(&next_state, "No Queens", "queen"))
 }
 
+#[tauri::command]
+fn start_king_of_hearts_hand(seed: u64) -> FullHandDto {
+    let state = barbu_core::start_king_of_hearts_hand(seed);
+    FullHandDto::from_core(&state, "King of Hearts", "king")
+}
+
+#[tauri::command]
+fn play_king_of_hearts_hand_card(
+    state: FullHandDto,
+    card_id: String,
+) -> Result<FullHandDto, String> {
+    let state = state.to_core()?;
+    let card = card_from_label(&card_id)?;
+    let next_state = barbu_core::play_king_of_hearts_card(state, card)?;
+
+    Ok(FullHandDto::from_core(
+        &next_state,
+        "King of Hearts",
+        "king",
+    ))
+}
+
 #[derive(serde::Serialize)]
 struct GameSummary {
     id: &'static str,
@@ -467,8 +489,10 @@ pub fn run() {
             current_game,
             generate_daily_drill_set,
             generate_no_hearts_follow_suit,
+            play_king_of_hearts_hand_card,
             play_no_hearts_hand_card,
             play_no_queens_hand_card,
+            start_king_of_hearts_hand,
             start_no_hearts_hand,
             start_no_queens_hand
         ])

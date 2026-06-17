@@ -24,8 +24,9 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Barbu table with contract entry points.
 - Five-step training path: concept, example, guided trick, practice, review.
 - Play Barbu mode with three quick mixed-contract decisions, immediate feedback, and a compact result.
-- No Hearts and No Queens full-hand skeletons with deterministic local deals, legal-card play, simple tactical auto opponents, hand scoring, and short per-trick feedback.
-- Generic trick-taking hand engine for deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts and No Queens as the first contract adapters.
+- No Hearts, No Queens, and King of Hearts full-hand skeletons with deterministic local deals, legal-card play, simple tactical auto opponents, hand scoring, and short per-trick feedback.
+- Generic trick-taking hand engine for deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, and King of Hearts as the first contract adapters.
+- Local full-hand contract penalty tracking. Full Barbu settlement scoring is still a later feature.
 - Training path practice step connected to Play Barbu completion.
 - Review step with latest Play Barbu score, weakest-contract advice, recent attempts, and replay actions.
 - Reason-based review advice that turns recent practice tags into one short next-step correction.
@@ -65,7 +66,8 @@ These are the next product increments that keep the app coherent.
    - Let varieties link to their parent core game instead of becoming separate top-level products.
 
 4. Full-Hand Play v2
-   - Add King of Hearts on top of the generic hand engine.
+   - Add the next Barbu contract on top of the generic hand engine.
+   - Add full Barbu settlement scoring across contracts once the playable contracts are broader.
    - Expand No Hearts opponent policy with more table-aware decisions.
    - Add stronger tactical feedback after each completed trick.
    - Decide when full hands should enter the learning path instead of living as separate practice.

@@ -30,6 +30,10 @@ export function startBrowserNoQueensHand(seed: number): FullHandState {
   return startBrowserFullHand("No Queens", seed);
 }
 
+export function startBrowserKingOfHeartsHand(seed: number): FullHandState {
+  return startBrowserFullHand("King of Hearts", seed);
+}
+
 function startBrowserFullHand(contract: FullHandContract, seed: number): FullHandState {
   const deck = standardDeck();
   const rng = new DeterministicRng(seed);
@@ -69,6 +73,10 @@ export function playBrowserNoHeartsCard(state: FullHandState, cardId: string): F
 }
 
 export function playBrowserNoQueensCard(state: FullHandState, cardId: string): FullHandState {
+  return playBrowserFullHandCard(state, cardId);
+}
+
+export function playBrowserKingOfHeartsCard(state: FullHandState, cardId: string): FullHandState {
   return playBrowserFullHandCard(state, cardId);
 }
 
@@ -239,12 +247,26 @@ function scoreTrick(contract: FullHandContract, cards: TableCard[]) {
   if (contract === "No Queens") {
     return cards.filter((played) => played.card.rank === "Q").length;
   }
+  if (contract === "King of Hearts") {
+    return cards.filter((played) => isKingOfHearts(played.card)).length;
+  }
 
   return cards.filter((played) => played.card.suit === "H").length;
 }
 
 function isPenaltyCard(contract: FullHandContract, card: Card) {
-  return contract === "No Queens" ? card.rank === "Q" : card.suit === "H";
+  if (contract === "No Queens") {
+    return card.rank === "Q";
+  }
+  if (contract === "King of Hearts") {
+    return isKingOfHearts(card);
+  }
+
+  return card.suit === "H";
+}
+
+function isKingOfHearts(card: Card) {
+  return card.rank === "K" && card.suit === "H";
 }
 
 function legalCards(hand: Card[], led: Suit | undefined) {
@@ -273,7 +295,7 @@ function trickWinner(cards: TableCard[]) {
 
 function promptForState(state: FullHandState, playerPenalty: number) {
   if (state.status === "complete") {
-    const penaltyName = state.contract === "No Queens" ? "queen" : "heart";
+    const penaltyName = state.contract === "No Queens" ? "queen" : state.contract === "King of Hearts" ? "king" : "heart";
     return `Hand complete. You took ${playerPenalty} ${playerPenalty === 1 ? penaltyName : `${penaltyName}s`}.`;
   }
 

@@ -181,6 +181,28 @@ test("No Queens hand plays through thirteen tricks", async ({ page }, testInfo) 
   await page.screenshot({ path: testInfo.outputPath("no-queens-hand.png"), fullPage: true });
 });
 
+test("King of Hearts hand plays through thirteen tricks", async ({ page }, testInfo) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "King of Hearts hand" }).click();
+
+  await expect(page.getByRole("heading", { name: "King of Hearts hand" })).toBeVisible();
+  await expect(page.getByLabel("King of Hearts hand score")).toContainText("king played");
+  await expect(page.getByLabel("King of Hearts hand table")).toBeVisible();
+  await expectNoPageScroll(page);
+
+  for (let decision = 0; decision < 13; decision += 1) {
+    await page.locator(".full-hand-card.legal").first().dblclick();
+  }
+
+  await expect(page.getByRole("heading", { name: "Hand complete" })).toBeVisible();
+  await expect(page.getByLabel("King of Hearts hand score")).toContainText("1 / 1");
+  await expect(page.getByLabel("Completed King of Hearts tricks")).toContainText(/(Avoided|Penalty|Clean win|Clear)/);
+  await expect(page.getByRole("button", { name: "New hand" })).toBeVisible();
+
+  await page.screenshot({ path: testInfo.outputPath("king-of-hearts-hand.png"), fullPage: true });
+});
+
 test("finishing a lesson advances course progress", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
