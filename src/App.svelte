@@ -525,10 +525,20 @@
   $: fullHandBestTrick = fullHand ? fullHandBestTrickLabel(fullHand) : "";
   $: fullHandWorstTrick = fullHand ? fullHandWorstTrickLabel(fullHand) : "";
   $: fullHandRunCurrentIndex = fullHand ? fullHandContracts.indexOf(fullHand.contract) : -1;
+  $: fullHandRunOrderedResults = fullHandContracts
+    .map((contract) => fullHandRunResults.find((result) => result.contract === contract))
+    .filter((result): result is FullHandRunResult => Boolean(result));
   $: fullHandRunTotalPenalty = fullHandRunResults.reduce((total, result) => total + result.playerPenalty, 0);
+  $: fullHandRunPenaltyTotal = fullHandContracts.reduce((total, contract) => total + fullHandMeta(contract).penaltyTotal, 0);
   $: fullHandRunIsComplete = fullHandRunActive && fullHandRunResults.length >= fullHandContracts.length;
+  $: fullHandRunResultTitle = fullHandRunTotalPenalty === 0 ? "Clean run" : "Run complete";
+  $: fullHandRunResultSummary = fullHandRunIsComplete
+    ? `${fullHandRunTotalPenalty} of ${fullHandRunPenaltyTotal} possible penalties landed on you.`
+    : "";
   $: fullHandRunStatusLabel =
-    fullHandRunActive && fullHandRunCurrentIndex >= 0
+    fullHandRunIsComplete
+      ? "Run complete"
+      : fullHandRunActive && fullHandRunCurrentIndex >= 0
       ? `Run ${fullHandRunCurrentIndex + 1} of ${fullHandContracts.length}`
       : fullHand?.status === "complete"
         ? "Complete"
@@ -1059,6 +1069,10 @@
 
   function formatFullHandPenalty(value: number) {
     return `${value} ${value === 1 ? fullHandPenaltyName : fullHandPenaltyPlural}`;
+  }
+
+  function formatRunContractScore(result: FullHandRunResult) {
+    return `${result.playerPenalty} / ${fullHandMeta(result.contract).penaltyTotal}`;
   }
 
   async function startDailyDrill(pathStepId = "") {
@@ -1986,38 +2000,56 @@
 
         {#snippet panel()}
           {#if fullHand.status === "complete"}
-            <div class="lesson-heading">
-              <p class="eyebrow">Result</p>
-              <h2>{fullHandResultTitle}</h2>
-            </div>
+            {#if fullHandRunIsComplete}
+              <div class="lesson-heading">
+                <p class="eyebrow">Run result</p>
+                <h2>{fullHandRunResultTitle}</h2>
+              </div>
 
-            <p class="result">{fullHandResultSummary}</p>
+              <p class="result">{fullHandRunResultSummary}</p>
 
-            <div class="full-hand-result-grid" aria-label={`${fullHand.contract} result summary`}>
-              <div>
-                <span>You took</span>
-                <strong>{formatFullHandPenalty(fullHand.playerPenalty)}</strong>
+              <div class="full-hand-run-list" aria-label="Barbu run results">
+                {#each fullHandRunOrderedResults as result}
+                  <div>
+                    <span>{result.contract}</span>
+                    <strong>{formatRunContractScore(result)}</strong>
+                  </div>
+                {/each}
               </div>
-              <div>
-                <span>Barbu took</span>
-                <strong>{formatFullHandPenalty(fullHandBarbuPenalty)}</strong>
+            {:else}
+              <div class="lesson-heading">
+                <p class="eyebrow">Result</p>
+                <h2>{fullHandResultTitle}</h2>
               </div>
-              <div>
-                <span>Clean wins</span>
-                <strong>{fullHandCleanWinCount}</strong>
-              </div>
-            </div>
 
-            <div class="full-hand-result-tricks" aria-label={`${fullHand.contract} key tricks`}>
-              <div>
-                <span>Best escape</span>
-                <strong>{fullHandBestTrick}</strong>
+              <p class="result">{fullHandResultSummary}</p>
+
+              <div class="full-hand-result-grid" aria-label={`${fullHand.contract} result summary`}>
+                <div>
+                  <span>You took</span>
+                  <strong>{formatFullHandPenalty(fullHand.playerPenalty)}</strong>
+                </div>
+                <div>
+                  <span>Barbu took</span>
+                  <strong>{formatFullHandPenalty(fullHandBarbuPenalty)}</strong>
+                </div>
+                <div>
+                  <span>Clean wins</span>
+                  <strong>{fullHandCleanWinCount}</strong>
+                </div>
               </div>
-              <div>
-                <span>Costliest trick</span>
-                <strong>{fullHandWorstTrick}</strong>
+
+              <div class="full-hand-result-tricks" aria-label={`${fullHand.contract} key tricks`}>
+                <div>
+                  <span>Best escape</span>
+                  <strong>{fullHandBestTrick}</strong>
+                </div>
+                <div>
+                  <span>Costliest trick</span>
+                  <strong>{fullHandWorstTrick}</strong>
+                </div>
               </div>
-            </div>
+            {/if}
           {:else}
             <div class="lesson-heading">
               <p class="eyebrow">{usingBrowserFullHand ? "Local browser hand" : "Rust hand"}</p>
@@ -2063,8 +2095,13 @@
           <div class="action-row">
             {#if fullHand.status === "complete"}
               <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
-              <button class="secondary-action" onclick={() => void startNextFullHand()} type="button">{fullHandNextActionLabel}</button>
-              <button class="primary-action" onclick={() => void replayFullHand()} type="button">Replay</button>
+              {#if fullHandRunIsComplete}
+                <button class="secondary-action" onclick={() => void replayFullHand()} type="button">Replay last</button>
+                <button class="primary-action" onclick={startBarbuRun} type="button">New run</button>
+              {:else}
+                <button class="secondary-action" onclick={() => void startNextFullHand()} type="button">{fullHandNextActionLabel}</button>
+                <button class="primary-action" onclick={() => void replayFullHand()} type="button">Replay</button>
+              {/if}
             {:else}
               <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
               <button

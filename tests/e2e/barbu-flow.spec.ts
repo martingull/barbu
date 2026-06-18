@@ -168,28 +168,35 @@ test("active game tables share one compact surface", async ({ page }) => {
 });
 
 test("Barbu run advances full-hand contracts with a running total", async ({ page }) => {
+  const contracts = ["No Hearts", "No Queens", "King of Hearts", "No Last Two", "No Tricks"];
+
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
   await page.getByRole("button", { name: "Barbu run" }).click();
 
-  await expect(page.getByRole("heading", { name: "No Hearts hand" })).toBeVisible();
-  await expect(page.getByText("Run 1 of 5")).toBeVisible();
-  await expect(page.getByLabel("No Hearts hand score")).toContainText("Run total");
-  await expectNoPageScroll(page);
+  for (const [index, contract] of contracts.entries()) {
+    await expect(page.getByRole("heading", { name: `${contract} hand` })).toBeVisible();
+    await expect(page.getByText(`Run ${index + 1} of ${contracts.length}`)).toBeVisible();
+    await expect(page.getByLabel(`${contract} hand score`)).toContainText("Run total");
+    await expectNoPageScroll(page);
 
-  for (let decision = 0; decision < 13; decision += 1) {
-    await page.locator(".full-hand-card.legal").first().dblclick();
+    for (let decision = 0; decision < 13; decision += 1) {
+      await page.locator(".full-hand-card.legal").first().dblclick();
+    }
+
+    if (index < contracts.length - 1) {
+      await expect(page.getByRole("button", { name: "Next contract" })).toBeVisible();
+      await expectNoPageScroll(page);
+      await page.getByRole("button", { name: "Next contract" }).click();
+    }
   }
 
-  await expect(page.getByRole("button", { name: "Next contract" })).toBeVisible();
-  await expect(page.getByLabel("No Hearts hand score")).toContainText("Run total");
-  await expectNoPageScroll(page);
-
-  await page.getByRole("button", { name: "Next contract" }).click();
-
-  await expect(page.getByRole("heading", { name: "No Queens hand" })).toBeVisible();
-  await expect(page.getByText("Run 2 of 5")).toBeVisible();
-  await expect(page.getByLabel("No Queens hand score")).toContainText("Run total");
+  await expect(page.getByRole("heading", { name: /Clean run|Run complete/ })).toBeVisible();
+  await expect(page.getByText("Run complete").first()).toBeVisible();
+  await expect(page.getByLabel("Barbu run results")).toContainText("No Hearts");
+  await expect(page.getByLabel("Barbu run results")).toContainText("No Tricks");
+  await expect(page.getByRole("button", { name: "Replay last" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "New run" })).toBeVisible();
   await expectNoPageScroll(page);
 });
 
