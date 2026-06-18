@@ -73,6 +73,21 @@ fn play_no_last_two_hand_card(state: FullHandDto, card_id: String) -> Result<Ful
 }
 
 #[tauri::command]
+fn start_no_tricks_hand(seed: u64) -> FullHandDto {
+    let state = barbu_core::start_no_tricks_hand(seed);
+    FullHandDto::from_core(&state, "No Tricks", "trick")
+}
+
+#[tauri::command]
+fn play_no_tricks_hand_card(state: FullHandDto, card_id: String) -> Result<FullHandDto, String> {
+    let state = state.to_core()?;
+    let card = card_from_label(&card_id)?;
+    let next_state = barbu_core::play_no_tricks_card(state, card)?;
+
+    Ok(FullHandDto::from_core(&next_state, "No Tricks", "trick"))
+}
+
+#[tauri::command]
 fn start_king_of_hearts_hand(seed: u64) -> FullHandDto {
     let state = barbu_core::start_king_of_hearts_hand(seed);
     FullHandDto::from_core(&state, "King of Hearts", "king")
@@ -512,10 +527,12 @@ pub fn run() {
             play_no_hearts_hand_card,
             play_no_last_two_hand_card,
             play_no_queens_hand_card,
+            play_no_tricks_hand_card,
             start_king_of_hearts_hand,
             start_no_hearts_hand,
             start_no_last_two_hand,
-            start_no_queens_hand
+            start_no_queens_hand,
+            start_no_tricks_hand
         ])
         .run(tauri::generate_context!())
         .expect("error while running Tauri application");

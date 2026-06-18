@@ -57,6 +57,12 @@
       "title": "No Last Two",
       "objective": "Avoid winning either of the final two tricks.",
       "scoring": "Each of the last two tricks penalizes its winner."
+    },
+    {
+      "id": "no_tricks",
+      "title": "No Tricks",
+      "objective": "Avoid winning tricks.",
+      "scoring": "Each trick penalizes its winner."
     }
   ],
   "variants": [

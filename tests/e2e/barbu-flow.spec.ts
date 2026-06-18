@@ -78,6 +78,7 @@ test("Barbu reference exposes baseline rules and varieties", async ({ page }, te
   await expect(page.getByLabel("Contract reference").getByText("No Queens", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Contract reference").getByText("King of Hearts", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Contract reference").getByText("No Last Two", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Contract reference").getByText("No Tricks", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Documented variations" })).toBeVisible();
 
   await page.screenshot({ path: testInfo.outputPath("barbu-reference.png"), fullPage: true });
@@ -273,6 +274,31 @@ test("No Last Two hand plays through thirteen tricks", async ({ page }, testInfo
   await expectNoPageScroll(page);
 
   await page.screenshot({ path: testInfo.outputPath("no-last-two-hand.png"), fullPage: true });
+});
+
+test("No Tricks hand plays through thirteen tricks", async ({ page }, testInfo) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "No Tricks hand" }).click();
+
+  await expect(page.getByRole("heading", { name: "No Tricks hand" })).toBeVisible();
+  await expect(page.getByLabel("No Tricks hand score")).toContainText("tricks played");
+  await expect(page.getByLabel("No Tricks hand table")).toBeVisible();
+  await expectNoPageScroll(page);
+
+  for (let decision = 0; decision < 13; decision += 1) {
+    await page.locator(".full-hand-card.legal").first().dblclick();
+  }
+
+  await expect(page.getByRole("heading", { name: /Clean hand|Damage limited|Barbu caught you/ })).toBeVisible();
+  await expect(page.getByLabel("No Tricks hand score")).toContainText("13 / 13");
+  await expect(page.getByLabel("No Tricks result summary")).toContainText("Barbu took");
+  await expect(page.getByLabel("No Tricks key tricks")).toContainText("Costliest trick");
+  await expect(page.getByRole("button", { name: "Replay" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Try another" })).toBeVisible();
+  await expectNoPageScroll(page);
+
+  await page.screenshot({ path: testInfo.outputPath("no-tricks-hand.png"), fullPage: true });
 });
 
 test("finishing a lesson advances course progress", async ({ page }, testInfo) => {

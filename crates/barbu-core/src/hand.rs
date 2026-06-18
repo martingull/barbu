@@ -7,6 +7,7 @@ pub type NoHeartsHandState = TrickTakingHandState;
 pub type NoQueensHandState = TrickTakingHandState;
 pub type KingOfHeartsHandState = TrickTakingHandState;
 pub type NoLastTwoHandState = TrickTakingHandState;
+pub type NoTricksHandState = TrickTakingHandState;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TrickTakingHandState {
@@ -239,6 +240,24 @@ pub fn play_no_last_two_card(
     )
 }
 
+pub fn start_no_tricks_hand(seed: u64) -> NoTricksHandState {
+    let state = start_trick_taking_hand(format!("no-tricks-hand-{seed}"), seed, 0);
+    advance_to_player_turn(state, 2, score_no_tricks_trick, choose_no_tricks_opponent_card)
+}
+
+pub fn play_no_tricks_card(
+    state: NoTricksHandState,
+    player_card: Card,
+) -> Result<NoTricksHandState, String> {
+    play_trick_taking_card(
+        state,
+        player_card,
+        2,
+        score_no_tricks_trick,
+        choose_no_tricks_opponent_card,
+    )
+}
+
 pub fn play_trick_taking_card(
     mut state: TrickTakingHandState,
     player_card: Card,
@@ -461,6 +480,29 @@ fn choose_no_last_two_opponent_card(state: &TrickTakingHandState) -> Option<Card
     lowest_card(&legal)
 }
 
+fn choose_no_tricks_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
+    let hand = &state.hands[state.current_player];
+    let legal = legal_cards(hand, state.led_suit());
+    let led_suit = state.led_suit();
+
+    if legal.is_empty() {
+        return None;
+    }
+
+    if led_suit.is_none() {
+        return lowest_card(&legal);
+    }
+
+    let follows_suit = legal.iter().all(|card| Some(card.suit) == led_suit);
+
+    if !follows_suit {
+        return highest_card(&legal);
+    }
+
+    highest_card_matching(&legal, |card| !card_would_win_trick(state, card))
+        .or_else(|| lowest_card(&legal))
+}
+
 fn score_no_hearts_hand_trick(_state: &TrickTakingHandState, cards: &[PlayedCard]) -> i32 {
     score_no_hearts_trick(cards)
 }
@@ -485,6 +527,10 @@ fn score_no_last_two_trick(state: &TrickTakingHandState, _cards: &[PlayedCard]) 
     } else {
         0
     }
+}
+
+fn score_no_tricks_trick(_state: &TrickTakingHandState, _cards: &[PlayedCard]) -> i32 {
+    1
 }
 
 fn is_king_of_hearts(card: Card) -> bool {
@@ -1012,6 +1058,61 @@ mod tests {
         assert_eq!(state.completed_tricks.len(), 13);
         assert_eq!(state.cards_remaining(), 0);
         assert_eq!(state.total_penalty(), 2);
+    }
+
+    #[test]
+    fn no_tricks_scores_every_trick() {
+        let state = start_trick_taking_hand("score-no-tricks".to_string(), 37, 0);
+        let trick = vec![
+            PlayedCard::new(0, Card::new(Rank::Two, Suit::Clubs)),
+            PlayedCard::new(1, Card::new(Rank::Three, Suit::Clubs)),
+            PlayedCard::new(2, Card::new(Rank::Four, Suit::Clubs)),
+            PlayedCard::new(3, Card::new(Rank::Five, Suit::Clubs)),
+        ];
+
+        assert_eq!(score_no_tricks_trick(&state, &trick), 1);
+    }
+
+    #[test]
+    fn no_tricks_opponent_ducks_when_possible() {
+        let state = NoTricksHandState {
+            id: "opponent-duck-no-tricks".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Six, Suit::Clubs),
+                    Card::new(Rank::King, Suit::Clubs),
+                ],
+            ],
+            current_player: 3,
+            current_trick: vec![
+                PlayedCard::new(0, Card::new(Rank::Seven, Suit::Clubs)),
+                PlayedCard::new(1, Card::new(Rank::Eight, Suit::Clubs)),
+            ],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_no_tricks_opponent_card(&state),
+            Some(Card::new(Rank::Six, Suit::Clubs))
+        );
+    }
+
+    #[test]
+    fn no_tricks_hand_can_be_completed_by_playing_first_legal_card() {
+        let mut state = start_no_tricks_hand(41);
+
+        while state.status == HandStatus::InProgress {
+            let legal_card = state.legal_player_cards()[0];
+            state = play_no_tricks_card(state, legal_card).expect("first legal card should play");
+        }
+
+        assert_eq!(state.completed_tricks.len(), 13);
+        assert_eq!(state.cards_remaining(), 0);
+        assert_eq!(state.total_penalty(), 13);
     }
 
     fn score_completed_tricks(state: &NoHeartsHandState) -> i32 {

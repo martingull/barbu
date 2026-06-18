@@ -5,10 +5,12 @@
     playBrowserNoHeartsCard,
     playBrowserNoLastTwoCard,
     playBrowserNoQueensCard,
+    playBrowserNoTricksCard,
     startBrowserKingOfHeartsHand,
     startBrowserNoHeartsHand,
     startBrowserNoLastTwoHand,
-    startBrowserNoQueensHand
+    startBrowserNoQueensHand,
+    startBrowserNoTricksHand
   } from "./browserHandFallback";
   import { generateBrowserPlayBarbuDrillSteps } from "./browserDrillFallback";
   import CardTable from "./CardTable.svelte";
@@ -213,7 +215,7 @@
   const practiceSeedStorageKey = "barbu.practiceSeed.v1";
   const playBarbuHistoryStorageKey = "barbu.playHistory.v1";
   const maxStoredPlayBarbuAttempts = 8;
-  const fullHandContracts: FullHandContract[] = ["No Hearts", "No Queens", "King of Hearts", "No Last Two"];
+  const fullHandContracts: FullHandContract[] = ["No Hearts", "No Queens", "King of Hearts", "No Last Two", "No Tricks"];
   const outcomeLabels: Record<GuidedCardOutcome | "illegal", string> = {
     good: "Good",
     risky: "Risky",
@@ -733,6 +735,16 @@
         playCommand: "play_no_last_two_hand_card"
       };
     }
+    if (contract === "No Tricks") {
+      return {
+        penaltyName: "trick",
+        penaltyPlural: "tricks",
+        penaltyTotal: 13,
+        playedLabel: "tricks played",
+        startCommand: "start_no_tricks_hand",
+        playCommand: "play_no_tricks_hand_card"
+      };
+    }
 
     return {
       penaltyName: "heart",
@@ -754,6 +766,9 @@
     if (contract === "No Last Two") {
       return startBrowserNoLastTwoHand(seed);
     }
+    if (contract === "No Tricks") {
+      return startBrowserNoTricksHand(seed);
+    }
 
     return startBrowserNoHeartsHand(seed);
   }
@@ -767,6 +782,9 @@
     }
     if (state.contract === "No Last Two") {
       return playBrowserNoLastTwoCard(state, cardId);
+    }
+    if (state.contract === "No Tricks") {
+      return playBrowserNoTricksCard(state, cardId);
     }
 
     return playBrowserNoHeartsCard(state, cardId);
@@ -854,6 +872,10 @@
     void startFullHand("No Last Two");
   }
 
+  function startNoTricksHand() {
+    void startFullHand("No Tricks");
+  }
+
   function startNextFullHand() {
     if (!fullHand) {
       return;
@@ -889,6 +911,9 @@
       if (fullHand?.contract === "No Last Two") {
         return "You won a clean trick. Legal, but the final two tricks are the ones that score.";
       }
+      if (fullHand?.contract === "No Tricks") {
+        return "You won a trick. Legal, but every trick you win scores in this contract.";
+      }
       return `You won a clean trick. Legal, but keep checking whether ${fullHandPenaltyPlural} can still enter the trick.`;
     }
     if (fullHand?.contract === "King of Hearts") {
@@ -896,6 +921,9 @@
     }
     if (fullHand?.contract === "No Last Two") {
       return `${trick.winner} won a clean trick. The final-two danger has not scored here.`;
+    }
+    if (fullHand?.contract === "No Tricks") {
+      return `${trick.winner} won the trick. Good: you stayed out of it.`;
     }
     return `${trick.winner} won a clean trick. No ${fullHandPenaltyPlural} moved, so you stayed clear.`;
   }
@@ -916,6 +944,8 @@
         ? "You kept KH out of your tricks."
         : hand.contract === "No Last Two"
           ? "You avoided both final tricks."
+          : hand.contract === "No Tricks"
+            ? "You avoided every trick."
         : `You avoided every ${fullHandPenaltyName}.`;
     }
 
@@ -1606,6 +1636,7 @@
           <button class="drill-action" onclick={() => void startNoQueensHand()} type="button">No Queens hand</button>
           <button class="drill-action" onclick={() => void startKingOfHeartsHand()} type="button">King of Hearts hand</button>
           <button class="drill-action" onclick={() => void startNoLastTwoHand()} type="button">No Last Two hand</button>
+          <button class="drill-action" onclick={() => void startNoTricksHand()} type="button">No Tricks hand</button>
           <button class="reference-action" onclick={() => openReference("barbu")} type="button">Reference</button>
           {#if isCourseComplete}
             <button class="continue-action" onclick={openPathReview} type="button">Review results</button>

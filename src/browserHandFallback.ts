@@ -38,6 +38,10 @@ export function startBrowserNoLastTwoHand(seed: number): FullHandState {
   return startBrowserFullHand("No Last Two", seed);
 }
 
+export function startBrowserNoTricksHand(seed: number): FullHandState {
+  return startBrowserFullHand("No Tricks", seed);
+}
+
 function startBrowserFullHand(contract: FullHandContract, seed: number): FullHandState {
   const deck = standardDeck();
   const rng = new DeterministicRng(seed);
@@ -85,6 +89,10 @@ export function playBrowserKingOfHeartsCard(state: FullHandState, cardId: string
 }
 
 export function playBrowserNoLastTwoCard(state: FullHandState, cardId: string): FullHandState {
+  return playBrowserFullHandCard(state, cardId);
+}
+
+export function playBrowserNoTricksCard(state: FullHandState, cardId: string): FullHandState {
   return playBrowserFullHandCard(state, cardId);
 }
 
@@ -210,7 +218,14 @@ function chooseOpponentCard(state: FullHandState) {
   const followsSuit = legal.every((card) => card.suit === led);
 
   if (!followsSuit) {
+    if (state.contract === "No Tricks") {
+      return highestCard(legal);
+    }
     return highestCard(legal.filter((card) => isPenaltyCard(state.contract, card))) ?? highestCard(legal);
+  }
+
+  if (state.contract === "No Tricks") {
+    return highestCard(legal.filter((card) => !cardWouldWinTrick(state, card))) ?? lowestCard(legal);
   }
 
   if (state.contract === "No Last Two" && state.completedTricks.length >= 11) {
@@ -256,6 +271,9 @@ function compareByRankThenSuit(left: Card, right: Card) {
 }
 
 function scoreTrick(state: FullHandState, cards: TableCard[]) {
+  if (state.contract === "No Tricks") {
+    return 1;
+  }
   if (state.contract === "No Last Two") {
     return state.completedTricks.length >= 11 ? 1 : 0;
   }
@@ -270,6 +288,9 @@ function scoreTrick(state: FullHandState, cards: TableCard[]) {
 }
 
 function isPenaltyCard(contract: FullHandContract, card: Card) {
+  if (contract === "No Tricks") {
+    return false;
+  }
   if (contract === "No Last Two") {
     return false;
   }
@@ -320,6 +341,8 @@ function promptForState(state: FullHandState, playerPenalty: number) {
           ? "king"
           : state.contract === "No Last Two"
             ? "last trick"
+            : state.contract === "No Tricks"
+              ? "trick"
             : "heart";
     return `Hand complete. You took ${playerPenalty} ${playerPenalty === 1 ? penaltyName : `${penaltyName}s`}.`;
   }
