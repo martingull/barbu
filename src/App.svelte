@@ -42,6 +42,7 @@
     | "lesson"
     | "drill"
     | "drillResult"
+    | "runContractIntro"
     | "fullHand"
     | "pathReview";
 
@@ -147,6 +148,13 @@
     totalPenalty: number;
   };
 
+  type RunContractIntro = {
+    title: string;
+    target: string;
+    reason: string;
+    habit: string;
+  };
+
   const catalogEntries: CatalogEntry[] = [
     {
       id: "barbu",
@@ -191,6 +199,38 @@
   const playBarbuHistoryStorageKey = "barbu.playHistory.v1";
   const maxStoredPlayBarbuAttempts = 8;
   const fullHandContracts: FullHandContract[] = ["No Hearts", "No Queens", "King of Hearts", "No Last Two", "No Tricks"];
+  const runContractIntros: Record<FullHandContract, RunContractIntro> = {
+    "No Hearts": {
+      title: "Hearts are cargo. Do not bring them home.",
+      target: "Avoid winning heart tricks.",
+      reason: "Barbu starts with the simplest penalty shape: dangerous cards inside ordinary tricks.",
+      habit: "Locate the trick winner before worrying about the heart."
+    },
+    "No Queens": {
+      title: "Queens punish the player who captures them.",
+      target: "Avoid queen tricks.",
+      reason: "This contract raises the pressure because one high card can pull a queen into your score.",
+      habit: "Duck under the current winner when a queen is loaded."
+    },
+    "King of Hearts": {
+      title: "One card carries the contract.",
+      target: "Avoid capturing KH.",
+      reason: "Barbu now narrows the danger to one card, so tracking matters more than fear of the whole suit.",
+      habit: "Find KH, then ask whether your card wins its trick."
+    },
+    "No Last Two": {
+      title: "The end of the hand is dangerous.",
+      target: "Avoid tricks 12 and 13.",
+      reason: "Early tricks are setup. Barbu wants to see whether you can keep a late escape.",
+      habit: "Count the hand before spending a low card."
+    },
+    "No Tricks": {
+      title: "Every trick you win costs you.",
+      target: "Avoid taking control.",
+      reason: "This contract turns the whole hand into ducking practice.",
+      habit: "Play below the current winner whenever the led suit allows it."
+    }
+  };
   const outcomeLabels: Record<GuidedCardOutcome | "illegal", string> = {
     good: "Good",
     risky: "Risky",
@@ -504,6 +544,7 @@
   let lastFullHandTapAt = 0;
   let fullHandRunActive = false;
   let fullHandRunResults: FullHandRunResult[] = [];
+  let pendingRunContract: FullHandContract = fullHandContracts[0];
 
   $: selectedLesson = guidedLessons.find((lesson) => lesson.id === selectedLessonId) ?? guidedLessons[0];
   $: familyLabel = usingGeneratedPractice ? "Hearts" : selectedLesson.family;
@@ -582,6 +623,9 @@
   $: fullHandBestTrick = fullHand ? fullHandBestTrickLabel(fullHand) : "";
   $: fullHandWorstTrick = fullHand ? fullHandWorstTrickLabel(fullHand) : "";
   $: fullHandRunCurrentIndex = fullHand ? fullHandContracts.indexOf(fullHand.contract) : -1;
+  $: pendingRunContractIndex = fullHandContracts.indexOf(pendingRunContract);
+  $: pendingRunContractIntro = runContractIntros[pendingRunContract];
+  $: pendingRunStatusLabel = `Run ${pendingRunContractIndex + 1} of ${fullHandContracts.length}`;
   $: fullHandRunOrderedResults = fullHandContracts
     .map((contract) => fullHandRunResults.find((result) => result.contract === contract))
     .filter((result): result is FullHandRunResult => Boolean(result));
@@ -986,7 +1030,17 @@
   function startBarbuRun() {
     fullHandRunActive = true;
     fullHandRunResults = [];
-    void startFullHand(fullHandContracts[0], { keepRun: true });
+    fullHand = null;
+    openRunContractIntro(fullHandContracts[0]);
+  }
+
+  function openRunContractIntro(contract: FullHandContract) {
+    pendingRunContract = contract;
+    appView = "runContractIntro";
+  }
+
+  function startPendingRunContract() {
+    void startFullHand(pendingRunContract, { keepRun: true });
   }
 
   function startNextFullHand() {
@@ -1004,7 +1058,7 @@
 
       const currentIndex = fullHandContracts.indexOf(fullHand.contract);
       const nextContract = fullHandContracts[(currentIndex + 1) % fullHandContracts.length] ?? "No Hearts";
-      void startFullHand(nextContract, { keepRun: true });
+      openRunContractIntro(nextContract);
       return;
     }
 
@@ -2084,6 +2138,59 @@
             Finish {activeCourse.contract}
           {/if}
         </button>
+      </div>
+    </section>
+  {:else if appView === "runContractIntro"}
+    <header class="topbar" aria-label={`${pendingRunContract} run intro`}>
+      <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
+      <div>
+        <p class="eyebrow">Barbu run</p>
+        <h1>{pendingRunContract}</h1>
+      </div>
+      <div class="contract-status">
+        <span>Next contract</span>
+        <strong>{pendingRunStatusLabel}</strong>
+      </div>
+    </header>
+
+    <section class="run-intro-screen" aria-label="Barbu run contract intro">
+      <div class="run-intro-card">
+        <p class="eyebrow">Barbu sets the contract</p>
+        <h2>{pendingRunContractIntro.title}</h2>
+        <p>{pendingRunContractIntro.reason}</p>
+      </div>
+
+      <div class="run-intro-panel">
+        <div class="run-score-strip" aria-label="Current run score">
+          <div>
+            <span>You</span>
+            <strong>{fullHandRunTotalPenalty}</strong>
+          </div>
+          <div>
+            <span>Barbu</span>
+            <strong>{fullHandRunBarbuPenalty}</strong>
+          </div>
+          <div>
+            <span>Played</span>
+            <strong>{fullHandRunResults.length} / {fullHandContracts.length}</strong>
+          </div>
+        </div>
+
+        <div class="run-contract-target" aria-label={`${pendingRunContract} target`}>
+          <div>
+            <span>Target</span>
+            <strong>{pendingRunContractIntro.target}</strong>
+          </div>
+          <div>
+            <span>Table habit</span>
+            <strong>{pendingRunContractIntro.habit}</strong>
+          </div>
+        </div>
+
+        <div class="course-actions">
+          <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
+          <button class="primary-action" onclick={startPendingRunContract} type="button">Start hand</button>
+        </div>
       </div>
     </section>
   {:else if appView === "fullHand"}

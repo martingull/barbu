@@ -234,6 +234,13 @@ test("Barbu run advances full-hand contracts with a running total", async ({ pag
   await page.getByRole("button", { name: "Barbu run" }).click();
 
   for (const [index, contract] of contracts.entries()) {
+    await expect(page.getByRole("heading", { name: contract })).toBeVisible();
+    await expect(page.getByText(`Run ${index + 1} of ${contracts.length}`)).toBeVisible();
+    await expect(page.getByLabel("Barbu run contract intro")).toContainText("Barbu sets the contract");
+    await expect(page.getByLabel("Current run score")).toContainText("You");
+    await expectNoPageScroll(page);
+    await page.getByRole("button", { name: "Start hand" }).click();
+
     await expect(page.getByRole("heading", { name: `${contract} hand` })).toBeVisible();
     await expect(page.getByText(`Run ${index + 1} of ${contracts.length}`)).toBeVisible();
     await expect(page.getByLabel(`${contract} hand score`)).toContainText("Your run");

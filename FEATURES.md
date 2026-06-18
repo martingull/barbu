@@ -34,6 +34,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Generic trick-taking hand engine for deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks as the first contract adapters.
 - Shared table-play surface for Play Barbu and full-hand contracts so active games keep one compact mobile layout.
 - Barbu run v1 with a local sequence through playable full-hand contracts, player and Barbu penalty totals, per-contract score rows, and a compact run-complete summary.
+- Barbu run contract intro before each hand, where Barbu sets the next contract and the current run score stays visible.
 - Local full-hand contract penalty tracking. Full Barbu settlement scoring is still a later feature.
 - Compact full-hand result panel with contract result, Barbu/player penalty split, key tricks, replay, and next-contract actions.
 - Training path practice step connected to Play Barbu completion.
@@ -104,12 +105,17 @@ These are the next product increments that keep the app coherent.
    - Add stronger tactical feedback after each completed trick.
    - Decide when full hands should enter the learning path instead of living as separate practice.
 
-5. Progress Model v2
+5. Barbu Run Flow v2
+   - Keep contract intros short and score-aware.
+   - Clarify fixed order versus chosen/dealer-driven contract order before full settlement scoring.
+   - Make Barbu feel like the contract setter without adding long dialogue.
+
+6. Progress Model v2
    - Store completion by lesson node, not only path step.
    - Track attempts, last result, and review due state.
    - Keep it local until the app needs sync or accounts.
 
-6. Reference Layer v1
+7. Reference Layer v1
    - Add structured reference pages for the next supported games using Parlett as the baseline source.
    - Continue expanding object, players, cards, deal, play, scoring, variants, and tactical ideas.
    - Link reference sections from lessons without making rules pages the main flow.

@@ -172,6 +172,7 @@ Purpose: play a sequence of full-hand contracts as the early version of a full B
 Current role:
 
 - Runs through playable full-hand contracts.
+- Shows a compact contract intro before each hand.
 - Tracks running player and Barbu penalty totals.
 - Ends with a compact score summary and per-contract rows.
 
@@ -180,7 +181,7 @@ Near-term direction:
 - Make this the main play mode.
 - Add the remaining contracts.
 - Add full Barbu settlement scoring when contract coverage is broad enough.
-- Clarify whether contract order is fixed, chosen, or dealer-driven.
+- Clarify whether contract order remains fixed, chosen, or dealer-driven.
 
 Should not contain:
 

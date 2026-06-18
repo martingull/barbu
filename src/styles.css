@@ -579,6 +579,91 @@ button {
   line-height: 1.45;
 }
 
+.run-intro-screen {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(320px, 1.08fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.run-intro-card {
+  display: grid;
+  align-content: end;
+  min-height: 300px;
+  padding: 20px;
+  border: 1px solid #b9c4b1;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(9, 34, 24, 0.34)),
+    #315f4d;
+  color: #f7faf3;
+}
+
+.run-intro-card .eyebrow {
+  color: #dbe7d1;
+}
+
+.run-intro-card h2 {
+  max-width: 620px;
+  font-size: 1.58rem;
+  line-height: 1.12;
+}
+
+.run-intro-card p:last-child {
+  max-width: 560px;
+  margin: 14px 0 0;
+  color: #e7eee1;
+  font-weight: 750;
+  line-height: 1.42;
+}
+
+.run-intro-panel {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.run-score-strip,
+.run-contract-target {
+  display: grid;
+  gap: 8px;
+}
+
+.run-score-strip {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.run-score-strip div,
+.run-contract-target div {
+  display: grid;
+  gap: 4px;
+  min-height: 70px;
+  padding: 12px;
+  border: 1px solid #c7d0c0;
+  border-radius: 8px;
+  background: #fbfcf8;
+}
+
+.run-score-strip span,
+.run-contract-target span {
+  color: #60705a;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.run-score-strip strong,
+.run-contract-target strong {
+  color: #17201a;
+  font-size: 1rem;
+  line-height: 1.16;
+}
+
+.run-score-strip strong {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
 .example-copy-stack {
   display: grid;
   gap: 10px;
@@ -1426,7 +1511,8 @@ h2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .course-screen {
+  .course-screen,
+  .run-intro-screen {
     grid-template-columns: 1fr;
   }
 
@@ -1626,6 +1712,44 @@ h2 {
 
   .practice-chooser-intro p:last-child {
     margin-top: 7px;
+    font-size: 0.86rem;
+  }
+
+  .run-intro-screen {
+    gap: 10px;
+  }
+
+  .run-intro-card {
+    min-height: 148px;
+    padding: 14px;
+  }
+
+  .run-intro-card h2 {
+    font-size: 1.12rem;
+  }
+
+  .run-intro-card p:last-child {
+    margin-top: 7px;
+    font-size: 0.86rem;
+  }
+
+  .run-score-strip {
+    gap: 6px;
+  }
+
+  .run-score-strip div,
+  .run-contract-target div {
+    min-height: 0;
+    padding: 8px;
+  }
+
+  .run-score-strip span,
+  .run-contract-target span {
+    font-size: 0.6rem;
+  }
+
+  .run-score-strip strong,
+  .run-contract-target strong {
     font-size: 0.86rem;
   }
 
