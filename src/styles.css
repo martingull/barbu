@@ -1001,16 +1001,19 @@ h2 {
 }
 
 .full-hand-result-grid,
+.full-hand-run-score,
 .full-hand-result-tricks {
   display: grid;
   gap: 8px;
 }
 
-.full-hand-result-grid {
+.full-hand-result-grid,
+.full-hand-run-score {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .full-hand-result-grid div,
+.full-hand-run-score div,
 .full-hand-result-tricks div {
   display: grid;
   gap: 4px;
@@ -1022,6 +1025,7 @@ h2 {
 }
 
 .full-hand-result-grid span,
+.full-hand-run-score span,
 .full-hand-result-tricks span {
   color: #60705a;
   font-size: 0.68rem;
@@ -1030,6 +1034,7 @@ h2 {
 }
 
 .full-hand-result-grid strong,
+.full-hand-run-score strong,
 .full-hand-result-tricks strong {
   color: #17201a;
   font-size: 0.98rem;
@@ -1970,12 +1975,14 @@ h2 {
   }
 
   .table-play-surface.compact-result .full-hand-result-grid,
+  .table-play-surface.compact-result .full-hand-run-score,
   .table-play-surface.compact-result .full-hand-result-tricks,
   .table-play-surface.compact-result .full-hand-run-list {
     gap: 6px;
   }
 
   .table-play-surface.compact-result .full-hand-result-grid div,
+  .table-play-surface.compact-result .full-hand-run-score div,
   .table-play-surface.compact-result .full-hand-result-tricks div,
   .table-play-surface.compact-result .full-hand-run-list div {
     min-height: 0;
@@ -1983,12 +1990,14 @@ h2 {
   }
 
   .table-play-surface.compact-result .full-hand-result-grid span,
+  .table-play-surface.compact-result .full-hand-run-score span,
   .table-play-surface.compact-result .full-hand-result-tricks span,
   .table-play-surface.compact-result .full-hand-run-list span {
     font-size: 0.6rem;
   }
 
   .table-play-surface.compact-result .full-hand-result-grid strong,
+  .table-play-surface.compact-result .full-hand-run-score strong,
   .table-play-surface.compact-result .full-hand-result-tricks strong,
   .table-play-surface.compact-result .full-hand-run-list strong {
     font-size: 0.8rem;

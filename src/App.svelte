@@ -498,12 +498,22 @@
     .map((contract) => fullHandRunResults.find((result) => result.contract === contract))
     .filter((result): result is FullHandRunResult => Boolean(result));
   $: fullHandRunTotalPenalty = fullHandRunResults.reduce((total, result) => total + result.playerPenalty, 0);
+  $: fullHandRunBarbuPenalty = fullHandRunResults.reduce(
+    (total, result) => total + Math.max(0, result.totalPenalty - result.playerPenalty),
+    0
+  );
   $: fullHandRunPenaltyTotal = fullHandContracts.reduce((total, contract) => total + fullHandMeta(contract).penaltyTotal, 0);
   $: fullHandRunIsComplete = fullHandRunActive && fullHandRunResults.length >= fullHandContracts.length;
   $: fullHandRunResultTitle = fullHandRunTotalPenalty === 0 ? "Clean run" : "Run complete";
   $: fullHandRunResultSummary = fullHandRunIsComplete
-    ? `${fullHandRunTotalPenalty} of ${fullHandRunPenaltyTotal} possible penalties landed on you.`
+    ? `${fullHandRunScoreLeader} after ${fullHandRunResults.length} contracts. Lower penalties win the table.`
     : "";
+  $: fullHandRunScoreLeader =
+    fullHandRunTotalPenalty < fullHandRunBarbuPenalty
+      ? `You lead by ${fullHandRunBarbuPenalty - fullHandRunTotalPenalty}`
+      : fullHandRunTotalPenalty > fullHandRunBarbuPenalty
+        ? `Barbu leads by ${fullHandRunTotalPenalty - fullHandRunBarbuPenalty}`
+        : "You are level with Barbu";
   $: fullHandRunStatusLabel =
     fullHandRunIsComplete
       ? "Run complete"
@@ -1044,8 +1054,16 @@
     return `${value} ${value === 1 ? fullHandPenaltyName : fullHandPenaltyPlural}`;
   }
 
+  function formatContractPenalty(contract: FullHandContract, value: number) {
+    const meta = fullHandMeta(contract);
+    return `${value} ${value === 1 ? meta.penaltyName : meta.penaltyPlural}`;
+  }
+
   function formatRunContractScore(result: FullHandRunResult) {
-    return `${result.playerPenalty} / ${fullHandMeta(result.contract).penaltyTotal}`;
+    return `You ${formatContractPenalty(result.contract, result.playerPenalty)} | Barbu ${formatContractPenalty(
+      result.contract,
+      result.totalPenalty - result.playerPenalty
+    )}`;
   }
 
   async function startDailyDrill(pathStepId = "") {
@@ -1986,8 +2004,12 @@
             </div>
             {#if fullHandRunActive}
               <div>
-                <span>Run total</span>
+                <span>Your run</span>
                 <strong>{fullHandRunTotalPenalty}</strong>
+              </div>
+              <div>
+                <span>Barbu run</span>
+                <strong>{fullHandRunBarbuPenalty}</strong>
               </div>
             {/if}
           </div>
@@ -2002,6 +2024,21 @@
               </div>
 
               <p class="result">{fullHandRunResultSummary}</p>
+
+              <div class="full-hand-run-score" aria-label="Barbu run score">
+                <div>
+                  <span>You</span>
+                  <strong>{fullHandRunTotalPenalty}</strong>
+                </div>
+                <div>
+                  <span>Barbu</span>
+                  <strong>{fullHandRunBarbuPenalty}</strong>
+                </div>
+                <div>
+                  <span>Table</span>
+                  <strong>{fullHandRunPenaltyTotal}</strong>
+                </div>
+              </div>
 
               <div class="full-hand-run-list" aria-label="Barbu run results">
                 {#each fullHandRunOrderedResults as result}

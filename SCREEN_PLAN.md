@@ -172,8 +172,8 @@ Purpose: play a sequence of full-hand contracts as the early version of a full B
 Current role:
 
 - Runs through playable full-hand contracts.
-- Tracks running player penalty total.
-- Ends with a compact run summary.
+- Tracks running player and Barbu penalty totals.
+- Ends with a compact score summary and per-contract rows.
 
 Near-term direction:
 

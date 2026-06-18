@@ -204,7 +204,8 @@ test("Barbu run advances full-hand contracts with a running total", async ({ pag
   for (const [index, contract] of contracts.entries()) {
     await expect(page.getByRole("heading", { name: `${contract} hand` })).toBeVisible();
     await expect(page.getByText(`Run ${index + 1} of ${contracts.length}`)).toBeVisible();
-    await expect(page.getByLabel(`${contract} hand score`)).toContainText("Run total");
+    await expect(page.getByLabel(`${contract} hand score`)).toContainText("Your run");
+    await expect(page.getByLabel(`${contract} hand score`)).toContainText("Barbu run");
     await expectNoPageScroll(page);
 
     for (let decision = 0; decision < 13; decision += 1) {
@@ -220,6 +221,9 @@ test("Barbu run advances full-hand contracts with a running total", async ({ pag
 
   await expect(page.getByRole("heading", { name: /Clean run|Run complete/ })).toBeVisible();
   await expect(page.getByText("Run complete").first()).toBeVisible();
+  await expect(page.getByLabel("Barbu run score")).toContainText("You");
+  await expect(page.getByLabel("Barbu run score")).toContainText("Barbu");
+  await expect(page.getByLabel("Barbu run score")).toContainText("Table");
   await expect(page.getByLabel("Barbu run results")).toContainText("No Hearts");
   await expect(page.getByLabel("Barbu run results")).toContainText("No Tricks");
   await expect(page.getByRole("button", { name: "Replay last" })).toBeVisible();
