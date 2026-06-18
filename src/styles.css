@@ -630,7 +630,7 @@ button {
 }
 
 .run-score-strip {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .run-score-strip div,
@@ -998,6 +998,14 @@ h2 {
   align-items: stretch;
 }
 
+.table-play-surface.table-hidden {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.table-play-surface.table-hidden .table-play-panel {
+  grid-column: 1 / -1;
+}
+
 .drill-track {
   display: flex;
   grid-column: 1 / -1;
@@ -1094,7 +1102,7 @@ h2 {
 
 .full-hand-result-grid,
 .full-hand-run-score {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .full-hand-result-grid div,
@@ -1137,7 +1145,7 @@ h2 {
 
 .full-hand-run-list div {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(92px, 0.28fr) minmax(0, 1fr);
   gap: 8px;
   align-items: center;
   min-height: 42px;
@@ -1155,9 +1163,12 @@ h2 {
 }
 
 .full-hand-run-list strong {
+  min-width: 0;
   color: #17201a;
   font-size: 0.95rem;
   line-height: 1.1;
+  overflow-wrap: anywhere;
+  text-align: right;
 }
 
 .drill-result-screen {

@@ -16,6 +16,7 @@
     pendingBySeat?: Partial<Record<Seat, string>>;
     statusLabel: string;
     statusValue: string;
+    showTable?: boolean;
     summary?: Snippet;
     tableAriaLabel: string;
     tableCards: TableCard[];
@@ -34,6 +35,7 @@
     pendingBySeat = {},
     statusLabel,
     statusValue,
+    showTable = true,
     summary,
     tableAriaLabel,
     tableCards,
@@ -64,6 +66,7 @@
 <section
   class:compact-play={mode === "play"}
   class:compact-result={mode === "result"}
+  class:table-hidden={!showTable}
   class="table-play-surface"
   aria-label={ariaLabel}
 >
@@ -75,7 +78,9 @@
     {@render track()}
   {/if}
 
-  <CardTable ariaLabel={tableAriaLabel} {pendingBySeat} tableCards={tableCards} />
+  {#if showTable}
+    <CardTable ariaLabel={tableAriaLabel} {pendingBySeat} tableCards={tableCards} />
+  {/if}
 
   <section class="lesson-panel table-play-panel" aria-label={panelAriaLabel}>
     {@render panel()}

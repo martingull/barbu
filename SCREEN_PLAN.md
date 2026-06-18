@@ -173,7 +173,7 @@ Current role:
 
 - Runs through playable full-hand contracts.
 - Shows a compact contract intro before each hand.
-- Tracks running player and Barbu penalty totals.
+- Tracks running penalty totals for You, Barbu, Left, and Right.
 - Ends with a compact score summary and per-contract rows.
 
 Near-term direction:

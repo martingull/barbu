@@ -146,6 +146,7 @@
     contract: FullHandContract;
     playerPenalty: number;
     totalPenalty: number;
+    seatPenalties: Record<Seat, number>;
   };
 
   type RunContractIntro = {
@@ -199,6 +200,13 @@
   const playBarbuHistoryStorageKey = "barbu.playHistory.v1";
   const maxStoredPlayBarbuAttempts = 8;
   const fullHandContracts: FullHandContract[] = ["No Hearts", "No Queens", "King of Hearts", "No Last Two", "No Tricks"];
+  const scoreSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
+  const seatByPlayerIndex: Record<number, Seat> = {
+    0: "Tutor",
+    1: "Right",
+    2: "You",
+    3: "Left"
+  };
   const runContractIntros: Record<FullHandContract, RunContractIntro> = {
     "No Hearts": {
       title: "Hearts are cargo. Do not bring them home.",
@@ -615,9 +623,7 @@
   $: fullHandPenaltyPlayedLabel = fullHandContractMeta.playedLabel;
   $: fullHandPlayerPenaltyLabel =
     fullHand?.playerPenalty === 1 ? fullHandPenaltyName : fullHandPenaltyPlural;
-  $: fullHandCleanWinCount =
-    fullHand?.completedTricks.filter((trick) => trick.winnerIndex === 2 && trick.penalty === 0).length ?? 0;
-  $: fullHandBarbuPenalty = fullHand ? fullHand.totalPenalty - fullHand.playerPenalty : 0;
+  $: fullHandSeatPenalties = fullHand ? seatPenaltiesForTricks(fullHand.completedTricks) : emptySeatPenalties();
   $: fullHandResultTitle = fullHand ? fullHandResultHeading(fullHand) : "";
   $: fullHandResultSummary = fullHand ? fullHandResultText(fullHand) : "";
   $: fullHandBestTrick = fullHand ? fullHandBestTrickLabel(fullHand) : "";
@@ -629,23 +635,16 @@
   $: fullHandRunOrderedResults = fullHandContracts
     .map((contract) => fullHandRunResults.find((result) => result.contract === contract))
     .filter((result): result is FullHandRunResult => Boolean(result));
-  $: fullHandRunTotalPenalty = fullHandRunResults.reduce((total, result) => total + result.playerPenalty, 0);
-  $: fullHandRunBarbuPenalty = fullHandRunResults.reduce(
-    (total, result) => total + Math.max(0, result.totalPenalty - result.playerPenalty),
-    0
-  );
+  $: fullHandRunSeatPenalties = runSeatPenalties(fullHandRunResults);
+  $: fullHandRunTotalPenalty = fullHandRunSeatPenalties.You;
+  $: fullHandRunBarbuPenalty = fullHandRunSeatPenalties.Tutor;
   $: fullHandRunPenaltyTotal = fullHandContracts.reduce((total, contract) => total + fullHandMeta(contract).penaltyTotal, 0);
   $: fullHandRunIsComplete = fullHandRunActive && fullHandRunResults.length >= fullHandContracts.length;
   $: fullHandRunResultTitle = fullHandRunTotalPenalty === 0 ? "Clean run" : "Run complete";
   $: fullHandRunResultSummary = fullHandRunIsComplete
     ? `${fullHandRunScoreLeader} after ${fullHandRunResults.length} contracts. Lower penalties win the table.`
     : "";
-  $: fullHandRunScoreLeader =
-    fullHandRunTotalPenalty < fullHandRunBarbuPenalty
-      ? `You lead by ${fullHandRunBarbuPenalty - fullHandRunTotalPenalty}`
-      : fullHandRunTotalPenalty > fullHandRunBarbuPenalty
-        ? `Barbu leads by ${fullHandRunTotalPenalty - fullHandRunBarbuPenalty}`
-        : "You are level with Barbu";
+  $: fullHandRunScoreLeader = runScoreLeader(fullHandRunSeatPenalties);
   $: fullHandRunStatusLabel =
     fullHandRunIsComplete
       ? "Run complete"
@@ -1089,10 +1088,68 @@
     const result: FullHandRunResult = {
       contract: state.contract,
       playerPenalty: state.playerPenalty,
-      totalPenalty: state.totalPenalty
+      totalPenalty: state.totalPenalty,
+      seatPenalties: seatPenaltiesForTricks(state.completedTricks)
     };
 
     fullHandRunResults = [...fullHandRunResults.filter((item) => item.contract !== state.contract), result];
+  }
+
+  function emptySeatPenalties(): Record<Seat, number> {
+    return {
+      Tutor: 0,
+      Right: 0,
+      You: 0,
+      Left: 0
+    };
+  }
+
+  function seatPenaltiesForTricks(tricks: CompletedHandTrick[]) {
+    const totals = emptySeatPenalties();
+
+    for (const trick of tricks) {
+      const seat = seatByPlayerIndex[trick.winnerIndex];
+
+      if (seat) {
+        totals[seat] += trick.penalty;
+      }
+    }
+
+    return totals;
+  }
+
+  function runSeatPenalties(results: FullHandRunResult[]) {
+    const totals = emptySeatPenalties();
+
+    for (const result of results) {
+      for (const seat of scoreSeats) {
+        totals[seat] += result.seatPenalties[seat] ?? 0;
+      }
+    }
+
+    return totals;
+  }
+
+  function scoreSeatLabel(seat: Seat) {
+    return seat === "Tutor" ? "Barbu" : seat;
+  }
+
+  function scoreSeatRunLabel(seat: Seat) {
+    return seat === "You" ? "Your" : scoreSeatLabel(seat);
+  }
+
+  function runScoreLeader(scores: Record<Seat, number>) {
+    const orderedScores = scoreSeats
+      .map((seat) => ({ seat, score: scores[seat] }))
+      .sort((left, right) => left.score - right.score);
+    const leader = orderedScores[0];
+    const second = orderedScores[1];
+
+    if (!leader || !second || leader.score === second.score) {
+      return "The table is level";
+    }
+
+    return `${scoreSeatLabel(leader.seat)} leads by ${second.score - leader.score}`;
   }
 
   function fullHandCardClasses(card: Card) {
@@ -1159,13 +1216,13 @@
     }
 
     const youTook = formatFullHandPenalty(hand.playerPenalty);
-    const barbuTook = formatFullHandPenalty(hand.totalPenalty - hand.playerPenalty);
+    const tableTook = formatFullHandPenalty(hand.totalPenalty - hand.playerPenalty);
 
     if (hand.playerPenalty === hand.totalPenalty) {
       return `You took ${youTook}. Replay the contract and look for one duck or discard.`;
     }
 
-    return `You took ${youTook}. Barbu absorbed ${barbuTook}.`;
+    return `You took ${youTook}. The other seats absorbed ${tableTook}.`;
   }
 
   function fullHandBestTrickLabel(hand: FullHandState) {
@@ -1199,10 +1256,9 @@
   }
 
   function formatRunContractScore(result: FullHandRunResult) {
-    return `You ${formatContractPenalty(result.contract, result.playerPenalty)} | Barbu ${formatContractPenalty(
-      result.contract,
-      result.totalPenalty - result.playerPenalty
-    )}`;
+    return scoreSeats
+      .map((seat) => `${scoreSeatLabel(seat)} ${formatContractPenalty(result.contract, result.seatPenalties[seat] ?? 0)}`)
+      .join(" | ");
   }
 
   async function startDailyDrill(pathStepId = "") {
@@ -2162,18 +2218,12 @@
 
       <div class="run-intro-panel">
         <div class="run-score-strip" aria-label="Current run score">
-          <div>
-            <span>You</span>
-            <strong>{fullHandRunTotalPenalty}</strong>
-          </div>
-          <div>
-            <span>Barbu</span>
-            <strong>{fullHandRunBarbuPenalty}</strong>
-          </div>
-          <div>
-            <span>Played</span>
-            <strong>{fullHandRunResults.length} / {fullHandContracts.length}</strong>
-          </div>
+          {#each scoreSeats as seat}
+            <div>
+              <span>{scoreSeatLabel(seat)}</span>
+              <strong>{fullHandRunSeatPenalties[seat]}</strong>
+            </div>
+          {/each}
         </div>
 
         <div class="run-contract-target" aria-label={`${pendingRunContract} target`}>
@@ -2204,35 +2254,45 @@
         statusValue={`${fullHand.playerPenalty} ${fullHandPlayerPenaltyLabel}`}
         tableAriaLabel={`${fullHand.contract} hand table`}
         pendingBySeat={fullHandPendingBySeat}
+        showTable={!fullHandRunIsComplete}
         tableCards={fullHandVisibleTableCards}
         panelAriaLabel={`${fullHand.contract} hand decision`}
         onBack={openBarbuTable}
       >
         {#snippet summary()}
-          <div class="full-hand-summary" aria-label={`${fullHand.contract} hand score`}>
-            <div>
-              <span>Your score</span>
-              <strong>{fullHand.playerPenalty}</strong>
-            </div>
-            <div>
-              <span>{fullHandPenaltyPlayedLabel}</span>
-              <strong>{fullHand.totalPenalty} / {fullHandPenaltyTotal}</strong>
-            </div>
-            <div>
-              <span>Tricks</span>
-              <strong>{fullHand.completedTricks.length} / 13</strong>
-            </div>
-            {#if fullHandRunActive}
+          {#if !fullHandRunIsComplete}
+            <div class="full-hand-summary" aria-label={`${fullHand.contract} hand score`}>
               <div>
-                <span>Your run</span>
-                <strong>{fullHandRunTotalPenalty}</strong>
+                <span>Your score</span>
+                <strong>{fullHand.playerPenalty}</strong>
               </div>
               <div>
-                <span>Barbu run</span>
-                <strong>{fullHandRunBarbuPenalty}</strong>
+                <span>{fullHandPenaltyPlayedLabel}</span>
+                <strong>{fullHand.totalPenalty} / {fullHandPenaltyTotal}</strong>
               </div>
-            {/if}
-          </div>
+              <div>
+                <span>Tricks</span>
+                <strong>{fullHand.completedTricks.length} / 13</strong>
+              </div>
+              {#if fullHandRunActive}
+                {#each scoreSeats as seat}
+                  <div>
+                    <span>{scoreSeatRunLabel(seat)} run</span>
+                    <strong>{fullHandRunSeatPenalties[seat]}</strong>
+                  </div>
+                {/each}
+              {/if}
+            </div>
+          {:else}
+            <div class="full-hand-summary compact-run-complete" aria-label={`${fullHand.contract} hand score`}>
+              {#each scoreSeats as seat}
+                <div>
+                  <span>{scoreSeatRunLabel(seat)} run</span>
+                  <strong>{fullHandRunSeatPenalties[seat]}</strong>
+                </div>
+              {/each}
+            </div>
+          {/if}
         {/snippet}
 
         {#snippet panel()}
@@ -2246,18 +2306,12 @@
               <p class="result">{fullHandRunResultSummary}</p>
 
               <div class="full-hand-run-score" aria-label="Barbu run score">
-                <div>
-                  <span>You</span>
-                  <strong>{fullHandRunTotalPenalty}</strong>
-                </div>
-                <div>
-                  <span>Barbu</span>
-                  <strong>{fullHandRunBarbuPenalty}</strong>
-                </div>
-                <div>
-                  <span>Table</span>
-                  <strong>{fullHandRunPenaltyTotal}</strong>
-                </div>
+                {#each scoreSeats as seat}
+                  <div>
+                    <span>{scoreSeatLabel(seat)}</span>
+                    <strong>{fullHandRunSeatPenalties[seat]}</strong>
+                  </div>
+                {/each}
               </div>
 
               <div class="full-hand-run-list" aria-label="Barbu run results">
@@ -2277,18 +2331,12 @@
               <p class="result">{fullHandResultSummary}</p>
 
               <div class="full-hand-result-grid" aria-label={`${fullHand.contract} result summary`}>
-                <div>
-                  <span>You took</span>
-                  <strong>{formatFullHandPenalty(fullHand.playerPenalty)}</strong>
-                </div>
-                <div>
-                  <span>Barbu took</span>
-                  <strong>{formatFullHandPenalty(fullHandBarbuPenalty)}</strong>
-                </div>
-                <div>
-                  <span>Clean wins</span>
-                  <strong>{fullHandCleanWinCount}</strong>
-                </div>
+                {#each scoreSeats as seat}
+                  <div>
+                    <span>{scoreSeatLabel(seat)} took</span>
+                    <strong>{formatFullHandPenalty(fullHandSeatPenalties[seat])}</strong>
+                  </div>
+                {/each}
               </div>
 
               <div class="full-hand-result-tricks" aria-label={`${fullHand.contract} key tricks`}>
