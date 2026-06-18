@@ -27,7 +27,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 ## Current Feature Set
 
 - Game catalog with Barbu as the first playable core game and documented varieties kept under their parent game.
-- Barbu table with contract entry points.
+- Barbu table with grouped Learn, Practice, Play, and Reference entry points, including a contract-hand practice chooser.
 - Five-step training path: concept, example, guided trick, practice, review.
 - Play Barbu mode with three quick mixed-contract decisions, immediate feedback, and a compact result.
 - No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks full-hand skeletons with deterministic local deals, legal-card play, simple tactical auto opponents, hand scoring, and short per-trick feedback.

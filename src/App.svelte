@@ -36,6 +36,7 @@
   type AppView =
     | "catalog"
     | "barbuTable"
+    | "practiceChooser"
     | "reference"
     | "courseContent"
     | "lesson"
@@ -700,6 +701,10 @@
 
   function openBarbuTable() {
     appView = "barbuTable";
+  }
+
+  function openPracticeChooser() {
+    appView = "practiceChooser";
   }
 
   function openReference(referenceId = "barbu") {
@@ -1721,23 +1726,34 @@
             <div class="progress-fill" style={`width: ${(completedCount / playablePathSteps.length) * 100}%`}></div>
           </div>
         </div>
-        <div class="table-actions">
-          <button class="drill-action" onclick={startBarbuRun} type="button">Barbu run</button>
-          <button class="drill-action" onclick={() => void startDailyDrill()} type="button">Play Barbu</button>
-          <button class="drill-action" onclick={() => void startNoHeartsHand()} type="button">No Hearts hand</button>
-          <button class="drill-action" onclick={() => void startNoQueensHand()} type="button">No Queens hand</button>
-          <button class="drill-action" onclick={() => void startKingOfHeartsHand()} type="button">King of Hearts hand</button>
-          <button class="drill-action" onclick={() => void startNoLastTwoHand()} type="button">No Last Two hand</button>
-          <button class="drill-action" onclick={() => void startNoTricksHand()} type="button">No Tricks hand</button>
-          <button class="reference-action" onclick={() => openReference("barbu")} type="button">Reference</button>
-          {#if isCourseComplete}
-            <button class="continue-action" onclick={openPathReview} type="button">Review results</button>
-            <button class="reset-progress-action" onclick={resetCourseProgress} type="button">Reset path</button>
-          {:else if nextPathStep}
-            <button class="continue-action" onclick={continueCourse} type="button">
-              Continue with {nextPathStep.title}
-            </button>
-          {/if}
+        <div class="table-action-groups" aria-label="Barbu table actions">
+          <section class="table-action-group" aria-label="Learn">
+            <p class="eyebrow">Learn</p>
+            {#if isCourseComplete}
+              <button class="continue-action" onclick={openPathReview} type="button">Review results</button>
+              <button class="reset-progress-action" onclick={resetCourseProgress} type="button">Reset path</button>
+            {:else if nextPathStep}
+              <button class="continue-action" onclick={continueCourse} type="button">
+                Continue with {nextPathStep.title}
+              </button>
+            {/if}
+          </section>
+
+          <section class="table-action-group" aria-label="Practice">
+            <p class="eyebrow">Practice</p>
+            <button class="drill-action" onclick={() => void startDailyDrill()} type="button">Play Barbu</button>
+            <button class="drill-action" onclick={openPracticeChooser} type="button">Contract hands</button>
+          </section>
+
+          <section class="table-action-group" aria-label="Play">
+            <p class="eyebrow">Play</p>
+            <button class="drill-action" onclick={startBarbuRun} type="button">Barbu run</button>
+          </section>
+
+          <section class="table-action-group" aria-label="Reference">
+            <p class="eyebrow">Reference</p>
+            <button class="reference-action" onclick={() => openReference("barbu")} type="button">Reference</button>
+          </section>
         </div>
       </div>
 
@@ -1790,6 +1806,49 @@
             </span>
           </button>
         {/each}
+      </div>
+    </section>
+  {:else if appView === "practiceChooser"}
+    <header class="topbar" aria-label="Contract hand practice">
+      <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
+      <div>
+        <p class="eyebrow">Practice</p>
+        <h1>Contract hands</h1>
+      </div>
+      <div class="contract-status">
+        <span>Full hands</span>
+        <strong>{fullHandContracts.length} contracts</strong>
+      </div>
+    </header>
+
+    <section class="practice-chooser-screen" aria-label="Contract hand chooser">
+      <div class="practice-chooser-intro">
+        <p class="eyebrow">Isolated contracts</p>
+        <h2>One contract at a time.</h2>
+        <p>Sharpen a single penalty pattern before returning to Barbu's table.</p>
+      </div>
+
+      <div class="practice-choice-list" aria-label="Contract hand choices">
+        <button class="practice-choice" onclick={() => void startNoHeartsHand()} type="button">
+          <span>No Hearts</span>
+          <strong>Avoid heart tricks</strong>
+        </button>
+        <button class="practice-choice" onclick={() => void startNoQueensHand()} type="button">
+          <span>No Queens</span>
+          <strong>Avoid queen tricks</strong>
+        </button>
+        <button class="practice-choice" onclick={() => void startKingOfHeartsHand()} type="button">
+          <span>King of Hearts</span>
+          <strong>Avoid the king</strong>
+        </button>
+        <button class="practice-choice" onclick={() => void startNoLastTwoHand()} type="button">
+          <span>No Last Two</span>
+          <strong>Avoid the final tricks</strong>
+        </button>
+        <button class="practice-choice" onclick={() => void startNoTricksHand()} type="button">
+          <span>No Tricks</span>
+          <strong>Avoid every trick</strong>
+        </button>
       </div>
     </section>
   {:else if appView === "reference"}

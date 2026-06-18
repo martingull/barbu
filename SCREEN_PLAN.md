@@ -76,21 +76,17 @@ Purpose: the hub for Barbu.
 
 Current role:
 
-- Continue the learning path.
-- Start Play Barbu.
-- Start Barbu run.
-- Open individual full-hand contracts.
-- Open reference.
+- Groups actions by intent: Learn, Practice, Play, and Reference.
+- Continues the learning path.
+- Starts Play Barbu.
+- Starts Barbu run.
+- Opens contract-hand practice through a chooser.
+- Opens reference.
 
 Near-term direction:
 
-- Group actions by intent:
-  - Learn
-  - Practice
-  - Play
-  - Reference
 - Make Barbu run the main play entry once it feels stable.
-- Move individual contract hands into a clear practice/play subgroup instead of a long undifferentiated button row.
+- Keep individual contract hands behind the practice chooser as the contract list grows.
 
 Should not contain:
 

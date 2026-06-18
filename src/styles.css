@@ -331,7 +331,7 @@ button {
 .continue-action {
   justify-self: start;
   min-height: 42px;
-  margin-top: 16px;
+  margin-top: 0;
   padding: 0 14px;
   border: 1px solid #f5f1cf;
   border-radius: 8px;
@@ -340,16 +340,26 @@ button {
   font-weight: 900;
 }
 
-.table-actions,
+.table-action-groups,
 .completion-actions {
-  display: flex;
-  gap: 8px;
+  display: grid;
+  gap: 12px;
   margin-top: 16px;
-  flex-wrap: wrap;
 }
 
-.table-actions .continue-action {
-  margin-top: 0;
+.table-action-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid rgba(245, 241, 207, 0.22);
+}
+
+.table-action-group .eyebrow {
+  width: 100%;
+  margin-bottom: 0;
+  color: #dbe7d1;
 }
 
 .drill-action {
@@ -419,6 +429,76 @@ button {
   font-size: 0.82rem;
   font-weight: 650;
   line-height: 1.28;
+}
+
+.practice-chooser-screen {
+  display: grid;
+  grid-template-columns: minmax(0, 0.82fr) minmax(320px, 1.18fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.practice-chooser-intro {
+  display: grid;
+  align-content: center;
+  min-height: 300px;
+  padding: 18px;
+  border: 1px solid #b9c4b1;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(9, 34, 24, 0.34)),
+    #315f4d;
+  color: #f7faf3;
+}
+
+.practice-chooser-intro .eyebrow {
+  color: #dbe7d1;
+}
+
+.practice-chooser-intro h2 {
+  max-width: 520px;
+  font-size: 1.42rem;
+  line-height: 1.12;
+}
+
+.practice-chooser-intro p:last-child {
+  max-width: 480px;
+  margin: 12px 0 0;
+  color: #e7eee1;
+  font-weight: 700;
+  line-height: 1.42;
+}
+
+.practice-choice-list {
+  display: grid;
+  gap: 9px;
+}
+
+.practice-choice {
+  display: grid;
+  grid-template-columns: minmax(0, 0.84fr) minmax(0, 1.16fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 64px;
+  padding: 12px 14px;
+  border: 1px solid #c7d0c0;
+  border-radius: 8px;
+  background: #fbfcf8;
+  color: #17201a;
+  text-align: left;
+}
+
+.practice-choice span {
+  color: #9a342e;
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.practice-choice strong {
+  color: #273229;
+  font-size: 0.98rem;
+  line-height: 1.16;
 }
 
 .path-section {
@@ -1363,6 +1443,7 @@ h2 {
   }
 
   .table-play-surface,
+  .practice-chooser-screen,
   .drill-result-screen {
     grid-template-columns: 1fr;
   }
@@ -1506,14 +1587,19 @@ h2 {
 
   .continue-action {
     width: 100%;
+  }
+
+  .table-action-groups,
+  .completion-actions {
+    display: grid;
+    gap: 10px;
     margin-top: 12px;
   }
 
-  .table-actions,
-  .completion-actions {
+  .table-action-group {
     display: grid;
-    gap: 8px;
-    margin-top: 12px;
+    gap: 7px;
+    padding-top: 9px;
   }
 
   .reference-action {
@@ -1545,6 +1631,39 @@ h2 {
 
   .contract-card strong {
     font-size: 0.92rem;
+  }
+
+  .practice-chooser-intro {
+    min-height: 132px;
+    padding: 14px;
+  }
+
+  .practice-chooser-intro h2 {
+    font-size: 1.12rem;
+  }
+
+  .practice-chooser-intro p:last-child {
+    margin-top: 7px;
+    font-size: 0.86rem;
+  }
+
+  .practice-choice-list {
+    gap: 7px;
+  }
+
+  .practice-choice {
+    grid-template-columns: 1fr;
+    gap: 3px;
+    min-height: 54px;
+    padding: 10px 12px;
+  }
+
+  .practice-choice span {
+    font-size: 0.68rem;
+  }
+
+  .practice-choice strong {
+    font-size: 0.9rem;
   }
 
   .path-grid {
