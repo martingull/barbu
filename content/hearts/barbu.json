@@ -76,5 +76,56 @@
       "title": "Teaching variety",
       "note": "The current app uses authored tricks and generated drills before full contract deals."
     }
+  ],
+  "contractRoadmap": [
+    {
+      "id": "no_hearts",
+      "title": "No Hearts",
+      "coreStatus": "core",
+      "appStatus": "playable",
+      "note": "Reference, learning path, generated practice, full hand, and Barbu run support exist."
+    },
+    {
+      "id": "no_queens",
+      "title": "No Queens",
+      "coreStatus": "core",
+      "appStatus": "playable",
+      "note": "Reference, learning path, generated practice, full hand, and Barbu run support exist."
+    },
+    {
+      "id": "king_of_hearts",
+      "title": "King of Hearts",
+      "coreStatus": "core",
+      "appStatus": "playable",
+      "note": "The app currently names the Barbu contract by its danger card for beginner clarity."
+    },
+    {
+      "id": "no_last_two",
+      "title": "No Last Two",
+      "coreStatus": "core",
+      "appStatus": "playable",
+      "note": "Reference, guided course, full hand, and Barbu run support exist; generated practice is still later."
+    },
+    {
+      "id": "no_tricks",
+      "title": "No Tricks",
+      "coreStatus": "core",
+      "appStatus": "playable",
+      "note": "Reference, guided course, full hand, and Barbu run support exist; generated practice is still later."
+    },
+    {
+      "id": "positive_tricks",
+      "title": "Positive Tricks",
+      "coreStatus": "core_candidate",
+      "appStatus": "not_built",
+      "note": "Verify Parlett's exact contract treatment before adding rules, scoring, or UI."
+    },
+    {
+      "id": "domino",
+      "title": "Domino",
+      "coreStatus": "core_candidate",
+      "appStatus": "not_built",
+      "note": "Likely needs a different play surface from trick-taking contracts; verify baseline first."
+    }
   ]
 }

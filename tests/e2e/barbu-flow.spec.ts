@@ -106,6 +106,11 @@ test("Barbu reference exposes baseline rules and varieties", async ({ page }, te
   await expect(page.getByLabel("Contract reference").getByText("King of Hearts", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Contract reference").getByText("No Last Two", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Contract reference").getByText("No Tricks", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Contract status" })).toBeVisible();
+  await expect(page.getByLabel("Contract roadmap")).toContainText("Core candidate");
+  await expect(page.getByLabel("Contract roadmap")).toContainText("Positive Tricks");
+  await expect(page.getByLabel("Contract roadmap")).toContainText("Domino");
+  await expect(page.getByLabel("Contract roadmap")).toContainText("Not built");
   await expect(page.getByRole("heading", { name: "Documented variations" })).toBeVisible();
 
   await page.screenshot({ path: testInfo.outputPath("barbu-reference.png"), fullPage: true });
@@ -475,6 +480,68 @@ test("King of Hearts course has concept example play and review", async ({ page 
   await expect(page.getByText("3 / 5 complete")).toBeVisible();
   await expect(page.getByRole("button", { name: /Continue with Practice table/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Play the trick/ })).toContainText("Complete");
+});
+
+test("No Last Two course has concept example play and review", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: /^No Last Two/ }).click();
+
+  await expect(page.getByRole("heading", { name: "Avoid the final tricks" })).toBeVisible();
+  await expect(page.getByText("the danger appears late")).toBeVisible();
+  await page.getByRole("button", { name: "See example" }).click();
+
+  await expect(page.getByRole("heading", { name: /Trick 12 starts with spades/ })).toBeVisible();
+  await expect(page.getByLabel("No Last Two trick sequence")).toContainText("This is trick 12");
+  await expect(page.getByLabel("No Last Two trick sequence")).toContainText("Tutor overtakes with JS");
+  await expect(page.getByLabel("No Last Two example table")).toBeVisible();
+  await page.getByRole("button", { name: "Play guided trick" }).click();
+
+  await page.getByRole("button", { name: "2 S" }).click();
+  await page.getByRole("button", { name: "Play selected" }).click();
+  await page.getByRole("button", { name: "Next trick" }).click();
+
+  await page.getByRole("button", { name: "A C" }).click();
+  await page.getByRole("button", { name: "Play selected" }).click();
+  await page.getByRole("button", { name: "Finish lesson" }).click();
+
+  await expect(page.getByRole("heading", { name: "Review" })).toBeVisible();
+  await expect(page.getByText("No Last Two is a timing contract")).toBeVisible();
+  await page.getByRole("button", { name: "Finish No Last Two" }).click();
+
+  await expect(page.getByRole("heading", { name: "Barbu's table" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^No Last Two/ })).toContainText("Complete");
+});
+
+test("No Tricks course has concept example play and review", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: /^No Tricks/ }).click();
+
+  await expect(page.getByRole("heading", { name: "Avoid every trick" })).toBeVisible();
+  await expect(page.getByText("control is the thing you avoid")).toBeVisible();
+  await page.getByRole("button", { name: "See example" }).click();
+
+  await expect(page.getByRole("heading", { name: /Tutor leads clubs/ })).toBeVisible();
+  await expect(page.getByLabel("No Tricks trick sequence")).toContainText("Tutor plays 9C");
+  await expect(page.getByLabel("No Tricks trick sequence")).toContainText("Right plays KC");
+  await expect(page.getByLabel("No Tricks example table")).toBeVisible();
+  await page.getByRole("button", { name: "Play guided trick" }).click();
+
+  await page.getByRole("button", { name: "2 C" }).click();
+  await page.getByRole("button", { name: "Play selected" }).click();
+  await page.getByRole("button", { name: "Next trick" }).click();
+
+  await page.getByRole("button", { name: "K D" }).click();
+  await page.getByRole("button", { name: "Play selected" }).click();
+  await page.getByRole("button", { name: "Finish lesson" }).click();
+
+  await expect(page.getByRole("heading", { name: "Review" })).toBeVisible();
+  await expect(page.getByText("No Tricks turns every win into a cost")).toBeVisible();
+  await page.getByRole("button", { name: "Finish No Tricks" }).click();
+
+  await expect(page.getByRole("heading", { name: "Barbu's table" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^No Tricks/ })).toContainText("Complete");
 });
 
 test("training path practice step starts Play Barbu and marks completion", async ({ page }) => {

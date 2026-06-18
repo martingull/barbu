@@ -64,9 +64,10 @@ content/             Structured game and lesson content
 - Local Play Barbu result history with contract-level summaries and focused replay for the weakest contract.
 - Local course progress, a continue action, and compact outcome labels for guided card decisions.
 - Shared learner-facing outcome model: good, risky, penalty, and illegal, with separate reason tags for review and future tutor explanations.
-- Shared course content flow for No Hearts, No Queens, and King of Hearts with concept, example, guided play, and review screens.
+- Shared course content flow for No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks with concept, example, guided play, and review screens.
 - Shared card table renderer for course examples and guided play.
 - Barbu reference screen grounded in the Parlett baseline, with core contracts kept separate from documented varieties of play.
+- Contract roadmap in the Barbu reference that distinguishes core playable contracts, core candidates, app teaching modes, and future varieties.
 - Fixed authored Barbu lessons for No Hearts, No Queens, and King of Hearts.
 - Structured outcome metadata for authored guided card choices.
 - Generated No Hearts, No Queens, and King of Hearts drills from Rust using deterministic seeds and multiple local scenario patterns per contract.

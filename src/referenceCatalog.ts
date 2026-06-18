@@ -18,6 +18,14 @@ export type ReferenceContract = {
   lesson: string;
 };
 
+export type ReferenceContractRoadmapItem = {
+  id: string;
+  title: string;
+  coreStatus: string;
+  appStatus: string;
+  note: string;
+};
+
 export type ReferenceVariant = {
   id: string;
   title: string;
@@ -32,6 +40,7 @@ export type GameReference = {
   overview: string;
   sections: ReferenceSection[];
   contracts: ReferenceContract[];
+  contractRoadmap: ReferenceContractRoadmapItem[];
   variants: ReferenceVariant[];
 };
 
@@ -144,6 +153,57 @@ export const referenceCatalog: GameReference[] = [
         objective: "Avoid winning tricks.",
         scoring: "Each trick belongs to its winner as a penalty.",
         lesson: "Low cards and ducking matter because taking control of any trick costs you."
+      }
+    ],
+    contractRoadmap: [
+      {
+        id: "no-hearts",
+        title: "No Hearts",
+        coreStatus: "Core",
+        appStatus: "Playable",
+        note: "Reference, learning path, generated practice, full hand, and Barbu run support exist."
+      },
+      {
+        id: "no-queens",
+        title: "No Queens",
+        coreStatus: "Core",
+        appStatus: "Playable",
+        note: "Reference, learning path, generated practice, full hand, and Barbu run support exist."
+      },
+      {
+        id: "king-of-hearts",
+        title: "King of Hearts",
+        coreStatus: "Core",
+        appStatus: "Playable",
+        note: "The app currently names the Barbu contract by its danger card for beginner clarity."
+      },
+      {
+        id: "no-last-two",
+        title: "No Last Two",
+        coreStatus: "Core",
+        appStatus: "Playable",
+        note: "Reference, guided course, full hand, and Barbu run support exist; generated practice is still later."
+      },
+      {
+        id: "no-tricks",
+        title: "No Tricks",
+        coreStatus: "Core",
+        appStatus: "Playable",
+        note: "Reference, guided course, full hand, and Barbu run support exist; generated practice is still later."
+      },
+      {
+        id: "positive-tricks",
+        title: "Positive Tricks",
+        coreStatus: "Core candidate",
+        appStatus: "Not built",
+        note: "Verify Parlett's exact contract treatment before adding rules, scoring, or UI."
+      },
+      {
+        id: "domino",
+        title: "Domino",
+        coreStatus: "Core candidate",
+        appStatus: "Not built",
+        note: "Likely needs a different play surface from trick-taking contracts; verify baseline first."
       }
     ],
     variants: [

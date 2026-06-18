@@ -1198,6 +1198,48 @@ h2 {
   font-weight: 800;
 }
 
+.contract-roadmap-list {
+  display: grid;
+  gap: 8px;
+}
+
+.contract-roadmap-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px 10px;
+  min-height: 74px;
+  padding: 12px;
+  border: 1px solid #c7d0c0;
+  border-radius: 8px;
+  background: #fbfcf8;
+}
+
+.contract-roadmap-card h3 {
+  color: #17201a;
+  font-size: 1rem;
+  line-height: 1.12;
+}
+
+.contract-roadmap-card > span {
+  align-self: start;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #dfe8d9;
+  color: #284f40;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.contract-roadmap-card > p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #53604d;
+  font-size: 0.82rem;
+  font-weight: 750;
+  line-height: 1.34;
+}
+
 .recent-attempt-list {
   grid-column: 1 / -1;
 }

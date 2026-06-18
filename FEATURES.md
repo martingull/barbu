@@ -44,7 +44,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Continue action for the next unfinished step.
 - Completed-course state with review and reset actions.
 - Shared learner-facing outcome model: good, risky, penalty, and illegal, with separate reason tags for review and future tutor explanations.
-- Shared course content flow for No Hearts, No Queens, and King of Hearts with concept, example, guided play, and review screens.
+- Shared course content flow for No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks with concept, example, guided play, and review screens.
 - Shared card table renderer for course examples and guided play.
 - Barbu reference screen with Parlett baseline, play direction, core contracts, scoring, and documented varieties.
 - Guided trick table for authored Barbu lessons.
@@ -54,6 +54,28 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Generated No Hearts, No Queens, and King of Hearts Play Barbu set via Rust/Tauri, with multiple local scenario patterns per contract.
 - Browser generated fallback for Play Barbu when Tauri is unavailable.
 - Playwright smoke tests for catalog, Barbu table, lesson flow, generated fallback, and course-complete behavior.
+
+## Barbu Contract Roadmap
+
+Barbu should be presented as one core game first, then as documented teaching modes and varieties. The user should always be able to tell which rules belong to core Barbu and which screens are app-specific ways to learn or practice it.
+
+Product layers:
+
+- **Core Barbu**: Parlett baseline for object, players, cards, deal, play, contracts, scoring, and full-game settlement.
+- **App teaching modes**: guided lessons, contract-hand practice, Play Barbu quick drills, and Barbu run.
+- **Varieties of play**: documented changes to contract order, scoring, deal customs, or beginner simplifications.
+
+Core contract status:
+
+| Contract | Core status | App status | Notes |
+| --- | --- | --- | --- |
+| No Hearts | Core | Playable | Reference, lesson, generated practice, full hand, and run support exist. |
+| No Queens | Core | Playable | Reference, lesson, generated practice, full hand, and run support exist. |
+| King of Hearts / Barbu | Core | Playable | The app currently uses "King of Hearts" for beginner clarity. |
+| No Last Two | Core | Playable | Guided course, full-hand, and run support exist; generated practice is still later. |
+| No Tricks | Core | Playable | Guided course, full-hand, and run support exist; generated practice is still later. |
+| Positive Tricks | Core candidate | Not built | Verify Parlett's exact treatment before adding rules, scoring, or UI. |
+| Domino | Core candidate | Not built | Likely needs a different play surface; verify baseline first. |
 
 ## Near-Term Roadmap
 

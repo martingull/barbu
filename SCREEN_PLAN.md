@@ -196,12 +196,14 @@ Current role:
 
 - Parlett baseline.
 - Object, players, cards, deal, play, scoring, contracts, and documented varieties.
+- Contract roadmap showing core playable contracts, core candidates, and app teaching status.
 
 Future role:
 
 - Add references for more games.
 - Link from lessons and play screens.
 - Distinguish core rules from variants clearly.
+- Keep app teaching modes separate from rule varieties.
 
 Should not contain:
 

@@ -379,6 +379,94 @@
           { marker: "OK", text: "Discarding KH is strong when another player already controls the trick." }
         ]
       }
+    },
+    {
+      id: "no-last-two",
+      pathStepId: "contract-no-last-two",
+      lessonId: "barbu-no-last-two",
+      contract: "No Last Two",
+      title: "Avoid the final tricks",
+      concept: {
+        heading: "In No Last Two, the danger appears late.",
+        body:
+          "The first eleven tricks are setup. Tricks 12 and 13 score against their winners, so your late high cards become dangerous.",
+        points: [
+          { marker: "1", text: "Count how close the hand is to the final two tricks." },
+          { marker: "2", text: "Keep a low card for the last suits when you can." },
+          { marker: "3", text: "Winning early can be fine; winning late is the danger." }
+        ]
+      },
+      example: {
+        heading: "Trick 12 starts with spades. Tutor is already winning.",
+        body:
+          "When only two tricks remain, staying under the current winner is often the whole decision. A high card that was safe earlier can now score against you.",
+        sequence: [
+          { label: "Late hand", text: "This is trick 12, so the trick winner takes a penalty." },
+          { label: "Lead", text: "Left plays 7S and Tutor overtakes with JS." },
+          { label: "Your turn", text: "You can follow low and leave the penalty with Tutor." }
+        ],
+        ariaLabel: "No Last Two example table",
+        tableCards: [
+          { seat: "Left", card: { id: "7S", rank: "7", suit: "S", label: "7S" } },
+          { seat: "Tutor", card: { id: "JS", rank: "J", suit: "S", label: "JS" } },
+          { seat: "Right", card: { id: "3S", rank: "3", suit: "S", label: "3S" } }
+        ],
+        pendingBySeat: { You: "follow low" }
+      },
+      review: {
+        heading: "No Last Two is a timing contract.",
+        body:
+          "You practiced treating early tricks as setup and late tricks as danger. The key habit is counting the hand before choosing whether to overtake.",
+        points: [
+          { marker: "OK", text: "Only tricks 12 and 13 are penalties." },
+          { marker: "OK", text: "Low legal cards are precious near the end." },
+          { marker: "OK", text: "A forced late win usually means the setup happened earlier." }
+        ]
+      }
+    },
+    {
+      id: "no-tricks",
+      pathStepId: "contract-no-tricks",
+      lessonId: "barbu-no-tricks",
+      contract: "No Tricks",
+      title: "Avoid every trick",
+      concept: {
+        heading: "In No Tricks, control is the thing you avoid.",
+        body:
+          "Every trick you win counts against you. The simple move is to follow suit with the lowest card that keeps someone else ahead.",
+        points: [
+          { marker: "1", text: "Follow the led suit when you can." },
+          { marker: "2", text: "Compare your card to the current winner." },
+          { marker: "3", text: "Duck under the winner unless the rules force you to win." }
+        ]
+      },
+      example: {
+        heading: "Tutor leads clubs. Right takes control with KC.",
+        body:
+          "In No Tricks, Right winning is good for you. The danger is overtaking with a higher club and taking the trick yourself.",
+        sequence: [
+          { label: "Lead", text: "Tutor plays 9C, so clubs are the led suit." },
+          { label: "Then", text: "Right plays KC and becomes the current winner." },
+          { label: "Your turn", text: "You can follow with 2C and avoid taking control." }
+        ],
+        ariaLabel: "No Tricks example table",
+        tableCards: [
+          { seat: "Tutor", card: { id: "9C", rank: "9", suit: "C", label: "9C" } },
+          { seat: "Right", card: { id: "KC", rank: "K", suit: "C", label: "KC" } },
+          { seat: "Left", card: { id: "5C", rank: "5", suit: "C", label: "5C" } }
+        ],
+        pendingBySeat: { You: "duck" }
+      },
+      review: {
+        heading: "No Tricks turns every win into a cost.",
+        body:
+          "You practiced ducking under the current winner and recognizing forced wins. The key habit is asking whether your legal card takes control.",
+        points: [
+          { marker: "OK", text: "Every trick winner scores in this contract." },
+          { marker: "OK", text: "A low legal card can be the strongest play." },
+          { marker: "OK", text: "Forced wins are legal, but they still count." }
+        ]
+      }
     }
   ];
   const drillSteps: DrillStep[] = guidedLessons.map((lesson) => ({
@@ -712,9 +800,6 @@
   function catalogDetailLabel(entry: CatalogEntry) {
     if (entry.lessonCount > 0) {
       return `${entry.lessonCount} ${entry.lessonCount === 1 ? "lesson" : "lessons"}`;
-    }
-    if (entry.kind === "variety") {
-      return entry.status === "Documented" ? "Reference only" : "Not scheduled";
     }
     return "No lessons yet";
   }
@@ -1142,9 +1227,9 @@
     appView = "drill";
   }
 
-  function startLesson(lessonId: string) {
+  function startLesson(lessonId: string, pathStepId = "") {
     selectLesson(lessonId);
-    activePathStepId = barbuPathSteps.find((step) => step.lessonId === lessonId)?.id ?? "";
+    activePathStepId = pathStepId || (barbuPathSteps.find((step) => step.lessonId === lessonId)?.id ?? "");
     appView = "lesson";
   }
 
@@ -1172,6 +1257,10 @@
     startLesson(lessonId);
   }
 
+  function courseForLesson(lessonId: string) {
+    return courseCatalog.find((item) => item.lessonId === lessonId);
+  }
+
   function continueCourseContent() {
     if (activeCourseStage === "concept") {
       activeCourseStage = "example";
@@ -1179,7 +1268,7 @@
     }
 
     if (activeCourseStage === "example") {
-      startLesson(activeCourse.lessonId);
+      startLesson(activeCourse.lessonId, activeCourse.pathStepId);
       return;
     }
 
@@ -1720,7 +1809,12 @@
           <button class="contract-card" onclick={() => startCourseForLesson(lesson.id)} type="button">
             <span>{lesson.contract}</span>
             <strong>{lesson.title}</strong>
-            <small>{lesson.summary}</small>
+            <small>
+              {lesson.summary}
+              {#if completedPathSteps[courseForLesson(lesson.id)?.pathStepId ?? ""]}
+                Complete
+              {/if}
+            </small>
           </button>
         {/each}
       </div>
@@ -1856,6 +1950,25 @@
               <h3>{contract.objective}</h3>
               <p>{contract.scoring}</p>
               <small>{contract.lesson}</small>
+            </article>
+          {/each}
+        </div>
+      </section>
+
+      <section class="reference-list" aria-label="Contract roadmap">
+        <div class="section-heading">
+          <p class="eyebrow">Core roadmap</p>
+          <h2>Contract status</h2>
+        </div>
+        <div class="contract-roadmap-list">
+          {#each activeReference.contractRoadmap as item}
+            <article class="contract-roadmap-card">
+              <div>
+                <p class="eyebrow">{item.coreStatus}</p>
+                <h3>{item.title}</h3>
+              </div>
+              <span>{item.appStatus}</span>
+              <p>{item.note}</p>
             </article>
           {/each}
         </div>
