@@ -34,9 +34,11 @@ const rankOrder: Record<Rank, number> = {
 
 export function generateBrowserPlayBarbuDrillSteps(seed: number): BrowserDrillStep[] {
   return [
-    generatedNoHeartsStep(seed * 3),
-    generatedNoQueensStep(seed * 3 + 1),
-    generatedKingOfHeartsStep(seed * 3 + 2)
+    generatedNoHeartsStep(seed * 5),
+    generatedNoQueensStep(seed * 5 + 1),
+    generatedKingOfHeartsStep(seed * 5 + 2),
+    generatedNoLastTwoStep(seed * 5 + 3),
+    generatedNoTricksStep(seed * 5 + 4)
   ];
 }
 
@@ -311,6 +313,185 @@ function generatedKingOfHeartsVoidDiscardStep(seed: number): BrowserDrillStep {
       ),
       cardOutcomes: cardOutcomesFor(playerHand, "good"),
       cardReasons: cardReasonsFor(playerHand, () => "avoided_penalty")
+    }
+  };
+}
+
+function generatedNoLastTwoStep(seed: number): BrowserDrillStep {
+  return seed % 2 === 0 ? generatedNoLastTwoDuckStep(seed) : generatedNoLastTwoForcedWinStep(seed);
+}
+
+function generatedNoLastTwoDuckStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const ledSuit = choose(rng, nonHeartSuits);
+  const leadCard = card(choose(rng, ["6", "7", "8"]), ledSuit);
+  const tutorWinner = card("J", ledSuit);
+  const rightCard = card(choose(rng, ["3", "4", "5"]), ledSuit);
+  const lowPlayerCard = card("2", ledSuit);
+  const highPlayerCard = card("Q", ledSuit);
+  const offSuitCard = card(choose(rng, ["5", "6", "7"]), firstNonMatchingSuit(ledSuit, "H"));
+  const playerHand = [lowPlayerCard, highPlayerCard, offSuitCard].sort(compareCards);
+  const ledSuitName = suitNames[ledSuit];
+
+  return {
+    contract: "No Last Two",
+    title: "Duck the late trick",
+    trick: {
+      title: "Duck the twelfth trick",
+      beforeResult: `This is trick 12. Left led ${leadCard.label}. Tutor played ${tutorWinner.label}. Right followed ${rightCard.label}.`,
+      afterResult: `Tutor wins with ${tutorWinner.label} and takes this last-two penalty.`,
+      emptyExplanation: `${capitalize(ledSuitName)} were led. Stay below the current winner if you can.`,
+      legalCardIds: [lowPlayerCard.id, highPlayerCard.id],
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Left", card: leadCard },
+        { seat: "Tutor", card: tutorWinner },
+        { seat: "Right", card: rightCard }
+      ],
+      tableAfterChoice: [],
+      pendingBySeat: { You: "You" },
+      playedExplanations: {
+        [lowPlayerCard.id]: `${lowPlayerCard.label} follows ${ledSuitName} and stays below ${tutorWinner.label}.`,
+        [highPlayerCard.id]: `${highPlayerCard.label} follows ${ledSuitName} but wins a last-two trick.`
+      },
+      cardOutcomes: {
+        [lowPlayerCard.id]: "good",
+        [highPlayerCard.id]: "penalty"
+      },
+      cardReasons: {
+        [lowPlayerCard.id]: "avoided_penalty",
+        [highPlayerCard.id]: "captured_penalty"
+      }
+    }
+  };
+}
+
+function generatedNoLastTwoForcedWinStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const ledSuit = choose(rng, nonHeartSuits);
+  const leadCard = card(choose(rng, ["4", "5", "6"]), ledSuit);
+  const tutorCard = card(choose(rng, ["7", "8", "9"]), ledSuit);
+  const rightCard = card("10", ledSuit);
+  const forcedWinner = card("K", ledSuit);
+  const offSuitCard = card("3", firstNonMatchingSuit(ledSuit, "H"));
+  const playerHand = [forcedWinner, offSuitCard].sort(compareCards);
+  const ledSuitName = suitNames[ledSuit];
+
+  return {
+    contract: "No Last Two",
+    title: "Forced late winner",
+    trick: {
+      title: "When your only legal card wins late",
+      beforeResult: `This is trick 13. Left led ${leadCard.label}. Tutor played ${tutorCard.label}. Right followed ${rightCard.label}.`,
+      afterResult: `You win with ${forcedWinner.label} and take the final-trick penalty.`,
+      emptyExplanation: `${capitalize(ledSuitName)} were led. Your only ${ledSuitName} card is forced.`,
+      legalCardIds: [forcedWinner.id],
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Left", card: leadCard },
+        { seat: "Tutor", card: tutorCard },
+        { seat: "Right", card: rightCard }
+      ],
+      tableAfterChoice: [],
+      pendingBySeat: { You: "You" },
+      playedExplanations: {
+        [forcedWinner.id]: `${forcedWinner.label} is forced by the led suit and wins the final trick.`
+      },
+      cardOutcomes: {
+        [forcedWinner.id]: "penalty"
+      },
+      cardReasons: {
+        [forcedWinner.id]: "captured_penalty"
+      }
+    }
+  };
+}
+
+function generatedNoTricksStep(seed: number): BrowserDrillStep {
+  return seed % 2 === 0 ? generatedNoTricksDuckStep(seed) : generatedNoTricksForcedWinStep(seed);
+}
+
+function generatedNoTricksDuckStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const ledSuit = choose(rng, nonHeartSuits);
+  const leadCard = card(choose(rng, ["7", "8", "9"]), ledSuit);
+  const rightWinner = card("K", ledSuit);
+  const leftCard = card(choose(rng, ["3", "4", "5"]), ledSuit);
+  const lowPlayerCard = card("2", ledSuit);
+  const highPlayerCard = card("A", ledSuit);
+  const offSuitCard = card(choose(rng, ["6", "7", "8"]), firstNonMatchingSuit(ledSuit, "H"));
+  const playerHand = [lowPlayerCard, highPlayerCard, offSuitCard].sort(compareCards);
+  const ledSuitName = suitNames[ledSuit];
+
+  return {
+    contract: "No Tricks",
+    title: "Duck the trick",
+    trick: {
+      title: "Duck every trick you can",
+      beforeResult: `Tutor led ${leadCard.label}. Right followed with ${rightWinner.label}.`,
+      afterResult: `Right keeps control with ${rightWinner.label} unless you overtake.`,
+      emptyExplanation: `${capitalize(ledSuitName)} were led. Avoid winning the trick.`,
+      legalCardIds: [lowPlayerCard.id, highPlayerCard.id],
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Tutor", card: leadCard },
+        { seat: "Right", card: rightWinner }
+      ],
+      tableAfterChoice: [{ seat: "Left", card: leftCard }],
+      pendingBySeat: { Left: leftCard.label, You: "You" },
+      playedExplanations: {
+        [lowPlayerCard.id]: `${lowPlayerCard.label} follows ${ledSuitName} and stays below ${rightWinner.label}.`,
+        [highPlayerCard.id]: `${highPlayerCard.label} follows ${ledSuitName} but wins the trick.`
+      },
+      cardOutcomes: {
+        [lowPlayerCard.id]: "good",
+        [highPlayerCard.id]: "penalty"
+      },
+      cardReasons: {
+        [lowPlayerCard.id]: "avoided_penalty",
+        [highPlayerCard.id]: "captured_penalty"
+      }
+    }
+  };
+}
+
+function generatedNoTricksForcedWinStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const ledSuit = choose(rng, nonHeartSuits);
+  const leadCard = card(choose(rng, ["4", "5", "6"]), ledSuit);
+  const tutorCard = card(choose(rng, ["7", "8"]), ledSuit);
+  const rightCard = card("9", ledSuit);
+  const forcedWinner = card("K", ledSuit);
+  const offSuitCard = card("3", firstNonMatchingSuit(ledSuit, "H"));
+  const playerHand = [forcedWinner, offSuitCard].sort(compareCards);
+  const ledSuitName = suitNames[ledSuit];
+
+  return {
+    contract: "No Tricks",
+    title: "Forced trick winner",
+    trick: {
+      title: "When the only legal card wins",
+      beforeResult: `Left led ${leadCard.label}. Tutor played ${tutorCard.label}. Right followed ${rightCard.label}.`,
+      afterResult: `You win with ${forcedWinner.label}. The play is legal, but the trick still counts against you.`,
+      emptyExplanation: `${capitalize(ledSuitName)} were led. Your only ${ledSuitName} card is forced.`,
+      legalCardIds: [forcedWinner.id],
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Left", card: leadCard },
+        { seat: "Tutor", card: tutorCard },
+        { seat: "Right", card: rightCard }
+      ],
+      tableAfterChoice: [],
+      pendingBySeat: { You: "You" },
+      playedExplanations: {
+        [forcedWinner.id]: `${forcedWinner.label} is forced by the led suit. It wins this trick, so it scores against you.`
+      },
+      cardOutcomes: {
+        [forcedWinner.id]: "penalty"
+      },
+      cardReasons: {
+        [forcedWinner.id]: "captured_penalty"
+      }
     }
   };
 }

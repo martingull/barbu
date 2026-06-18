@@ -242,7 +242,12 @@ pub fn play_no_last_two_card(
 
 pub fn start_no_tricks_hand(seed: u64) -> NoTricksHandState {
     let state = start_trick_taking_hand(format!("no-tricks-hand-{seed}"), seed, 0);
-    advance_to_player_turn(state, 2, score_no_tricks_trick, choose_no_tricks_opponent_card)
+    advance_to_player_turn(
+        state,
+        2,
+        score_no_tricks_trick,
+        choose_no_tricks_opponent_card,
+    )
 }
 
 pub fn play_no_tricks_card(

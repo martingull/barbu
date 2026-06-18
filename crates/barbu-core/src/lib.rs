@@ -12,18 +12,20 @@ pub use guided::{
 };
 pub use hand::{
     play_king_of_hearts_card, play_no_hearts_card, play_no_last_two_card, play_no_queens_card,
-    play_no_tricks_card, play_trick_taking_card, start_king_of_hearts_hand,
-    start_no_hearts_hand, start_no_last_two_hand, start_no_queens_hand, start_no_tricks_hand,
-    start_trick_taking_hand, CompletedTrick, HandStatus, HandTrickOutcome,
-    KingOfHeartsHandState, NoHeartsHandState, NoLastTwoHandState, NoQueensHandState,
-    NoTricksHandState, OpponentPolicyFn, TrickScoreFn, TrickTakingHandState,
+    play_no_tricks_card, play_trick_taking_card, start_king_of_hearts_hand, start_no_hearts_hand,
+    start_no_last_two_hand, start_no_queens_hand, start_no_tricks_hand, start_trick_taking_hand,
+    CompletedTrick, HandStatus, HandTrickOutcome, KingOfHeartsHandState, NoHeartsHandState,
+    NoLastTwoHandState, NoQueensHandState, NoTricksHandState, OpponentPolicyFn, TrickScoreFn,
+    TrickTakingHandState,
 };
 pub use learning::{barbu_learning_path, ContractLesson, GameLesson, LessonStep};
 pub use practice::{
     generate_daily_drill_set, generate_king_of_hearts_capture, generate_king_of_hearts_practice,
     generate_king_of_hearts_void_discard, generate_no_hearts_follow_suit,
-    generate_no_hearts_practice, generate_no_hearts_void_discard, generate_no_queens_capture,
-    generate_no_queens_practice, generate_no_queens_void_discard, PracticeContractKind,
+    generate_no_hearts_practice, generate_no_hearts_void_discard, generate_no_last_two_duck,
+    generate_no_last_two_forced_win, generate_no_last_two_practice, generate_no_queens_capture,
+    generate_no_queens_practice, generate_no_queens_void_discard, generate_no_tricks_duck,
+    generate_no_tricks_forced_win, generate_no_tricks_practice, PracticeContractKind,
     PracticeDrillSet, PracticeOutcome, PracticeOutcomeKind, PracticeOutcomeReason,
     PracticeScenario,
 };

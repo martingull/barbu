@@ -125,7 +125,7 @@ Purpose: quick mixed-contract practice.
 
 Current role:
 
-- Three generated or fallback decisions.
+- Five generated or fallback decisions across the playable avoidance contracts.
 - Immediate outcome feedback.
 - Result and review links.
 

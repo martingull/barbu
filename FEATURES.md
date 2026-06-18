@@ -29,7 +29,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Game catalog with Barbu as the first playable core game and documented varieties kept under their parent game.
 - Barbu table with grouped Learn, Practice, Play, and Reference entry points, including a contract-hand practice chooser.
 - Five-step training path: concept, example, guided trick, practice, review.
-- Play Barbu mode with three quick mixed-contract decisions, immediate feedback, and a compact result.
+- Play Barbu mode with five quick mixed-contract decisions, immediate feedback, and a compact result.
 - No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks full-hand skeletons with deterministic local deals, legal-card play, simple tactical auto opponents, hand scoring, and short per-trick feedback.
 - Generic trick-taking hand engine for deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks as the first contract adapters.
 - Shared table-play surface for Play Barbu and full-hand contracts so active games keep one compact mobile layout.
@@ -51,7 +51,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Authored lessons for No Hearts, No Queens, and King of Hearts.
 - Structured outcome metadata for authored guided card choices.
 - Compact outcome labels for guided decisions.
-- Generated No Hearts, No Queens, and King of Hearts Play Barbu set via Rust/Tauri, with multiple local scenario patterns per contract.
+- Generated No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks Play Barbu set via Rust/Tauri, with multiple local scenario patterns per contract.
 - Browser generated fallback for Play Barbu when Tauri is unavailable.
 - Playwright smoke tests for catalog, Barbu table, lesson flow, generated fallback, and course-complete behavior.
 
@@ -90,6 +90,7 @@ These are the next product increments that keep the app coherent.
    - Add more scenario families for each supported contract.
    - Keep commands thin and deterministic.
    - Add Rust tests for every drill generator.
+   - Current baseline now covers all five playable avoidance contracts; next pass should add more variety inside each contract.
 
 3. Core Game And Variety Model v2
    - Move catalog metadata toward content-backed data as more games are added.
