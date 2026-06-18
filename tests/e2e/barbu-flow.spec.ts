@@ -19,14 +19,16 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
 
   await expect(page.getByRole("heading", { name: "Choose a table" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Core games" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Varieties of play" })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Barbu/ })).toBeVisible();
-  await expect(page.getByText("Barbu Learning Table")).toBeVisible();
-  await expect(page.getByText("Variety of Barbu").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Open Barbu" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Hearts planned" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Whist planned" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Bridge planned" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Varieties of play" })).toHaveCount(0);
+  await expect(page.getByText("Barbu Learning Table")).toHaveCount(0);
 
   await page.screenshot({ path: testInfo.outputPath("catalog.png"), fullPage: true });
 
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu" }).click();
 
   await expect(page.getByRole("heading", { name: "Barbu's table" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Continue with Meet the contract/ })).toBeVisible();

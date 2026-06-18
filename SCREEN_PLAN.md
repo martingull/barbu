@@ -48,13 +48,13 @@ Design implication:
 
 ### Catalog / Welcome
 
-Purpose: choose the game family, core game, or current learning/play destination.
+Purpose: choose the game family or core game.
 
 Current role:
 
 - Shows Barbu as the first playable core game.
 - Shows future core games such as Hearts, Whist, and Bridge.
-- Keeps varieties under their parent game.
+- Keeps varieties under their parent game instead of showing them as separate first-screen tables.
 - Signals that Barbu belongs to a broader Hearts-family catalog.
 
 Future role:

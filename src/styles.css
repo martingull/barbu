@@ -153,10 +153,6 @@ button {
   gap: 10px;
 }
 
-.variety-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
 .game-card {
   display: grid;
   gap: 10px;
@@ -177,11 +173,6 @@ button {
 
 .game-card:disabled {
   color: #697366;
-}
-
-.variety-card {
-  background: #f4f6ef;
-  border-style: dashed;
 }
 
 .game-family {
@@ -223,44 +214,6 @@ button {
   color: #9a342e;
   font-size: 0.78rem;
   font-weight: 900;
-}
-
-.progression-section {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.progression-step {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 8px;
-  align-items: center;
-  min-height: 48px;
-  padding: 8px 10px;
-  border: 1px solid #c7d0c0;
-  border-radius: 8px;
-  background: rgba(251, 252, 248, 0.72);
-}
-
-.progression-step span {
-  display: grid;
-  width: 26px;
-  aspect-ratio: 1;
-  place-items: center;
-  border-radius: 999px;
-  background: #284f40;
-  color: #ffffff;
-  font-size: 0.78rem;
-  font-weight: 900;
-}
-
-.progression-step strong {
-  min-width: 0;
-  color: #354338;
-  font-size: 0.84rem;
-  line-height: 1.12;
 }
 
 .table-room {
@@ -1409,10 +1362,6 @@ h2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .progression-section {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
   .table-room {
     grid-template-columns: 1fr;
   }
@@ -1546,20 +1495,6 @@ h2 {
 
   .game-summary {
     font-size: 0.84rem;
-  }
-
-  .progression-section {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin-top: 12px;
-  }
-
-  .progression-step {
-    min-height: 42px;
-    padding: 7px 8px;
-  }
-
-  .progression-step strong {
-    font-size: 0.78rem;
   }
 
   .table-room {

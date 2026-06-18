@@ -50,7 +50,7 @@ content/             Structured game and lesson content
 ## Current Product Shape
 
 - A catalog/welcome screen that treats Barbu as the first playable core game in a broader card-game curriculum.
-- Core games and varieties of play are separated in the catalog so teaching variants and later rule variations stay attached to their parent game.
+- The catalog stays focused on core games; varieties and teaching modes stay attached to their parent game screens.
 - A Barbu table screen with grouped Learn, Practice, Play, and Reference entry points, a contract-hand practice chooser, and a five-step training path.
 - Play Barbu mode with three quick mixed-contract decisions, immediate feedback, and a compact result; Tauri builds use Rust-generated scenarios, while browser runs use a local generated fallback.
 - No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks full-hand skeletons with deterministic local deals, legal-card play, simple tactical auto opponents, hand scoring, and short per-trick feedback.
