@@ -927,7 +927,7 @@ h2 {
 .full-hand-summary {
   display: grid;
   grid-column: 1 / -1;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
   gap: 8px;
 }
 
@@ -1797,7 +1797,7 @@ h2 {
   }
 
   .table-play-surface .full-hand-summary {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
     gap: 6px;
   }
 

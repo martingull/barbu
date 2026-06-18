@@ -56,6 +56,7 @@ content/             Structured game and lesson content
 - No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks full-hand skeletons with deterministic local deals, legal-card play, simple tactical auto opponents, hand scoring, and short per-trick feedback.
 - Generic trick-taking hand engine for full-hand deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks as the first contract adapters.
 - Shared table-play surface for Play Barbu and full-hand contracts so active games use one compact mobile layout instead of contract-specific screens.
+- Barbu run v1 starts a local sequence through the playable full-hand contracts and tracks a running player penalty total.
 - Compact full-hand result panel with contract result, Barbu/player penalty split, key tricks, replay, and next-contract actions.
 - The training path practice step launches Play Barbu and marks the path step complete after a finished table.
 - Review step with latest Play Barbu score, weakest-contract advice, recent attempts, and replay actions.

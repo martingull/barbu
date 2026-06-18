@@ -167,6 +167,32 @@ test("active game tables share one compact surface", async ({ page }) => {
   expect(Math.round(noHeartsTable?.height ?? 0)).toBe(Math.round(playBarbuTable?.height ?? -1));
 });
 
+test("Barbu run advances full-hand contracts with a running total", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Barbu run" }).click();
+
+  await expect(page.getByRole("heading", { name: "No Hearts hand" })).toBeVisible();
+  await expect(page.getByText("Run 1 of 5")).toBeVisible();
+  await expect(page.getByLabel("No Hearts hand score")).toContainText("Run total");
+  await expectNoPageScroll(page);
+
+  for (let decision = 0; decision < 13; decision += 1) {
+    await page.locator(".full-hand-card.legal").first().dblclick();
+  }
+
+  await expect(page.getByRole("button", { name: "Next contract" })).toBeVisible();
+  await expect(page.getByLabel("No Hearts hand score")).toContainText("Run total");
+  await expectNoPageScroll(page);
+
+  await page.getByRole("button", { name: "Next contract" }).click();
+
+  await expect(page.getByRole("heading", { name: "No Queens hand" })).toBeVisible();
+  await expect(page.getByText("Run 2 of 5")).toBeVisible();
+  await expect(page.getByLabel("No Queens hand score")).toContainText("Run total");
+  await expectNoPageScroll(page);
+});
+
 test("No Hearts hand plays through thirteen tricks", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
