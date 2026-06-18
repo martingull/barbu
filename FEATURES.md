@@ -2,9 +2,15 @@
 
 This document controls product growth. It is a place to decide what belongs in the app now, what comes next, what is deliberately later, and what should not be built yet.
 
+Use [SCREEN_PLAN.md](./SCREEN_PLAN.md) for screen ownership, navigation boundaries, game-family catalog structure, and UI separation between learning, practice, full-game play, reference, and future multiplayer.
+
 ## Product North Star
 
-Barbu is an iPhone-first learning app for classic card games. The player sits at Barbu's table against the King of Cards, learns one decision at a time, and gradually moves from guided tricks to confident play.
+Barbu is an iPhone-first learning app for classic card games. The first playable path is Barbu in the Hearts family: the player sits at Barbu's table against the King of Cards, learns one decision at a time, and gradually moves from guided tricks to confident play.
+
+Barbu is the first complete curriculum, not the app boundary. The product should grow through reusable game-family foundations, starting with Hearts-family overlap such as follow-suit trick taking, avoidance scoring, penalty cards, and clockwise table play.
+
+Whist and Bridge are important future families, but they should wait until Barbu has a strong learning, practice, and play loop. New family work should reuse shared card and trick-taking foundations without weakening the current Barbu experience.
 
 David Parlett's *The Penguin Book of Card Games* is the baseline reference for how supported games are played and described. Product variants are allowed only when they are deliberate and documented.
 
@@ -91,8 +97,8 @@ These are the next product increments that keep the app coherent.
 - Barbu opponent behavior and table persona.
 - More Barbu contracts.
 - Hearts-family expansion.
-- Whist-family expansion.
-- Bridge-family expansion.
+- Whist-family expansion after Barbu is stable.
+- Bridge-family expansion after Barbu is stable.
 - Entitlements and paid packs.
 - iOS simulator smoke tests.
 - StoreKit sandbox tests.

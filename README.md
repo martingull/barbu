@@ -1,6 +1,6 @@
 # Barbu
 
-An iPhone-first card-game app for learning, practicing, and exploring classic card games. The first curriculum is Barbu in the Hearts family, with room to expand to more games later.
+An iPhone-first card-game app for learning, practicing, and exploring classic card games. The first curriculum is Barbu in the Hearts family, with room to expand into related Hearts-family games first, then other families later.
 
 The product concept is that the player learns by sitting down against Barbu, a King of Cards figure who introduces games, sets contracts, reacts to play, and raises the difficulty over time. Barbu should function as a coach and opponent: enough personality to give the app identity, but never at the expense of clear rules, fast practice, and accurate feedback.
 
@@ -27,7 +27,7 @@ Parlett is the baseline for rules and descriptions, but app copy must be origina
 
 The main experience should still be learn-by-doing: play first, get fast feedback, read a tiny explanation, repeat, and open reference material only when needed. The desired feel is closer to Duolingo or a strong chess tutor than to a rules encyclopedia.
 
-Use [FEATURES.md](./FEATURES.md) as the product control document for current scope, near-term roadmap, non-goals, and parked ideas.
+Use [FEATURES.md](./FEATURES.md) as the product control document for current scope, near-term roadmap, non-goals, and parked ideas. Use [SCREEN_PLAN.md](./SCREEN_PLAN.md) to keep game-family catalog, learning, practice, full-game play, reference, and future multiplayer/UI work separated.
 
 ## Stack
 
@@ -73,7 +73,7 @@ content/             Structured game and lesson content
 - Rule validation, trick winners, full-hand state, contract penalty tracking, and generated-practice outcomes live in `barbu-core`.
 - Full Barbu settlement scoring is not implemented yet; current full-hand play tracks the local contract penalty for the hand being practiced.
 - The Svelte app renders authored or generated scenarios and should avoid duplicating rules where Rust can provide them.
-- Barbu is the first Hearts-family core game, not the app boundary. The lesson/catalog structure should be able to grow toward other core games and documented varieties first, then other families such as Whist or Bridge later.
+- Barbu is the first Hearts-family core game, not the app boundary. The lesson/catalog structure should be able to grow toward related Hearts-family games first, then popular families such as Whist and Bridge after Barbu has a stable learning, practice, and play loop.
 
 ## First Commands
 
