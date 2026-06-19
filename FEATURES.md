@@ -29,7 +29,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Game catalog with Barbu as the first playable core game and documented varieties kept under their parent game.
 - Barbu table with grouped Learn, Practice, Play, and Reference entry points, including a contract-hand practice chooser.
 - Five-step training path: concept, example, guided trick, practice, review.
-- Quick Drill mode with five quick mixed-contract decisions, immediate feedback, and a compact result.
+- Quick Drill mode with seven quick mixed-contract decisions, immediate feedback, and a compact result across the playable contract roster.
 - No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps full-hand skeletons with deterministic local deals, legal-card play, simple tactical auto opponents, hand scoring, and short per-trick feedback.
 - Generic trick-taking hand engine for deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps as the first contract adapters.
 - Domino playable hand v1 with deterministic local deals, fixed-seven layout starts, adjacent suit building, legal pass handling, four-player order-out scoring, and Play Barbu roster support.
@@ -57,7 +57,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Authored lessons for No Hearts, No Queens, and King of Hearts.
 - Structured outcome metadata for authored guided card choices.
 - Compact outcome labels for guided decisions.
-- Generated No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks Quick Drill set via Rust/Tauri, with multiple local scenario patterns per contract.
+- Generated No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino Quick Drill set via Rust/Tauri, with multiple local scenario patterns for the avoidance contracts and first-pass scenarios for Hearts Trumps and Domino.
 - Browser generated fallback for Quick Drill when Tauri is unavailable.
 - Playwright smoke tests for catalog, Barbu table, lesson flow, generated fallback, and course-complete behavior.
 
@@ -93,10 +93,10 @@ These are the next product increments that keep the app coherent.
    - Keep explanations to one sentence unless the player asks for more.
 
 2. Generated Practice Expansion v2
-   - Add more scenario families for each supported contract.
+   - Add more scenario families for each supported contract, especially Hearts Trumps and Domino.
    - Keep commands thin and deterministic.
    - Add Rust tests for every drill generator.
-   - Current generated baseline covers the five playable avoidance contracts; Hearts Trumps generated practice is still missing.
+   - Current generated baseline covers the playable roster; Hearts Trumps and Domino still need more than one scenario family.
 
 3. Contract Score Model v2
    - Move point-value definitions into shared content/core metadata instead of duplicating them across UI and scoring code.
@@ -132,16 +132,15 @@ These are the next product increments that keep the app coherent.
    - Track attempts, last result, and review due state.
    - Keep it local until the app needs sync or accounts.
 
-8. Reference Layer v1
+9. Reference Layer v1
    - Add structured reference pages for the next supported games using Parlett as the baseline source.
    - Continue expanding object, players, cards, deal, play, scoring, variants, and tactical ideas.
    - Link reference sections from lessons without making rules pages the main flow.
 
 ## Later Roadmap
 
-- Full Barbu hand practice.
 - Barbu opponent behavior and table persona.
-- More Barbu contracts.
+- More Barbu contracts beyond the current playable roster.
 - Hearts-family expansion.
 - Whist-family expansion after Barbu is stable.
 - Bridge-family expansion after Barbu is stable.

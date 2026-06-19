@@ -87,10 +87,11 @@ export const referenceCatalog: GameReference[] = [
         id: "deal",
         title: "Deal",
         body:
-          "A full reference deal belongs to the core game rules layer. The teaching path currently begins after a deal, with small table positions chosen to teach one rule or contract idea at a time.",
+          "A full reference deal belongs to the core game rules layer. The teaching path begins with small table positions, while practice and Play Barbu now include local full-hand contracts.",
         facts: [
           { label: "App scope now", value: "Guided tricks and generated drills" },
-          { label: "Later scope", value: "Full hands and contract sequencing" }
+          { label: "App scope now", value: "Full hands and Play Barbu sequencing" },
+          { label: "Later scope", value: "Full settlement and broader game families" }
         ]
       },
       {
@@ -108,13 +109,15 @@ export const referenceCatalog: GameReference[] = [
         id: "scoring",
         title: "Scoring",
         body:
-          "Scoring depends on the contract. In avoidance contracts, penalty cards count against the player who wins the trick containing them.",
+          "Scoring depends on the contract. Avoidance contracts score against the trick winner, Hearts Trumps rewards tricks won, and Domino scores the order players empty their hands.",
         facts: [
           { label: "No Hearts", value: "Hearts penalize the trick winner" },
           { label: "No Queens", value: "Queens penalize the trick winner" },
           { label: "King of Hearts", value: "The king of hearts is the danger card" },
           { label: "No Last Two", value: "The final two tricks penalize their winners" },
-          { label: "No Tricks", value: "Every trick penalizes its winner" }
+          { label: "No Tricks", value: "Every trick penalizes its winner" },
+          { label: "Hearts Trumps", value: "Every trick won scores positive points" },
+          { label: "Domino", value: "Order out scores positive and negative points" }
         ]
       }
     ],

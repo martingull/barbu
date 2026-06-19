@@ -125,13 +125,14 @@ Purpose: quick mixed-contract practice.
 
 Current role:
 
-- Five generated or fallback decisions across the playable avoidance contracts.
+- Seven generated or fallback decisions across the playable contract roster.
 - Immediate outcome feedback.
 - Result and review links.
 
 Future role:
 
 - Become the fast practice mode, like a daily drill.
+- Add deeper Hearts Trumps and Domino scenario variety.
 - Vary scenarios independently from the learning path.
 - Use recent mistakes to choose focused drills.
 
@@ -201,7 +202,7 @@ Current role:
 
 - Parlett baseline.
 - Object, players, cards, deal, play, scoring, contracts, and documented varieties.
-- Contract roadmap showing core playable contracts, core candidates, and app teaching status.
+- Contract roadmap showing core playable contracts, teaching coverage, and later variants.
 
 Future role:
 

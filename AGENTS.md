@@ -83,7 +83,7 @@ task verify
 
 For UI-only changes, `npm run build` plus `task ui:test` is usually the minimum. For rules or scoring changes, run the core Rust tests.
 
-Generated drills require the Tauri runtime. Browser-only localhost can test authored lessons and frontend rendering, but Rust-backed commands need `task tauri:dev`.
+Rust-backed generated drills and full-hand commands require the Tauri runtime. Browser-only localhost can test authored lessons, frontend rendering, and browser fallback flows; use `task tauri:dev` when verifying Tauri command behavior.
 
 ## Generated Files
 

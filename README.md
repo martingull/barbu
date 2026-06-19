@@ -52,31 +52,32 @@ content/             Structured game and lesson content
 - A catalog/welcome screen that treats Barbu as the first playable core game in a broader card-game curriculum.
 - The catalog stays focused on core games; varieties and teaching modes stay attached to their parent game screens.
 - A Barbu table screen with grouped Learn, Practice, Play, and Reference entry points, a contract-hand practice chooser, and a five-step training path.
-- Play Barbu mode with five quick mixed-contract decisions, immediate feedback, and a compact result; Tauri builds use Rust-generated scenarios, while browser runs use a local generated fallback.
-- No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Positive Tricks full-hand skeletons with deterministic local deals, legal-card play, simple tactical auto opponents, hand scoring, and short per-trick feedback.
-- Generic trick-taking hand engine for full-hand deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Positive Tricks as the first contract adapters.
-- Shared table-play surface for Play Barbu and full-hand contracts so active games use one compact mobile layout instead of contract-specific screens.
-- Barbu run v1 starts a local sequence through the playable full-hand contracts, tracks four-player penalty totals, and ends with a compact score summary.
-- Barbu run contract intro before each hand so Barbu sets the next contract, shows the target, and keeps the current run score visible.
-- Barbu run score tracking now follows all four seats: You, Barbu, Left, and Right.
-- Barbu run settlement now ranks the four seats, names the player's best and weakest contract, and offers a focused replay.
-- Barbu run scorecard shows contract rows, four-player columns, current-contract highlight, pending rows, and totals.
+- Quick Drill mode with seven quick mixed-contract decisions across the playable contract roster, immediate feedback, and a compact result; Tauri builds use Rust-generated scenarios, while browser runs use a local generated fallback.
+- No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps full-hand skeletons with deterministic local deals, legal-card play, simple tactical auto opponents, hand scoring, and short per-trick feedback.
+- Domino playable hand v1 with deterministic local deals, fixed-seven starts, adjacent suit building, legal pass handling, four-player order-out scoring, and Play Barbu roster support.
+- Generic trick-taking hand engine for full-hand deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps as the first contract adapters.
+- Shared table-play surface for Quick Drill, Play Barbu, and full-hand contracts so active games use one compact mobile layout instead of contract-specific screens.
+- Play Barbu v1 starts a local sequence through the playable full-hand contracts, tracks four-player scores, and ends with a compact score summary.
+- Play Barbu contract intro before each hand so Barbu sets the next contract, shows the target, and keeps the current run score visible.
+- Play Barbu score tracking now follows all four seats: You, Barbu, Left, and Right.
+- Play Barbu settlement now ranks the four seats, names the player's best and weakest contract, and offers a focused replay.
+- Play Barbu scorecard shows contract rows, four-player columns, current-contract highlight, pending rows, and totals.
 - Compact full-hand result panel with contract result, Barbu/player penalty split, key tricks, replay, and next-contract actions.
-- The training path practice step launches Play Barbu and marks the path step complete after a finished table.
-- Review step with latest Play Barbu score, weakest-contract advice, recent attempts, and replay actions.
+- The training path practice step launches Quick Drill and marks the path step complete after a finished drill.
+- Review step with latest Quick Drill score, weakest-contract advice, recent attempts, and replay actions.
 - Reason-based review advice that turns recent practice tags into one short next-step correction.
-- Local Play Barbu result history with contract-level summaries and focused replay for the weakest contract.
+- Local Quick Drill result history with contract-level summaries and focused replay for the weakest contract.
 - Local course progress, a continue action, and compact outcome labels for guided card decisions.
 - Shared learner-facing outcome model: good, risky, penalty, and illegal, with separate reason tags for review and future tutor explanations.
 - Shared course content flow for No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks with concept, example, guided play, and review screens.
 - Shared card table renderer for course examples and guided play.
 - Barbu reference screen grounded in the Parlett baseline, with core contracts kept separate from documented varieties of play.
-- Contract roadmap in the Barbu reference that distinguishes core playable contracts, core candidates, app teaching modes, and future varieties.
+- Contract roadmap in the Barbu reference that distinguishes core playable contracts, app teaching coverage, and future varieties.
 - Fixed authored Barbu lessons for No Hearts, No Queens, and King of Hearts.
 - Structured outcome metadata for authored guided card choices.
-- Generated No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks drills from Rust using deterministic seeds and multiple local scenario patterns per contract.
-- Rule validation, trick winners, full-hand state, contract penalty tracking, and generated-practice outcomes live in `barbu-core`.
-- Full Barbu settlement scoring is not implemented yet; current full-hand play tracks the local contract penalty for the hand being practiced.
+- Generated No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino drills from Rust using deterministic seeds.
+- Rule validation, trick winners, full-hand state, contract value tracking, Domino layout state, and generated-practice outcomes live in `barbu-core`.
+- Full Barbu settlement scoring is not implemented yet; current full-hand play tracks local contract values for the hand being practiced.
 - The Svelte app renders authored or generated scenarios and should avoid duplicating rules where Rust can provide them.
 - Barbu is the first Hearts-family core game, not the app boundary. The lesson/catalog structure should be able to grow toward related Hearts-family games first, then popular families such as Whist and Bridge after Barbu has a stable learning, practice, and play loop.
 

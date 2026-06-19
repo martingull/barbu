@@ -21,6 +21,8 @@ pub enum PracticeContractKind {
     KingOfHearts,
     NoLastTwo,
     NoTricks,
+    HeartsTrumps,
+    Domino,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -74,10 +76,23 @@ pub struct PracticeDrillSet {
 
 impl PracticeScenario {
     pub fn legal_player_cards(&self) -> Vec<Card> {
+        if self.contract_kind == PracticeContractKind::Domino {
+            return self
+                .player_hand
+                .iter()
+                .copied()
+                .filter(|card| is_legal_domino_practice_card(&self.table_before_choice, *card))
+                .collect();
+        }
+
         legal_cards(&self.player_hand, Some(self.led_suit))
     }
 
     pub fn completed_trick(&self, player_card: Card) -> Option<Vec<PlayedCard>> {
+        if self.contract_kind == PracticeContractKind::Domino {
+            return None;
+        }
+
         if !self.legal_player_cards().contains(&player_card) {
             return None;
         }
@@ -92,12 +107,20 @@ impl PracticeScenario {
         let legal_cards = self.legal_player_cards();
 
         if !legal_cards.contains(&player_card) {
-            let explanation = format!(
-                "{} is not legal because {} were led and you still hold {}.",
-                player_card,
-                suit_name(self.led_suit),
-                join_cards(&legal_cards)
-            );
+            let explanation = if self.contract_kind == PracticeContractKind::Domino {
+                format!(
+                    "{} is not legal because it does not start or extend a suit. Legal placement: {}.",
+                    player_card,
+                    join_cards(&legal_cards)
+                )
+            } else {
+                format!(
+                    "{} is not legal because {} were led and you still hold {}.",
+                    player_card,
+                    suit_name(self.led_suit),
+                    join_cards(&legal_cards)
+                )
+            };
 
             return PracticeOutcome {
                 player_card,
@@ -112,23 +135,57 @@ impl PracticeScenario {
             };
         }
 
+        if self.contract_kind == PracticeContractKind::Domino {
+            return PracticeOutcome {
+                player_card,
+                outcome_kind: PracticeOutcomeKind::Good,
+                reason: PracticeOutcomeReason::FollowedSuit,
+                is_legal: true,
+                legal_cards,
+                winner: None,
+                penalty: Some(0),
+                completed_trick: None,
+                explanation: format!(
+                    "{} fits the Domino layout. Keep opening sevens or extending a suit by one rank.",
+                    player_card
+                ),
+            };
+        }
+
         let completed_trick = self
             .completed_trick(player_card)
             .expect("legal card should complete the trick");
-        let winner = trick_winner(&completed_trick).expect("completed trick should have a winner");
+        let winner = practice_trick_winner(self.contract_kind, &completed_trick)
+            .expect("completed trick should have a winner");
         let penalty = score_practice_trick(self.contract_kind, &completed_trick);
         let winner_name = player_name(winner);
 
         PracticeOutcome {
             player_card,
-            outcome_kind: practice_outcome_kind(winner, penalty),
-            reason: practice_outcome_reason(self.led_suit, player_card, winner, penalty),
+            outcome_kind: practice_outcome_kind(self.contract_kind, winner, penalty),
+            reason: practice_outcome_reason(self.contract_kind, self.led_suit, player_card, winner, penalty),
             is_legal: true,
             legal_cards,
             winner: Some(winner),
             penalty: Some(penalty),
             completed_trick: Some(completed_trick),
-            explanation: if penalty == 0 {
+            explanation: if self.contract_kind == PracticeContractKind::HeartsTrumps {
+                if winner == 2 {
+                    format!(
+                        "{} is trump. {} wins the trick and scores {}.",
+                        player_card,
+                        winner_name,
+                        penalty_label(self.contract_kind, penalty)
+                    )
+                } else {
+                    format!(
+                        "{} is legal because you are void in {}. {} wins the trick.",
+                        player_card,
+                        suit_name(self.led_suit),
+                        winner_name
+                    )
+                }
+            } else if penalty == 0 {
                 format!(
                     "{} follows {}. {} wins the trick, and no penalty card was captured.",
                     player_card,
@@ -617,16 +674,112 @@ pub fn generate_no_tricks_practice(seed: u64) -> PracticeScenario {
     }
 }
 
+pub fn generate_hearts_trumps_cut(seed: u64) -> PracticeScenario {
+    let mut rng = DeterministicRng::new(seed);
+    let led_suit = choose_suit(&mut rng, &[Suit::Clubs, Suit::Diamonds, Suit::Spades]);
+    let first_off_suit = first_non_matching_suit(led_suit, Suit::Hearts);
+    let second_off_suit = Suit::ALL
+        .into_iter()
+        .find(|suit| *suit != led_suit && *suit != first_off_suit && *suit != Suit::Hearts)
+        .expect("there should be a second non-heart discard suit");
+
+    let lead_card = Card::new(
+        choose(&mut rng, &[Rank::Nine, Rank::Ten, Rank::Jack]),
+        led_suit,
+    );
+    let right_card = Card::new(Rank::Ace, led_suit);
+    let left_card = Card::new(
+        choose(&mut rng, &[Rank::Three, Rank::Four, Rank::Five]),
+        first_off_suit,
+    );
+    let heart_trump = Card::new(
+        choose(&mut rng, &[Rank::Four, Rank::Five, Rank::Six]),
+        Suit::Hearts,
+    );
+    let low_discard = Card::new(choose(&mut rng, &[Rank::Two, Rank::Three]), first_off_suit);
+    let high_discard = Card::new(Rank::King, second_off_suit);
+
+    let mut player_hand = vec![
+        heart_trump,
+        Card::new(Rank::Seven, Suit::Hearts),
+        low_discard,
+        high_discard,
+    ];
+    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+
+    PracticeScenario {
+        id: format!("hearts-trumps-cut-{seed}"),
+        title: "Find the trump trick".to_string(),
+        contract: "Hearts Trumps".to_string(),
+        contract_kind: PracticeContractKind::HeartsTrumps,
+        led_suit,
+        prompt: format!(
+            "Tutor led {lead_card}. Right followed {right_card}. Hearts are trumps, and you have no {}.",
+            suit_name(led_suit)
+        ),
+        table_before_choice: vec![PlayedCard::new(0, lead_card), PlayedCard::new(1, right_card)],
+        player_hand,
+        table_after_choice: vec![PlayedCard::new(3, left_card)],
+    }
+}
+
+pub fn generate_hearts_trumps_practice(seed: u64) -> PracticeScenario {
+    generate_hearts_trumps_cut(seed)
+}
+
+pub fn generate_domino_practice(seed: u64) -> PracticeScenario {
+    let mut rng = DeterministicRng::new(seed);
+    let low_spade = choose(&mut rng, &[Rank::Five, Rank::Six]);
+    let high_spade = if low_spade == Rank::Five {
+        Rank::Six
+    } else {
+        Rank::Eight
+    };
+    let legal_spade = if low_spade == Rank::Five {
+        Rank::Four
+    } else {
+        Rank::Nine
+    };
+
+    let mut player_hand = vec![
+        Card::new(Rank::Seven, Suit::Hearts),
+        Card::new(legal_spade, Suit::Spades),
+        Card::new(Rank::Ten, Suit::Clubs),
+        Card::new(Rank::Queen, Suit::Diamonds),
+    ];
+    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+
+    PracticeScenario {
+        id: format!("domino-placement-{seed}"),
+        title: "Place into the Domino layout".to_string(),
+        contract: "Domino".to_string(),
+        contract_kind: PracticeContractKind::Domino,
+        led_suit: Suit::Spades,
+        prompt:
+            "Domino is open on spades from the current lane, and unopened suits need a seven. Choose a legal placement."
+                .to_string(),
+        table_before_choice: vec![
+            PlayedCard::new(0, Card::new(Rank::Seven, Suit::Spades)),
+            PlayedCard::new(1, Card::new(low_spade, Suit::Spades)),
+            PlayedCard::new(3, Card::new(high_spade, Suit::Spades)),
+        ],
+        player_hand,
+        table_after_choice: vec![],
+    }
+}
+
 pub fn generate_daily_drill_set(seed: u64) -> PracticeDrillSet {
     PracticeDrillSet {
         id: format!("play-barbu-{seed}"),
         title: "Play Barbu".to_string(),
         scenarios: vec![
-            generate_no_hearts_practice(seed.saturating_mul(5)),
-            generate_no_queens_practice(seed.saturating_mul(5) + 1),
-            generate_king_of_hearts_practice(seed.saturating_mul(5) + 2),
-            generate_no_last_two_practice(seed.saturating_mul(5) + 3),
-            generate_no_tricks_practice(seed.saturating_mul(5) + 4),
+            generate_no_hearts_practice(seed.saturating_mul(7)),
+            generate_no_queens_practice(seed.saturating_mul(7) + 1),
+            generate_king_of_hearts_practice(seed.saturating_mul(7) + 2),
+            generate_no_last_two_practice(seed.saturating_mul(7) + 3),
+            generate_no_tricks_practice(seed.saturating_mul(7) + 4),
+            generate_hearts_trumps_practice(seed.saturating_mul(7) + 5),
+            generate_domino_practice(seed.saturating_mul(7) + 6),
         ],
     }
 }
@@ -647,6 +800,10 @@ fn first_non_matching_suit(led_suit: Suit, excluded_suit: Suit) -> Suit {
 }
 
 fn join_cards(cards: &[Card]) -> String {
+    if cards.is_empty() {
+        return "none".to_string();
+    }
+
     cards
         .iter()
         .map(ToString::to_string)
@@ -672,6 +829,8 @@ fn score_practice_trick(contract_kind: PracticeContractKind, played_cards: &[Pla
             }
         }
         PracticeContractKind::NoLastTwo | PracticeContractKind::NoTricks => 1,
+        PracticeContractKind::HeartsTrumps => 1,
+        PracticeContractKind::Domino => 0,
     }
 }
 
@@ -682,10 +841,48 @@ fn penalty_label(contract_kind: PracticeContractKind, penalty: i32) -> String {
         PracticeContractKind::KingOfHearts => "the king of hearts penalty".to_string(),
         PracticeContractKind::NoLastTwo => "the last-trick penalty".to_string(),
         PracticeContractKind::NoTricks => "1 trick penalty".to_string(),
+        PracticeContractKind::HeartsTrumps => format!("{penalty} trick point"),
+        PracticeContractKind::Domino => "0 points".to_string(),
     }
 }
 
-fn practice_outcome_kind(winner: PlayerIndex, penalty: i32) -> PracticeOutcomeKind {
+fn practice_trick_winner(
+    contract_kind: PracticeContractKind,
+    played_cards: &[PlayedCard],
+) -> Option<PlayerIndex> {
+    if contract_kind == PracticeContractKind::HeartsTrumps {
+        return hearts_trumps_practice_winner(played_cards);
+    }
+
+    trick_winner(played_cards)
+}
+
+fn hearts_trumps_practice_winner(played_cards: &[PlayedCard]) -> Option<PlayerIndex> {
+    let heart_winner = played_cards
+        .iter()
+        .filter(|played| played.card.suit == Suit::Hearts)
+        .max_by_key(|played| played.card.rank);
+
+    if let Some(winner) = heart_winner {
+        return Some(winner.player);
+    }
+
+    trick_winner(played_cards)
+}
+
+fn practice_outcome_kind(
+    contract_kind: PracticeContractKind,
+    winner: PlayerIndex,
+    penalty: i32,
+) -> PracticeOutcomeKind {
+    if contract_kind == PracticeContractKind::HeartsTrumps {
+        return if winner == 2 {
+            PracticeOutcomeKind::Good
+        } else {
+            PracticeOutcomeKind::Risky
+        };
+    }
+
     if winner == 2 && penalty > 0 {
         PracticeOutcomeKind::Penalty
     } else if winner == 2 {
@@ -696,11 +893,22 @@ fn practice_outcome_kind(winner: PlayerIndex, penalty: i32) -> PracticeOutcomeKi
 }
 
 fn practice_outcome_reason(
+    contract_kind: PracticeContractKind,
     led_suit: Suit,
     player_card: Card,
     winner: PlayerIndex,
     penalty: i32,
 ) -> PracticeOutcomeReason {
+    if contract_kind == PracticeContractKind::HeartsTrumps {
+        return if winner == 2 {
+            PracticeOutcomeReason::WonCleanTrick
+        } else if player_card.suit != led_suit {
+            PracticeOutcomeReason::VoidDiscard
+        } else {
+            PracticeOutcomeReason::FollowedSuit
+        };
+    }
+
     if winner == 2 && penalty > 0 {
         PracticeOutcomeReason::CapturedPenalty
     } else if winner != 2 && penalty > 0 {
@@ -711,6 +919,60 @@ fn practice_outcome_reason(
         PracticeOutcomeReason::VoidDiscard
     } else {
         PracticeOutcomeReason::FollowedSuit
+    }
+}
+
+fn is_legal_domino_practice_card(layout: &[PlayedCard], card: Card) -> bool {
+    let mut lane_cards = layout
+        .iter()
+        .filter(|played| played.card.suit == card.suit)
+        .map(|played| played.card)
+        .collect::<Vec<_>>();
+
+    if lane_cards.is_empty() {
+        return card.rank == Rank::Seven;
+    }
+
+    lane_cards.sort_by_key(|lane_card| lane_card.rank as u8);
+    let low = lane_cards.first().map(|lane_card| lane_card.rank);
+    let high = lane_cards.last().map(|lane_card| lane_card.rank);
+
+    rank_above(card.rank) == low || rank_below(card.rank) == high
+}
+
+fn rank_below(rank: Rank) -> Option<Rank> {
+    match rank {
+        Rank::Three => Some(Rank::Two),
+        Rank::Four => Some(Rank::Three),
+        Rank::Five => Some(Rank::Four),
+        Rank::Six => Some(Rank::Five),
+        Rank::Seven => Some(Rank::Six),
+        Rank::Eight => Some(Rank::Seven),
+        Rank::Nine => Some(Rank::Eight),
+        Rank::Ten => Some(Rank::Nine),
+        Rank::Jack => Some(Rank::Ten),
+        Rank::Queen => Some(Rank::Jack),
+        Rank::King => Some(Rank::Queen),
+        Rank::Ace => Some(Rank::King),
+        Rank::Two => None,
+    }
+}
+
+fn rank_above(rank: Rank) -> Option<Rank> {
+    match rank {
+        Rank::Two => Some(Rank::Three),
+        Rank::Three => Some(Rank::Four),
+        Rank::Four => Some(Rank::Five),
+        Rank::Five => Some(Rank::Six),
+        Rank::Six => Some(Rank::Seven),
+        Rank::Seven => Some(Rank::Eight),
+        Rank::Eight => Some(Rank::Nine),
+        Rank::Nine => Some(Rank::Ten),
+        Rank::Ten => Some(Rank::Jack),
+        Rank::Jack => Some(Rank::Queen),
+        Rank::Queen => Some(Rank::King),
+        Rank::King => Some(Rank::Ace),
+        Rank::Ace => None,
     }
 }
 
@@ -777,15 +1039,17 @@ mod tests {
     }
 
     #[test]
-    fn daily_drill_set_contains_five_generated_scenarios() {
+    fn daily_drill_set_contains_all_playable_generated_scenarios() {
         let drill_set = generate_daily_drill_set(13);
 
-        assert_eq!(drill_set.scenarios.len(), 5);
+        assert_eq!(drill_set.scenarios.len(), 7);
         assert_eq!(drill_set.scenarios[0].contract, "No Hearts");
         assert_eq!(drill_set.scenarios[1].contract, "No Queens");
         assert_eq!(drill_set.scenarios[2].contract, "King of Hearts");
         assert_eq!(drill_set.scenarios[3].contract, "No Last Two");
         assert_eq!(drill_set.scenarios[4].contract, "No Tricks");
+        assert_eq!(drill_set.scenarios[5].contract, "Hearts Trumps");
+        assert_eq!(drill_set.scenarios[6].contract, "Domino");
     }
 
     #[test]
@@ -803,6 +1067,45 @@ mod tests {
         assert!(next_set.scenarios[3].id.contains("forced-win"));
         assert!(first_set.scenarios[4].id.contains("forced-win"));
         assert!(next_set.scenarios[4].id.contains("duck"));
+    }
+
+    #[test]
+    fn generated_hearts_trumps_drill_allows_trumping_when_void() {
+        let scenario = generate_hearts_trumps_practice(41);
+        let legal_cards = scenario.legal_player_cards();
+
+        assert_eq!(scenario.contract, "Hearts Trumps");
+        assert_eq!(legal_cards, scenario.player_hand);
+
+        let heart = scenario
+            .player_hand
+            .iter()
+            .copied()
+            .find(|card| card.suit == Suit::Hearts)
+            .expect("scenario should include a trump card");
+        let outcome = scenario.outcome_for(heart);
+
+        assert!(outcome.is_legal);
+        assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Good);
+        assert_eq!(outcome.reason, PracticeOutcomeReason::WonCleanTrick);
+        assert_eq!(outcome.winner, Some(2));
+    }
+
+    #[test]
+    fn generated_domino_drill_allows_sevens_and_adjacent_extensions() {
+        let scenario = generate_domino_practice(43);
+        let legal_cards = scenario.legal_player_cards();
+
+        assert_eq!(scenario.contract, "Domino");
+        assert!(legal_cards.contains(&Card::new(Rank::Seven, Suit::Hearts)));
+        assert_eq!(legal_cards.len(), 2);
+
+        let outcome = scenario.outcome_for(legal_cards[0]);
+
+        assert!(outcome.is_legal);
+        assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Good);
+        assert_eq!(outcome.winner, None);
+        assert_eq!(outcome.completed_trick, None);
     }
 
     #[test]

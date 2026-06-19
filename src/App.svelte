@@ -609,6 +609,41 @@
     return totals;
   }
 
+  function buildDominoDrillLayout(tableCards: TableCard[]) {
+    const lanes: Card[][] = [[], [], [], []];
+
+    for (const play of tableCards) {
+      const laneIndex = suitIndex(play.card.suit);
+      lanes[laneIndex] = [...lanes[laneIndex], play.card].sort((left, right) => rankValue(left.rank) - rankValue(right.rank));
+    }
+
+    return lanes;
+  }
+
+  function suitIndex(suit: Suit) {
+    return { C: 0, D: 1, H: 2, S: 3 }[suit];
+  }
+
+  function rankValue(rank: string) {
+    const values: Record<string, number> = {
+      "2": 2,
+      "3": 3,
+      "4": 4,
+      "5": 5,
+      "6": 6,
+      "7": 7,
+      "8": 8,
+      "9": 9,
+      "10": 10,
+      J: 11,
+      Q: 12,
+      K: 13,
+      A: 14
+    };
+
+    return values[rank] ?? 0;
+  }
+
   $: selectedLesson = guidedLessons.find((lesson) => lesson.id === selectedLessonId) ?? guidedLessons[0];
   $: familyLabel = usingGeneratedPractice ? "Hearts" : selectedLesson.family;
   $: gameLabel = usingGeneratedPractice ? "Generated practice" : selectedLesson.game;
@@ -639,6 +674,7 @@
   $: drillCheckedCard = currentDrillTrick.hand.find((card) => card.id === drillCheckedCardId);
   $: isDrillSelectionLegal = drillSelectedCard ? drillLegalCardIds.has(drillSelectedCard.id) : false;
   $: isDrillCheckedLegal = drillCheckedCard ? drillLegalCardIds.has(drillCheckedCard.id) : false;
+  $: currentDrillIsDomino = currentDrill.contract === "Domino";
   $: drillCompletedTable = drillCheckedCard && isDrillCheckedLegal
     ? [
         ...currentDrillTrick.tableBeforeChoice,
@@ -646,6 +682,7 @@
         ...currentDrillTrick.tableAfterChoice
       ]
     : currentDrillTrick.tableBeforeChoice;
+  $: drillDominoLayout = buildDominoDrillLayout(drillCompletedTable);
   $: drillOutcome = drillCheckedCard ? buildDrillOutcome(drillCheckedCard) : "";
   $: drillFeedback = drillCheckedCard ? buildDrillFeedback(drillCheckedCard) : currentDrillTrick.emptyExplanation;
   $: cleanDrillCount = drillResults.filter((result) => result.clean).length;
@@ -2986,7 +3023,7 @@
             <p class="explanation">Left's card is on the table. Tap the table or press Next trick when you are ready.</p>
           {:else}
             <div class="lesson-heading">
-              <p class="eyebrow">{usingBrowserFullHand ? "Local browser hand" : "Rust hand"}</p>
+              <p class="eyebrow">Your turn</p>
               <h2>Choose your card</h2>
             </div>
 
@@ -3172,7 +3209,7 @@
             {/if}
           {:else}
             <div class="lesson-heading">
-              <p class="eyebrow">{usingBrowserDomino ? "Local browser hand" : "Rust hand"}</p>
+              <p class="eyebrow">Your turn</p>
               <h2>Place a card</h2>
             </div>
 
@@ -3250,10 +3287,24 @@
       statusValue={`Decision ${drillIndex + 1} of ${activeDrillSteps.length}`}
       tableAriaLabel="Drill card table"
       pendingBySeat={currentDrillTrick.pendingBySeat}
-      tableCards={drillCompletedTable}
+      showTable={!currentDrillIsDomino}
+      tableCards={currentDrillIsDomino ? [] : drillCompletedTable}
       panelAriaLabel="Drill decision"
       onBack={openBarbuTable}
     >
+      {#snippet summary()}
+        {#if currentDrillIsDomino}
+          <div class="domino-layout" aria-label="Domino drill layout">
+            {#each drillDominoLayout as lane, index}
+              <div>
+                <span>{dominoSuitLabel(index)}</span>
+                <strong>{dominoLaneText(lane)}</strong>
+              </div>
+            {/each}
+          </div>
+        {/if}
+      {/snippet}
+
       {#snippet track()}
         <div class="drill-track" aria-label="Drill progress">
           {#each activeDrillSteps as step, index}

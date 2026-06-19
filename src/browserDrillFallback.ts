@@ -34,11 +34,13 @@ const rankOrder: Record<Rank, number> = {
 
 export function generateBrowserPlayBarbuDrillSteps(seed: number): BrowserDrillStep[] {
   return [
-    generatedNoHeartsStep(seed * 5),
-    generatedNoQueensStep(seed * 5 + 1),
-    generatedKingOfHeartsStep(seed * 5 + 2),
-    generatedNoLastTwoStep(seed * 5 + 3),
-    generatedNoTricksStep(seed * 5 + 4)
+    generatedNoHeartsStep(seed * 7),
+    generatedNoQueensStep(seed * 7 + 1),
+    generatedKingOfHeartsStep(seed * 7 + 2),
+    generatedNoLastTwoStep(seed * 7 + 3),
+    generatedNoTricksStep(seed * 7 + 4),
+    generatedHeartsTrumpsStep(seed * 7 + 5),
+    generatedDominoStep(seed * 7 + 6)
   ];
 }
 
@@ -491,6 +493,112 @@ function generatedNoTricksForcedWinStep(seed: number): BrowserDrillStep {
       },
       cardReasons: {
         [forcedWinner.id]: "captured_penalty"
+      }
+    }
+  };
+}
+
+function generatedHeartsTrumpsStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const ledSuit = choose(rng, nonHeartSuits);
+  const firstOffSuit = firstNonMatchingSuit(ledSuit, "H");
+  const secondOffSuit = nonHeartSuits.find((suit) => suit !== ledSuit && suit !== firstOffSuit) ?? "S";
+  const leadCard = card(choose(rng, ["9", "10", "J"]), ledSuit);
+  const rightWinner = card("A", ledSuit);
+  const leftCard = card(choose(rng, ["3", "4", "5"]), firstOffSuit);
+  const heartTrump = card(choose(rng, ["4", "5", "6"]), "H");
+  const highHeart = card("7", "H");
+  const lowDiscard = card(choose(rng, ["2", "3"]), firstOffSuit);
+  const highDiscard = card("K", secondOffSuit);
+  const playerHand = [heartTrump, highHeart, lowDiscard, highDiscard].sort(compareCards);
+  const ledSuitName = suitNames[ledSuit];
+
+  return {
+    contract: "Hearts Trumps",
+    title: "Find the trump trick",
+    trick: {
+      title: "Trump when you are void",
+      beforeResult: `Tutor led ${leadCard.label}. Right followed ${rightWinner.label}. Hearts are trumps, and you have no ${ledSuitName}.`,
+      afterResult: `Because you are void in ${ledSuitName}, a heart can trump the trick.`,
+      emptyExplanation: `You have no ${ledSuitName}. Any card is legal; a heart takes control.`,
+      legalCardIds: playerHand.map((card) => card.id),
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Tutor", card: leadCard },
+        { seat: "Right", card: rightWinner }
+      ],
+      tableAfterChoice: [{ seat: "Left", card: leftCard }],
+      pendingBySeat: { Left: leftCard.label, You: "You" },
+      playedExplanations: {
+        [heartTrump.id]: `${heartTrump.label} is trump and wins because you are void in ${ledSuitName}.`,
+        [highHeart.id]: `${highHeart.label} is trump and wins because you are void in ${ledSuitName}.`,
+        [lowDiscard.id]: `${lowDiscard.label} is legal, but it does not beat ${rightWinner.label}.`,
+        [highDiscard.id]: `${highDiscard.label} is legal, but it does not beat ${rightWinner.label}.`
+      },
+      cardOutcomes: {
+        [heartTrump.id]: "good",
+        [highHeart.id]: "good",
+        [lowDiscard.id]: "risky",
+        [highDiscard.id]: "risky"
+      },
+      cardReasons: {
+        [heartTrump.id]: "won_clean_trick",
+        [highHeart.id]: "won_clean_trick",
+        [lowDiscard.id]: "void_discard",
+        [highDiscard.id]: "void_discard"
+      }
+    }
+  };
+}
+
+function generatedDominoStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const lowSpade = choose(rng, ["5", "6"] as Rank[]);
+  const highSpade: Rank = lowSpade === "5" ? "6" : "8";
+  const legalSpade: Rank = lowSpade === "5" ? "4" : "9";
+  const sevenHearts = card("7", "H");
+  const legalExtension = card(legalSpade, "S");
+  const clubGap = card("10", "C");
+  const diamondGap = card("Q", "D");
+  const sevenSpades = card("7", "S");
+  const lowLayout = card(lowSpade, "S");
+  const highLayout = card(highSpade, "S");
+  const playerHand = [sevenHearts, legalExtension, clubGap, diamondGap].sort(compareCards);
+
+  return {
+    contract: "Domino",
+    title: "Place into the layout",
+    trick: {
+      title: "Build from sevens",
+      beforeResult: `The spade lane shows ${lowLayout.label} ${sevenSpades.label} ${highLayout.label}. Unopened suits need a seven.`,
+      afterResult: `A legal Domino play either opens a suit with a seven or extends an existing suit by one rank.`,
+      emptyExplanation: "Choose a card that starts a suit with a seven or extends the spade lane.",
+      legalCardIds: [sevenHearts.id, legalExtension.id],
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Tutor", card: sevenSpades },
+        { seat: "Right", card: lowLayout },
+        { seat: "Left", card: highLayout }
+      ],
+      tableAfterChoice: [],
+      pendingBySeat: { You: "You" },
+      playedExplanations: {
+        [sevenHearts.id]: `${sevenHearts.label} opens the heart lane.`,
+        [legalExtension.id]: `${legalExtension.label} extends the current spade lane by one rank.`,
+        [clubGap.id]: `${clubGap.label} cannot open clubs because unopened suits start with a seven.`,
+        [diamondGap.id]: `${diamondGap.label} cannot open diamonds because unopened suits start with a seven.`
+      },
+      cardOutcomes: {
+        [sevenHearts.id]: "good",
+        [legalExtension.id]: "good",
+        [clubGap.id]: "penalty",
+        [diamondGap.id]: "penalty"
+      },
+      cardReasons: {
+        [sevenHearts.id]: "followed_suit",
+        [legalExtension.id]: "followed_suit",
+        [clubGap.id]: "off_suit",
+        [diamondGap.id]: "off_suit"
       }
     }
   };
