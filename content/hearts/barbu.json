@@ -38,31 +38,31 @@
       "id": "no_hearts",
       "title": "No Hearts",
       "objective": "Avoid winning tricks that contain hearts.",
-      "scoring": "Hearts penalize the trick winner."
+      "scoring": "Ordinary hearts are 2 penalty points; the ace of hearts is 6."
     },
     {
       "id": "no_queens",
       "title": "No Queens",
       "objective": "Avoid winning tricks that contain queens.",
-      "scoring": "Queens penalize the trick winner."
+      "scoring": "Each queen is 6 penalty points for the trick winner."
     },
     {
       "id": "barbu",
       "title": "Barbu",
       "objective": "Avoid winning the king of hearts.",
-      "scoring": "The king of hearts penalizes the player who captures it."
+      "scoring": "The king of hearts is 20 penalty points for the trick winner."
     },
     {
       "id": "no_last_two",
       "title": "No Last Two",
       "objective": "Avoid winning either of the final two tricks.",
-      "scoring": "Each of the last two tricks penalizes its winner."
+      "scoring": "The penultimate trick is 10 penalty points; the final trick is 20."
     },
     {
       "id": "no_tricks",
       "title": "No Tricks",
       "objective": "Avoid winning tricks.",
-      "scoring": "Each trick penalizes its winner."
+      "scoring": "Each trick is 2 penalty points for its winner."
     }
   ],
   "variants": [

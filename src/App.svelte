@@ -690,9 +690,18 @@
   $: fullHandRunSeatScores = runSeatScores(fullHandRunResults);
   $: fullHandRunStandings = runStandings(fullHandRunSeatScores);
   $: fullHandRunPlayerStanding = fullHandRunStandings.find((standing) => standing.seat === "You");
+  $: fullHandRunLeader = fullHandRunStandings[0];
   $: fullHandRunBestContract = runBestContract(fullHandRunOrderedResults);
   $: fullHandRunWeakestContract = runWeakestContract(fullHandRunOrderedResults);
   $: fullHandRunIsComplete = fullHandRunActive && fullHandRunResults.length >= fullHandContracts.length;
+  $: fullHandRunRemainingCount = Math.max(fullHandContracts.length - fullHandRunResults.length, 0);
+  $: fullHandRunLeaderLabel = fullHandRunLeader
+    ? `${scoreSeatLabel(fullHandRunLeader.seat)} ${formatSignedScore(fullHandRunLeader.score)}`
+    : "You 0";
+  $: fullHandRunPlayerPlaceLabel = fullHandRunPlayerStanding ? formatOrdinal(fullHandRunPlayerStanding.rank) : "1st";
+  $: fullHandRunRemainingLabel = `${fullHandRunRemainingCount} ${
+    fullHandRunRemainingCount === 1 ? "contract" : "contracts"
+  }`;
   $: fullHandRunResultTitle = fullHandRunIsComplete ? runResultHeading(fullHandRunStandings) : "Game complete";
   $: fullHandRunResultSummary = fullHandRunIsComplete
     ? runResultSummary(fullHandRunStandings, fullHandRunResults.length)
@@ -903,10 +912,10 @@
     if (contract === "No Queens") {
       return {
         scoringGoal: "avoid",
-        penaltyName: "queen",
-        penaltyPlural: "queens",
-        penaltyTotal: 4,
-        playedLabel: "queens played",
+        penaltyName: "point",
+        penaltyPlural: "points",
+        penaltyTotal: 24,
+        playedLabel: "points in play",
         scoreLabel: "Your penalty",
         resultLabel: "took",
         bestLabel: "Best escape",
@@ -918,10 +927,10 @@
     if (contract === "King of Hearts") {
       return {
         scoringGoal: "avoid",
-        penaltyName: "king",
-        penaltyPlural: "kings",
-        penaltyTotal: 1,
-        playedLabel: "king played",
+        penaltyName: "point",
+        penaltyPlural: "points",
+        penaltyTotal: 20,
+        playedLabel: "points in play",
         scoreLabel: "Your penalty",
         resultLabel: "took",
         bestLabel: "Best escape",
@@ -933,10 +942,10 @@
     if (contract === "No Last Two") {
       return {
         scoringGoal: "avoid",
-        penaltyName: "last trick",
-        penaltyPlural: "last tricks",
-        penaltyTotal: 2,
-        playedLabel: "last tricks played",
+        penaltyName: "point",
+        penaltyPlural: "points",
+        penaltyTotal: 30,
+        playedLabel: "points in play",
         scoreLabel: "Your penalty",
         resultLabel: "took",
         bestLabel: "Best escape",
@@ -948,10 +957,10 @@
     if (contract === "No Tricks") {
       return {
         scoringGoal: "avoid",
-        penaltyName: "trick",
-        penaltyPlural: "tricks",
-        penaltyTotal: 13,
-        playedLabel: "tricks played",
+        penaltyName: "point",
+        penaltyPlural: "points",
+        penaltyTotal: 26,
+        playedLabel: "points in play",
         scoreLabel: "Your penalty",
         resultLabel: "took",
         bestLabel: "Best escape",
@@ -963,11 +972,11 @@
     if (contract === "Positive Tricks") {
       return {
         scoringGoal: "win",
-        penaltyName: "trick",
-        penaltyPlural: "tricks",
-        penaltyTotal: 13,
-        playedLabel: "tricks won",
-        scoreLabel: "Your tricks",
+        penaltyName: "point",
+        penaltyPlural: "points",
+        penaltyTotal: 65,
+        playedLabel: "points in play",
+        scoreLabel: "Your score",
         resultLabel: "won",
         bestLabel: "Best win",
         weakestLabel: "Missed chance",
@@ -978,10 +987,10 @@
 
     return {
       scoringGoal: "avoid",
-      penaltyName: "heart",
-      penaltyPlural: "hearts",
-      penaltyTotal: 13,
-      playedLabel: "hearts played",
+      penaltyName: "point",
+      penaltyPlural: "points",
+      penaltyTotal: 30,
+      playedLabel: "points in play",
       scoreLabel: "Your penalty",
       resultLabel: "took",
       bestLabel: "Best escape",
@@ -1325,10 +1334,12 @@
     }
 
     if (player.rank === 1) {
-      return `You finished with ${player.score} after ${contractsPlayed} contracts. Higher net score wins the table.`;
+      return `You finished with ${formatSignedScore(player.score)} after ${contractsPlayed} contracts. Higher net score wins the table.`;
     }
 
-    return `${scoreSeatLabel(leader.seat)} won with ${leader.score}. You finished with ${player.score} after ${contractsPlayed} contracts.`;
+    return `${scoreSeatLabel(leader.seat)} won with ${formatSignedScore(leader.score)}. You finished with ${formatSignedScore(
+      player.score
+    )} after ${contractsPlayed} contracts.`;
   }
 
   function formatOrdinal(value: number) {
@@ -1343,6 +1354,10 @@
     }
 
     return `${value}th`;
+  }
+
+  function formatSignedScore(value: number) {
+    return value > 0 ? `+${value}` : String(value);
   }
 
   function runBestContract(results: FullHandRunResult[]) {
@@ -1520,13 +1535,33 @@
   }
 
   function scorecardCellLabel(contract: FullHandContract, seat: Seat) {
+    const score = scorecardCellScore(contract, seat);
+
+    if (score !== undefined) {
+      return formatSignedScore(score);
+    }
+
+    return contract === pendingRunContract || fullHand?.contract === contract ? "Now" : "-";
+  }
+
+  function scorecardCellScore(contract: FullHandContract, seat: Seat) {
     const result = runResultForContract(contract);
 
     if (!result) {
-      return contract === pendingRunContract || fullHand?.contract === contract ? "Now" : "-";
+      return undefined;
     }
 
-    return String(contractRunScore(contract, result.seatPenalties[seat] ?? 0));
+    return contractRunScore(contract, result.seatPenalties[seat] ?? 0);
+  }
+
+  function scorecardRowState(contract: FullHandContract) {
+    if (runResultForContract(contract)) {
+      return "Complete";
+    }
+    if (contract === pendingRunContract || fullHand?.contract === contract) {
+      return "Now";
+    }
+    return "Pending";
   }
 
   async function startDailyDrill(pathStepId = "") {
@@ -2082,17 +2117,36 @@
       {/each}
     </div>
     {#each fullHandContracts as contract}
-      <div class:active={contract === pendingRunContract || fullHand?.contract === contract} class="run-scorecard-row">
-        <span>{contract}</span>
+      <div
+        class:active={contract === pendingRunContract || fullHand?.contract === contract}
+        class:complete={Boolean(runResultForContract(contract))}
+        class:pending={!runResultForContract(contract) && contract !== pendingRunContract && fullHand?.contract !== contract}
+        class="run-scorecard-row"
+      >
+        <span>
+          {contract}
+          <small>{scorecardRowState(contract)}</small>
+        </span>
         {#each scoreSeats as seat}
-          <strong>{scorecardCellLabel(contract, seat)}</strong>
+          <strong
+            class:negative={(scorecardCellScore(contract, seat) ?? 0) < 0}
+            class:positive={(scorecardCellScore(contract, seat) ?? 0) > 0}
+            class:pending={scorecardCellScore(contract, seat) === undefined}
+          >
+            {scorecardCellLabel(contract, seat)}
+          </strong>
         {/each}
       </div>
     {/each}
     <div class="run-scorecard-row total">
       <span>Total</span>
       {#each scoreSeats as seat}
-        <strong>{fullHandRunSeatScores[seat]}</strong>
+        <strong
+          class:negative={fullHandRunSeatScores[seat] < 0}
+          class:positive={fullHandRunSeatScores[seat] > 0}
+        >
+          {formatSignedScore(fullHandRunSeatScores[seat])}
+        </strong>
       {/each}
     </div>
   </div>
@@ -2514,13 +2568,19 @@
       </div>
 
       <div class="run-intro-panel">
-        <div class="run-score-strip" aria-label="Current game score">
-          {#each scoreSeats as seat}
-            <div>
-              <span>{scoreSeatLabel(seat)}</span>
-              <strong>{fullHandRunSeatScores[seat]}</strong>
-            </div>
-          {/each}
+        <div class="run-session-summary" aria-label="Play Barbu session summary">
+          <div>
+            <span>Leader</span>
+            <strong>{fullHandRunLeaderLabel}</strong>
+          </div>
+          <div>
+            <span>Your place</span>
+            <strong>{fullHandRunPlayerPlaceLabel}</strong>
+          </div>
+          <div>
+            <span>Remaining</span>
+            <strong>{fullHandRunRemainingLabel}</strong>
+          </div>
         </div>
 
         <div class="run-contract-target" aria-label={`${pendingRunContract} target`}>
@@ -2578,7 +2638,7 @@
                 {#each scoreSeats as seat}
                   <div>
                     <span>{scoreSeatRunLabel(seat)} score</span>
-                    <strong>{fullHandRunSeatScores[seat]}</strong>
+                    <strong>{formatSignedScore(fullHandRunSeatScores[seat])}</strong>
                   </div>
                 {/each}
               {/if}
@@ -2588,7 +2648,7 @@
               {#each scoreSeats as seat}
                 <div>
                   <span>{scoreSeatRunLabel(seat)} score</span>
-                  <strong>{fullHandRunSeatScores[seat]}</strong>
+                  <strong>{formatSignedScore(fullHandRunSeatScores[seat])}</strong>
                 </div>
               {/each}
             </div>
@@ -2609,7 +2669,7 @@
                 {#each fullHandRunStandings as standing}
                   <div>
                     <span>{formatOrdinal(standing.rank)} {scoreSeatLabel(standing.seat)}</span>
-                    <strong>{standing.score}</strong>
+                    <strong>{formatSignedScore(standing.score)}</strong>
                   </div>
                 {/each}
               </div>

@@ -286,20 +286,31 @@ function compareByRankThenSuit(left: Card, right: Card) {
 }
 
 function scoreTrick(state: FullHandState, cards: TableCard[]) {
-  if (state.contract === "No Tricks" || state.contract === "Positive Tricks") {
-    return 1;
+  if (state.contract === "No Tricks") {
+    return 2;
+  }
+  if (state.contract === "Positive Tricks") {
+    return 5;
   }
   if (state.contract === "No Last Two") {
-    return state.completedTricks.length >= 11 ? 1 : 0;
+    if (state.completedTricks.length === 11) {
+      return 10;
+    }
+    if (state.completedTricks.length === 12) {
+      return 20;
+    }
+    return 0;
   }
   if (state.contract === "No Queens") {
-    return cards.filter((played) => played.card.rank === "Q").length;
+    return cards.filter((played) => played.card.rank === "Q").length * 6;
   }
   if (state.contract === "King of Hearts") {
-    return cards.filter((played) => isKingOfHearts(played.card)).length;
+    return cards.filter((played) => isKingOfHearts(played.card)).length * 20;
   }
 
-  return cards.filter((played) => played.card.suit === "H").length;
+  return cards
+    .filter((played) => played.card.suit === "H")
+    .reduce((total, played) => total + (played.card.rank === "A" ? 6 : 2), 0);
 }
 
 function isPenaltyCard(contract: FullHandContract, card: Card) {
@@ -349,17 +360,7 @@ function trickWinner(cards: TableCard[]) {
 
 function promptForState(state: FullHandState, playerPenalty: number) {
   if (state.status === "complete") {
-    const penaltyName =
-      state.contract === "No Queens"
-        ? "queen"
-        : state.contract === "King of Hearts"
-          ? "king"
-          : state.contract === "No Last Two"
-            ? "last trick"
-            : state.contract === "No Tricks"
-              ? "trick"
-            : "heart";
-    return `Hand complete. You took ${playerPenalty} ${playerPenalty === 1 ? penaltyName : `${penaltyName}s`}.`;
+    return `Hand complete. You took ${playerPenalty} ${playerPenalty === 1 ? "point" : "points"}.`;
   }
 
   const led = ledSuit(state);

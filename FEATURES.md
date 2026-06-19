@@ -37,8 +37,9 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Play Barbu contract intro before each hand, where Barbu sets the next contract and the current game score stays visible.
 - Four-player Play Barbu score tracking for You, Barbu, Left, and Right.
 - Play Barbu settlement summary with four-player placement, best contract, weakest contract, and focused replay.
-- Play Barbu scorecard with contract rows, four-player columns, current-contract highlight, pending rows, and totals.
-- Local full-hand contract value tracking. Current scoring is still one point per scoring event; full Parlett-style settlement values are a later feature.
+- Play Barbu scorecard with signed score cells, contract rows, four-player columns, current/completed/pending states, and totals.
+- Play Barbu session summary with current leader, player place, and contracts remaining before each hand.
+- Local full-hand contract value tracking with contract-specific point values for the currently playable trick-taking contracts. Full settlement rules and Trumps/Domino coverage are later features.
 - Compact full-hand result panel with contract result, Barbu/player penalty split, key tricks, replay, and next-contract actions.
 - Training path practice step connected to Quick Drill completion.
 - Review step with latest Quick Drill score, weakest-contract advice, recent attempts, and replay actions.
@@ -97,7 +98,7 @@ These are the next product increments that keep the app coherent.
    - Current generated baseline covers the five playable avoidance contracts; Positive Tricks generated practice is still missing.
 
 3. Contract Score Model v2
-   - Move from one point per scoring event to contract-specific point values where Barbu requires it.
+   - Move point-value definitions into shared content/core metadata instead of duplicating them across UI and scoring code.
    - Keep avoidance contracts, positive contracts, and future layout contracts explicit in metadata.
    - Make scorecard language use score/value/tricks instead of assuming every contract is a penalty contract.
 

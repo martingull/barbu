@@ -623,16 +623,26 @@ button {
   gap: 10px;
 }
 
+.run-session-summary,
 .run-score-strip,
 .run-contract-target {
   display: grid;
   gap: 8px;
 }
 
+.run-session-summary {
+  grid-template-columns: 1fr 0.74fr 1fr;
+}
+
 .run-score-strip {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.run-contract-target {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.run-session-summary div,
 .run-score-strip div,
 .run-contract-target div {
   display: grid;
@@ -644,6 +654,21 @@ button {
   background: #fbfcf8;
 }
 
+.run-session-summary div {
+  min-height: 58px;
+  background: #eef3e8;
+}
+
+.run-session-summary div:first-child {
+  border-color: #aebd9f;
+}
+
+.run-session-summary div:nth-child(2) {
+  background: #f7f1df;
+  border-color: #d8c179;
+}
+
+.run-session-summary span,
 .run-score-strip span,
 .run-contract-target span {
   color: #60705a;
@@ -652,6 +677,7 @@ button {
   text-transform: uppercase;
 }
 
+.run-session-summary strong,
 .run-score-strip strong,
 .run-contract-target strong {
   color: #17201a;
@@ -678,14 +704,23 @@ button {
   grid-template-columns: minmax(72px, 1.45fr) repeat(4, minmax(34px, 0.7fr));
   gap: 4px;
   align-items: center;
-  min-height: 28px;
-  padding: 5px 6px;
+  min-height: 26px;
+  padding: 4px 6px;
   border-radius: 6px;
 }
 
 .run-scorecard-row.header,
 .run-scorecard-row.total {
   background: #e8eee1;
+}
+
+.run-scorecard-row.complete {
+  background: #f7f9f3;
+}
+
+.run-scorecard-row.pending {
+  color: #6f7a69;
+  background: #fbfcf8;
 }
 
 .run-scorecard-row.active {
@@ -703,14 +738,35 @@ button {
 }
 
 .run-scorecard-row span:first-child {
+  display: grid;
+  gap: 2px;
   color: #53604d;
   text-align: left;
   text-transform: uppercase;
 }
 
+.run-scorecard-row small {
+  color: #7a856f;
+  font-size: 0.5rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
 .run-scorecard-row span:not(:first-child),
 .run-scorecard-row strong {
   text-align: center;
+}
+
+.run-scorecard-row strong.positive {
+  color: #1f6b4f;
+}
+
+.run-scorecard-row strong.negative {
+  color: #9a342e;
+}
+
+.run-scorecard-row strong.pending {
+  color: #87917d;
 }
 
 .example-copy-stack {
@@ -1835,21 +1891,25 @@ h2 {
     font-size: 0.86rem;
   }
 
+  .run-session-summary,
   .run-score-strip {
     gap: 6px;
   }
 
+  .run-session-summary div,
   .run-score-strip div,
   .run-contract-target div {
     min-height: 0;
     padding: 8px;
   }
 
+  .run-session-summary span,
   .run-score-strip span,
   .run-contract-target span {
     font-size: 0.6rem;
   }
 
+  .run-session-summary strong,
   .run-score-strip strong,
   .run-contract-target strong {
     font-size: 0.86rem;
@@ -2263,6 +2323,10 @@ h2 {
   .table-play-surface.compact-result .run-scorecard-row span,
   .table-play-surface.compact-result .run-scorecard-row strong {
     font-size: 0.58rem;
+  }
+
+  .table-play-surface.compact-result .run-scorecard-row small {
+    font-size: 0.46rem;
   }
 
   .table-play-surface.compact-result .full-hand-result-grid div,

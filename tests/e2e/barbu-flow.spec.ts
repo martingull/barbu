@@ -117,6 +117,7 @@ test("Barbu reference exposes baseline rules and varieties", async ({ page }, te
   await expect(page.getByLabel("Contract reference").getByText("No Hearts", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Contract reference").getByText("No Queens", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Contract reference").getByText("King of Hearts", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Contract reference")).toContainText("20 penalty points");
   await expect(page.getByLabel("Contract reference").getByText("No Last Two", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Contract reference").getByText("No Tricks", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Contract reference").getByText("Positive Tricks", { exact: true })).toBeVisible();
@@ -251,12 +252,16 @@ test("Play Barbu advances full-hand contracts with a running total", async ({ pa
     await expect(page.getByRole("heading", { name: contract })).toBeVisible();
     await expect(page.getByText(`Contract ${index + 1} of ${contracts.length}`)).toBeVisible();
     await expect(page.getByLabel("Play Barbu contract intro")).toContainText("Barbu sets the contract");
-    await expect(page.getByLabel("Current game score")).toContainText("You");
-    await expect(page.getByLabel("Current game score")).toContainText("Barbu");
-    await expect(page.getByLabel("Current game score")).toContainText("Left");
-    await expect(page.getByLabel("Current game score")).toContainText("Right");
+    await expect(page.getByLabel("Play Barbu session summary")).toContainText("Leader");
+    await expect(page.getByLabel("Play Barbu session summary")).toContainText("Your place");
+    await expect(page.getByLabel("Play Barbu session summary")).toContainText("Remaining");
     await expect(page.getByLabel("Play Barbu scorecard")).toContainText("Contract");
+    await expect(page.getByLabel("Play Barbu scorecard")).toContainText("You");
+    await expect(page.getByLabel("Play Barbu scorecard")).toContainText("Barbu");
+    await expect(page.getByLabel("Play Barbu scorecard")).toContainText("Left");
+    await expect(page.getByLabel("Play Barbu scorecard")).toContainText("Right");
     await expect(page.getByLabel("Play Barbu scorecard")).toContainText(contract);
+    await expect(page.getByLabel("Play Barbu scorecard")).toContainText(index === 0 ? "Now" : "Complete");
     await expect(page.getByLabel("Play Barbu scorecard")).toContainText("Total");
     await expectNoPageScroll(page);
     await page.getByRole("button", { name: "Start hand" }).click();
@@ -291,6 +296,7 @@ test("Play Barbu advances full-hand contracts with a running total", async ({ pa
   await expect(page.getByLabel("Play Barbu results")).toContainText("No Hearts");
   await expect(page.getByLabel("Play Barbu results")).toContainText("No Tricks");
   await expect(page.getByLabel("Play Barbu results")).toContainText("Positive Tricks");
+  await expect(page.getByLabel("Play Barbu results")).toContainText("Complete");
   await expect(page.getByLabel("Play Barbu results")).toContainText("Total");
   await expect(page.getByRole("button", { name: "Replay weakest" })).toBeVisible();
   await expect(page.getByRole("button", { name: "New game" })).toBeVisible();
@@ -320,7 +326,7 @@ test("No Hearts hand plays through thirteen tricks", async ({ page }, testInfo) 
   }
 
   await expect(page.getByRole("heading", { name: /Clean hand|Damage limited|Barbu caught you/ })).toBeVisible();
-  await expect(page.getByLabel("No Hearts hand score")).toContainText("13 / 13");
+  await expect(page.getByLabel("No Hearts hand score")).toContainText("30 / 30");
   await expect(page.getByLabel("No Hearts result summary")).toContainText("Barbu took");
   await expect(page.getByLabel("No Hearts key tricks")).toContainText("Best escape");
   await expect(page.getByRole("button", { name: "Replay" })).toBeVisible();
@@ -336,7 +342,7 @@ test("No Queens hand plays through thirteen tricks", async ({ page }, testInfo) 
   await startContractHand(page, "No Queens");
 
   await expect(page.getByRole("heading", { name: "No Queens hand" })).toBeVisible();
-  await expect(page.getByLabel("No Queens hand score")).toContainText("queens played");
+  await expect(page.getByLabel("No Queens hand score")).toContainText("points in play");
   await expect(page.getByLabel("No Queens hand table")).toBeVisible();
   await expectNoPageScroll(page);
 
@@ -345,7 +351,7 @@ test("No Queens hand plays through thirteen tricks", async ({ page }, testInfo) 
   }
 
   await expect(page.getByRole("heading", { name: /Clean hand|Damage limited|Barbu caught you/ })).toBeVisible();
-  await expect(page.getByLabel("No Queens hand score")).toContainText("4 / 4");
+  await expect(page.getByLabel("No Queens hand score")).toContainText("24 / 24");
   await expect(page.getByLabel("No Queens result summary")).toContainText("Barbu took");
   await expect(page.getByLabel("No Queens key tricks")).toContainText("Costliest trick");
   await expect(page.getByRole("button", { name: "Replay" })).toBeVisible();
@@ -361,7 +367,7 @@ test("King of Hearts hand plays through thirteen tricks", async ({ page }, testI
   await startContractHand(page, "King of Hearts");
 
   await expect(page.getByRole("heading", { name: "King of Hearts hand" })).toBeVisible();
-  await expect(page.getByLabel("King of Hearts hand score")).toContainText("king played");
+  await expect(page.getByLabel("King of Hearts hand score")).toContainText("points in play");
   await expect(page.getByLabel("King of Hearts hand table")).toBeVisible();
   await expectNoPageScroll(page);
 
@@ -370,7 +376,7 @@ test("King of Hearts hand plays through thirteen tricks", async ({ page }, testI
   }
 
   await expect(page.getByRole("heading", { name: /Clean hand|Damage limited|Barbu caught you/ })).toBeVisible();
-  await expect(page.getByLabel("King of Hearts hand score")).toContainText("1 / 1");
+  await expect(page.getByLabel("King of Hearts hand score")).toContainText("20 / 20");
   await expect(page.getByLabel("King of Hearts result summary")).toContainText("You took");
   await expect(page.getByLabel("King of Hearts key tricks")).toContainText("Best escape");
   await expect(page.getByRole("button", { name: "Replay" })).toBeVisible();
@@ -386,7 +392,7 @@ test("No Last Two hand plays through thirteen tricks", async ({ page }, testInfo
   await startContractHand(page, "No Last Two");
 
   await expect(page.getByRole("heading", { name: "No Last Two hand" })).toBeVisible();
-  await expect(page.getByLabel("No Last Two hand score")).toContainText("last tricks played");
+  await expect(page.getByLabel("No Last Two hand score")).toContainText("points in play");
   await expect(page.getByLabel("No Last Two hand table")).toBeVisible();
   const activeTable = await page.getByLabel("No Last Two hand table").boundingBox();
   expect(activeTable).not.toBeNull();
@@ -397,7 +403,7 @@ test("No Last Two hand plays through thirteen tricks", async ({ page }, testInfo
   }
 
   await expect(page.getByRole("heading", { name: /Clean hand|Damage limited|Barbu caught you/ })).toBeVisible();
-  await expect(page.getByLabel("No Last Two hand score")).toContainText("2 / 2");
+  await expect(page.getByLabel("No Last Two hand score")).toContainText("30 / 30");
   await expect(page.getByLabel("No Last Two result summary")).toContainText("Barbu took");
   await expect(page.getByLabel("No Last Two key tricks")).toContainText("Costliest trick");
   const resultTable = await page.getByLabel("No Last Two hand table").boundingBox();
@@ -416,7 +422,7 @@ test("No Tricks hand plays through thirteen tricks", async ({ page }, testInfo) 
   await startContractHand(page, "No Tricks");
 
   await expect(page.getByRole("heading", { name: "No Tricks hand" })).toBeVisible();
-  await expect(page.getByLabel("No Tricks hand score")).toContainText("tricks played");
+  await expect(page.getByLabel("No Tricks hand score")).toContainText("points in play");
   await expect(page.getByLabel("No Tricks hand table")).toBeVisible();
   await expectNoPageScroll(page);
 
@@ -425,7 +431,7 @@ test("No Tricks hand plays through thirteen tricks", async ({ page }, testInfo) 
   }
 
   await expect(page.getByRole("heading", { name: /Clean hand|Damage limited|Barbu caught you/ })).toBeVisible();
-  await expect(page.getByLabel("No Tricks hand score")).toContainText("13 / 13");
+  await expect(page.getByLabel("No Tricks hand score")).toContainText("26 / 26");
   await expect(page.getByLabel("No Tricks result summary")).toContainText("Barbu took");
   await expect(page.getByLabel("No Tricks key tricks")).toContainText("Costliest trick");
   await expect(page.getByRole("button", { name: "Replay" })).toBeVisible();
@@ -441,7 +447,7 @@ test("Positive Tricks hand plays through thirteen tricks", async ({ page }, test
   await startContractHand(page, "Positive Tricks");
 
   await expect(page.getByRole("heading", { name: "Positive Tricks hand" })).toBeVisible();
-  await expect(page.getByLabel("Positive Tricks hand score")).toContainText("tricks won");
+  await expect(page.getByLabel("Positive Tricks hand score")).toContainText("points in play");
   await expect(page.getByLabel("Positive Tricks hand table")).toBeVisible();
   await expectNoPageScroll(page);
 
@@ -455,7 +461,7 @@ test("Positive Tricks hand plays through thirteen tricks", async ({ page }, test
   }
 
   await expect(page.getByRole("heading", { name: /Strong trick count|Keep fighting for tricks/ })).toBeVisible();
-  await expect(page.getByLabel("Positive Tricks hand score")).toContainText("13 / 13");
+  await expect(page.getByLabel("Positive Tricks hand score")).toContainText("65 / 65");
   await expect(page.getByLabel("Positive Tricks result summary")).toContainText("You won");
   await expect(page.getByRole("button", { name: "Replay" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Try another" })).toBeVisible();

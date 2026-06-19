@@ -26,7 +26,7 @@ fn generate_daily_drill_set(seed: u64) -> PracticeDrillSetDto {
 #[tauri::command]
 fn start_no_hearts_hand(seed: u64) -> FullHandDto {
     let state = barbu_core::start_no_hearts_hand(seed);
-    FullHandDto::from_core(&state, "No Hearts", "heart")
+    FullHandDto::from_core(&state, "No Hearts", "point")
 }
 
 #[tauri::command]
@@ -35,13 +35,13 @@ fn play_no_hearts_hand_card(state: FullHandDto, card_id: String) -> Result<FullH
     let card = card_from_label(&card_id)?;
     let next_state = barbu_core::play_no_hearts_card(state, card)?;
 
-    Ok(FullHandDto::from_core(&next_state, "No Hearts", "heart"))
+    Ok(FullHandDto::from_core(&next_state, "No Hearts", "point"))
 }
 
 #[tauri::command]
 fn start_no_queens_hand(seed: u64) -> FullHandDto {
     let state = barbu_core::start_no_queens_hand(seed);
-    FullHandDto::from_core(&state, "No Queens", "queen")
+    FullHandDto::from_core(&state, "No Queens", "point")
 }
 
 #[tauri::command]
@@ -50,13 +50,13 @@ fn play_no_queens_hand_card(state: FullHandDto, card_id: String) -> Result<FullH
     let card = card_from_label(&card_id)?;
     let next_state = barbu_core::play_no_queens_card(state, card)?;
 
-    Ok(FullHandDto::from_core(&next_state, "No Queens", "queen"))
+    Ok(FullHandDto::from_core(&next_state, "No Queens", "point"))
 }
 
 #[tauri::command]
 fn start_no_last_two_hand(seed: u64) -> FullHandDto {
     let state = barbu_core::start_no_last_two_hand(seed);
-    FullHandDto::from_core(&state, "No Last Two", "last trick")
+    FullHandDto::from_core(&state, "No Last Two", "point")
 }
 
 #[tauri::command]
@@ -68,14 +68,14 @@ fn play_no_last_two_hand_card(state: FullHandDto, card_id: String) -> Result<Ful
     Ok(FullHandDto::from_core(
         &next_state,
         "No Last Two",
-        "last trick",
+        "point",
     ))
 }
 
 #[tauri::command]
 fn start_no_tricks_hand(seed: u64) -> FullHandDto {
     let state = barbu_core::start_no_tricks_hand(seed);
-    FullHandDto::from_core(&state, "No Tricks", "trick")
+    FullHandDto::from_core(&state, "No Tricks", "point")
 }
 
 #[tauri::command]
@@ -84,13 +84,13 @@ fn play_no_tricks_hand_card(state: FullHandDto, card_id: String) -> Result<FullH
     let card = card_from_label(&card_id)?;
     let next_state = barbu_core::play_no_tricks_card(state, card)?;
 
-    Ok(FullHandDto::from_core(&next_state, "No Tricks", "trick"))
+    Ok(FullHandDto::from_core(&next_state, "No Tricks", "point"))
 }
 
 #[tauri::command]
 fn start_positive_tricks_hand(seed: u64) -> FullHandDto {
     let state = barbu_core::start_positive_tricks_hand(seed);
-    FullHandDto::from_core(&state, "Positive Tricks", "trick")
+    FullHandDto::from_core(&state, "Positive Tricks", "point")
 }
 
 #[tauri::command]
@@ -105,14 +105,14 @@ fn play_positive_tricks_hand_card(
     Ok(FullHandDto::from_core(
         &next_state,
         "Positive Tricks",
-        "trick",
+        "point",
     ))
 }
 
 #[tauri::command]
 fn start_king_of_hearts_hand(seed: u64) -> FullHandDto {
     let state = barbu_core::start_king_of_hearts_hand(seed);
-    FullHandDto::from_core(&state, "King of Hearts", "king")
+    FullHandDto::from_core(&state, "King of Hearts", "point")
 }
 
 #[tauri::command]
@@ -127,7 +127,7 @@ fn play_king_of_hearts_hand_card(
     Ok(FullHandDto::from_core(
         &next_state,
         "King of Hearts",
-        "king",
+        "point",
     ))
 }
 

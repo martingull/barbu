@@ -1,5 +1,5 @@
 use crate::cards::{standard_deck, Card, Rank, Suit};
-use crate::trick::{legal_cards, score_no_hearts_trick, trick_winner, PlayedCard, PlayerIndex};
+use crate::trick::{legal_cards, trick_winner, PlayedCard, PlayerIndex};
 
 pub type TrickScoreFn = fn(&TrickTakingHandState, &[PlayedCard]) -> i32;
 pub type OpponentPolicyFn = fn(&TrickTakingHandState) -> Option<Card>;
@@ -533,37 +533,49 @@ fn choose_no_tricks_opponent_card(state: &TrickTakingHandState) -> Option<Card> 
 }
 
 fn score_no_hearts_hand_trick(_state: &TrickTakingHandState, cards: &[PlayedCard]) -> i32 {
-    score_no_hearts_trick(cards)
+    cards
+        .iter()
+        .filter(|played| played.card.suit == Suit::Hearts)
+        .map(|played| {
+            if played.card.rank == Rank::Ace {
+                6
+            } else {
+                2
+            }
+        })
+        .sum()
 }
 
 fn score_no_queens_trick(_state: &TrickTakingHandState, cards: &[PlayedCard]) -> i32 {
     cards
         .iter()
         .filter(|played| played.card.rank == Rank::Queen)
-        .count() as i32
+        .map(|_| 6)
+        .sum()
 }
 
 fn score_king_of_hearts_trick(_state: &TrickTakingHandState, cards: &[PlayedCard]) -> i32 {
     cards
         .iter()
         .filter(|played| is_king_of_hearts(played.card))
-        .count() as i32
+        .map(|_| 20)
+        .sum()
 }
 
 fn score_no_last_two_trick(state: &TrickTakingHandState, _cards: &[PlayedCard]) -> i32 {
-    if state.completed_tricks.len() >= 11 {
-        1
-    } else {
-        0
+    match state.completed_tricks.len() {
+        11 => 10,
+        12 => 20,
+        _ => 0,
     }
 }
 
 fn score_no_tricks_trick(_state: &TrickTakingHandState, _cards: &[PlayedCard]) -> i32 {
-    1
+    2
 }
 
 fn score_positive_tricks_trick(_state: &TrickTakingHandState, _cards: &[PlayedCard]) -> i32 {
-    1
+    5
 }
 
 fn choose_positive_tricks_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
@@ -847,7 +859,20 @@ mod tests {
     }
 
     #[test]
-    fn no_queens_trick_scores_one_penalty_per_queen() {
+    fn no_hearts_hand_scores_ace_as_six_and_other_hearts_as_two() {
+        let state = start_trick_taking_hand("score-no-hearts".to_string(), 3, 0);
+        let trick = vec![
+            PlayedCard::new(0, Card::new(Rank::Ace, Suit::Hearts)),
+            PlayedCard::new(1, Card::new(Rank::Two, Suit::Hearts)),
+            PlayedCard::new(2, Card::new(Rank::Queen, Suit::Spades)),
+            PlayedCard::new(3, Card::new(Rank::King, Suit::Hearts)),
+        ];
+
+        assert_eq!(score_no_hearts_hand_trick(&state, &trick), 10);
+    }
+
+    #[test]
+    fn no_queens_trick_scores_six_points_per_queen() {
         let state = start_trick_taking_hand("score-no-queens".to_string(), 3, 0);
         let trick = vec![
             PlayedCard::new(0, Card::new(Rank::Queen, Suit::Clubs)),
@@ -856,7 +881,7 @@ mod tests {
             PlayedCard::new(3, Card::new(Rank::Ace, Suit::Clubs)),
         ];
 
-        assert_eq!(score_no_queens_trick(&state, &trick), 2);
+        assert_eq!(score_no_queens_trick(&state, &trick), 12);
     }
 
     #[test]
@@ -949,7 +974,7 @@ mod tests {
             PlayedCard::new(3, Card::new(Rank::Ace, Suit::Hearts)),
         ];
 
-        assert_eq!(score_king_of_hearts_trick(&state, &trick), 1);
+        assert_eq!(score_king_of_hearts_trick(&state, &trick), 20);
     }
 
     #[test]
@@ -1044,7 +1069,7 @@ mod tests {
 
         assert_eq!(state.completed_tricks.len(), 13);
         assert_eq!(state.cards_remaining(), 0);
-        assert_eq!(state.total_penalty(), 1);
+        assert_eq!(state.total_penalty(), 20);
     }
 
     #[test]
@@ -1058,7 +1083,7 @@ mod tests {
 
         assert_eq!(state.completed_tricks.len(), 13);
         assert_eq!(state.cards_remaining(), 0);
-        assert_eq!(state.total_penalty(), 4);
+        assert_eq!(state.total_penalty(), 24);
     }
 
     #[test]
@@ -1072,7 +1097,7 @@ mod tests {
 
         assert_eq!(state.completed_tricks.len(), 13);
         assert_eq!(state.cards_remaining(), 0);
-        assert_eq!(state.total_penalty(), 13);
+        assert_eq!(state.total_penalty(), 30);
     }
 
     #[test]
@@ -1089,10 +1114,10 @@ mod tests {
         assert_eq!(score_no_last_two_trick(&state, &trick), 0);
 
         state.completed_tricks = repeat_clean_tricks(11);
-        assert_eq!(score_no_last_two_trick(&state, &trick), 1);
+        assert_eq!(score_no_last_two_trick(&state, &trick), 10);
 
         state.completed_tricks = repeat_clean_tricks(12);
-        assert_eq!(score_no_last_two_trick(&state, &trick), 1);
+        assert_eq!(score_no_last_two_trick(&state, &trick), 20);
     }
 
     #[test]
@@ -1106,7 +1131,7 @@ mod tests {
 
         assert_eq!(state.completed_tricks.len(), 13);
         assert_eq!(state.cards_remaining(), 0);
-        assert_eq!(state.total_penalty(), 2);
+        assert_eq!(state.total_penalty(), 30);
     }
 
     #[test]
@@ -1119,7 +1144,7 @@ mod tests {
             PlayedCard::new(3, Card::new(Rank::Five, Suit::Clubs)),
         ];
 
-        assert_eq!(score_no_tricks_trick(&state, &trick), 1);
+        assert_eq!(score_no_tricks_trick(&state, &trick), 2);
     }
 
     #[test]
@@ -1161,7 +1186,7 @@ mod tests {
 
         assert_eq!(state.completed_tricks.len(), 13);
         assert_eq!(state.cards_remaining(), 0);
-        assert_eq!(state.total_penalty(), 13);
+        assert_eq!(state.total_penalty(), 26);
     }
 
     #[test]
@@ -1174,7 +1199,7 @@ mod tests {
             PlayedCard::new(3, Card::new(Rank::Five, Suit::Clubs)),
         ];
 
-        assert_eq!(score_positive_tricks_trick(&state, &trick), 1);
+        assert_eq!(score_positive_tricks_trick(&state, &trick), 5);
     }
 
     #[test]
@@ -1189,14 +1214,14 @@ mod tests {
 
         assert_eq!(state.completed_tricks.len(), 13);
         assert_eq!(state.cards_remaining(), 0);
-        assert_eq!(state.total_penalty(), 13);
+        assert_eq!(state.total_penalty(), 65);
     }
 
     fn score_completed_tricks(state: &NoHeartsHandState) -> i32 {
         state
             .completed_tricks
             .iter()
-            .map(|trick| score_no_hearts_trick(&trick.cards))
+            .map(|trick| crate::trick::score_no_hearts_trick(&trick.cards))
             .sum()
     }
 

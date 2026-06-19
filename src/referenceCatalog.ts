@@ -123,42 +123,42 @@ export const referenceCatalog: GameReference[] = [
         id: "no-hearts",
         title: "No Hearts",
         objective: "Avoid winning tricks that contain hearts.",
-        scoring: "Each heart in a trick belongs to the trick winner as a penalty.",
+        scoring: "Each ordinary heart is 2 penalty points; the ace of hearts is 6.",
         lesson: "First learn to separate a scary discard from the player who actually wins the trick."
       },
       {
         id: "no-queens",
         title: "No Queens",
         objective: "Avoid winning tricks that contain queens.",
-        scoring: "A queen penalizes the player who wins the trick containing it.",
+        scoring: "Each queen is 6 penalty points for the trick winner.",
         lesson: "A lower legal card can be better than taking control of a queen trick."
       },
       {
         id: "king-of-hearts",
         title: "King of Hearts",
         objective: "Avoid capturing the king of hearts.",
-        scoring: "The player who wins the trick containing the king of hearts takes the contract penalty.",
+        scoring: "The king of hearts is 20 penalty points for the trick winner.",
         lesson: "Watch whether your card captures the trick or safely leaves the danger with someone else."
       },
       {
         id: "no-last-two",
         title: "No Last Two",
         objective: "Avoid winning either of the final two tricks.",
-        scoring: "Each of the last two tricks belongs to its winner as a penalty.",
+        scoring: "The penultimate trick is 10 penalty points; the final trick is 20.",
         lesson: "Early tricks are setup; late leads and high cards become dangerous when only two tricks remain."
       },
       {
         id: "no-tricks",
         title: "No Tricks",
         objective: "Avoid winning tricks.",
-        scoring: "Each trick belongs to its winner as a penalty.",
+        scoring: "Each trick is 2 penalty points for its winner.",
         lesson: "Low cards and ducking matter because taking control of any trick costs you."
       },
       {
         id: "positive-tricks",
         title: "Positive Tricks",
         objective: "Win tricks.",
-        scoring: "Each trick won counts for the player who wins it.",
+        scoring: "The current local stand-in gives 5 points for each trick won.",
         lesson: "This contract flips the avoidance habit: control is useful when tricks are worth taking."
       }
     ],
