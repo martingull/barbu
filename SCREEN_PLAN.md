@@ -174,7 +174,8 @@ Current role:
 - Runs through playable full-hand contracts.
 - Shows a compact contract intro before each hand.
 - Tracks running penalty totals for You, Barbu, Left, and Right.
-- Ends with four-player placement, best and weakest contracts, focused replay, and per-contract rows.
+- Shows a scorecard with contract rows, four-player columns, current-contract highlight, pending rows, and totals.
+- Ends with four-player placement, best and weakest contracts, focused replay, and the same scorecard.
 
 Near-term direction:
 
@@ -220,8 +221,9 @@ Purpose: product identity and coaching presence.
 Character concept:
 
 - Barbu is the King of Cards.
+- He teaches many card games because he is the king.
+- His visual identity should present him as a King of Hearts.
 - He is a bearded king-like opponent and coach.
-- His suit identity is undecided.
 
 Near-term role:
 

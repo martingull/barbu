@@ -6,7 +6,7 @@ Use [SCREEN_PLAN.md](./SCREEN_PLAN.md) for screen ownership, navigation boundari
 
 ## Product North Star
 
-Barbu is an iPhone-first learning app for classic card games. The first playable path is Barbu in the Hearts family: the player sits at Barbu's table against the King of Cards, learns one decision at a time, and gradually moves from guided tricks to confident play.
+Barbu is an iPhone-first learning app for classic card games. The first playable path is Barbu in the Hearts family: the player sits at Barbu's table against Barbu, the King of Cards, learns one decision at a time, and gradually moves from guided tricks to confident play. Barbu teaches many card games because he is the King of Cards; his visual identity should present him as a King of Hearts.
 
 Barbu is the first complete curriculum, not the app boundary. The product should grow through reusable game-family foundations, starting with Hearts-family overlap such as follow-suit trick taking, avoidance scoring, penalty cards, and clockwise table play.
 
@@ -37,6 +37,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Barbu run contract intro before each hand, where Barbu sets the next contract and the current run score stays visible.
 - Four-player Barbu run score tracking for You, Barbu, Left, and Right.
 - Barbu run settlement summary with four-player placement, best contract, weakest contract, and focused replay.
+- Barbu run scorecard with contract rows, four-player columns, current-contract highlight, pending rows, and totals.
 - Local full-hand contract penalty tracking. Full Barbu settlement scoring is still a later feature.
 - Compact full-hand result panel with contract result, Barbu/player penalty split, key tricks, replay, and next-contract actions.
 - Training path practice step connected to Play Barbu completion.

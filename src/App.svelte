@@ -1387,10 +1387,18 @@
     return `${value} ${value === 1 ? meta.penaltyName : meta.penaltyPlural}`;
   }
 
-  function formatRunContractScore(result: FullHandRunResult) {
-    return scoreSeats
-      .map((seat) => `${scoreSeatLabel(seat)} ${formatContractPenalty(result.contract, result.seatPenalties[seat] ?? 0)}`)
-      .join(" | ");
+  function runResultForContract(contract: FullHandContract) {
+    return fullHandRunResults.find((result) => result.contract === contract);
+  }
+
+  function scorecardCellLabel(contract: FullHandContract, seat: Seat) {
+    const result = runResultForContract(contract);
+
+    if (!result) {
+      return contract === pendingRunContract || fullHand?.contract === contract ? "Now" : "-";
+    }
+
+    return String(result.seatPenalties[seat] ?? 0);
   }
 
   async function startDailyDrill(pathStepId = "") {
@@ -1937,6 +1945,31 @@
   }
 </script>
 
+{#snippet runScorecard(label = "Barbu scorecard")}
+  <div class="run-scorecard" aria-label={label}>
+    <div class="run-scorecard-row header">
+      <span>Contract</span>
+      {#each scoreSeats as seat}
+        <span>{scoreSeatLabel(seat)}</span>
+      {/each}
+    </div>
+    {#each fullHandContracts as contract}
+      <div class:active={contract === pendingRunContract || fullHand?.contract === contract} class="run-scorecard-row">
+        <span>{contract}</span>
+        {#each scoreSeats as seat}
+          <strong>{scorecardCellLabel(contract, seat)}</strong>
+        {/each}
+      </div>
+    {/each}
+    <div class="run-scorecard-row total">
+      <span>Total</span>
+      {#each scoreSeats as seat}
+        <strong>{fullHandRunSeatPenalties[seat]}</strong>
+      {/each}
+    </div>
+  </div>
+{/snippet}
+
 <main class="app-shell">
   {#if appView === "catalog"}
     <section class="welcome-screen" aria-labelledby="catalog-title">
@@ -2369,6 +2402,8 @@
           </div>
         </div>
 
+        {@render runScorecard("Barbu run scorecard")}
+
         <div class="course-actions">
           <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
           <button class="primary-action" onclick={startPendingRunContract} type="button">Start hand</button>
@@ -2480,14 +2515,7 @@
                 </div>
               </div>
 
-              <div class="full-hand-run-list" aria-label="Barbu run results">
-                {#each fullHandRunOrderedResults as result}
-                  <div>
-                    <span>{result.contract}</span>
-                    <strong>{formatRunContractScore(result)}</strong>
-                  </div>
-                {/each}
-              </div>
+              {@render runScorecard("Barbu run results")}
             {:else}
               <div class="lesson-heading">
                 <p class="eyebrow">Result</p>

@@ -253,6 +253,9 @@ test("Barbu run advances full-hand contracts with a running total", async ({ pag
     await expect(page.getByLabel("Current run score")).toContainText("Barbu");
     await expect(page.getByLabel("Current run score")).toContainText("Left");
     await expect(page.getByLabel("Current run score")).toContainText("Right");
+    await expect(page.getByLabel("Barbu run scorecard")).toContainText("Contract");
+    await expect(page.getByLabel("Barbu run scorecard")).toContainText(contract);
+    await expect(page.getByLabel("Barbu run scorecard")).toContainText("Total");
     await expectNoPageScroll(page);
     await page.getByRole("button", { name: "Start hand" }).click();
 
@@ -285,6 +288,7 @@ test("Barbu run advances full-hand contracts with a running total", async ({ pag
   await expect(page.getByLabel("Barbu run settlement")).toContainText("Practice next");
   await expect(page.getByLabel("Barbu run results")).toContainText("No Hearts");
   await expect(page.getByLabel("Barbu run results")).toContainText("No Tricks");
+  await expect(page.getByLabel("Barbu run results")).toContainText("Total");
   await expect(page.getByRole("button", { name: "Replay weakest" })).toBeVisible();
   await expect(page.getByRole("button", { name: "New run" })).toBeVisible();
   await expectNoPageScroll(page);

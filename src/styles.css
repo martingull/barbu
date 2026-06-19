@@ -664,6 +664,55 @@ button {
   line-height: 1;
 }
 
+.run-scorecard {
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid #c7d0c0;
+  border-radius: 8px;
+  background: #fbfcf8;
+}
+
+.run-scorecard-row {
+  display: grid;
+  grid-template-columns: minmax(72px, 1.45fr) repeat(4, minmax(34px, 0.7fr));
+  gap: 4px;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 6px;
+  border-radius: 6px;
+}
+
+.run-scorecard-row.header,
+.run-scorecard-row.total {
+  background: #e8eee1;
+}
+
+.run-scorecard-row.active {
+  outline: 2px solid #284f40;
+  background: #eef3e8;
+}
+
+.run-scorecard-row span,
+.run-scorecard-row strong {
+  min-width: 0;
+  color: #17201a;
+  font-size: 0.66rem;
+  font-weight: 900;
+  line-height: 1.08;
+}
+
+.run-scorecard-row span:first-child {
+  color: #53604d;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.run-scorecard-row span:not(:first-child),
+.run-scorecard-row strong {
+  text-align: center;
+}
+
 .example-copy-stack {
   display: grid;
   gap: 10px;
@@ -2197,8 +2246,23 @@ h2 {
   .table-play-surface.compact-result .full-hand-run-score,
   .table-play-surface.compact-result .run-settlement-grid,
   .table-play-surface.compact-result .full-hand-result-tricks,
-  .table-play-surface.compact-result .full-hand-run-list {
+  .table-play-surface.compact-result .full-hand-run-list,
+  .table-play-surface.compact-result .run-scorecard {
     gap: 6px;
+  }
+
+  .table-play-surface.compact-result .run-scorecard {
+    padding: 6px;
+  }
+
+  .table-play-surface.compact-result .run-scorecard-row {
+    min-height: 24px;
+    padding: 4px 5px;
+  }
+
+  .table-play-surface.compact-result .run-scorecard-row span,
+  .table-play-surface.compact-result .run-scorecard-row strong {
+    font-size: 0.58rem;
   }
 
   .table-play-surface.compact-result .full-hand-result-grid div,

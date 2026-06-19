@@ -2,7 +2,7 @@
 
 An iPhone-first card-game app for learning, practicing, and exploring classic card games. The first curriculum is Barbu in the Hearts family, with room to expand into related Hearts-family games first, then other families later.
 
-The product concept is that the player learns by sitting down against Barbu, a King of Cards figure who introduces games, sets contracts, reacts to play, and raises the difficulty over time. Barbu should function as a coach and opponent: enough personality to give the app identity, but never at the expense of clear rules, fast practice, and accurate feedback.
+The product concept is that the player learns by sitting down against Barbu, the King of Cards, who introduces games, sets contracts, reacts to play, and raises the difficulty over time. Barbu should function as a coach and opponent: enough personality to give the app identity, but never at the expense of clear rules, fast practice, and accurate feedback. His visual identity should eventually show him as a King of Hearts while still positioning him as the tutor for many card games.
 
 This is intended as a real mobile app-store product, not a throwaway experiment. The first distribution barrier is Apple App Store and Google Play readiness, so product decisions should prioritize mobile usability, automated verification, and future monetization from the start.
 
@@ -60,6 +60,7 @@ content/             Structured game and lesson content
 - Barbu run contract intro before each hand so Barbu sets the next contract, shows the target, and keeps the current run score visible.
 - Barbu run score tracking now follows all four seats: You, Barbu, Left, and Right.
 - Barbu run settlement now ranks the four seats, names the player's best and weakest contract, and offers a focused replay.
+- Barbu run scorecard shows contract rows, four-player columns, current-contract highlight, pending rows, and totals.
 - Compact full-hand result panel with contract result, Barbu/player penalty split, key tricks, replay, and next-contract actions.
 - The training path practice step launches Play Barbu and marks the path step complete after a finished table.
 - Review step with latest Play Barbu score, weakest-contract advice, recent attempts, and replay actions.
