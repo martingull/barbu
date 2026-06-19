@@ -8,7 +8,7 @@ Use [SCREEN_PLAN.md](./SCREEN_PLAN.md) for screen ownership, navigation boundari
 
 Barbu is an iPhone-first learning app for classic card games. The first playable path is Barbu in the Hearts family: the player sits at Barbu's table against Barbu, the King of Cards, learns one decision at a time, and gradually moves from guided tricks to confident play. Barbu teaches many card games because he is the King of Cards; his visual identity should present him as a King of Hearts.
 
-Barbu is the first complete curriculum, not the app boundary. The product should grow through reusable game-family foundations, starting with Hearts-family overlap such as follow-suit trick taking, avoidance scoring, penalty cards, and clockwise table play.
+Barbu is the first complete curriculum, not the app boundary. The product should grow through reusable game-family foundations, starting with Hearts-family overlap such as follow-suit trick taking, contract scoring, penalty cards, reward tricks, and clockwise table play.
 
 Whist and Bridge are important future families, but they should wait until Barbu has a strong learning, practice, and play loop. New family work should reuse shared card and trick-taking foundations without weakening the current Barbu experience.
 
@@ -33,12 +33,12 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Positive Tricks full-hand skeletons with deterministic local deals, legal-card play, simple tactical auto opponents, hand scoring, and short per-trick feedback.
 - Generic trick-taking hand engine for deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Positive Tricks as the first contract adapters.
 - Shared table-play surface for Play Barbu and full-hand contracts so active games keep one compact mobile layout.
-- Barbu run v1 with a local sequence through playable full-hand contracts, four-player penalty totals, per-contract score rows, and a compact run-complete summary.
+- Barbu run v1 with a local sequence through playable full-hand contracts, four-player contract values, per-contract score rows, and a compact run-complete summary.
 - Barbu run contract intro before each hand, where Barbu sets the next contract and the current run score stays visible.
 - Four-player Barbu run score tracking for You, Barbu, Left, and Right.
 - Barbu run settlement summary with four-player placement, best contract, weakest contract, and focused replay.
 - Barbu run scorecard with contract rows, four-player columns, current-contract highlight, pending rows, and totals.
-- Local full-hand contract penalty tracking. Full Barbu settlement scoring is still a later feature.
+- Local full-hand contract value tracking. Current scoring is still one point per scoring event; full Parlett-style settlement values are a later feature.
 - Compact full-hand result panel with contract result, Barbu/player penalty split, key tricks, replay, and next-contract actions.
 - Training path practice step connected to Play Barbu completion.
 - Review step with latest Play Barbu score, weakest-contract advice, recent attempts, and replay actions.
@@ -47,7 +47,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Local course progress for the playable Barbu path.
 - Continue action for the next unfinished step.
 - Completed-course state with review and reset actions.
-- Shared learner-facing outcome model: good, risky, penalty, and illegal, with separate reason tags for review and future tutor explanations.
+- Shared learner-facing outcome model: good, risky, penalty/reward, and illegal, with separate reason tags for review and future tutor explanations.
 - Shared course content flow for No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks with concept, example, guided play, and review screens.
 - Shared card table renderer for course examples and guided play.
 - Barbu reference screen with Parlett baseline, play direction, core contracts, scoring, and documented varieties.
@@ -94,31 +94,36 @@ These are the next product increments that keep the app coherent.
    - Add more scenario families for each supported contract.
    - Keep commands thin and deterministic.
    - Add Rust tests for every drill generator.
-   - Current baseline now covers all five playable avoidance contracts; next pass should add more variety inside each contract.
+   - Current generated baseline covers the five playable avoidance contracts; Positive Tricks generated practice is still missing.
 
-3. Core Game And Variety Model v2
+3. Contract Score Model v2
+   - Move from one point per scoring event to contract-specific point values where Barbu requires it.
+   - Keep avoidance contracts, positive contracts, and future layout contracts explicit in metadata.
+   - Make scorecard language use score/value/tricks instead of assuming every contract is a penalty contract.
+
+4. Core Game And Variety Model v2
    - Move catalog metadata toward content-backed data as more games are added.
    - Keep core rules separate from rule/scoring/table-custom variations.
    - Let varieties link to their parent core game instead of becoming separate top-level products.
 
-4. Full-Hand Play v2
+5. Full-Hand Play v2
    - Continue adding Barbu contracts on top of the generic hand engine.
    - Add full Barbu settlement scoring across contracts once the playable contracts are broader.
    - Expand No Hearts opponent policy with more table-aware decisions.
    - Add stronger tactical feedback after each completed trick.
    - Decide when full hands should enter the learning path instead of living as separate practice.
 
-5. Barbu Run Flow v2
+6. Barbu Run Flow v2
    - Keep contract intros short and score-aware.
    - Clarify fixed order versus chosen/dealer-driven contract order before full settlement scoring.
    - Make Barbu feel like the contract setter without adding long dialogue.
 
-6. Barbu Run Settlement v2
+7. Barbu Run Settlement v2
    - Refine placement copy once full Barbu settlement scoring is implemented.
-   - Compare best and worst contracts relative to table strength, not only raw penalty count.
+   - Compare best and worst contracts relative to table strength, not only raw event count.
    - Connect focused replay back into review history.
 
-7. Progress Model v2
+8. Progress Model v2
    - Store completion by lesson node, not only path step.
    - Track attempts, last result, and review due state.
    - Keep it local until the app needs sync or accounts.

@@ -305,7 +305,7 @@ test("No Hearts hand plays through thirteen tricks", async ({ page }, testInfo) 
   await startContractHand(page, "No Hearts");
 
   await expect(page.getByRole("heading", { name: "No Hearts hand" })).toBeVisible();
-  await expect(page.getByLabel("No Hearts hand score")).toContainText("Your score");
+  await expect(page.getByLabel("No Hearts hand score")).toContainText("Your penalty");
   await expect(page.getByLabel("No Hearts hand table")).toBeVisible();
   await expectNoPageScroll(page);
 

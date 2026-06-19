@@ -149,7 +149,7 @@ Current role:
 
 - No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Positive Tricks.
 - Shared table surface.
-- Local contract penalty tracking.
+- Local contract value tracking for avoidance and positive-trick contracts.
 - Compact result panel.
 
 Future role:
@@ -173,7 +173,7 @@ Current role:
 
 - Runs through playable full-hand contracts.
 - Shows a compact contract intro before each hand.
-- Tracks running penalty totals for You, Barbu, Left, and Right.
+- Tracks running score totals for You, Barbu, Left, and Right.
 - Shows a scorecard with contract rows, four-player columns, current-contract highlight, pending rows, and totals.
 - Ends with four-player placement, best and weakest contracts, focused replay, and the same scorecard.
 
@@ -181,7 +181,7 @@ Near-term direction:
 
 - Make this the main play mode.
 - Add the remaining contracts.
-- Add full Barbu settlement scoring when contract coverage is broad enough.
+- Add full Barbu settlement scoring and contract-specific point values when contract coverage is broad enough.
 - Clarify whether contract order remains fixed, chosen, or dealer-driven.
 - Feed weakest-contract replay into the broader review loop.
 
