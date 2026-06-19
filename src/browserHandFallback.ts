@@ -43,7 +43,7 @@ export function startBrowserNoTricksHand(seed: number): FullHandState {
 }
 
 export function startBrowserPositiveTricksHand(seed: number): FullHandState {
-  return startBrowserFullHand("Positive Tricks", seed);
+  return startBrowserFullHand("Hearts Trumps", seed);
 }
 
 function startBrowserFullHand(contract: FullHandContract, seed: number): FullHandState {
@@ -158,7 +158,7 @@ function playCardForCurrentPlayer(state: FullHandState, card: Card) {
 }
 
 function completeTrick(state: FullHandState) {
-  const winnerIndex = trickWinner(state.currentTrick);
+  const winnerIndex = trickWinner(state.contract, state.currentTrick);
   const penalty = scoreTrick(state, state.currentTrick);
 
   state.completedTricks.push({
@@ -220,7 +220,7 @@ function chooseOpponentCard(state: FullHandState) {
   }
 
   if (!led) {
-    if (state.contract === "Positive Tricks") {
+    if (state.contract === "Hearts Trumps") {
       return highestCard(legal);
     }
     return lowestCard(legal.filter((card) => !isPenaltyCard(state.contract, card))) ?? lowestCard(legal);
@@ -229,13 +229,13 @@ function chooseOpponentCard(state: FullHandState) {
   const followsSuit = legal.every((card) => card.suit === led);
 
   if (!followsSuit) {
-    if (state.contract === "No Tricks" || state.contract === "Positive Tricks") {
+    if (state.contract === "No Tricks" || state.contract === "Hearts Trumps") {
       return highestCard(legal);
     }
     return highestCard(legal.filter((card) => isPenaltyCard(state.contract, card))) ?? highestCard(legal);
   }
 
-  if (state.contract === "Positive Tricks") {
+  if (state.contract === "Hearts Trumps") {
     return lowestCard(legal.filter((card) => cardWouldWinTrick(state, card))) ?? lowestCard(legal);
   }
 
@@ -259,6 +259,10 @@ function cardWouldWinTrick(state: FullHandState, card: Card) {
 
   if (!led) {
     return true;
+  }
+  if (state.contract === "Hearts Trumps") {
+    const simulated = [...state.currentTrick, { seat: playerNames[state.currentPlayerIndex], card }];
+    return trickWinner(state.contract, simulated) === state.currentPlayerIndex;
   }
   if (card.suit !== led) {
     return false;
@@ -289,7 +293,7 @@ function scoreTrick(state: FullHandState, cards: TableCard[]) {
   if (state.contract === "No Tricks") {
     return 2;
   }
-  if (state.contract === "Positive Tricks") {
+  if (state.contract === "Hearts Trumps") {
     return 5;
   }
   if (state.contract === "No Last Two") {
@@ -314,7 +318,7 @@ function scoreTrick(state: FullHandState, cards: TableCard[]) {
 }
 
 function isPenaltyCard(contract: FullHandContract, card: Card) {
-  if (contract === "No Tricks" || contract === "Positive Tricks") {
+  if (contract === "No Tricks" || contract === "Hearts Trumps") {
     return false;
   }
   if (contract === "No Last Two") {
@@ -347,7 +351,21 @@ function ledSuit(state: FullHandState): Suit | undefined {
   return state.currentTrick[0]?.card.suit;
 }
 
-function trickWinner(cards: TableCard[]) {
+function trickWinner(contract: FullHandContract, cards: TableCard[]) {
+  if (contract === "Hearts Trumps") {
+    const trumpWinner = cards
+      .filter((played) => played.card.suit === "H")
+      .reduce<TableCard | undefined>(
+        (winner, played) =>
+          !winner || rankOrder[played.card.rank as Rank] > rankOrder[winner.card.rank as Rank] ? played : winner,
+        undefined
+      );
+
+    if (trumpWinner) {
+      return playerNames.indexOf(trumpWinner.seat);
+    }
+  }
+
   const led = cards[0].card.suit;
   const winner = cards
     .filter((played) => played.card.suit === led)

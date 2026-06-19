@@ -9,6 +9,7 @@ pub type KingOfHeartsHandState = TrickTakingHandState;
 pub type NoLastTwoHandState = TrickTakingHandState;
 pub type NoTricksHandState = TrickTakingHandState;
 pub type PositiveTricksHandState = TrickTakingHandState;
+const HEARTS_TRUMP_SUIT: Suit = Suit::Hearts;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TrickTakingHandState {
@@ -265,7 +266,7 @@ pub fn play_no_tricks_card(
 }
 
 pub fn start_positive_tricks_hand(seed: u64) -> PositiveTricksHandState {
-    let state = start_trick_taking_hand(format!("positive-tricks-hand-{seed}"), seed, 0);
+    let state = start_trick_taking_hand(format!("hearts-trumps-hand-{seed}"), seed, 0);
     advance_to_player_turn(
         state,
         2,
@@ -368,7 +369,7 @@ fn play_card_for_current_player(
 
 fn complete_trick(state: &mut TrickTakingHandState, score_trick: TrickScoreFn) {
     let cards = state.current_trick.clone();
-    let winner = trick_winner(&cards).expect("a four-card trick should have a winner");
+    let winner = trick_winner_for_state(state, &cards).expect("a four-card trick should have a winner");
     let penalty = score_trick(state, &cards);
 
     state.completed_tricks.push(CompletedTrick {
@@ -382,6 +383,39 @@ fn complete_trick(state: &mut TrickTakingHandState, score_trick: TrickScoreFn) {
     if state.cards_remaining() == 0 {
         state.status = HandStatus::Complete;
     }
+}
+
+fn trick_winner_for_state(
+    state: &TrickTakingHandState,
+    played_cards: &[PlayedCard],
+) -> Option<PlayerIndex> {
+    if is_hearts_trumps_state(state) {
+        return trump_trick_winner(played_cards, HEARTS_TRUMP_SUIT);
+    }
+
+    trick_winner(played_cards)
+}
+
+fn trump_trick_winner(played_cards: &[PlayedCard], trump_suit: Suit) -> Option<PlayerIndex> {
+    let first_card = played_cards.first()?.card;
+    let winner = played_cards
+        .iter()
+        .copied()
+        .filter(|played| played.card.suit == trump_suit)
+        .max_by_key(|played| played.card.rank)
+        .or_else(|| {
+            played_cards
+                .iter()
+                .copied()
+                .filter(|played| played.card.suit == first_card.suit)
+                .max_by_key(|played| played.card.rank)
+        })?;
+
+    Some(winner.player)
+}
+
+fn is_hearts_trumps_state(state: &TrickTakingHandState) -> bool {
+    state.id.starts_with("hearts-trumps-hand-")
 }
 
 fn choose_no_hearts_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
@@ -599,6 +633,10 @@ fn is_king_of_hearts(card: Card) -> bool {
 }
 
 fn card_would_win_trick(state: &TrickTakingHandState, card: Card) -> bool {
+    if is_hearts_trumps_state(state) {
+        return card_would_win_trump_trick(state, card, HEARTS_TRUMP_SUIT);
+    }
+
     let Some(led_suit) = state.led_suit() else {
         return true;
     };
@@ -617,6 +655,27 @@ fn card_would_win_trick(state: &TrickTakingHandState, card: Card) -> bool {
     };
 
     card.rank > current_winner.card.rank
+}
+
+fn card_would_win_trump_trick(
+    state: &TrickTakingHandState,
+    card: Card,
+    trump_suit: Suit,
+) -> bool {
+    let Some(led_suit) = state.led_suit() else {
+        return true;
+    };
+    let mut simulated = state.current_trick.clone();
+    simulated.push(PlayedCard::new(state.current_player, card));
+    let Some(winner) = trump_trick_winner(&simulated, trump_suit) else {
+        return true;
+    };
+
+    if card.suit != led_suit && card.suit != trump_suit {
+        return false;
+    }
+
+    winner == state.current_player
 }
 
 fn lowest_card(cards: &[Card]) -> Option<Card> {
@@ -1200,6 +1259,42 @@ mod tests {
         ];
 
         assert_eq!(score_positive_tricks_trick(&state, &trick), 5);
+    }
+
+    #[test]
+    fn hearts_trumps_uses_led_suit_when_no_trump_appears() {
+        let trick = vec![
+            PlayedCard::new(0, Card::new(Rank::Two, Suit::Clubs)),
+            PlayedCard::new(1, Card::new(Rank::King, Suit::Clubs)),
+            PlayedCard::new(2, Card::new(Rank::Ace, Suit::Spades)),
+            PlayedCard::new(3, Card::new(Rank::Queen, Suit::Clubs)),
+        ];
+
+        assert_eq!(trump_trick_winner(&trick, Suit::Hearts), Some(1));
+    }
+
+    #[test]
+    fn hearts_trumps_heart_beats_led_suit() {
+        let trick = vec![
+            PlayedCard::new(0, Card::new(Rank::Ace, Suit::Clubs)),
+            PlayedCard::new(1, Card::new(Rank::Two, Suit::Hearts)),
+            PlayedCard::new(2, Card::new(Rank::King, Suit::Clubs)),
+            PlayedCard::new(3, Card::new(Rank::Queen, Suit::Clubs)),
+        ];
+
+        assert_eq!(trump_trick_winner(&trick, Suit::Hearts), Some(1));
+    }
+
+    #[test]
+    fn hearts_trumps_highest_heart_wins_when_multiple_trumps_appear() {
+        let trick = vec![
+            PlayedCard::new(0, Card::new(Rank::Ace, Suit::Clubs)),
+            PlayedCard::new(1, Card::new(Rank::Two, Suit::Hearts)),
+            PlayedCard::new(2, Card::new(Rank::King, Suit::Hearts)),
+            PlayedCard::new(3, Card::new(Rank::Queen, Suit::Clubs)),
+        ];
+
+        assert_eq!(trump_trick_winner(&trick, Suit::Hearts), Some(2));
     }
 
     #[test]

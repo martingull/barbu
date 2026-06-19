@@ -220,7 +220,7 @@
     "King of Hearts",
     "No Last Two",
     "No Tricks",
-    "Positive Tricks"
+    "Hearts Trumps"
   ];
   const scoreSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
   const seatByPlayerIndex: Record<number, Seat> = {
@@ -260,11 +260,11 @@
       reason: "This contract turns the whole hand into ducking practice.",
       habit: "Play below the current winner whenever the led suit allows it."
     },
-    "Positive Tricks": {
-      title: "Now tricks are treasure.",
-      target: "Win tricks.",
-      reason: "Barbu flips the lesson: control is good when the contract rewards tricks.",
-      habit: "Look for safe chances to overtake and keep the lead."
+    "Hearts Trumps": {
+      title: "Hearts are trumps.",
+      target: "Win tricks with heart control.",
+      reason: "Barbu flips the table: hearts now outrank the led suit and tricks are worth points.",
+      habit: "Track whether a heart can cut the trick before you spend a high card."
     }
   };
   const outcomeLabels: Record<GuidedCardOutcome | "illegal", string> = {
@@ -969,7 +969,7 @@
         playCommand: "play_no_tricks_hand_card"
       };
     }
-    if (contract === "Positive Tricks") {
+    if (contract === "Hearts Trumps") {
       return {
         scoringGoal: "win",
         penaltyName: "point",
@@ -978,8 +978,8 @@
         playedLabel: "points in play",
         scoreLabel: "Your score",
         resultLabel: "won",
-        bestLabel: "Best win",
-        weakestLabel: "Missed chance",
+        bestLabel: "Best trump",
+        weakestLabel: "Missed trick",
         startCommand: "start_positive_tricks_hand",
         playCommand: "play_positive_tricks_hand_card"
       };
@@ -1013,7 +1013,7 @@
     if (contract === "No Tricks") {
       return startBrowserNoTricksHand(seed);
     }
-    if (contract === "Positive Tricks") {
+    if (contract === "Hearts Trumps") {
       return startBrowserPositiveTricksHand(seed);
     }
 
@@ -1033,7 +1033,7 @@
     if (state.contract === "No Tricks") {
       return playBrowserNoTricksCard(state, cardId);
     }
-    if (state.contract === "Positive Tricks") {
+    if (state.contract === "Hearts Trumps") {
       return playBrowserPositiveTricksCard(state, cardId);
     }
 
@@ -1156,7 +1156,7 @@
   }
 
   function startPositiveTricksHand() {
-    void startFullHand("Positive Tricks");
+    void startFullHand("Hearts Trumps");
   }
 
   function startBarbuRun() {
@@ -1408,10 +1408,10 @@
   function fullHandTrickFeedback(trick: CompletedHandTrick) {
     const penaltyText = `${trick.penalty} ${trick.penalty === 1 ? fullHandPenaltyName : fullHandPenaltyPlural}`;
 
-    if (fullHand?.contract === "Positive Tricks") {
+    if (fullHand?.contract === "Hearts Trumps") {
       return trick.winner === "You"
-        ? `You won the trick and banked ${penaltyText}. Good: this contract rewards control.`
-        : `${trick.winner} won the trick and banked ${penaltyText}. Look for a chance to overtake next time.`;
+        ? `You won the trick and banked ${penaltyText}. Good: hearts are trumps in this contract.`
+        : `${trick.winner} won the trick and banked ${penaltyText}. Look for a heart or higher control next time.`;
     }
 
     if (trick.outcome === "captured_penalty") {
@@ -1445,7 +1445,7 @@
   }
 
   function fullHandResultHeading(hand: FullHandState) {
-    if (hand.contract === "Positive Tricks") {
+    if (hand.contract === "Hearts Trumps") {
       return hand.playerPenalty >= 5 ? "Strong trick count" : "Keep fighting for tricks";
     }
     if (hand.playerPenalty === 0) {
@@ -1458,7 +1458,7 @@
   }
 
   function fullHandResultText(hand: FullHandState) {
-    if (hand.contract === "Positive Tricks") {
+    if (hand.contract === "Hearts Trumps") {
       return `You won ${formatFullHandPenalty(hand.playerPenalty)}. The table won ${formatFullHandPenalty(
         hand.totalPenalty - hand.playerPenalty
       )}.`;
@@ -2355,8 +2355,8 @@
           <strong>Avoid every trick</strong>
         </button>
         <button class="practice-choice" onclick={() => void startPositiveTricksHand()} type="button">
-          <span>Positive Tricks</span>
-          <strong>Win tricks on purpose</strong>
+          <span>Hearts Trumps</span>
+          <strong>Hearts beat the led suit</strong>
         </button>
       </div>
     </section>

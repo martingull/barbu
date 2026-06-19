@@ -155,11 +155,11 @@ export const referenceCatalog: GameReference[] = [
         lesson: "Low cards and ducking matter because taking control of any trick costs you."
       },
       {
-        id: "positive-tricks",
-        title: "Positive Tricks",
-        objective: "Win tricks.",
-        scoring: "The current local stand-in gives 5 points for each trick won.",
-        lesson: "This contract flips the avoidance habit: control is useful when tricks are worth taking."
+        id: "hearts-trumps",
+        title: "Hearts Trumps",
+        objective: "Win tricks while hearts act as trumps.",
+        scoring: "Each trick won is 5 positive points; hearts beat non-heart led-suit cards.",
+        lesson: "This contract flips the avoidance habit: a heart can cut the trick and take control."
       }
     ],
     contractRoadmap: [
@@ -199,11 +199,11 @@ export const referenceCatalog: GameReference[] = [
         note: "Reference, guided course, full hand, and Barbu run support exist; generated practice is still later."
       },
       {
-        id: "positive-tricks",
-        title: "Positive Tricks",
+        id: "hearts-trumps",
+        title: "Hearts Trumps",
         coreStatus: "Core",
         appStatus: "Playable",
-        note: "Reference, full hand, and Barbu run support exist; generated practice and guided course are still later."
+        note: "Reference, full hand, trump trick resolution, and Barbu run support exist; generated practice and guided course are still later."
       },
       {
         id: "domino",

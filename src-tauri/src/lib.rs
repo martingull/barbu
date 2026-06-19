@@ -90,7 +90,7 @@ fn play_no_tricks_hand_card(state: FullHandDto, card_id: String) -> Result<FullH
 #[tauri::command]
 fn start_positive_tricks_hand(seed: u64) -> FullHandDto {
     let state = barbu_core::start_positive_tricks_hand(seed);
-    FullHandDto::from_core(&state, "Positive Tricks", "point")
+    FullHandDto::from_core(&state, "Hearts Trumps", "point")
 }
 
 #[tauri::command]
@@ -104,7 +104,7 @@ fn play_positive_tricks_hand_card(
 
     Ok(FullHandDto::from_core(
         &next_state,
-        "Positive Tricks",
+        "Hearts Trumps",
         "point",
     ))
 }

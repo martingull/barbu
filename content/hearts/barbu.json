@@ -114,11 +114,11 @@
       "note": "Reference, guided course, full hand, and Barbu run support exist; generated practice is still later."
     },
     {
-      "id": "positive_tricks",
-      "title": "Positive Tricks",
-      "coreStatus": "core_candidate",
-      "appStatus": "not_built",
-      "note": "Verify Parlett's exact contract treatment before adding rules, scoring, or UI."
+      "id": "hearts_trumps",
+      "title": "Hearts Trumps",
+      "coreStatus": "core",
+      "appStatus": "playable",
+      "note": "Hearts are currently fixed as the trump suit; generated practice and guided course are still later."
     },
     {
       "id": "domino",

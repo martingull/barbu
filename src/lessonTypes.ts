@@ -94,7 +94,7 @@ export type FullHandContract =
   | "King of Hearts"
   | "No Last Two"
   | "No Tricks"
-  | "Positive Tricks";
+  | "Hearts Trumps";
 
 export type FullHandState = {
   id: string;

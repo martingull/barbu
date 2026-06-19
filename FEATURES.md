@@ -30,8 +30,8 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Barbu table with grouped Learn, Practice, Play, and Reference entry points, including a contract-hand practice chooser.
 - Five-step training path: concept, example, guided trick, practice, review.
 - Quick Drill mode with five quick mixed-contract decisions, immediate feedback, and a compact result.
-- No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Positive Tricks full-hand skeletons with deterministic local deals, legal-card play, simple tactical auto opponents, hand scoring, and short per-trick feedback.
-- Generic trick-taking hand engine for deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Positive Tricks as the first contract adapters.
+- No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps full-hand skeletons with deterministic local deals, legal-card play, simple tactical auto opponents, hand scoring, and short per-trick feedback.
+- Generic trick-taking hand engine for deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps as the first contract adapters.
 - Shared table-play surface for quick drills, Play Barbu, and full-hand contracts so active games keep one compact mobile layout.
 - Play Barbu v1 with a local sequence through playable full-hand contracts, four-player contract values, per-contract score rows, and a compact game-complete summary.
 - Play Barbu contract intro before each hand, where Barbu sets the next contract and the current game score stays visible.
@@ -39,7 +39,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Play Barbu settlement summary with four-player placement, best contract, weakest contract, and focused replay.
 - Play Barbu scorecard with signed score cells, contract rows, four-player columns, current/completed/pending states, and totals.
 - Play Barbu session summary with current leader, player place, and contracts remaining before each hand.
-- Local full-hand contract value tracking with contract-specific point values for the currently playable trick-taking contracts. Full settlement rules and Trumps/Domino coverage are later features.
+- Local full-hand contract value tracking with contract-specific point values for the currently playable trick-taking contracts. Full settlement rules and Domino coverage are later features.
 - Compact full-hand result panel with contract result, Barbu/player penalty split, key tricks, replay, and next-contract actions.
 - Training path practice step connected to Quick Drill completion.
 - Review step with latest Quick Drill score, weakest-contract advice, recent attempts, and replay actions.
@@ -79,7 +79,7 @@ Core contract status:
 | King of Hearts / Barbu | Core | Playable | The app currently uses "King of Hearts" for beginner clarity. |
 | No Last Two | Core | Playable | Guided course, full-hand, and run support exist; generated practice is still later. |
 | No Tricks | Core | Playable | Guided course, full-hand, and run support exist; generated practice is still later. |
-| Positive Tricks | Core | Playable | Full-hand and run support exist; generated practice and guided course are still later. |
+| Hearts Trumps | Core | Playable | Hearts are fixed as trumps for v1; full-hand and run support exist; generated practice and guided course are still later. |
 | Domino | Core candidate | Not built | Likely needs a different play surface; verify baseline first. |
 
 ## Near-Term Roadmap
@@ -95,7 +95,7 @@ These are the next product increments that keep the app coherent.
    - Add more scenario families for each supported contract.
    - Keep commands thin and deterministic.
    - Add Rust tests for every drill generator.
-   - Current generated baseline covers the five playable avoidance contracts; Positive Tricks generated practice is still missing.
+   - Current generated baseline covers the five playable avoidance contracts; Hearts Trumps generated practice is still missing.
 
 3. Contract Score Model v2
    - Move point-value definitions into shared content/core metadata instead of duplicating them across UI and scoring code.
