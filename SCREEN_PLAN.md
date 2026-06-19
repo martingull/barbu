@@ -11,7 +11,7 @@ The app should separate these concerns:
 - **Game family catalog**: shared foundations for related games.
 - **Learning**: structured progression for a beginner.
 - **Practice**: quick repeatable decisions outside the lesson path.
-- **Playing**: full hands and Barbu runs.
+- **Playing**: full hands and Play Barbu sessions.
 - **Reference**: Parlett-style rule structure and variants.
 - **Meta features**: progress, monetization, multiplayer, accounts, and future character presentation.
 
@@ -19,7 +19,7 @@ When a feature is added, it should have one primary home. Cross-links are allowe
 
 ## Game Family Model
 
-Barbu is the first playable game, not the product boundary. The app should grow from shared game families rather than isolated one-off games. The product priority is still to make Barbu feel good first: clear learning, reliable full-hand play, useful practice, and a coherent run/game loop.
+Barbu is the first playable game, not the product boundary. The app should grow from shared game families rather than isolated one-off games. The product priority is still to make Barbu feel good first: clear learning, reliable full-hand play, useful practice, and a coherent local game loop.
 
 The Hearts family is the first expansion area because many games share:
 
@@ -78,21 +78,21 @@ Current role:
 
 - Groups actions by intent: Learn, Practice, Play, and Reference.
 - Continues the learning path.
-- Starts Play Barbu.
-- Starts Barbu run.
+- Starts quick drills.
+- Starts Play Barbu as the multi-contract local game session.
 - Opens contract-hand practice through a chooser.
 - Opens reference.
 
 Near-term direction:
 
-- Make Barbu run the main play entry once it feels stable.
+- Keep Play Barbu as the main play entry.
 - Keep individual contract hands behind the practice chooser as the contract list grows.
 
 Should not contain:
 
 - Other Hearts-family games as if they were Barbu contracts.
 - Deep lesson content.
-- Run result details.
+- Play Barbu result details.
 - Multiplayer room setup.
 
 ### Learning Path
@@ -119,7 +119,7 @@ Future role:
 - Track review due state and weakest concepts.
 - Let Barbu act as coach through short reactions, not long lectures.
 
-### Play Barbu
+### Quick Drill
 
 Purpose: quick mixed-contract practice.
 
@@ -157,21 +157,21 @@ Future role:
 - Better opponent policy.
 - Stronger trick-by-trick tactical feedback.
 - More contracts.
-- Optional contract replay from review or Barbu run.
+- Optional contract replay from review or Play Barbu.
 
 Should not contain:
 
 - Learning path step management.
 - Mixed drill history.
-- Full run settlement beyond the current hand.
+- Full game settlement beyond the current hand.
 
-### Barbu Run
+### Play Barbu
 
 Purpose: play a sequence of full-hand contracts as the early version of a full Barbu game.
 
 Current role:
 
-- Runs through playable full-hand contracts.
+- Runs through playable full-hand contracts as one local session.
 - Shows a compact contract intro before each hand.
 - Tracks running score totals for You, Barbu, Left, and Right.
 - Shows a scorecard with contract rows, four-player columns, current-contract highlight, pending rows, and totals.
@@ -179,7 +179,7 @@ Current role:
 
 Near-term direction:
 
-- Make this the main play mode.
+- Keep this as the main play mode.
 - Add the remaining contracts.
 - Add full Barbu settlement scoring and contract-specific point values when contract coverage is broad enough.
 - Clarify whether contract order remains fixed, chosen, or dealer-driven.
@@ -236,7 +236,7 @@ Later role:
 
 - Character portrait or simple animated state.
 - Small emotional reactions after decisions.
-- Stronger presence in run results and lesson milestones.
+- Stronger presence in Play Barbu results and lesson milestones.
 
 Design constraints:
 
@@ -253,7 +253,7 @@ Status: out of scope for now.
 Future home:
 
 - Separate play area or room setup.
-- Not mixed into learning drills or local Barbu run.
+- Not mixed into learning drills or local Play Barbu.
 
 Dependencies before serious work:
 

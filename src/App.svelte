@@ -304,7 +304,7 @@
       id: "generated-drill",
       step: "Practice",
       title: "Practice table",
-      summary: "Play a mixed Barbu table and review the contract results.",
+      summary: "Run a quick mixed-contract drill and review the results.",
       action: "generated"
     },
     {
@@ -560,7 +560,7 @@
   let drillCheckedCardId = "";
   let drillResults: DrillResult[] = [];
   let activeDrillSteps: DrillStep[] = drillSteps;
-  let drillSetTitle = "Play Barbu";
+  let drillSetTitle = "Quick drill";
   let practiceSeed = loadPracticeSeed();
   let selectedLessonId = guidedLessons[0].id;
   let activeTricks: GuidedTrick[] = guidedLessons[0].tricks;
@@ -682,7 +682,7 @@
   $: fullHandRunCurrentIndex = fullHand ? fullHandContracts.indexOf(fullHand.contract) : -1;
   $: pendingRunContractIndex = fullHandContracts.indexOf(pendingRunContract);
   $: pendingRunContractIntro = runContractIntros[pendingRunContract];
-  $: pendingRunStatusLabel = `Run ${pendingRunContractIndex + 1} of ${fullHandContracts.length}`;
+  $: pendingRunStatusLabel = `Contract ${pendingRunContractIndex + 1} of ${fullHandContracts.length}`;
   $: fullHandRunOrderedResults = fullHandContracts
     .map((contract) => fullHandRunResults.find((result) => result.contract === contract))
     .filter((result): result is FullHandRunResult => Boolean(result));
@@ -693,21 +693,21 @@
   $: fullHandRunBestContract = runBestContract(fullHandRunOrderedResults);
   $: fullHandRunWeakestContract = runWeakestContract(fullHandRunOrderedResults);
   $: fullHandRunIsComplete = fullHandRunActive && fullHandRunResults.length >= fullHandContracts.length;
-  $: fullHandRunResultTitle = fullHandRunIsComplete ? runResultHeading(fullHandRunStandings) : "Run complete";
+  $: fullHandRunResultTitle = fullHandRunIsComplete ? runResultHeading(fullHandRunStandings) : "Game complete";
   $: fullHandRunResultSummary = fullHandRunIsComplete
     ? runResultSummary(fullHandRunStandings, fullHandRunResults.length)
     : "";
   $: fullHandRunStatusLabel =
     fullHandRunIsComplete
-      ? "Run complete"
+      ? "Game complete"
       : fullHandRunActive && fullHandRunCurrentIndex >= 0
-      ? `Run ${fullHandRunCurrentIndex + 1} of ${fullHandContracts.length}`
+      ? `Contract ${fullHandRunCurrentIndex + 1} of ${fullHandContracts.length}`
       : fullHand?.status === "complete"
         ? "Complete"
         : `Trick ${fullHand?.trickNumber ?? 1}`;
   $: fullHandNextActionLabel = fullHandRunActive
     ? fullHandRunIsComplete
-      ? "New run"
+      ? "New game"
       : "Next contract"
     : "Try another";
 
@@ -1305,12 +1305,12 @@
     const player = standings.find((standing) => standing.seat === "You");
 
     if (!player) {
-      return "Run complete";
+      return "Game complete";
     }
 
     if (player.rank === 1) {
       const tiedWinners = standings.filter((standing) => standing.rank === 1);
-      return tiedWinners.length > 1 ? "You tied for 1st" : "You won the run";
+      return tiedWinners.length > 1 ? "You tied for 1st" : "You won the game";
     }
 
     return `You finished ${formatOrdinal(player.rank)}`;
@@ -1321,7 +1321,7 @@
     const player = standings.find((standing) => standing.seat === "You");
 
     if (!leader || !player) {
-      return `Run complete after ${contractsPlayed} contracts. Higher net score wins the table.`;
+      return `Game complete after ${contractsPlayed} contracts. Higher net score wins the table.`;
     }
 
     if (player.rank === 1) {
@@ -1533,7 +1533,7 @@
     activePathStepId = pathStepId;
     drillIndex = 0;
     drillResults = [];
-    drillSetTitle = "Play Barbu";
+    drillSetTitle = "Quick drill";
     resetDrillDecision();
     const seed = usePracticeSeed();
 
@@ -1546,7 +1546,7 @@
       drillSetTitle = drillSet.title;
     } catch {
       activeDrillSteps = generateBrowserPlayBarbuDrillSteps(seed);
-      drillSetTitle = "Play Barbu";
+      drillSetTitle = "Quick drill";
     }
 
     drillIndex = 0;
@@ -2164,7 +2164,7 @@
         <p>
           {isCourseComplete
             ? "You have cleared the first Barbu table. Review the contracts, or reset the path when you want another pass."
-            : "Start with compact guided tricks, then move into generated drills as the rules become automatic."}
+            : "Start with compact guided tricks, then move into quick drills and a full table session as the rules become automatic."}
         </p>
         <div class="course-progress" aria-label="Course progress">
           <span>{completedCount} / {playablePathSteps.length} complete</span>
@@ -2187,13 +2187,13 @@
 
           <section class="table-action-group" aria-label="Practice">
             <p class="eyebrow">Practice</p>
-            <button class="drill-action" onclick={() => void startDailyDrill()} type="button">Play Barbu</button>
+            <button class="drill-action" onclick={() => void startDailyDrill()} type="button">Quick drill</button>
             <button class="drill-action" onclick={openPracticeChooser} type="button">Contract hands</button>
           </section>
 
           <section class="table-action-group" aria-label="Play">
             <p class="eyebrow">Play</p>
-            <button class="drill-action" onclick={startBarbuRun} type="button">Barbu run</button>
+            <button class="drill-action" onclick={startBarbuRun} type="button">Play Barbu</button>
           </section>
 
           <section class="table-action-group" aria-label="Reference">
@@ -2494,10 +2494,10 @@
       </div>
     </section>
   {:else if appView === "runContractIntro"}
-    <header class="topbar" aria-label={`${pendingRunContract} run intro`}>
+    <header class="topbar" aria-label={`${pendingRunContract} game intro`}>
       <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
       <div>
-        <p class="eyebrow">Barbu run</p>
+        <p class="eyebrow">Play Barbu</p>
         <h1>{pendingRunContract}</h1>
       </div>
       <div class="contract-status">
@@ -2506,7 +2506,7 @@
       </div>
     </header>
 
-    <section class="run-intro-screen" aria-label="Barbu run contract intro">
+    <section class="run-intro-screen" aria-label="Play Barbu contract intro">
       <div class="run-intro-card">
         <p class="eyebrow">Barbu sets the contract</p>
         <h2>{pendingRunContractIntro.title}</h2>
@@ -2514,7 +2514,7 @@
       </div>
 
       <div class="run-intro-panel">
-        <div class="run-score-strip" aria-label="Current run score">
+        <div class="run-score-strip" aria-label="Current game score">
           {#each scoreSeats as seat}
             <div>
               <span>{scoreSeatLabel(seat)}</span>
@@ -2534,7 +2534,7 @@
           </div>
         </div>
 
-        {@render runScorecard("Barbu run scorecard")}
+        {@render runScorecard("Play Barbu scorecard")}
 
         <div class="course-actions">
           <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
@@ -2548,7 +2548,7 @@
         mode={fullHand.status === "complete" ? "result" : "play"}
         ariaLabel={`${fullHand.contract} full hand`}
         title={`${fullHand.contract} hand`}
-        eyebrow="Full-hand skeleton"
+        eyebrow={fullHandRunActive ? "Play Barbu" : "Contract hand"}
         statusLabel={fullHandRunStatusLabel}
         statusValue={`${fullHand.playerPenalty} ${fullHandPlayerPenaltyLabel}`}
         tableAriaLabel={`${fullHand.contract} hand table`}
@@ -2577,7 +2577,7 @@
               {#if fullHandRunActive}
                 {#each scoreSeats as seat}
                   <div>
-                    <span>{scoreSeatRunLabel(seat)} run</span>
+                    <span>{scoreSeatRunLabel(seat)} score</span>
                     <strong>{fullHandRunSeatScores[seat]}</strong>
                   </div>
                 {/each}
@@ -2587,7 +2587,7 @@
             <div class="full-hand-summary compact-run-complete" aria-label={`${fullHand.contract} hand score`}>
               {#each scoreSeats as seat}
                 <div>
-                  <span>{scoreSeatRunLabel(seat)} run</span>
+                  <span>{scoreSeatRunLabel(seat)} score</span>
                   <strong>{fullHandRunSeatScores[seat]}</strong>
                 </div>
               {/each}
@@ -2599,13 +2599,13 @@
           {#if fullHand.status === "complete"}
             {#if fullHandRunIsComplete}
               <div class="lesson-heading">
-                <p class="eyebrow">Run result</p>
+                <p class="eyebrow">Play Barbu</p>
                 <h2>{fullHandRunResultTitle}</h2>
               </div>
 
               <p class="result">{fullHandRunResultSummary}</p>
 
-              <div class="full-hand-run-score" aria-label="Barbu run score">
+              <div class="full-hand-run-score" aria-label="Play Barbu score">
                 {#each fullHandRunStandings as standing}
                   <div>
                     <span>{formatOrdinal(standing.rank)} {scoreSeatLabel(standing.seat)}</span>
@@ -2614,7 +2614,7 @@
                 {/each}
               </div>
 
-              <div class="run-settlement-grid" aria-label="Barbu run settlement">
+              <div class="run-settlement-grid" aria-label="Play Barbu settlement">
                 <div>
                   <span>Your place</span>
                   <strong>{fullHandRunPlayerStanding ? formatOrdinal(fullHandRunPlayerStanding.rank) : "Done"}</strong>
@@ -2628,7 +2628,7 @@
                         fullHandRunBestContract.seatPenalties.You ?? 0
                       )}
                     {:else}
-                      Run complete
+                      Game complete
                     {/if}
                   </strong>
                 </div>
@@ -2647,7 +2647,7 @@
                 </div>
               </div>
 
-              {@render runScorecard("Barbu run results")}
+              {@render runScorecard("Play Barbu results")}
             {:else}
               <div class="lesson-heading">
                 <p class="eyebrow">Result</p>
@@ -2733,7 +2733,7 @@
               <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
               {#if fullHandRunIsComplete}
                 <button class="secondary-action" onclick={() => void replayWeakestRunContract()} type="button">Replay weakest</button>
-                <button class="primary-action" onclick={startBarbuRun} type="button">New run</button>
+                <button class="primary-action" onclick={startBarbuRun} type="button">New game</button>
               {:else}
                 <button class="secondary-action" onclick={() => void startNextFullHand()} type="button">{fullHandNextActionLabel}</button>
                 <button class="primary-action" onclick={() => void replayFullHand()} type="button">Replay</button>
@@ -2759,8 +2759,8 @@
   {:else if appView === "drill"}
     <TablePlaySurface
       mode="play"
-      ariaLabel="Play Barbu game"
-      title="Play Barbu"
+      ariaLabel="Quick drill"
+      title="Quick drill"
       eyebrow={drillSetTitle}
       statusLabel={currentDrill.contract}
       statusValue={`Decision ${drillIndex + 1} of ${activeDrillSteps.length}`}
@@ -2823,7 +2823,7 @@
         <div class="action-row">
           {#if drillCheckedCard}
             <button class="primary-action" onclick={continueDrill} type="button">
-              {drillIndex === activeDrillSteps.length - 1 ? "Finish game" : "Next table"}
+              {drillIndex === activeDrillSteps.length - 1 ? "Finish drill" : "Next table"}
             </button>
           {:else}
             <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
@@ -2839,7 +2839,7 @@
       <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
       <div>
         <p class="eyebrow">{drillSetTitle}</p>
-        <h1>Game complete</h1>
+        <h1>Drill complete</h1>
       </div>
       <div class="contract-status">
         <span>Score</span>
@@ -2880,7 +2880,7 @@
       </div>
 
       {#if recentPlayBarbuAttempts.length}
-        <div class="recent-attempt-list" aria-label="Recent Play Barbu attempts">
+        <div class="recent-attempt-list" aria-label="Recent quick drill attempts">
           <p class="eyebrow">Recent tables</p>
           {#each recentPlayBarbuAttempts as attempt}
             <div>
@@ -2939,7 +2939,7 @@
         <div class="contract-result-list" aria-label="Review contract results">
           <div>
             <span>Ready</span>
-            <strong>Play Barbu</strong>
+            <strong>Quick drill</strong>
             <small>Finish a practice table to unlock review feedback.</small>
           </div>
         </div>
@@ -2962,7 +2962,7 @@
         <button class="secondary-action" onclick={() => void replayReviewWeakContract()} type="button">
           Replay {reviewReplayContract || "table"}
         </button>
-        <button class="secondary-action" onclick={() => void startDailyDrill("generated-drill")} type="button">Play Barbu</button>
+        <button class="secondary-action" onclick={() => void startDailyDrill("generated-drill")} type="button">Quick drill</button>
         <button class="primary-action" onclick={finishPathReview} type="button">Finish review</button>
       </div>
     </section>

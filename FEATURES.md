@@ -29,21 +29,21 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Game catalog with Barbu as the first playable core game and documented varieties kept under their parent game.
 - Barbu table with grouped Learn, Practice, Play, and Reference entry points, including a contract-hand practice chooser.
 - Five-step training path: concept, example, guided trick, practice, review.
-- Play Barbu mode with five quick mixed-contract decisions, immediate feedback, and a compact result.
+- Quick Drill mode with five quick mixed-contract decisions, immediate feedback, and a compact result.
 - No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Positive Tricks full-hand skeletons with deterministic local deals, legal-card play, simple tactical auto opponents, hand scoring, and short per-trick feedback.
 - Generic trick-taking hand engine for deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Positive Tricks as the first contract adapters.
-- Shared table-play surface for Play Barbu and full-hand contracts so active games keep one compact mobile layout.
-- Barbu run v1 with a local sequence through playable full-hand contracts, four-player contract values, per-contract score rows, and a compact run-complete summary.
-- Barbu run contract intro before each hand, where Barbu sets the next contract and the current run score stays visible.
-- Four-player Barbu run score tracking for You, Barbu, Left, and Right.
-- Barbu run settlement summary with four-player placement, best contract, weakest contract, and focused replay.
-- Barbu run scorecard with contract rows, four-player columns, current-contract highlight, pending rows, and totals.
+- Shared table-play surface for quick drills, Play Barbu, and full-hand contracts so active games keep one compact mobile layout.
+- Play Barbu v1 with a local sequence through playable full-hand contracts, four-player contract values, per-contract score rows, and a compact game-complete summary.
+- Play Barbu contract intro before each hand, where Barbu sets the next contract and the current game score stays visible.
+- Four-player Play Barbu score tracking for You, Barbu, Left, and Right.
+- Play Barbu settlement summary with four-player placement, best contract, weakest contract, and focused replay.
+- Play Barbu scorecard with contract rows, four-player columns, current-contract highlight, pending rows, and totals.
 - Local full-hand contract value tracking. Current scoring is still one point per scoring event; full Parlett-style settlement values are a later feature.
 - Compact full-hand result panel with contract result, Barbu/player penalty split, key tricks, replay, and next-contract actions.
-- Training path practice step connected to Play Barbu completion.
-- Review step with latest Play Barbu score, weakest-contract advice, recent attempts, and replay actions.
+- Training path practice step connected to Quick Drill completion.
+- Review step with latest Quick Drill score, weakest-contract advice, recent attempts, and replay actions.
 - Reason-based review advice that turns recent practice tags into one short next-step correction.
-- Local Play Barbu result history with contract-level summaries and focused replay for the weakest contract.
+- Local Quick Drill result history with contract-level summaries and focused replay for the weakest contract.
 - Local course progress for the playable Barbu path.
 - Continue action for the next unfinished step.
 - Completed-course state with review and reset actions.
@@ -55,8 +55,8 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Authored lessons for No Hearts, No Queens, and King of Hearts.
 - Structured outcome metadata for authored guided card choices.
 - Compact outcome labels for guided decisions.
-- Generated No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks Play Barbu set via Rust/Tauri, with multiple local scenario patterns per contract.
-- Browser generated fallback for Play Barbu when Tauri is unavailable.
+- Generated No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks Quick Drill set via Rust/Tauri, with multiple local scenario patterns per contract.
+- Browser generated fallback for Quick Drill when Tauri is unavailable.
 - Playwright smoke tests for catalog, Barbu table, lesson flow, generated fallback, and course-complete behavior.
 
 ## Barbu Contract Roadmap
@@ -66,7 +66,7 @@ Barbu should be presented as one core game first, then as documented teaching mo
 Product layers:
 
 - **Core Barbu**: Parlett baseline for object, players, cards, deal, play, contracts, scoring, and full-game settlement.
-- **App teaching modes**: guided lessons, contract-hand practice, Play Barbu quick drills, and Barbu run.
+- **App teaching modes**: guided lessons, quick drills, contract-hand practice, and Play Barbu.
 - **Varieties of play**: documented changes to contract order, scoring, deal customs, or beginner simplifications.
 
 Core contract status:
@@ -113,12 +113,12 @@ These are the next product increments that keep the app coherent.
    - Add stronger tactical feedback after each completed trick.
    - Decide when full hands should enter the learning path instead of living as separate practice.
 
-6. Barbu Run Flow v2
+6. Play Barbu Flow v2
    - Keep contract intros short and score-aware.
    - Clarify fixed order versus chosen/dealer-driven contract order before full settlement scoring.
    - Make Barbu feel like the contract setter without adding long dialogue.
 
-7. Barbu Run Settlement v2
+7. Play Barbu Settlement v2
    - Refine placement copy once full Barbu settlement scoring is implemented.
    - Compare best and worst contracts relative to table strength, not only raw event count.
    - Connect focused replay back into review history.
