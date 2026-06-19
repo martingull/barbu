@@ -4,7 +4,7 @@ An iPhone-first card-game app for learning, practicing, and exploring classic ca
 
 The product concept is that the player learns by sitting down against Barbu, a King of Cards figure who introduces games, sets contracts, reacts to play, and raises the difficulty over time. Barbu should function as a coach and opponent: enough personality to give the app identity, but never at the expense of clear rules, fast practice, and accurate feedback.
 
-This is intended as a real App Store product, not a throwaway experiment. The codebase should keep product quality, automated verification, and future monetization in mind from the start.
+This is intended as a real mobile app-store product, not a throwaway experiment. The first distribution barrier is Apple App Store and Google Play readiness, so product decisions should prioritize mobile usability, automated verification, and future monetization from the start.
 
 ## Learning Model
 
@@ -42,7 +42,7 @@ The app shell is intentionally separate from `barbu-core` so rules can be tested
 
 ```text
 crates/barbu-core/   Card model, trick-taking rules, scoring, lesson primitives
-src-tauri/           Tauri mobile/desktop shell
+src-tauri/           Tauri mobile app shell
 src/                 Svelte app UI and authored lesson data
 content/             Structured game and lesson content
 ```
@@ -59,6 +59,7 @@ content/             Structured game and lesson content
 - Barbu run v1 starts a local sequence through the playable full-hand contracts, tracks four-player penalty totals, and ends with a compact score summary.
 - Barbu run contract intro before each hand so Barbu sets the next contract, shows the target, and keeps the current run score visible.
 - Barbu run score tracking now follows all four seats: You, Barbu, Left, and Right.
+- Barbu run settlement now ranks the four seats, names the player's best and weakest contract, and offers a focused replay.
 - Compact full-hand result panel with contract result, Barbu/player penalty split, key tricks, replay, and next-contract actions.
 - The training path practice step launches Play Barbu and marks the path step complete after a finished table.
 - Review step with latest Play Barbu score, weakest-contract advice, recent attempts, and replay actions.
@@ -86,7 +87,7 @@ task verify
 task dev
 ```
 
-`task dev` runs the browser version. Generated drills require the Tauri runtime, so use `task tauri:dev` when testing Rust-backed app commands.
+`task dev` runs the browser version for fast local iteration. Generated drills require the Tauri runtime, so use `task tauri:dev` when testing Rust-backed app commands.
 
 For iOS simulator/device work, install the Tauri mobile prerequisites and use:
 
@@ -110,7 +111,7 @@ Current automated coverage:
 
 - Rust unit tests for cards, trick-taking, scoring, fixed guided tricks, and generated follow-suit drills.
 - Frontend production build.
-- Playwright browser smoke tests for the catalog, Barbu table, lesson flow, and generated-practice fallback on iPhone XR and desktop Chrome.
+- Playwright browser smoke tests for the catalog, Barbu table, lesson flow, generated-practice fallback, and no-scroll table behavior on an iPhone XR viewport.
 - Tauri app crate check.
 
 Next testing layers to add:

@@ -45,7 +45,7 @@ tasks:
       - tauri:check
 
   tauri:dev:
-    desc: Run the Tauri desktop development app
+    desc: Run the Tauri development app
     cmds:
       - npm run tauri:dev
 

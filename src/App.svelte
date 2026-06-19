@@ -149,6 +149,12 @@
     seatPenalties: Record<Seat, number>;
   };
 
+  type RunStanding = {
+    rank: number;
+    seat: Seat;
+    score: number;
+  };
+
   type RunContractIntro = {
     title: string;
     target: string;
@@ -547,6 +553,7 @@
   let fullHand: FullHandState | null = null;
   let fullHandSelectedCardId = "";
   let fullHandError = "";
+  let fullHandReviewTrickCount = 0;
   let usingBrowserFullHand = false;
   let lastFullHandTapCardId = "";
   let lastFullHandTapAt = 0;
@@ -608,12 +615,22 @@
   $: fullHandLegalCardIds = new Set(fullHand?.legalCardIds ?? []);
   $: fullHandSelectedCard = fullHand?.playerHand.find((card) => card.id === fullHandSelectedCardId);
   $: fullHandLastCompletedTrick = fullHand?.completedTricks[fullHand.completedTricks.length - 1];
+  $: fullHandReviewTrick =
+    fullHand && fullHandReviewTrickCount > 0 ? fullHand.completedTricks[fullHandReviewTrickCount - 1] : undefined;
+  $: fullHandIsReviewingTrick = Boolean(
+    fullHandReviewTrick && fullHand?.status === "in_progress" && fullHand.completedTricks.length === fullHandReviewTrickCount
+  );
   $: fullHandLastFeedback = fullHandLastCompletedTrick ? fullHandTrickFeedback(fullHandLastCompletedTrick) : "";
-  $: fullHandVisibleTableCards = fullHand?.currentTrick.length
+  $: fullHandReviewFeedback = fullHandReviewTrick ? fullHandTrickFeedback(fullHandReviewTrick) : "";
+  $: fullHandVisibleTableCards = fullHandIsReviewingTrick && fullHandReviewTrick
+    ? fullHandReviewTrick.cards
+    : fullHand?.currentTrick.length
     ? fullHand.currentTrick
-    : (fullHandLastCompletedTrick?.cards ?? []);
+    : fullHand?.status === "complete"
+      ? (fullHandLastCompletedTrick?.cards ?? [])
+      : [];
   $: fullHandPendingBySeat =
-    fullHand?.status === "in_progress" && fullHand.currentPlayer === "You" && fullHand.currentTrick.length < 4
+    !fullHandIsReviewingTrick && fullHand?.status === "in_progress" && fullHand.currentPlayer === "You" && fullHand.currentTrick.length < 4
       ? { You: "You" }
       : {};
   $: fullHandContractMeta = fullHandMeta(fullHand?.contract ?? "No Hearts");
@@ -636,15 +653,15 @@
     .map((contract) => fullHandRunResults.find((result) => result.contract === contract))
     .filter((result): result is FullHandRunResult => Boolean(result));
   $: fullHandRunSeatPenalties = runSeatPenalties(fullHandRunResults);
-  $: fullHandRunTotalPenalty = fullHandRunSeatPenalties.You;
-  $: fullHandRunBarbuPenalty = fullHandRunSeatPenalties.Tutor;
-  $: fullHandRunPenaltyTotal = fullHandContracts.reduce((total, contract) => total + fullHandMeta(contract).penaltyTotal, 0);
+  $: fullHandRunStandings = runStandings(fullHandRunSeatPenalties);
+  $: fullHandRunPlayerStanding = fullHandRunStandings.find((standing) => standing.seat === "You");
+  $: fullHandRunBestContract = runBestContract(fullHandRunOrderedResults);
+  $: fullHandRunWeakestContract = runWeakestContract(fullHandRunOrderedResults);
   $: fullHandRunIsComplete = fullHandRunActive && fullHandRunResults.length >= fullHandContracts.length;
-  $: fullHandRunResultTitle = fullHandRunTotalPenalty === 0 ? "Clean run" : "Run complete";
+  $: fullHandRunResultTitle = fullHandRunIsComplete ? runResultHeading(fullHandRunStandings) : "Run complete";
   $: fullHandRunResultSummary = fullHandRunIsComplete
-    ? `${fullHandRunScoreLeader} after ${fullHandRunResults.length} contracts. Lower penalties win the table.`
+    ? runResultSummary(fullHandRunStandings, fullHandRunResults.length)
     : "";
-  $: fullHandRunScoreLeader = runScoreLeader(fullHandRunSeatPenalties);
   $: fullHandRunStatusLabel =
     fullHandRunIsComplete
       ? "Run complete"
@@ -942,6 +959,7 @@
     const seed = usePracticeSeed();
     fullHandSelectedCardId = "";
     fullHandError = "";
+    fullHandReviewTrickCount = 0;
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
     const metadata = fullHandMeta(contract);
@@ -960,7 +978,7 @@
   }
 
   async function selectFullHandCard(card: Card) {
-    if (!fullHand || fullHand.status === "complete") {
+    if (!fullHand || fullHand.status === "complete" || fullHandIsReviewingTrick) {
       return;
     }
 
@@ -977,14 +995,15 @@
   }
 
   async function playFullHandCard(cardId = fullHandSelectedCard?.id) {
-    if (!fullHand || !cardId || !fullHandLegalCardIds.has(cardId)) {
+    if (!fullHand || fullHandIsReviewingTrick || !cardId || !fullHandLegalCardIds.has(cardId)) {
       return;
     }
 
     fullHandError = "";
+    const completedTrickCount = fullHand.completedTricks.length;
 
     if (usingBrowserFullHand) {
-      fullHand = playBrowserFullHand(fullHand, cardId);
+      updateFullHandAfterPlayerPlay(playBrowserFullHand(fullHand, cardId), completedTrickCount);
       recordCompletedFullHandRunResult(fullHand);
       fullHandSelectedCardId = "";
       lastFullHandTapCardId = "";
@@ -993,10 +1012,11 @@
     }
 
     try {
-      fullHand = await invoke<FullHandState>(fullHandMeta(fullHand.contract).playCommand, {
+      const nextFullHand = await invoke<FullHandState>(fullHandMeta(fullHand.contract).playCommand, {
         state: fullHand,
         cardId
       });
+      updateFullHandAfterPlayerPlay(nextFullHand, completedTrickCount);
       recordCompletedFullHandRunResult(fullHand);
       fullHandSelectedCardId = "";
       lastFullHandTapCardId = "";
@@ -1004,6 +1024,25 @@
     } catch (error) {
       fullHandError = typeof error === "string" ? error : "That card could not be played.";
     }
+  }
+
+  function updateFullHandAfterPlayerPlay(nextFullHand: FullHandState, previousCompletedTrickCount: number) {
+    fullHand = nextFullHand;
+    fullHandReviewTrickCount =
+      nextFullHand.status === "in_progress" && nextFullHand.completedTricks.length > previousCompletedTrickCount
+        ? nextFullHand.completedTricks.length
+        : 0;
+  }
+
+  function continueFullHandAfterTrick() {
+    if (!fullHandIsReviewingTrick) {
+      return;
+    }
+
+    fullHandReviewTrickCount = 0;
+    fullHandSelectedCardId = "";
+    lastFullHandTapCardId = "";
+    lastFullHandTapAt = 0;
   }
 
   function startNoHeartsHand() {
@@ -1080,6 +1119,14 @@
     void startFullHand(fullHand.contract);
   }
 
+  function replayWeakestRunContract() {
+    if (!fullHandRunWeakestContract) {
+      return;
+    }
+
+    void startFullHand(fullHandRunWeakestContract.contract);
+  }
+
   function recordCompletedFullHandRunResult(state: FullHandState | null) {
     if (!fullHandRunActive || !state || state.status !== "complete") {
       return;
@@ -1138,18 +1185,103 @@
     return seat === "You" ? "Your" : scoreSeatLabel(seat);
   }
 
-  function runScoreLeader(scores: Record<Seat, number>) {
+  function runStandings(scores: Record<Seat, number>): RunStanding[] {
     const orderedScores = scoreSeats
       .map((seat) => ({ seat, score: scores[seat] }))
       .sort((left, right) => left.score - right.score);
-    const leader = orderedScores[0];
-    const second = orderedScores[1];
+    let previousScore = -1;
+    let previousRank = 0;
 
-    if (!leader || !second || leader.score === second.score) {
-      return "The table is level";
+    return orderedScores.map((standing, index) => {
+      const rank = index > 0 && standing.score === previousScore ? previousRank : index + 1;
+      previousScore = standing.score;
+      previousRank = rank;
+
+      return {
+        ...standing,
+        rank
+      };
+    });
+  }
+
+  function runResultHeading(standings: RunStanding[]) {
+    const player = standings.find((standing) => standing.seat === "You");
+
+    if (!player) {
+      return "Run complete";
     }
 
-    return `${scoreSeatLabel(leader.seat)} leads by ${second.score - leader.score}`;
+    if (player.rank === 1) {
+      const tiedWinners = standings.filter((standing) => standing.rank === 1);
+      return tiedWinners.length > 1 ? "You tied for 1st" : "You won the run";
+    }
+
+    return `You finished ${formatOrdinal(player.rank)}`;
+  }
+
+  function runResultSummary(standings: RunStanding[], contractsPlayed: number) {
+    const leader = standings[0];
+    const player = standings.find((standing) => standing.seat === "You");
+
+    if (!leader || !player) {
+      return `Run complete after ${contractsPlayed} contracts. Lower penalties win the table.`;
+    }
+
+    if (player.rank === 1) {
+      return `You took ${player.score} penalties across ${contractsPlayed} contracts. Lower penalties win the table.`;
+    }
+
+    return `${scoreSeatLabel(leader.seat)} won with ${leader.score}. You took ${player.score} across ${contractsPlayed} contracts.`;
+  }
+
+  function formatOrdinal(value: number) {
+    if (value === 1) {
+      return "1st";
+    }
+    if (value === 2) {
+      return "2nd";
+    }
+    if (value === 3) {
+      return "3rd";
+    }
+
+    return `${value}th`;
+  }
+
+  function runBestContract(results: FullHandRunResult[]) {
+    return [...results].sort((left, right) => {
+      const leftPenalty = left.seatPenalties.You ?? 0;
+      const rightPenalty = right.seatPenalties.You ?? 0;
+
+      if (leftPenalty !== rightPenalty) {
+        return leftPenalty - rightPenalty;
+      }
+
+      return runContractRelativeScore(left) - runContractRelativeScore(right);
+    })[0];
+  }
+
+  function runWeakestContract(results: FullHandRunResult[]) {
+    return [...results].sort((left, right) => {
+      const leftPenalty = left.seatPenalties.You ?? 0;
+      const rightPenalty = right.seatPenalties.You ?? 0;
+
+      if (leftPenalty !== rightPenalty) {
+        return rightPenalty - leftPenalty;
+      }
+
+      return runContractRelativeScore(right) - runContractRelativeScore(left);
+    })[0];
+  }
+
+  function runContractRelativeScore(result: FullHandRunResult) {
+    const playerPenalty = result.seatPenalties.You ?? 0;
+    const tableAverage =
+      scoreSeats
+        .filter((seat) => seat !== "You")
+        .reduce((total, seat) => total + (result.seatPenalties[seat] ?? 0), 0) / 3;
+
+    return playerPenalty - tableAverage;
   }
 
   function fullHandCardClasses(card: Card) {
@@ -2258,6 +2390,7 @@
         tableCards={fullHandVisibleTableCards}
         panelAriaLabel={`${fullHand.contract} hand decision`}
         onBack={openBarbuTable}
+        onSurfaceClick={fullHandIsReviewingTrick ? continueFullHandAfterTrick : undefined}
       >
         {#snippet summary()}
           {#if !fullHandRunIsComplete}
@@ -2306,12 +2439,45 @@
               <p class="result">{fullHandRunResultSummary}</p>
 
               <div class="full-hand-run-score" aria-label="Barbu run score">
-                {#each scoreSeats as seat}
+                {#each fullHandRunStandings as standing}
                   <div>
-                    <span>{scoreSeatLabel(seat)}</span>
-                    <strong>{fullHandRunSeatPenalties[seat]}</strong>
+                    <span>{formatOrdinal(standing.rank)} {scoreSeatLabel(standing.seat)}</span>
+                    <strong>{standing.score}</strong>
                   </div>
                 {/each}
+              </div>
+
+              <div class="run-settlement-grid" aria-label="Barbu run settlement">
+                <div>
+                  <span>Your place</span>
+                  <strong>{fullHandRunPlayerStanding ? formatOrdinal(fullHandRunPlayerStanding.rank) : "Done"}</strong>
+                </div>
+                <div>
+                  <span>Best contract</span>
+                  <strong>
+                    {#if fullHandRunBestContract}
+                      {fullHandRunBestContract.contract}: {formatContractPenalty(
+                        fullHandRunBestContract.contract,
+                        fullHandRunBestContract.seatPenalties.You ?? 0
+                      )}
+                    {:else}
+                      Run complete
+                    {/if}
+                  </strong>
+                </div>
+                <div>
+                  <span>Practice next</span>
+                  <strong>
+                    {#if fullHandRunWeakestContract}
+                      {fullHandRunWeakestContract.contract}: {formatContractPenalty(
+                        fullHandRunWeakestContract.contract,
+                        fullHandRunWeakestContract.seatPenalties.You ?? 0
+                      )}
+                    {:else}
+                      Replay a hand
+                    {/if}
+                  </strong>
+                </div>
               </div>
 
               <div class="full-hand-run-list" aria-label="Barbu run results">
@@ -2350,6 +2516,16 @@
                 </div>
               </div>
             {/if}
+          {:else if fullHandIsReviewingTrick}
+            <div class="lesson-heading">
+              <p class="eyebrow">Trick complete</p>
+              <h2>Read the table</h2>
+            </div>
+
+            <p class:warning={fullHandReviewTrick?.outcome === "captured_penalty"} class="outcome">
+              {fullHandReviewFeedback}
+            </p>
+            <p class="explanation">Left's card is on the table. Tap the table or press Next trick when you are ready.</p>
           {:else}
             <div class="lesson-heading">
               <p class="eyebrow">{usingBrowserFullHand ? "Local browser hand" : "Rust hand"}</p>
@@ -2396,12 +2572,15 @@
             {#if fullHand.status === "complete"}
               <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
               {#if fullHandRunIsComplete}
-                <button class="secondary-action" onclick={() => void replayFullHand()} type="button">Replay last</button>
+                <button class="secondary-action" onclick={() => void replayWeakestRunContract()} type="button">Replay weakest</button>
                 <button class="primary-action" onclick={startBarbuRun} type="button">New run</button>
               {:else}
                 <button class="secondary-action" onclick={() => void startNextFullHand()} type="button">{fullHandNextActionLabel}</button>
                 <button class="primary-action" onclick={() => void replayFullHand()} type="button">Replay</button>
               {/if}
+            {:else if fullHandIsReviewingTrick}
+              <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
+              <button class="primary-action" onclick={continueFullHandAfterTrick} type="button">Next trick</button>
             {:else}
               <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
               <button

@@ -11,6 +11,7 @@
     eyebrow?: string;
     mode?: TablePlayMode;
     onBack: () => void;
+    onSurfaceClick?: () => void;
     panel: Snippet;
     panelAriaLabel: string;
     pendingBySeat?: Partial<Record<Seat, string>>;
@@ -30,6 +31,7 @@
     eyebrow = "",
     mode = "play",
     onBack,
+    onSurfaceClick,
     panel,
     panelAriaLabel,
     pendingBySeat = {},
@@ -42,11 +44,21 @@
     title,
     track
   }: Props = $props();
+
+  function handleSurfaceKeydown(event: KeyboardEvent) {
+    if (!onSurfaceClick || (event.key !== "Enter" && event.key !== " ")) {
+      return;
+    }
+
+    event.preventDefault();
+    onSurfaceClick();
+  }
 </script>
 
 <header
   class:compact-play={mode === "play"}
   class:compact-result={mode === "result"}
+  class:table-hidden={!showTable}
   class="topbar table-play-topbar"
   aria-label={title}
 >
@@ -79,7 +91,20 @@
   {/if}
 
   {#if showTable}
-    <CardTable ariaLabel={tableAriaLabel} {pendingBySeat} tableCards={tableCards} />
+    {#if onSurfaceClick}
+      <div
+        class="table-tap-target"
+        onclick={onSurfaceClick}
+        onkeydown={handleSurfaceKeydown}
+        role="button"
+        tabindex="0"
+        aria-label="Continue to next trick"
+      >
+        <CardTable ariaLabel={tableAriaLabel} {pendingBySeat} tableCards={tableCards} />
+      </div>
+    {:else}
+      <CardTable ariaLabel={tableAriaLabel} {pendingBySeat} tableCards={tableCards} />
+    {/if}
   {/if}
 
   <section class="lesson-panel table-play-panel" aria-label={panelAriaLabel}>

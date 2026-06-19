@@ -36,6 +36,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Barbu run v1 with a local sequence through playable full-hand contracts, four-player penalty totals, per-contract score rows, and a compact run-complete summary.
 - Barbu run contract intro before each hand, where Barbu sets the next contract and the current run score stays visible.
 - Four-player Barbu run score tracking for You, Barbu, Left, and Right.
+- Barbu run settlement summary with four-player placement, best contract, weakest contract, and focused replay.
 - Local full-hand contract penalty tracking. Full Barbu settlement scoring is still a later feature.
 - Compact full-hand result panel with contract result, Barbu/player penalty split, key tricks, replay, and next-contract actions.
 - Training path practice step connected to Play Barbu completion.
@@ -111,10 +112,10 @@ These are the next product increments that keep the app coherent.
    - Clarify fixed order versus chosen/dealer-driven contract order before full settlement scoring.
    - Make Barbu feel like the contract setter without adding long dialogue.
 
-6. Barbu Run Settlement v1
-   - Classify win/loss/tie from the four-player run table.
-   - Show best and worst contract from the completed run.
-   - Offer one focused replay action for the weakest contract.
+6. Barbu Run Settlement v2
+   - Refine placement copy once full Barbu settlement scoring is implemented.
+   - Compare best and worst contracts relative to table strength, not only raw penalty count.
+   - Connect focused replay back into review history.
 
 7. Progress Model v2
    - Store completion by lesson node, not only path step.

@@ -24,12 +24,6 @@ export default defineConfig({
       use: {
         ...devices["iPhone XR"]
       }
-    },
-    {
-      name: "desktop-chrome",
-      use: {
-        ...devices["Desktop Chrome"]
-      }
     }
   ]
 });

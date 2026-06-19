@@ -174,7 +174,7 @@ Current role:
 - Runs through playable full-hand contracts.
 - Shows a compact contract intro before each hand.
 - Tracks running penalty totals for You, Barbu, Left, and Right.
-- Ends with a compact score summary and per-contract rows.
+- Ends with four-player placement, best and weakest contracts, focused replay, and per-contract rows.
 
 Near-term direction:
 
@@ -182,6 +182,7 @@ Near-term direction:
 - Add the remaining contracts.
 - Add full Barbu settlement scoring when contract coverage is broad enough.
 - Clarify whether contract order remains fixed, chosen, or dealer-driven.
+- Feed weakest-contract replay into the broader review loop.
 
 Should not contain:
 

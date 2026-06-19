@@ -14,6 +14,18 @@ async function startContractHand(page: Page, contract: string) {
   await page.getByLabel("Contract hand choices").getByRole("button", { name: new RegExp(`^${contract}\\b`) }).click();
 }
 
+async function playFullHandDecision(page: Page) {
+  await page.locator(".full-hand-card.legal").first().dblclick();
+
+  const nextTrick = page.getByRole("button", { name: "Next trick", exact: true });
+  try {
+    await nextTrick.waitFor({ state: "visible", timeout: 500 });
+    await nextTrick.click();
+  } catch {
+    // The last card of the hand goes straight to the result panel.
+  }
+}
+
 test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await page.goto("/");
 
@@ -253,7 +265,7 @@ test("Barbu run advances full-hand contracts with a running total", async ({ pag
     await expectNoPageScroll(page);
 
     for (let decision = 0; decision < 13; decision += 1) {
-      await page.locator(".full-hand-card.legal").first().dblclick();
+      await playFullHandDecision(page);
     }
 
     if (index < contracts.length - 1) {
@@ -263,17 +275,21 @@ test("Barbu run advances full-hand contracts with a running total", async ({ pag
     }
   }
 
-  await expect(page.getByRole("heading", { name: /Clean run|Run complete/ })).toBeVisible();
-  await expect(page.getByText("Run complete").first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: /You won the run|You tied for 1st|You finished/ })).toBeVisible();
   await expect(page.getByLabel("Barbu run score")).toContainText("You");
   await expect(page.getByLabel("Barbu run score")).toContainText("Barbu");
   await expect(page.getByLabel("Barbu run score")).toContainText("Left");
   await expect(page.getByLabel("Barbu run score")).toContainText("Right");
+  await expect(page.getByLabel("Barbu run settlement")).toContainText("Your place");
+  await expect(page.getByLabel("Barbu run settlement")).toContainText("Best contract");
+  await expect(page.getByLabel("Barbu run settlement")).toContainText("Practice next");
   await expect(page.getByLabel("Barbu run results")).toContainText("No Hearts");
   await expect(page.getByLabel("Barbu run results")).toContainText("No Tricks");
-  await expect(page.getByRole("button", { name: "Replay last" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Replay weakest" })).toBeVisible();
   await expect(page.getByRole("button", { name: "New run" })).toBeVisible();
   await expectNoPageScroll(page);
+  await page.getByRole("button", { name: "Replay weakest" }).click();
+  await expect(page.getByRole("heading", { name: /No Hearts hand|No Queens hand|King of Hearts hand|No Last Two hand|No Tricks hand/ })).toBeVisible();
 });
 
 test("No Hearts hand plays through thirteen tricks", async ({ page }, testInfo) => {
@@ -286,12 +302,14 @@ test("No Hearts hand plays through thirteen tricks", async ({ page }, testInfo) 
   await expect(page.getByLabel("No Hearts hand table")).toBeVisible();
   await expectNoPageScroll(page);
 
-  for (let decision = 0; decision < 13; decision += 1) {
-    await page.locator(".full-hand-card.legal").first().dblclick();
+  await page.locator(".full-hand-card.legal").first().dblclick();
+  await expect(page.getByLabel("No Hearts hand decision")).toContainText("Left's card is on the table");
+  await expect(page.getByLabel("No Hearts hand table").locator(".table-card")).toHaveCount(4);
+  await expect(page.locator(".table-play-panel p.outcome").filter({ hasText: /(won the trick|won a clean trick)/ })).toBeVisible();
+  await page.getByRole("button", { name: "Next trick", exact: true }).click();
 
-    if (decision === 0) {
-      await expect(page.locator(".table-play-panel p.outcome").filter({ hasText: /(won the trick|won a clean trick)/ })).toBeVisible();
-    }
+  for (let decision = 1; decision < 13; decision += 1) {
+    await playFullHandDecision(page);
   }
 
   await expect(page.getByRole("heading", { name: /Clean hand|Damage limited|Barbu caught you/ })).toBeVisible();
@@ -316,7 +334,7 @@ test("No Queens hand plays through thirteen tricks", async ({ page }, testInfo) 
   await expectNoPageScroll(page);
 
   for (let decision = 0; decision < 13; decision += 1) {
-    await page.locator(".full-hand-card.legal").first().dblclick();
+    await playFullHandDecision(page);
   }
 
   await expect(page.getByRole("heading", { name: /Clean hand|Damage limited|Barbu caught you/ })).toBeVisible();
@@ -341,7 +359,7 @@ test("King of Hearts hand plays through thirteen tricks", async ({ page }, testI
   await expectNoPageScroll(page);
 
   for (let decision = 0; decision < 13; decision += 1) {
-    await page.locator(".full-hand-card.legal").first().dblclick();
+    await playFullHandDecision(page);
   }
 
   await expect(page.getByRole("heading", { name: /Clean hand|Damage limited|Barbu caught you/ })).toBeVisible();
@@ -368,7 +386,7 @@ test("No Last Two hand plays through thirteen tricks", async ({ page }, testInfo
   await expectNoPageScroll(page);
 
   for (let decision = 0; decision < 13; decision += 1) {
-    await page.locator(".full-hand-card.legal").first().dblclick();
+    await playFullHandDecision(page);
   }
 
   await expect(page.getByRole("heading", { name: /Clean hand|Damage limited|Barbu caught you/ })).toBeVisible();
@@ -396,7 +414,7 @@ test("No Tricks hand plays through thirteen tricks", async ({ page }, testInfo) 
   await expectNoPageScroll(page);
 
   for (let decision = 0; decision < 13; decision += 1) {
-    await page.locator(".full-hand-card.legal").first().dblclick();
+    await playFullHandDecision(page);
   }
 
   await expect(page.getByRole("heading", { name: /Clean hand|Damage limited|Barbu caught you/ })).toBeVisible();
