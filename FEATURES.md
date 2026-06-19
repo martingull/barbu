@@ -30,8 +30,8 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Barbu table with grouped Learn, Practice, Play, and Reference entry points, including a contract-hand practice chooser.
 - Five-step training path: concept, example, guided trick, practice, review.
 - Play Barbu mode with five quick mixed-contract decisions, immediate feedback, and a compact result.
-- No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks full-hand skeletons with deterministic local deals, legal-card play, simple tactical auto opponents, hand scoring, and short per-trick feedback.
-- Generic trick-taking hand engine for deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks as the first contract adapters.
+- No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Positive Tricks full-hand skeletons with deterministic local deals, legal-card play, simple tactical auto opponents, hand scoring, and short per-trick feedback.
+- Generic trick-taking hand engine for deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Positive Tricks as the first contract adapters.
 - Shared table-play surface for Play Barbu and full-hand contracts so active games keep one compact mobile layout.
 - Barbu run v1 with a local sequence through playable full-hand contracts, four-player penalty totals, per-contract score rows, and a compact run-complete summary.
 - Barbu run contract intro before each hand, where Barbu sets the next contract and the current run score stays visible.
@@ -78,7 +78,7 @@ Core contract status:
 | King of Hearts / Barbu | Core | Playable | The app currently uses "King of Hearts" for beginner clarity. |
 | No Last Two | Core | Playable | Guided course, full-hand, and run support exist; generated practice is still later. |
 | No Tricks | Core | Playable | Guided course, full-hand, and run support exist; generated practice is still later. |
-| Positive Tricks | Core candidate | Not built | Verify Parlett's exact treatment before adding rules, scoring, or UI. |
+| Positive Tricks | Core | Playable | Full-hand and run support exist; generated practice and guided course are still later. |
 | Domino | Core candidate | Not built | Likely needs a different play surface; verify baseline first. |
 
 ## Near-Term Roadmap

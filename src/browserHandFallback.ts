@@ -42,6 +42,10 @@ export function startBrowserNoTricksHand(seed: number): FullHandState {
   return startBrowserFullHand("No Tricks", seed);
 }
 
+export function startBrowserPositiveTricksHand(seed: number): FullHandState {
+  return startBrowserFullHand("Positive Tricks", seed);
+}
+
 function startBrowserFullHand(contract: FullHandContract, seed: number): FullHandState {
   const deck = standardDeck();
   const rng = new DeterministicRng(seed);
@@ -93,6 +97,10 @@ export function playBrowserNoLastTwoCard(state: FullHandState, cardId: string): 
 }
 
 export function playBrowserNoTricksCard(state: FullHandState, cardId: string): FullHandState {
+  return playBrowserFullHandCard(state, cardId);
+}
+
+export function playBrowserPositiveTricksCard(state: FullHandState, cardId: string): FullHandState {
   return playBrowserFullHandCard(state, cardId);
 }
 
@@ -212,16 +220,23 @@ function chooseOpponentCard(state: FullHandState) {
   }
 
   if (!led) {
+    if (state.contract === "Positive Tricks") {
+      return highestCard(legal);
+    }
     return lowestCard(legal.filter((card) => !isPenaltyCard(state.contract, card))) ?? lowestCard(legal);
   }
 
   const followsSuit = legal.every((card) => card.suit === led);
 
   if (!followsSuit) {
-    if (state.contract === "No Tricks") {
+    if (state.contract === "No Tricks" || state.contract === "Positive Tricks") {
       return highestCard(legal);
     }
     return highestCard(legal.filter((card) => isPenaltyCard(state.contract, card))) ?? highestCard(legal);
+  }
+
+  if (state.contract === "Positive Tricks") {
+    return lowestCard(legal.filter((card) => cardWouldWinTrick(state, card))) ?? lowestCard(legal);
   }
 
   if (state.contract === "No Tricks") {
@@ -271,7 +286,7 @@ function compareByRankThenSuit(left: Card, right: Card) {
 }
 
 function scoreTrick(state: FullHandState, cards: TableCard[]) {
-  if (state.contract === "No Tricks") {
+  if (state.contract === "No Tricks" || state.contract === "Positive Tricks") {
     return 1;
   }
   if (state.contract === "No Last Two") {
@@ -288,7 +303,7 @@ function scoreTrick(state: FullHandState, cards: TableCard[]) {
 }
 
 function isPenaltyCard(contract: FullHandContract, card: Card) {
-  if (contract === "No Tricks") {
+  if (contract === "No Tricks" || contract === "Positive Tricks") {
     return false;
   }
   if (contract === "No Last Two") {

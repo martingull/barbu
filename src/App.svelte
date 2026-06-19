@@ -6,11 +6,13 @@
     playBrowserNoLastTwoCard,
     playBrowserNoQueensCard,
     playBrowserNoTricksCard,
+    playBrowserPositiveTricksCard,
     startBrowserKingOfHeartsHand,
     startBrowserNoHeartsHand,
     startBrowserNoLastTwoHand,
     startBrowserNoQueensHand,
-    startBrowserNoTricksHand
+    startBrowserNoTricksHand,
+    startBrowserPositiveTricksHand
   } from "./browserHandFallback";
   import { generateBrowserPlayBarbuDrillSteps } from "./browserDrillFallback";
   import CardTable from "./CardTable.svelte";
@@ -205,7 +207,14 @@
   const practiceSeedStorageKey = "barbu.practiceSeed.v1";
   const playBarbuHistoryStorageKey = "barbu.playHistory.v1";
   const maxStoredPlayBarbuAttempts = 8;
-  const fullHandContracts: FullHandContract[] = ["No Hearts", "No Queens", "King of Hearts", "No Last Two", "No Tricks"];
+  const fullHandContracts: FullHandContract[] = [
+    "No Hearts",
+    "No Queens",
+    "King of Hearts",
+    "No Last Two",
+    "No Tricks",
+    "Positive Tricks"
+  ];
   const scoreSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
   const seatByPlayerIndex: Record<number, Seat> = {
     0: "Tutor",
@@ -243,6 +252,12 @@
       target: "Avoid taking control.",
       reason: "This contract turns the whole hand into ducking practice.",
       habit: "Play below the current winner whenever the led suit allows it."
+    },
+    "Positive Tricks": {
+      title: "Now tricks are treasure.",
+      target: "Win tricks.",
+      reason: "Barbu flips the lesson: control is good when the contract rewards tricks.",
+      habit: "Look for safe chances to overtake and keep the lead."
     }
   };
   const outcomeLabels: Record<GuidedCardOutcome | "illegal", string> = {
@@ -561,6 +576,18 @@
   let fullHandRunResults: FullHandRunResult[] = [];
   let pendingRunContract: FullHandContract = fullHandContracts[0];
 
+  function runSeatScores(results: FullHandRunResult[]) {
+    const totals = emptySeatPenalties();
+
+    for (const result of results) {
+      for (const seat of scoreSeats) {
+        totals[seat] += contractRunScore(result.contract, result.seatPenalties[seat] ?? 0);
+      }
+    }
+
+    return totals;
+  }
+
   $: selectedLesson = guidedLessons.find((lesson) => lesson.id === selectedLessonId) ?? guidedLessons[0];
   $: familyLabel = usingGeneratedPractice ? "Hearts" : selectedLesson.family;
   $: gameLabel = usingGeneratedPractice ? "Generated practice" : selectedLesson.game;
@@ -653,7 +680,8 @@
     .map((contract) => fullHandRunResults.find((result) => result.contract === contract))
     .filter((result): result is FullHandRunResult => Boolean(result));
   $: fullHandRunSeatPenalties = runSeatPenalties(fullHandRunResults);
-  $: fullHandRunStandings = runStandings(fullHandRunSeatPenalties);
+  $: fullHandRunSeatScores = runSeatScores(fullHandRunResults);
+  $: fullHandRunStandings = runStandings(fullHandRunSeatScores);
   $: fullHandRunPlayerStanding = fullHandRunStandings.find((standing) => standing.seat === "You");
   $: fullHandRunBestContract = runBestContract(fullHandRunOrderedResults);
   $: fullHandRunWeakestContract = runWeakestContract(fullHandRunOrderedResults);
@@ -905,6 +933,16 @@
         playCommand: "play_no_tricks_hand_card"
       };
     }
+    if (contract === "Positive Tricks") {
+      return {
+        penaltyName: "trick",
+        penaltyPlural: "tricks",
+        penaltyTotal: 13,
+        playedLabel: "tricks won",
+        startCommand: "start_positive_tricks_hand",
+        playCommand: "play_positive_tricks_hand_card"
+      };
+    }
 
     return {
       penaltyName: "heart",
@@ -929,6 +967,9 @@
     if (contract === "No Tricks") {
       return startBrowserNoTricksHand(seed);
     }
+    if (contract === "Positive Tricks") {
+      return startBrowserPositiveTricksHand(seed);
+    }
 
     return startBrowserNoHeartsHand(seed);
   }
@@ -945,6 +986,9 @@
     }
     if (state.contract === "No Tricks") {
       return playBrowserNoTricksCard(state, cardId);
+    }
+    if (state.contract === "Positive Tricks") {
+      return playBrowserPositiveTricksCard(state, cardId);
     }
 
     return playBrowserNoHeartsCard(state, cardId);
@@ -1065,6 +1109,10 @@
     void startFullHand("No Tricks");
   }
 
+  function startPositiveTricksHand() {
+    void startFullHand("Positive Tricks");
+  }
+
   function startBarbuRun() {
     fullHandRunActive = true;
     fullHandRunResults = [];
@@ -1177,6 +1225,10 @@
     return totals;
   }
 
+  function contractRunScore(contract: FullHandContract, value: number) {
+    return contract === "Positive Tricks" ? value : -value;
+  }
+
   function scoreSeatLabel(seat: Seat) {
     return seat === "Tutor" ? "Barbu" : seat;
   }
@@ -1185,10 +1237,18 @@
     return seat === "You" ? "Your" : scoreSeatLabel(seat);
   }
 
+  function scoreSeatResultLabel(seat: Seat) {
+    return `${scoreSeatLabel(seat)} ${fullHand?.contract === "Positive Tricks" ? "won" : "took"}`;
+  }
+
+  function fullHandTrickIsWarning(trick: CompletedHandTrick | undefined) {
+    return fullHand?.contract !== "Positive Tricks" && trick?.outcome === "captured_penalty";
+  }
+
   function runStandings(scores: Record<Seat, number>): RunStanding[] {
     const orderedScores = scoreSeats
       .map((seat) => ({ seat, score: scores[seat] }))
-      .sort((left, right) => left.score - right.score);
+      .sort((left, right) => right.score - left.score);
     let previousScore = -1;
     let previousRank = 0;
 
@@ -1224,14 +1284,14 @@
     const player = standings.find((standing) => standing.seat === "You");
 
     if (!leader || !player) {
-      return `Run complete after ${contractsPlayed} contracts. Lower penalties win the table.`;
+      return `Run complete after ${contractsPlayed} contracts. Higher net score wins the table.`;
     }
 
     if (player.rank === 1) {
-      return `You took ${player.score} penalties across ${contractsPlayed} contracts. Lower penalties win the table.`;
+      return `You finished with ${player.score} after ${contractsPlayed} contracts. Higher net score wins the table.`;
     }
 
-    return `${scoreSeatLabel(leader.seat)} won with ${leader.score}. You took ${player.score} across ${contractsPlayed} contracts.`;
+    return `${scoreSeatLabel(leader.seat)} won with ${leader.score}. You finished with ${player.score} after ${contractsPlayed} contracts.`;
   }
 
   function formatOrdinal(value: number) {
@@ -1250,38 +1310,38 @@
 
   function runBestContract(results: FullHandRunResult[]) {
     return [...results].sort((left, right) => {
-      const leftPenalty = left.seatPenalties.You ?? 0;
-      const rightPenalty = right.seatPenalties.You ?? 0;
+      const leftScore = contractRunScore(left.contract, left.seatPenalties.You ?? 0);
+      const rightScore = contractRunScore(right.contract, right.seatPenalties.You ?? 0);
 
-      if (leftPenalty !== rightPenalty) {
-        return leftPenalty - rightPenalty;
-      }
-
-      return runContractRelativeScore(left) - runContractRelativeScore(right);
-    })[0];
-  }
-
-  function runWeakestContract(results: FullHandRunResult[]) {
-    return [...results].sort((left, right) => {
-      const leftPenalty = left.seatPenalties.You ?? 0;
-      const rightPenalty = right.seatPenalties.You ?? 0;
-
-      if (leftPenalty !== rightPenalty) {
-        return rightPenalty - leftPenalty;
+      if (leftScore !== rightScore) {
+        return rightScore - leftScore;
       }
 
       return runContractRelativeScore(right) - runContractRelativeScore(left);
     })[0];
   }
 
+  function runWeakestContract(results: FullHandRunResult[]) {
+    return [...results].sort((left, right) => {
+      const leftScore = contractRunScore(left.contract, left.seatPenalties.You ?? 0);
+      const rightScore = contractRunScore(right.contract, right.seatPenalties.You ?? 0);
+
+      if (leftScore !== rightScore) {
+        return leftScore - rightScore;
+      }
+
+      return runContractRelativeScore(left) - runContractRelativeScore(right);
+    })[0];
+  }
+
   function runContractRelativeScore(result: FullHandRunResult) {
-    const playerPenalty = result.seatPenalties.You ?? 0;
+    const playerScore = contractRunScore(result.contract, result.seatPenalties.You ?? 0);
     const tableAverage =
       scoreSeats
         .filter((seat) => seat !== "You")
-        .reduce((total, seat) => total + (result.seatPenalties[seat] ?? 0), 0) / 3;
+        .reduce((total, seat) => total + contractRunScore(result.contract, result.seatPenalties[seat] ?? 0), 0) / 3;
 
-    return playerPenalty - tableAverage;
+    return playerScore - tableAverage;
   }
 
   function fullHandCardClasses(card: Card) {
@@ -1295,6 +1355,12 @@
 
   function fullHandTrickFeedback(trick: CompletedHandTrick) {
     const penaltyText = `${trick.penalty} ${trick.penalty === 1 ? fullHandPenaltyName : fullHandPenaltyPlural}`;
+
+    if (fullHand?.contract === "Positive Tricks") {
+      return trick.winner === "You"
+        ? `You won the trick and banked ${penaltyText}. Good: this contract rewards control.`
+        : `${trick.winner} won the trick and banked ${penaltyText}. Look for a chance to overtake next time.`;
+    }
 
     if (trick.outcome === "captured_penalty") {
       return `You won the trick and took ${penaltyText}. Risky: your card became the highest card in the led suit.`;
@@ -1327,6 +1393,9 @@
   }
 
   function fullHandResultHeading(hand: FullHandState) {
+    if (hand.contract === "Positive Tricks") {
+      return hand.playerPenalty >= 5 ? "Strong trick count" : "Keep fighting for tricks";
+    }
     if (hand.playerPenalty === 0) {
       return "Clean hand";
     }
@@ -1337,6 +1406,12 @@
   }
 
   function fullHandResultText(hand: FullHandState) {
+    if (hand.contract === "Positive Tricks") {
+      return `You won ${formatFullHandPenalty(hand.playerPenalty)}. The table won ${formatFullHandPenalty(
+        hand.totalPenalty - hand.playerPenalty
+      )}.`;
+    }
+
     if (hand.playerPenalty === 0) {
       return hand.contract === "King of Hearts"
         ? "You kept KH out of your tricks."
@@ -1964,7 +2039,7 @@
     <div class="run-scorecard-row total">
       <span>Total</span>
       {#each scoreSeats as seat}
-        <strong>{fullHandRunSeatPenalties[seat]}</strong>
+        <strong>{fullHandRunSeatScores[seat]}</strong>
       {/each}
     </div>
   </div>
@@ -2171,6 +2246,10 @@
         <button class="practice-choice" onclick={() => void startNoTricksHand()} type="button">
           <span>No Tricks</span>
           <strong>Avoid every trick</strong>
+        </button>
+        <button class="practice-choice" onclick={() => void startPositiveTricksHand()} type="button">
+          <span>Positive Tricks</span>
+          <strong>Win tricks on purpose</strong>
         </button>
       </div>
     </section>
@@ -2386,7 +2465,7 @@
           {#each scoreSeats as seat}
             <div>
               <span>{scoreSeatLabel(seat)}</span>
-              <strong>{fullHandRunSeatPenalties[seat]}</strong>
+              <strong>{fullHandRunSeatScores[seat]}</strong>
             </div>
           {/each}
         </div>
@@ -2446,7 +2525,7 @@
                 {#each scoreSeats as seat}
                   <div>
                     <span>{scoreSeatRunLabel(seat)} run</span>
-                    <strong>{fullHandRunSeatPenalties[seat]}</strong>
+                    <strong>{fullHandRunSeatScores[seat]}</strong>
                   </div>
                 {/each}
               {/if}
@@ -2456,7 +2535,7 @@
               {#each scoreSeats as seat}
                 <div>
                   <span>{scoreSeatRunLabel(seat)} run</span>
-                  <strong>{fullHandRunSeatPenalties[seat]}</strong>
+                  <strong>{fullHandRunSeatScores[seat]}</strong>
                 </div>
               {/each}
             </div>
@@ -2527,7 +2606,7 @@
               <div class="full-hand-result-grid" aria-label={`${fullHand.contract} result summary`}>
                 {#each scoreSeats as seat}
                   <div>
-                    <span>{scoreSeatLabel(seat)} took</span>
+                    <span>{scoreSeatResultLabel(seat)}</span>
                     <strong>{formatFullHandPenalty(fullHandSeatPenalties[seat])}</strong>
                   </div>
                 {/each}
@@ -2550,7 +2629,7 @@
               <h2>Read the table</h2>
             </div>
 
-            <p class:warning={fullHandReviewTrick?.outcome === "captured_penalty"} class="outcome">
+            <p class:warning={fullHandTrickIsWarning(fullHandReviewTrick)} class="outcome">
               {fullHandReviewFeedback}
             </p>
             <p class="explanation">Left's card is on the table. Tap the table or press Next trick when you are ready.</p>
@@ -2562,7 +2641,7 @@
 
             <p class="result">{fullHand.prompt}</p>
             {#if fullHandLastFeedback}
-              <p class:warning={fullHandLastCompletedTrick?.outcome === "captured_penalty"} class="outcome">
+              <p class:warning={fullHandTrickIsWarning(fullHandLastCompletedTrick)} class="outcome">
                 {fullHandLastFeedback}
               </p>
             {/if}

@@ -53,8 +53,8 @@ content/             Structured game and lesson content
 - The catalog stays focused on core games; varieties and teaching modes stay attached to their parent game screens.
 - A Barbu table screen with grouped Learn, Practice, Play, and Reference entry points, a contract-hand practice chooser, and a five-step training path.
 - Play Barbu mode with five quick mixed-contract decisions, immediate feedback, and a compact result; Tauri builds use Rust-generated scenarios, while browser runs use a local generated fallback.
-- No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks full-hand skeletons with deterministic local deals, legal-card play, simple tactical auto opponents, hand scoring, and short per-trick feedback.
-- Generic trick-taking hand engine for full-hand deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks as the first contract adapters.
+- No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Positive Tricks full-hand skeletons with deterministic local deals, legal-card play, simple tactical auto opponents, hand scoring, and short per-trick feedback.
+- Generic trick-taking hand engine for full-hand deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Positive Tricks as the first contract adapters.
 - Shared table-play surface for Play Barbu and full-hand contracts so active games use one compact mobile layout instead of contract-specific screens.
 - Barbu run v1 starts a local sequence through the playable full-hand contracts, tracks four-player penalty totals, and ends with a compact score summary.
 - Barbu run contract intro before each hand so Barbu sets the next contract, shows the target, and keeps the current run score visible.

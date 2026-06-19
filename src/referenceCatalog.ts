@@ -153,6 +153,13 @@ export const referenceCatalog: GameReference[] = [
         objective: "Avoid winning tricks.",
         scoring: "Each trick belongs to its winner as a penalty.",
         lesson: "Low cards and ducking matter because taking control of any trick costs you."
+      },
+      {
+        id: "positive-tricks",
+        title: "Positive Tricks",
+        objective: "Win tricks.",
+        scoring: "Each trick won counts for the player who wins it.",
+        lesson: "This contract flips the avoidance habit: control is useful when tricks are worth taking."
       }
     ],
     contractRoadmap: [
@@ -194,9 +201,9 @@ export const referenceCatalog: GameReference[] = [
       {
         id: "positive-tricks",
         title: "Positive Tricks",
-        coreStatus: "Core candidate",
-        appStatus: "Not built",
-        note: "Verify Parlett's exact contract treatment before adding rules, scoring, or UI."
+        coreStatus: "Core",
+        appStatus: "Playable",
+        note: "Reference, full hand, and Barbu run support exist; generated practice and guided course are still later."
       },
       {
         id: "domino",

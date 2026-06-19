@@ -147,7 +147,7 @@ Purpose: play one contract hand at a time.
 
 Current role:
 
-- No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks.
+- No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Positive Tricks.
 - Shared table surface.
 - Local contract penalty tracking.
 - Compact result panel.
