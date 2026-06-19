@@ -147,9 +147,10 @@ Purpose: play one contract hand at a time.
 
 Current role:
 
-- No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps.
+- No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino.
 - Shared table surface.
 - Local contract value tracking for avoidance and positive-trick contracts.
+- Domino uses the same active-game shell with a layout grid instead of a trick table.
 - Compact result panel.
 
 Future role:

@@ -14,6 +14,7 @@
     startBrowserNoTricksHand,
     startBrowserPositiveTricksHand
   } from "./browserHandFallback";
+  import { passBrowserDominoTurn, playBrowserDominoCard, startBrowserDominoHand } from "./browserDominoFallback";
   import { generateBrowserPlayBarbuDrillSteps } from "./browserDrillFallback";
   import CardTable from "./CardTable.svelte";
   import TablePlaySurface from "./TablePlaySurface.svelte";
@@ -22,6 +23,7 @@
   import type {
     Card,
     CompletedHandTrick,
+    DominoHandState,
     FullHandContract,
     FullHandState,
     GeneratedDrillSet,
@@ -46,6 +48,7 @@
     | "drillResult"
     | "runContractIntro"
     | "fullHand"
+    | "dominoHand"
     | "pathReview";
 
   type PathAction = "lesson" | "generated" | "review" | "planned";
@@ -220,7 +223,8 @@
     "King of Hearts",
     "No Last Two",
     "No Tricks",
-    "Hearts Trumps"
+    "Hearts Trumps",
+    "Domino"
   ];
   const scoreSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
   const seatByPlayerIndex: Record<number, Seat> = {
@@ -265,6 +269,12 @@
       target: "Win tricks with heart control.",
       reason: "Barbu flips the table: hearts now outrank the led suit and tricks are worth points.",
       habit: "Track whether a heart can cut the trick before you spend a high card."
+    },
+    Domino: {
+      title: "Build the layout from sevens.",
+      target: "Go out before the table.",
+      reason: "Barbu changes the surface: no tricks, just legal adjacent placements in each suit.",
+      habit: "Open a suit with a seven, then extend the low or high end when you can."
     }
   };
   const outcomeLabels: Record<GuidedCardOutcome | "illegal", string> = {
@@ -573,10 +583,14 @@
   let usingGeneratedPractice = false;
   let generatedPracticeError = "";
   let fullHand: FullHandState | null = null;
+  let dominoHand: DominoHandState | null = null;
   let fullHandSelectedCardId = "";
+  let dominoSelectedCardId = "";
   let fullHandError = "";
+  let dominoError = "";
   let fullHandReviewTrickCount = 0;
   let usingBrowserFullHand = false;
+  let usingBrowserDomino = false;
   let lastFullHandTapCardId = "";
   let lastFullHandTapAt = 0;
   let fullHandRunActive = false;
@@ -679,7 +693,8 @@
   $: fullHandResultSummary = fullHand ? fullHandResultText(fullHand) : "";
   $: fullHandBestTrick = fullHand ? fullHandBestTrickLabel(fullHand) : "";
   $: fullHandWorstTrick = fullHand ? fullHandWorstTrickLabel(fullHand) : "";
-  $: fullHandRunCurrentIndex = fullHand ? fullHandContracts.indexOf(fullHand.contract) : -1;
+  $: activeRunContract = fullHand?.contract ?? dominoHand?.contract;
+  $: fullHandRunCurrentIndex = activeRunContract ? fullHandContracts.indexOf(activeRunContract) : -1;
   $: pendingRunContractIndex = fullHandContracts.indexOf(pendingRunContract);
   $: pendingRunContractIntro = runContractIntros[pendingRunContract];
   $: pendingRunStatusLabel = `Contract ${pendingRunContractIndex + 1} of ${fullHandContracts.length}`;
@@ -711,14 +726,30 @@
       ? "Game complete"
       : fullHandRunActive && fullHandRunCurrentIndex >= 0
       ? `Contract ${fullHandRunCurrentIndex + 1} of ${fullHandContracts.length}`
-      : fullHand?.status === "complete"
+      : fullHand?.status === "complete" || dominoHand?.status === "complete"
         ? "Complete"
-        : `Trick ${fullHand?.trickNumber ?? 1}`;
+        : fullHand
+          ? `Trick ${fullHand.trickNumber}`
+          : dominoHand
+            ? `${dominoHand.cardsRemaining} cards left`
+            : "Ready";
   $: fullHandNextActionLabel = fullHandRunActive
     ? fullHandRunIsComplete
       ? "New game"
       : "Next contract"
     : "Try another";
+  $: dominoLegalCardIds = new Set(dominoHand?.legalCardIds ?? []);
+  $: dominoSelectedCard = dominoHand?.playerHand.find((card) => card.id === dominoSelectedCardId);
+  $: dominoScoreMap = dominoHand
+    ? ({
+        Tutor: dominoHand.scores[0] ?? 0,
+        Right: dominoHand.scores[1] ?? 0,
+        You: dominoHand.scores[2] ?? 0,
+        Left: dominoHand.scores[3] ?? 0
+      } satisfies Record<Seat, number>)
+    : emptySeatPenalties();
+  $: dominoResultTitle = dominoHand?.status === "complete" ? dominoResultHeading(dominoHand) : "Build the layout";
+  $: dominoResultSummary = dominoHand?.status === "complete" ? dominoResultText(dominoHand) : "";
 
   function loadCourseProgress() {
     if (typeof localStorage === "undefined") {
@@ -984,6 +1015,21 @@
         playCommand: "play_positive_tricks_hand_card"
       };
     }
+    if (contract === "Domino") {
+      return {
+        scoringGoal: "win",
+        penaltyName: "point",
+        penaltyPlural: "points",
+        penaltyTotal: 65,
+        playedLabel: "points in play",
+        scoreLabel: "Your score",
+        resultLabel: "scored",
+        bestLabel: "Best lane",
+        weakestLabel: "Blocked lane",
+        startCommand: "start_domino_hand",
+        playCommand: "play_domino_card"
+      };
+    }
 
     return {
       scoringGoal: "avoid",
@@ -1041,11 +1087,17 @@
   }
 
   async function startFullHand(contract: FullHandContract, options: { keepRun?: boolean } = {}) {
+    if (contract === "Domino") {
+      await startDominoHand(options);
+      return;
+    }
+
     if (!options.keepRun) {
       fullHandRunActive = false;
       fullHandRunResults = [];
     }
 
+    dominoHand = null;
     const seed = usePracticeSeed();
     fullHandSelectedCardId = "";
     fullHandError = "";
@@ -1065,6 +1117,30 @@
     }
 
     appView = "fullHand";
+  }
+
+  async function startDominoHand(options: { keepRun?: boolean } = {}) {
+    if (!options.keepRun) {
+      fullHandRunActive = false;
+      fullHandRunResults = [];
+    }
+
+    const seed = usePracticeSeed();
+    fullHand = null;
+    dominoSelectedCardId = "";
+    dominoError = "";
+
+    try {
+      dominoHand = await invoke<DominoHandState>("start_domino_hand", {
+        seed
+      });
+      usingBrowserDomino = false;
+    } catch {
+      dominoHand = startBrowserDominoHand(seed);
+      usingBrowserDomino = true;
+    }
+
+    appView = "dominoHand";
   }
 
   async function selectFullHandCard(card: Card) {
@@ -1159,10 +1235,15 @@
     void startFullHand("Hearts Trumps");
   }
 
+  function startDominoPracticeHand() {
+    void startFullHand("Domino");
+  }
+
   function startBarbuRun() {
     fullHandRunActive = true;
     fullHandRunResults = [];
     fullHand = null;
+    dominoHand = null;
     openRunContractIntro(fullHandContracts[0]);
   }
 
@@ -1173,6 +1254,93 @@
 
   function startPendingRunContract() {
     void startFullHand(pendingRunContract, { keepRun: true });
+  }
+
+  async function playDominoSelectedCard(cardId = dominoSelectedCardId) {
+    if (!dominoHand || dominoHand.status === "complete" || !cardId || !dominoHand.legalCardIds.includes(cardId)) {
+      return;
+    }
+
+    dominoError = "";
+
+    if (usingBrowserDomino) {
+      dominoHand = playBrowserDominoCard(dominoHand, cardId);
+      recordCompletedDominoRunResult(dominoHand);
+      dominoSelectedCardId = "";
+      return;
+    }
+
+    try {
+      dominoHand = await invoke<DominoHandState>("play_domino_card", {
+        state: dominoHand,
+        cardId
+      });
+      recordCompletedDominoRunResult(dominoHand);
+      dominoSelectedCardId = "";
+    } catch (error) {
+      dominoError = typeof error === "string" ? error : "That card could not be placed.";
+    }
+  }
+
+  async function passDomino() {
+    if (!dominoHand || dominoHand.status === "complete" || dominoHand.legalCardIds.length > 0) {
+      return;
+    }
+
+    dominoError = "";
+
+    if (usingBrowserDomino) {
+      dominoHand = passBrowserDominoTurn(dominoHand);
+      recordCompletedDominoRunResult(dominoHand);
+      return;
+    }
+
+    try {
+      dominoHand = await invoke<DominoHandState>("pass_domino_turn", {
+        state: dominoHand
+      });
+      recordCompletedDominoRunResult(dominoHand);
+    } catch (error) {
+      dominoError = typeof error === "string" ? error : "You could not pass here.";
+    }
+  }
+
+  function startNextDominoHand() {
+    if (!dominoHand) {
+      return;
+    }
+
+    if (fullHandRunActive) {
+      recordCompletedDominoRunResult(dominoHand);
+
+      if (fullHandRunIsComplete) {
+        startBarbuRun();
+        return;
+      }
+
+      const currentIndex = fullHandContracts.indexOf(dominoHand.contract);
+      const nextContract = fullHandContracts[(currentIndex + 1) % fullHandContracts.length] ?? "No Hearts";
+      openRunContractIntro(nextContract);
+      return;
+    }
+
+    const currentIndex = fullHandContracts.indexOf(dominoHand.contract);
+    const nextContract = fullHandContracts[(currentIndex + 1) % fullHandContracts.length] ?? "No Hearts";
+    void startFullHand(nextContract);
+  }
+
+  function replayDominoHand() {
+    if (!dominoHand) {
+      return;
+    }
+
+    if (fullHandRunActive) {
+      fullHandRunResults = fullHandRunResults.filter((result) => result.contract !== "Domino");
+      void startFullHand("Domino", { keepRun: true });
+      return;
+    }
+
+    void startFullHand("Domino");
   }
 
   function startNextFullHand() {
@@ -1234,6 +1402,30 @@
     };
 
     fullHandRunResults = [...fullHandRunResults.filter((item) => item.contract !== state.contract), result];
+  }
+
+  function recordCompletedDominoRunResult(state: DominoHandState | null) {
+    if (!fullHandRunActive || !state || state.status !== "complete") {
+      return;
+    }
+
+    const result: FullHandRunResult = {
+      contract: "Domino",
+      playerPenalty: state.scores[2] ?? 0,
+      totalPenalty: state.scores.reduce((total, score) => total + score, 0),
+      seatPenalties: dominoSeatScores(state)
+    };
+
+    fullHandRunResults = [...fullHandRunResults.filter((item) => item.contract !== "Domino"), result];
+  }
+
+  function dominoSeatScores(state: DominoHandState): Record<Seat, number> {
+    return {
+      Tutor: state.scores[0] ?? 0,
+      Right: state.scores[1] ?? 0,
+      You: state.scores[2] ?? 0,
+      Left: state.scores[3] ?? 0
+    };
   }
 
   function emptySeatPenalties(): Record<Seat, number> {
@@ -1528,6 +1720,48 @@
   function formatContractPenalty(contract: FullHandContract, value: number) {
     const meta = fullHandMeta(contract);
     return `${value} ${value === 1 ? meta.penaltyName : meta.penaltyPlural}`;
+  }
+
+  function dominoResultHeading(state: DominoHandState) {
+    const playerRank = state.outOrder.indexOf("You") + 1;
+
+    if (playerRank === 1) {
+      return "You went out first";
+    }
+    if (playerRank > 0) {
+      return `You finished ${formatOrdinal(playerRank)}`;
+    }
+    return "Domino complete";
+  }
+
+  function dominoResultText(state: DominoHandState) {
+    const playerScore = state.scores[2] ?? 0;
+    const leader = scoreSeats
+      .map((seat, index) => ({ seat, score: state.scores[index] ?? 0 }))
+      .sort((left, right) => right.score - left.score)[0];
+
+    if (!leader || leader.seat === "You") {
+      return `You scored ${formatSignedScore(playerScore)}. Domino rewards the first players to empty their hands.`;
+    }
+
+    return `${scoreSeatLabel(leader.seat)} led Domino with ${formatSignedScore(leader.score)}. You scored ${formatSignedScore(playerScore)}.`;
+  }
+
+  function dominoSuitLabel(index: number) {
+    return ["Clubs", "Diamonds", "Hearts", "Spades"][index] ?? "Suit";
+  }
+
+  function dominoLaneText(lane: Card[]) {
+    return lane.length ? lane.map((card) => card.label).join(" ") : "Open with 7";
+  }
+
+  function dominoCardClasses(card: Card) {
+    return {
+      heart: card.suit === "H",
+      legal: dominoLegalCardIds.has(card.id),
+      illegal: !dominoLegalCardIds.has(card.id),
+      selected: dominoSelectedCardId === card.id
+    };
   }
 
   function runResultForContract(contract: FullHandContract) {
@@ -2358,6 +2592,10 @@
           <span>Hearts Trumps</span>
           <strong>Hearts beat the led suit</strong>
         </button>
+        <button class="practice-choice" onclick={() => void startDominoPracticeHand()} type="button">
+          <span>Domino</span>
+          <strong>Build suits from sevens</strong>
+        </button>
       </div>
     </section>
   {:else if appView === "reference"}
@@ -2810,6 +3048,192 @@
                 type="button"
               >
                 Play card
+              </button>
+            {/if}
+          </div>
+        {/snippet}
+      </TablePlaySurface>
+    {/if}
+  {:else if appView === "dominoHand"}
+    {#if dominoHand}
+      <TablePlaySurface
+        mode={dominoHand.status === "complete" ? "result" : "play"}
+        ariaLabel="Domino hand"
+        title="Domino hand"
+        eyebrow={fullHandRunActive ? "Play Barbu" : "Contract hand"}
+        statusLabel={fullHandRunStatusLabel}
+        statusValue={`${formatSignedScore(dominoScoreMap.You)} points`}
+        tableAriaLabel="Domino layout"
+        tableCards={[]}
+        showTable={false}
+        panelAriaLabel="Domino hand decision"
+        onBack={openBarbuTable}
+      >
+        {#snippet summary()}
+          <div
+            class:compact-run-complete={fullHandRunIsComplete}
+            class="full-hand-summary"
+            aria-label="Domino hand score"
+          >
+            {#each scoreSeats as seat}
+              <div>
+                <span>{scoreSeatRunLabel(seat)} score</span>
+                <strong>{formatSignedScore(dominoScoreMap[seat])}</strong>
+              </div>
+            {/each}
+            {#if !fullHandRunIsComplete}
+              <div>
+                <span>Cards left</span>
+                <strong>{dominoHand.cardsRemaining}</strong>
+              </div>
+            {/if}
+          </div>
+
+          {#if !fullHandRunIsComplete}
+            <div class="domino-layout" aria-label="Domino layout">
+              {#each dominoHand.layout as lane, index}
+                <div>
+                  <span>{dominoSuitLabel(index)}</span>
+                  <strong>{dominoLaneText(lane)}</strong>
+                </div>
+              {/each}
+            </div>
+          {/if}
+        {/snippet}
+
+        {#snippet panel()}
+          {#if dominoHand.status === "complete"}
+            {#if fullHandRunIsComplete}
+              <div class="lesson-heading">
+                <p class="eyebrow">Play Barbu</p>
+                <h2>{fullHandRunResultTitle}</h2>
+              </div>
+
+              <p class="result">{fullHandRunResultSummary}</p>
+
+              <div class="full-hand-run-score" aria-label="Play Barbu score">
+                {#each fullHandRunStandings as standing}
+                  <div>
+                    <span>{formatOrdinal(standing.rank)} {scoreSeatLabel(standing.seat)}</span>
+                    <strong>{formatSignedScore(standing.score)}</strong>
+                  </div>
+                {/each}
+              </div>
+
+              <div class="run-settlement-grid" aria-label="Play Barbu settlement">
+                <div>
+                  <span>Your place</span>
+                  <strong>{fullHandRunPlayerStanding ? formatOrdinal(fullHandRunPlayerStanding.rank) : "Done"}</strong>
+                </div>
+                <div>
+                  <span>Best contract</span>
+                  <strong>
+                    {#if fullHandRunBestContract}
+                      {fullHandRunBestContract.contract}: {formatContractPenalty(
+                        fullHandRunBestContract.contract,
+                        fullHandRunBestContract.seatPenalties.You ?? 0
+                      )}
+                    {:else}
+                      Game complete
+                    {/if}
+                  </strong>
+                </div>
+                <div>
+                  <span>Practice next</span>
+                  <strong>
+                    {#if fullHandRunWeakestContract}
+                      {fullHandRunWeakestContract.contract}: {formatContractPenalty(
+                        fullHandRunWeakestContract.contract,
+                        fullHandRunWeakestContract.seatPenalties.You ?? 0
+                      )}
+                    {:else}
+                      Replay a hand
+                    {/if}
+                  </strong>
+                </div>
+              </div>
+
+              {@render runScorecard("Play Barbu results")}
+            {:else}
+              <div class="lesson-heading">
+                <p class="eyebrow">Result</p>
+                <h2>{dominoResultTitle}</h2>
+              </div>
+
+              <p class="result">{dominoResultSummary}</p>
+              <div class="full-hand-run-score" aria-label="Domino result summary">
+                {#each scoreSeats as seat}
+                  <div>
+                    <span>{scoreSeatLabel(seat)}</span>
+                    <strong>{formatSignedScore(dominoScoreMap[seat])}</strong>
+                  </div>
+                {/each}
+              </div>
+            {/if}
+          {:else}
+            <div class="lesson-heading">
+              <p class="eyebrow">{usingBrowserDomino ? "Local browser hand" : "Rust hand"}</p>
+              <h2>Place a card</h2>
+            </div>
+
+            <p class="result">{dominoHand.prompt}</p>
+            {#if dominoError}
+              <p class="outcome warning">{dominoError}</p>
+            {/if}
+            <p class="explanation">
+              {dominoSelectedCard
+                ? dominoLegalCardIds.has(dominoSelectedCard.id)
+                  ? `${dominoSelectedCard.label} fits the current layout.`
+                  : `${dominoSelectedCard.label} cannot start or extend a suit right now.`
+                : "Legal cards are highlighted. Domino starts suits with sevens and extends one rank at a time."}
+            </p>
+
+            <div class="hand full-hand-cards domino-cards" aria-label="Your Domino hand">
+              {#each dominoHand.playerHand as card}
+                <button
+                  aria-pressed={dominoSelectedCardId === card.id}
+                  class:heart={dominoCardClasses(card).heart}
+                  class:illegal={dominoCardClasses(card).illegal}
+                  class:legal={dominoCardClasses(card).legal}
+                  class:selected={dominoCardClasses(card).selected}
+                  class="card hand-card full-hand-card"
+                  onclick={() => (dominoSelectedCardId = card.id)}
+                  type="button"
+                >
+                  <b>{card.rank}</b>
+                  <small>{card.suit}</small>
+                </button>
+              {/each}
+            </div>
+          {/if}
+
+          <div class="action-row">
+            {#if dominoHand.status === "complete"}
+              <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
+              {#if fullHandRunIsComplete}
+                <button class="secondary-action" onclick={() => void replayWeakestRunContract()} type="button">Replay weakest</button>
+                <button class="primary-action" onclick={startBarbuRun} type="button">New game</button>
+              {:else}
+                <button class="secondary-action" onclick={() => void startNextDominoHand()} type="button">{fullHandNextActionLabel}</button>
+                <button class="primary-action" onclick={() => void replayDominoHand()} type="button">Replay</button>
+              {/if}
+            {:else}
+              <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
+              <button
+                class="secondary-action"
+                disabled={dominoHand.legalCardIds.length > 0}
+                onclick={() => void passDomino()}
+                type="button"
+              >
+                Pass
+              </button>
+              <button
+                class="primary-action"
+                disabled={!dominoSelectedCard || !dominoLegalCardIds.has(dominoSelectedCard.id)}
+                onclick={() => void playDominoSelectedCard()}
+                type="button"
+              >
+                Place card
               </button>
             {/if}
           </div>

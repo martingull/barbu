@@ -94,7 +94,8 @@ export type FullHandContract =
   | "King of Hearts"
   | "No Last Two"
   | "No Tricks"
-  | "Hearts Trumps";
+  | "Hearts Trumps"
+  | "Domino";
 
 export type FullHandState = {
   id: string;
@@ -115,3 +116,20 @@ export type FullHandState = {
 };
 
 export type NoHeartsHandState = FullHandState;
+
+export type DominoHandState = {
+  id: string;
+  contract: "Domino";
+  hands: Card[][];
+  currentPlayerIndex: number;
+  currentPlayer: Seat | "Unknown";
+  layout: Card[][];
+  passedPlayers: Array<Seat | "Unknown">;
+  outOrder: Array<Seat | "Unknown">;
+  playerHand: Card[];
+  legalCardIds: string[];
+  scores: number[];
+  cardsRemaining: number;
+  status: HandStatus;
+  prompt: string;
+};

@@ -32,6 +32,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Quick Drill mode with five quick mixed-contract decisions, immediate feedback, and a compact result.
 - No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps full-hand skeletons with deterministic local deals, legal-card play, simple tactical auto opponents, hand scoring, and short per-trick feedback.
 - Generic trick-taking hand engine for deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps as the first contract adapters.
+- Domino playable hand v1 with deterministic local deals, fixed-seven layout starts, adjacent suit building, legal pass handling, four-player order-out scoring, and Play Barbu roster support.
 - Shared table-play surface for quick drills, Play Barbu, and full-hand contracts so active games keep one compact mobile layout.
 - Play Barbu v1 with a local sequence through playable full-hand contracts, four-player contract values, per-contract score rows, and a compact game-complete summary.
 - Play Barbu contract intro before each hand, where Barbu sets the next contract and the current game score stays visible.
@@ -39,7 +40,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Play Barbu settlement summary with four-player placement, best contract, weakest contract, and focused replay.
 - Play Barbu scorecard with signed score cells, contract rows, four-player columns, current/completed/pending states, and totals.
 - Play Barbu session summary with current leader, player place, and contracts remaining before each hand.
-- Local full-hand contract value tracking with contract-specific point values for the currently playable trick-taking contracts. Full settlement rules and Domino coverage are later features.
+- Local full-hand contract value tracking with contract-specific point values for the currently playable contracts. Full settlement rules are a later feature.
 - Compact full-hand result panel with contract result, Barbu/player penalty split, key tricks, replay, and next-contract actions.
 - Training path practice step connected to Quick Drill completion.
 - Review step with latest Quick Drill score, weakest-contract advice, recent attempts, and replay actions.
@@ -80,7 +81,7 @@ Core contract status:
 | No Last Two | Core | Playable | Guided course, full-hand, and run support exist; generated practice is still later. |
 | No Tricks | Core | Playable | Guided course, full-hand, and run support exist; generated practice is still later. |
 | Hearts Trumps | Core | Playable | Hearts are fixed as trumps for v1; full-hand and run support exist; generated practice and guided course are still later. |
-| Domino | Core candidate | Not built | Likely needs a different play surface; verify baseline first. |
+| Domino | Core | Playable | Fixed-seven layout v1 exists with full hand and run support; chooser/declarer-selected starting rank is later. |
 
 ## Near-Term Roadmap
 
@@ -101,6 +102,7 @@ These are the next product increments that keep the app coherent.
    - Move point-value definitions into shared content/core metadata instead of duplicating them across UI and scoring code.
    - Keep avoidance contracts, positive contracts, and future layout contracts explicit in metadata.
    - Make scorecard language use score/value/tricks instead of assuming every contract is a penalty contract.
+   - Fold Domino's order-out score table into the same shared model.
 
 4. Core Game And Variety Model v2
    - Move catalog metadata toward content-backed data as more games are added.
@@ -109,6 +111,7 @@ These are the next product increments that keep the app coherent.
 
 5. Full-Hand Play v2
    - Continue adding Barbu contracts on top of the generic hand engine.
+   - Improve Domino from fixed-seven v1 to the baseline Barbu chooser/declarer shape once contract selection is modeled.
    - Add full Barbu settlement scoring across contracts once the playable contracts are broader.
    - Expand No Hearts opponent policy with more table-aware decisions.
    - Add stronger tactical feedback after each completed trick.

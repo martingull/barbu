@@ -160,6 +160,13 @@ export const referenceCatalog: GameReference[] = [
         objective: "Win tricks while hearts act as trumps.",
         scoring: "Each trick won is 5 positive points; hearts beat non-heart led-suit cards.",
         lesson: "This contract flips the avoidance habit: a heart can cut the trick and take control."
+      },
+      {
+        id: "domino",
+        title: "Domino",
+        objective: "Empty your hand by building each suit outward from the starting rank.",
+        scoring: "The first four players out score +45, +20, +5, and -5 in order.",
+        lesson: "Open a suit with a seven in v1, then extend the low or high end by one rank when you can."
       }
     ],
     contractRoadmap: [
@@ -208,9 +215,9 @@ export const referenceCatalog: GameReference[] = [
       {
         id: "domino",
         title: "Domino",
-        coreStatus: "Core candidate",
-        appStatus: "Not built",
-        note: "Likely needs a different play surface from trick-taking contracts; verify baseline first."
+        coreStatus: "Core",
+        appStatus: "Playable",
+        note: "Fixed-seven layout v1 exists with full hand and Barbu run support; chooser/declarer-selected starting rank is later."
       }
     ],
     variants: [

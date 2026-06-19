@@ -123,9 +123,9 @@
     {
       "id": "domino",
       "title": "Domino",
-      "coreStatus": "core_candidate",
-      "appStatus": "not_built",
-      "note": "Likely needs a different play surface from trick-taking contracts; verify baseline first."
+      "coreStatus": "core",
+      "appStatus": "playable",
+      "note": "Fixed-seven layout v1 exists with full hand and Barbu run support; chooser/declarer-selected starting rank is later."
     }
   ]
 }

@@ -65,11 +65,7 @@ fn play_no_last_two_hand_card(state: FullHandDto, card_id: String) -> Result<Ful
     let card = card_from_label(&card_id)?;
     let next_state = barbu_core::play_no_last_two_card(state, card)?;
 
-    Ok(FullHandDto::from_core(
-        &next_state,
-        "No Last Two",
-        "point",
-    ))
+    Ok(FullHandDto::from_core(&next_state, "No Last Two", "point"))
 }
 
 #[tauri::command]
@@ -129,6 +125,29 @@ fn play_king_of_hearts_hand_card(
         "King of Hearts",
         "point",
     ))
+}
+
+#[tauri::command]
+fn start_domino_hand(seed: u64) -> DominoHandDto {
+    let state = barbu_core::start_domino_hand(seed);
+    DominoHandDto::from_core(&state)
+}
+
+#[tauri::command]
+fn play_domino_card(state: DominoHandDto, card_id: String) -> Result<DominoHandDto, String> {
+    let state = state.to_core()?;
+    let card = card_from_label(&card_id)?;
+    let next_state = barbu_core::play_domino_card(state, card)?;
+
+    Ok(DominoHandDto::from_core(&next_state))
+}
+
+#[tauri::command]
+fn pass_domino_turn(state: DominoHandDto) -> Result<DominoHandDto, String> {
+    let state = state.to_core()?;
+    let next_state = barbu_core::pass_domino_turn(state)?;
+
+    Ok(DominoHandDto::from_core(&next_state))
 }
 
 #[derive(serde::Serialize)]
@@ -269,6 +288,108 @@ struct FullHandDto {
     trick_number: usize,
     status: String,
     prompt: String,
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct DominoHandDto {
+    id: String,
+    contract: String,
+    hands: Vec<Vec<CardDto>>,
+    current_player_index: usize,
+    current_player: String,
+    layout: Vec<Vec<CardDto>>,
+    passed_players: Vec<String>,
+    out_order: Vec<String>,
+    player_hand: Vec<CardDto>,
+    legal_card_ids: Vec<String>,
+    scores: Vec<i32>,
+    cards_remaining: usize,
+    status: String,
+    prompt: String,
+}
+
+impl DominoHandDto {
+    fn from_core(state: &barbu_core::DominoHandState) -> Self {
+        let scores = state.scores();
+
+        Self {
+            id: state.id.clone(),
+            contract: "Domino".to_string(),
+            hands: state
+                .hands
+                .iter()
+                .map(|hand| hand.iter().copied().map(CardDto::from_core).collect())
+                .collect(),
+            current_player_index: state.current_player,
+            current_player: player_name(state.current_player).to_string(),
+            layout: state
+                .layout
+                .iter()
+                .map(|lane| lane.iter().copied().map(CardDto::from_core).collect())
+                .collect(),
+            passed_players: state
+                .passed_players
+                .iter()
+                .copied()
+                .map(player_name)
+                .map(str::to_string)
+                .collect(),
+            out_order: state
+                .out_order
+                .iter()
+                .copied()
+                .map(player_name)
+                .map(str::to_string)
+                .collect(),
+            player_hand: state.hands[2]
+                .iter()
+                .copied()
+                .map(CardDto::from_core)
+                .collect(),
+            legal_card_ids: state
+                .legal_cards_for_player(2)
+                .iter()
+                .map(ToString::to_string)
+                .collect(),
+            scores: scores.to_vec(),
+            cards_remaining: state.hands.iter().map(Vec::len).sum(),
+            status: state.status.as_str().to_string(),
+            prompt: domino_prompt(state),
+        }
+    }
+
+    fn to_core(&self) -> Result<barbu_core::DominoHandState, String> {
+        let hands = hands_from_dto(&self.hands)?;
+        let layout = hands_from_dto(&self.layout)?;
+        let mut layout_array = [Vec::new(), Vec::new(), Vec::new(), Vec::new()];
+
+        for (index, lane) in layout.into_iter().enumerate().take(4) {
+            layout_array[index] = lane;
+        }
+
+        Ok(barbu_core::DominoHandState {
+            id: self.id.clone(),
+            hands,
+            current_player: self.current_player_index,
+            layout: layout_array,
+            passed_players: self
+                .passed_players
+                .iter()
+                .map(|player| player_index(player))
+                .collect::<Result<Vec<_>, _>>()?,
+            out_order: self
+                .out_order
+                .iter()
+                .map(|player| player_index(player))
+                .collect::<Result<Vec<_>, _>>()?,
+            status: match self.status.as_str() {
+                "in_progress" => barbu_core::DominoStatus::InProgress,
+                "complete" => barbu_core::DominoStatus::Complete,
+                _ => return Err(format!("Unknown Domino status: {}", self.status)),
+            },
+        })
+    }
 }
 
 impl FullHandDto {
@@ -509,6 +630,22 @@ fn hand_prompt(state: &barbu_core::TrickTakingHandState, penalty_name: &str) -> 
     format!("{} were led. Follow suit if you can.", led_suit)
 }
 
+fn domino_prompt(state: &barbu_core::DominoHandState) -> String {
+    if state.status == barbu_core::DominoStatus::Complete {
+        let scores = state.scores();
+        return format!(
+            "Domino complete. You scored {} points.",
+            scores.get(2).copied().unwrap_or(0)
+        );
+    }
+
+    if state.legal_cards_for_player(2).is_empty() {
+        return "No legal placement. Pass and wait for the layout to open.".to_string();
+    }
+
+    "Play a seven to start a suit, or extend a suit by one rank.".to_string()
+}
+
 fn suit_name(suit: barbu_core::Suit) -> &'static str {
     match suit {
         barbu_core::Suit::Clubs => "Clubs",
@@ -545,12 +682,15 @@ pub fn run() {
             current_game,
             generate_daily_drill_set,
             generate_no_hearts_follow_suit,
+            pass_domino_turn,
+            play_domino_card,
             play_king_of_hearts_hand_card,
             play_no_hearts_hand_card,
             play_no_last_two_hand_card,
             play_no_queens_hand_card,
             play_no_tricks_hand_card,
             play_positive_tricks_hand_card,
+            start_domino_hand,
             start_king_of_hearts_hand,
             start_no_hearts_hand,
             start_no_last_two_hand,

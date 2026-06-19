@@ -454,6 +454,39 @@ button {
   line-height: 1.16;
 }
 
+.domino-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.domino-layout div {
+  display: grid;
+  gap: 4px;
+  min-height: 52px;
+  padding: 9px 10px;
+  border: 1px solid rgba(239, 228, 194, 0.52);
+  border-radius: 8px;
+  background: rgba(14, 45, 32, 0.7);
+}
+
+.domino-layout span {
+  color: #d7c891;
+  font-size: 0.66rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.domino-layout strong {
+  color: #fbfcf8;
+  font-size: 0.82rem;
+  line-height: 1.18;
+}
+
+.domino-cards {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
 .path-section {
   display: grid;
   gap: 12px;
@@ -1932,6 +1965,23 @@ h2 {
 
   .practice-choice strong {
     font-size: 0.9rem;
+  }
+
+  .domino-layout {
+    gap: 6px;
+  }
+
+  .domino-layout div {
+    min-height: 44px;
+    padding: 7px 8px;
+  }
+
+  .domino-layout span {
+    font-size: 0.58rem;
+  }
+
+  .domino-layout strong {
+    font-size: 0.72rem;
   }
 
   .path-grid {
