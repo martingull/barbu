@@ -1125,20 +1125,34 @@ pub fn generate_domino_practice(seed: u64) -> PracticeScenario {
     }
 }
 
+const DAILY_DRILL_POOL_ROUNDS: u64 = 3;
+
 pub fn generate_daily_drill_set(seed: u64) -> PracticeDrillSet {
+    let mut scenarios = Vec::new();
+
+    for round in 0..DAILY_DRILL_POOL_ROUNDS {
+        scenarios.extend([
+            generate_no_hearts_practice(drill_pool_seed(seed, 0, round)),
+            generate_no_queens_practice(drill_pool_seed(seed, 1, round)),
+            generate_king_of_hearts_practice(drill_pool_seed(seed, 2, round)),
+            generate_no_last_two_practice(drill_pool_seed(seed, 3, round)),
+            generate_no_tricks_practice(drill_pool_seed(seed, 4, round)),
+            generate_hearts_trumps_practice(drill_pool_seed(seed, 5, round)),
+            generate_domino_practice(drill_pool_seed(seed, 6, round)),
+        ]);
+    }
+
     PracticeDrillSet {
         id: format!("play-barbu-{seed}"),
         title: "Play Barbu".to_string(),
-        scenarios: vec![
-            generate_no_hearts_practice(seed.saturating_mul(7)),
-            generate_no_queens_practice(seed.saturating_mul(7) + 1),
-            generate_king_of_hearts_practice(seed.saturating_mul(7) + 2),
-            generate_no_last_two_practice(seed.saturating_mul(7) + 3),
-            generate_no_tricks_practice(seed.saturating_mul(7) + 4),
-            generate_hearts_trumps_practice(seed.saturating_mul(7) + 5),
-            generate_domino_practice(seed.saturating_mul(7) + 6),
-        ],
+        scenarios,
     }
+}
+
+fn drill_pool_seed(seed: u64, contract_index: u64, round: u64) -> u64 {
+    seed.saturating_mul(97)
+        .saturating_add(contract_index)
+        .saturating_add(round.saturating_mul(7))
 }
 
 fn choose(rng: &mut DeterministicRng, values: &[Rank]) -> Rank {
@@ -1399,7 +1413,7 @@ mod tests {
     fn daily_drill_set_contains_all_playable_generated_scenarios() {
         let drill_set = generate_daily_drill_set(13);
 
-        assert_eq!(drill_set.scenarios.len(), 7);
+        assert_eq!(drill_set.scenarios.len(), 21);
         assert_eq!(drill_set.scenarios[0].contract, "No Hearts");
         assert_eq!(drill_set.scenarios[1].contract, "No Queens");
         assert_eq!(drill_set.scenarios[2].contract, "King of Hearts");
@@ -1414,18 +1428,36 @@ mod tests {
         let first_set = generate_daily_drill_set(13);
         let next_set = generate_daily_drill_set(14);
 
-        assert!(first_set.scenarios[0].id.contains("void-discard"));
-        assert!(next_set.scenarios[0].id.contains("void-dump-danger"));
-        assert!(first_set.scenarios[1].id.contains("void-dump-queen"));
-        assert!(next_set.scenarios[1].id.contains("capture"));
-        assert!(first_set.scenarios[2].id.contains("capture"));
-        assert!(next_set.scenarios[2].id.contains("void-discard"));
-        assert!(first_set.scenarios[3].id.contains("duck"));
-        assert!(next_set.scenarios[3].id.contains("forced-win"));
-        assert!(first_set.scenarios[4].id.contains("void-discard"));
-        assert!(next_set.scenarios[4].id.contains("duck"));
-        assert_ne!(first_set.scenarios[5].id, next_set.scenarios[5].id);
-        assert_ne!(first_set.scenarios[6].id, next_set.scenarios[6].id);
+        assert_ne!(first_set.scenarios, next_set.scenarios);
+
+        let no_hearts_patterns = first_set
+            .scenarios
+            .iter()
+            .filter(|scenario| scenario.contract == "No Hearts")
+            .map(|scenario| scenario_pattern_id(&scenario.id))
+            .collect::<std::collections::BTreeSet<_>>();
+        let no_last_two_patterns = first_set
+            .scenarios
+            .iter()
+            .filter(|scenario| scenario.contract == "No Last Two")
+            .map(|scenario| scenario_pattern_id(&scenario.id))
+            .collect::<std::collections::BTreeSet<_>>();
+        let domino_patterns = first_set
+            .scenarios
+            .iter()
+            .filter(|scenario| scenario.contract == "Domino")
+            .map(|scenario| scenario_pattern_id(&scenario.id))
+            .collect::<std::collections::BTreeSet<_>>();
+
+        assert_eq!(no_hearts_patterns.len(), 3);
+        assert_eq!(no_last_two_patterns.len(), 2);
+        assert_eq!(domino_patterns.len(), 3);
+    }
+
+    fn scenario_pattern_id(id: &str) -> String {
+        id.rsplit_once('-')
+            .map(|(pattern, _)| pattern.to_string())
+            .unwrap_or_else(|| id.to_string())
     }
 
     #[test]

@@ -63,6 +63,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Compact outcome labels for guided decisions.
 - Generated No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino Quick Drill set via Rust/Tauri, with multiple local scenario patterns for avoidance, trumps, and Domino layout decisions.
 - Generated practice quality pass started with safe-dump scenarios for No Hearts, No Queens, King of Hearts, and No Tricks that teach when a void player can unload danger under a locked winner.
+- Practice Scenario Pool v1 expands Quick Drill from a fixed generated roster into a larger deterministic pool, so mixed practice and weak-contract replays can draw from several scenario shapes.
 - Browser generated fallback for Quick Drill when Tauri is unavailable.
 - Playwright smoke tests for catalog, Barbu table, lesson flow, generated fallback, and course-complete behavior.
 
@@ -102,6 +103,7 @@ These are the next product increments that keep the app coherent.
 2. Generated Practice Expansion v2
    - Hearts Trumps and Domino now rotate through multiple scenario families.
    - No Hearts, No Queens, King of Hearts, and No Tricks now include void-discard quality scenarios focused on unloading safely when another player already controls the trick.
+   - Quick Drill now samples from a larger deterministic scenario pool and avoids immediate repeats when possible.
    - Add more scenario families for each supported contract as testing reveals repetition.
    - Keep commands thin and deterministic.
    - Add Rust tests for every drill generator.

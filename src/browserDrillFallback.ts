@@ -1,6 +1,7 @@
 import type { Card, GuidedCardOutcome, GuidedTrick, PracticeReason, Suit } from "./lessonTypes";
 
 type BrowserDrillStep = {
+  scenarioId?: string;
   contract: string;
   title: string;
   trick: GuidedTrick;
@@ -32,16 +33,31 @@ const rankOrder: Record<Rank, number> = {
   A: 14
 };
 
+const dailyDrillPoolRounds = 3;
+
 export function generateBrowserPlayBarbuDrillSteps(seed: number): BrowserDrillStep[] {
-  return [
-    generatedNoHeartsStep(seed * 7),
-    generatedNoQueensStep(seed * 7 + 1),
-    generatedKingOfHeartsStep(seed * 7 + 2),
-    generatedNoLastTwoStep(seed * 7 + 3),
-    generatedNoTricksStep(seed * 7 + 4),
-    generatedHeartsTrumpsStep(seed * 7 + 5),
-    generatedDominoStep(seed * 7 + 6)
-  ];
+  const steps: BrowserDrillStep[] = [];
+
+  for (let round = 0; round < dailyDrillPoolRounds; round += 1) {
+    steps.push(
+      generatedNoHeartsStep(drillPoolSeed(seed, 0, round)),
+      generatedNoQueensStep(drillPoolSeed(seed, 1, round)),
+      generatedKingOfHeartsStep(drillPoolSeed(seed, 2, round)),
+      generatedNoLastTwoStep(drillPoolSeed(seed, 3, round)),
+      generatedNoTricksStep(drillPoolSeed(seed, 4, round)),
+      generatedHeartsTrumpsStep(drillPoolSeed(seed, 5, round)),
+      generatedDominoStep(drillPoolSeed(seed, 6, round))
+    );
+  }
+
+  return steps.map((step, index) => ({
+    ...step,
+    scenarioId: `${index % 7}-${step.contract}-${step.trick.title}`
+  }));
+}
+
+function drillPoolSeed(seed: number, contractIndex: number, round: number) {
+  return seed * 97 + contractIndex + round * 7;
 }
 
 function generatedNoHeartsStep(seed: number): BrowserDrillStep {

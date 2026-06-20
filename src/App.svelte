@@ -109,6 +109,7 @@
   };
 
   type DrillStep = {
+    scenarioId?: string;
     contract: string;
     title: string;
     trick: GuidedTrick;
@@ -1896,7 +1897,7 @@
         .filter((step) => !focusContract || step.contract === focusContract);
 
       if (candidates.length > 0) {
-        return candidates[generatedCandidateIndex(seed, candidates.length)];
+        return selectGeneratedDrillCandidate(candidates, seed);
       }
     } catch {
       const candidates = generateBrowserPlayBarbuDrillSteps(seed).filter(
@@ -1904,11 +1905,22 @@
       );
 
       if (candidates.length > 0) {
-        return candidates[generatedCandidateIndex(seed, candidates.length)];
+        return selectGeneratedDrillCandidate(candidates, seed);
       }
     }
 
     return drillSteps.find((step) => !focusContract || step.contract === focusContract) ?? drillSteps[0];
+  }
+
+  function selectGeneratedDrillCandidate(candidates: DrillStep[], seed: number) {
+    const lastStep = activeDrillSteps[activeDrillSteps.length - 1];
+    const nonRepeatingCandidates =
+      candidates.length > 1 && lastStep?.scenarioId
+        ? candidates.filter((step) => step.scenarioId !== lastStep.scenarioId)
+        : candidates;
+    const freshCandidates = nonRepeatingCandidates.length > 0 ? nonRepeatingCandidates : candidates;
+
+    return freshCandidates[generatedCandidateIndex(seed, freshCandidates.length)];
   }
 
   function generatedCandidateIndex(seed: number, candidateCount: number) {
@@ -2203,10 +2215,17 @@
 
   function drillStepFromGeneratedScenario(scenario: GeneratedPracticeScenario): DrillStep {
     return {
+      scenarioId: generatedScenarioPatternId(scenario.id),
       contract: scenario.contract,
       title: scenario.title,
       trick: guidedTrickFromGeneratedScenario(scenario)
     };
+  }
+
+  function generatedScenarioPatternId(id: string) {
+    const lastHyphen = id.lastIndexOf("-");
+
+    return lastHyphen > 0 ? id.slice(0, lastHyphen) : id;
   }
 
   function saveCompletedDrillSession() {
