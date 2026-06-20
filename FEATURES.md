@@ -35,6 +35,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Generic trick-taking hand engine for deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps as the first contract adapters.
 - Opponent policy v2 baseline for avoidance contracts: auto seats now duck clean tricks with the highest safe card instead of winning avoidable tricks without a reason.
 - Domino playable hand v1 with deterministic local deals, fixed-seven layout starts, adjacent suit building, legal pass handling, four-player order-out scoring, and Play Barbu roster support.
+- Domino clarity pass adds an in-hand order-out point counter and move reasoning for opening sevens, extending lanes, blocked cards, and follow-up cards.
 - Shared table-play surface for quick drills, Play Barbu, and full-hand contracts so active games keep one compact mobile layout.
 - Play Barbu v1 with a local sequence through playable full-hand contracts, four-player contract values, per-contract score rows, and a compact game-complete summary.
 - Play Barbu contract intro before each hand, where Barbu sets the next contract and the current game score stays visible.

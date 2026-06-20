@@ -39,21 +39,27 @@ async function playFullHandDecision(page: Page) {
 }
 
 async function playDominoDecision(page: Page) {
+  const handRegion = page.getByRole("region", { name: "Domino hand", exact: true });
+  const previousState = await handRegion.innerText();
   const placeCard = page.getByRole("button", { name: "Place card" });
+  const legalCard = page.locator(".domino-cards .full-hand-card.legal").first();
 
   if (await placeCard.isEnabled()) {
+    await legalCard.click();
     await placeCard.click();
+    await expect.poll(async () => (await handRegion.innerText()) !== previousState).toBe(true);
     return;
   }
 
-  const legalCard = page.locator(".domino-cards .full-hand-card.legal").first();
   if ((await legalCard.count()) > 0) {
     await legalCard.click();
     await placeCard.click();
+    await expect.poll(async () => (await handRegion.innerText()) !== previousState).toBe(true);
     return;
   }
 
   await page.getByRole("button", { name: "Pass" }).click();
+  await expect.poll(async () => (await handRegion.innerText()) !== previousState).toBe(true);
 }
 
 async function playDominoHand(page: Page) {
@@ -507,6 +513,9 @@ test("Domino hand plays through the layout contract", async ({ page }, testInfo)
 
   await expect(page.getByRole("heading", { name: "Domino hand" })).toBeVisible();
   await expect(page.getByLabel("Domino hand score")).toContainText("Cards left");
+  await expect(page.getByLabel("Domino hand score")).toContainText("Next out");
+  await expect(page.getByLabel("Domino point counter")).toContainText("Next out");
+  await expect(page.getByLabel("Domino hand decision")).toContainText(/Open a closed suit|extend an open suit|blocked/);
   await expect(page.getByLabel("Domino layout")).toBeVisible();
   await expect(page.getByLabel("Your Domino hand")).toBeVisible();
   await expectNoPageScroll(page);

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { invoke } from "@tauri-apps/api/core";
+  import { invoke, isTauri } from "@tauri-apps/api/core";
   import {
     playBrowserKingOfHeartsCard,
     playBrowserNoHeartsCard,
@@ -212,11 +212,18 @@
   const maxStoredDrillPatterns = 6;
   const maxStoredPlayBarbuAttempts = 8;
   const scoreSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
+  const dominoOrderScores = [45, 20, 5, -5];
   const seatByPlayerIndex: Record<number, Seat> = {
     0: "Tutor",
     1: "Right",
     2: "You",
     3: "Left"
+  };
+  const playerIndexBySeat: Record<Seat, number> = {
+    Tutor: 0,
+    Right: 1,
+    You: 2,
+    Left: 3
   };
   const runContractIntros: Record<FullHandContract, RunContractIntro> = {
     "No Hearts": {
@@ -700,6 +707,7 @@
   let usingBrowserDomino = false;
   let lastFullHandTapCardId = "";
   let lastFullHandTapAt = 0;
+  let dominoLastMoveReason = "";
   let fullHandRunActive = false;
   let fullHandRunResults: FullHandRunResult[] = [];
   let pendingRunContract: FullHandContract = fullHandContracts[0];
@@ -891,6 +899,7 @@
     : "Try another";
   $: dominoLegalCardIds = new Set(dominoHand?.legalCardIds ?? []);
   $: dominoSelectedCard = dominoHand?.playerHand.find((card) => card.id === dominoSelectedCardId);
+  $: dominoDefaultPlayableCard = dominoHand?.playerHand.find((card) => dominoLegalCardIds.has(card.id));
   $: dominoScoreMap = dominoHand
     ? ({
         Tutor: dominoHand.scores[0] ?? 0,
@@ -901,6 +910,12 @@
     : emptySeatPenalties();
   $: dominoResultTitle = dominoHand?.status === "complete" ? dominoResultHeading(dominoHand) : "Build the layout";
   $: dominoResultSummary = dominoHand?.status === "complete" ? dominoResultText(dominoHand) : "";
+  $: dominoNextOutScore = dominoHand ? dominoOrderScores[dominoHand.outOrder.length] ?? -5 : 0;
+  $: dominoMoveReason = dominoHand
+    ? dominoSelectedCard
+      ? dominoMoveExplanation(dominoHand, dominoSelectedCard)
+      : dominoLastMoveReason || dominoMoveExplanation(dominoHand, undefined)
+    : "";
 
   function loadCourseProgress() {
     if (typeof localStorage === "undefined") {
@@ -1141,6 +1156,23 @@
     return startBrowserNoHeartsHand(seed);
   }
 
+  function hasTauriRuntime() {
+    return typeof window !== "undefined" && isTauri();
+  }
+
+  function invokeWithTimeout<T>(command: string, args: Record<string, unknown>, timeoutMs = 900) {
+    return Promise.race<T>([
+      invoke<T>(command, args),
+      new Promise<T>((_, reject) => {
+        window.setTimeout(() => reject(new Error(`Timed out calling ${command}`)), timeoutMs);
+      })
+    ]);
+  }
+
+  function isInvokeTimeoutError(error: unknown) {
+    return error instanceof Error && error.message.startsWith("Timed out calling");
+  }
+
   function playBrowserFullHand(state: FullHandState, cardId: string) {
     if (state.contract === "No Queens") {
       return playBrowserNoQueensCard(state, cardId);
@@ -1204,9 +1236,17 @@
     fullHand = null;
     dominoSelectedCardId = "";
     dominoError = "";
+    dominoLastMoveReason = "";
+
+    if (!hasTauriRuntime()) {
+      dominoHand = startBrowserDominoHand(seed);
+      usingBrowserDomino = true;
+      appView = "dominoHand";
+      return;
+    }
 
     try {
-      dominoHand = await invoke<DominoHandState>("start_domino_hand", {
+      dominoHand = await invokeWithTimeout<DominoHandState>("start_domino_hand", {
         seed
       });
       usingBrowserDomino = false;
@@ -1336,25 +1376,56 @@
       return;
     }
 
+    const playedCard = dominoHand.playerHand.find((card) => card.id === cardId);
+    const moveReason = playedCard ? dominoMoveExplanation(dominoHand, playedCard) : "";
     dominoError = "";
 
-    if (usingBrowserDomino) {
+    if (usingBrowserDomino || !hasTauriRuntime()) {
       dominoHand = playBrowserDominoCard(dominoHand, cardId);
+      usingBrowserDomino = true;
       recordCompletedDominoRunResult(dominoHand);
       dominoSelectedCardId = "";
+      dominoLastMoveReason = moveReason;
       return;
     }
 
     try {
-      dominoHand = await invoke<DominoHandState>("play_domino_card", {
+      dominoHand = await invokeWithTimeout<DominoHandState>("play_domino_card", {
         state: dominoHand,
         cardId
       });
       recordCompletedDominoRunResult(dominoHand);
       dominoSelectedCardId = "";
+      dominoLastMoveReason = moveReason;
     } catch (error) {
-      dominoError = typeof error === "string" ? error : "That card could not be placed.";
+      if (!isInvokeTimeoutError(error)) {
+        dominoError = typeof error === "string" ? error : "That card could not be placed.";
+        return;
+      }
+
+      dominoHand = playBrowserDominoCard(dominoHand, cardId);
+      usingBrowserDomino = true;
+      recordCompletedDominoRunResult(dominoHand);
+      dominoSelectedCardId = "";
+      dominoLastMoveReason = moveReason;
     }
+  }
+
+  function selectDominoCard(card: Card) {
+    if (!dominoHand || dominoHand.status === "complete") {
+      return;
+    }
+
+    dominoSelectedCardId = card.id;
+  }
+
+  function placeSelectedOrDefaultDominoCard() {
+    const cardId =
+      dominoSelectedCard && dominoLegalCardIds.has(dominoSelectedCard.id)
+        ? dominoSelectedCard.id
+        : (dominoDefaultPlayableCard?.id ?? "");
+
+    void playDominoSelectedCard(cardId);
   }
 
   async function passDomino() {
@@ -1364,19 +1435,30 @@
 
     dominoError = "";
 
-    if (usingBrowserDomino) {
+    if (usingBrowserDomino || !hasTauriRuntime()) {
       dominoHand = passBrowserDominoTurn(dominoHand);
+      usingBrowserDomino = true;
       recordCompletedDominoRunResult(dominoHand);
+      dominoLastMoveReason = "You passed because no card in your hand could start or extend a lane.";
       return;
     }
 
     try {
-      dominoHand = await invoke<DominoHandState>("pass_domino_turn", {
+      dominoHand = await invokeWithTimeout<DominoHandState>("pass_domino_turn", {
         state: dominoHand
       });
       recordCompletedDominoRunResult(dominoHand);
+      dominoLastMoveReason = "You passed because no card in your hand could start or extend a lane.";
     } catch (error) {
-      dominoError = typeof error === "string" ? error : "You could not pass here.";
+      if (!isInvokeTimeoutError(error)) {
+        dominoError = typeof error === "string" ? error : "You could not pass here.";
+        return;
+      }
+
+      dominoHand = passBrowserDominoTurn(dominoHand);
+      usingBrowserDomino = true;
+      recordCompletedDominoRunResult(dominoHand);
+      dominoLastMoveReason = "You passed because no card in your hand could start or extend a lane.";
     }
   }
 
@@ -1861,6 +1943,101 @@
 
   function dominoLaneText(lane: Card[]) {
     return lane.length ? lane.map((card) => card.label).join(" ") : "Open with 7";
+  }
+
+  function dominoSeatProgressLabel(state: DominoHandState, seat: Seat) {
+    const outIndex = state.outOrder.indexOf(seat);
+
+    if (outIndex >= 0) {
+      return `${formatOrdinal(outIndex + 1)} ${formatSignedScore(dominoOrderScores[outIndex] ?? 0)}`;
+    }
+
+    const cardsLeft = state.hands[playerIndexBySeat[seat]]?.length ?? 0;
+    return `${cardsLeft} ${cardsLeft === 1 ? "card" : "cards"}`;
+  }
+
+  function dominoOutOrderText(state: DominoHandState) {
+    return state.outOrder.length ? state.outOrder.map((seat) => scoreSeatLabel(seat as Seat)).join(" ") : "No one out";
+  }
+
+  function dominoMoveExplanation(state: DominoHandState, card: Card | undefined) {
+    if (!card) {
+      if (state.legalCardIds.length === 0) {
+        return "You are blocked. Passing is correct because no card in your hand starts or extends a lane.";
+      }
+
+      return `Legal cards are highlighted. Open a closed suit with a seven, or extend an open suit by one rank. The next player out scores ${formatSignedScore(dominoNextOutScore)}.`;
+    }
+
+    if (!dominoLegalCardIds.has(card.id)) {
+      return dominoIllegalMoveExplanation(state, card);
+    }
+
+    const lane = state.layout[suitIndex(card.suit)];
+    const unlockedCards = dominoCardsUnlockedByPlacement(state, card);
+    const finishText =
+      state.playerHand.length === 1
+        ? ` It empties your hand and claims ${formatSignedScore(dominoNextOutScore)}.`
+        : "";
+    const unlockText = unlockedCards.length
+      ? ` It also prepares ${unlockedCards.map((unlocked) => unlocked.label).join(" or ")} for a later turn.`
+      : "";
+
+    if (lane.length === 0) {
+      return `${card.label} opens the ${suitNames[card.suit]} lane from seven.${unlockText}${finishText}`;
+    }
+
+    const direction = dominoExtensionDirection(lane, card);
+    return `${card.label} extends ${suitNames[card.suit]} ${direction}. This reduces your hand without opening an unrelated suit.${unlockText}${finishText}`;
+  }
+
+  function dominoIllegalMoveExplanation(state: DominoHandState, card: Card) {
+    const lane = state.layout[suitIndex(card.suit)];
+
+    if (lane.length === 0) {
+      return `${card.label} is blocked because a closed suit must start with its seven.`;
+    }
+
+    return `${card.label} is blocked because ${suitNames[card.suit]} currently shows ${dominoLaneText(lane)}; only the next lower or next higher rank fits.`;
+  }
+
+  function dominoCardsUnlockedByPlacement(state: DominoHandState, card: Card) {
+    const nextLayout = state.layout.map((lane) => [...lane]);
+    const lane = nextLayout[suitIndex(card.suit)];
+    lane.push(card);
+    lane.sort((left, right) => rankValue(left.rank) - rankValue(right.rank));
+
+    return state.playerHand
+      .filter((heldCard) => heldCard.id !== card.id && heldCard.suit === card.suit)
+      .filter((heldCard) => isLegalDominoCardOnLayout(nextLayout, heldCard));
+  }
+
+  function isLegalDominoCardOnLayout(layout: Card[][], card: Card) {
+    const lane = layout[suitIndex(card.suit)];
+
+    if (lane.length === 0) {
+      return card.rank === "7";
+    }
+
+    const low = Math.min(...lane.map((played) => rankValue(played.rank)));
+    const high = Math.max(...lane.map((played) => rankValue(played.rank)));
+    const rank = rankValue(card.rank);
+
+    return rank === low - 1 || rank === high + 1;
+  }
+
+  function dominoExtensionDirection(lane: Card[], card: Card) {
+    const low = Math.min(...lane.map((played) => rankValue(played.rank)));
+    const high = Math.max(...lane.map((played) => rankValue(played.rank)));
+    const rank = rankValue(card.rank);
+
+    if (rank === low - 1) {
+      return "downward";
+    }
+    if (rank === high + 1) {
+      return "upward";
+    }
+    return "by one rank";
   }
 
   function dominoCardClasses(card: Card) {
@@ -3303,6 +3480,10 @@
                 <span>Cards left</span>
                 <strong>{dominoHand.cardsRemaining}</strong>
               </div>
+              <div>
+                <span>Next out</span>
+                <strong>{formatSignedScore(dominoNextOutScore)}</strong>
+              </div>
             {/if}
           </div>
 
@@ -3397,13 +3578,24 @@
             {#if dominoError}
               <p class="outcome warning">{dominoError}</p>
             {/if}
-            <p class="explanation">
-              {dominoSelectedCard
-                ? dominoLegalCardIds.has(dominoSelectedCard.id)
-                  ? `${dominoSelectedCard.label} fits the current layout.`
-                  : `${dominoSelectedCard.label} cannot start or extend a suit right now.`
-                : "Legal cards are highlighted. Domino starts suits with sevens and extends one rank at a time."}
-            </p>
+            <p class="explanation">{dominoMoveReason}</p>
+
+            <div class="domino-counter" aria-label="Domino point counter">
+              {#each scoreSeats as seat}
+                <div>
+                  <span>{scoreSeatRunLabel(seat)}</span>
+                  <strong>{dominoSeatProgressLabel(dominoHand, seat)}</strong>
+                </div>
+              {/each}
+              <div>
+                <span>Next out</span>
+                <strong>{formatSignedScore(dominoNextOutScore)}</strong>
+              </div>
+              <div>
+                <span>Order</span>
+                <strong>{dominoOutOrderText(dominoHand)}</strong>
+              </div>
+            </div>
 
             <div class="hand full-hand-cards domino-cards" aria-label="Your Domino hand">
               {#each dominoHand.playerHand as card}
@@ -3414,7 +3606,9 @@
                   class:legal={dominoCardClasses(card).legal}
                   class:selected={dominoCardClasses(card).selected}
                   class="card hand-card full-hand-card"
-                  onclick={() => (dominoSelectedCardId = card.id)}
+                  ondblclick={() => void playDominoSelectedCard(card.id)}
+                  onclick={() => selectDominoCard(card)}
+                  onfocus={() => selectDominoCard(card)}
                   type="button"
                 >
                   <b>{card.rank}</b>
@@ -3446,8 +3640,8 @@
               </button>
               <button
                 class="primary-action"
-                disabled={!dominoSelectedCard || !dominoLegalCardIds.has(dominoSelectedCard.id)}
-                onclick={() => void playDominoSelectedCard()}
+                disabled={!dominoDefaultPlayableCard}
+                onclick={placeSelectedOrDefaultDominoCard}
                 type="button"
               >
                 Place card

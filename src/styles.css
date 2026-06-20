@@ -487,6 +487,38 @@ button {
   grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
+.domino-counter {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.domino-counter div {
+  display: grid;
+  gap: 3px;
+  min-height: 42px;
+  padding: 7px 8px;
+  border: 1px solid #c7d0c0;
+  border-radius: 8px;
+  background: #f4f6ef;
+}
+
+.domino-counter span {
+  color: #60705a;
+  font-size: 0.58rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.domino-counter strong {
+  overflow: hidden;
+  color: #17201a;
+  font-size: 0.78rem;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .path-section {
   display: grid;
   gap: 12px;
