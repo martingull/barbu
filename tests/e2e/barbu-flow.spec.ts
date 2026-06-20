@@ -483,7 +483,7 @@ test("Hearts Trumps hand plays through thirteen tricks", async ({ page }, testIn
   await startContractHand(page, "Hearts Trumps");
 
   await expect(page.getByRole("heading", { name: "Hearts Trumps hand" })).toBeVisible();
-  await expect(page.getByLabel("Hearts Trumps hand score")).toContainText("points in play");
+  await expect(page.getByLabel("Hearts Trumps hand score")).toContainText("points available");
   await expect(page.getByLabel("Hearts Trumps hand table")).toBeVisible();
   await expectNoPageScroll(page);
 

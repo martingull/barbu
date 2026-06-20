@@ -18,6 +18,7 @@
   import { generateBrowserPlayBarbuDrillSteps } from "./browserDrillFallback";
   import CardTable from "./CardTable.svelte";
   import TablePlaySurface from "./TablePlaySurface.svelte";
+  import { contractRunScore, contractScoreMeta, formatContractValue } from "./contractScoring";
   import { guidedLessons } from "./lessons/catalog";
   import { referenceCatalog } from "./referenceCatalog";
   import type {
@@ -138,18 +139,7 @@
     message: string;
   };
 
-  type ContractScoringGoal = "avoid" | "win";
-
-  type FullHandContractMeta = {
-    scoringGoal: ContractScoringGoal;
-    penaltyName: string;
-    penaltyPlural: string;
-    penaltyTotal: number;
-    playedLabel: string;
-    scoreLabel: string;
-    resultLabel: string;
-    bestLabel: string;
-    weakestLabel: string;
+  type FullHandContractCommands = {
     startCommand: string;
     playCommand: string;
   };
@@ -226,6 +216,36 @@
     "Hearts Trumps",
     "Domino"
   ];
+  const fullHandContractCommands: Record<FullHandContract, FullHandContractCommands> = {
+    "No Hearts": {
+      startCommand: "start_no_hearts_hand",
+      playCommand: "play_no_hearts_hand_card"
+    },
+    "No Queens": {
+      startCommand: "start_no_queens_hand",
+      playCommand: "play_no_queens_hand_card"
+    },
+    "King of Hearts": {
+      startCommand: "start_king_of_hearts_hand",
+      playCommand: "play_king_of_hearts_hand_card"
+    },
+    "No Last Two": {
+      startCommand: "start_no_last_two_hand",
+      playCommand: "play_no_last_two_hand_card"
+    },
+    "No Tricks": {
+      startCommand: "start_no_tricks_hand",
+      playCommand: "play_no_tricks_hand_card"
+    },
+    "Hearts Trumps": {
+      startCommand: "start_positive_tricks_hand",
+      playCommand: "play_positive_tricks_hand_card"
+    },
+    Domino: {
+      startCommand: "start_domino_hand",
+      playCommand: "play_domino_card"
+    }
+  };
   const scoreSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
   const seatByPlayerIndex: Record<number, Seat> = {
     0: "Tutor",
@@ -840,11 +860,11 @@
     !fullHandIsReviewingTrick && fullHand?.status === "in_progress" && fullHand.currentPlayer === "You" && fullHand.currentTrick.length < 4
       ? { You: "You" }
       : {};
-  $: fullHandContractMeta = fullHandMeta(fullHand?.contract ?? "No Hearts");
-  $: fullHandPenaltyName = fullHandContractMeta.penaltyName;
-  $: fullHandPenaltyPlural = fullHandContractMeta.penaltyPlural;
-  $: fullHandPenaltyTotal = fullHandContractMeta.penaltyTotal;
-  $: fullHandPenaltyPlayedLabel = fullHandContractMeta.playedLabel;
+  $: fullHandContractMeta = contractScoreMeta(fullHand?.contract ?? "No Hearts");
+  $: fullHandPenaltyName = fullHandContractMeta.unitName;
+  $: fullHandPenaltyPlural = fullHandContractMeta.unitPlural;
+  $: fullHandPenaltyTotal = fullHandContractMeta.totalValue;
+  $: fullHandPenaltyPlayedLabel = fullHandContractMeta.inPlayLabel;
   $: fullHandNoLastTwoPhaseLabel = noLastTwoPhaseLabel(fullHand);
   $: fullHandNoLastTwoPhaseValue = noLastTwoPhaseValue(fullHand);
   $: fullHandPlayerPenaltyLabel =
@@ -1100,113 +1120,6 @@
     return "No lessons yet";
   }
 
-  function fullHandMeta(contract: FullHandContract): FullHandContractMeta {
-    if (contract === "No Queens") {
-      return {
-        scoringGoal: "avoid",
-        penaltyName: "point",
-        penaltyPlural: "points",
-        penaltyTotal: 24,
-        playedLabel: "points in play",
-        scoreLabel: "Your penalty",
-        resultLabel: "took",
-        bestLabel: "Best escape",
-        weakestLabel: "Costliest trick",
-        startCommand: "start_no_queens_hand",
-        playCommand: "play_no_queens_hand_card"
-      };
-    }
-    if (contract === "King of Hearts") {
-      return {
-        scoringGoal: "avoid",
-        penaltyName: "point",
-        penaltyPlural: "points",
-        penaltyTotal: 20,
-        playedLabel: "points in play",
-        scoreLabel: "Your penalty",
-        resultLabel: "took",
-        bestLabel: "Best escape",
-        weakestLabel: "Costliest trick",
-        startCommand: "start_king_of_hearts_hand",
-        playCommand: "play_king_of_hearts_hand_card"
-      };
-    }
-    if (contract === "No Last Two") {
-      return {
-        scoringGoal: "avoid",
-        penaltyName: "point",
-        penaltyPlural: "points",
-        penaltyTotal: 30,
-        playedLabel: "points in play",
-        scoreLabel: "Your penalty",
-        resultLabel: "took",
-        bestLabel: "Best escape",
-        weakestLabel: "Costliest trick",
-        startCommand: "start_no_last_two_hand",
-        playCommand: "play_no_last_two_hand_card"
-      };
-    }
-    if (contract === "No Tricks") {
-      return {
-        scoringGoal: "avoid",
-        penaltyName: "point",
-        penaltyPlural: "points",
-        penaltyTotal: 26,
-        playedLabel: "points in play",
-        scoreLabel: "Your penalty",
-        resultLabel: "took",
-        bestLabel: "Best escape",
-        weakestLabel: "Costliest trick",
-        startCommand: "start_no_tricks_hand",
-        playCommand: "play_no_tricks_hand_card"
-      };
-    }
-    if (contract === "Hearts Trumps") {
-      return {
-        scoringGoal: "win",
-        penaltyName: "point",
-        penaltyPlural: "points",
-        penaltyTotal: 65,
-        playedLabel: "points in play",
-        scoreLabel: "Your score",
-        resultLabel: "won",
-        bestLabel: "Best trump",
-        weakestLabel: "Missed trick",
-        startCommand: "start_positive_tricks_hand",
-        playCommand: "play_positive_tricks_hand_card"
-      };
-    }
-    if (contract === "Domino") {
-      return {
-        scoringGoal: "win",
-        penaltyName: "point",
-        penaltyPlural: "points",
-        penaltyTotal: 65,
-        playedLabel: "points in play",
-        scoreLabel: "Your score",
-        resultLabel: "scored",
-        bestLabel: "Best lane",
-        weakestLabel: "Blocked lane",
-        startCommand: "start_domino_hand",
-        playCommand: "play_domino_card"
-      };
-    }
-
-    return {
-      scoringGoal: "avoid",
-      penaltyName: "point",
-      penaltyPlural: "points",
-      penaltyTotal: 30,
-      playedLabel: "points in play",
-      scoreLabel: "Your penalty",
-      resultLabel: "took",
-      bestLabel: "Best escape",
-      weakestLabel: "Costliest trick",
-      startCommand: "start_no_hearts_hand",
-      playCommand: "play_no_hearts_hand_card"
-    };
-  }
-
   function startBrowserFullHand(contract: FullHandContract, seed: number) {
     if (contract === "No Queens") {
       return startBrowserNoQueensHand(seed);
@@ -1265,7 +1178,7 @@
     fullHandReviewTrickCount = 0;
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
-    const metadata = fullHandMeta(contract);
+    const metadata = fullHandContractCommands[contract];
 
     try {
       fullHand = await invoke<FullHandState>(metadata.startCommand, {
@@ -1339,7 +1252,7 @@
     }
 
     try {
-      const nextFullHand = await invoke<FullHandState>(fullHandMeta(fullHand.contract).playCommand, {
+      const nextFullHand = await invoke<FullHandState>(fullHandContractCommands[fullHand.contract].playCommand, {
         state: fullHand,
         cardId
       });
@@ -1624,10 +1537,6 @@
     return totals;
   }
 
-  function contractRunScore(contract: FullHandContract, value: number) {
-    return fullHandMeta(contract).scoringGoal === "win" ? value : -value;
-  }
-
   function scoreSeatLabel(seat: Seat) {
     return seat === "Tutor" ? "Barbu" : seat;
   }
@@ -1637,11 +1546,11 @@
   }
 
   function scoreSeatResultLabel(seat: Seat) {
-    return `${scoreSeatLabel(seat)} ${fullHandContractMeta.resultLabel}`;
+    return `${scoreSeatLabel(seat)} ${fullHandContractMeta.resultVerb}`;
   }
 
   function fullHandTrickIsWarning(trick: CompletedHandTrick | undefined) {
-    return fullHandContractMeta.scoringGoal === "avoid" && trick?.outcome === "captured_penalty";
+    return fullHandContractMeta.kind === "avoidance" && trick?.outcome === "captured_penalty";
   }
 
   function runStandings(scores: Record<Seat, number>): RunStanding[] {
@@ -1880,7 +1789,7 @@
   }
 
   function fullHandBestTrickLabel(hand: FullHandState) {
-    if (fullHandMeta(hand.contract).scoringGoal === "win") {
+    if (contractScoreMeta(hand.contract).kind !== "avoidance") {
       const won = hand.completedTricks
         .filter((trick) => trick.winnerIndex === 2 && trick.penalty > 0)
         .sort((left, right) => right.penalty - left.penalty)[0];
@@ -1901,7 +1810,7 @@
   }
 
   function fullHandWorstTrickLabel(hand: FullHandState) {
-    if (fullHandMeta(hand.contract).scoringGoal === "win") {
+    if (contractScoreMeta(hand.contract).kind !== "avoidance") {
       const missed = hand.completedTricks
         .filter((trick) => trick.winnerIndex !== 2 && trick.penalty > 0)
         .sort((left, right) => right.penalty - left.penalty)[0];
@@ -1918,11 +1827,6 @@
 
   function formatFullHandPenalty(value: number) {
     return `${value} ${value === 1 ? fullHandPenaltyName : fullHandPenaltyPlural}`;
-  }
-
-  function formatContractPenalty(contract: FullHandContract, value: number) {
-    const meta = fullHandMeta(contract);
-    return `${value} ${value === 1 ? meta.penaltyName : meta.penaltyPlural}`;
   }
 
   function dominoResultHeading(state: DominoHandState) {
@@ -3079,7 +2983,7 @@
           {#if !fullHandRunIsComplete}
             <div class="full-hand-summary" aria-label={`${fullHand.contract} hand score`}>
               <div>
-                <span>{fullHandContractMeta.scoreLabel}</span>
+                <span>{fullHandContractMeta.playerValueLabel}</span>
                 <strong>{fullHand.playerPenalty}</strong>
               </div>
               <div>
@@ -3145,7 +3049,7 @@
                   <span>Best contract</span>
                   <strong>
                     {#if fullHandRunBestContract}
-                      {fullHandRunBestContract.contract}: {formatContractPenalty(
+                      {fullHandRunBestContract.contract}: {formatContractValue(
                         fullHandRunBestContract.contract,
                         fullHandRunBestContract.seatPenalties.You ?? 0
                       )}
@@ -3158,7 +3062,7 @@
                   <span>Practice next</span>
                   <strong>
                     {#if fullHandRunWeakestContract}
-                      {fullHandRunWeakestContract.contract}: {formatContractPenalty(
+                      {fullHandRunWeakestContract.contract}: {formatContractValue(
                         fullHandRunWeakestContract.contract,
                         fullHandRunWeakestContract.seatPenalties.You ?? 0
                       )}
@@ -3357,7 +3261,7 @@
                   <span>Best contract</span>
                   <strong>
                     {#if fullHandRunBestContract}
-                      {fullHandRunBestContract.contract}: {formatContractPenalty(
+                      {fullHandRunBestContract.contract}: {formatContractValue(
                         fullHandRunBestContract.contract,
                         fullHandRunBestContract.seatPenalties.You ?? 0
                       )}
@@ -3370,7 +3274,7 @@
                   <span>Practice next</span>
                   <strong>
                     {#if fullHandRunWeakestContract}
-                      {fullHandRunWeakestContract.contract}: {formatContractPenalty(
+                      {fullHandRunWeakestContract.contract}: {formatContractValue(
                         fullHandRunWeakestContract.contract,
                         fullHandRunWeakestContract.seatPenalties.You ?? 0
                       )}

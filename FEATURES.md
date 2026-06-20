@@ -41,6 +41,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Play Barbu scorecard with signed score cells, contract rows, four-player columns, current/completed/pending states, and totals.
 - Play Barbu session summary with current leader, player place, and contracts remaining before each hand.
 - Local full-hand contract value tracking with contract-specific point values for the currently playable contracts. Full settlement rules are a later feature.
+- Shared frontend contract score model that separates avoidance, reward, and layout contracts for labels, run-score direction, and contract totals.
 - Compact full-hand result panel with contract result, Barbu/player penalty split, key tricks, replay, and next-contract actions.
 - Training path practice step connected to Quick Drill completion.
 - Review step with latest Quick Drill score, weakest-contract advice, recent attempts, and replay actions.
@@ -101,9 +102,9 @@ These are the next product increments that keep the app coherent.
 
 3. Contract Score Model v2
    - Move point-value definitions into shared content/core metadata instead of duplicating them across UI and scoring code.
-   - Keep avoidance contracts, positive contracts, and future layout contracts explicit in metadata.
-   - Make scorecard language use score/value/tricks instead of assuming every contract is a penalty contract.
-   - Fold Domino's order-out score table into the same shared model.
+   - Frontend score metadata now separates avoidance, reward, and layout contracts for labels and run-score direction.
+   - Next: move the same model into Rust/content so hand scoring, generated practice, and UI labels share one source.
+   - Next: fold Domino's order-out score table into the same shared model.
 
 4. Core Game And Variety Model v2
    - Move catalog metadata toward content-backed data as more games are added.
