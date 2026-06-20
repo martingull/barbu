@@ -423,12 +423,18 @@ test("No Last Two hand plays through thirteen tricks", async ({ page }, testInfo
 
   await expect(page.getByRole("heading", { name: "No Last Two hand" })).toBeVisible();
   await expect(page.getByLabel("No Last Two hand score")).toContainText("points in play");
+  await expect(page.getByLabel("No Last Two hand score")).toContainText("Setup trick");
+  await expect(page.getByLabel("No Last Two hand score")).toContainText("0 points");
   await expect(page.getByLabel("No Last Two hand table")).toBeVisible();
   const activeTable = await page.getByLabel("No Last Two hand table").boundingBox();
   expect(activeTable).not.toBeNull();
   await expectNoPageScroll(page);
 
-  for (let decision = 0; decision < 13; decision += 1) {
+  await page.locator(".full-hand-card.legal").first().dblclick();
+  await expect(page.getByLabel("No Last Two hand decision")).toContainText("setup trick");
+  await page.getByRole("button", { name: "Next trick", exact: true }).click();
+
+  for (let decision = 1; decision < 13; decision += 1) {
     await playFullHandDecision(page);
   }
 

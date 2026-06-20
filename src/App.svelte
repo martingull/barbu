@@ -845,6 +845,8 @@
   $: fullHandPenaltyPlural = fullHandContractMeta.penaltyPlural;
   $: fullHandPenaltyTotal = fullHandContractMeta.penaltyTotal;
   $: fullHandPenaltyPlayedLabel = fullHandContractMeta.playedLabel;
+  $: fullHandNoLastTwoPhaseLabel = noLastTwoPhaseLabel(fullHand);
+  $: fullHandNoLastTwoPhaseValue = noLastTwoPhaseValue(fullHand);
   $: fullHandPlayerPenaltyLabel =
     fullHand?.playerPenalty === 1 ? fullHandPenaltyName : fullHandPenaltyPlural;
   $: fullHandSeatPenalties = fullHand ? seatPenaltiesForTricks(fullHand.completedTricks) : emptySeatPenalties();
@@ -1756,6 +1758,36 @@
     };
   }
 
+  function noLastTwoPhaseLabel(hand: FullHandState | null | undefined) {
+    if (!hand || hand.contract !== "No Last Two") {
+      return "";
+    }
+    if (hand.trickNumber >= 13) {
+      return "Penalty trick";
+    }
+    if (hand.trickNumber === 12) {
+      return "Penalty trick";
+    }
+    return "Setup trick";
+  }
+
+  function noLastTwoPhaseValue(hand: FullHandState | null | undefined) {
+    if (!hand || hand.contract !== "No Last Two") {
+      return "";
+    }
+    if (hand.trickNumber >= 13) {
+      return "20 points";
+    }
+    if (hand.trickNumber === 12) {
+      return "10 points";
+    }
+    return "0 points";
+  }
+
+  function fullHandCompletedTrickNumber(trick: CompletedHandTrick) {
+    return fullHand ? fullHand.completedTricks.indexOf(trick) + 1 : 0;
+  }
+
   function fullHandTrickFeedback(trick: CompletedHandTrick) {
     const penaltyText = `${trick.penalty} ${trick.penalty === 1 ? fullHandPenaltyName : fullHandPenaltyPlural}`;
 
@@ -1763,6 +1795,18 @@
       return trick.winner === "You"
         ? `You won the trick and banked ${penaltyText}. Good: hearts are trumps in this contract.`
         : `${trick.winner} won the trick and banked ${penaltyText}. Look for a heart or higher control next time.`;
+    }
+
+    if (fullHand?.contract === "No Last Two") {
+      const trickNumber = fullHandCompletedTrickNumber(trick);
+      if (trickNumber <= 11) {
+        return trick.winner === "You"
+          ? "You won a setup trick. No score yet; high cards are being shed before the final two."
+          : `${trick.winner} won a setup trick. No score yet; high cards are being shed before the final two.`;
+      }
+      return trick.winner === "You"
+        ? `You won trick ${trickNumber} and took ${penaltyText}. This is one of the final two.`
+        : `${trick.winner} won trick ${trickNumber} and took ${penaltyText}. Good: you stayed out of the final-two penalty.`;
     }
 
     if (trick.outcome === "captured_penalty") {
@@ -3046,6 +3090,12 @@
                 <span>Tricks</span>
                 <strong>{fullHand.completedTricks.length} / 13</strong>
               </div>
+              {#if fullHand.contract === "No Last Two"}
+                <div>
+                  <span>{fullHandNoLastTwoPhaseLabel}</span>
+                  <strong>{fullHandNoLastTwoPhaseValue}</strong>
+                </div>
+              {/if}
               {#if fullHandRunActive}
                 {#each scoreSeats as seat}
                   <div>
@@ -3157,7 +3207,11 @@
             <p class:warning={fullHandTrickIsWarning(fullHandReviewTrick)} class="outcome">
               {fullHandReviewFeedback}
             </p>
-            <p class="explanation">Left's card is on the table. Tap the table or press Next trick when you are ready.</p>
+            <p class="explanation">
+              {fullHand.contract === "No Last Two"
+                ? "Check the trick number first. Tap the table or press Next trick when you are ready."
+                : "Left's card is on the table. Tap the table or press Next trick when you are ready."}
+            </p>
           {:else}
             <div class="lesson-heading">
               <p class="eyebrow">Your turn</p>
