@@ -43,6 +43,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Play Barbu settlement summary with four-player placement, best contract, weakest contract, and focused replay.
 - Play Barbu scorecard with signed score cells, contract rows, four-player columns, current/completed/pending states, and totals.
 - Play Barbu session summary with current leader, player place, and contracts remaining before each hand.
+- Play Barbu session framing with contract sequence roles, surface cues for trick-taking versus Domino layout, and a compact winner/strongest/weakest end summary.
 - Local full-hand contract value tracking with contract-specific point values for the currently playable contracts. Full settlement rules are a later feature.
 - Shared frontend contract score model that separates avoidance, reward, and layout contracts for labels, run-score direction, and contract totals.
 - Compact full-hand result panel with contract result, Barbu/player penalty split, key tricks, replay, and next-contract actions.

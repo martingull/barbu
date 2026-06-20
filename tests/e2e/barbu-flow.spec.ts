@@ -276,6 +276,10 @@ test("Play Barbu advances full-hand contracts with a running total", async ({ pa
     await expect(page.getByRole("heading", { name: contract })).toBeVisible();
     await expect(page.getByText(`Contract ${index + 1} of ${contracts.length}`)).toBeVisible();
     await expect(page.getByLabel("Play Barbu contract intro")).toContainText("Barbu sets the contract");
+    await expect(page.getByLabel(`${contract} role`)).toContainText("Role");
+    await expect(page.getByLabel(`${contract} role`)).toContainText("Surface");
+    await expect(page.getByLabel(`${contract} role`)).toContainText(contract === "Domino" ? "Domino layout" : /Trick|Trump/);
+    await expect(page.getByLabel("Play Barbu contract sequence")).toContainText(contract);
     await expect(page.getByLabel("Play Barbu session summary")).toContainText("Leader");
     await expect(page.getByLabel("Play Barbu session summary")).toContainText("Your place");
     await expect(page.getByLabel("Play Barbu session summary")).toContainText("Remaining");
@@ -319,9 +323,10 @@ test("Play Barbu advances full-hand contracts with a running total", async ({ pa
   await expect(page.getByLabel("Play Barbu score")).toContainText("Barbu");
   await expect(page.getByLabel("Play Barbu score")).toContainText("Left");
   await expect(page.getByLabel("Play Barbu score")).toContainText("Right");
+  await expect(page.getByLabel("Play Barbu settlement")).toContainText("Winner");
   await expect(page.getByLabel("Play Barbu settlement")).toContainText("Your place");
-  await expect(page.getByLabel("Play Barbu settlement")).toContainText("Best contract");
-  await expect(page.getByLabel("Play Barbu settlement")).toContainText("Practice next");
+  await expect(page.getByLabel("Play Barbu settlement")).toContainText("Strongest");
+  await expect(page.getByLabel("Play Barbu settlement")).toContainText("Weakest");
   await expect(page.getByLabel("Play Barbu results")).toContainText("No Hearts");
   await expect(page.getByLabel("Play Barbu results")).toContainText("No Tricks");
   await expect(page.getByLabel("Play Barbu results")).toContainText("Hearts Trumps");

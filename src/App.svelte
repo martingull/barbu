@@ -161,6 +161,8 @@
 
   type RunContractIntro = {
     title: string;
+    role: string;
+    surface: string;
     target: string;
     reason: string;
     habit: string;
@@ -228,42 +230,56 @@
   const runContractIntros: Record<FullHandContract, RunContractIntro> = {
     "No Hearts": {
       title: "Hearts are cargo. Do not bring them home.",
+      role: "Opening avoidance contract",
+      surface: "Trick-taking hand",
       target: "Avoid winning heart tricks.",
       reason: "Barbu starts with the simplest penalty shape: dangerous cards inside ordinary tricks.",
       habit: "Locate the trick winner before worrying about the heart."
     },
     "No Queens": {
       title: "Queens punish the player who captures them.",
+      role: "Penalty-card contract",
+      surface: "Trick-taking hand",
       target: "Avoid queen tricks.",
       reason: "This contract raises the pressure because one high card can pull a queen into your score.",
       habit: "Duck under the current winner when a queen is loaded."
     },
     "King of Hearts": {
       title: "One card carries the contract.",
+      role: "Single-danger contract",
+      surface: "Trick-taking hand",
       target: "Avoid capturing KH.",
       reason: "Barbu now narrows the danger to one card, so tracking matters more than fear of the whole suit.",
       habit: "Find KH, then ask whether your card wins its trick."
     },
     "No Last Two": {
       title: "The end of the hand is dangerous.",
+      role: "Timing contract",
+      surface: "Trick-taking hand",
       target: "Avoid tricks 12 and 13.",
       reason: "Early tricks are setup. Barbu wants to see whether you can keep a late escape.",
       habit: "Count the hand before spending a low card."
     },
     "No Tricks": {
       title: "Every trick you win costs you.",
+      role: "Pure avoidance contract",
+      surface: "Trick-taking hand",
       target: "Avoid taking control.",
       reason: "This contract turns the whole hand into ducking practice.",
       habit: "Play below the current winner whenever the led suit allows it."
     },
     "Hearts Trumps": {
       title: "Hearts are trumps.",
+      role: "Positive trick contract",
+      surface: "Trump hand",
       target: "Win tricks with heart control.",
       reason: "Barbu flips the table: hearts now outrank the led suit and tricks are worth points.",
       habit: "Track whether a heart can cut the trick before you spend a high card."
     },
     Domino: {
       title: "Build the layout from sevens.",
+      role: "Layout contract",
+      surface: "Domino layout",
       target: "Go out before the table.",
       reason: "Barbu changes the surface: no tricks, just legal adjacent placements in each suit.",
       habit: "Open a suit with a seven, then extend the low or high end when you can."
@@ -857,6 +873,8 @@
   $: pendingRunContractIndex = fullHandContracts.indexOf(pendingRunContract);
   $: pendingRunContractIntro = runContractIntros[pendingRunContract];
   $: pendingRunStatusLabel = `Contract ${pendingRunContractIndex + 1} of ${fullHandContracts.length}`;
+  $: pendingRunSequenceLabel = `${fullHandRunResults.length} played, ${fullHandRunRemainingCount} to go`;
+  $: pendingRunSurfaceLabel = pendingRunContractIntro.surface;
   $: fullHandRunOrderedResults = fullHandContracts
     .map((contract) => fullHandRunResults.find((result) => result.contract === contract))
     .filter((result): result is FullHandRunResult => Boolean(result));
@@ -880,6 +898,15 @@
   $: fullHandRunResultSummary = fullHandRunIsComplete
     ? runResultSummary(fullHandRunStandings, fullHandRunResults.length)
     : "";
+  $: fullHandRunWinnerLabel = fullHandRunLeader
+    ? `${scoreSeatLabel(fullHandRunLeader.seat)} wins with ${formatSignedScore(fullHandRunLeader.score)}`
+    : "Game complete";
+  $: fullHandRunBestContractLabel = fullHandRunBestContract
+    ? `${fullHandRunBestContract.contract}: ${runContractValueLabel(fullHandRunBestContract)}`
+    : "No hands yet";
+  $: fullHandRunWeakestContractLabel = fullHandRunWeakestContract
+    ? `${fullHandRunWeakestContract.contract}: ${runContractValueLabel(fullHandRunWeakestContract)}`
+    : "No hands yet";
   $: fullHandRunStatusLabel =
     fullHandRunIsComplete
       ? "Game complete"
@@ -1729,6 +1756,10 @@
 
       return runContractRelativeScore(left) - runContractRelativeScore(right);
     })[0];
+  }
+
+  function runContractValueLabel(result: FullHandRunResult) {
+    return formatContractValue(result.contract, result.seatPenalties.You ?? 0);
   }
 
   function runContractRelativeScore(result: FullHandRunResult) {
@@ -2759,6 +2790,43 @@
   </div>
 {/snippet}
 
+{#snippet runSequenceStrip(label = "Play Barbu sequence")}
+  <div class="run-sequence-strip" aria-label={label}>
+    {#each fullHandContracts as contract, index}
+      <div
+        class:active={contract === pendingRunContract || fullHand?.contract === contract || dominoHand?.contract === contract}
+        class:complete={Boolean(runResultForContract(contract))}
+        class:layout={contract === "Domino"}
+      >
+        <span>{index + 1}</span>
+        <strong>{contract}</strong>
+        <small>{runContractIntros[contract].role}</small>
+      </div>
+    {/each}
+  </div>
+{/snippet}
+
+{#snippet runSettlementSummary()}
+  <div class="run-final-summary" aria-label="Play Barbu settlement">
+    <div>
+      <span>Winner</span>
+      <strong>{fullHandRunWinnerLabel}</strong>
+    </div>
+    <div>
+      <span>Your place</span>
+      <strong>{fullHandRunPlayerStanding ? formatOrdinal(fullHandRunPlayerStanding.rank) : "Done"}</strong>
+    </div>
+    <div>
+      <span>Strongest</span>
+      <strong>{fullHandRunBestContractLabel}</strong>
+    </div>
+    <div>
+      <span>Weakest</span>
+      <strong>{fullHandRunWeakestContractLabel}</strong>
+    </div>
+  </div>
+{/snippet}
+
 <main class="app-shell">
   {#if appView === "catalog"}
     <section class="welcome-screen" aria-labelledby="catalog-title">
@@ -3170,7 +3238,7 @@
       </div>
     </section>
   {:else if appView === "runContractIntro"}
-    <header class="topbar" aria-label={`${pendingRunContract} game intro`}>
+    <header class="topbar run-intro-topbar" aria-label={`${pendingRunContract} game intro`}>
       <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
       <div>
         <p class="eyebrow">Play Barbu</p>
@@ -3187,6 +3255,20 @@
         <p class="eyebrow">Barbu sets the contract</p>
         <h2>{pendingRunContractIntro.title}</h2>
         <p>{pendingRunContractIntro.reason}</p>
+        <div class="run-contract-role" aria-label={`${pendingRunContract} role`}>
+          <div>
+            <span>Role</span>
+            <strong>{pendingRunContractIntro.role}</strong>
+          </div>
+          <div>
+            <span>Surface</span>
+            <strong>{pendingRunSurfaceLabel}</strong>
+          </div>
+          <div>
+            <span>Sequence</span>
+            <strong>{pendingRunSequenceLabel}</strong>
+          </div>
+        </div>
       </div>
 
       <div class="run-intro-panel">
@@ -3204,6 +3286,8 @@
             <strong>{fullHandRunRemainingLabel}</strong>
           </div>
         </div>
+
+        {@render runSequenceStrip("Play Barbu contract sequence")}
 
         <div class="run-contract-target" aria-label={`${pendingRunContract} target`}>
           <div>
@@ -3302,38 +3386,7 @@
                 {/each}
               </div>
 
-              <div class="run-settlement-grid" aria-label="Play Barbu settlement">
-                <div>
-                  <span>Your place</span>
-                  <strong>{fullHandRunPlayerStanding ? formatOrdinal(fullHandRunPlayerStanding.rank) : "Done"}</strong>
-                </div>
-                <div>
-                  <span>Best contract</span>
-                  <strong>
-                    {#if fullHandRunBestContract}
-                      {fullHandRunBestContract.contract}: {formatContractValue(
-                        fullHandRunBestContract.contract,
-                        fullHandRunBestContract.seatPenalties.You ?? 0
-                      )}
-                    {:else}
-                      Game complete
-                    {/if}
-                  </strong>
-                </div>
-                <div>
-                  <span>Practice next</span>
-                  <strong>
-                    {#if fullHandRunWeakestContract}
-                      {fullHandRunWeakestContract.contract}: {formatContractValue(
-                        fullHandRunWeakestContract.contract,
-                        fullHandRunWeakestContract.seatPenalties.You ?? 0
-                      )}
-                    {:else}
-                      Replay a hand
-                    {/if}
-                  </strong>
-                </div>
-              </div>
+              {@render runSettlementSummary()}
 
               {@render runScorecard("Play Barbu results")}
             {:else}
@@ -3518,38 +3571,7 @@
                 {/each}
               </div>
 
-              <div class="run-settlement-grid" aria-label="Play Barbu settlement">
-                <div>
-                  <span>Your place</span>
-                  <strong>{fullHandRunPlayerStanding ? formatOrdinal(fullHandRunPlayerStanding.rank) : "Done"}</strong>
-                </div>
-                <div>
-                  <span>Best contract</span>
-                  <strong>
-                    {#if fullHandRunBestContract}
-                      {fullHandRunBestContract.contract}: {formatContractValue(
-                        fullHandRunBestContract.contract,
-                        fullHandRunBestContract.seatPenalties.You ?? 0
-                      )}
-                    {:else}
-                      Game complete
-                    {/if}
-                  </strong>
-                </div>
-                <div>
-                  <span>Practice next</span>
-                  <strong>
-                    {#if fullHandRunWeakestContract}
-                      {fullHandRunWeakestContract.contract}: {formatContractValue(
-                        fullHandRunWeakestContract.contract,
-                        fullHandRunWeakestContract.seatPenalties.You ?? 0
-                      )}
-                    {:else}
-                      Replay a hand
-                    {/if}
-                  </strong>
-                </div>
-              </div>
+              {@render runSettlementSummary()}
 
               {@render runScorecard("Play Barbu results")}
             {:else}
