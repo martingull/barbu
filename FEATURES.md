@@ -64,6 +64,8 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Generated No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino Quick Drill set via Rust/Tauri, with multiple local scenario patterns for avoidance, trumps, and Domino layout decisions.
 - Generated practice quality pass started with safe-dump scenarios for No Hearts, No Queens, King of Hearts, and No Tricks that teach when a void player can unload danger under a locked winner.
 - Practice Scenario Pool v1 expands Quick Drill from a fixed generated roster into a larger deterministic pool, so mixed practice and weak-contract replays can draw from several scenario shapes.
+- Quick Drill has short-term pattern memory, so recent scenario shapes are avoided before falling back to the full pool.
+- Practice Template Model v1 has started with a Rust-side template roster that maps playable contracts to generator functions before a broader scenario-template DSL is justified.
 - Browser generated fallback for Quick Drill when Tauri is unavailable.
 - Playwright smoke tests for catalog, Barbu table, lesson flow, generated fallback, and course-complete behavior.
 
@@ -104,6 +106,8 @@ These are the next product increments that keep the app coherent.
    - Hearts Trumps and Domino now rotate through multiple scenario families.
    - No Hearts, No Queens, King of Hearts, and No Tricks now include void-discard quality scenarios focused on unloading safely when another player already controls the trick.
    - Quick Drill now samples from a larger deterministic scenario pool and avoids immediate repeats when possible.
+   - Short-term practice memory now avoids recently seen scenario patterns when the filtered pool has alternatives.
+   - Practice Template Model v1 should continue gradually by extracting repeated table/hand construction patterns only after two or three more scenario families prove the shape.
    - Add more scenario families for each supported contract as testing reveals repetition.
    - Keep commands thin and deterministic.
    - Add Rust tests for every drill generator.

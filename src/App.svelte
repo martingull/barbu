@@ -207,7 +207,9 @@
 
   const progressStorageKey = "barbu.courseProgress.v1";
   const practiceSeedStorageKey = "barbu.practiceSeed.v1";
+  const drillPatternMemoryStorageKey = "barbu.drillPatternMemory.v1";
   const playBarbuHistoryStorageKey = "barbu.playHistory.v1";
+  const maxStoredDrillPatterns = 6;
   const maxStoredPlayBarbuAttempts = 8;
   const scoreSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
   const seatByPlayerIndex: Record<number, Seat> = {
@@ -675,6 +677,7 @@
   let activeDrillSteps: DrillStep[] = drillSteps;
   let drillSetTitle = "Quick drill";
   let activeDrillFocusContract = "";
+  let recentDrillScenarioIds = loadDrillPatternMemory();
   let practiceSeed = loadPracticeSeed();
   let selectedLessonId = guidedLessons[0].id;
   let activeTricks: GuidedTrick[] = guidedLessons[0].tricks;
@@ -1016,6 +1019,37 @@
     }
 
     return seed;
+  }
+
+  function loadDrillPatternMemory() {
+    if (typeof localStorage === "undefined") {
+      return [];
+    }
+
+    try {
+      const storedMemory = JSON.parse(localStorage.getItem(drillPatternMemoryStorageKey) ?? "[]");
+
+      return Array.isArray(storedMemory)
+        ? storedMemory.filter((item): item is string => typeof item === "string").slice(0, maxStoredDrillPatterns)
+        : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function rememberDrillScenarioPattern(scenarioId: string | undefined) {
+    if (!scenarioId) {
+      return;
+    }
+
+    recentDrillScenarioIds = [
+      scenarioId,
+      ...recentDrillScenarioIds.filter((recentScenarioId) => recentScenarioId !== scenarioId)
+    ].slice(0, maxStoredDrillPatterns);
+
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(drillPatternMemoryStorageKey, JSON.stringify(recentDrillScenarioIds));
+    }
   }
 
   function selectCard(card: Card) {
@@ -1914,13 +1948,29 @@
 
   function selectGeneratedDrillCandidate(candidates: DrillStep[], seed: number) {
     const lastStep = activeDrillSteps[activeDrillSteps.length - 1];
+    const activeScenarioIds = activeDrillSteps
+      .slice(-maxStoredDrillPatterns)
+      .map((step) => step.scenarioId)
+      .filter((scenarioId): scenarioId is string => Boolean(scenarioId));
+    const recentScenarioIds = new Set([...recentDrillScenarioIds, ...activeScenarioIds]);
+    const freshCandidates =
+      candidates.length > 1
+        ? candidates.filter((step) => !step.scenarioId || !recentScenarioIds.has(step.scenarioId))
+        : candidates;
     const nonRepeatingCandidates =
       candidates.length > 1 && lastStep?.scenarioId
         ? candidates.filter((step) => step.scenarioId !== lastStep.scenarioId)
         : candidates;
-    const freshCandidates = nonRepeatingCandidates.length > 0 ? nonRepeatingCandidates : candidates;
+    const candidatePool =
+      freshCandidates.length > 0
+        ? freshCandidates
+        : nonRepeatingCandidates.length > 0
+          ? nonRepeatingCandidates
+          : candidates;
+    const selectedCandidate = candidatePool[generatedCandidateIndex(seed, candidatePool.length)];
 
-    return freshCandidates[generatedCandidateIndex(seed, freshCandidates.length)];
+    rememberDrillScenarioPattern(selectedCandidate.scenarioId);
+    return selectedCandidate;
   }
 
   function generatedCandidateIndex(seed: number, candidateCount: number) {

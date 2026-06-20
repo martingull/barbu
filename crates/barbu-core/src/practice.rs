@@ -1127,19 +1127,61 @@ pub fn generate_domino_practice(seed: u64) -> PracticeScenario {
 
 const DAILY_DRILL_POOL_ROUNDS: u64 = 3;
 
+type PracticeScenarioGenerator = fn(u64) -> PracticeScenario;
+
+struct PracticeScenarioTemplate {
+    id: &'static str,
+    contract_kind: PracticeContractKind,
+    generate: PracticeScenarioGenerator,
+}
+
+const PRACTICE_SCENARIO_TEMPLATES: [PracticeScenarioTemplate; 7] = [
+    PracticeScenarioTemplate {
+        id: "no-hearts",
+        contract_kind: PracticeContractKind::NoHearts,
+        generate: generate_no_hearts_practice,
+    },
+    PracticeScenarioTemplate {
+        id: "no-queens",
+        contract_kind: PracticeContractKind::NoQueens,
+        generate: generate_no_queens_practice,
+    },
+    PracticeScenarioTemplate {
+        id: "king-of-hearts",
+        contract_kind: PracticeContractKind::KingOfHearts,
+        generate: generate_king_of_hearts_practice,
+    },
+    PracticeScenarioTemplate {
+        id: "no-last-two",
+        contract_kind: PracticeContractKind::NoLastTwo,
+        generate: generate_no_last_two_practice,
+    },
+    PracticeScenarioTemplate {
+        id: "no-tricks",
+        contract_kind: PracticeContractKind::NoTricks,
+        generate: generate_no_tricks_practice,
+    },
+    PracticeScenarioTemplate {
+        id: "hearts-trumps",
+        contract_kind: PracticeContractKind::HeartsTrumps,
+        generate: generate_hearts_trumps_practice,
+    },
+    PracticeScenarioTemplate {
+        id: "domino",
+        contract_kind: PracticeContractKind::Domino,
+        generate: generate_domino_practice,
+    },
+];
+
 pub fn generate_daily_drill_set(seed: u64) -> PracticeDrillSet {
     let mut scenarios = Vec::new();
 
     for round in 0..DAILY_DRILL_POOL_ROUNDS {
-        scenarios.extend([
-            generate_no_hearts_practice(drill_pool_seed(seed, 0, round)),
-            generate_no_queens_practice(drill_pool_seed(seed, 1, round)),
-            generate_king_of_hearts_practice(drill_pool_seed(seed, 2, round)),
-            generate_no_last_two_practice(drill_pool_seed(seed, 3, round)),
-            generate_no_tricks_practice(drill_pool_seed(seed, 4, round)),
-            generate_hearts_trumps_practice(drill_pool_seed(seed, 5, round)),
-            generate_domino_practice(drill_pool_seed(seed, 6, round)),
-        ]);
+        for (contract_index, template) in PRACTICE_SCENARIO_TEMPLATES.iter().enumerate() {
+            let scenario = (template.generate)(drill_pool_seed(seed, contract_index as u64, round));
+            debug_assert_eq!(scenario.contract_kind, template.contract_kind, "{}", template.id);
+            scenarios.push(scenario);
+        }
     }
 
     PracticeDrillSet {
