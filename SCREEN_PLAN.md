@@ -158,6 +158,7 @@ Current role:
 Future role:
 
 - Better opponent policy.
+- Keep improving opponent policy, especially table-aware endgame choices and trump timing.
 - Stronger trick-by-trick tactical feedback.
 - More contracts.
 - Optional contract replay from review or Play Barbu.

@@ -520,13 +520,18 @@ fn choose_no_last_two_opponent_card(state: &TrickTakingHandState) -> Option<Card
     let hand = &state.hands[state.current_player];
     let legal = legal_cards(hand, state.led_suit());
     let led_suit = state.led_suit();
+    let is_late_penalty_trick = state.completed_tricks.len() >= 11;
 
     if legal.is_empty() {
         return None;
     }
 
     if led_suit.is_none() {
-        return lowest_card(&legal);
+        return if is_late_penalty_trick {
+            lowest_card(&legal)
+        } else {
+            highest_card(&legal)
+        };
     }
 
     let follows_suit = legal.iter().all(|card| Some(card.suit) == led_suit);
@@ -535,12 +540,12 @@ fn choose_no_last_two_opponent_card(state: &TrickTakingHandState) -> Option<Card
         return highest_card(&legal);
     }
 
-    if state.completed_tricks.len() >= 11 {
+    if is_late_penalty_trick {
         return highest_card_matching(&legal, |card| !card_would_win_trick(state, card))
             .or_else(|| lowest_card(&legal));
     }
 
-    lowest_card(&legal)
+    highest_card(&legal)
 }
 
 fn choose_no_tricks_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
@@ -621,7 +626,8 @@ fn choose_positive_tricks_opponent_card(state: &TrickTakingHandState) -> Option<
     }
 
     if state.led_suit().is_none() {
-        return highest_card(&legal);
+        return highest_card_matching(&legal, |card| card.suit == HEARTS_TRUMP_SUIT)
+            .or_else(|| highest_card(&legal));
     }
 
     lowest_card_matching(&legal, |card| card_would_win_trick(state, card))
@@ -1180,6 +1186,62 @@ mod tests {
     }
 
     #[test]
+    fn no_last_two_opponent_sheds_high_cards_before_final_two() {
+        let state = NoLastTwoHandState {
+            id: "opponent-shed-high-no-last-two".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Two, Suit::Clubs),
+                    Card::new(Rank::King, Suit::Clubs),
+                ],
+            ],
+            current_player: 3,
+            current_trick: vec![
+                PlayedCard::new(0, Card::new(Rank::Seven, Suit::Clubs)),
+                PlayedCard::new(1, Card::new(Rank::Eight, Suit::Clubs)),
+            ],
+            completed_tricks: repeat_clean_tricks(8),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_no_last_two_opponent_card(&state),
+            Some(Card::new(Rank::King, Suit::Clubs))
+        );
+    }
+
+    #[test]
+    fn no_last_two_opponent_ducks_final_two_when_possible() {
+        let state = NoLastTwoHandState {
+            id: "opponent-duck-late-no-last-two".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Two, Suit::Clubs),
+                    Card::new(Rank::King, Suit::Clubs),
+                ],
+            ],
+            current_player: 3,
+            current_trick: vec![
+                PlayedCard::new(0, Card::new(Rank::Seven, Suit::Clubs)),
+                PlayedCard::new(1, Card::new(Rank::Eight, Suit::Clubs)),
+            ],
+            completed_tricks: repeat_clean_tricks(11),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_no_last_two_opponent_card(&state),
+            Some(Card::new(Rank::Two, Suit::Clubs))
+        );
+    }
+
+    #[test]
     fn no_last_two_hand_can_be_completed_by_playing_first_legal_card() {
         let mut state = start_no_last_two_hand(31);
 
@@ -1259,6 +1321,58 @@ mod tests {
         ];
 
         assert_eq!(score_positive_tricks_trick(&state, &trick), 5);
+    }
+
+    #[test]
+    fn hearts_trumps_opponent_leads_highest_heart() {
+        let state = PositiveTricksHandState {
+            id: "hearts-trumps-hand-opponent-lead".to_string(),
+            hands: [
+                vec![
+                    Card::new(Rank::Ace, Suit::Spades),
+                    Card::new(Rank::Two, Suit::Hearts),
+                    Card::new(Rank::King, Suit::Hearts),
+                ],
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+            ],
+            current_player: 0,
+            current_trick: Vec::new(),
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_positive_tricks_opponent_card(&state),
+            Some(Card::new(Rank::King, Suit::Hearts))
+        );
+    }
+
+    #[test]
+    fn hearts_trumps_opponent_uses_lowest_winning_trump_when_void() {
+        let state = PositiveTricksHandState {
+            id: "hearts-trumps-hand-opponent-trump".to_string(),
+            hands: [
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Two, Suit::Diamonds),
+                    Card::new(Rank::Three, Suit::Hearts),
+                    Card::new(Rank::King, Suit::Hearts),
+                ],
+                Vec::new(),
+                Vec::new(),
+            ],
+            current_player: 1,
+            current_trick: vec![PlayedCard::new(0, Card::new(Rank::Ace, Suit::Clubs))],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_positive_tricks_opponent_card(&state),
+            Some(Card::new(Rank::Three, Suit::Hearts))
+        );
     }
 
     #[test]

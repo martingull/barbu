@@ -30,7 +30,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Barbu table with grouped Learn, Practice, Play, and Reference entry points, including a contract-hand practice chooser.
 - Five-step training path: concept, example, guided trick, practice, review.
 - Quick Drill mode with seven quick mixed-contract decisions, immediate feedback, and a compact result across the playable contract roster.
-- No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps full-hand skeletons with deterministic local deals, legal-card play, simple tactical auto opponents, hand scoring, and short per-trick feedback.
+- No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps full-hand skeletons with deterministic local deals, legal-card play, contract-aware auto opponents, hand scoring, and short per-trick feedback.
 - Generic trick-taking hand engine for deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps as the first contract adapters.
 - Domino playable hand v1 with deterministic local deals, fixed-seven layout starts, adjacent suit building, legal pass handling, four-player order-out scoring, and Play Barbu roster support.
 - Shared table-play surface for quick drills, Play Barbu, and full-hand contracts so active games keep one compact mobile layout.
@@ -114,7 +114,7 @@ These are the next product increments that keep the app coherent.
    - Continue adding Barbu contracts on top of the generic hand engine.
    - Improve Domino from fixed-seven v1 to the baseline Barbu chooser/declarer shape once contract selection is modeled.
    - Add full Barbu settlement scoring across contracts once the playable contracts are broader.
-   - Expand No Hearts opponent policy with more table-aware decisions.
+   - Expand opponent policy beyond the first contract-aware pass with more table-aware decisions.
    - Add stronger tactical feedback after each completed trick.
    - Decide when full hands should enter the learning path instead of living as separate practice.
 
