@@ -525,6 +525,14 @@ test("Domino hand plays through the layout contract", async ({ page }, testInfo)
   await expect(page.getByLabel("Your Domino hand")).toBeVisible();
   await expectNoPageScroll(page);
 
+  const dominoRegion = page.getByRole("region", { name: "Domino hand", exact: true });
+  const stateBeforeDoubleTap = await dominoRegion.innerText();
+  const firstLegalDominoCard = page.locator(".domino-cards .full-hand-card.legal").first();
+  await expect.poll(async () => page.locator(".domino-cards .full-hand-card.legal").count()).toBeGreaterThan(0);
+  await firstLegalDominoCard.tap();
+  await firstLegalDominoCard.tap();
+  await expect.poll(async () => (await dominoRegion.innerText()) !== stateBeforeDoubleTap).toBe(true);
+
   await playDominoHand(page);
 
   await expect(page.getByRole("heading", { name: /You went out first|You finished|Domino complete/ })).toBeVisible();

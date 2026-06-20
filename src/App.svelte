@@ -723,6 +723,8 @@
   let usingBrowserDomino = false;
   let lastFullHandTapCardId = "";
   let lastFullHandTapAt = 0;
+  let lastDominoTapCardId = "";
+  let lastDominoTapAt = 0;
   let dominoLastMoveReason = "";
   let fullHandRunActive = false;
   let fullHandRunResults: FullHandRunResult[] = [];
@@ -1264,6 +1266,8 @@
     dominoSelectedCardId = "";
     dominoError = "";
     dominoLastMoveReason = "";
+    lastDominoTapCardId = "";
+    lastDominoTapAt = 0;
 
     if (!hasTauriRuntime()) {
       dominoHand = startBrowserDominoHand(seed);
@@ -1412,6 +1416,8 @@
       usingBrowserDomino = true;
       recordCompletedDominoRunResult(dominoHand);
       dominoSelectedCardId = "";
+      lastDominoTapCardId = "";
+      lastDominoTapAt = 0;
       dominoLastMoveReason = moveReason;
       return;
     }
@@ -1423,6 +1429,8 @@
       });
       recordCompletedDominoRunResult(dominoHand);
       dominoSelectedCardId = "";
+      lastDominoTapCardId = "";
+      lastDominoTapAt = 0;
       dominoLastMoveReason = moveReason;
     } catch (error) {
       if (!isInvokeTimeoutError(error)) {
@@ -1434,16 +1442,27 @@
       usingBrowserDomino = true;
       recordCompletedDominoRunResult(dominoHand);
       dominoSelectedCardId = "";
+      lastDominoTapCardId = "";
+      lastDominoTapAt = 0;
       dominoLastMoveReason = moveReason;
     }
   }
 
-  function selectDominoCard(card: Card) {
+  async function selectDominoCard(card: Card) {
     if (!dominoHand || dominoHand.status === "complete") {
       return;
     }
 
+    const now = Date.now();
+    const isDoubleTap = lastDominoTapCardId === card.id && now - lastDominoTapAt < 450;
+
     dominoSelectedCardId = card.id;
+    lastDominoTapCardId = card.id;
+    lastDominoTapAt = now;
+
+    if (isDoubleTap && dominoLegalCardIds.has(card.id)) {
+      await playDominoSelectedCard(card.id);
+    }
   }
 
   function placeSelectedOrDefaultDominoCard() {
@@ -1467,6 +1486,8 @@
       usingBrowserDomino = true;
       recordCompletedDominoRunResult(dominoHand);
       dominoLastMoveReason = "You passed because no card in your hand could start or extend a lane.";
+      lastDominoTapCardId = "";
+      lastDominoTapAt = 0;
       return;
     }
 
@@ -1476,6 +1497,8 @@
       });
       recordCompletedDominoRunResult(dominoHand);
       dominoLastMoveReason = "You passed because no card in your hand could start or extend a lane.";
+      lastDominoTapCardId = "";
+      lastDominoTapAt = 0;
     } catch (error) {
       if (!isInvokeTimeoutError(error)) {
         dominoError = typeof error === "string" ? error : "You could not pass here.";
@@ -1486,6 +1509,8 @@
       usingBrowserDomino = true;
       recordCompletedDominoRunResult(dominoHand);
       dominoLastMoveReason = "You passed because no card in your hand could start or extend a lane.";
+      lastDominoTapCardId = "";
+      lastDominoTapAt = 0;
     }
   }
 
@@ -3628,9 +3653,10 @@
                   class:legal={dominoCardClasses(card).legal}
                   class:selected={dominoCardClasses(card).selected}
                   class="card hand-card full-hand-card"
-                  ondblclick={() => void playDominoSelectedCard(card.id)}
-                  onclick={() => selectDominoCard(card)}
-                  onfocus={() => selectDominoCard(card)}
+                  onclick={() => void selectDominoCard(card)}
+                  onfocus={() => {
+                    dominoSelectedCardId = card.id;
+                  }}
                   type="button"
                 >
                   <b>{card.rank}</b>
