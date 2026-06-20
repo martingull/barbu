@@ -199,28 +199,28 @@ export const referenceCatalog: GameReference[] = [
         title: "No Last Two",
         coreStatus: "Core",
         appStatus: "Playable",
-        note: "Reference, guided course, full hand, and Barbu run support exist; generated practice is still later."
+        note: "Reference, guided course, generated practice, full hand, and Barbu run support exist."
       },
       {
         id: "no-tricks",
         title: "No Tricks",
         coreStatus: "Core",
         appStatus: "Playable",
-        note: "Reference, guided course, full hand, and Barbu run support exist; generated practice is still later."
+        note: "Reference, guided course, generated practice, full hand, and Barbu run support exist."
       },
       {
         id: "hearts-trumps",
         title: "Hearts Trumps",
         coreStatus: "Core",
         appStatus: "Playable",
-        note: "Reference, full hand, trump trick resolution, and Barbu run support exist; generated practice and guided course are still later."
+        note: "Reference, guided course, generated practice, full hand, trump trick resolution, and Barbu run support exist."
       },
       {
         id: "domino",
         title: "Domino",
         coreStatus: "Core",
         appStatus: "Playable",
-        note: "Fixed-seven layout v1 exists with full hand and Barbu run support; chooser/declarer-selected starting rank is later."
+        note: "Fixed-seven layout v1 exists with guided course, generated practice, full hand, and Barbu run support; chooser/declarer-selected starting rank is later."
       }
     ],
     variants: [

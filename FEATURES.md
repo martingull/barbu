@@ -50,7 +50,8 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Continue action for the next unfinished step.
 - Completed-course state with review and reset actions.
 - Shared learner-facing outcome model: good, risky, penalty/reward, and illegal, with separate reason tags for review and future tutor explanations.
-- Shared course content flow for No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks with concept, example, guided play, and review screens.
+- Shared course content flow for No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino with concept, example, guided play, and review screens.
+- Domino learning examples and guided placement use a layout surface instead of the trick-taking card table.
 - Shared card table renderer for course examples and guided play.
 - Barbu reference screen with Parlett baseline, play direction, core contracts, scoring, and documented varieties.
 - Guided trick table for authored Barbu lessons.
@@ -78,10 +79,10 @@ Core contract status:
 | No Hearts | Core | Playable | Reference, lesson, generated practice, full hand, and run support exist. |
 | No Queens | Core | Playable | Reference, lesson, generated practice, full hand, and run support exist. |
 | King of Hearts / Barbu | Core | Playable | The app currently uses "King of Hearts" for beginner clarity. |
-| No Last Two | Core | Playable | Guided course, full-hand, and run support exist; generated practice is still later. |
-| No Tricks | Core | Playable | Guided course, full-hand, and run support exist; generated practice is still later. |
-| Hearts Trumps | Core | Playable | Hearts are fixed as trumps for v1; full-hand and run support exist; generated practice and guided course are still later. |
-| Domino | Core | Playable | Fixed-seven layout v1 exists with full hand and run support; chooser/declarer-selected starting rank is later. |
+| No Last Two | Core | Playable | Guided course, generated practice, full-hand, and run support exist. |
+| No Tricks | Core | Playable | Guided course, generated practice, full-hand, and run support exist. |
+| Hearts Trumps | Core | Playable | Hearts are fixed as trumps for v1; guided course, generated practice, full-hand, and run support exist. |
+| Domino | Core | Playable | Fixed-seven layout v1 exists with guided course, generated practice, full hand, and run support; chooser/declarer-selected starting rank is later. |
 
 ## Near-Term Roadmap
 

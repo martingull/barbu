@@ -69,7 +69,8 @@ content/             Structured game and lesson content
 - Local Quick Drill result history with contract-level summaries and focused replay for the weakest contract.
 - Local course progress, a continue action, and compact outcome labels for guided card decisions.
 - Shared learner-facing outcome model: good, risky, penalty, and illegal, with separate reason tags for review and future tutor explanations.
-- Shared course content flow for No Hearts, No Queens, King of Hearts, No Last Two, and No Tricks with concept, example, guided play, and review screens.
+- Shared course content flow for No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino with concept, example, guided play, and review screens.
+- Domino learning states use a layout surface instead of the trick-taking card table.
 - Shared card table renderer for course examples and guided play.
 - Barbu reference screen grounded in the Parlett baseline, with core contracts kept separate from documented varieties of play.
 - Contract roadmap in the Barbu reference that distinguishes core playable contracts, app teaching coverage, and future varieties.

@@ -118,6 +118,7 @@ Future role:
 - Support multiple lesson nodes per contract.
 - Track review due state and weakest concepts.
 - Let Barbu act as coach through short reactions, not long lectures.
+- Keep Domino lesson states on a layout surface, not the trick-taking table.
 
 ### Quick Drill
 

@@ -311,6 +311,38 @@
       lessonId: "barbu-king-of-hearts"
     },
     {
+      id: "contract-no-last-two",
+      step: "Contract",
+      title: "Avoid the final tricks",
+      summary: "Learn why the final two tricks change the hand.",
+      action: "lesson",
+      lessonId: "barbu-no-last-two"
+    },
+    {
+      id: "contract-no-tricks",
+      step: "Contract",
+      title: "Avoid every trick",
+      summary: "Practice ducking under the current winner.",
+      action: "lesson",
+      lessonId: "barbu-no-tricks"
+    },
+    {
+      id: "contract-hearts-trumps",
+      step: "Contract",
+      title: "Use trumps",
+      summary: "See when a heart can cut the led suit.",
+      action: "lesson",
+      lessonId: "barbu-hearts-trumps"
+    },
+    {
+      id: "contract-domino",
+      step: "Layout",
+      title: "Build Domino",
+      summary: "Place sevens and extend suit lanes.",
+      action: "lesson",
+      lessonId: "barbu-domino"
+    },
+    {
       id: "generated-drill",
       step: "Practice",
       title: "Practice table",
@@ -553,6 +585,94 @@
           { marker: "OK", text: "Forced wins are legal, but they still count." }
         ]
       }
+    },
+    {
+      id: "hearts-trumps",
+      pathStepId: "contract-hearts-trumps",
+      lessonId: "barbu-hearts-trumps",
+      contract: "Hearts Trumps",
+      title: "Use trumps",
+      concept: {
+        heading: "In Hearts Trumps, hearts can beat the led suit.",
+        body:
+          "The follow-suit rule still comes first. If you can follow the led suit, you must. When you are void, a heart can trump and win the trick.",
+        points: [
+          { marker: "1", text: "Check whether you can follow the led suit." },
+          { marker: "2", text: "If you are void, a heart can cut the trick." },
+          { marker: "3", text: "This is a winning contract: taking tricks is good." }
+        ]
+      },
+      example: {
+        heading: "Tutor leads clubs. You have no clubs, but you have hearts.",
+        body:
+          "Because clubs were led and you are void in clubs, you may play any card. A heart is trump, so it beats the club trick.",
+        sequence: [
+          { label: "Lead", text: "Tutor plays 9C, so clubs are the led suit." },
+          { label: "Then", text: "Right follows with AC and is winning for now." },
+          { label: "Your turn", text: "You are void in clubs, so 5H can trump." }
+        ],
+        ariaLabel: "Hearts Trumps example table",
+        tableCards: [
+          { seat: "Tutor", card: { id: "9C", rank: "9", suit: "C", label: "9C" } },
+          { seat: "Right", card: { id: "AC", rank: "A", suit: "C", label: "AC" } },
+          { seat: "Left", card: { id: "4D", rank: "4", suit: "D", label: "4D" } }
+        ],
+        pendingBySeat: { You: "trump" }
+      },
+      review: {
+        heading: "Hearts Trumps flips the usual Barbu habit.",
+        body:
+          "You practiced using a heart to take control when you are void. The important rule is that trumping is powerful only after follow-suit has been checked.",
+        points: [
+          { marker: "OK", text: "Follow suit still comes first." },
+          { marker: "OK", text: "A heart can trump when you are void." },
+          { marker: "OK", text: "Winning tricks is the goal in this contract." }
+        ]
+      }
+    },
+    {
+      id: "domino",
+      pathStepId: "contract-domino",
+      lessonId: "barbu-domino",
+      contract: "Domino",
+      title: "Build Domino",
+      concept: {
+        heading: "Domino is a layout, not a trick.",
+        body:
+          "No one leads a suit and no trick is won. A suit opens with a seven, then grows outward one rank at a time toward the ace and the two.",
+        points: [
+          { marker: "1", text: "Open an empty suit with its seven." },
+          { marker: "2", text: "Extend an open suit by exactly one rank." },
+          { marker: "3", text: "Pass only when no card in your hand fits." }
+        ]
+      },
+      example: {
+        heading: "The spade lane is open around 7S.",
+        body:
+          "The lane already contains 6S, 7S, and 8S. You may place 5S below 6S, 9S above 8S, or open another suit with a seven.",
+        sequence: [
+          { label: "Lane", text: "Spades show 6S 7S 8S." },
+          { label: "Legal", text: "5S extends the low end; 7H opens hearts." },
+          { label: "Blocked", text: "10C cannot open clubs before 7C." }
+        ],
+        ariaLabel: "Domino example layout",
+        tableCards: [
+          { seat: "Right", card: { id: "6S", rank: "6", suit: "S", label: "6S" } },
+          { seat: "Tutor", card: { id: "7S", rank: "7", suit: "S", label: "7S" } },
+          { seat: "Left", card: { id: "8S", rank: "8", suit: "S", label: "8S" } }
+        ],
+        pendingBySeat: { You: "place" }
+      },
+      review: {
+        heading: "Domino asks what fits the layout right now.",
+        body:
+          "You practiced reading a suit lane instead of reading a trick. The next habit is simple: scan for sevens, then scan the open ends of each suit.",
+        points: [
+          { marker: "OK", text: "Empty suits start with sevens." },
+          { marker: "OK", text: "Open suits grow one rank at a time." },
+          { marker: "OK", text: "Passing is only correct when nothing fits." }
+        ]
+      }
     }
   ];
   const drillSteps: DrillStep[] = guidedLessons.map((lesson) => ({
@@ -657,6 +777,8 @@
   $: completedTable = playedCard
     ? [...currentTrick.tableBeforeChoice, { seat: "You" as const, card: playedCard }, ...currentTrick.tableAfterChoice]
     : currentTrick.tableBeforeChoice;
+  $: currentLessonIsDomino = contractLabel === "Domino";
+  $: completedDominoLessonLayout = buildDominoDrillLayout(completedTable);
   $: explanation = generatedPracticeError || buildExplanation(selectedCard, playedCard);
   $: resultText = playedCard ? currentTrick.afterResult : currentTrick.beforeResult;
   $: isLastTrick = trickIndex === activeTricks.length - 1;
@@ -2323,6 +2445,10 @@
     }
 
     if (!legalCardIds.has(selected.id)) {
+      if (contractLabel === "Domino") {
+        return `${selected.label} does not fit the layout right now. Open with a seven or extend an open suit by one rank.`;
+      }
+
       return `${selected.label} is not legal here because you still have ${suitNames[currentTrick.hand.find((card) => legalCardIds.has(card.id))?.suit ?? selected.suit]}.`;
     }
 
@@ -2551,7 +2677,7 @@
     <section class="path-section" aria-label="Barbu lesson path">
       <div class="section-heading">
         <p class="eyebrow">Training path</p>
-        <h2>Learn the table in five passes</h2>
+        <h2>Learn the Barbu table</h2>
       </div>
 
       <div class="path-grid">
@@ -2786,11 +2912,22 @@
         </div>
 
         <div class="example-table">
-          <CardTable
-            ariaLabel={activeCourse.example.ariaLabel}
-            pendingBySeat={activeCourse.example.pendingBySeat}
-            tableCards={activeCourse.example.tableCards}
-          />
+          {#if activeCourse.contract === "Domino"}
+            <div class="domino-layout" aria-label={activeCourse.example.ariaLabel}>
+              {#each buildDominoDrillLayout(activeCourse.example.tableCards) as lane, index}
+                <div>
+                  <span>{dominoSuitLabel(index)}</span>
+                  <strong>{dominoLaneText(lane)}</strong>
+                </div>
+              {/each}
+            </div>
+          {:else}
+            <CardTable
+              ariaLabel={activeCourse.example.ariaLabel}
+              pendingBySeat={activeCourse.example.pendingBySeat}
+              tableCards={activeCourse.example.tableCards}
+            />
+          {/if}
         </div>
       {:else}
         <div class="course-copy">
@@ -3510,7 +3647,7 @@
       </div>
       <div class="contract-status">
         <span>{contractLabel}</span>
-        <strong>Trick {trickIndex + 1} of {activeTricks.length}</strong>
+        <strong>Decision {trickIndex + 1} of {activeTricks.length}</strong>
       </div>
     </header>
 
@@ -3536,7 +3673,18 @@
     </section>
 
     <section class="learning-surface" aria-label="Guided trick">
-      <CardTable ariaLabel="Card table" pendingBySeat={currentTrick.pendingBySeat} tableCards={completedTable} />
+      {#if currentLessonIsDomino}
+        <div class="domino-layout" aria-label="Domino lesson layout">
+          {#each completedDominoLessonLayout as lane, index}
+            <div>
+              <span>{dominoSuitLabel(index)}</span>
+              <strong>{dominoLaneText(lane)}</strong>
+            </div>
+          {/each}
+        </div>
+      {:else}
+        <CardTable ariaLabel="Card table" pendingBySeat={currentTrick.pendingBySeat} tableCards={completedTable} />
+      {/if}
 
       <section class="lesson-panel" aria-label="Current lesson">
         <div class="lesson-heading">

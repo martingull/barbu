@@ -104,28 +104,28 @@
       "title": "No Last Two",
       "coreStatus": "core",
       "appStatus": "playable",
-      "note": "Reference, guided course, full hand, and Barbu run support exist; generated practice is still later."
+      "note": "Reference, guided course, generated practice, full hand, and Barbu run support exist."
     },
     {
       "id": "no_tricks",
       "title": "No Tricks",
       "coreStatus": "core",
       "appStatus": "playable",
-      "note": "Reference, guided course, full hand, and Barbu run support exist; generated practice is still later."
+      "note": "Reference, guided course, generated practice, full hand, and Barbu run support exist."
     },
     {
       "id": "hearts_trumps",
       "title": "Hearts Trumps",
       "coreStatus": "core",
       "appStatus": "playable",
-      "note": "Hearts are currently fixed as the trump suit; generated practice and guided course are still later."
+      "note": "Hearts are currently fixed as the trump suit; guided course, generated practice, full hand, and Barbu run support exist."
     },
     {
       "id": "domino",
       "title": "Domino",
       "coreStatus": "core",
       "appStatus": "playable",
-      "note": "Fixed-seven layout v1 exists with full hand and Barbu run support; chooser/declarer-selected starting rank is later."
+      "note": "Fixed-seven layout v1 exists with guided course, generated practice, full hand, and Barbu run support; chooser/declarer-selected starting rank is later."
     }
   ]
 }

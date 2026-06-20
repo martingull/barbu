@@ -552,7 +552,7 @@ test("finishing a lesson advances course progress", async ({ page }, testInfo) =
   await page.getByRole("button", { name: "Finish No Hearts" }).click();
 
   await expect(page.getByRole("heading", { name: "Barbu's table" })).toBeVisible();
-  await expect(page.getByText("1 / 5 complete")).toBeVisible();
+  await expect(page.getByText("1 / 9 complete")).toBeVisible();
   await expect(page.getByRole("button", { name: /Continue with Spot the danger/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Meet the contract/ })).toContainText("Complete");
 });
@@ -589,7 +589,7 @@ test("No Queens course has concept example play and review", async ({ page }) =>
   await expect(page.getByText("No Queens rewards patience")).toBeVisible();
   await page.getByRole("button", { name: "Finish No Queens" }).click();
 
-  await expect(page.getByText("2 / 5 complete")).toBeVisible();
+  await expect(page.getByText("2 / 9 complete")).toBeVisible();
   await expect(page.getByRole("button", { name: /Continue with Play the trick/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Spot the danger/ })).toContainText("Complete");
 });
@@ -629,8 +629,8 @@ test("King of Hearts course has concept example play and review", async ({ page 
   await expect(page.getByText("locate KH, then ask who wins this trick")).toBeVisible();
   await page.getByRole("button", { name: "Finish King of Hearts" }).click();
 
-  await expect(page.getByText("3 / 5 complete")).toBeVisible();
-  await expect(page.getByRole("button", { name: /Continue with Practice table/ })).toBeVisible();
+  await expect(page.getByText("3 / 9 complete")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Continue with Avoid the final tricks/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Play the trick/ })).toContainText("Complete");
 });
 
@@ -696,6 +696,60 @@ test("No Tricks course has concept example play and review", async ({ page }) =>
   await expect(page.getByRole("button", { name: /^No Tricks/ })).toContainText("Complete");
 });
 
+test("Hearts Trumps course has concept example play and review", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: /^Hearts Trumps/ }).click();
+
+  await expect(page.getByRole("heading", { name: "Use trumps" })).toBeVisible();
+  await expect(page.getByText("hearts can beat the led suit")).toBeVisible();
+  await page.getByRole("button", { name: "See example" }).click();
+
+  await expect(page.getByRole("heading", { name: /Tutor leads clubs/ })).toBeVisible();
+  await expect(page.getByLabel("Hearts Trumps trick sequence")).toContainText("5H can trump");
+  await expect(page.getByLabel("Hearts Trumps example table")).toBeVisible();
+  await page.getByRole("button", { name: "Play guided trick" }).click();
+
+  await page.getByRole("button", { name: "5 H" }).click();
+  await page.getByRole("button", { name: "Play selected" }).click();
+  await page.getByRole("button", { name: "Finish lesson" }).click();
+
+  await expect(page.getByRole("heading", { name: "Review" })).toBeVisible();
+  await expect(page.getByText("Hearts Trumps flips the usual Barbu habit")).toBeVisible();
+  await page.getByRole("button", { name: "Finish Hearts Trumps" }).click();
+
+  await expect(page.getByRole("heading", { name: "Barbu's table" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Hearts Trumps/ })).toContainText("Complete");
+});
+
+test("Domino course uses a layout example and guided placement", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: /^Domino/ }).click();
+
+  await expect(page.getByRole("heading", { name: "Build Domino" })).toBeVisible();
+  await expect(page.getByText("Domino is a layout, not a trick")).toBeVisible();
+  await page.getByRole("button", { name: "See example" }).click();
+
+  await expect(page.getByRole("heading", { name: /spade lane is open/ })).toBeVisible();
+  await expect(page.getByLabel("Domino trick sequence")).toContainText("Spades show 6S 7S 8S");
+  await expect(page.getByLabel("Domino example layout")).toBeVisible();
+  await page.getByRole("button", { name: "Play guided trick" }).click();
+
+  await expect(page.getByLabel("Domino lesson layout")).toBeVisible();
+  await expect(page.getByLabel("Card table")).toHaveCount(0);
+  await page.getByRole("button", { name: "5 S" }).click();
+  await page.getByRole("button", { name: "Play selected" }).click();
+  await page.getByRole("button", { name: "Finish lesson" }).click();
+
+  await expect(page.getByRole("heading", { name: "Review" })).toBeVisible();
+  await expect(page.getByText("Domino asks what fits the layout")).toBeVisible();
+  await page.getByRole("button", { name: "Finish Domino" }).click();
+
+  await expect(page.getByRole("heading", { name: "Barbu's table" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Domino/ })).toContainText("Complete");
+});
+
 test("training path practice step starts quick drill and marks completion", async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem(
@@ -703,7 +757,11 @@ test("training path practice step starts quick drill and marks completion", asyn
       JSON.stringify({
         "meet-contract": true,
         "spot-danger": true,
-        "play-trick": true
+        "play-trick": true,
+        "contract-no-last-two": true,
+        "contract-no-tricks": true,
+        "contract-hearts-trumps": true,
+        "contract-domino": true
       })
     );
   });
@@ -733,7 +791,7 @@ test("training path practice step starts quick drill and marks completion", asyn
   await expect(page.getByRole("button", { name: /Replay (No Hearts|No Queens|King of Hearts|No Last Two|No Tricks|Hearts Trumps|Domino)/ })).toBeVisible();
   await page.getByRole("button", { name: "Finish review" }).click();
 
-  await expect(page.getByText("5 / 5 complete")).toBeVisible();
+  await expect(page.getByText("9 / 9 complete")).toBeVisible();
   await expect(page.getByRole("button", { name: /Review the hand/ })).toContainText("Complete");
 });
 
@@ -745,6 +803,10 @@ test("completed course does not loop back to the first lesson", async ({ page })
         "meet-contract": true,
         "spot-danger": true,
         "play-trick": true,
+        "contract-no-last-two": true,
+        "contract-no-tricks": true,
+        "contract-hearts-trumps": true,
+        "contract-domino": true,
         "generated-drill": true,
         review: true
       })
@@ -754,7 +816,7 @@ test("completed course does not loop back to the first lesson", async ({ page })
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
 
-  await expect(page.getByText("5 / 5 complete")).toBeVisible();
+  await expect(page.getByText("9 / 9 complete")).toBeVisible();
   await expect(page.getByRole("button", { name: "Review results" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Reset path" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Continue with Meet the contract/ })).toHaveCount(0);

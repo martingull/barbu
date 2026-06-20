@@ -1,4 +1,6 @@
 import type { GuidedLesson } from "../lessonTypes";
+import { dominoLesson } from "./domino";
+import { heartsTrumpsLesson } from "./heartsTrumps";
 import { kingOfHeartsLesson } from "./kingOfHearts";
 import { noHeartsLesson } from "./noHearts";
 import { noLastTwoLesson } from "./noLastTwo";
@@ -10,5 +12,7 @@ export const guidedLessons: GuidedLesson[] = [
   noQueensLesson,
   kingOfHeartsLesson,
   noLastTwoLesson,
-  noTricksLesson
+  noTricksLesson,
+  heartsTrumpsLesson,
+  dominoLesson
 ];
