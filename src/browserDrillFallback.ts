@@ -341,8 +341,8 @@ function generatedNoLastTwoDuckStep(seed: number): BrowserDrillStep {
     trick: {
       title: "Duck the twelfth trick",
       beforeResult: `This is trick 12. Left led ${leadCard.label}. Barbu played ${tutorWinner.label}. Right followed ${rightCard.label}.`,
-      afterResult: `Barbu wins with ${tutorWinner.label} and takes this last-two penalty.`,
-      emptyExplanation: `${capitalize(ledSuitName)} were led. Stay below the current winner if you can.`,
+      afterResult: `Barbu wins with ${tutorWinner.label} and takes this last-two penalty. Losing the late trick is good here.`,
+      emptyExplanation: `${capitalize(ledSuitName)} were led. In No Last Two, try to lose this late trick.`,
       legalCardIds: [lowPlayerCard.id, highPlayerCard.id],
       hand: playerHand,
       tableBeforeChoice: [
@@ -353,8 +353,8 @@ function generatedNoLastTwoDuckStep(seed: number): BrowserDrillStep {
       tableAfterChoice: [],
       pendingBySeat: { You: "You" },
       playedExplanations: {
-        [lowPlayerCard.id]: `${lowPlayerCard.label} follows ${ledSuitName} and stays below ${tutorWinner.label}.`,
-        [highPlayerCard.id]: `${highPlayerCard.label} follows ${ledSuitName} but wins a last-two trick.`
+        [lowPlayerCard.id]: `${lowPlayerCard.label} follows ${ledSuitName} and loses the late trick. That is good in No Last Two.`,
+        [highPlayerCard.id]: `${highPlayerCard.label} follows ${ledSuitName} but wins a last-two trick and takes the penalty.`
       },
       cardOutcomes: {
         [lowPlayerCard.id]: "good",
@@ -385,8 +385,8 @@ function generatedNoLastTwoForcedWinStep(seed: number): BrowserDrillStep {
     trick: {
       title: "When your only legal card wins late",
       beforeResult: `This is trick 13. Left led ${leadCard.label}. Barbu played ${tutorCard.label}. Right followed ${rightCard.label}.`,
-      afterResult: `You win with ${forcedWinner.label} and take the final-trick penalty.`,
-      emptyExplanation: `${capitalize(ledSuitName)} were led. Your only ${ledSuitName} card is forced.`,
+      afterResult: `You win with ${forcedWinner.label} and take the final-trick penalty. The earlier exits mattered.`,
+      emptyExplanation: `${capitalize(ledSuitName)} were led. Your only ${ledSuitName} card is forced, even though it wins.`,
       legalCardIds: [forcedWinner.id],
       hand: playerHand,
       tableBeforeChoice: [
@@ -397,7 +397,7 @@ function generatedNoLastTwoForcedWinStep(seed: number): BrowserDrillStep {
       tableAfterChoice: [],
       pendingBySeat: { You: "You" },
       playedExplanations: {
-        [forcedWinner.id]: `${forcedWinner.label} is forced by the led suit and wins the final trick.`
+        [forcedWinner.id]: `${forcedWinner.label} is forced by the led suit and wins the final trick. This is a forced penalty, not an illegal play.`
       },
       cardOutcomes: {
         [forcedWinner.id]: "penalty"

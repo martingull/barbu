@@ -992,6 +992,14 @@ button {
   gap: 8px;
 }
 
+.drill-result-actions {
+  justify-content: stretch;
+}
+
+.drill-result-actions .primary-action {
+  width: 100%;
+}
+
 .topbar {
   display: flex;
   align-items: center;
@@ -1200,6 +1208,27 @@ h2 {
   color: #284f40;
 }
 
+.drill-loop-status {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.drill-loop-status span {
+  display: grid;
+  min-height: 34px;
+  place-items: center;
+  padding: 6px 8px;
+  border: 1px solid #c7d0c0;
+  border-radius: 8px;
+  background: #fbfcf8;
+  color: #43503f;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-align: center;
+}
+
 .table-play-panel {
   min-height: 460px;
 }
@@ -1384,6 +1413,68 @@ h2 {
   color: #e7eee1;
   font-weight: 750;
   line-height: 1.42;
+}
+
+.drill-loop-panel {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(94px, auto) minmax(94px, auto);
+  gap: 8px;
+  align-items: stretch;
+  padding: 14px;
+  border: 1px solid #b5c0ad;
+  border-radius: 8px;
+  background: #fbfcf8;
+}
+
+.drill-loop-panel > div {
+  display: grid;
+  align-content: center;
+  gap: 4px;
+}
+
+.drill-loop-panel .eyebrow {
+  color: #6d7c67;
+}
+
+.drill-loop-panel h2 {
+  color: #17201a;
+  font-size: 1.35rem;
+  line-height: 1.12;
+}
+
+.drill-loop-copy > strong {
+  color: #284f40;
+  font-size: 0.88rem;
+  line-height: 1.2;
+}
+
+.drill-loop-panel p {
+  margin: 0;
+  color: #53604d;
+  font-size: 0.82rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.drill-loop-panel span {
+  color: #6d7c67;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.drill-loop-panel strong {
+  color: #17201a;
+  font-size: 0.88rem;
+  line-height: 1.14;
+}
+
+.drill-loop-actions {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.75fr);
+  gap: 8px;
 }
 
 .drill-result-list {
@@ -2084,6 +2175,18 @@ h2 {
   .course-actions {
     display: grid;
     grid-template-columns: 0.8fr 1fr;
+  }
+
+  .drill-result-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .drill-loop-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .drill-loop-actions {
+    grid-template-columns: 1fr;
   }
 
   .topbar {

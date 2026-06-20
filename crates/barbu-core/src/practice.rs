@@ -194,6 +194,21 @@ impl PracticeScenario {
                         winner_name
                     )
                 }
+            } else if self.contract_kind == PracticeContractKind::NoLastTwo && winner != 2 {
+                format!(
+                    "{} follows {} and loses the late trick. That is good in No Last Two because {} takes {} instead.",
+                    player_card,
+                    suit_name(self.led_suit),
+                    winner_name,
+                    penalty_label(self.contract_kind, penalty)
+                )
+            } else if self.contract_kind == PracticeContractKind::NoLastTwo {
+                format!(
+                    "{} follows {}. You win the late trick and take {}.",
+                    player_card,
+                    suit_name(self.led_suit),
+                    penalty_label(self.contract_kind, penalty)
+                )
             } else if penalty == 0 {
                 format!(
                     "{} follows {}. {} wins the trick, and no penalty card was captured.",
@@ -1519,6 +1534,42 @@ mod tests {
         assert_eq!(outcome.reason, PracticeOutcomeReason::AvoidedPenalty);
         assert_ne!(outcome.winner, Some(2));
         assert_eq!(outcome.penalty, Some(1));
+        assert!(outcome.explanation.contains("loses the late trick"));
+        assert!(outcome.explanation.contains("good in No Last Two"));
+    }
+
+    #[test]
+    fn generated_no_last_two_duck_penalizes_overtaking_late_trick() {
+        let scenario = generate_no_last_two_duck(41);
+        let high_card = scenario
+            .legal_player_cards()
+            .into_iter()
+            .find(|card| card.rank == Rank::Queen)
+            .expect("duck scenario should include a high legal card");
+        let outcome = scenario.outcome_for(high_card);
+
+        assert!(outcome.is_legal);
+        assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Penalty);
+        assert_eq!(outcome.reason, PracticeOutcomeReason::CapturedPenalty);
+        assert_eq!(outcome.winner, Some(2));
+        assert_eq!(outcome.penalty, Some(1));
+        assert!(outcome.explanation.contains("win the late trick"));
+    }
+
+    #[test]
+    fn generated_no_last_two_duck_rejects_off_suit_when_led_suit_is_held() {
+        let scenario = generate_no_last_two_duck(41);
+        let off_suit_card = scenario
+            .player_hand
+            .iter()
+            .copied()
+            .find(|card| card.suit != scenario.led_suit)
+            .expect("duck scenario should include an off-suit card");
+        let outcome = scenario.outcome_for(off_suit_card);
+
+        assert!(!outcome.is_legal);
+        assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Illegal);
+        assert_eq!(outcome.reason, PracticeOutcomeReason::OffSuit);
     }
 
     #[test]

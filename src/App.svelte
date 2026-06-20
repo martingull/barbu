@@ -140,6 +140,11 @@
     message: string;
   };
 
+  type DrillLoopInsight = ReviewInsight & {
+    heading: string;
+    streakText: string;
+  };
+
   type FullHandRunResult = {
     contract: FullHandContract;
     playerPenalty: number;
@@ -323,7 +328,7 @@
       id: "generated-drill",
       step: "Practice",
       title: "Practice table",
-      summary: "Run a quick mixed-contract drill and review the results.",
+      summary: "Run generated practice decisions and review the next repetition.",
       action: "generated"
     },
     {
@@ -668,6 +673,7 @@
   let drillResults: DrillResult[] = [];
   let activeDrillSteps: DrillStep[] = drillSteps;
   let drillSetTitle = "Quick drill";
+  let activeDrillFocusContract = "";
   let practiceSeed = loadPracticeSeed();
   let selectedLessonId = guidedLessons[0].id;
   let activeTricks: GuidedTrick[] = guidedLessons[0].tricks;
@@ -785,9 +791,12 @@
   $: drillOutcome = drillCheckedCard ? buildDrillOutcome(drillCheckedCard) : "";
   $: drillFeedback = drillCheckedCard ? buildDrillFeedback(drillCheckedCard) : currentDrillTrick.emptyExplanation;
   $: cleanDrillCount = drillResults.filter((result) => result.clean).length;
+  $: currentDrillDecisionNumber = drillCheckedCard ? drillResults.length : drillResults.length + 1;
   $: currentContractResults = summarizeContractResults(drillResults);
   $: weakContract = weakestContractFromResults(currentContractResults);
   $: recentPlayBarbuAttempts = playBarbuHistory.slice(0, 3);
+  $: drillLoopInsight = buildDrillLoopInsight(drillResults, recentPlayBarbuAttempts);
+  $: drillLoopFocus = drillLoopInsight.contract || weakContract || "Full table";
   $: latestPlayBarbuAttempt = playBarbuHistory[0];
   $: reviewResults = latestPlayBarbuAttempt?.results ?? [];
   $: reviewContractResults = summarizeContractResults(reviewResults);
@@ -1864,10 +1873,17 @@
 
   async function startDailyDrill(pathStepId = "") {
     activePathStepId = pathStepId;
+    activeDrillFocusContract = "";
     drillIndex = 0;
     drillResults = [];
     drillSetTitle = "Quick drill";
     resetDrillDecision();
+
+    activeDrillSteps = [await loadGeneratedDrillStep()];
+    appView = "drill";
+  }
+
+  async function loadGeneratedDrillStep(focusContract = "") {
     const seed = usePracticeSeed();
 
     try {
@@ -1875,17 +1891,28 @@
         seed
       });
 
-      activeDrillSteps = drillSet.scenarios.map(drillStepFromGeneratedScenario);
-      drillSetTitle = drillSet.title;
+      const candidates = drillSet.scenarios
+        .map(drillStepFromGeneratedScenario)
+        .filter((step) => !focusContract || step.contract === focusContract);
+
+      if (candidates.length > 0) {
+        return candidates[generatedCandidateIndex(seed, candidates.length)];
+      }
     } catch {
-      activeDrillSteps = generateBrowserPlayBarbuDrillSteps(seed);
-      drillSetTitle = "Quick drill";
+      const candidates = generateBrowserPlayBarbuDrillSteps(seed).filter(
+        (step) => !focusContract || step.contract === focusContract
+      );
+
+      if (candidates.length > 0) {
+        return candidates[generatedCandidateIndex(seed, candidates.length)];
+      }
     }
 
-    drillIndex = 0;
-    drillResults = [];
-    resetDrillDecision();
-    appView = "drill";
+    return drillSteps.find((step) => !focusContract || step.contract === focusContract) ?? drillSteps[0];
+  }
+
+  function generatedCandidateIndex(seed: number, candidateCount: number) {
+    return ((seed * 1103515245 + 12345) >>> 0) % candidateCount;
   }
 
   async function replayWeakContract() {
@@ -1911,29 +1938,13 @@
   }
 
   async function startContractReplay(replayContract: string) {
+    activeDrillFocusContract = replayContract;
     drillIndex = 0;
     drillResults = [];
     drillSetTitle = `Replay ${replayContract}`;
     resetDrillDecision();
-    const seed = usePracticeSeed();
 
-    try {
-      const drillSet = await invoke<GeneratedDrillSet>("generate_daily_drill_set", {
-        seed
-      });
-      activeDrillSteps = drillSet.scenarios
-        .map(drillStepFromGeneratedScenario)
-        .filter((step) => step.contract === replayContract);
-    } catch {
-      activeDrillSteps = generateBrowserPlayBarbuDrillSteps(seed).filter((step) => step.contract === replayContract);
-    }
-
-    if (activeDrillSteps.length === 0) {
-      activeDrillSteps = drillSteps.filter((step) => step.contract === replayContract);
-    }
-
-    drillIndex = 0;
-    drillResults = [];
+    activeDrillSteps = [await loadGeneratedDrillStep(replayContract)];
     resetDrillDecision();
     appView = "drill";
   }
@@ -2104,19 +2115,21 @@
   }
 
   function checkDrillAnswer() {
-    if (!drillSelectedCard || drillCheckedCardId) {
+    const selected = currentDrillTrick.hand.find((card) => card.id === drillSelectedCardId);
+
+    if (!selected || drillCheckedCardId) {
       return;
     }
 
-    const outcome = buildDrillOutcomeKey(drillSelectedCard);
-    const reason = buildDrillReasonKey(drillSelectedCard, outcome);
+    const outcome = buildDrillOutcomeKey(selected);
+    const reason = buildDrillReasonKey(selected, outcome);
 
-    drillCheckedCardId = drillSelectedCard.id;
+    drillCheckedCardId = selected.id;
     drillResults = [
       ...drillResults,
       {
         contract: currentDrill.contract,
-        cardLabel: drillSelectedCard.label,
+        cardLabel: selected.label,
         outcome,
         reason,
         clean: cleanDrillOutcomes.includes(outcome)
@@ -2124,18 +2137,25 @@
     ];
   }
 
-  function continueDrill() {
-    if (drillIndex === activeDrillSteps.length - 1) {
+  async function continueDrill() {
+    const nextStep = await loadGeneratedDrillStep(activeDrillFocusContract);
+    const nextIndex = activeDrillSteps.length;
+
+    activeDrillSteps = [...activeDrillSteps, nextStep];
+    drillIndex = nextIndex;
+    resetDrillDecision();
+  }
+
+  function finishDrill() {
+    try {
       saveCompletedDrillSession();
       if (activePathStepId === "generated-drill") {
         saveCourseProgress({ ...completedPathSteps, "generated-drill": true });
       }
-      appView = "drillResult";
-      return;
+    } catch {
+      // The result screen should still open if local storage is unavailable.
     }
-
-    drillIndex += 1;
-    resetDrillDecision();
+    appView = "drillResult";
   }
 
   function drillCardClasses(card: Card) {
@@ -2153,7 +2173,7 @@
       return "illegal";
     }
 
-    return currentDrillTrick.cardOutcomes[card.id] ?? "good";
+    return currentDrillTrick.cardOutcomes?.[card.id] ?? "good";
   }
 
   function buildDrillOutcome(card: Card) {
@@ -2236,6 +2256,43 @@
     })[0].contract;
   }
 
+  function cleanAttemptCount(attempts: PlayBarbuAttempt[]) {
+    return attempts.filter((attempt) => attempt.results.length > 0 && attempt.results.every((result) => result.clean)).length;
+  }
+
+  function buildDrillLoopInsight(results: DrillResult[], attempts: PlayBarbuAttempt[]): DrillLoopInsight {
+    try {
+      const cleanCount = results.filter((result) => result.clean).length;
+      const replayContract = weakestContractFromResults(summarizeContractResults(results));
+      const reasonInsight = buildReasonInsight(results, {
+        empty: "Finish a quick drill to unlock a replay target.",
+        clean:
+          "Good table. Repeat once more for rhythm, or replay the weakest contract to keep the habit sharp.",
+        risky:
+          "You won a clean trick. In avoidance contracts, only win when the trick is worth taking.",
+        captured:
+          "You captured a penalty. Before playing high, ask who wins if you stay low."
+      });
+      const cleanStreak = cleanAttemptCount(attempts);
+
+      return {
+        contract: replayContract || reasonInsight.contract,
+        heading: results.length > 0 && cleanCount === results.length ? "Repeat for rhythm" : "Replay the weak spot",
+        message: reasonInsight.message,
+        streakText: cleanStreak
+          ? `${cleanStreak} recent clean ${cleanStreak === 1 ? "table" : "tables"}`
+          : "No clean streak yet"
+      };
+    } catch {
+      return {
+        contract: "",
+        heading: "Repeat for rhythm",
+        message: "Finish a quick drill to unlock a replay target.",
+        streakText: "No clean streak yet"
+      };
+    }
+  }
+
   function worstOutcome(left: GuidedCardOutcome | "illegal", right: GuidedCardOutcome | "illegal") {
     return outcomeSeverity(right) > outcomeSeverity(left) ? right : left;
   }
@@ -2251,29 +2308,25 @@
     return severity[outcome];
   }
 
-  function adviceForContract(contract: string) {
-    if (contract === "No Hearts") {
-      return "Before choosing, ask who is winning the trick and whether a heart is already loaded.";
-    }
-
-    if (contract === "No Queens") {
-      return "Find the queen, then avoid becoming the player who captures that trick.";
-    }
-
-    if (contract === "King of Hearts") {
-      return "Track KH first; low hearts and safe discards are usually your escape route.";
-    }
-
-    return "Play another table to give Barbu enough decisions to review.";
-  }
-
   function buildReviewInsight(attempts: PlayBarbuAttempt[]): ReviewInsight {
     const recentResults = attempts.flatMap((attempt) => attempt.results);
 
-    if (recentResults.length === 0) {
+    return buildReasonInsight(recentResults, {
+      empty: "Play a practice table to give Barbu enough decisions to review.",
+      clean: "You followed suit well. Keep repeating the table until reading the winner feels automatic.",
+      risky: "You won a clean trick. That is legal, but keep checking whether the trick is actually dangerous.",
+      captured: "You captured a penalty. Before playing high, ask who wins the trick if you stay low."
+    });
+  }
+
+  function buildReasonInsight(
+    results: DrillResult[],
+    copy: { empty: string; clean: string; risky: string; captured: string }
+  ): ReviewInsight {
+    if (results.length === 0) {
       return {
         contract: "",
-        message: "Play a practice table to give Barbu enough decisions to review."
+        message: copy.empty
       };
     }
 
@@ -2285,8 +2338,8 @@
       "avoided_penalty",
       "followed_suit"
     ];
-    const reason = priority.find((candidate) => recentResults.some((result) => result.reason === candidate));
-    const result = reason ? recentResults.find((item) => item.reason === reason) : undefined;
+    const reason = priority.find((candidate) => results.some((result) => result.reason === candidate));
+    const result = reason ? results.find((item) => item.reason === reason) : undefined;
     const contract = result?.contract ?? "";
 
     if (reason === "off_suit") {
@@ -2299,14 +2352,17 @@
     if (reason === "captured_penalty") {
       return {
         contract,
-        message: "You captured a penalty. Before playing high, ask who wins the trick if you stay low."
+        message:
+          contract === "No Last Two"
+            ? "You won a late trick. In No Last Two, the safe card is often the card that loses the trick."
+            : copy.captured
       };
     }
 
     if (reason === "won_clean_trick") {
       return {
         contract,
-        message: "You won a clean trick. That is legal, but keep checking whether the trick is actually dangerous."
+        message: copy.risky
       };
     }
 
@@ -2320,13 +2376,16 @@
     if (reason === "avoided_penalty") {
       return {
         contract,
-        message: "You avoided the penalty card. Keep locating the trick winner before choosing your card."
+        message:
+          contract === "No Last Two"
+            ? "Good avoidance. You lost the late trick while staying legal, which is the point of No Last Two."
+            : "You avoided the penalty card. Keep locating the trick winner before choosing your card."
       };
     }
 
     return {
       contract,
-      message: "You followed suit well. Keep repeating the table until reading the winner feels automatic."
+      message: copy.clean
     };
   }
 
@@ -2369,7 +2428,7 @@
       return "";
     }
 
-    return outcomeLabels[currentTrick.cardOutcomes[played.id] ?? "good"];
+    return outcomeLabels[currentTrick.cardOutcomes?.[played.id] ?? "good"];
   }
 
   function guidedTrickFromGeneratedScenario(scenario: GeneratedPracticeScenario): GuidedTrick {
@@ -3336,7 +3395,7 @@
       title="Quick drill"
       eyebrow={drillSetTitle}
       statusLabel={currentDrill.contract}
-      statusValue={`Decision ${drillIndex + 1} of ${activeDrillSteps.length}`}
+      statusValue={`Decision ${currentDrillDecisionNumber}`}
       tableAriaLabel="Drill card table"
       pendingBySeat={currentDrillTrick.pendingBySeat}
       showTable={!currentDrillIsDomino}
@@ -3358,16 +3417,10 @@
       {/snippet}
 
       {#snippet track()}
-        <div class="drill-track" aria-label="Drill progress">
-          {#each activeDrillSteps as step, index}
-            <span
-              class:active={index === drillIndex}
-              class:complete={index < drillResults.length}
-              aria-label={`Decision ${index + 1}: ${step.contract}`}
-            >
-              {index + 1}
-            </span>
-          {/each}
+        <div class="drill-loop-status" aria-label="Drill progress">
+          <span>{drillResults.length} played</span>
+          <span>{cleanDrillCount} clean</span>
+          <span>{activeDrillFocusContract || "Mixed contracts"}</span>
         </div>
       {/snippet}
 
@@ -3409,9 +3462,8 @@
 
         <div class="action-row">
           {#if drillCheckedCard}
-            <button class="primary-action" onclick={continueDrill} type="button">
-              {drillIndex === activeDrillSteps.length - 1 ? "Finish drill" : "Next table"}
-            </button>
+            <button class="secondary-action" onclick={finishDrill} type="button">Finish session</button>
+            <button class="primary-action" onclick={() => void continueDrill()} type="button">Next decision</button>
           {:else}
             <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
             <button class="primary-action" disabled={!drillSelectedCard} onclick={checkDrillAnswer} type="button">
@@ -3426,22 +3478,45 @@
       <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
       <div>
         <p class="eyebrow">{drillSetTitle}</p>
-        <h1>Drill complete</h1>
+        <h1>Session complete</h1>
       </div>
       <div class="contract-status">
         <span>Score</span>
-        <strong>{cleanDrillCount} of {activeDrillSteps.length} clean</strong>
+        <strong>{cleanDrillCount} of {drillResults.length} clean</strong>
       </div>
     </header>
 
     <section class="drill-result-screen" aria-label="Drill results">
+      <div class="drill-loop-panel" aria-label="Next drill step">
+        <div class="drill-loop-copy">
+          <p class="eyebrow">Practice loop</p>
+          <h2>Next repetition</h2>
+          <strong>{drillLoopInsight.heading}</strong>
+          <p>{drillLoopInsight.message}</p>
+        </div>
+        <div class="drill-loop-detail">
+          <span>Focus</span>
+          <strong>{drillLoopFocus}</strong>
+        </div>
+        <div class="drill-loop-detail">
+          <span>Recent rhythm</span>
+          <strong>{drillLoopInsight.streakText}</strong>
+        </div>
+        <div class="drill-loop-actions">
+          <button class="primary-action" onclick={() => void replayWeakContract()} type="button">
+            Replay {drillLoopFocus}
+          </button>
+          <button class="secondary-action" onclick={() => void startDailyDrill()} type="button">Try again</button>
+        </div>
+      </div>
+
       <div class="drill-score-card">
         <p class="eyebrow">Result</p>
-        <h2>{cleanDrillCount} / {activeDrillSteps.length} clean decisions</h2>
+        <h2>{cleanDrillCount} / {drillResults.length} clean decisions</h2>
         <p>
-          {cleanDrillCount === activeDrillSteps.length
-            ? "Clean table. Barbu is ready to raise the pressure."
-            : "Run the table again and make the legal card automatic."}
+          {drillResults.length > 0 && cleanDrillCount === drillResults.length
+            ? "Clean session. Barbu is ready to raise the pressure."
+            : "Use the next repetition to make the weak decision automatic."}
         </p>
       </div>
 
@@ -3478,11 +3553,7 @@
         </div>
       {/if}
 
-      <div class="course-actions">
-        <button class="secondary-action" onclick={() => void startDailyDrill()} type="button">Try again</button>
-        <button class="secondary-action" onclick={() => void replayWeakContract()} type="button">
-          Replay {weakContract || "table"}
-        </button>
+      <div class="course-actions drill-result-actions">
         <button class="primary-action" onclick={continueCourse} type="button">Continue path</button>
       </div>
     </section>

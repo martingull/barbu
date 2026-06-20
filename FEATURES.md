@@ -29,7 +29,8 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Game catalog with Barbu as the first playable core game and documented varieties kept under their parent game.
 - Barbu table with grouped Learn, Practice, Play, and Reference entry points, including a contract-hand practice chooser.
 - Five-step training path: concept, example, guided trick, practice, review.
-- Quick Drill mode with seven quick mixed-contract decisions, immediate feedback, and a compact result across the playable contract roster.
+- Quick Drill mode as a generated practice loop: one decision at a time, immediate feedback, optional next decision, and a compact session result.
+- Quick Drill result loop with next-repetition guidance, focused replay, recent rhythm, and local attempt history after the learner finishes a generated session.
 - No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps full-hand skeletons with deterministic local deals, legal-card play, contract-aware auto opponents, hand scoring, and short per-trick feedback.
 - Generic trick-taking hand engine for deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps as the first contract adapters.
 - Opponent policy v2 baseline for avoidance contracts: auto seats now duck clean tricks with the highest safe card instead of winning avoidable tricks without a reason.
@@ -91,8 +92,10 @@ Core contract status:
 These are the next product increments that keep the app coherent.
 
 1. Drill Loop v2
-   - Expand recent-attempt display into a small habit loop.
+   - Quick Drill now generates a continuing practice loop instead of a fixed seven-exercise roster.
+   - Result screen now shows next repetition, focus contract, and recent rhythm after the learner finishes the session.
    - Use stored reason tags to refine replay recommendations and review timing.
+   - Next: improve review timing and focused replay selection after more real play.
    - Keep explanations to one sentence unless the player asks for more.
 
 2. Generated Practice Expansion v2
