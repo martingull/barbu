@@ -444,11 +444,10 @@ fn choose_no_hearts_opponent_card(state: &TrickTakingHandState) -> Option<Card> 
         .iter()
         .any(|played| played.card.suit == Suit::Hearts)
     {
-        return highest_card_matching(&legal, |card| !card_would_win_trick(state, card))
-            .or_else(|| lowest_card(&legal));
+        return highest_non_winning_card(state, &legal).or_else(|| lowest_card(&legal));
     }
 
-    lowest_card(&legal)
+    highest_non_winning_card(state, &legal).or_else(|| lowest_card(&legal))
 }
 
 fn choose_no_queens_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
@@ -477,11 +476,10 @@ fn choose_no_queens_opponent_card(state: &TrickTakingHandState) -> Option<Card> 
         .iter()
         .any(|played| played.card.rank == Rank::Queen)
     {
-        return highest_card_matching(&legal, |card| !card_would_win_trick(state, card))
-            .or_else(|| lowest_card(&legal));
+        return highest_non_winning_card(state, &legal).or_else(|| lowest_card(&legal));
     }
 
-    lowest_card(&legal)
+    highest_non_winning_card(state, &legal).or_else(|| lowest_card(&legal))
 }
 
 fn choose_king_of_hearts_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
@@ -509,11 +507,10 @@ fn choose_king_of_hearts_opponent_card(state: &TrickTakingHandState) -> Option<C
         .iter()
         .any(|played| is_king_of_hearts(played.card))
     {
-        return highest_card_matching(&legal, |card| !card_would_win_trick(state, card))
-            .or_else(|| lowest_card(&legal));
+        return highest_non_winning_card(state, &legal).or_else(|| lowest_card(&legal));
     }
 
-    lowest_card(&legal)
+    highest_non_winning_card(state, &legal).or_else(|| lowest_card(&legal))
 }
 
 fn choose_no_last_two_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
@@ -541,8 +538,7 @@ fn choose_no_last_two_opponent_card(state: &TrickTakingHandState) -> Option<Card
     }
 
     if is_late_penalty_trick {
-        return highest_card_matching(&legal, |card| !card_would_win_trick(state, card))
-            .or_else(|| lowest_card(&legal));
+        return highest_non_winning_card(state, &legal).or_else(|| lowest_card(&legal));
     }
 
     highest_card(&legal)
@@ -569,6 +565,10 @@ fn choose_no_tricks_opponent_card(state: &TrickTakingHandState) -> Option<Card> 
 
     highest_card_matching(&legal, |card| !card_would_win_trick(state, card))
         .or_else(|| lowest_card(&legal))
+}
+
+fn highest_non_winning_card(state: &TrickTakingHandState, cards: &[Card]) -> Option<Card> {
+    highest_card_matching(cards, |card| !card_would_win_trick(state, card))
 }
 
 fn score_no_hearts_hand_trick(_state: &TrickTakingHandState, cards: &[PlayedCard]) -> i32 {
@@ -898,6 +898,32 @@ mod tests {
     }
 
     #[test]
+    fn opponent_ducks_clean_avoidance_trick_with_highest_loser() {
+        let state = NoHeartsHandState {
+            id: "opponent-duck-clean".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Six, Suit::Clubs),
+                    Card::new(Rank::Nine, Suit::Clubs),
+                    Card::new(Rank::King, Suit::Clubs),
+                ],
+            ],
+            current_player: 3,
+            current_trick: vec![PlayedCard::new(0, Card::new(Rank::Ten, Suit::Clubs))],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_no_hearts_opponent_card(&state),
+            Some(Card::new(Rank::Nine, Suit::Clubs))
+        );
+    }
+
+    #[test]
     fn opponent_discards_highest_heart_when_void() {
         let state = NoHeartsHandState {
             id: "opponent-discard-heart".to_string(),
@@ -1000,6 +1026,32 @@ mod tests {
         assert_eq!(
             choose_no_queens_opponent_card(&state),
             Some(Card::new(Rank::Six, Suit::Clubs))
+        );
+    }
+
+    #[test]
+    fn no_queens_opponent_ducks_clean_trick_before_loading_queen() {
+        let state = NoQueensHandState {
+            id: "opponent-duck-clean-no-queens".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Six, Suit::Diamonds),
+                    Card::new(Rank::Nine, Suit::Diamonds),
+                    Card::new(Rank::Queen, Suit::Diamonds),
+                ],
+            ],
+            current_player: 3,
+            current_trick: vec![PlayedCard::new(0, Card::new(Rank::Ten, Suit::Diamonds))],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_no_queens_opponent_card(&state),
+            Some(Card::new(Rank::Nine, Suit::Diamonds))
         );
     }
 

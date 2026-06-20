@@ -18,6 +18,7 @@
   import { generateBrowserPlayBarbuDrillSteps } from "./browserDrillFallback";
   import CardTable from "./CardTable.svelte";
   import TablePlaySurface from "./TablePlaySurface.svelte";
+  import { fullHandContractCommands, fullHandContracts } from "./contractRegistry";
   import { contractRunScore, contractScoreMeta, formatContractValue } from "./contractScoring";
   import { guidedLessons } from "./lessons/catalog";
   import { referenceCatalog } from "./referenceCatalog";
@@ -139,11 +140,6 @@
     message: string;
   };
 
-  type FullHandContractCommands = {
-    startCommand: string;
-    playCommand: string;
-  };
-
   type FullHandRunResult = {
     contract: FullHandContract;
     playerPenalty: number;
@@ -207,45 +203,6 @@
   const practiceSeedStorageKey = "barbu.practiceSeed.v1";
   const playBarbuHistoryStorageKey = "barbu.playHistory.v1";
   const maxStoredPlayBarbuAttempts = 8;
-  const fullHandContracts: FullHandContract[] = [
-    "No Hearts",
-    "No Queens",
-    "King of Hearts",
-    "No Last Two",
-    "No Tricks",
-    "Hearts Trumps",
-    "Domino"
-  ];
-  const fullHandContractCommands: Record<FullHandContract, FullHandContractCommands> = {
-    "No Hearts": {
-      startCommand: "start_no_hearts_hand",
-      playCommand: "play_no_hearts_hand_card"
-    },
-    "No Queens": {
-      startCommand: "start_no_queens_hand",
-      playCommand: "play_no_queens_hand_card"
-    },
-    "King of Hearts": {
-      startCommand: "start_king_of_hearts_hand",
-      playCommand: "play_king_of_hearts_hand_card"
-    },
-    "No Last Two": {
-      startCommand: "start_no_last_two_hand",
-      playCommand: "play_no_last_two_hand_card"
-    },
-    "No Tricks": {
-      startCommand: "start_no_tricks_hand",
-      playCommand: "play_no_tricks_hand_card"
-    },
-    "Hearts Trumps": {
-      startCommand: "start_positive_tricks_hand",
-      playCommand: "play_positive_tricks_hand_card"
-    },
-    Domino: {
-      startCommand: "start_domino_hand",
-      playCommand: "play_domino_card"
-    }
-  };
   const scoreSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
   const seatByPlayerIndex: Record<number, Seat> = {
     0: "Tutor",

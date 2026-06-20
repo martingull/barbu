@@ -85,6 +85,8 @@ For UI-only changes, `npm run build` plus `task ui:test` is usually the minimum.
 
 Rust-backed generated drills and full-hand commands require the Tauri runtime. Browser-only localhost can test authored lessons, frontend rendering, and browser fallback flows; use `task tauri:dev` when verifying Tauri command behavior.
 
+Every implemented feature should end with a short "Try it yourself" note in the final handoff. Include the exact app path or buttons to press, what the user should expect to see, and whether browser dev mode is enough or Tauri/iOS is needed.
+
 ## Generated Files
 
 Do not commit generated output:
