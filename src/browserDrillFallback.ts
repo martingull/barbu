@@ -45,7 +45,13 @@ export function generateBrowserPlayBarbuDrillSteps(seed: number): BrowserDrillSt
 }
 
 function generatedNoHeartsStep(seed: number): BrowserDrillStep {
-  return seed % 2 === 0 ? generatedNoHeartsFollowSuitStep(seed) : generatedNoHeartsVoidDiscardStep(seed);
+  if (seed % 3 === 0) {
+    return generatedNoHeartsFollowSuitStep(seed);
+  }
+  if (seed % 3 === 1) {
+    return generatedNoHeartsVoidDiscardStep(seed);
+  }
+  return generatedNoHeartsVoidDumpDangerStep(seed);
 }
 
 function generatedNoHeartsFollowSuitStep(seed: number): BrowserDrillStep {
@@ -138,8 +144,62 @@ function generatedNoHeartsVoidDiscardStep(seed: number): BrowserDrillStep {
   };
 }
 
+function generatedNoHeartsVoidDumpDangerStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const ledSuit = choose(rng, nonHeartSuits);
+  const discardSuit = firstNonMatchingSuit(ledSuit, "H");
+  const leadCard = card(choose(rng, ["6", "7", "8"]), ledSuit);
+  const tutorCard = card(choose(rng, ["10", "J", "Q"]), ledSuit);
+  const rightWinner = card("A", ledSuit);
+  const aceHeart = card("A", "H");
+  const queenHeart = card("Q", "H");
+  const lowDiscard = card("2", discardSuit);
+  const highDiscard = card("K", discardSuit);
+  const playerHand = [aceHeart, queenHeart, lowDiscard, highDiscard].sort(compareCards);
+  const ledSuitName = suitNames[ledSuit];
+  const legalCardIds = playerHand.map((card) => card.id);
+
+  return {
+    contract: "No Hearts",
+    title: "Dump hearts safely",
+    trick: {
+      title: "Unload danger under a locked winner",
+      beforeResult: `Left led ${leadCard.label}. Barbu followed ${tutorCard.label}. Right is winning with ${rightWinner.label}. You have no ${ledSuitName}.`,
+      afterResult: `Right wins with ${rightWinner.label}. Any heart you discard goes to Right, not you.`,
+      emptyExplanation: `You are void in ${ledSuitName}. This is a chance to unload hearts safely.`,
+      legalCardIds,
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Left", card: leadCard },
+        { seat: "Tutor", card: tutorCard },
+        { seat: "Right", card: rightWinner }
+      ],
+      tableAfterChoice: [],
+      pendingBySeat: { You: "You" },
+      playedExplanations: Object.fromEntries(
+        playerHand.map((playerCard) => [
+          playerCard.id,
+          playerCard.suit === "H"
+            ? `${playerCard.label} unloads a heart while Right is already winning the trick.`
+            : `${playerCard.label} is legal, but it does not shed a heart penalty.`
+        ])
+      ),
+      cardOutcomes: cardOutcomesFor(playerHand, "good"),
+      cardReasons: cardReasonsFor(playerHand, (playerCard) =>
+        playerCard.suit === "H" ? "avoided_penalty" : "void_discard"
+      )
+    }
+  };
+}
+
 function generatedNoQueensStep(seed: number): BrowserDrillStep {
-  return seed % 2 === 0 ? generatedNoQueensCaptureStep(seed) : generatedNoQueensVoidDiscardStep(seed);
+  if (seed % 3 === 0) {
+    return generatedNoQueensCaptureStep(seed);
+  }
+  if (seed % 3 === 1) {
+    return generatedNoQueensVoidDiscardStep(seed);
+  }
+  return generatedNoQueensVoidDumpQueenStep(seed);
 }
 
 function generatedNoQueensCaptureStep(seed: number): BrowserDrillStep {
@@ -233,8 +293,62 @@ function generatedNoQueensVoidDiscardStep(seed: number): BrowserDrillStep {
   };
 }
 
+function generatedNoQueensVoidDumpQueenStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const ledSuit = choose(rng, nonHeartSuits);
+  const discardSuit = firstNonMatchingSuit(ledSuit, "H");
+  const leadCard = card(choose(rng, ["6", "7", "8"]), ledSuit);
+  const tutorCard = card(choose(rng, ["9", "10", "J"]), ledSuit);
+  const rightWinner = card("A", ledSuit);
+  const heartQueen = card("Q", "H");
+  const suitQueen = card("Q", discardSuit);
+  const lowDiscard = card("2", discardSuit);
+  const highDiscard = card("K", discardSuit);
+  const playerHand = [heartQueen, suitQueen, lowDiscard, highDiscard].sort(compareCards);
+  const ledSuitName = suitNames[ledSuit];
+  const legalCardIds = playerHand.map((card) => card.id);
+
+  return {
+    contract: "No Queens",
+    title: "Dump a queen safely",
+    trick: {
+      title: "Unload a queen under a locked winner",
+      beforeResult: `Left led ${leadCard.label}. Barbu followed ${tutorCard.label}. Right is winning with ${rightWinner.label}. You have no ${ledSuitName}.`,
+      afterResult: `Right wins with ${rightWinner.label}. Any queen you discard goes to Right, not you.`,
+      emptyExplanation: `You are void in ${ledSuitName}. This is a chance to unload a queen safely.`,
+      legalCardIds,
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Left", card: leadCard },
+        { seat: "Tutor", card: tutorCard },
+        { seat: "Right", card: rightWinner }
+      ],
+      tableAfterChoice: [],
+      pendingBySeat: { You: "You" },
+      playedExplanations: Object.fromEntries(
+        playerHand.map((playerCard) => [
+          playerCard.id,
+          playerCard.rank === "Q"
+            ? `${playerCard.label} unloads a queen while Right is already winning the trick.`
+            : `${playerCard.label} is legal, but it does not shed a queen.`
+        ])
+      ),
+      cardOutcomes: cardOutcomesFor(playerHand, "good"),
+      cardReasons: cardReasonsFor(playerHand, (playerCard) =>
+        playerCard.rank === "Q" ? "avoided_penalty" : "void_discard"
+      )
+    }
+  };
+}
+
 function generatedKingOfHeartsStep(seed: number): BrowserDrillStep {
-  return seed % 2 === 0 ? generatedKingOfHeartsCaptureStep(seed) : generatedKingOfHeartsVoidDiscardStep(seed);
+  if (seed % 3 === 0) {
+    return generatedKingOfHeartsCaptureStep(seed);
+  }
+  if (seed % 3 === 1) {
+    return generatedKingOfHeartsVoidDiscardStep(seed);
+  }
+  return generatedKingOfHeartsVoidDumpKingStep(seed);
 }
 
 function generatedKingOfHeartsCaptureStep(seed: number): BrowserDrillStep {
@@ -315,6 +429,54 @@ function generatedKingOfHeartsVoidDiscardStep(seed: number): BrowserDrillStep {
       ),
       cardOutcomes: cardOutcomesFor(playerHand, "good"),
       cardReasons: cardReasonsFor(playerHand, () => "avoided_penalty")
+    }
+  };
+}
+
+function generatedKingOfHeartsVoidDumpKingStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const ledSuit = choose(rng, nonHeartSuits);
+  const discardSuit = firstNonMatchingSuit(ledSuit, "H");
+  const leadCard = card(choose(rng, ["6", "7", "8"]), ledSuit);
+  const tutorCard = card(choose(rng, ["9", "10", "J"]), ledSuit);
+  const rightWinner = card("A", ledSuit);
+  const kingHeart = card("K", "H");
+  const queenHeart = card("Q", "H");
+  const lowDiscard = card("2", discardSuit);
+  const highDiscard = card("K", discardSuit);
+  const playerHand = [kingHeart, queenHeart, lowDiscard, highDiscard].sort(compareCards);
+  const ledSuitName = suitNames[ledSuit];
+  const legalCardIds = playerHand.map((card) => card.id);
+
+  return {
+    contract: "King of Hearts",
+    title: "Dump Barbu safely",
+    trick: {
+      title: "Unload KH under a locked winner",
+      beforeResult: `Left led ${leadCard.label}. Barbu followed ${tutorCard.label}. Right is winning with ${rightWinner.label}. You have no ${ledSuitName}.`,
+      afterResult: `Right wins with ${rightWinner.label}. KH goes to Right, not you.`,
+      emptyExplanation: `You are void in ${ledSuitName}. This is a chance to unload KH safely.`,
+      legalCardIds,
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Left", card: leadCard },
+        { seat: "Tutor", card: tutorCard },
+        { seat: "Right", card: rightWinner }
+      ],
+      tableAfterChoice: [],
+      pendingBySeat: { You: "You" },
+      playedExplanations: Object.fromEntries(
+        playerHand.map((playerCard) => [
+          playerCard.id,
+          playerCard.id === kingHeart.id
+            ? `${playerCard.label} unloads Barbu while Right is already winning the trick.`
+            : `${playerCard.label} is legal, but it does not shed KH.`
+        ])
+      ),
+      cardOutcomes: cardOutcomesFor(playerHand, "good"),
+      cardReasons: cardReasonsFor(playerHand, (playerCard) =>
+        playerCard.id === kingHeart.id ? "avoided_penalty" : "void_discard"
+      )
     }
   };
 }
@@ -410,7 +572,13 @@ function generatedNoLastTwoForcedWinStep(seed: number): BrowserDrillStep {
 }
 
 function generatedNoTricksStep(seed: number): BrowserDrillStep {
-  return seed % 2 === 0 ? generatedNoTricksDuckStep(seed) : generatedNoTricksForcedWinStep(seed);
+  if (seed % 3 === 0) {
+    return generatedNoTricksDuckStep(seed);
+  }
+  if (seed % 3 === 1) {
+    return generatedNoTricksForcedWinStep(seed);
+  }
+  return generatedNoTricksVoidDiscardStep(seed);
 }
 
 function generatedNoTricksDuckStep(seed: number): BrowserDrillStep {
@@ -494,6 +662,53 @@ function generatedNoTricksForcedWinStep(seed: number): BrowserDrillStep {
       cardReasons: {
         [forcedWinner.id]: "captured_penalty"
       }
+    }
+  };
+}
+
+function generatedNoTricksVoidDiscardStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const ledSuit = choose(rng, nonHeartSuits);
+  const discardSuit = firstNonMatchingSuit(ledSuit, "H");
+  const secondDiscardSuit = (["C", "D", "H", "S"] as Suit[]).find(
+    (suit) => suit !== ledSuit && suit !== discardSuit
+  ) ?? "H";
+  const leadCard = card(choose(rng, ["6", "7", "8"]), ledSuit);
+  const tutorCard = card(choose(rng, ["10", "J", "Q"]), ledSuit);
+  const rightWinner = card("A", ledSuit);
+  const lowDiscard = card("2", discardSuit);
+  const highDiscard = card("K", discardSuit);
+  const secondLow = card("4", secondDiscardSuit);
+  const secondHigh = card("Q", secondDiscardSuit);
+  const playerHand = [lowDiscard, highDiscard, secondLow, secondHigh].sort(compareCards);
+  const ledSuitName = suitNames[ledSuit];
+  const legalCardIds = playerHand.map((card) => card.id);
+
+  return {
+    contract: "No Tricks",
+    title: "Discard under control",
+    trick: {
+      title: "Stay clear when void",
+      beforeResult: `Left led ${leadCard.label}. Barbu followed ${tutorCard.label}. Right is winning with ${rightWinner.label}. You have no ${ledSuitName}.`,
+      afterResult: `Right wins with ${rightWinner.label}. Your discard cannot win the led-suit trick.`,
+      emptyExplanation: `You are void in ${ledSuitName}. Any discard is legal and stays out of the trick.`,
+      legalCardIds,
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Left", card: leadCard },
+        { seat: "Tutor", card: tutorCard },
+        { seat: "Right", card: rightWinner }
+      ],
+      tableAfterChoice: [],
+      pendingBySeat: { You: "You" },
+      playedExplanations: Object.fromEntries(
+        playerHand.map((playerCard) => [
+          playerCard.id,
+          `${playerCard.label} is safe because Right already controls the ${ledSuitName} trick.`
+        ])
+      ),
+      cardOutcomes: cardOutcomesFor(playerHand, "good"),
+      cardReasons: cardReasonsFor(playerHand, () => "avoided_penalty")
     }
   };
 }

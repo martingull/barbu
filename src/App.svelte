@@ -1912,7 +1912,7 @@
   }
 
   function generatedCandidateIndex(seed: number, candidateCount: number) {
-    return ((seed * 1103515245 + 12345) >>> 0) % candidateCount;
+    return (Math.imul(seed, 2654435761) + 1013904223 >>> 0) % candidateCount;
   }
 
   async function replayWeakContract() {

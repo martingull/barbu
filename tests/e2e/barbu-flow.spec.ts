@@ -786,7 +786,7 @@ test("training path practice step starts quick drill and marks completion", asyn
   await expect(page.getByLabel("Review recent attempts")).toContainText("/ 3 clean");
   await expect(
     page.getByText(
-      /You (avoided the penalty card|used a void turn to discard|captured a penalty|won a clean trick|lost the late trick)/
+      /You (avoided the penalty card|used a void turn to discard|captured a penalty|won a clean trick|won a late trick|lost the late trick|followed suit well)/
     )
   ).toBeVisible();
   await expect(page.getByRole("button", { name: /Replay (No Hearts|No Queens|King of Hearts|No Last Two|No Tricks|Hearts Trumps|Domino)/ })).toBeVisible();
