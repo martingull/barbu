@@ -60,7 +60,7 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 - Authored lessons for No Hearts, No Queens, and King of Hearts.
 - Structured outcome metadata for authored guided card choices.
 - Compact outcome labels for guided decisions.
-- Generated No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino Quick Drill set via Rust/Tauri, with multiple local scenario patterns for the avoidance contracts and first-pass scenarios for Hearts Trumps and Domino.
+- Generated No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino Quick Drill set via Rust/Tauri, with multiple local scenario patterns for avoidance, trumps, and Domino layout decisions.
 - Browser generated fallback for Quick Drill when Tauri is unavailable.
 - Playwright smoke tests for catalog, Barbu table, lesson flow, generated fallback, and course-complete behavior.
 
@@ -96,10 +96,11 @@ These are the next product increments that keep the app coherent.
    - Keep explanations to one sentence unless the player asks for more.
 
 2. Generated Practice Expansion v2
-   - Add more scenario families for each supported contract, especially Hearts Trumps and Domino.
+   - Hearts Trumps and Domino now rotate through multiple scenario families.
+   - Add more scenario families for each supported contract as testing reveals repetition.
    - Keep commands thin and deterministic.
    - Add Rust tests for every drill generator.
-   - Current generated baseline covers the playable roster; Hearts Trumps and Domino still need more than one scenario family.
+   - Current generated baseline covers the playable roster; remaining work is breadth and balancing rather than first coverage.
 
 3. Contract Score Model v2
    - Move point-value definitions into shared content/core metadata instead of duplicating them across UI and scoring code.
