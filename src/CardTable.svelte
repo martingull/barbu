@@ -20,7 +20,7 @@
 </script>
 
 <section class="card-table" aria-label={ariaLabel}>
-  <div class="seat north">Tutor</div>
+  <div class="seat north">Barbu</div>
   <div class="seat west">Left</div>
   <div class="seat east">Right</div>
   <div class="seat south">You</div>

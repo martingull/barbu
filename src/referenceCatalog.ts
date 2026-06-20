@@ -67,10 +67,10 @@ export const referenceCatalog: GameReference[] = [
         id: "players",
         title: "Players And Seats",
         body:
-          "The reference table uses four seats: Tutor at the top, You at the bottom, Right on the right, and Left on the left. Seat names are fixed to the screen so examples stay readable.",
+          "The reference table uses four seats: Barbu at the top, You at the bottom, Right on the right, and Left on the left. Seat names are fixed to the screen so examples stay readable.",
         facts: [
           { label: "Players", value: "Four" },
-          { label: "Current app order", value: "Tutor -> Right -> You -> Left when Tutor leads" }
+          { label: "Current app order", value: "Barbu -> Right -> You -> Left when Barbu leads" }
         ]
       },
       {
@@ -101,7 +101,7 @@ export const referenceCatalog: GameReference[] = [
           "The leader plays the first card to a trick. Play then passes clockwise around the table. A player who can follow the led suit must do so; only a player void in that suit may discard another suit.",
         facts: [
           { label: "Led suit", value: "Set by the first card in the trick" },
-          { label: "Tutor lead order", value: "Tutor, Right, You, Left" },
+          { label: "Barbu lead order", value: "Barbu, Right, You, Left" },
           { label: "Follow-suit rule", value: "Follow the led suit when you can" }
         ]
       },

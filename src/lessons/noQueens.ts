@@ -3,7 +3,7 @@ import type { GuidedLesson, GuidedTrick } from "../lessonTypes";
 export const noQueensGuidedTricks: GuidedTrick[] = [
   {
     title: "Do not capture a queen",
-    beforeResult: "Tutor led 8D. Right followed with QD, loading the trick with a queen.",
+    beforeResult: "Barbu led 8D. Right followed with QD, loading the trick with a queen.",
     afterResult: "Left wins with AD and takes the queen penalty.",
     emptyExplanation:
       "Diamonds were led. You have diamonds, so you must follow. The queen is dangerous only for the player who wins this trick.",
@@ -35,7 +35,7 @@ export const noQueensGuidedTricks: GuidedTrick[] = [
   },
   {
     title: "When your high card would take the queen",
-    beforeResult: "Left led 5C. Tutor played QC. Right followed with 9C. You play last.",
+    beforeResult: "Left led 5C. Barbu played QC. Right followed with 9C. You play last.",
     afterResult: "You win with KC and take the queen penalty.",
     emptyExplanation:
       "Clubs were led. KC is your only club, so it is legal and forced even though it wins the queen.",

@@ -3,8 +3,8 @@ import type { GuidedLesson, GuidedTrick } from "../lessonTypes";
 export const noLastTwoGuidedTricks: GuidedTrick[] = [
   {
     title: "Duck the twelfth trick",
-    beforeResult: "This is trick 12. Left led 7S, Tutor played JS, and Right followed with 3S.",
-    afterResult: "Tutor wins with JS and takes this last-two penalty.",
+    beforeResult: "This is trick 12. Left led 7S, Barbu played JS, and Right followed with 3S.",
+    afterResult: "Barbu wins with JS and takes this last-two penalty.",
     emptyExplanation:
       "Spades were led. In the final two tricks, winning the trick is the danger, so stay below the current winner when you can.",
     legalCardIds: ["2S", "QS"],
@@ -21,7 +21,7 @@ export const noLastTwoGuidedTricks: GuidedTrick[] = [
     tableAfterChoice: [],
     pendingBySeat: { You: "You" },
     playedExplanations: {
-      "2S": "2S follows spades and stays below JS. Tutor wins the trick, so the last-two penalty avoids you.",
+      "2S": "2S follows spades and stays below JS. Barbu wins the trick, so the last-two penalty avoids you.",
       QS: "QS follows spades but overtakes JS. That wins trick 12, which is exactly what this contract punishes."
     },
     cardOutcomes: {
@@ -35,7 +35,7 @@ export const noLastTwoGuidedTricks: GuidedTrick[] = [
   },
   {
     title: "Forced into the final trick",
-    beforeResult: "This is trick 13. Left led 9C, Tutor played QC, and Right followed with 4C.",
+    beforeResult: "This is trick 13. Left led 9C, Barbu played QC, and Right followed with 4C.",
     afterResult: "You win the final trick with AC and take the last-trick penalty.",
     emptyExplanation:
       "Clubs were led. AC is your only club, so the penalty is forced. Earlier exits matter in No Last Two.",

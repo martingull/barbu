@@ -65,7 +65,7 @@ function generatedNoHeartsFollowSuitStep(seed: number): BrowserDrillStep {
     title: "Avoid the heart trick",
     trick: {
       title: "Follow suit with a heart at risk",
-      beforeResult: `Tutor led ${leadCard.label}. Right is void in ${ledSuitName} and discarded ${heartCard.label}.`,
+      beforeResult: `Barbu led ${leadCard.label}. Right is void in ${ledSuitName} and discarded ${heartCard.label}.`,
       afterResult: `Left wins with ${leftWinner.label} and takes 1 heart penalty from Right's ${heartCard.label}.`,
       emptyExplanation: `${capitalize(ledSuitName)} were led. Choose a ${ledSuitName} card.`,
       legalCardIds: [lowPlayerCard.id, highPlayerCard.id],
@@ -111,7 +111,7 @@ function generatedNoHeartsVoidDiscardStep(seed: number): BrowserDrillStep {
     title: "Discard while void",
     trick: {
       title: "Discard while void in the led suit",
-      beforeResult: `Tutor led ${leadCard.label}. Right followed ${rightCard.label}. You have no ${ledSuitName}.`,
+      beforeResult: `Barbu led ${leadCard.label}. Right followed ${rightCard.label}. You have no ${ledSuitName}.`,
       afterResult: `Left wins with ${leftWinner.label}. Your discard cannot win the led-suit trick.`,
       emptyExplanation: `You are void in ${ledSuitName}. Any card is legal.`,
       legalCardIds,
@@ -159,7 +159,7 @@ function generatedNoQueensCaptureStep(seed: number): BrowserDrillStep {
     title: "Duck the queen trick",
     trick: {
       title: "Duck the queen trick",
-      beforeResult: `Left led ${leadCard.label}. Tutor played ${queenCard.label}. Right followed ${rightCard.label}.`,
+      beforeResult: `Left led ${leadCard.label}. Barbu played ${queenCard.label}. Right followed ${rightCard.label}.`,
       afterResult: `The trick contains ${queenCard.label}. The winner takes the queen penalty.`,
       emptyExplanation: `${capitalize(ledSuitName)} were led. Choose a ${ledSuitName} card without capturing the queen.`,
       legalCardIds: [lowPlayerCard.id, highPlayerCard.id],
@@ -172,7 +172,7 @@ function generatedNoQueensCaptureStep(seed: number): BrowserDrillStep {
       tableAfterChoice: [],
       pendingBySeat: { You: "You" },
       playedExplanations: {
-        [lowPlayerCard.id]: `${lowPlayerCard.label} follows ${ledSuitName} and leaves the queen with Tutor.`,
+        [lowPlayerCard.id]: `${lowPlayerCard.label} follows ${ledSuitName} and leaves the queen with Barbu.`,
         [highPlayerCard.id]: `${highPlayerCard.label} follows ${ledSuitName} but captures ${queenCard.label}.`
       },
       cardOutcomes: {
@@ -206,7 +206,7 @@ function generatedNoQueensVoidDiscardStep(seed: number): BrowserDrillStep {
     title: "Discard while void",
     trick: {
       title: "Discard when the queen is already loose",
-      beforeResult: `Tutor led ${leadCard.label}. Right played ${queenCard.label}. You are void in ${ledSuitName}.`,
+      beforeResult: `Barbu led ${leadCard.label}. Right played ${queenCard.label}. You are void in ${ledSuitName}.`,
       afterResult: `Left wins with ${leftWinner.label}. Any queen in this trick goes to Left.`,
       emptyExplanation: `You have no ${ledSuitName}. Any discard is legal.`,
       legalCardIds,
@@ -252,7 +252,7 @@ function generatedKingOfHeartsCaptureStep(seed: number): BrowserDrillStep {
     title: "Stay under the king",
     trick: {
       title: "Stay under the king",
-      beforeResult: `Tutor led ${leadCard.label}. Right played ${kingCard.label}, the contract card.`,
+      beforeResult: `Barbu led ${leadCard.label}. Right played ${kingCard.label}, the contract card.`,
       afterResult: `The trick contains ${kingCard.label}. The winner takes the king of hearts penalty.`,
       emptyExplanation: "Hearts were led. Choose a heart that does not capture KH.",
       legalCardIds: [lowPlayerCard.id, highPlayerCard.id],
@@ -296,7 +296,7 @@ function generatedKingOfHeartsVoidDiscardStep(seed: number): BrowserDrillStep {
     title: "Escape while void",
     trick: {
       title: "Escape the king when you are void",
-      beforeResult: `Tutor led ${leadCard.label}. Right played ${kingCard.label}. You have no hearts.`,
+      beforeResult: `Barbu led ${leadCard.label}. Right played ${kingCard.label}. You have no hearts.`,
       afterResult: `Left wins with ${leftWinner.label} and takes the king of hearts penalty.`,
       emptyExplanation: "You are void in hearts. Any discard is legal.",
       legalCardIds,
@@ -340,8 +340,8 @@ function generatedNoLastTwoDuckStep(seed: number): BrowserDrillStep {
     title: "Duck the late trick",
     trick: {
       title: "Duck the twelfth trick",
-      beforeResult: `This is trick 12. Left led ${leadCard.label}. Tutor played ${tutorWinner.label}. Right followed ${rightCard.label}.`,
-      afterResult: `Tutor wins with ${tutorWinner.label} and takes this last-two penalty.`,
+      beforeResult: `This is trick 12. Left led ${leadCard.label}. Barbu played ${tutorWinner.label}. Right followed ${rightCard.label}.`,
+      afterResult: `Barbu wins with ${tutorWinner.label} and takes this last-two penalty.`,
       emptyExplanation: `${capitalize(ledSuitName)} were led. Stay below the current winner if you can.`,
       legalCardIds: [lowPlayerCard.id, highPlayerCard.id],
       hand: playerHand,
@@ -384,7 +384,7 @@ function generatedNoLastTwoForcedWinStep(seed: number): BrowserDrillStep {
     title: "Forced late winner",
     trick: {
       title: "When your only legal card wins late",
-      beforeResult: `This is trick 13. Left led ${leadCard.label}. Tutor played ${tutorCard.label}. Right followed ${rightCard.label}.`,
+      beforeResult: `This is trick 13. Left led ${leadCard.label}. Barbu played ${tutorCard.label}. Right followed ${rightCard.label}.`,
       afterResult: `You win with ${forcedWinner.label} and take the final-trick penalty.`,
       emptyExplanation: `${capitalize(ledSuitName)} were led. Your only ${ledSuitName} card is forced.`,
       legalCardIds: [forcedWinner.id],
@@ -430,7 +430,7 @@ function generatedNoTricksDuckStep(seed: number): BrowserDrillStep {
     title: "Duck the trick",
     trick: {
       title: "Duck every trick you can",
-      beforeResult: `Tutor led ${leadCard.label}. Right followed with ${rightWinner.label}.`,
+      beforeResult: `Barbu led ${leadCard.label}. Right followed with ${rightWinner.label}.`,
       afterResult: `Right keeps control with ${rightWinner.label} unless you overtake.`,
       emptyExplanation: `${capitalize(ledSuitName)} were led. Avoid winning the trick.`,
       legalCardIds: [lowPlayerCard.id, highPlayerCard.id],
@@ -473,7 +473,7 @@ function generatedNoTricksForcedWinStep(seed: number): BrowserDrillStep {
     title: "Forced trick winner",
     trick: {
       title: "When the only legal card wins",
-      beforeResult: `Left led ${leadCard.label}. Tutor played ${tutorCard.label}. Right followed ${rightCard.label}.`,
+      beforeResult: `Left led ${leadCard.label}. Barbu played ${tutorCard.label}. Right followed ${rightCard.label}.`,
       afterResult: `You win with ${forcedWinner.label}. The play is legal, but the trick still counts against you.`,
       emptyExplanation: `${capitalize(ledSuitName)} were led. Your only ${ledSuitName} card is forced.`,
       legalCardIds: [forcedWinner.id],
@@ -518,7 +518,7 @@ function generatedHeartsTrumpsStep(seed: number): BrowserDrillStep {
     title: "Find the trump trick",
     trick: {
       title: "Trump when you are void",
-      beforeResult: `Tutor led ${leadCard.label}. Right followed ${rightWinner.label}. Hearts are trumps, and you have no ${ledSuitName}.`,
+      beforeResult: `Barbu led ${leadCard.label}. Right followed ${rightWinner.label}. Hearts are trumps, and you have no ${ledSuitName}.`,
       afterResult: `Because you are void in ${ledSuitName}, a heart can trump the trick.`,
       emptyExplanation: `You have no ${ledSuitName}. Any card is legal; a heart takes control.`,
       legalCardIds: playerHand.map((card) => card.id),

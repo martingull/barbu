@@ -3,7 +3,7 @@ import type { GuidedLesson, GuidedTrick } from "../lessonTypes";
 export const noTricksGuidedTricks: GuidedTrick[] = [
   {
     title: "Duck every trick you can",
-    beforeResult: "Tutor led 9C. Right followed with KC.",
+    beforeResult: "Barbu led 9C. Right followed with KC.",
     afterResult: "Right keeps control with KC unless you overtake.",
     emptyExplanation:
       "Clubs were led. In No Tricks, every trick you win scores against you, so low legal cards are valuable.",
@@ -34,7 +34,7 @@ export const noTricksGuidedTricks: GuidedTrick[] = [
   },
   {
     title: "When the only legal card wins",
-    beforeResult: "Left led 4D, Tutor played 8D, and Right followed with 9D.",
+    beforeResult: "Left led 4D, Barbu played 8D, and Right followed with 9D.",
     afterResult: "You win with KD. The play is legal, but the trick still counts against you.",
     emptyExplanation:
       "Diamonds were led. KD is your only diamond, so it is forced even though it wins the trick.",

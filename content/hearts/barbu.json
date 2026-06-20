@@ -12,7 +12,7 @@
     "play": {
       "direction": "clockwise",
       "followSuit": "A player who can follow the led suit must do so.",
-      "appSeatOrderFromTutorLead": ["Tutor", "Right", "You", "Left"]
+      "appSeatOrderFromBarbuLead": ["Barbu", "Right", "You", "Left"]
     },
     "scoring": "Penalty scoring depends on the active contract and applies to the player who wins the trick containing the penalty card."
   },

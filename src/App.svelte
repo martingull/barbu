@@ -383,11 +383,11 @@
         ]
       },
       example: {
-        heading: "Tutor leads clubs. Right discards a heart into that trick.",
+        heading: "Barbu leads clubs. Right discards a heart into that trick.",
         body:
           "The first card in a trick sets the suit everyone must follow when they can. Right did not open hearts here; Right failed to follow clubs and threw a heart away.",
         sequence: [
-          { label: "Lead", text: "Tutor plays 9C, so clubs are the led suit." },
+          { label: "Lead", text: "Barbu plays 9C, so clubs are the led suit." },
           { label: "Then", text: "Right has no club and discards 4H." },
           { label: "Your turn", text: "You still have clubs, so you must follow clubs." }
         ],
@@ -427,11 +427,11 @@
         ]
       },
       example: {
-        heading: "Tutor leads diamonds. Right follows with QD, loading the trick.",
+        heading: "Barbu leads diamonds. Right follows with QD, loading the trick.",
         body:
           "The first card sets diamonds as the led suit. The queen is dangerous, but only the player who wins the trick takes the queen penalty.",
         sequence: [
-          { label: "Lead", text: "Tutor plays 8D, so diamonds are the led suit." },
+          { label: "Lead", text: "Barbu plays 8D, so diamonds are the led suit." },
           { label: "Then", text: "Right follows diamonds with QD." },
           { label: "Your turn", text: "You must follow diamonds without taking control." }
         ],
@@ -471,11 +471,11 @@
         ]
       },
       example: {
-        heading: "Tutor leads hearts. Right plays KH into the trick.",
+        heading: "Barbu leads hearts. Right plays KH into the trick.",
         body:
           "Hearts are the led suit, so hearts must be followed. The danger is not holding a heart; the danger is winning the trick that contains KH.",
         sequence: [
-          { label: "Lead", text: "Tutor plays 10H, so hearts are the led suit." },
+          { label: "Lead", text: "Barbu plays 10H, so hearts are the led suit." },
           { label: "Then", text: "Right follows with KH, the contract card." },
           { label: "Your turn", text: "You can follow low and leave KH with Right." }
         ],
@@ -515,13 +515,13 @@
         ]
       },
       example: {
-        heading: "Trick 12 starts with spades. Tutor is already winning.",
+        heading: "Trick 12 starts with spades. Barbu is already winning.",
         body:
           "When only two tricks remain, staying under the current winner is often the whole decision. A high card that was safe earlier can now score against you.",
         sequence: [
           { label: "Late hand", text: "This is trick 12, so the trick winner takes a penalty." },
-          { label: "Lead", text: "Left plays 7S and Tutor overtakes with JS." },
-          { label: "Your turn", text: "You can follow low and leave the penalty with Tutor." }
+          { label: "Lead", text: "Left plays 7S and Barbu overtakes with JS." },
+          { label: "Your turn", text: "You can follow low and leave the penalty with Barbu." }
         ],
         ariaLabel: "No Last Two example table",
         tableCards: [
@@ -559,11 +559,11 @@
         ]
       },
       example: {
-        heading: "Tutor leads clubs. Right takes control with KC.",
+        heading: "Barbu leads clubs. Right takes control with KC.",
         body:
           "In No Tricks, Right winning is good for you. The danger is overtaking with a higher club and taking the trick yourself.",
         sequence: [
-          { label: "Lead", text: "Tutor plays 9C, so clubs are the led suit." },
+          { label: "Lead", text: "Barbu plays 9C, so clubs are the led suit." },
           { label: "Then", text: "Right plays KC and becomes the current winner." },
           { label: "Your turn", text: "You can follow with 2C and avoid taking control." }
         ],
@@ -603,11 +603,11 @@
         ]
       },
       example: {
-        heading: "Tutor leads clubs. You have no clubs, but you have hearts.",
+        heading: "Barbu leads clubs. You have no clubs, but you have hearts.",
         body:
           "Because clubs were led and you are void in clubs, you may play any card. A heart is trump, so it beats the club trick.",
         sequence: [
-          { label: "Lead", text: "Tutor plays 9C, so clubs are the led suit." },
+          { label: "Lead", text: "Barbu plays 9C, so clubs are the led suit." },
           { label: "Then", text: "Right follows with AC and is winning for now." },
           { label: "Your turn", text: "You are void in clubs, so 5H can trump." }
         ],

@@ -3,10 +3,10 @@ import type { GuidedLesson, GuidedTrick } from "../lessonTypes";
 export const noHeartsGuidedTricks: GuidedTrick[] = [
   {
     title: "Follow clubs without taking the heart",
-    beforeResult: "Tutor led 9C. Right could not follow clubs and discarded 4H.",
+    beforeResult: "Barbu led 9C. Right could not follow clubs and discarded 4H.",
     afterResult: "Left wins with AC and takes 1 heart penalty from Right's 4H.",
     emptyExplanation:
-      "The led suit is clubs. You hold clubs, so only 2C and KC are legal. The heart belongs to Right, not Tutor.",
+      "The led suit is clubs. You hold clubs, so only 2C and KC are legal. The heart belongs to Right, not Barbu.",
     legalCardIds: ["2C", "KC"],
     hand: [
       { id: "2C", rank: "2", suit: "C", label: "2C" },
@@ -35,7 +35,7 @@ export const noHeartsGuidedTricks: GuidedTrick[] = [
   },
   {
     title: "When the winner leads the next trick",
-    beforeResult: "Left won the first trick, so Left leads 7S. Tutor and Right both follow spades.",
+    beforeResult: "Left won the first trick, so Left leads 7S. Barbu and Right both follow spades.",
     afterResult: "You win this trick with QS. No hearts were played, so there is no penalty.",
     emptyExplanation:
       "Spades were led. You still have QS, so you must follow spades even though it wins this harmless trick.",

@@ -3,7 +3,7 @@ import type { GuidedLesson, GuidedTrick } from "../lessonTypes";
 export const heartsTrumpsGuidedTricks: GuidedTrick[] = [
   {
     title: "Trump when you are void",
-    beforeResult: "Tutor led 9C. Right followed with AC. You have no clubs.",
+    beforeResult: "Barbu led 9C. Right followed with AC. You have no clubs.",
     afterResult: "You trump with 5H and win the trick. Hearts outrank the led suit in this contract.",
     emptyExplanation:
       "Clubs were led, but you are void. In Hearts Trumps, a heart can cut the trick and take control.",

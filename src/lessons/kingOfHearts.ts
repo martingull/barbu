@@ -3,7 +3,7 @@ import type { GuidedLesson, GuidedTrick } from "../lessonTypes";
 export const kingOfHeartsGuidedTricks: GuidedTrick[] = [
   {
     title: "Let someone else take the king",
-    beforeResult: "Tutor led 10H. Right played KH, putting the contract card into the trick.",
+    beforeResult: "Barbu led 10H. Right played KH, putting the contract card into the trick.",
     afterResult: "The king of hearts is in this trick. Check the explanation to see who captured it.",
     emptyExplanation:
       "Hearts were led. You have hearts, so you must follow. The goal is not to win the trick containing KH.",
@@ -35,7 +35,7 @@ export const kingOfHeartsGuidedTricks: GuidedTrick[] = [
   },
   {
     title: "Discard the king when you are void",
-    beforeResult: "Left led 6S. Tutor and Right followed spades. You have no spades.",
+    beforeResult: "Left led 6S. Barbu and Right followed spades. You have no spades.",
     afterResult: "Right wins with AS. Your KH is safely discarded into a trick you do not win.",
     emptyExplanation:
       "You cannot follow spades, so any card is legal. This is a chance to get rid of the dangerous king.",
