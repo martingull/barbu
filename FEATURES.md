@@ -24,6 +24,8 @@ The app should feel like a real tutor:
 
 The default loop is: play first, get fast feedback, read a tiny explanation, repeat, then consult reference only when useful. Duolingo and strong chess tutor apps are the feel benchmark: active, progressive, lightly playful, and built around doing rather than reading.
 
+The broader ambition is to make players stronger with a 52-card deck, not only to teach individual rule sets. Barbu should train transferable card skills: suit counting, danger-card memory, void inference, trump awareness, safe exits, table-strength reading, and knowing when to win or duck. Learning explains games; practice builds card sense; Play modes should feel like trying to beat the table.
+
 ## Current Feature Set
 
 - Game catalog with Barbu as the first playable core game and documented varieties kept under their parent game.
@@ -149,7 +151,19 @@ These are the next product increments that keep the app coherent.
    - Track attempts, last result, and review due state.
    - Keep it local until the app needs sync or accounts.
 
-9. Reference Layer v1
+9. Card Sense Training v1
+   - Parked for later, but important to the product identity.
+   - Add short mini-games for serious 52-card-deck skills: Suit Count, Danger Card Tracker, Trump Count, Void Finder, High Card Memory, and Safe Exit Trainer.
+   - Specific future Whist idea: bake a tracking mini-game into Whist or a Whist variety where the player follows remaining trumps and court cards during play.
+   - Keep each mini-game tied to real play, with one-sentence feedback explaining how the skill helps in Barbu, Hearts-family games, Whist, Bridge, or other classic card games.
+   - Do not let these become disconnected brain-training toys; every exercise should make the player better at reading a table.
+
+10. Local Opponent Policy v3
+   - Improve Barbu and table seats as training opponents before any real multiplayer work.
+   - Focus on believable card-player habits: avoid obvious penalties, count endgame danger, preserve exits, use trumps sensibly, and pursue reward tricks when the contract asks for it.
+   - Great card games are often played against real people, but better local opponents are the right bridge from solo learning to real table play.
+
+11. Reference Layer v1
    - Add structured reference pages for the next supported games using Parlett as the baseline source.
    - Continue expanding object, players, cards, deal, play, scoring, variants, and tactical ideas.
    - Link reference sections from lessons without making rules pages the main flow.
@@ -157,6 +171,8 @@ These are the next product increments that keep the app coherent.
 ## Later Roadmap
 
 - Barbu opponent behavior and table persona.
+- Real-person play or multiplayer once local play, scoring, and opponent behavior are strong.
+- Card-sense mini-game expansion beyond the first training set.
 - More Barbu contracts beyond the current playable roster.
 - Hearts-family expansion.
 - Whist-family expansion after Barbu is stable.

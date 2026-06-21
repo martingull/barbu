@@ -4,6 +4,8 @@ An iPhone-first card-game app for learning, practicing, and exploring classic ca
 
 The product concept is that the player learns by sitting down against Barbu, the King of Cards, who introduces games, sets contracts, reacts to play, and raises the difficulty over time. Barbu should function as a coach and opponent: enough personality to give the app identity, but never at the expense of clear rules, fast practice, and accurate feedback. His visual identity should eventually show him as a King of Hearts while still positioning him as the tutor for many card games.
 
+The long-term goal is broader than teaching rules. Barbu should help people become better 52-card-deck players: stronger at following suit, counting suits and danger cards, reading voids, remembering played cards, preserving exits, using trumps, and judging table strength. Lessons explain games, practice builds card sense, and Play modes should eventually feel like trying to beat a real table.
+
 This is intended as a real mobile app-store product, not a throwaway experiment. The first distribution barrier is Apple App Store and Google Play readiness, so product decisions should prioritize mobile usability, automated verification, and future monetization from the start.
 
 ## Learning Model
@@ -81,6 +83,23 @@ content/             Structured game and lesson content
 - Full Barbu settlement scoring is not implemented yet; current full-hand play tracks local contract values for the hand being practiced.
 - The Svelte app renders authored or generated scenarios and should avoid duplicating rules where Rust can provide them.
 - Barbu is the first Hearts-family core game, not the app boundary. The lesson/catalog structure should be able to grow toward related Hearts-family games first, then popular families such as Whist and Bridge after Barbu has a stable learning, practice, and play loop.
+
+## Long-Term Card Skill Direction
+
+Great card games are usually best against real people, but the app should first make local solo play and local opponents good enough to train real table habits. Barbu should become a place to practice transferable card skills, not only a library of rules.
+
+Future training modes may include card-sense mini-games:
+
+- Suit Count: track how many cards in a suit remain.
+- Danger Card Tracker: remember whether queens, KH, aces, or trumps are still live.
+- Trump Count: count remaining trumps in trump contracts and future Whist/Bridge play.
+- Void Finder: infer which seats are void in a suit from previous tricks.
+- High Card Memory: identify the highest remaining card in a suit.
+- Safe Exit Trainer: choose a card that avoids taking control later.
+
+One specific later idea is a Whist-focused tracking mini-game, either inside Whist itself or a documented Whist variety, where the player practices following remaining trumps and court cards as the hand develops.
+
+These should stay connected to real play. A mini-game should make the player better at Barbu, Hearts-family games, Whist, Bridge, or another real 52-card-deck game, not become abstract brain training.
 
 ## First Commands
 
