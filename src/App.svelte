@@ -2914,64 +2914,65 @@
         <h1>Barbu's table</h1>
       </div>
       <div class="contract-status">
-        <span>King of Cards</span>
-        <strong>{completedCount} of {playablePathSteps.length} complete</strong>
+        <span>Current mode</span>
+        <strong>
+          {activeBarbuTableTab === "learn" ? "Learn" : activeBarbuTableTab === "practice" ? "Practice" : "Play"}
+        </strong>
       </div>
     </header>
 
     <section class="table-room" aria-labelledby="barbu-table-title">
-      <div class="barbu-card">
-        <p class="eyebrow">Coach and opponent</p>
-        <h2 id="barbu-table-title">Barbu sets the contract. You learn by playing the decision.</h2>
-        <p>
-          {isCourseComplete
-            ? "You have cleared the first Barbu table. Review the contracts, or reset the path when you want another pass."
-            : "Start with compact guided tricks, then move into quick drills and a full table session as the rules become automatic."}
-        </p>
-        <div class="course-progress" aria-label="Course progress">
-          <span>{completedCount} / {playablePathSteps.length} complete</span>
-          <div class="progress-track">
-            <div class="progress-fill" style={`width: ${(completedCount / playablePathSteps.length) * 100}%`}></div>
+      <div class="barbu-table-rail">
+        <div class="barbu-mode-box">
+          <p class="eyebrow">Table mode</p>
+          <div class="barbu-table-tabs" aria-label="Barbu table sections" role="tablist">
+            <button
+              aria-controls="barbu-learn-panel"
+              aria-selected={activeBarbuTableTab === "learn"}
+              class:active={activeBarbuTableTab === "learn"}
+              onclick={() => {
+                activeBarbuTableTab = "learn";
+              }}
+              role="tab"
+              type="button"
+            >
+              Learn
+            </button>
+            <button
+              aria-controls="barbu-practice-panel"
+              aria-selected={activeBarbuTableTab === "practice"}
+              class:active={activeBarbuTableTab === "practice"}
+              onclick={() => {
+                activeBarbuTableTab = "practice";
+              }}
+              role="tab"
+              type="button"
+            >
+              Practice
+            </button>
+            <button
+              aria-controls="barbu-play-panel"
+              aria-selected={activeBarbuTableTab === "play"}
+              class:active={activeBarbuTableTab === "play"}
+              onclick={() => {
+                activeBarbuTableTab = "play";
+              }}
+              role="tab"
+              type="button"
+            >
+              Play
+            </button>
           </div>
         </div>
 
-        <div class="barbu-table-tabs" aria-label="Barbu table sections" role="tablist">
-          <button
-            aria-controls="barbu-learn-panel"
-            aria-selected={activeBarbuTableTab === "learn"}
-            class:active={activeBarbuTableTab === "learn"}
-            onclick={() => {
-              activeBarbuTableTab = "learn";
-            }}
-            role="tab"
-            type="button"
-          >
-            Learn
-          </button>
-          <button
-            aria-controls="barbu-practice-panel"
-            aria-selected={activeBarbuTableTab === "practice"}
-            class:active={activeBarbuTableTab === "practice"}
-            onclick={() => {
-              activeBarbuTableTab = "practice";
-            }}
-            role="tab"
-            type="button"
-          >
-            Practice
-          </button>
-          <button
-            aria-controls="barbu-play-panel"
-            aria-selected={activeBarbuTableTab === "play"}
-            class:active={activeBarbuTableTab === "play"}
-            onclick={() => {
-              activeBarbuTableTab = "play";
-            }}
-            role="tab"
-            type="button"
-          >
-            Play
-          </button>
+        <div class="barbu-card">
+          <p class="eyebrow">Coach and opponent</p>
+          <h2 id="barbu-table-title">Barbu sets the contract. You learn by playing the decision.</h2>
+          <p>
+            {isCourseComplete
+              ? "You have cleared the first Barbu table. Review the contracts, or reset the path when you want another pass."
+              : "Start with compact guided tricks, then move into quick drills and a full table session as the rules become automatic."}
+          </p>
         </div>
       </div>
 
@@ -3020,6 +3021,13 @@
             <div class="section-heading">
               <p class="eyebrow">Training path</p>
               <h2>Learn the Barbu table</h2>
+            </div>
+
+            <div class="course-progress path-progress" aria-label="Course progress">
+              <span>{completedCount} / {playablePathSteps.length} complete</span>
+              <div class="progress-track">
+                <div class="progress-fill" style={`width: ${(completedCount / playablePathSteps.length) * 100}%`}></div>
+              </div>
             </div>
 
             <div class="path-grid">

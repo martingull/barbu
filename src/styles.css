@@ -234,8 +234,13 @@ button {
   display: grid;
   grid-template-columns: minmax(0, 0.92fr) minmax(320px, 1.08fr);
   gap: 14px;
-  align-items: stretch;
+  align-items: start;
   margin-bottom: 16px;
+}
+
+.barbu-table-rail {
+  display: grid;
+  gap: 10px;
 }
 
 .barbu-card {
@@ -295,13 +300,26 @@ button {
   background: #f5f1cf;
 }
 
+.barbu-mode-box {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(245, 241, 207, 0.28);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(9, 34, 24, 0.18)),
+    #1b372b;
+  color: #f7faf3;
+}
+
+.barbu-mode-box .eyebrow {
+  color: #f5f1cf;
+}
+
 .barbu-table-tabs {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(245, 241, 207, 0.22);
 }
 
 .barbu-table-tabs button {
@@ -718,6 +736,20 @@ button {
 .path-section {
   display: grid;
   gap: 12px;
+}
+
+.path-progress {
+  margin-top: 0;
+  padding: 12px;
+  border: 1px solid rgba(245, 241, 207, 0.22);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(9, 34, 24, 0.16)),
+    #182f25;
+}
+
+.path-progress span {
+  color: #f5f1cf;
 }
 
 .path-grid {
@@ -2299,9 +2331,8 @@ h2 {
     margin-top: 12px;
   }
 
-  .barbu-table-tabs {
-    margin-top: 12px;
-    padding-top: 10px;
+  .barbu-mode-box {
+    padding: 10px;
   }
 
   .barbu-table-tabs button {
