@@ -76,22 +76,26 @@ Purpose: the hub for Barbu.
 
 Current role:
 
-- Groups actions by intent: Learn, Practice, Play, and Reference.
+- Groups actions by intent through three primary tabs: Learn, Practice, and Play.
 - Continues the learning path.
 - Starts quick drills.
 - Starts Play Barbu as the multi-contract local game session.
 - Opens contract-hand practice through a chooser.
-- Opens reference.
+- Opens reference from Learn as secondary support.
+- Opens the Barbu contract roster as a drill-down from Learn instead of showing the full contract list on the hub.
 
 Near-term direction:
 
+- Keep the Learning Path high in the Learn tab; this is the beginner's primary route.
 - Keep Play Barbu as the main play entry.
 - Keep individual contract hands behind the practice chooser as the contract list grows.
+- Keep the contract roster as a separate map for jumping into a specific contract lesson.
 
 Should not contain:
 
 - Other Hearts-family games as if they were Barbu contracts.
 - Deep lesson content.
+- A long full contract roster competing with the learning path.
 - Play Barbu result details.
 - Multiplayer room setup.
 

@@ -281,16 +281,95 @@ button {
   background: #f5f1cf;
 }
 
-.continue-action {
-  justify-self: start;
+.barbu-table-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(245, 241, 207, 0.22);
+}
+
+.barbu-table-tabs button {
   min-height: 42px;
-  margin-top: 0;
-  padding: 0 14px;
-  border: 1px solid #f5f1cf;
+  padding: 0 10px;
+  border: 1px solid rgba(245, 241, 207, 0.68);
   border-radius: 8px;
+  background: transparent;
+  color: #f5f1cf;
+  font-weight: 900;
+}
+
+.barbu-table-tabs button.active {
+  border-color: #f5f1cf;
   background: #f5f1cf;
   color: #21372d;
-  font-weight: 900;
+}
+
+.barbu-tab-panel {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.barbu-tab-panel.learn-panel {
+  gap: 14px;
+}
+
+.barbu-mode-copy {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 14px;
+  border: 1px solid #c7d0c0;
+  border-radius: 8px;
+  background: #fbfcf8;
+  color: #17201a;
+}
+
+.barbu-mode-copy h2 {
+  font-size: 1.25rem;
+  line-height: 1.12;
+}
+
+.barbu-mode-copy p:last-child {
+  color: #53604d;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.learn-action-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.learn-action-card {
+  display: grid;
+  gap: 6px;
+  min-height: 92px;
+  padding: 14px;
+  border: 1px solid #7fa372;
+  border-radius: 8px;
+  background: #fbfcf8;
+  color: #17201a;
+  text-align: left;
+}
+
+.learn-action-card.primary,
+.learn-contracts-card {
+  border-color: #284f40;
+  background: #edf4e7;
+}
+
+.learn-action-card strong {
+  font-size: 1.18rem;
+  line-height: 1.12;
+}
+
+.learn-action-card small {
+  color: #53604d;
+  font-weight: 700;
+  line-height: 1.35;
 }
 
 .table-action-groups,
@@ -306,13 +385,21 @@ button {
   gap: 8px;
   align-items: center;
   padding-top: 10px;
-  border-top: 1px solid rgba(245, 241, 207, 0.22);
+  border-top: 1px solid #c7d0c0;
 }
 
 .table-action-group .eyebrow {
   width: 100%;
   margin-bottom: 0;
+  color: #60705a;
+}
+
+.barbu-card .table-action-group .eyebrow {
   color: #dbe7d1;
+}
+
+.barbu-card .table-action-group {
+  border-top-color: rgba(245, 241, 207, 0.22);
 }
 
 .drill-action {
@@ -325,29 +412,38 @@ button {
   font-weight: 900;
 }
 
-.reference-action {
-  min-height: 42px;
-  padding: 0 14px;
-  border: 1px solid rgba(245, 241, 207, 0.68);
-  border-radius: 8px;
-  background: transparent;
-  color: #f5f1cf;
-  font-weight: 900;
-}
-
-.reset-progress-action {
-  min-height: 42px;
-  padding: 0 14px;
-  border: 1px solid rgba(245, 241, 207, 0.68);
-  border-radius: 8px;
-  background: transparent;
-  color: #f5f1cf;
-  font-weight: 900;
-}
-
 .contract-list {
   display: grid;
   gap: 8px;
+}
+
+.contract-roster-screen {
+  display: grid;
+  grid-template-columns: minmax(0, 0.72fr) minmax(320px, 1.28fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.contract-roster-intro {
+  display: grid;
+  gap: 8px;
+  min-height: 220px;
+  padding: 18px;
+  border: 1px solid #c7d0c0;
+  border-radius: 8px;
+  background: #fbfcf8;
+  color: #17201a;
+}
+
+.contract-roster-intro h2 {
+  font-size: 1.45rem;
+  line-height: 1.12;
+}
+
+.contract-roster-intro p:last-child {
+  color: #53604d;
+  font-weight: 700;
+  line-height: 1.38;
 }
 
 .contract-card {
@@ -1904,6 +2000,7 @@ h2 {
   }
 
   .course-screen,
+  .contract-roster-screen,
   .run-intro-screen {
     grid-template-columns: 1fr;
   }
@@ -2045,8 +2142,43 @@ h2 {
     margin-top: 12px;
   }
 
-  .continue-action {
-    width: 100%;
+  .barbu-table-tabs {
+    margin-top: 12px;
+    padding-top: 10px;
+  }
+
+  .barbu-table-tabs button {
+    min-height: 38px;
+  }
+
+  .barbu-tab-panel {
+    gap: 10px;
+  }
+
+  .barbu-mode-copy {
+    padding: 12px;
+  }
+
+  .barbu-mode-copy h2 {
+    font-size: 1.08rem;
+  }
+
+  .learn-action-card {
+    min-height: 0;
+    padding: 12px;
+  }
+
+  .contract-roster-screen {
+    gap: 10px;
+  }
+
+  .contract-roster-intro {
+    min-height: 0;
+    padding: 14px;
+  }
+
+  .contract-roster-intro h2 {
+    font-size: 1.2rem;
   }
 
   .table-action-groups,
@@ -2062,15 +2194,7 @@ h2 {
     padding-top: 9px;
   }
 
-  .reference-action {
-    width: 100%;
-  }
-
   .drill-action {
-    width: 100%;
-  }
-
-  .reset-progress-action {
     width: 100%;
   }
 

@@ -42,6 +42,7 @@
   type AppView =
     | "catalog"
     | "barbuTable"
+    | "barbuContracts"
     | "practiceChooser"
     | "reference"
     | "courseContent"
@@ -55,6 +56,7 @@
 
   type PathAction = "lesson" | "generated" | "review" | "planned";
   type CourseStage = "concept" | "example" | "review";
+  type BarbuTableTab = "learn" | "practice" | "play";
 
   type CatalogStatus = "Ready" | "Planned";
 
@@ -708,6 +710,7 @@
   let activeCourseId = courseCatalog[0].id;
   let activeReferenceId = referenceCatalog[0].id;
   let activeCourseStage: CourseStage = "concept";
+  let activeBarbuTableTab: BarbuTableTab = "learn";
   let completedPathSteps: Record<string, boolean> = loadCourseProgress();
   let playBarbuHistory: PlayBarbuAttempt[] = loadPlayBarbuHistory();
   let usingGeneratedPractice = false;
@@ -1128,6 +1131,11 @@
 
   function openBarbuTable() {
     appView = "barbuTable";
+  }
+
+  function openBarbuContracts() {
+    activeBarbuTableTab = "learn";
+    appView = "barbuContracts";
   }
 
   function openPracticeChooser() {
@@ -2926,42 +2934,190 @@
             <div class="progress-fill" style={`width: ${(completedCount / playablePathSteps.length) * 100}%`}></div>
           </div>
         </div>
-        <div class="table-action-groups" aria-label="Barbu table actions">
-          <section class="table-action-group" aria-label="Learn">
-            <p class="eyebrow">Learn</p>
-            {#if isCourseComplete}
-              <button class="continue-action" onclick={openPathReview} type="button">Review results</button>
-              <button class="reset-progress-action" onclick={resetCourseProgress} type="button">Reset path</button>
-            {:else if nextPathStep}
-              <button class="continue-action" onclick={continueCourse} type="button">
-                Continue with {nextPathStep.title}
-              </button>
-            {/if}
-          </section>
 
-          <section class="table-action-group" aria-label="Practice">
-            <p class="eyebrow">Practice</p>
-            <button class="drill-action" onclick={() => void startDailyDrill()} type="button">Quick drill</button>
-            <button class="drill-action" onclick={openPracticeChooser} type="button">Contract hands</button>
-          </section>
-
-          <section class="table-action-group" aria-label="Play">
-            <p class="eyebrow">Play</p>
-            <button class="drill-action" onclick={startBarbuRun} type="button">Play Barbu</button>
-          </section>
-
-          <section class="table-action-group" aria-label="Reference">
-            <p class="eyebrow">Reference</p>
-            <button class="reference-action" onclick={() => openReference("barbu")} type="button">Reference</button>
-          </section>
+        <div class="barbu-table-tabs" aria-label="Barbu table sections" role="tablist">
+          <button
+            aria-controls="barbu-learn-panel"
+            aria-selected={activeBarbuTableTab === "learn"}
+            class:active={activeBarbuTableTab === "learn"}
+            onclick={() => {
+              activeBarbuTableTab = "learn";
+            }}
+            role="tab"
+            type="button"
+          >
+            Learn
+          </button>
+          <button
+            aria-controls="barbu-practice-panel"
+            aria-selected={activeBarbuTableTab === "practice"}
+            class:active={activeBarbuTableTab === "practice"}
+            onclick={() => {
+              activeBarbuTableTab = "practice";
+            }}
+            role="tab"
+            type="button"
+          >
+            Practice
+          </button>
+          <button
+            aria-controls="barbu-play-panel"
+            aria-selected={activeBarbuTableTab === "play"}
+            class:active={activeBarbuTableTab === "play"}
+            onclick={() => {
+              activeBarbuTableTab = "play";
+            }}
+            role="tab"
+            type="button"
+          >
+            Play
+          </button>
         </div>
       </div>
 
-      <div class="contract-list" aria-label="Core Barbu contracts">
-        <div class="section-heading">
-          <p class="eyebrow">Core game</p>
-          <h2>Barbu contracts</h2>
+      {#if activeBarbuTableTab === "learn"}
+        <div
+          aria-label="Learn"
+          class="barbu-tab-panel learn-panel"
+          id="barbu-learn-panel"
+          role="tabpanel"
+        >
+          <div class="table-action-groups" aria-label="Barbu table actions">
+            <section class="learn-action-grid" aria-label="Learn actions">
+              {#if isCourseComplete}
+                <button class="learn-action-card primary" onclick={openPathReview} type="button">
+                  <span class="eyebrow">Review</span>
+                  <strong>Review results</strong>
+                  <small>Look over the first Barbu table before another pass.</small>
+                </button>
+                <button class="learn-action-card" onclick={resetCourseProgress} type="button">
+                  <span class="eyebrow">Reset</span>
+                  <strong>Reset path</strong>
+                  <small>Clear lesson progress and start the table again.</small>
+                </button>
+              {:else if nextPathStep}
+                <button class="learn-action-card primary" onclick={continueCourse} type="button">
+                  <span class="eyebrow">Next lesson</span>
+                  <strong>Continue with {nextPathStep.title}</strong>
+                  <small>Return to the next short card decision.</small>
+                </button>
+              {/if}
+              <button class="learn-action-card" onclick={() => openReference("barbu")} type="button">
+                <span class="eyebrow">Rules</span>
+                <strong>Reference</strong>
+                <small>Check the baseline rules, scoring, and variants.</small>
+              </button>
+            </section>
+          </div>
+
+          <button class="learn-action-card learn-contracts-card" onclick={openBarbuContracts} type="button">
+            <span class="eyebrow">Core game</span>
+            <strong>Barbu contracts</strong>
+            <small>Open the contract map.</small>
+          </button>
+
+          <section class="path-section" aria-label="Barbu lesson path">
+            <div class="section-heading">
+              <p class="eyebrow">Training path</p>
+              <h2>Learn the Barbu table</h2>
+            </div>
+
+            <div class="path-grid">
+              {#each barbuPathSteps as step, index}
+                <button
+                  class:active={step.id === nextPathStep?.id && !completedPathSteps[step.id]}
+                  class:complete={completedPathSteps[step.id]}
+                  class:planned={step.action === "planned"}
+                  class="path-card"
+                  disabled={step.action === "planned"}
+                  onclick={() => startPathStep(step)}
+                  type="button"
+                >
+                  <span class="path-index">{index + 1}</span>
+                  <span class="path-step">{step.step}</span>
+                  <strong>{step.title}</strong>
+                  <small>{step.summary}</small>
+                  <span class="path-status">
+                    {#if completedPathSteps[step.id]}
+                      Complete
+                    {:else if step.action === "planned"}
+                      Planned
+                    {:else if step.id === nextPathStep?.id}
+                      Next
+                    {:else}
+                      Open
+                    {/if}
+                  </span>
+                </button>
+              {/each}
+            </div>
+          </section>
         </div>
+      {:else if activeBarbuTableTab === "practice"}
+        <div
+          aria-label="Practice"
+          class="barbu-tab-panel"
+          id="barbu-practice-panel"
+          role="tabpanel"
+        >
+          <div class="barbu-mode-copy">
+            <p class="eyebrow">Practice</p>
+            <h2>Sharpen one decision at a time.</h2>
+            <p>Use short mixed drills when you want rhythm, or isolate one contract hand when a pattern feels weak.</p>
+          </div>
+          <div class="table-action-groups" aria-label="Barbu table actions">
+            <section class="table-action-group" aria-label="Practice actions">
+              <p class="eyebrow">Practice</p>
+              <button class="drill-action" onclick={() => void startDailyDrill()} type="button">Quick drill</button>
+              <button class="drill-action" onclick={openPracticeChooser} type="button">Contract hands</button>
+            </section>
+          </div>
+        </div>
+      {:else}
+        <div
+          aria-label="Play"
+          class="barbu-tab-panel"
+          id="barbu-play-panel"
+          role="tabpanel"
+        >
+          <div class="barbu-mode-copy">
+            <p class="eyebrow">Play</p>
+            <h2>Challenge the table.</h2>
+            <p>Play the current local Barbu run: contracts in sequence, cumulative score, and a final table result.</p>
+          </div>
+          <div class="table-action-groups" aria-label="Barbu table actions">
+            <section class="table-action-group" aria-label="Play actions">
+              <p class="eyebrow">Play</p>
+              <button class="drill-action" onclick={startBarbuRun} type="button">Play Barbu</button>
+            </section>
+          </div>
+        </div>
+      {/if}
+    </section>
+  {:else if appView === "barbuContracts"}
+    <header class="topbar" aria-label="Barbu contracts">
+      <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
+      <div>
+        <p class="eyebrow">Core game</p>
+        <h1>Barbu contracts</h1>
+      </div>
+      <div class="contract-status">
+        <span>Core roster</span>
+        <strong>{guidedLessons.length} contracts</strong>
+      </div>
+    </header>
+
+    <section class="contract-roster-screen" aria-label="Core Barbu contracts">
+      <div class="contract-roster-intro">
+        <p class="eyebrow">Contract map</p>
+        <h2>Each contract changes what a good card means.</h2>
+        <p>
+          Use this screen when you want to jump into one contract directly. The main Learn tab keeps the ordered
+          path separate so the table does not become a long list of controls.
+        </p>
+      </div>
+
+      <div class="contract-list">
         {#each guidedLessons as lesson}
           <button class="contract-card" onclick={() => startCourseForLesson(lesson.id)} type="button">
             <span>{lesson.contract}</span>
@@ -2972,43 +3128,6 @@
                 Complete
               {/if}
             </small>
-          </button>
-        {/each}
-      </div>
-    </section>
-
-    <section class="path-section" aria-label="Barbu lesson path">
-      <div class="section-heading">
-        <p class="eyebrow">Training path</p>
-        <h2>Learn the Barbu table</h2>
-      </div>
-
-      <div class="path-grid">
-        {#each barbuPathSteps as step, index}
-          <button
-            class:active={step.id === nextPathStep?.id && !completedPathSteps[step.id]}
-            class:complete={completedPathSteps[step.id]}
-            class:planned={step.action === "planned"}
-            class="path-card"
-            disabled={step.action === "planned"}
-            onclick={() => startPathStep(step)}
-            type="button"
-          >
-            <span class="path-index">{index + 1}</span>
-            <span class="path-step">{step.step}</span>
-            <strong>{step.title}</strong>
-            <small>{step.summary}</small>
-            <span class="path-status">
-              {#if completedPathSteps[step.id]}
-                Complete
-              {:else if step.action === "planned"}
-                Planned
-              {:else if step.id === nextPathStep?.id}
-                Next
-              {:else}
-                Open
-              {/if}
-            </span>
           </button>
         {/each}
       </div>
