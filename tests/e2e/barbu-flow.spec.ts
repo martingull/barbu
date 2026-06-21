@@ -133,9 +133,11 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await openBarbuTab(page, "Practice");
   await expect(page.getByLabel("Barbu table actions").getByRole("button", { name: "Quick drill" })).toBeVisible();
   await expect(page.getByLabel("Barbu table actions").getByRole("button", { name: "Contract hands" })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("barbu-practice.png"), fullPage: true });
 
   await openBarbuTab(page, "Play");
   await expect(page.getByLabel("Barbu table actions").getByRole("button", { name: "Play Barbu" })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("barbu-play.png"), fullPage: true });
 
   await page.screenshot({ path: testInfo.outputPath("barbu-table.png"), fullPage: true });
 });

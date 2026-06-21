@@ -3056,7 +3056,7 @@
       {:else if activeBarbuTableTab === "practice"}
         <div
           aria-label="Practice"
-          class="barbu-tab-panel"
+          class="barbu-tab-panel practice-panel"
           id="barbu-practice-panel"
           role="tabpanel"
         >
@@ -3076,7 +3076,7 @@
       {:else}
         <div
           aria-label="Play"
-          class="barbu-tab-panel"
+          class="barbu-tab-panel play-panel"
           id="barbu-play-panel"
           role="tabpanel"
         >
