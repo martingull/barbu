@@ -9,7 +9,7 @@ async function expectNoPageScroll(page: Page) {
     .toBe(true);
 }
 
-async function openBarbuTab(page: Page, tab: "Learn" | "Practice" | "Play") {
+async function openBarbuTab(page: Page, tab: "Learn" | "Practice" | "Play" | "Perfect") {
   await page.getByRole("tab", { name: tab }).click();
   await expect(page.getByRole("tab", { name: tab })).toHaveAttribute("aria-selected", "true");
 }
@@ -116,6 +116,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByRole("tab", { name: "Learn" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("tab", { name: "Practice" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Play" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Perfect" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Continue with Meet the contract/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /^1 Concept Meet the contract/ })).toBeVisible();
   await expect(page.getByLabel("Barbu lesson path")).toContainText("Meet the contract");
@@ -138,6 +139,12 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await openBarbuTab(page, "Play");
   await expect(page.getByLabel("Barbu table actions").getByRole("button", { name: "Play Barbu" })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath("barbu-play.png"), fullPage: true });
+
+  await openBarbuTab(page, "Perfect");
+  await expect(page.getByRole("heading", { name: "Train the skills behind strong card play." })).toBeVisible();
+  await expect(page.getByLabel("Perfect mode placeholders")).toContainText("Count trumps");
+  await expect(page.getByLabel("Perfect mode placeholders")).toContainText("Track court cards");
+  await page.screenshot({ path: testInfo.outputPath("barbu-perfect.png"), fullPage: true });
 
   await page.screenshot({ path: testInfo.outputPath("barbu-table.png"), fullPage: true });
 });

@@ -56,7 +56,7 @@
 
   type PathAction = "lesson" | "generated" | "review" | "planned";
   type CourseStage = "concept" | "example" | "review";
-  type BarbuTableTab = "learn" | "practice" | "play";
+  type BarbuTableTab = "learn" | "practice" | "play" | "perfect";
 
   type CatalogStatus = "Ready" | "Planned";
 
@@ -805,6 +805,14 @@
   $: lessonOutcome = selectedCard && (playedCard || !isSelectedLegal) ? buildLessonOutcome(selectedCard, playedCard) : "";
   $: activeCourse = courseCatalog.find((course) => course.id === activeCourseId) ?? courseCatalog[0];
   $: activeReference = referenceCatalog.find((reference) => reference.id === activeReferenceId) ?? referenceCatalog[0];
+  $: activeBarbuTableTabLabel =
+    activeBarbuTableTab === "learn"
+      ? "Learn"
+      : activeBarbuTableTab === "practice"
+        ? "Practice"
+        : activeBarbuTableTab === "play"
+          ? "Play"
+          : "Perfect";
   $: currentDrill = activeDrillSteps[drillIndex] ?? activeDrillSteps[0] ?? drillSteps[0];
   $: currentDrillTrick = currentDrill.trick;
   $: drillLegalCardIds = new Set(currentDrillTrick.legalCardIds);
@@ -2915,13 +2923,11 @@
       </div>
       <div class="contract-status">
         <span>Current mode</span>
-        <strong>
-          {activeBarbuTableTab === "learn" ? "Learn" : activeBarbuTableTab === "practice" ? "Practice" : "Play"}
-        </strong>
+        <strong>{activeBarbuTableTabLabel}</strong>
       </div>
     </header>
 
-    <section class="table-room" aria-labelledby="barbu-table-title">
+    <section class="table-room" aria-label="Barbu table modes">
       <div class="barbu-table-rail">
         <div class="barbu-mode-box">
           <p class="eyebrow">Table mode</p>
@@ -2962,17 +2968,19 @@
             >
               Play
             </button>
+            <button
+              aria-controls="barbu-perfect-panel"
+              aria-selected={activeBarbuTableTab === "perfect"}
+              class:active={activeBarbuTableTab === "perfect"}
+              onclick={() => {
+                activeBarbuTableTab = "perfect";
+              }}
+              role="tab"
+              type="button"
+            >
+              Perfect
+            </button>
           </div>
-        </div>
-
-        <div class="barbu-card">
-          <p class="eyebrow">Coach and opponent</p>
-          <h2 id="barbu-table-title">Barbu sets the contract. You learn by playing the decision.</h2>
-          <p>
-            {isCourseComplete
-              ? "You have cleared the first Barbu table. Review the contracts, or reset the path when you want another pass."
-              : "Start with compact guided tricks, then move into quick drills and a full table session as the rules become automatic."}
-          </p>
         </div>
       </div>
 
@@ -3081,7 +3089,7 @@
             </section>
           </div>
         </div>
-      {:else}
+      {:else if activeBarbuTableTab === "play"}
         <div
           aria-label="Play"
           class="barbu-tab-panel play-panel"
@@ -3099,6 +3107,35 @@
               <button class="drill-action" onclick={startBarbuRun} type="button">Play Barbu</button>
             </section>
           </div>
+        </div>
+      {:else}
+        <div
+          aria-label="Perfect"
+          class="barbu-tab-panel perfect-panel"
+          id="barbu-perfect-panel"
+          role="tabpanel"
+        >
+          <div class="barbu-mode-copy">
+            <p class="eyebrow">Perfect</p>
+            <h2>Train the skills behind strong card play.</h2>
+            <p>
+              Placeholder for short minigames that make you faster at remembering trumps, court cards, and cards that
+              have left the deck.
+            </p>
+          </div>
+
+          <section class="perfect-skill-grid" aria-label="Perfect mode placeholders">
+            <article class="perfect-skill-card">
+              <span>Planned</span>
+              <strong>Count trumps</strong>
+              <small>Track which trump cards have appeared and name what remains.</small>
+            </article>
+            <article class="perfect-skill-card">
+              <span>Planned</span>
+              <strong>Track court cards</strong>
+              <small>Remember kings, queens, and jacks as tricks move around the table.</small>
+            </article>
+          </section>
         </div>
       {/if}
     </section>

@@ -318,17 +318,18 @@ button {
 
 .barbu-table-tabs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
 }
 
 .barbu-table-tabs button {
   min-height: 42px;
-  padding: 0 10px;
+  padding: 0 8px;
   border: 1px solid rgba(245, 241, 207, 0.68);
   border-radius: 8px;
   background: transparent;
   color: #f5f1cf;
+  font-size: 0.92rem;
   font-weight: 900;
 }
 
@@ -371,7 +372,8 @@ button {
 }
 
 .practice-panel,
-.play-panel {
+.play-panel,
+.perfect-panel {
   padding: 12px;
   border: 1px solid #284f40;
   border-radius: 8px;
@@ -382,19 +384,22 @@ button {
 }
 
 .practice-panel .barbu-mode-copy,
-.play-panel .barbu-mode-copy {
+.play-panel .barbu-mode-copy,
+.perfect-panel .barbu-mode-copy {
   border-color: rgba(245, 241, 207, 0.28);
   background: rgba(13, 45, 31, 0.5);
   color: #f7faf3;
 }
 
 .practice-panel .barbu-mode-copy .eyebrow,
-.play-panel .barbu-mode-copy .eyebrow {
+.play-panel .barbu-mode-copy .eyebrow,
+.perfect-panel .barbu-mode-copy .eyebrow {
   color: #f5f1cf;
 }
 
 .practice-panel .barbu-mode-copy p:last-child,
-.play-panel .barbu-mode-copy p:last-child {
+.play-panel .barbu-mode-copy p:last-child,
+.perfect-panel .barbu-mode-copy p:last-child {
   color: #dbe7d1;
 }
 
@@ -428,6 +433,43 @@ button {
   border-color: rgba(245, 241, 207, 0.7);
   background: rgba(245, 241, 207, 0.08);
   color: #f5f1cf;
+}
+
+.perfect-skill-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.perfect-skill-card {
+  display: grid;
+  gap: 5px;
+  min-height: 92px;
+  padding: 12px;
+  border: 1px solid rgba(245, 241, 207, 0.24);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(9, 34, 24, 0.16)),
+    #182f25;
+}
+
+.perfect-skill-card span {
+  color: #f0b3a8;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.perfect-skill-card strong {
+  color: #f7faf3;
+  font-size: 1rem;
+  line-height: 1.12;
+}
+
+.perfect-skill-card small {
+  color: #dbe7d1;
+  font-size: 0.8rem;
+  font-weight: 750;
+  line-height: 1.3;
 }
 
 .learn-action-grid {
