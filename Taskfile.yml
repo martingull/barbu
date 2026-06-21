@@ -50,9 +50,39 @@ tasks:
       - npm run tauri:dev
 
   ios:dev:
-    desc: Run the Tauri iOS development target
+    desc: Run the Tauri iOS development target; pass a simulator/device name with `task ios:dev -- "iPhone 15"`
     cmds:
-      - npm run tauri:ios
+      - npm run tauri -- ios dev {{.CLI_ARGS}}
+
+  ios:init:
+    desc: Initialize the generated Tauri iOS project when the iOS target is missing
+    cmds:
+      - npm run tauri -- ios init
+
+  ios:dev:device:
+    desc: Run on a physical iPhone with network dev-server support; pass device name with `task ios:dev:device -- "Martin's iPhone"`
+    cmds:
+      - npm run tauri -- ios dev {{.CLI_ARGS}} --host
+
+  ios:run:
+    desc: Build the frontend and run the production iOS app on a simulator/device; pass device name with `task ios:run -- "Martin's iPhone"`
+    cmds:
+      - npm run tauri -- ios run {{.CLI_ARGS}}
+
+  ios:build:
+    desc: Build an iOS IPA; pass options such as `task ios:build -- --debug --target aarch64`
+    cmds:
+      - npm run tauri -- ios build {{.CLI_ARGS}}
+
+  ios:devices:
+    desc: List iOS simulators and connected devices known to Xcode
+    cmds:
+      - xcrun xctrace list devices
+
+  ios:open:
+    desc: Open the generated iOS project in Xcode for signing/device troubleshooting
+    cmds:
+      - npm run tauri -- ios dev --open --host
 
   android:dev:
     desc: Run the Tauri Android development target

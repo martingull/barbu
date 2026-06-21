@@ -1,6 +1,7 @@
 /node_modules/
 /dist/
 /target/
+/src-tauri/gen/apple/
 /src-tauri/gen/schemas/
 /playwright-report/
 /test-results/

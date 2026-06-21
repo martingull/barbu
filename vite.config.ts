@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [svelte()],
   clearScreen: false,
   server: {
-    host: "127.0.0.1",
+    host: process.env.TAURI_DEV_HOST ? "0.0.0.0" : "127.0.0.1",
     port: 1420,
     strictPort: true
   },
