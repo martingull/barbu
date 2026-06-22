@@ -3019,7 +3019,7 @@
             </section>
           </div>
 
-          <button class="learn-action-card learn-contracts-card" onclick={openBarbuContracts} type="button">
+          <button class="learn-action-card" onclick={openBarbuContracts} type="button">
             <span class="eyebrow">Core game</span>
             <strong>Barbu contracts</strong>
             <small>Open the contract map.</small>

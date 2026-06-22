@@ -243,38 +243,6 @@ button {
   gap: 10px;
 }
 
-.barbu-card {
-  display: grid;
-  align-content: end;
-  min-height: 250px;
-  padding: 18px;
-  border: 1px solid #b9c4b1;
-  border-radius: 8px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(9, 34, 24, 0.34)),
-    #315f4d;
-  color: #f7faf3;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
-}
-
-.barbu-card .eyebrow {
-  color: #dbe7d1;
-}
-
-.barbu-card h2 {
-  max-width: 520px;
-  font-size: 1.55rem;
-  line-height: 1.12;
-}
-
-.barbu-card > p:not(.eyebrow) {
-  max-width: 500px;
-  margin: 12px 0 0;
-  color: #e7eee1;
-  font-weight: 700;
-  line-height: 1.42;
-}
-
 .course-progress {
   display: grid;
   gap: 7px;
@@ -375,7 +343,7 @@ button {
 .play-panel,
 .perfect-panel {
   padding: 12px;
-  border: 1px solid #284f40;
+  border: 1px solid rgba(245, 241, 207, 0.24);
   border-radius: 8px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(9, 34, 24, 0.3)),
@@ -496,15 +464,13 @@ button {
   color: #f5f1cf;
 }
 
-.learn-action-card.primary,
-.learn-contracts-card {
+.learn-action-card.primary {
   border-color: #f5f1cf;
   background: #f5f1cf;
   color: #21372d;
 }
 
-.learn-action-card.primary .eyebrow,
-.learn-contracts-card .eyebrow {
+.learn-action-card.primary .eyebrow {
   color: #64705e;
 }
 
@@ -519,8 +485,7 @@ button {
   line-height: 1.35;
 }
 
-.learn-action-card.primary small,
-.learn-contracts-card small {
+.learn-action-card.primary small {
   color: #53604d;
 }
 
@@ -544,14 +509,6 @@ button {
   width: 100%;
   margin-bottom: 0;
   color: #dbe7d1;
-}
-
-.barbu-card .table-action-group .eyebrow {
-  color: #dbe7d1;
-}
-
-.barbu-card .table-action-group {
-  border-top-color: rgba(245, 241, 207, 0.22);
 }
 
 .drill-action {
@@ -648,7 +605,7 @@ button {
   align-content: center;
   min-height: 300px;
   padding: 18px;
-  border: 1px solid #b9c4b1;
+  border: 1px solid rgba(245, 241, 207, 0.28);
   border-radius: 8px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(9, 34, 24, 0.34)),
@@ -732,7 +689,7 @@ button {
 }
 
 .domino-layout strong {
-  color: #fbfcf8;
+  color: #f7faf3;
   font-size: 0.82rem;
   line-height: 1.18;
 }
@@ -935,7 +892,7 @@ button {
   align-content: end;
   min-height: 300px;
   padding: 20px;
-  border: 1px solid #b9c4b1;
+  border: 1px solid rgba(245, 241, 207, 0.28);
   border-radius: 8px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(9, 34, 24, 0.34)),
@@ -1248,7 +1205,7 @@ button {
   display: grid;
   gap: 8px;
   padding: 18px;
-  border: 1px solid #b9c4b1;
+  border: 1px solid rgba(245, 241, 207, 0.28);
   border-radius: 8px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(9, 34, 24, 0.34)),
@@ -1808,7 +1765,7 @@ h2 {
   align-content: end;
   min-height: 230px;
   padding: 18px;
-  border: 1px solid #b9c4b1;
+  border: 1px solid rgba(245, 241, 207, 0.28);
   border-radius: 8px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(9, 34, 24, 0.34)),
@@ -2188,9 +2145,9 @@ h2 {
 }
 
 .primary-action:disabled {
-  border-color: #c7d0c0;
-  background: #dfe5d8;
-  color: #818a7c;
+  border-color: rgba(245, 241, 207, 0.18);
+  background: rgba(245, 241, 207, 0.08);
+  color: #aebcae;
 }
 
 .secondary-action {
@@ -2215,10 +2172,6 @@ h2 {
 
   .table-room {
     grid-template-columns: 1fr;
-  }
-
-  .barbu-card {
-    min-height: 190px;
   }
 
   .path-grid {
@@ -2353,20 +2306,6 @@ h2 {
   .table-room {
     gap: 10px;
     margin-bottom: 12px;
-  }
-
-  .barbu-card {
-    min-height: 164px;
-    padding: 14px;
-  }
-
-  .barbu-card h2 {
-    font-size: 1.22rem;
-  }
-
-  .barbu-card > p:not(.eyebrow) {
-    margin-top: 8px;
-    font-size: 0.9rem;
   }
 
   .course-progress {

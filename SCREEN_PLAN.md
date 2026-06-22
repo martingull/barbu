@@ -4,6 +4,20 @@ This document describes the intended product layout before the UI is redesigned.
 
 The current visual direction can remain casino-inspired: green table surface, compact cards, restrained gold/cream accents, and a serious game-room feel. The plan is about information architecture first, not a decorative redesign.
 
+## Visual System
+
+The app should feel like a compact card table: dark casino green as the dominant surface, cream as a deliberate action color, and soft red/gold accents for labels and scoring. Avoid letting screens drift back to pale document cards unless the element is literally a playing card.
+
+Use color roles consistently:
+
+- **Dark casino green**: default screen background, panels, supporting action cards, reference cards, score panels, and table surfaces.
+- **Cream**: primary current action, selected mode tab, enabled main play/check/continue buttons, and important progress markers. Use it enough that it feels like the app's action color, but do not use it for every card.
+- **Soft red**: warnings, penalties, planned/future labels, and secondary status emphasis.
+- **Muted green/gray**: disabled or inactive states.
+- **White card faces**: physical playing cards only.
+
+On hub screens, cream should normally mean "do this next" or "this mode is selected." Supporting destinations such as reference, contract maps, and future-feature placeholders should usually stay dark green unless they are the single primary action for that screen.
+
 ## Product Areas
 
 The app should separate these concerns:
