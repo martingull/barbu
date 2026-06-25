@@ -9,6 +9,24 @@ async function expectNoPageScroll(page: Page) {
     .toBe(true);
 }
 
+async function expectGameplayActionRowPinned(page: Page) {
+  const row = page.locator(".table-play-surface .action-row").last();
+  await expect(row).toBeVisible();
+  await expect(row).toHaveCSS("position", "fixed");
+  await expect
+    .poll(async () => {
+      const box = await row.boundingBox();
+      if (!box) {
+        return false;
+      }
+
+      const viewportHeight = await page.evaluate(() => window.innerHeight);
+      const bottomGap = viewportHeight - (box.y + box.height);
+      return bottomGap >= 0 && bottomGap <= 18;
+    })
+    .toBe(true);
+}
+
 async function openBarbuTab(page: Page, tab: "Learn" | "Practice" | "Play" | "Perfect") {
   await page.getByRole("tab", { name: tab }).click();
   await expect(page.getByRole("tab", { name: tab })).toHaveAttribute("aria-selected", "true");
@@ -183,12 +201,14 @@ test("quick drill is a fixed iPhone screen without page scroll", async ({ page }
   await expect(page.getByText("Decision 1 of 7")).toBeVisible();
   await expect(page.getByRole("button", { name: "Check answer" })).toBeVisible();
   await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
 
   const firstLegalCard = page.locator(".drill-hand .hand-card.legal").first();
   await firstLegalCard.tap();
   await expect(firstLegalCard).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator(".drill-hand .hand-card.selected")).toHaveCount(1);
   await expect(page.getByRole("button", { name: "Check answer" })).toBeEnabled();
+  await expectGameplayActionRowPinned(page);
 
   await page.screenshot({ path: testInfo.outputPath("quick-drill-fixed-screen.png"), fullPage: true });
 });
@@ -383,6 +403,7 @@ test("Quick drill runs as a generated learning loop", async ({ page }, testInfo)
 });
 
 test("active game tables share one compact surface", async ({ page }) => {
+  await page.setViewportSize({ width: 393, height: 852 });
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
   await openBarbuTab(page, "Practice");
@@ -393,6 +414,7 @@ test("active game tables share one compact surface", async ({ page }) => {
   const playBarbuTable = await page.getByLabel("Drill card table").boundingBox();
   expect(playBarbuTable).not.toBeNull();
   await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
 
   await page.locator(".table-play-topbar").getByRole("button", { name: "Table" }).click();
   await openBarbuTab(page, "Play");
@@ -404,8 +426,15 @@ test("active game tables share one compact surface", async ({ page }) => {
   const noHeartsTable = await page.getByLabel("No Hearts hand table").boundingBox();
   expect(noHeartsTable).not.toBeNull();
   await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
   expect(Math.abs((noHeartsTable?.width ?? 0) - (playBarbuTable?.width ?? 0))).toBeLessThanOrEqual(1);
   expect(Math.abs((noHeartsTable?.height ?? 0) - (playBarbuTable?.height ?? 0))).toBeLessThanOrEqual(1);
+
+  await page.locator(".full-hand-card.legal").first().click();
+  await page.getByRole("button", { name: "Play card" }).click();
+  await expect(page.getByRole("button", { name: "Next trick", exact: true })).toBeVisible();
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
 });
 
 test("Play Barbu advances full-hand contracts with a running total", async ({ page }) => {

@@ -760,6 +760,7 @@
   let fullHandRunActive = false;
   let fullHandRunResults: FullHandRunResult[] = [];
   let pendingRunContract: FullHandContract = fullHandContracts[0];
+  $: isTablePlayScreen = appView === "drill" || appView === "fullHand" || appView === "dominoHand";
 
   function runSeatScores(results: FullHandRunResult[]) {
     const totals = emptySeatPenalties();
@@ -2977,7 +2978,7 @@
   </div>
 {/snippet}
 
-<main class:fixed-play-screen={appView === "drill"} class="app-shell">
+<main class:fixed-play-screen={isTablePlayScreen} class="app-shell">
   {#if appView === "catalog"}
     <section class="welcome-screen" aria-labelledby="catalog-title">
       <div class="welcome-copy">
