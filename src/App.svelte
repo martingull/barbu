@@ -16,6 +16,7 @@
   } from "./browserHandFallback";
   import { passBrowserDominoTurn, playBrowserDominoCard, startBrowserDominoHand } from "./browserDominoFallback";
   import { generateBrowserPlayBarbuDrillSteps } from "./browserDrillFallback";
+  import CardFace from "./CardFace.svelte";
   import CardTable from "./CardTable.svelte";
   import TablePlaySurface from "./TablePlaySurface.svelte";
   import { fullHandContractCommands, fullHandContracts } from "./contractRegistry";
@@ -3773,6 +3774,7 @@
             <div class="hand full-hand-cards" aria-label={`Your ${fullHand.contract} hand`}>
               {#each fullHand.playerHand as card}
                 <button
+                  aria-label={`${card.rank} ${card.suit}`}
                   aria-pressed={fullHandSelectedCardId === card.id}
                   class:heart={fullHandCardClasses(card).heart}
                   class:illegal={fullHandCardClasses(card).illegal}
@@ -3782,8 +3784,7 @@
                   onclick={() => void selectFullHandCard(card)}
                   type="button"
                 >
-                  <b>{card.rank}</b>
-                  <small>{card.suit}</small>
+                  <CardFace {card} decorative />
                 </button>
               {/each}
             </div>
@@ -3938,6 +3939,7 @@
             <div class="hand full-hand-cards domino-cards" aria-label="Your Domino hand">
               {#each dominoHand.playerHand as card}
                 <button
+                  aria-label={`${card.rank} ${card.suit}`}
                   aria-pressed={dominoSelectedCardId === card.id}
                   class:heart={dominoCardClasses(card).heart}
                   class:illegal={dominoCardClasses(card).illegal}
@@ -3950,8 +3952,7 @@
                   }}
                   type="button"
                 >
-                  <b>{card.rank}</b>
-                  <small>{card.suit}</small>
+                  <CardFace {card} decorative />
                 </button>
               {/each}
             </div>
@@ -4046,6 +4047,7 @@
         <div class="hand drill-hand" aria-label="Your drill hand">
           {#each currentDrillTrick.hand as card}
             <button
+              aria-label={`${card.rank} ${card.suit}`}
               aria-pressed={drillSelectedCardId === card.id}
               class:heart={drillCardClasses(card).heart}
               class:illegal={drillCardClasses(card).illegal}
@@ -4056,8 +4058,7 @@
               onclick={() => selectDrillCard(card)}
               type="button"
             >
-              <b>{card.rank}</b>
-              <small>{card.suit}</small>
+              <CardFace {card} decorative />
             </button>
           {/each}
         </div>
@@ -4325,6 +4326,7 @@
         <div class="hand" aria-label="Your hand">
           {#each hand as card}
             <button
+              aria-label={`${card.rank} ${card.suit}`}
               aria-pressed={selectedCardId === card.id}
               class:heart={card.suit === "H"}
               class:illegal={cardClasses(card).illegal}
@@ -4335,8 +4337,7 @@
               onclick={() => selectCard(card)}
               type="button"
             >
-              <b>{card.rank}</b>
-              <small>{card.suit}</small>
+              <CardFace {card} decorative />
             </button>
           {/each}
         </div>

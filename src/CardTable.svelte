@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CardFace from "./CardFace.svelte";
   import type { Seat, TableCard } from "./lessonTypes";
 
   type Props = {
@@ -28,8 +29,7 @@
   <div class="played-slot tutor-slot">
     {#if tutorCard}
       <div class:heart={tutorCard.suit === "H"} class="table-card">
-        <b>{tutorCard.rank}</b>
-        <small>{tutorCard.suit}</small>
+        <CardFace card={tutorCard} />
       </div>
     {:else if pendingBySeat.Tutor}
       <div class="pending-card">{pendingBySeat.Tutor}</div>
@@ -39,8 +39,7 @@
   <div class="played-slot left-slot">
     {#if leftCard}
       <div class:heart={leftCard.suit === "H"} class="table-card">
-        <b>{leftCard.rank}</b>
-        <small>{leftCard.suit}</small>
+        <CardFace card={leftCard} />
       </div>
     {:else if pendingBySeat.Left}
       <div class="pending-card">{pendingBySeat.Left}</div>
@@ -50,8 +49,7 @@
   <div class="played-slot right-slot">
     {#if rightCard}
       <div class:heart={rightCard.suit === "H"} class="table-card">
-        <b>{rightCard.rank}</b>
-        <small>{rightCard.suit}</small>
+        <CardFace card={rightCard} />
       </div>
     {:else if pendingBySeat.Right}
       <div class="pending-card">{pendingBySeat.Right}</div>
@@ -61,8 +59,7 @@
   <div class="played-slot you-slot">
     {#if youCard}
       <div class:heart={youCard.suit === "H"} class="table-card">
-        <b>{youCard.rank}</b>
-        <small>{youCard.suit}</small>
+        <CardFace card={youCard} />
       </div>
     {:else if pendingBySeat.You}
       <div class="pending-card">{pendingBySeat.You}</div>
@@ -149,28 +146,14 @@
 
   .table-card {
     display: grid;
-    grid-template-rows: 1fr auto;
-    align-items: start;
+    place-items: center;
     width: 76px;
     aspect-ratio: 5 / 7;
-    border: 1px solid #d7dccf;
-    border-radius: 8px;
-    background: #fbfcf8;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
     color: #18211b;
     box-shadow: 0 8px 22px rgba(21, 40, 30, 0.22);
-  }
-
-  .table-card b {
-    padding: 9px 8px 0;
-    font-size: 1.4rem;
-    line-height: 1;
-  }
-
-  .table-card small {
-    justify-self: end;
-    padding: 0 8px 8px;
-    font-size: 1rem;
-    font-weight: 900;
   }
 
   .table-card.heart {
