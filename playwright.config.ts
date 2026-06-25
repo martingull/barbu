@@ -1,5 +1,20 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const iPhoneXR = {
+  ...devices["iPhone XR"],
+  viewport: { width: 393, height: 852 }
+};
+
+const iPhone13 = {
+  ...devices["iPhone 13"],
+  viewport: { width: 390, height: 844 }
+};
+
+const iPhone15ProMax = {
+  ...devices["iPhone 15 Pro Max"],
+  viewport: { width: 430, height: 932 }
+};
+
 export default defineConfig({
   testDir: "./tests/e2e",
   timeout: 30_000,
@@ -21,9 +36,15 @@ export default defineConfig({
   projects: [
     {
       name: "iphone-xr",
-      use: {
-        ...devices["iPhone XR"]
-      }
+      use: iPhoneXR
+    },
+    {
+      name: "iphone-13",
+      use: iPhone13
+    },
+    {
+      name: "iphone-15-pro-max",
+      use: iPhone15ProMax
     }
   ]
 });

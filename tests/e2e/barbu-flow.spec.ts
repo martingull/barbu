@@ -191,7 +191,6 @@ test("practice tab keeps contract hands hidden while fixed drills are public", a
 });
 
 test("quick drill is a fixed iPhone screen without page scroll", async ({ page }, testInfo) => {
-  await page.setViewportSize({ width: 393, height: 852 });
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
   await openBarbuTab(page, "Practice");
@@ -403,7 +402,6 @@ test("Quick drill runs as a generated learning loop", async ({ page }, testInfo)
 });
 
 test("active game tables share one compact surface", async ({ page }, testInfo) => {
-  await page.setViewportSize({ width: 393, height: 852 });
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
   await openBarbuTab(page, "Practice");
