@@ -394,7 +394,8 @@ test("active game tables share one compact surface", async ({ page }) => {
   const noHeartsTable = await page.getByLabel("No Hearts hand table").boundingBox();
   expect(noHeartsTable).not.toBeNull();
   await expectNoPageScroll(page);
-  expect(noHeartsTable?.height ?? 0).toBeGreaterThan(240);
+  expect(Math.abs((noHeartsTable?.width ?? 0) - (playBarbuTable?.width ?? 0))).toBeLessThanOrEqual(1);
+  expect(Math.abs((noHeartsTable?.height ?? 0) - (playBarbuTable?.height ?? 0))).toBeLessThanOrEqual(1);
 });
 
 test("Play Barbu advances full-hand contracts with a running total", async ({ page }) => {

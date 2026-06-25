@@ -1575,7 +1575,13 @@ h2 {
 
 .table-tap-target {
   display: grid;
+  align-self: start;
   cursor: pointer;
+}
+
+.table-play-surface .card-table {
+  align-self: start;
+  width: 100%;
 }
 
 .drill-track {
@@ -2263,7 +2269,7 @@ h2 {
 
   .app-shell.fixed-play-screen {
     align-content: stretch;
-    padding: max(8px, env(safe-area-inset-top)) 10px max(8px, env(safe-area-inset-bottom));
+    padding: max(8px, env(safe-area-inset-top)) 12px max(8px, env(safe-area-inset-bottom));
   }
 
   .welcome-screen {
@@ -2926,15 +2932,7 @@ h2 {
     font-size: 1.02rem;
   }
 
-  .table-play-surface.compact-play .card-table {
-    grid-template-columns: 40px minmax(188px, 1fr) 40px;
-    grid-template-rows: 28px 208px 28px;
-  }
-
-  .fixed-play-screen .table-play-surface.compact-play .card-table {
-    grid-template-rows: 26px minmax(176px, 1fr) 26px;
-  }
-
+  .table-play-surface.compact-play .card-table,
   .table-play-surface.compact-result .card-table {
     grid-template-columns: 40px minmax(188px, 1fr) 40px;
     grid-template-rows: 28px 208px 28px;
@@ -2956,7 +2954,7 @@ h2 {
   }
 
   .table-play-surface .tutor-slot {
-    padding-top: 22px;
+    padding-top: 14px;
   }
 
   .table-play-surface .left-slot {
@@ -2968,7 +2966,7 @@ h2 {
   }
 
   .table-play-surface .you-slot {
-    padding-bottom: 22px;
+    padding-bottom: 14px;
   }
 
   .table-play-surface .table-play-panel {
