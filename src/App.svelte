@@ -833,6 +833,10 @@
   $: drillFeedback = drillCheckedCard ? buildDrillFeedback(drillCheckedCard) : currentDrillTrick.emptyExplanation;
   $: cleanDrillCount = drillResults.filter((result) => result.clean).length;
   $: currentDrillDecisionNumber = drillCheckedCard ? drillResults.length : drillResults.length + 1;
+  $: isLastDrillDecision = drillIndex >= activeDrillSteps.length - 1;
+  $: completedPracticeTableSession =
+    !activeDrillFocusContract && activeDrillSteps.length >= fullHandContracts.length && drillResults.length >= activeDrillSteps.length;
+  $: canMarkPracticeTableComplete = completedPracticeTableSession && !completedPathSteps["generated-drill"];
   $: currentContractResults = summarizeContractResults(drillResults);
   $: weakContract = weakestContractFromResults(currentContractResults);
   $: recentPlayBarbuAttempts = playBarbuHistory.slice(0, 3);
@@ -2163,11 +2167,11 @@
     drillSetTitle = "Quick drill";
     resetDrillDecision();
 
-    activeDrillSteps = [await loadGeneratedDrillStep()];
+    activeDrillSteps = await loadGeneratedDrillSessionSteps();
     appView = "drill";
   }
 
-  async function loadGeneratedDrillStep(focusContract = "") {
+  async function loadGeneratedDrillCandidates(focusContract = "") {
     const seed = usePracticeSeed();
 
     try {
@@ -2180,7 +2184,7 @@
         .filter((step) => !focusContract || step.contract === focusContract);
 
       if (candidates.length > 0) {
-        return selectGeneratedDrillCandidate(candidates, seed);
+        return { candidates, seed };
       }
     } catch {
       const candidates = generateBrowserPlayBarbuDrillSteps(seed).filter(
@@ -2188,16 +2192,50 @@
       );
 
       if (candidates.length > 0) {
-        return selectGeneratedDrillCandidate(candidates, seed);
+        return { candidates, seed };
       }
     }
 
-    return drillSteps.find((step) => !focusContract || step.contract === focusContract) ?? drillSteps[0];
+    const fallbackCandidates = drillSteps.filter((step) => !focusContract || step.contract === focusContract);
+
+    return {
+      candidates: fallbackCandidates.length > 0 ? fallbackCandidates : [drillSteps[0]],
+      seed
+    };
   }
 
-  function selectGeneratedDrillCandidate(candidates: DrillStep[], seed: number) {
-    const lastStep = activeDrillSteps[activeDrillSteps.length - 1];
-    const activeScenarioIds = activeDrillSteps
+  async function loadGeneratedDrillStep(focusContract = "") {
+    const { candidates, seed } = await loadGeneratedDrillCandidates(focusContract);
+
+    return selectGeneratedDrillCandidate(candidates, seed);
+  }
+
+  async function loadGeneratedDrillSessionSteps(focusContract = "") {
+    const { candidates, seed } = await loadGeneratedDrillCandidates(focusContract);
+
+    if (focusContract) {
+      return [selectGeneratedDrillCandidate(candidates, seed)];
+    }
+
+    const selectedSteps: DrillStep[] = [];
+
+    for (const contract of fullHandContracts) {
+      const contractCandidates = candidates.filter((step) => step.contract === contract);
+
+      if (contractCandidates.length === 0) {
+        continue;
+      }
+
+      const contractSeed = seed + selectedSteps.length * 13;
+      selectedSteps.push(selectGeneratedDrillCandidate(contractCandidates, contractSeed, selectedSteps));
+    }
+
+    return selectedSteps.length > 0 ? selectedSteps : [selectGeneratedDrillCandidate(candidates, seed)];
+  }
+
+  function selectGeneratedDrillCandidate(candidates: DrillStep[], seed: number, sessionSteps = activeDrillSteps) {
+    const lastStep = sessionSteps[sessionSteps.length - 1];
+    const activeScenarioIds = sessionSteps
       .slice(-maxStoredDrillPatterns)
       .map((step) => step.scenarioId)
       .filter((scenarioId): scenarioId is string => Boolean(scenarioId));
@@ -2449,24 +2487,47 @@
   }
 
   async function continueDrill() {
-    const nextStep = await loadGeneratedDrillStep(activeDrillFocusContract);
-    const nextIndex = activeDrillSteps.length;
+    const nextIndex = drillIndex + 1;
 
-    activeDrillSteps = [...activeDrillSteps, nextStep];
+    if (nextIndex >= activeDrillSteps.length) {
+      finishDrill();
+      return;
+    }
+
     drillIndex = nextIndex;
     resetDrillDecision();
   }
 
   function finishDrill() {
+    const completedPathPracticeTable = activePathStepId === "generated-drill" && completedPracticeTableSession;
+
     try {
       saveCompletedDrillSession();
-      if (activePathStepId === "generated-drill") {
+      if (completedPathPracticeTable) {
         saveCourseProgress({ ...completedPathSteps, "generated-drill": true });
       }
     } catch {
       // The result screen should still open if local storage is unavailable.
     }
+
+    if (completedPathPracticeTable) {
+      openPathReview();
+      return;
+    }
+
     appView = "drillResult";
+  }
+
+  function markPracticeTableComplete() {
+    saveCourseProgress({ ...completedPathSteps, "generated-drill": true });
+    activeBarbuTableTab = "learn";
+
+    if (completedPathSteps.review) {
+      openBarbuTable();
+      return;
+    }
+
+    openPathReview();
   }
 
   function drillCardClasses(card: Card) {
@@ -2868,7 +2929,7 @@
   </div>
 {/snippet}
 
-<main class="app-shell">
+<main class:fixed-play-screen={appView === "drill"} class="app-shell">
   {#if appView === "catalog"}
     <section class="welcome-screen" aria-labelledby="catalog-title">
       <div class="welcome-copy">
@@ -3870,7 +3931,7 @@
       title="Quick drill"
       eyebrow={drillSetTitle}
       statusLabel={currentDrill.contract}
-      statusValue={`Decision ${currentDrillDecisionNumber}`}
+      statusValue={`Decision ${currentDrillDecisionNumber} of ${activeDrillSteps.length}`}
       tableAriaLabel="Drill card table"
       pendingBySeat={currentDrillTrick.pendingBySeat}
       showTable={!currentDrillIsDomino}
@@ -3893,7 +3954,7 @@
 
       {#snippet track()}
         <div class="drill-loop-status" aria-label="Drill progress">
-          <span>{drillResults.length} played</span>
+          <span>{drillResults.length} / {activeDrillSteps.length} played</span>
           <span>{cleanDrillCount} clean</span>
           <span>{activeDrillFocusContract || "Mixed contracts"}</span>
         </div>
@@ -3938,7 +3999,9 @@
         <div class="action-row">
           {#if drillCheckedCard}
             <button class="secondary-action" onclick={finishDrill} type="button">Finish session</button>
-            <button class="primary-action" onclick={() => void continueDrill()} type="button">Next decision</button>
+            <button class="primary-action" onclick={() => void continueDrill()} type="button">
+              {isLastDrillDecision ? "Review session" : "Next decision"}
+            </button>
           {:else}
             <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
             <button class="primary-action" disabled={!drillSelectedCard} onclick={checkDrillAnswer} type="button">
@@ -4029,6 +4092,9 @@
       {/if}
 
       <div class="course-actions drill-result-actions">
+        {#if canMarkPracticeTableComplete}
+          <button class="primary-action" onclick={markPracticeTableComplete} type="button">Mark Practice table complete</button>
+        {/if}
         <button class="primary-action" onclick={continueCourse} type="button">Continue path</button>
       </div>
     </section>

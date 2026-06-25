@@ -14,7 +14,7 @@
 body {
   margin: 0;
   min-width: 320px;
-  min-height: 100vh;
+  min-height: 100dvh;
   background:
     radial-gradient(circle at 50% 0%, rgba(73, 130, 103, 0.26), transparent 40%),
     linear-gradient(180deg, #173529 0%, #102319 54%, #08130d 100%);
@@ -26,9 +26,17 @@ button {
 
 .app-shell {
   width: min(1120px, 100%);
-  min-height: 100vh;
+  min-height: 100dvh;
   margin: 0 auto;
   padding: 16px;
+}
+
+.app-shell.fixed-play-screen {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
 }
 
 .welcome-screen {
@@ -2215,6 +2223,11 @@ h2 {
     padding: 12px;
   }
 
+  .app-shell.fixed-play-screen {
+    align-content: stretch;
+    padding: max(8px, env(safe-area-inset-top)) 10px max(8px, env(safe-area-inset-bottom));
+  }
+
   .welcome-screen {
     gap: 12px;
     min-height: 312px;
@@ -2843,6 +2856,11 @@ h2 {
     gap: 8px;
   }
 
+  .fixed-play-screen .table-play-surface.compact-play {
+    min-height: 0;
+    overflow: hidden;
+  }
+
   .table-play-surface.compact-play .drill-track {
     gap: 6px;
   }
@@ -2873,6 +2891,10 @@ h2 {
   .table-play-surface.compact-play .card-table {
     grid-template-columns: 40px minmax(188px, 1fr) 40px;
     grid-template-rows: 28px 208px 28px;
+  }
+
+  .fixed-play-screen .table-play-surface.compact-play .card-table {
+    grid-template-rows: 26px minmax(176px, 1fr) 26px;
   }
 
   .table-play-surface.compact-result .card-table {
@@ -2917,6 +2939,10 @@ h2 {
     padding: 10px;
   }
 
+  .fixed-play-screen .table-play-surface .table-play-panel {
+    overflow: hidden;
+  }
+
   .table-play-surface.compact-play .lesson-heading {
     display: none;
   }
@@ -2935,6 +2961,12 @@ h2 {
   .table-play-surface.compact-result .result {
     font-size: 0.78rem;
     line-height: 1.28;
+  }
+
+  .fixed-play-screen .table-play-surface.compact-play .result,
+  .fixed-play-screen .table-play-surface.compact-play .explanation,
+  .fixed-play-screen .table-play-surface.compact-play .outcome {
+    margin: 0;
   }
 
   .table-play-surface.compact-result .lesson-heading h2 {

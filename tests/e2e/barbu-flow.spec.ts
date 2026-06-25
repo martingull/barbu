@@ -36,10 +36,15 @@ async function checkDrillAnswer(page: Page) {
   await checkAnswer.tap();
 }
 
-async function continueDrillFromCheckedAnswer(page: Page, name: "Next decision" | "Finish session") {
+async function continueDrillFromCheckedAnswer(page: Page, name: "Next decision" | "Review session" | "Finish session") {
   const action = page.getByRole("button", { name });
   await expect(action).toBeEnabled();
   await action.tap();
+}
+
+async function completeQuickDrillDecision(page: Page) {
+  await page.locator(".drill-hand .hand-card.legal").first().tap();
+  await checkDrillAnswer(page);
 }
 
 async function playFullHandDecision(page: Page) {
@@ -166,6 +171,78 @@ test("contract hand chooser opens isolated practice without page scroll", async 
   await expectNoPageScroll(page);
 
   await page.screenshot({ path: testInfo.outputPath("contract-hand-chooser.png"), fullPage: true });
+});
+
+test("quick drill is a fixed iPhone screen without page scroll", async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto("/");
+  await page.getByRole("button", { name: /Barbu/ }).click();
+  await openBarbuTab(page, "Practice");
+  await page.getByRole("button", { name: "Quick drill" }).click();
+
+  await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
+  await expect(page.getByText("Decision 1 of 7")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Check answer" })).toBeVisible();
+  await expectNoPageScroll(page);
+
+  await page.screenshot({ path: testInfo.outputPath("quick-drill-fixed-screen.png"), fullPage: true });
+});
+
+test("quick drill finishes after one decision per Barbu contract", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Barbu/ }).click();
+  await openBarbuTab(page, "Practice");
+  await page.getByRole("button", { name: "Quick drill" }).click();
+
+  for (let decision = 1; decision <= 7; decision += 1) {
+    await expect(page.getByText(`Decision ${decision} of 7`)).toBeVisible();
+    await completeQuickDrillDecision(page);
+
+    if (decision < 7) {
+      await continueDrillFromCheckedAnswer(page, "Next decision");
+    } else {
+      await expect(page.getByRole("button", { name: "Review session" })).toBeVisible();
+      await page.getByRole("button", { name: "Review session" }).tap();
+    }
+  }
+
+  await expect(page.getByRole("heading", { name: "Session complete" })).toBeVisible();
+  await expect(page.getByText("7 clean decisions").or(page.getByText(/\/ 7 clean decisions/))).toBeVisible();
+});
+
+test("completed standalone quick drill can repair an out-of-order practice table step", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      "barbu.courseProgress.v1",
+      JSON.stringify({
+        "meet-contract": true,
+        "spot-danger": true,
+        "play-trick": true,
+        "contract-no-last-two": true,
+        "contract-no-tricks": true,
+        "contract-hearts-trumps": true,
+        "contract-domino": true,
+        review: true
+      })
+    );
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: /Barbu/ }).click();
+  await openBarbuTab(page, "Practice");
+  await page.getByRole("button", { name: "Quick drill" }).click();
+
+  for (let decision = 1; decision <= 7; decision += 1) {
+    await expect(page.getByText(`Decision ${decision} of 7`)).toBeVisible();
+    await completeQuickDrillDecision(page);
+    await continueDrillFromCheckedAnswer(page, decision === 7 ? "Review session" : "Next decision");
+  }
+
+  await expect(page.getByRole("heading", { name: "Session complete" })).toBeVisible();
+  await page.getByRole("button", { name: "Mark Practice table complete" }).click();
+
+  await expect(page.getByRole("heading", { name: "Barbu's table" })).toBeVisible();
+  await expect(page.getByText("9 / 9 complete")).toBeVisible();
 });
 
 test("guided lesson accepts a legal card play", async ({ page }) => {
@@ -844,18 +921,15 @@ test("training path practice step starts quick drill and marks completion", asyn
 
   await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
 
-  for (const buttonName of ["Next decision", "Next decision", "Finish session"]) {
-    await page.locator(".hand-card.legal").first().click();
-    await checkDrillAnswer(page);
-    await continueDrillFromCheckedAnswer(page, buttonName as "Next decision" | "Finish session");
+  for (let decision = 1; decision <= 7; decision += 1) {
+    await expect(page.getByText(`Decision ${decision} of 7`)).toBeVisible();
+    await completeQuickDrillDecision(page);
+    await continueDrillFromCheckedAnswer(page, decision === 7 ? "Review session" : "Next decision");
   }
-
-  await expect(page.getByRole("heading", { name: "Session complete" })).toBeVisible();
-  await page.getByRole("button", { name: "Continue path" }).click();
 
   await expect(page.getByRole("heading", { name: "Review the hand" })).toBeVisible();
   await expect(page.getByLabel("Review contract results")).toBeVisible();
-  await expect(page.getByLabel("Review recent attempts")).toContainText("/ 3 clean");
+  await expect(page.getByLabel("Review recent attempts")).toContainText("/ 7 clean");
   await expect(
     page.getByText(
       /You (avoided the penalty card|used a void turn to discard|captured a penalty|won a clean trick|won a late trick|lost the late trick|followed suit well)/
