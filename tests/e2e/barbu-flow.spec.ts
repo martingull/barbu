@@ -184,6 +184,12 @@ test("quick drill is a fixed iPhone screen without page scroll", async ({ page }
   await expect(page.getByRole("button", { name: "Check answer" })).toBeVisible();
   await expectNoPageScroll(page);
 
+  const firstLegalCard = page.locator(".drill-hand .hand-card.legal").first();
+  await firstLegalCard.tap();
+  await expect(firstLegalCard).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".drill-hand .hand-card.selected")).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "Check answer" })).toBeEnabled();
+
   await page.screenshot({ path: testInfo.outputPath("quick-drill-fixed-screen.png"), fullPage: true });
 });
 
