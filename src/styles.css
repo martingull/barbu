@@ -411,6 +411,33 @@ button {
   color: #f5f1cf;
 }
 
+.fixed-contract-practice {
+  display: grid;
+  gap: 10px;
+}
+
+.fixed-contract-practice .section-heading {
+  color: #f7faf3;
+}
+
+.fixed-contract-practice .section-heading .eyebrow {
+  color: #f5f1cf;
+}
+
+.fixed-contract-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.contract-card.compact {
+  min-height: 68px;
+  padding: 10px;
+  border-color: rgba(245, 241, 207, 0.26);
+  background:
+    linear-gradient(180deg, rgba(245, 241, 207, 0.07), rgba(9, 34, 24, 0.18)),
+    #182f25;
+}
+
 .perfect-skill-grid {
   display: grid;
   gap: 8px;
@@ -1855,11 +1882,22 @@ h2 {
   line-height: 1.14;
 }
 
+.drill-loop-detail small {
+  color: #f5f1cf;
+  font-size: 0.76rem;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
 .drill-loop-actions {
   grid-column: 1 / -1;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 0.75fr);
   gap: 8px;
+}
+
+.review-focus-panel {
+  grid-column: 1 / -1;
 }
 
 .drill-result-list {

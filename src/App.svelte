@@ -842,6 +842,7 @@
   $: recentPlayBarbuAttempts = playBarbuHistory.slice(0, 3);
   $: drillLoopInsight = buildDrillLoopInsight(drillResults, recentPlayBarbuAttempts);
   $: drillLoopFocus = drillLoopInsight.contract || weakContract || "Full table";
+  $: drillLoopFocusSummary = currentContractResults.find((result) => result.contract === drillLoopFocus);
   $: latestPlayBarbuAttempt = playBarbuHistory[0];
   $: reviewResults = latestPlayBarbuAttempt?.results ?? [];
   $: reviewContractResults = summarizeContractResults(reviewResults);
@@ -850,6 +851,7 @@
   $: reviewInsight = buildReviewInsight(recentPlayBarbuAttempts);
   $: reviewAdvice = reviewInsight.message;
   $: reviewReplayContract = reviewInsight.contract || reviewWeakContract;
+  $: reviewFocusSummary = reviewContractResults.find((result) => result.contract === reviewReplayContract);
   $: fullHandLegalCardIds = new Set(fullHand?.legalCardIds ?? []);
   $: fullHandSelectedCard = fullHand?.playerHand.find((card) => card.id === fullHandSelectedCardId);
   $: fullHandLastCompletedTrick = fullHand?.completedTricks[fullHand.completedTricks.length - 1];
@@ -2353,6 +2355,24 @@
     await startDailyDrill("generated-drill");
   }
 
+  function startFixedContractDrill(lessonId: string) {
+    const lesson = guidedLessons.find((item) => item.id === lessonId);
+    const step = lesson ? drillSteps.find((item) => item.contract === lesson.contract) : undefined;
+
+    if (!lesson || !step) {
+      return;
+    }
+
+    activePathStepId = "";
+    activeDrillFocusContract = lesson.contract;
+    drillIndex = 0;
+    drillResults = [];
+    drillSetTitle = `Fixed drill: ${lesson.contract}`;
+    activeDrillSteps = [step];
+    resetDrillDecision();
+    appView = "drill";
+  }
+
   function continueCourse() {
     if (isCourseComplete || !nextPathStep) {
       openBarbuTable();
@@ -3140,15 +3160,30 @@
           <div class="barbu-mode-copy">
             <p class="eyebrow">Practice</p>
             <h2>Sharpen one decision at a time.</h2>
-            <p>Use short mixed drills when you want rhythm, or isolate one contract hand when a pattern feels weak.</p>
+            <p>Use short mixed drills when you want rhythm, or isolate one contract pattern when a rule feels weak.</p>
           </div>
           <div class="table-action-groups" aria-label="Barbu table actions">
             <section class="table-action-group" aria-label="Practice actions">
               <p class="eyebrow">Practice</p>
               <button class="drill-action" onclick={() => void startDailyDrill()} type="button">Quick drill</button>
-              <button class="drill-action" onclick={openPracticeChooser} type="button">Contract hands</button>
             </section>
           </div>
+
+          <section class="fixed-contract-practice" aria-label="Fixed contract drills">
+            <div class="section-heading">
+              <p class="eyebrow">Fixed drills</p>
+              <h2>Practice one contract pattern.</h2>
+            </div>
+            <div class="fixed-contract-grid">
+              {#each guidedLessons as lesson}
+                <button class="contract-card compact" onclick={() => startFixedContractDrill(lesson.id)} type="button">
+                  <span>{lesson.contract}</span>
+                  <strong>{lesson.title}</strong>
+                  <small>One authored decision with immediate feedback.</small>
+                </button>
+              {/each}
+            </div>
+          </section>
         </div>
       {:else if activeBarbuTableTab === "play"}
         <div
@@ -4033,8 +4068,11 @@
           <p>{drillLoopInsight.message}</p>
         </div>
         <div class="drill-loop-detail">
-          <span>Focus</span>
+          <span>Weakest contract</span>
           <strong>{drillLoopFocus}</strong>
+          {#if drillLoopFocusSummary}
+            <small>{drillLoopFocusSummary.clean} / {drillLoopFocusSummary.total} clean</small>
+          {/if}
         </div>
         <div class="drill-loop-detail">
           <span>Recent rhythm</span>
@@ -4123,6 +4161,29 @@
         </h2>
         <p>{reviewAdvice}</p>
       </div>
+
+      {#if reviewReplayContract}
+        <div class="drill-loop-panel review-focus-panel" aria-label="Review focus">
+          <div class="drill-loop-copy">
+            <p class="eyebrow">Targeted repetition</p>
+            <h2>{reviewReplayContract}</h2>
+            <strong>Replay the pattern that cost the most attention.</strong>
+            <p>{reviewAdvice}</p>
+          </div>
+          {#if reviewFocusSummary}
+            <div class="drill-loop-detail">
+              <span>Last result</span>
+              <strong>{reviewFocusSummary.clean} / {reviewFocusSummary.total} clean</strong>
+              <small>{outcomeLabels[reviewFocusSummary.outcome]}</small>
+            </div>
+          {/if}
+          <div class="drill-loop-actions">
+            <button class="primary-action" onclick={() => void replayReviewWeakContract()} type="button">
+              Replay {reviewReplayContract}
+            </button>
+          </div>
+        </div>
+      {/if}
 
       {#if reviewContractResults.length}
         <div class="contract-result-list" aria-label="Review contract results">
