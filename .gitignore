@@ -6,6 +6,7 @@
 /playwright-report/
 /test-results/
 
+.idea/
 .DS_Store
 npm-debug.log*
 *.log

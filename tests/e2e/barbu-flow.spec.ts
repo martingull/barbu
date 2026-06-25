@@ -402,7 +402,7 @@ test("Quick drill runs as a generated learning loop", async ({ page }, testInfo)
   await expectNoPageScroll(page);
 });
 
-test("active game tables share one compact surface", async ({ page }) => {
+test("active game tables share one compact surface", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 393, height: 852 });
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
@@ -419,16 +419,22 @@ test("active game tables share one compact surface", async ({ page }) => {
   await page.locator(".table-play-topbar").getByRole("button", { name: "Table" }).click();
   await openBarbuTab(page, "Play");
   await page.getByRole("button", { name: "Play Barbu" }).click();
+  await page.screenshot({ path: testInfo.outputPath("play-barbu-contract-intro.png"), fullPage: true });
   await page.getByRole("button", { name: "Start hand" }).click();
 
   await expect(page.getByRole("heading", { name: "No Hearts hand" })).toBeVisible();
   await expect(page.locator(".table-play-surface")).toBeVisible();
+  await expect(page.getByLabel("Current hand")).toBeVisible();
+  await expect(page.getByLabel("Table scores")).toBeVisible();
+  await expect(page.locator(".summary-row-label", { hasText: "Current hand" })).toBeVisible();
+  await expect(page.locator(".summary-row-label", { hasText: "Table scores" })).toBeVisible();
   const noHeartsTable = await page.getByLabel("No Hearts hand table").boundingBox();
   expect(noHeartsTable).not.toBeNull();
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
   expect(Math.abs((noHeartsTable?.width ?? 0) - (playBarbuTable?.width ?? 0))).toBeLessThanOrEqual(1);
   expect(Math.abs((noHeartsTable?.height ?? 0) - (playBarbuTable?.height ?? 0))).toBeLessThanOrEqual(1);
+  await page.screenshot({ path: testInfo.outputPath("play-barbu-active-hand.png"), fullPage: true });
 
   await page.locator(".full-hand-card.legal").first().click();
   await page.getByRole("button", { name: "Play card" }).click();

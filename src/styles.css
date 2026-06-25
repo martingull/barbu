@@ -1668,7 +1668,47 @@ h2 {
   gap: 8px;
 }
 
-.full-hand-summary div {
+.full-hand-summary.grouped-play-summary {
+  grid-template-columns: 1fr;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid rgba(245, 241, 207, 0.24);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(9, 34, 24, 0.16)),
+    #1b372b;
+}
+
+.full-hand-summary-row {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.full-hand-summary-row.current-hand {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.full-hand-summary-row.current-hand.no-last-two {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.full-hand-summary-row.table-score {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.summary-row-label {
+  grid-column: 1 / -1;
+  color: #f5f1cf;
+  font-size: 0.64rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.full-hand-summary:not(.grouped-play-summary) > div,
+.full-hand-summary-row > div {
   display: grid;
   gap: 4px;
   min-height: 66px;
@@ -1678,6 +1718,14 @@ h2 {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(9, 34, 24, 0.16)),
     #182f25;
+}
+
+.full-hand-summary-row.table-score > div {
+  min-height: 52px;
+  padding: 8px 10px;
+  background:
+    linear-gradient(180deg, rgba(245, 241, 207, 0.05), rgba(9, 34, 24, 0.18)),
+    #102319;
 }
 
 .full-hand-summary span {
@@ -1693,7 +1741,11 @@ h2 {
   line-height: 1;
 }
 
-.compact-run-complete div {
+.full-hand-summary-row.table-score strong {
+  font-size: 1rem;
+}
+
+.compact-run-complete > div {
   min-height: 52px;
   padding: 8px 10px;
 }
@@ -2937,9 +2989,29 @@ h2 {
     gap: 6px;
   }
 
-  .table-play-surface .full-hand-summary div {
+  .table-play-surface .full-hand-summary.grouped-play-summary {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .table-play-surface .full-hand-summary-row.current-hand {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .table-play-surface .full-hand-summary-row.current-hand.no-last-two,
+  .table-play-surface .full-hand-summary-row.table-score {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .table-play-surface .full-hand-summary:not(.grouped-play-summary) > div,
+  .table-play-surface .full-hand-summary-row > div {
     min-height: 0;
     padding: 8px;
+  }
+
+  .table-play-surface .full-hand-summary-row.table-score > div {
+    padding: 7px 6px;
   }
 
   .table-play-surface .full-hand-summary span {

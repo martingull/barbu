@@ -3645,32 +3645,42 @@
       >
         {#snippet summary()}
           {#if !fullHandRunIsComplete}
-            <div class="full-hand-summary" aria-label={`${fullHand.contract} hand score`}>
-              <div>
-                <span>{fullHandContractMeta.playerValueLabel}</span>
-                <strong>{fullHand.playerPenalty}</strong>
-              </div>
-              <div>
-                <span>{fullHandPenaltyPlayedLabel}</span>
-                <strong>{fullHand.totalPenalty} / {fullHandPenaltyTotal}</strong>
-              </div>
-              <div>
-                <span>Tricks</span>
-                <strong>{fullHand.completedTricks.length} / 13</strong>
-              </div>
-              {#if fullHand.contract === "No Last Two"}
+            <div class="full-hand-summary grouped-play-summary" aria-label={`${fullHand.contract} hand score`}>
+              <div
+                class:no-last-two={fullHand.contract === "No Last Two"}
+                class="full-hand-summary-row current-hand"
+                aria-label="Current hand"
+              >
+                <span class="summary-row-label">Current hand</span>
                 <div>
-                  <span>{fullHandNoLastTwoPhaseLabel}</span>
-                  <strong>{fullHandNoLastTwoPhaseValue}</strong>
+                  <span>{fullHandContractMeta.playerValueLabel}</span>
+                  <strong>{fullHand.playerPenalty}</strong>
                 </div>
-              {/if}
-              {#if fullHandRunActive}
-                {#each scoreSeats as seat}
+                <div>
+                  <span>{fullHandPenaltyPlayedLabel}</span>
+                  <strong>{fullHand.totalPenalty} / {fullHandPenaltyTotal}</strong>
+                </div>
+                <div>
+                  <span>Tricks</span>
+                  <strong>{fullHand.completedTricks.length} / 13</strong>
+                </div>
+                {#if fullHand.contract === "No Last Two"}
                   <div>
-                    <span>{scoreSeatRunLabel(seat)} score</span>
-                    <strong>{formatSignedScore(fullHandRunSeatScores[seat])}</strong>
+                    <span>{fullHandNoLastTwoPhaseLabel}</span>
+                    <strong>{fullHandNoLastTwoPhaseValue}</strong>
                   </div>
-                {/each}
+                {/if}
+              </div>
+              {#if fullHandRunActive}
+                <div class="full-hand-summary-row table-score" aria-label="Table scores">
+                  <span class="summary-row-label">Table scores</span>
+                  {#each scoreSeats as seat}
+                    <div>
+                      <span>{scoreSeatRunLabel(seat)} score</span>
+                      <strong>{formatSignedScore(fullHandRunSeatScores[seat])}</strong>
+                    </div>
+                  {/each}
+                </div>
               {/if}
             </div>
           {:else}
