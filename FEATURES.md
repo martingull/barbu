@@ -28,7 +28,7 @@ The broader ambition is to make players stronger with a 52-card deck, not only t
 
 ## Current Feature Set
 
-- Game catalog with Barbu as the first playable core game and documented varieties kept under their parent game.
+- Game catalog with Barbu as the first playable core game, free starter placeholders for Hearts and Solitaire, and future placeholders for Whist, Bridge, Gin Rummy, and Canasta.
 - Barbu table with grouped Learn, Practice, Play, and Reference entry points, including a contract-hand practice chooser.
 - Five-step training path: concept, example, guided trick, practice, review.
 - Quick Drill mode as a generated practice loop: one decision at a time, immediate feedback, optional next decision, and a compact session result.
@@ -153,7 +153,7 @@ These are the next product increments that keep the app coherent.
 
 9. Card Sense Training v1
    - Parked for later, but important to the product identity.
-   - Add short mini-games for serious 52-card-deck skills: Suit Count, Danger Card Tracker, Trump Count, Void Finder, High Card Memory, and Safe Exit Trainer.
+   - Add short mini-games for serious 52-card-deck skills and practical card-counting habits: Suit Count, Danger Card Tracker, Trump Count, Void Finder, High Card Memory, and Safe Exit Trainer.
    - Specific future Whist idea: bake a tracking mini-game into Whist or a Whist variety where the player follows remaining trumps and court cards during play.
    - Keep each mini-game tied to real play, with one-sentence feedback explaining how the skill helps in Barbu, Hearts-family games, Whist, Bridge, or other classic card games.
    - Do not let these become disconnected brain-training toys; every exercise should make the player better at reading a table.

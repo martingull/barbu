@@ -51,7 +51,8 @@ content/             Structured game and lesson content
 
 ## Current Product Shape
 
-- A catalog/welcome screen that treats Barbu as the first playable core game in a broader card-game curriculum.
+- A catalog/welcome screen that treats Barbu as the first playable core game in a broader card-game curriculum, with placeholders for Hearts, Solitaire, Whist, Bridge, Gin Rummy, and Canasta.
+- The intended free starter catalog is Barbu, Hearts, and Solitaire; the other catalog entries can become later packs once the first game loop is strong.
 - The catalog stays focused on core games; varieties and teaching modes stay attached to their parent game screens.
 - A Barbu table screen with grouped Learn, Practice, Play, and Reference entry points, a contract-hand practice chooser, and a five-step training path.
 - Quick Drill mode with seven quick mixed-contract decisions across the playable contract roster, immediate feedback, and a compact result; Tauri builds use Rust-generated scenarios, while browser runs use a local generated fallback.
@@ -86,7 +87,7 @@ content/             Structured game and lesson content
 
 ## Long-Term Card Skill Direction
 
-Great card games are usually best against real people, but the app should first make local solo play and local opponents good enough to train real table habits. Barbu should become a place to practice transferable card skills, not only a library of rules.
+Great card games are usually best against real people, but the app should first make local solo play and local opponents good enough to train real table habits. Barbu should become a place to practice transferable card skills and practical card-counting habits, not only a library of rules.
 
 Future training modes may include card-sense mini-games:
 

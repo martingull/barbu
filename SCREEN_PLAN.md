@@ -56,7 +56,7 @@ Design implication:
 - Shared Hearts-family concepts should not be hardcoded as Barbu-only UI or copy.
 - Variants should remain attached to their parent core game.
 - New games should be added through family-aware data and reusable rules where practical, not by cloning the whole Barbu interface.
-- Bridge and Whist should stay visible as future product direction, but not become active implementation work until Barbu has a stable learning, practice, and play loop.
+- Bridge, Whist, Gin Rummy, Canasta, and Solitaire should stay visible as future product direction, but not become active implementation work until Barbu has a stable learning, practice, and play loop. Barbu, Hearts, and Solitaire are intended as the free starter catalog.
 
 ## Screen Map
 
@@ -67,7 +67,7 @@ Purpose: choose the game family or core game.
 Current role:
 
 - Shows Barbu as the first playable core game.
-- Shows future core games such as Hearts, Whist, and Bridge.
+- Shows future core games such as Hearts, Solitaire, Whist, Bridge, Gin Rummy, and Canasta.
 - Keeps varieties under their parent game instead of showing them as separate first-screen tables.
 - Signals that Barbu belongs to a broader Hearts-family catalog.
 

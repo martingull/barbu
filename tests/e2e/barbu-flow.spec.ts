@@ -108,8 +108,12 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByRole("heading", { name: "Core games" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Barbu" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Hearts planned" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Solitaire planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Whist planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Bridge planned" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Gin Rummy planned" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Canasta planned" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Solitaire planned" })).toContainText("Free");
   await expect(page.getByRole("heading", { name: "Varieties of play" })).toHaveCount(0);
   await expect(page.getByText("Barbu Learning Table")).toHaveCount(0);
 

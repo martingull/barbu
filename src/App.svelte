@@ -65,8 +65,8 @@
     family: string;
     title: string;
     status: CatalogStatus;
+    access: "Free" | "Pack";
     summary: string;
-    baseline: string;
     lessonCount: number;
   };
 
@@ -176,8 +176,8 @@
       family: "Hearts",
       title: "Barbu",
       status: "Ready",
+      access: "Free",
       summary: "Contract trick-taking against the King of Cards.",
-      baseline: "Parlett baseline",
       lessonCount: guidedLessons.length
     },
     {
@@ -185,8 +185,17 @@
       family: "Hearts",
       title: "Hearts",
       status: "Planned",
+      access: "Free",
       summary: "Plain-trick foundations before the contracts expand.",
-      baseline: "Parlett baseline",
+      lessonCount: 0
+    },
+    {
+      id: "solitaire",
+      family: "Patience",
+      title: "Solitaire",
+      status: "Planned",
+      access: "Free",
+      summary: "Solo card play for practicing order, suits, and patience habits.",
       lessonCount: 0
     },
     {
@@ -194,8 +203,8 @@
       family: "Whist",
       title: "Whist",
       status: "Planned",
+      access: "Pack",
       summary: "Partnership trick play and long-suit development.",
-      baseline: "Parlett baseline",
       lessonCount: 0
     },
     {
@@ -203,8 +212,26 @@
       family: "Bridge",
       title: "Bridge",
       status: "Planned",
+      access: "Pack",
       summary: "Declarer play, defense, and bidding concepts.",
-      baseline: "Parlett baseline",
+      lessonCount: 0
+    },
+    {
+      id: "gin-rummy",
+      family: "Rummy",
+      title: "Gin Rummy",
+      status: "Planned",
+      access: "Pack",
+      summary: "Draw, discard, meld, and read what the opponent is collecting.",
+      lessonCount: 0
+    },
+    {
+      id: "canasta",
+      family: "Rummy",
+      title: "Canasta",
+      status: "Planned",
+      access: "Pack",
+      summary: "Partnership meld-building with wild cards, packs, and bonuses.",
       lessonCount: 0
     }
   ];
@@ -2983,13 +3010,17 @@
             onclick={() => openGame(game.id)}
             type="button"
           >
-            <span class="game-family">{game.family}</span>
+            <span class="game-card-meta">
+              <span class="game-family">{game.family}</span>
+              <span class:free-access={game.access === "Free"} class="game-access">{game.access}</span>
+            </span>
             <strong>{game.title}</strong>
             <span class="game-summary">{game.summary}</span>
-            <span class="game-baseline">{game.baseline}</span>
             <span class="game-footer">
               <span>{game.status}</span>
-              <span>{catalogDetailLabel(game)}</span>
+              {#if game.lessonCount > 0}
+                <span>{catalogDetailLabel(game)}</span>
+              {/if}
             </span>
           </button>
         {/each}
@@ -3215,8 +3246,8 @@
             <p class="eyebrow">Perfect</p>
             <h2>Train the skills behind strong card play.</h2>
             <p>
-              Placeholder for short minigames that make you faster at remembering trumps, court cards, and cards that
-              have left the deck.
+              Placeholder for short minigames that build card-counting habits: remembering trumps, court cards, and
+              cards that have left the deck.
             </p>
           </div>
 
