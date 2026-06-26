@@ -10,7 +10,7 @@ const iPhone13 = {
   viewport: { width: 390, height: 844 }
 };
 
-const iPhone16 = {
+const iPhone16Curved = {
   ...devices["iPhone 15"],
   viewport: { width: 393, height: 852 }
 };
@@ -49,7 +49,7 @@ export default defineConfig({
     },
     {
       name: "iphone-16",
-      use: iPhone16
+      use: iPhone16Curved
     },
     {
       name: "iphone-15-pro-max",

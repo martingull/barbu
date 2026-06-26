@@ -1,4 +1,6 @@
 :root {
+  --app-safe-area-top: env(safe-area-inset-top, 0px);
+  --app-safe-area-bottom: env(safe-area-inset-bottom, 0px);
   color: #17201a;
   background: #102319;
   font-family:
@@ -2351,7 +2353,7 @@ h2 {
 
   .app-shell.fixed-play-screen {
     align-content: stretch;
-    padding: max(8px, env(safe-area-inset-top)) 12px max(8px, env(safe-area-inset-bottom));
+    padding: max(8px, var(--app-safe-area-top)) 12px max(8px, var(--app-safe-area-bottom));
   }
 
   .welcome-screen {
@@ -3266,7 +3268,7 @@ h2 {
   .fixed-play-screen .table-play-surface.compact-play .drill-hand {
     position: fixed;
     right: 16px;
-    bottom: calc(max(8px, env(safe-area-inset-bottom)) + 80px);
+    bottom: calc(max(8px, var(--app-safe-area-bottom)) + 80px);
     left: 16px;
     width: auto;
     z-index: 24;
@@ -3287,7 +3289,7 @@ h2 {
     position: fixed;
     grid-row: 1;
     right: 12px;
-    bottom: max(8px, env(safe-area-inset-bottom));
+    bottom: max(8px, var(--app-safe-area-bottom));
     left: 12px;
     z-index: 30;
     display: grid;

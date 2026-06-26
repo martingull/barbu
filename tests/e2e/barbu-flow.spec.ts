@@ -1,6 +1,29 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
+test.beforeEach(async ({ page }, testInfo) => {
+  if (testInfo.project.name !== "iphone-16") {
+    return;
+  }
+
+  await page.addInitScript(() => {
+    const applySafeArea = () => {
+      document.documentElement.style.setProperty("--app-safe-area-top", "47px");
+      document.documentElement.style.setProperty("--app-safe-area-bottom", "34px");
+    };
+
+    applySafeArea();
+    document.addEventListener("DOMContentLoaded", applySafeArea, { once: true });
+  });
+});
+
+async function safeAreaBottom(page: Page) {
+  return page.evaluate(() => {
+    const value = getComputedStyle(document.documentElement).getPropertyValue("--app-safe-area-bottom").trim();
+    return Number.parseFloat(value) || 0;
+  });
+}
+
 async function expectNoPageScroll(page: Page) {
   await expect
     .poll(async () =>
@@ -22,7 +45,8 @@ async function expectGameplayActionRowPinned(page: Page) {
 
       const viewportHeight = await page.evaluate(() => window.innerHeight);
       const bottomGap = viewportHeight - (box.y + box.height);
-      return bottomGap >= 0 && bottomGap <= 18;
+      const expectedBottomGap = await safeAreaBottom(page);
+      return bottomGap >= expectedBottomGap - 1 && bottomGap <= expectedBottomGap + 18;
     })
     .toBe(true);
 }
