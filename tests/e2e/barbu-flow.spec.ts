@@ -46,6 +46,20 @@ async function expectHandNearActionRow(page: Page, handSelector: string) {
     .toBe(true);
 }
 
+async function expectTableSlotsSeparated(page: Page) {
+  await expect
+    .poll(async () => {
+      const tutor = await page.locator(".card-table .tutor-slot .cardholder").boundingBox();
+      const you = await page.locator(".card-table .you-slot .cardholder").boundingBox();
+      if (!tutor || !you) {
+        return false;
+      }
+
+      return tutor.y + tutor.height <= you.y;
+    })
+    .toBe(true);
+}
+
 async function openBarbuTab(page: Page, tab: "Learn" | "Practice" | "Play" | "Perfect") {
   await page.getByRole("tab", { name: tab }).click();
   await expect(page.getByRole("tab", { name: tab })).toHaveAttribute("aria-selected", "true");
@@ -447,6 +461,7 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
   await expect(page.locator(".summary-row-label", { hasText: "Current hand" })).toBeVisible();
   await expect(page.locator(".summary-row-label", { hasText: "Table scores" })).toBeVisible();
   await expect(page.locator(".card-table .cardholder")).toHaveCount(4);
+  await expectTableSlotsSeparated(page);
   const noHeartsTable = await page.getByLabel("No Hearts hand table").boundingBox();
   expect(noHeartsTable).not.toBeNull();
   await expectNoPageScroll(page);
@@ -474,6 +489,7 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
   await page.getByRole("button", { name: "Play card" }).click();
   await expect(page.getByRole("button", { name: "Next trick", exact: true })).toBeVisible();
   await expect(page.locator(".card-table .cardholder")).toHaveCount(4);
+  await expectTableSlotsSeparated(page);
   const reviewingNoHeartsTable = await page.getByLabel("No Hearts hand table").boundingBox();
   expect(reviewingNoHeartsTable).not.toBeNull();
   expect(Math.abs((reviewingNoHeartsTable?.y ?? 0) - (noHeartsTable?.y ?? 0))).toBeLessThanOrEqual(1);
@@ -495,6 +511,30 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
   await page.screenshot({ path: testInfo.outputPath("play-barbu-replay-hand.png"), fullPage: true });
+
+  await page.getByRole("button", { name: "Next contract" }).click();
+  await expect(page.getByRole("heading", { name: "No Queens" })).toBeVisible();
+  await page.getByRole("button", { name: "Start hand" }).click();
+  await expect(page.getByRole("heading", { name: "No Queens hand" })).toBeVisible();
+  await expect(page.getByLabel("No Queens hand table")).toBeVisible();
+  await expectTableSlotsSeparated(page);
+  await expect(page.locator(".full-hand-cards .full-hand-card")).toHaveCount(13);
+  await expectHandNearActionRow(page, ".full-hand-cards");
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
+  await page.screenshot({ path: testInfo.outputPath("play-barbu-second-hand.png"), fullPage: true });
+
+  await page.locator(".full-hand-card.legal").first().click();
+  await page.getByRole("button", { name: "Play card" }).click();
+  await expect(page.getByRole("button", { name: "Next trick", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Next trick", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "No Queens hand" })).toBeVisible();
+  await expectTableSlotsSeparated(page);
+  await expect(page.locator(".full-hand-cards .full-hand-card")).toHaveCount(12);
+  await expectHandNearActionRow(page, ".full-hand-cards");
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
+  await page.screenshot({ path: testInfo.outputPath("play-barbu-no-queens-after-first-trick.png"), fullPage: true });
 });
 
 test("Play Barbu advances full-hand contracts with a running total", async ({ page }) => {

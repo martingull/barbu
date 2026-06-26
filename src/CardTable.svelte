@@ -195,7 +195,7 @@
   @media (max-width: 520px) {
     .card-table {
       grid-template-columns: 1fr;
-      grid-template-rows: 236px;
+      grid-template-rows: 270px;
     }
 
     .table-card {
@@ -216,7 +216,7 @@
     }
 
     .tutor-slot {
-      padding-top: 20px;
+      padding-top: 18px;
     }
 
     .left-slot {
@@ -228,7 +228,7 @@
     }
 
     .you-slot {
-      padding-bottom: 20px;
+      padding-bottom: 18px;
     }
   }
 </style>

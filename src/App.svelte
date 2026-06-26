@@ -3774,13 +3774,6 @@
             {#if fullHandError}
               <p class="outcome warning">{fullHandError}</p>
             {/if}
-            <p class="explanation">
-              {fullHandSelectedCard
-                ? fullHandLegalCardIds.has(fullHandSelectedCard.id)
-                  ? `${fullHandSelectedCard.label} is legal here.`
-                  : `${fullHandSelectedCard.label} is off suit while you still have a legal card.`
-                : "Legal cards are highlighted. Barbu's table will finish the trick after you play."}
-            </p>
 
             <div class="hand full-hand-cards" aria-label={`Your ${fullHand.contract} hand`}>
               {#each fullHand.playerHand as card}

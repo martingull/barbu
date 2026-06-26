@@ -10,6 +10,11 @@ const iPhone13 = {
   viewport: { width: 390, height: 844 }
 };
 
+const iPhone16 = {
+  ...devices["iPhone 15"],
+  viewport: { width: 393, height: 852 }
+};
+
 const iPhone15ProMax = {
   ...devices["iPhone 15 Pro Max"],
   viewport: { width: 430, height: 932 }
@@ -41,6 +46,10 @@ export default defineConfig({
     {
       name: "iphone-13",
       use: iPhone13
+    },
+    {
+      name: "iphone-16",
+      use: iPhone16
     },
     {
       name: "iphone-15-pro-max",

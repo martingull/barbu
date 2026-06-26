@@ -2351,7 +2351,7 @@ h2 {
 
   .app-shell.fixed-play-screen {
     align-content: stretch;
-    padding: max(8px, env(safe-area-inset-top)) 12px calc(max(8px, env(safe-area-inset-bottom)) + 62px);
+    padding: max(8px, env(safe-area-inset-top)) 12px max(8px, env(safe-area-inset-bottom));
   }
 
   .welcome-screen {
@@ -2990,7 +2990,7 @@ h2 {
 
   .fixed-play-screen .table-play-surface.compact-play,
   .fixed-play-screen .table-play-surface.compact-result:not(.table-hidden) {
-    grid-template-rows: auto 256px minmax(0, 1fr);
+    grid-template-rows: auto 270px minmax(0, 1fr);
     min-height: 0;
     overflow: hidden;
   }
@@ -3067,7 +3067,7 @@ h2 {
   .table-play-surface.compact-play .card-table,
   .table-play-surface.compact-result .card-table {
     grid-template-columns: 1fr;
-    grid-template-rows: 256px;
+    grid-template-rows: 270px;
   }
 
   .table-play-surface .table-card {
@@ -3080,7 +3080,7 @@ h2 {
   }
 
   .table-play-surface .tutor-slot {
-    padding-top: 18px;
+    padding-top: 16px;
   }
 
   .table-play-surface .left-slot {
@@ -3092,7 +3092,7 @@ h2 {
   }
 
   .table-play-surface .you-slot {
-    padding-bottom: 18px;
+    padding-bottom: 16px;
   }
 
   .table-play-surface .table-play-panel {
@@ -3105,7 +3105,7 @@ h2 {
     display: grid;
     grid-template-rows: auto auto 1fr auto;
     min-height: 0;
-    overflow: hidden;
+    overflow: visible;
     padding-bottom: 10px;
   }
 
@@ -3225,6 +3225,17 @@ h2 {
     padding-top: 4px;
   }
 
+  .fixed-play-screen .table-play-surface.compact-play .full-hand-cards,
+  .fixed-play-screen .table-play-surface.compact-play .drill-hand {
+    position: fixed;
+    right: 16px;
+    bottom: calc(max(8px, env(safe-area-inset-bottom)) + 80px);
+    left: 16px;
+    width: auto;
+    z-index: 24;
+    padding-top: 0;
+  }
+
   .table-play-surface.compact-play .hand-card.selected {
     transform: none;
   }
@@ -3268,7 +3279,7 @@ h2 {
   }
 
   .table-play-surface.compact-play .full-hand-cards {
-    grid-template-columns: repeat(7, minmax(50px, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 4px;
   }
 
@@ -3288,6 +3299,6 @@ h2 {
   }
 
   .table-play-surface.compact-play .full-hand-cards {
-    grid-template-columns: repeat(6, minmax(48px, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
