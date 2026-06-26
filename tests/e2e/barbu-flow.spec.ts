@@ -339,13 +339,17 @@ test("Perfect mode starts card-counting minigames", async ({ page }, testInfo) =
   await page.getByLabel("Count trumps mode").getByRole("button", { name: "Realistic" }).click();
   await expect(page.getByLabel("Realistic trump table")).toBeVisible();
   await expect(page.getByLabel("Count trumps trainer")).toContainText("Trick 1 of 3");
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
+  await page.screenshot({ path: testInfo.outputPath("perfect-count-trumps-realistic-play.png"), fullPage: true });
 
   for (let trick = 1; trick <= 3; trick += 1) {
     await page.locator(".realistic-trump-hand .full-hand-card.legal").first().click();
     await expect(page.getByRole("button", { name: "Play card" })).toBeEnabled();
     await page.getByRole("button", { name: "Play card" }).click();
-    await expect(page.getByRole("button", { name: trick === 3 ? "Answer memory" : "Next trick" })).toBeVisible();
-    await page.getByRole("button", { name: trick === 3 ? "Answer memory" : "Next trick" }).click();
+    const nextAction = page.getByRole("button", { name: trick === 3 ? "Answer memory" : "Next trick", exact: true });
+    await expect(nextAction).toBeVisible();
+    await nextAction.click();
   }
 
   await expect(page.getByLabel("Realistic trump memory prompt")).toContainText("Cards hidden");

@@ -2227,6 +2227,16 @@ h2 {
   color: #21372d;
 }
 
+.realistic-mode-switch {
+  grid-column: 1 / -1;
+  align-self: start;
+}
+
+.realistic-mode-switch button {
+  align-self: start;
+  min-height: 38px;
+}
+
 .trump-count-prompt {
   display: grid;
   gap: 6px;
@@ -2324,6 +2334,13 @@ h2 {
 
 .realistic-trump-hand .full-hand-card.illegal {
   opacity: 0.42;
+}
+
+.table-play-surface.compact-play .realistic-trump-hand {
+  grid-template-columns: repeat(5, minmax(46px, 64px));
+  justify-content: center;
+  align-items: end;
+  gap: 8px;
 }
 
 .trump-memory-hidden {
