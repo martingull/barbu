@@ -28,6 +28,7 @@ The app should separate these concerns:
 - **Playing**: full hands and Play Barbu sessions.
 - **Reference**: Parlett-style rule structure and variants.
 - **Meta features**: progress, monetization, multiplayer, accounts, and future character presentation.
+- **Perfect/card sense**: short skill trainers for transferable counting, memory, and table-reading habits.
 
 When a feature is added, it should have one primary home. Cross-links are allowed, but the feature should not become another button scattered across every screen.
 
@@ -57,6 +58,8 @@ Design implication:
 - Variants should remain attached to their parent core game.
 - New games should be added through family-aware data and reusable rules where practical, not by cloning the whole Barbu interface.
 - Bridge, Whist, Gin Rummy, Canasta, and Solitaire should stay visible as future product direction, but not become active implementation work until Barbu has a stable learning, practice, and play loop. Barbu, Hearts, and Solitaire are intended as the free starter catalog.
+- Catalog order should show free starter tables first: Hearts, Barbu, and Solitaire. Paid packs and paid future games should follow.
+- Monetization should support both individual pack purchases and one subscription that unlocks the full catalog. UI can label packs before entitlement plumbing exists, but access decisions should later be centralized.
 
 ## Screen Map
 
@@ -66,8 +69,9 @@ Purpose: choose the game family or core game.
 
 Current role:
 
-- Shows Barbu as the first playable core game.
-- Shows future core games such as Hearts, Solitaire, Whist, Bridge, Gin Rummy, and Canasta.
+- Shows free starter tables first: Hearts, Barbu, and Solitaire.
+- Shows Card Counting after the free starters as the first ready paid skill pack.
+- Shows future paid games such as Whist, Bridge, Gin Rummy, and Canasta.
 - Keeps varieties under their parent game instead of showing them as separate first-screen tables.
 - Signals that Barbu belongs to a broader Hearts-family catalog.
 
@@ -238,6 +242,22 @@ Should not contain:
 - Main learning flow.
 - Practice results.
 - Character dialogue unless it clarifies a rule.
+
+### Perfect / Card Sense
+
+Purpose: train skills that make the player stronger across 52-card games.
+
+Current role:
+
+- Starts a Card Counting pack.
+- Offers Count Trumps as the first minigame: show played cards, count visible trumps, and answer how many remain.
+- Offers Track Court Cards as the second minigame: show played cards, count visible jacks, queens, and kings, and answer how many remain.
+
+Near-term direction:
+
+- Add danger-card memory as a separate exercise.
+- Tie Perfect exercises back to Barbu, Hearts-family games, Whist, and Bridge.
+- Keep each exercise short and interactive, not a rules article.
 
 ### Barbu Character Layer
 

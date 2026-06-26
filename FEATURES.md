@@ -26,9 +26,11 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 
 The broader ambition is to make players stronger with a 52-card deck, not only to teach individual rule sets. Barbu should train transferable card skills: suit counting, danger-card memory, void inference, trump awareness, safe exits, table-strength reading, and knowing when to win or duck. Learning explains games; practice builds card sense; Play modes should feel like trying to beat the table.
 
+The intended monetization model is free starter tables first, then optional paid packs. Players should be able to buy individual packs or subscribe to unlock the full catalog. Entitlement checks should stay centralized when implemented; do not scatter subscription logic through game screens.
+
 ## Current Feature Set
 
-- Game catalog with Barbu as the first playable core game, free starter placeholders for Hearts and Solitaire, and future placeholders for Whist, Bridge, Gin Rummy, and Canasta.
+- Game catalog ordered with free starter tables first: Hearts, Barbu, and Solitaire, followed by paid packs/future paid games such as Card Counting, Whist, Bridge, Gin Rummy, and Canasta.
 - Barbu table with grouped Learn, Practice, Play, and Reference entry points, including a contract-hand practice chooser.
 - Five-step training path: concept, example, guided trick, practice, review.
 - Quick Drill mode as a generated practice loop: one decision at a time, immediate feedback, optional next decision, and a compact session result.
@@ -52,6 +54,7 @@ The broader ambition is to make players stronger with a 52-card deck, not only t
 - Compact full-hand result panel with contract result, Barbu/player penalty split, key tricks, replay, and next-contract actions.
 - Training path practice step connected to Quick Drill completion.
 - Review step with latest Quick Drill score, weakest-contract advice, recent attempts, and replay actions.
+- Perfect mode Card Counting pack started with Count Trumps and Track Court Cards minigames.
 - Reason-based review advice that turns recent practice tags into one short next-step correction.
 - Local Quick Drill result history with contract-level summaries and focused replay for the weakest contract.
 - Local course progress for the playable Barbu path.
@@ -155,8 +158,10 @@ These are the next product increments that keep the app coherent.
    - Keep it local until the app needs sync or accounts.
 
 9. Card Sense Training v1
-   - Parked for later, but important to the product identity.
+   - Started in the catalog and Perfect mode with a Card Counting pack.
+   - Count Trumps and Track Court Cards are the first active exercises.
    - Add short mini-games for serious 52-card-deck skills and practical card-counting habits: Suit Count, Danger Card Tracker, Trump Count, Void Finder, High Card Memory, and Safe Exit Trainer.
+   - Next: add danger-card memory and connect card-counting exercises back to Play Barbu feedback.
    - Specific future Whist idea: bake a tracking mini-game into Whist or a Whist variety where the player follows remaining trumps and court cards during play.
    - Keep each mini-game tied to real play, with one-sentence feedback explaining how the skill helps in Barbu, Hearts-family games, Whist, Bridge, or other classic card games.
    - Do not let these become disconnected brain-training toys; every exercise should make the player better at reading a table.
@@ -183,6 +188,7 @@ These are the next product increments that keep the app coherent.
 - Entitlements and paid packs.
 - iOS simulator smoke tests.
 - StoreKit sandbox tests.
+- Individual pack purchases and an all-access subscription.
 
 ## Explicit Non-Goals For Now
 

@@ -412,7 +412,8 @@ button {
 }
 
 .practice-panel .drill-action,
-.play-panel .drill-action {
+.play-panel .drill-action,
+.perfect-panel .drill-action {
   width: 100%;
   border-color: #f5f1cf;
   background: #f5f1cf;
@@ -436,6 +437,44 @@ button {
 .fixed-contract-practice {
   display: grid;
   gap: 10px;
+}
+
+.perfect-pack {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(245, 241, 207, 0.32);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(245, 241, 207, 0.1), rgba(9, 34, 24, 0.22)),
+    #182f25;
+  color: #f7faf3;
+}
+
+.perfect-pack .eyebrow {
+  color: #f5f1cf;
+}
+
+.perfect-pack h2 {
+  font-size: 1.18rem;
+}
+
+.perfect-pack p:not(.eyebrow) {
+  margin-bottom: 0;
+  color: #dbe7d1;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.perfect-pack-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.perfect-panel .drill-action.secondary {
+  border-color: rgba(245, 241, 207, 0.7);
+  background: rgba(245, 241, 207, 0.08);
+  color: #f5f1cf;
 }
 
 .fixed-contract-practice .section-heading {
@@ -477,11 +516,27 @@ button {
     #182f25;
 }
 
+button.perfect-skill-card {
+  width: 100%;
+  text-align: left;
+}
+
+.perfect-skill-card.ready {
+  border-color: rgba(245, 241, 207, 0.46);
+  background:
+    linear-gradient(180deg, rgba(245, 241, 207, 0.08), rgba(9, 34, 24, 0.18)),
+    #1f4637;
+}
+
 .perfect-skill-card span {
   color: #f0b3a8;
   font-size: 0.7rem;
   font-weight: 900;
   text-transform: uppercase;
+}
+
+.perfect-skill-card.ready span {
+  color: #f5f1cf;
 }
 
 .perfect-skill-card strong {
@@ -2141,6 +2196,116 @@ h2 {
 
 .recent-attempt-list .eyebrow {
   margin: 4px 0 0;
+}
+
+.trump-count-screen {
+  display: grid;
+  gap: 14px;
+  padding: 12px;
+  color: #f7faf3;
+}
+
+.trump-count-prompt {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid rgba(245, 241, 207, 0.28);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(245, 241, 207, 0.08), rgba(9, 34, 24, 0.18)),
+    #1b372b;
+}
+
+.trump-count-prompt .eyebrow {
+  color: #f5f1cf;
+}
+
+.trump-count-prompt h2 {
+  font-size: 1.25rem;
+  line-height: 1.12;
+}
+
+.trump-count-prompt p:not(.eyebrow) {
+  margin-bottom: 0;
+  color: #dbe7d1;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.trump-seen-cards {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid rgba(245, 241, 207, 0.2);
+  border-radius: 8px;
+  background: #10251d;
+}
+
+.trump-seen-card {
+  aspect-ratio: 5 / 7;
+  border-radius: 5px;
+  box-shadow: 0 6px 16px rgba(4, 15, 10, 0.36);
+}
+
+.trump-seen-card.trump,
+.trump-seen-card.court {
+  outline: 2px solid #f5f1cf;
+  outline-offset: 1px;
+}
+
+.trump-seen-card.court {
+  outline-color: #f0b3a8;
+}
+
+.trump-count-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.trump-count-options button {
+  min-height: 54px;
+  border: 1px solid rgba(245, 241, 207, 0.52);
+  border-radius: 8px;
+  background: rgba(245, 241, 207, 0.08);
+  color: #f5f1cf;
+  font-size: 1.35rem;
+  font-weight: 950;
+}
+
+.trump-count-options button.selected {
+  border-color: #f5f1cf;
+  background: #f5f1cf;
+  color: #21372d;
+}
+
+.trump-count-options button.correct {
+  border-color: #f5f1cf;
+  background: #f5f1cf;
+  color: #21372d;
+}
+
+.trump-count-options button.wrong {
+  border-color: #f0b3a8;
+  background: rgba(240, 179, 168, 0.16);
+  color: #f0b3a8;
+}
+
+.trump-count-feedback {
+  margin-bottom: 0;
+  padding: 12px;
+  border-left: 4px solid #f5f1cf;
+  background: rgba(245, 241, 207, 0.08);
+  color: #dbe7d1;
+  font-weight: 800;
+  line-height: 1.42;
+}
+
+.trump-count-feedback.warning {
+  border-left-color: #f0b3a8;
+  background: rgba(240, 179, 168, 0.1);
+  color: #f0b3a8;
 }
 
 .card {

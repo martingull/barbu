@@ -232,6 +232,8 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByRole("heading", { name: "Choose a table" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Core games" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Barbu" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Open Card Counting" })).toContainText("Pack");
+  await expect(page.getByRole("button", { name: "Open Card Counting" })).toContainText("2 minigames");
   await expect(page.getByRole("button", { name: "Hearts planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Solitaire planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Whist planned" })).toBeVisible();
@@ -241,6 +243,11 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByRole("button", { name: "Solitaire planned" })).toContainText("Free");
   await expect(page.getByRole("heading", { name: "Varieties of play" })).toHaveCount(0);
   await expect(page.getByText("Barbu Learning Table")).toHaveCount(0);
+  await expect
+    .poll(async () =>
+      page.locator(".game-card strong").evaluateAll((items) => items.slice(0, 4).map((item) => item.textContent?.trim()))
+    )
+    .toEqual(["Hearts", "Barbu", "Solitaire", "Card Counting"]);
 
   await page.screenshot({ path: testInfo.outputPath("catalog.png"), fullPage: true });
 
@@ -278,11 +285,63 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
 
   await openBarbuTab(page, "Perfect");
   await expect(page.getByRole("heading", { name: "Train the skills behind strong card play." })).toBeVisible();
-  await expect(page.getByLabel("Perfect mode placeholders")).toContainText("Count trumps");
-  await expect(page.getByLabel("Perfect mode placeholders")).toContainText("Track court cards");
+  await expect(page.getByLabel("Card counting pack")).toContainText("Know what is still out.");
+  await expect(page.getByLabel("Perfect mode skills")).toContainText("Count trumps");
+  await expect(page.getByLabel("Perfect mode skills")).toContainText("Track court cards");
   await page.screenshot({ path: testInfo.outputPath("barbu-perfect.png"), fullPage: true });
 
+  await page.getByRole("button", { name: "Games" }).click();
+  await page.getByRole("button", { name: "Open Card Counting" }).click();
+  await expect(page.getByRole("heading", { name: "Barbu's table" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Perfect" })).toHaveAttribute("aria-selected", "true");
+
   await page.screenshot({ path: testInfo.outputPath("barbu-table.png"), fullPage: true });
+});
+
+test("Perfect mode starts card-counting minigames", async ({ page }, testInfo) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Barbu/ }).click();
+  await openBarbuTab(page, "Perfect");
+  await page.getByLabel("Card counting pack").getByRole("button", { name: "Count trumps" }).click();
+
+  await expect(page.getByRole("heading", { name: "Count trumps" })).toBeVisible();
+  await expect(page.getByLabel("Count trumps trainer")).toContainText("Hearts are trumps");
+  await expect.poll(async () => page.getByLabel("Played cards").locator(".trump-seen-card").count()).toBeGreaterThan(10);
+  await expect(page.getByLabel("Trump count answers").getByRole("button")).toHaveCount(4);
+  await expect(page.getByRole("button", { name: "Check count" })).toBeDisabled();
+
+  const correctAnswer = await page
+    .locator(".trump-seen-card.trump")
+    .count()
+    .then((seenTrumps) => 13 - seenTrumps);
+  await page.getByLabel("Trump count answers").getByRole("button", { name: String(correctAnswer) }).click();
+  await expect(page.getByRole("button", { name: "Check count" })).toBeEnabled();
+  await page.getByRole("button", { name: "Check count" }).click();
+
+  await expect(page.getByText(`Correct.`)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Next count" })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("perfect-count-trumps.png"), fullPage: true });
+
+  await page.getByLabel("Count trumps", { exact: true }).getByRole("button", { name: "Table" }).click();
+  await page.getByLabel("Card counting pack").getByRole("button", { name: "Track court cards" }).click();
+
+  await expect(page.getByRole("heading", { name: "Track court cards" })).toBeVisible();
+  await expect(page.getByLabel("Track court cards trainer")).toContainText("Jacks, queens, kings");
+  await expect.poll(async () => page.getByLabel("Played cards").locator(".trump-seen-card").count()).toBeGreaterThan(10);
+  await expect(page.getByLabel("Court card count answers").getByRole("button")).toHaveCount(4);
+  await expect(page.getByRole("button", { name: "Check count" })).toBeDisabled();
+
+  const correctCourtAnswer = await page
+    .locator(".trump-seen-card.court")
+    .count()
+    .then((seenCourts) => 12 - seenCourts);
+  await page.getByLabel("Court card count answers").getByRole("button", { name: String(correctCourtAnswer) }).click();
+  await expect(page.getByRole("button", { name: "Check count" })).toBeEnabled();
+  await page.getByRole("button", { name: "Check count" }).click();
+
+  await expect(page.getByText(`Correct.`)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Next count" })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("perfect-track-court-cards.png"), fullPage: true });
 });
 
 test("practice tab keeps contract hands hidden while fixed drills are public", async ({ page }, testInfo) => {

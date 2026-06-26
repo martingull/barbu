@@ -53,6 +53,8 @@
     | "runContractIntro"
     | "fullHand"
     | "dominoHand"
+    | "trumpCount"
+    | "courtCount"
     | "pathReview";
 
   type PathAction = "lesson" | "generated" | "review" | "planned";
@@ -69,6 +71,7 @@
     access: "Free" | "Pack";
     summary: string;
     lessonCount: number;
+    detailLabel?: string;
   };
 
   type BarbuPathStep = {
@@ -171,6 +174,19 @@
     habit: string;
   };
 
+  type TrumpCountRound = {
+    trumpSuit: Suit;
+    seenCards: Card[];
+    answer: number;
+    options: number[];
+  };
+
+  type CourtCountRound = {
+    seenCards: Card[];
+    answer: number;
+    options: number[];
+  };
+
   type SavedPlayBarbuRun = {
     version: 1;
     seed: number;
@@ -187,15 +203,6 @@
 
   const catalogEntries: CatalogEntry[] = [
     {
-      id: "barbu",
-      family: "Hearts",
-      title: "Barbu",
-      status: "Ready",
-      access: "Free",
-      summary: "Contract trick-taking against the King of Cards.",
-      lessonCount: guidedLessons.length
-    },
-    {
       id: "hearts",
       family: "Hearts",
       title: "Hearts",
@@ -205,6 +212,15 @@
       lessonCount: 0
     },
     {
+      id: "barbu",
+      family: "Hearts",
+      title: "Barbu",
+      status: "Ready",
+      access: "Free",
+      summary: "Contract trick-taking against the King of Cards.",
+      lessonCount: guidedLessons.length
+    },
+    {
       id: "solitaire",
       family: "Patience",
       title: "Solitaire",
@@ -212,6 +228,16 @@
       access: "Free",
       summary: "Solo card play for practicing order, suits, and patience habits.",
       lessonCount: 0
+    },
+    {
+      id: "card-counting",
+      family: "Skill pack",
+      title: "Card Counting",
+      status: "Ready",
+      access: "Pack",
+      summary: "Fast minigames for tracking trumps, court cards, and what remains.",
+      lessonCount: 0,
+      detailLabel: "2 minigames"
     },
     {
       id: "whist",
@@ -259,6 +285,8 @@
   const maxStoredDrillPatterns = 6;
   const maxStoredPlayBarbuAttempts = 8;
   const scoreSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
+  const countingRanks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+  const countingSuits: Suit[] = ["C", "D", "H", "S"];
   const dominoOrderScores = [45, 20, 5, -5];
   const seatByPlayerIndex: Record<number, Seat> = {
     0: "Tutor",
@@ -777,6 +805,16 @@
   let fullHandRunSeed = 0;
   let fullHandRunResults: FullHandRunResult[] = [];
   let pendingRunContract: FullHandContract = fullHandContracts[0];
+  let trumpCountRound = buildTrumpCountRound(practiceSeed);
+  let trumpCountSelected: number | null = null;
+  let trumpCountChecked = false;
+  let trumpCountAttempts = 0;
+  let trumpCountClean = 0;
+  let courtCountRound = buildCourtCountRound(practiceSeed + 17);
+  let courtCountSelected: number | null = null;
+  let courtCountChecked = false;
+  let courtCountAttempts = 0;
+  let courtCountClean = 0;
   $: isTablePlayScreen = appView === "drill" || appView === "fullHand" || appView === "dominoHand";
 
   function runSeatScores(results: FullHandRunResult[]) {
@@ -1008,6 +1046,20 @@
       ? dominoMoveExplanation(dominoHand, dominoSelectedCard)
       : dominoLastMoveReason || dominoMoveExplanation(dominoHand, undefined)
     : "";
+  $: trumpCountSeenCount = trumpCountRound.seenCards.filter((card) => card.suit === trumpCountRound.trumpSuit).length;
+  $: trumpCountFeedback =
+    trumpCountChecked && trumpCountSelected !== null
+      ? trumpCountSelected === trumpCountRound.answer
+        ? `Correct. ${trumpCountSeenCount} ${suitNames[trumpCountRound.trumpSuit].toLowerCase()} have appeared, so ${trumpCountRound.answer} remain.`
+        : `${trumpCountSeenCount} ${suitNames[trumpCountRound.trumpSuit].toLowerCase()} have appeared. ${trumpCountRound.answer} remain.`
+      : "Count the trump cards shown, then name how many are still out.";
+  $: courtCountSeenCount = courtCountRound.seenCards.filter((card) => isCourtCard(card)).length;
+  $: courtCountFeedback =
+    courtCountChecked && courtCountSelected !== null
+      ? courtCountSelected === courtCountRound.answer
+        ? `Correct. ${courtCountSeenCount} court cards have appeared, so ${courtCountRound.answer} remain.`
+        : `${courtCountSeenCount} court cards have appeared. ${courtCountRound.answer} remain.`
+      : "Count jacks, queens, and kings, then name how many court cards are still out.";
 
   function loadCourseProgress() {
     if (typeof localStorage === "undefined") {
@@ -1353,6 +1405,137 @@
     appView = "barbuTable";
   }
 
+  function openTrumpCountTrainer() {
+    trumpCountRound = buildTrumpCountRound(usePracticeSeed());
+    trumpCountSelected = null;
+    trumpCountChecked = false;
+    appView = "trumpCount";
+  }
+
+  function openCourtCountTrainer() {
+    courtCountRound = buildCourtCountRound(usePracticeSeed());
+    courtCountSelected = null;
+    courtCountChecked = false;
+    appView = "courtCount";
+  }
+
+  function buildTrumpCountRound(seed: number): TrumpCountRound {
+    const deck = shuffleCountingDeck(seed);
+    const seenCardCount = 14 + (seed % 7);
+    const seenCards = deck.slice(0, seenCardCount);
+    const trumpSuit: Suit = "H";
+    const answer = 13 - seenCards.filter((card) => card.suit === trumpSuit).length;
+
+    return {
+      trumpSuit,
+      seenCards,
+      answer,
+      options: countOptions(answer, seed, 13)
+    };
+  }
+
+  function buildCourtCountRound(seed: number): CourtCountRound {
+    const deck = shuffleCountingDeck(seed + 97);
+    const seenCardCount = 15 + (seed % 8);
+    const seenCards = deck.slice(0, seenCardCount);
+    const answer = 12 - seenCards.filter((card) => isCourtCard(card)).length;
+
+    return {
+      seenCards,
+      answer,
+      options: countOptions(answer, seed, 12)
+    };
+  }
+
+  function shuffleCountingDeck(seed: number) {
+    const deck = countingSuits.flatMap((suit) =>
+      countingRanks.map((rank) => ({
+        id: `${rank}${suit}`,
+        rank,
+        suit,
+        label: `${rank}${suit}`
+      }))
+    );
+    let randomSeed = seed || 1;
+
+    for (let index = deck.length - 1; index > 0; index -= 1) {
+      randomSeed = (Math.imul(randomSeed, 1_664_525) + 1_013_904_223) >>> 0;
+      const swapIndex = randomSeed % (index + 1);
+      [deck[index], deck[swapIndex]] = [deck[swapIndex], deck[index]];
+    }
+
+    return deck;
+  }
+
+  function countOptions(answer: number, seed: number, max: number) {
+    const offsets = seed % 2 === 0 ? [-2, -1, 0, 1] : [-1, 0, 1, 2];
+    const options = offsets.map((offset) => Math.max(0, Math.min(max, answer + offset)));
+
+    for (let value = 0; new Set(options).size < 4 && value <= max; value += 1) {
+      options.push(value);
+    }
+
+    return Array.from(new Set(options)).slice(0, 4).sort((left, right) => left - right);
+  }
+
+  function isCourtCard(card: Card) {
+    return card.rank === "J" || card.rank === "Q" || card.rank === "K";
+  }
+
+  function selectTrumpCountAnswer(option: number) {
+    if (trumpCountChecked) {
+      return;
+    }
+
+    trumpCountSelected = option;
+  }
+
+  function checkTrumpCountAnswer() {
+    if (trumpCountSelected === null || trumpCountChecked) {
+      return;
+    }
+
+    trumpCountChecked = true;
+    trumpCountAttempts += 1;
+
+    if (trumpCountSelected === trumpCountRound.answer) {
+      trumpCountClean += 1;
+    }
+  }
+
+  function nextTrumpCountRound() {
+    trumpCountRound = buildTrumpCountRound(usePracticeSeed());
+    trumpCountSelected = null;
+    trumpCountChecked = false;
+  }
+
+  function selectCourtCountAnswer(option: number) {
+    if (courtCountChecked) {
+      return;
+    }
+
+    courtCountSelected = option;
+  }
+
+  function checkCourtCountAnswer() {
+    if (courtCountSelected === null || courtCountChecked) {
+      return;
+    }
+
+    courtCountChecked = true;
+    courtCountAttempts += 1;
+
+    if (courtCountSelected === courtCountRound.answer) {
+      courtCountClean += 1;
+    }
+  }
+
+  function nextCourtCountRound() {
+    courtCountRound = buildCourtCountRound(usePracticeSeed());
+    courtCountSelected = null;
+    courtCountChecked = false;
+  }
+
   function openBarbuContracts() {
     activeBarbuTableTab = "learn";
     appView = "barbuContracts";
@@ -1379,6 +1562,12 @@
   }
 
   function openGame(gameId: string) {
+    if (gameId === "card-counting") {
+      activeBarbuTableTab = "perfect";
+      openBarbuTable();
+      return;
+    }
+
     if (gameId !== "barbu") {
       return;
     }
@@ -1387,6 +1576,10 @@
   }
 
   function catalogDetailLabel(entry: CatalogEntry) {
+    if (entry.detailLabel) {
+      return entry.detailLabel;
+    }
+
     if (entry.lessonCount > 0) {
       return `${entry.lessonCount} ${entry.lessonCount === 1 ? "lesson" : "lessons"}`;
     }
@@ -3222,7 +3415,7 @@
             <span class="game-summary">{game.summary}</span>
             <span class="game-footer">
               <span>{game.status}</span>
-              {#if game.lessonCount > 0}
+              {#if game.detailLabel || game.lessonCount > 0}
                 <span>{catalogDetailLabel(game)}</span>
               {/if}
             </span>
@@ -3456,25 +3649,159 @@
             <p class="eyebrow">Perfect</p>
             <h2>Train the skills behind strong card play.</h2>
             <p>
-              Placeholder for short minigames that build card-counting habits: remembering trumps, court cards, and
-              cards that have left the deck.
+              Short minigames for card-counting habits: remembering trumps, court cards, and cards that have left the
+              deck.
             </p>
           </div>
 
-          <section class="perfect-skill-grid" aria-label="Perfect mode placeholders">
-            <article class="perfect-skill-card">
-              <span>Planned</span>
+          <section class="perfect-pack" aria-label="Card counting pack">
+            <div>
+              <p class="eyebrow">Card Counting</p>
+              <h2>Know what is still out.</h2>
+              <p>Try two fast drills: count the remaining trumps, then track the court cards that are still out.</p>
+            </div>
+            <div class="perfect-pack-actions">
+              <button class="drill-action" onclick={openTrumpCountTrainer} type="button">Count trumps</button>
+              <button class="drill-action secondary" onclick={openCourtCountTrainer} type="button">Track court cards</button>
+            </div>
+          </section>
+
+          <section class="perfect-skill-grid" aria-label="Perfect mode skills">
+            <button class="perfect-skill-card ready" onclick={openTrumpCountTrainer} type="button">
+              <span>Card Counting</span>
               <strong>Count trumps</strong>
               <small>Track which trump cards have appeared and name what remains.</small>
-            </article>
-            <article class="perfect-skill-card">
-              <span>Planned</span>
+            </button>
+            <button class="perfect-skill-card ready" onclick={openCourtCountTrainer} type="button">
+              <span>Card Counting</span>
               <strong>Track court cards</strong>
               <small>Remember kings, queens, and jacks as tricks move around the table.</small>
-            </article>
+            </button>
           </section>
         </div>
       {/if}
+    </section>
+  {:else if appView === "trumpCount"}
+    <header class="topbar" aria-label="Count trumps">
+      <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
+      <div>
+        <p class="eyebrow">Card Counting</p>
+        <h1>Count trumps</h1>
+      </div>
+      <div class="contract-status">
+        <span>Score</span>
+        <strong>{trumpCountClean} of {trumpCountAttempts}</strong>
+      </div>
+    </header>
+
+    <section class="trump-count-screen" aria-label="Count trumps trainer">
+      <div class="trump-count-prompt">
+        <p class="eyebrow">Hearts are trumps</p>
+        <h2>How many trumps are still out?</h2>
+        <p>{trumpCountRound.seenCards.length} cards have appeared. Count the hearts you can see.</p>
+      </div>
+
+      <div class="trump-seen-cards" aria-label="Played cards">
+        {#each trumpCountRound.seenCards as card}
+          <div class:trump={card.suit === trumpCountRound.trumpSuit} class="trump-seen-card">
+            <CardFace {card} decorative />
+          </div>
+        {/each}
+      </div>
+
+      <div class="trump-count-options" aria-label="Trump count answers">
+        {#each trumpCountRound.options as option}
+          <button
+            aria-pressed={trumpCountSelected === option}
+            class:correct={trumpCountChecked && option === trumpCountRound.answer}
+            class:selected={trumpCountSelected === option}
+            class:wrong={trumpCountChecked && trumpCountSelected === option && option !== trumpCountRound.answer}
+            onclick={() => selectTrumpCountAnswer(option)}
+            type="button"
+          >
+            {option}
+          </button>
+        {/each}
+      </div>
+
+      <p
+        class:warning={trumpCountChecked && trumpCountSelected !== trumpCountRound.answer}
+        class="trump-count-feedback"
+      >
+        {trumpCountFeedback}
+      </p>
+
+      <div class="course-actions">
+        <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
+        {#if trumpCountChecked}
+          <button class="primary-action" onclick={nextTrumpCountRound} type="button">Next count</button>
+        {:else}
+          <button class="primary-action" disabled={trumpCountSelected === null} onclick={checkTrumpCountAnswer} type="button">
+            Check count
+          </button>
+        {/if}
+      </div>
+    </section>
+  {:else if appView === "courtCount"}
+    <header class="topbar" aria-label="Track court cards">
+      <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
+      <div>
+        <p class="eyebrow">Card Counting</p>
+        <h1>Track court cards</h1>
+      </div>
+      <div class="contract-status">
+        <span>Score</span>
+        <strong>{courtCountClean} of {courtCountAttempts}</strong>
+      </div>
+    </header>
+
+    <section class="trump-count-screen" aria-label="Track court cards trainer">
+      <div class="trump-count-prompt">
+        <p class="eyebrow">Jacks, queens, kings</p>
+        <h2>How many court cards are still out?</h2>
+        <p>{courtCountRound.seenCards.length} cards have appeared. Count J, Q, and K.</p>
+      </div>
+
+      <div class="trump-seen-cards" aria-label="Played cards">
+        {#each courtCountRound.seenCards as card}
+          <div class:court={isCourtCard(card)} class="trump-seen-card">
+            <CardFace {card} decorative />
+          </div>
+        {/each}
+      </div>
+
+      <div class="trump-count-options" aria-label="Court card count answers">
+        {#each courtCountRound.options as option}
+          <button
+            aria-pressed={courtCountSelected === option}
+            class:correct={courtCountChecked && option === courtCountRound.answer}
+            class:selected={courtCountSelected === option}
+            class:wrong={courtCountChecked && courtCountSelected === option && option !== courtCountRound.answer}
+            onclick={() => selectCourtCountAnswer(option)}
+            type="button"
+          >
+            {option}
+          </button>
+        {/each}
+      </div>
+
+      <p
+        class:warning={courtCountChecked && courtCountSelected !== courtCountRound.answer}
+        class="trump-count-feedback"
+      >
+        {courtCountFeedback}
+      </p>
+
+      <div class="course-actions">
+        <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
+        {#if courtCountChecked}
+          <button class="primary-action" onclick={nextCourtCountRound} type="button">Next count</button>
+        {:else}
+          <button class="primary-action" disabled={courtCountSelected === null} onclick={checkCourtCountAnswer} type="button">
+            Check count
+          </button>
+        {/if}
+      </div>
     </section>
   {:else if appView === "barbuContracts"}
     <header class="topbar" aria-label="Barbu contracts">
