@@ -637,6 +637,29 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
   await page.screenshot({ path: testInfo.outputPath("play-barbu-no-queens-after-first-trick.png"), fullPage: true });
 });
 
+test("Play Barbu can resume a saved local run", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Barbu/ }).click();
+  await openBarbuTab(page, "Play");
+  await page.getByRole("button", { name: "Play Barbu" }).click();
+  await page.getByRole("button", { name: "Start hand" }).click();
+
+  await expect(page.getByRole("heading", { name: "No Hearts hand" })).toBeVisible();
+  await expect(page.locator(".full-hand-cards .full-hand-card")).toHaveCount(13);
+  await expect.poll(async () => page.evaluate(() => localStorage.getItem("barbu.savedPlayRun.v1"))).not.toBeNull();
+
+  await page.reload();
+  await page.getByRole("button", { name: /Barbu/ }).click();
+  await openBarbuTab(page, "Play");
+  await expect(page.getByRole("button", { name: "Continue Play Barbu" })).toBeVisible();
+  await expect(page.getByText("No Hearts, trick 1")).toBeVisible();
+
+  await page.getByRole("button", { name: "Continue Play Barbu" }).click();
+  await expect(page.getByRole("heading", { name: "No Hearts hand" })).toBeVisible();
+  await expect(page.locator(".full-hand-cards .full-hand-card")).toHaveCount(13);
+  await expectNoPageScroll(page);
+});
+
 test("Play Barbu advances full-hand contracts with a running total", async ({ page }) => {
   const contracts = ["No Hearts", "No Queens", "King of Hearts", "No Last Two", "No Tricks", "Hearts Trumps", "Domino"];
 

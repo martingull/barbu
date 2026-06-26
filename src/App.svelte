@@ -171,6 +171,20 @@
     habit: string;
   };
 
+  type SavedPlayBarbuRun = {
+    version: 1;
+    seed: number;
+    view: "runContractIntro" | "fullHand" | "dominoHand";
+    pendingContract: FullHandContract;
+    results: FullHandRunResult[];
+    fullHand: FullHandState | null;
+    dominoHand: DominoHandState | null;
+    fullHandReviewTrickCount: number;
+    usingBrowserFullHand: boolean;
+    usingBrowserDomino: boolean;
+    savedAt: string;
+  };
+
   const catalogEntries: CatalogEntry[] = [
     {
       id: "barbu",
@@ -241,6 +255,7 @@
   const practiceSeedStorageKey = "barbu.practiceSeed.v1";
   const drillPatternMemoryStorageKey = "barbu.drillPatternMemory.v1";
   const playBarbuHistoryStorageKey = "barbu.playHistory.v1";
+  const savedPlayBarbuRunStorageKey = "barbu.savedPlayRun.v1";
   const maxStoredDrillPatterns = 6;
   const maxStoredPlayBarbuAttempts = 8;
   const scoreSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
@@ -741,6 +756,7 @@
   let activeBarbuTableTab: BarbuTableTab = "learn";
   let completedPathSteps: Record<string, boolean> = loadCourseProgress();
   let playBarbuHistory: PlayBarbuAttempt[] = loadPlayBarbuHistory();
+  let savedPlayBarbuRun: SavedPlayBarbuRun | null = loadSavedPlayBarbuRun();
   let usingGeneratedPractice = false;
   let generatedPracticeError = "";
   let fullHand: FullHandState | null = null;
@@ -942,6 +958,7 @@
   $: fullHandRunRemainingLabel = `${fullHandRunRemainingCount} ${
     fullHandRunRemainingCount === 1 ? "contract" : "contracts"
   }`;
+  $: savedPlayBarbuRunLabel = savedPlayBarbuRun ? savedPlayBarbuRunSummary(savedPlayBarbuRun) : "";
   $: fullHandRunResultTitle = fullHandRunIsComplete ? runResultHeading(fullHandRunStandings) : "Game complete";
   $: fullHandRunResultSummary = fullHandRunIsComplete
     ? runResultSummary(fullHandRunStandings, fullHandRunResults.length)
@@ -1083,6 +1100,159 @@
     if (typeof localStorage !== "undefined") {
       localStorage.setItem(playBarbuHistoryStorageKey, JSON.stringify(playBarbuHistory));
     }
+  }
+
+  function loadSavedPlayBarbuRun(): SavedPlayBarbuRun | null {
+    if (typeof localStorage === "undefined") {
+      return null;
+    }
+
+    try {
+      return normalizeSavedPlayBarbuRun(JSON.parse(localStorage.getItem(savedPlayBarbuRunStorageKey) ?? "null"));
+    } catch {
+      return null;
+    }
+  }
+
+  function normalizeSavedPlayBarbuRun(savedRun: unknown): SavedPlayBarbuRun | null {
+    if (!savedRun || typeof savedRun !== "object") {
+      return null;
+    }
+
+    const candidate = savedRun as Partial<SavedPlayBarbuRun>;
+
+    if (candidate.version !== 1 || !isFullHandContract(candidate.pendingContract)) {
+      return null;
+    }
+
+    const view =
+      candidate.view === "fullHand" || candidate.view === "dominoHand" || candidate.view === "runContractIntro"
+        ? candidate.view
+        : "runContractIntro";
+    const fullHand = candidate.fullHand && isFullHandContract(candidate.fullHand.contract) ? candidate.fullHand : null;
+    const dominoHand = candidate.dominoHand?.contract === "Domino" ? candidate.dominoHand : null;
+
+    if ((view === "fullHand" && !fullHand) || (view === "dominoHand" && !dominoHand)) {
+      return null;
+    }
+
+    return {
+      version: 1,
+      seed: Number.isInteger(candidate.seed) && candidate.seed > 0 ? candidate.seed : 1,
+      view,
+      pendingContract: candidate.pendingContract,
+      results: Array.isArray(candidate.results) ? candidate.results.filter(isFullHandRunResult) : [],
+      fullHand,
+      dominoHand,
+      fullHandReviewTrickCount:
+        Number.isInteger(candidate.fullHandReviewTrickCount) && candidate.fullHandReviewTrickCount >= 0
+          ? candidate.fullHandReviewTrickCount
+          : 0,
+      usingBrowserFullHand: Boolean(candidate.usingBrowserFullHand),
+      usingBrowserDomino: Boolean(candidate.usingBrowserDomino),
+      savedAt: typeof candidate.savedAt === "string" ? candidate.savedAt : new Date().toISOString()
+    };
+  }
+
+  function isFullHandContract(contract: unknown): contract is FullHandContract {
+    return fullHandContracts.includes(contract as FullHandContract);
+  }
+
+  function isFullHandRunResult(result: unknown): result is FullHandRunResult {
+    if (!result || typeof result !== "object") {
+      return false;
+    }
+
+    const candidate = result as Partial<FullHandRunResult>;
+    return isFullHandContract(candidate.contract) && typeof candidate.seatPenalties === "object";
+  }
+
+  function persistSavedPlayBarbuRun(view: SavedPlayBarbuRun["view"] = savedPlayBarbuView()) {
+    if (!fullHandRunActive) {
+      return;
+    }
+
+    if (fullHandRunResults.length >= fullHandContracts.length) {
+      clearSavedPlayBarbuRun();
+      return;
+    }
+
+    const nextSavedRun: SavedPlayBarbuRun = {
+      version: 1,
+      seed: fullHandRunSeed || 1,
+      view,
+      pendingContract: pendingRunContract,
+      results: fullHandRunResults,
+      fullHand,
+      dominoHand,
+      fullHandReviewTrickCount,
+      usingBrowserFullHand,
+      usingBrowserDomino,
+      savedAt: new Date().toISOString()
+    };
+
+    savedPlayBarbuRun = nextSavedRun;
+
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(savedPlayBarbuRunStorageKey, JSON.stringify(nextSavedRun));
+    }
+  }
+
+  function clearSavedPlayBarbuRun() {
+    savedPlayBarbuRun = null;
+
+    if (typeof localStorage !== "undefined") {
+      localStorage.removeItem(savedPlayBarbuRunStorageKey);
+    }
+  }
+
+  function savedPlayBarbuView(): SavedPlayBarbuRun["view"] {
+    if (appView === "fullHand" || appView === "dominoHand" || appView === "runContractIntro") {
+      return appView;
+    }
+
+    return "runContractIntro";
+  }
+
+  function savedPlayBarbuRunSummary(savedRun: SavedPlayBarbuRun) {
+    if (savedRun.fullHand) {
+      return `${savedRun.fullHand.contract}, trick ${savedRun.fullHand.trickNumber}`;
+    }
+
+    if (savedRun.dominoHand) {
+      return `Domino, ${savedRun.dominoHand.cardsRemaining} cards left`;
+    }
+
+    return `${savedRun.pendingContract}, ${savedRun.results.length} played`;
+  }
+
+  function continueSavedPlayBarbuRun() {
+    const savedRun = savedPlayBarbuRun ?? loadSavedPlayBarbuRun();
+
+    if (!savedRun) {
+      return;
+    }
+
+    fullHandRunActive = true;
+    fullHandRunSeed = savedRun.seed;
+    fullHandRunResults = savedRun.results;
+    pendingRunContract = savedRun.pendingContract;
+    fullHand = savedRun.fullHand;
+    dominoHand = savedRun.dominoHand;
+    fullHandReviewTrickCount = savedRun.fullHandReviewTrickCount;
+    usingBrowserFullHand = savedRun.usingBrowserFullHand || !hasTauriRuntime();
+    usingBrowserDomino = savedRun.usingBrowserDomino || !hasTauriRuntime();
+    fullHandSelectedCardId = "";
+    dominoSelectedCardId = "";
+    fullHandError = "";
+    dominoError = "";
+    lastFullHandTapCardId = "";
+    lastFullHandTapAt = 0;
+    lastDominoTapCardId = "";
+    lastDominoTapAt = 0;
+    activeBarbuTableTab = "play";
+    appView = savedRun.view;
+    savedPlayBarbuRun = savedRun;
   }
 
   function loadPracticeSeed() {
@@ -1311,6 +1481,9 @@
     }
 
     appView = "fullHand";
+    if (options.keepRun && fullHandRunActive) {
+      persistSavedPlayBarbuRun("fullHand");
+    }
   }
 
   async function startDominoHand(options: { keepRun?: boolean } = {}) {
@@ -1331,6 +1504,9 @@
       dominoHand = startBrowserDominoHand(seed);
       usingBrowserDomino = true;
       appView = "dominoHand";
+      if (options.keepRun && fullHandRunActive) {
+        persistSavedPlayBarbuRun("dominoHand");
+      }
       return;
     }
 
@@ -1345,6 +1521,9 @@
     }
 
     appView = "dominoHand";
+    if (options.keepRun && fullHandRunActive) {
+      persistSavedPlayBarbuRun("dominoHand");
+    }
   }
 
   async function selectFullHandCard(card: Card) {
@@ -1378,6 +1557,7 @@
       fullHandSelectedCardId = "";
       lastFullHandTapCardId = "";
       lastFullHandTapAt = 0;
+      persistSavedPlayBarbuRun("fullHand");
       return;
     }
 
@@ -1391,6 +1571,7 @@
       fullHandSelectedCardId = "";
       lastFullHandTapCardId = "";
       lastFullHandTapAt = 0;
+      persistSavedPlayBarbuRun("fullHand");
     } catch (error) {
       fullHandError = typeof error === "string" ? error : "That card could not be played.";
     }
@@ -1413,6 +1594,7 @@
     fullHandSelectedCardId = "";
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
+    persistSavedPlayBarbuRun("fullHand");
   }
 
   function startNoHeartsHand() {
@@ -1454,7 +1636,13 @@
 
   function openRunContractIntro(contract: FullHandContract) {
     pendingRunContract = contract;
+    fullHand = null;
+    dominoHand = null;
+    fullHandReviewTrickCount = 0;
+    fullHandSelectedCardId = "";
+    dominoSelectedCardId = "";
     appView = "runContractIntro";
+    persistSavedPlayBarbuRun("runContractIntro");
   }
 
   function startPendingRunContract() {
@@ -1478,6 +1666,7 @@
       lastDominoTapCardId = "";
       lastDominoTapAt = 0;
       dominoLastMoveReason = moveReason;
+      persistSavedPlayBarbuRun("dominoHand");
       return;
     }
 
@@ -1491,6 +1680,7 @@
       lastDominoTapCardId = "";
       lastDominoTapAt = 0;
       dominoLastMoveReason = moveReason;
+      persistSavedPlayBarbuRun("dominoHand");
     } catch (error) {
       if (!isInvokeTimeoutError(error)) {
         dominoError = typeof error === "string" ? error : "That card could not be placed.";
@@ -1504,6 +1694,7 @@
       lastDominoTapCardId = "";
       lastDominoTapAt = 0;
       dominoLastMoveReason = moveReason;
+      persistSavedPlayBarbuRun("dominoHand");
     }
   }
 
@@ -1547,6 +1738,7 @@
       dominoLastMoveReason = "You passed because no card in your hand could start or extend a lane.";
       lastDominoTapCardId = "";
       lastDominoTapAt = 0;
+      persistSavedPlayBarbuRun("dominoHand");
       return;
     }
 
@@ -1558,6 +1750,7 @@
       dominoLastMoveReason = "You passed because no card in your hand could start or extend a lane.";
       lastDominoTapCardId = "";
       lastDominoTapAt = 0;
+      persistSavedPlayBarbuRun("dominoHand");
     } catch (error) {
       if (!isInvokeTimeoutError(error)) {
         dominoError = typeof error === "string" ? error : "You could not pass here.";
@@ -1570,6 +1763,7 @@
       dominoLastMoveReason = "You passed because no card in your hand could start or extend a lane.";
       lastDominoTapCardId = "";
       lastDominoTapAt = 0;
+      persistSavedPlayBarbuRun("dominoHand");
     }
   }
 
@@ -3241,7 +3435,13 @@
           <div class="table-action-groups" aria-label="Barbu table actions">
             <section class="table-action-group" aria-label="Play actions">
               <p class="eyebrow">Play</p>
-              <button class="drill-action" onclick={startBarbuRun} type="button">Play Barbu</button>
+              {#if savedPlayBarbuRun}
+                <button class="drill-action" onclick={continueSavedPlayBarbuRun} type="button">Continue Play Barbu</button>
+                <small class="saved-run-note">{savedPlayBarbuRunLabel}</small>
+              {/if}
+              <button class:resume-secondary={Boolean(savedPlayBarbuRun)} class="drill-action" onclick={startBarbuRun} type="button">
+                Play Barbu
+              </button>
             </section>
           </div>
         </div>

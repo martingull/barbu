@@ -40,6 +40,7 @@ The broader ambition is to make players stronger with a 52-card deck, not only t
 - Domino clarity pass adds an in-hand order-out point counter and move reasoning for opening sevens, extending lanes, blocked cards, and follow-up cards.
 - Shared table-play surface for quick drills, Play Barbu, and full-hand contracts so active games keep one compact mobile layout.
 - Play Barbu v1 with a local sequence through playable full-hand contracts, four-player contract values, per-contract score rows, and a compact game-complete summary.
+- Local Play Barbu save/resume for unfinished runs, with a Continue Play Barbu action on the Play tab.
 - Play Barbu contract intro before each hand, where Barbu sets the next contract and the current game score stays visible.
 - Four-player Play Barbu score tracking for You, Barbu, Left, and Right.
 - Play Barbu settlement summary with four-player placement, best contract, weakest contract, and focused replay.
@@ -138,6 +139,7 @@ These are the next product increments that keep the app coherent.
 
 6. Play Barbu Flow v2
    - Keep contract intros short and score-aware.
+   - Keep local resume reliable for unfinished runs before adding accounts or cloud sync.
    - Clarify fixed order versus chosen/dealer-driven contract order before full settlement scoring.
    - Make Barbu feel like the contract setter without adding long dialogue.
 
@@ -149,6 +151,7 @@ These are the next product increments that keep the app coherent.
 8. Progress Model v2
    - Store completion by lesson node, not only path step.
    - Track attempts, last result, and review due state.
+   - Keep Play Barbu run resume local and simple until sync or accounts are justified.
    - Keep it local until the app needs sync or accounts.
 
 9. Card Sense Training v1

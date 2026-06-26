@@ -94,6 +94,7 @@ Current role:
 - Continues the learning path.
 - Starts quick drills.
 - Starts Play Barbu as the multi-contract local game session.
+- Shows Continue Play Barbu when an unfinished local run exists.
 - Opens contract-hand practice through a chooser.
 - Opens reference from Learn as secondary support.
 - Opens the Barbu contract roster as a drill-down from Learn instead of showing the full contract list on the hub.
@@ -194,6 +195,7 @@ Purpose: play a sequence of full-hand contracts as the early version of a full B
 Current role:
 
 - Runs through playable full-hand contracts as one local session.
+- Saves unfinished local runs so the player can continue a Play Barbu session from the Play tab.
 - Shows a compact contract intro before each hand.
 - Tracks running score totals for You, Barbu, Left, and Right.
 - Shows a session summary with leader, player place, and contracts remaining.

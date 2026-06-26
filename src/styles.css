@@ -419,10 +419,18 @@ button {
   color: #21372d;
 }
 
-.practice-panel .drill-action + .drill-action {
+.practice-panel .drill-action + .drill-action,
+.play-panel .drill-action.resume-secondary {
   border-color: rgba(245, 241, 207, 0.7);
   background: rgba(245, 241, 207, 0.08);
   color: #f5f1cf;
+}
+
+.saved-run-note {
+  margin-top: -2px;
+  color: #dbe7d1;
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
 .fixed-contract-practice {
