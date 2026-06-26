@@ -352,7 +352,7 @@ test("Perfect mode starts card-counting minigames", async ({ page }, testInfo) =
     await nextAction.click();
   }
 
-  await expect(page.getByLabel("Realistic trump memory prompt")).toContainText("Cards hidden");
+  await expect(page.getByLabel("Realistic trump challenge")).toContainText(/How many hearts|Was .* played/);
   const realisticCountAnswers = page.getByLabel("Realistic trump count answers").getByRole("button");
   if ((await realisticCountAnswers.count()) > 0) {
     await realisticCountAnswers.first().click();

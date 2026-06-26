@@ -1105,16 +1105,23 @@
   $: realisticTrumpSelectedCard = realisticTrumpRound.hands.You.find((card) => card.id === realisticTrumpSelectedCardId);
   $: realisticTrumpPromptTitle =
     realisticTrumpRound.status === "question"
-      ? "Answer from memory"
+      ? "Memory check"
       : realisticTrumpRound.status === "review"
-        ? "Read the completed trick"
-        : "Play the hand. Count hearts.";
+        ? "Update the count"
+        : `Trick ${realisticTrumpRound.completedTricks.length + 1} of 3`;
   $: realisticTrumpPromptBody =
     realisticTrumpRound.status === "question"
       ? realisticTrumpRound.question.prompt
       : realisticTrumpRound.status === "review"
-        ? "Left has played. Lock the trump count before moving on."
-        : `Trick ${realisticTrumpRound.completedTricks.length + 1} of 3. Follow suit if you can. Hearts are trumps.`;
+        ? "Left has played. Add every heart from this trick before moving on."
+        : "Follow suit if you can. Hearts are trumps, and Barbu may test your count after the third trick.";
+  $: realisticTrumpTableCards = realisticTrumpRound.status === "question" ? [] : realisticTrumpRound.currentTrick;
+  $: realisticTrumpPendingBySeat =
+    realisticTrumpRound.status === "question"
+      ? { Tutor: "Barbu", Right: "Right", You: "You", Left: "Left" }
+      : realisticTrumpRound.status === "playing"
+        ? { You: "You", Left: "Left" }
+        : {};
   $: realisticTrumpFeedback =
     realisticTrumpChecked && realisticTrumpAnswer !== null
       ? realisticTrumpAnswer === realisticTrumpRound.question.answer
@@ -3986,16 +3993,15 @@
   {:else if appView === "trumpCount"}
     {#if trumpCountMode === "realistic"}
       <TablePlaySurface
-        mode={realisticTrumpRound.status === "question" ? "result" : "play"}
+        mode="play"
         ariaLabel="Count trumps trainer"
         title="Count trumps"
         eyebrow="Card Counting"
         statusLabel="Score"
         statusValue={`${trumpCountClean} of ${trumpCountAttempts}`}
         tableAriaLabel="Realistic trump table"
-        pendingBySeat={realisticTrumpRound.status === "playing" ? { You: "You", Left: "Left" } : {}}
-        showTable={realisticTrumpRound.status !== "question"}
-        tableCards={realisticTrumpRound.currentTrick}
+        pendingBySeat={realisticTrumpPendingBySeat}
+        tableCards={realisticTrumpTableCards}
         panelAriaLabel="Realistic trump decision"
         onBack={openBarbuTable}
         onSurfaceClick={realisticTrumpRound.status === "review" ? continueRealisticTrumpRound : undefined}
@@ -4022,20 +4028,12 @@
         {/snippet}
 
         {#snippet panel()}
-          {#if realisticTrumpRound.status === "question"}
-            <div class="trump-memory-hidden" aria-label="Realistic trump memory prompt">
-              <span>3 tricks played</span>
-              <strong>Cards hidden</strong>
-              <small>{realisticTrumpRound.question.prompt}</small>
-            </div>
-          {:else}
-            <div class="lesson-heading">
-              <p class="eyebrow">Hearts are trumps</p>
-              <h2>{realisticTrumpPromptTitle}</h2>
-            </div>
+          <div class="lesson-heading">
+            <p class="eyebrow">Hearts are trumps</p>
+            <h2>{realisticTrumpPromptTitle}</h2>
+          </div>
 
-            <p class="result">{realisticTrumpPromptBody}</p>
-          {/if}
+          <p class="result" aria-label="Realistic trump challenge">{realisticTrumpPromptBody}</p>
 
           {#if realisticTrumpRound.status === "playing"}
             <div class="hand full-hand-cards realistic-trump-hand" aria-label="Your realistic trump hand">
