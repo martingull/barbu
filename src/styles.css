@@ -3109,6 +3109,12 @@ h2 {
     padding-bottom: 10px;
   }
 
+  .fixed-play-screen .table-play-surface.compact-result:not(.table-hidden) .table-play-panel {
+    align-content: start;
+    grid-template-rows: auto auto auto;
+    padding-bottom: 72px;
+  }
+
   .fixed-play-screen .table-play-surface.compact-play .table-play-panel {
     align-content: start;
     grid-template-rows: auto auto auto;
@@ -3172,6 +3178,10 @@ h2 {
     gap: 6px;
   }
 
+  .table-play-surface.compact-result .full-hand-result-tricks {
+    align-items: start;
+  }
+
   .table-play-surface.compact-result .run-scorecard {
     padding: 6px;
   }
@@ -3198,6 +3208,10 @@ h2 {
   .table-play-surface.compact-result .full-hand-run-list div {
     min-height: 0;
     padding: 8px;
+  }
+
+  .table-play-surface.compact-result .full-hand-result-tricks div {
+    min-height: 58px;
   }
 
   .table-play-surface.compact-result .full-hand-result-grid span,

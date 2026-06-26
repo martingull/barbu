@@ -3723,16 +3723,7 @@
                 <h2>{fullHandResultTitle}</h2>
               </div>
 
-              <p class="result">{fullHandResultSummary}</p>
-
-              <div class="full-hand-result-grid" aria-label={`${fullHand.contract} result summary`}>
-                {#each scoreSeats as seat}
-                  <div>
-                    <span>{scoreSeatResultLabel(seat)}</span>
-                    <strong>{formatFullHandPenalty(fullHandSeatPenalties[seat])}</strong>
-                  </div>
-                {/each}
-              </div>
+              <p class="result" aria-label={`${fullHand.contract} result summary`}>{fullHandResultSummary}</p>
 
               <div class="full-hand-result-tricks" aria-label={`${fullHand.contract} key tricks`}>
                 <div>
@@ -3801,8 +3792,8 @@
                 <button class="secondary-action" onclick={() => void replayWeakestRunContract()} type="button">Replay weakest</button>
                 <button class="primary-action" onclick={startBarbuRun} type="button">New game</button>
               {:else}
-                <button class="secondary-action" onclick={() => void startNextFullHand()} type="button">{fullHandNextActionLabel}</button>
-                <button class="primary-action" onclick={() => void replayFullHand()} type="button">Replay</button>
+                <button class="secondary-action" onclick={() => void replayFullHand()} type="button">Replay</button>
+                <button class="primary-action" onclick={() => void startNextFullHand()} type="button">{fullHandNextActionLabel}</button>
               {/if}
             {:else if fullHandIsReviewingTrick}
               <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
@@ -3901,15 +3892,7 @@
                 <h2>{dominoResultTitle}</h2>
               </div>
 
-              <p class="result">{dominoResultSummary}</p>
-              <div class="full-hand-run-score" aria-label="Domino result summary">
-                {#each scoreSeats as seat}
-                  <div>
-                    <span>{scoreSeatLabel(seat)}</span>
-                    <strong>{formatSignedScore(dominoScoreMap[seat])}</strong>
-                  </div>
-                {/each}
-              </div>
+              <p class="result" aria-label="Domino result summary">{dominoResultSummary}</p>
             {/if}
           {:else}
             <div class="lesson-heading">
@@ -3969,8 +3952,8 @@
                 <button class="secondary-action" onclick={() => void replayWeakestRunContract()} type="button">Replay weakest</button>
                 <button class="primary-action" onclick={startBarbuRun} type="button">New game</button>
               {:else}
-                <button class="secondary-action" onclick={() => void startNextDominoHand()} type="button">{fullHandNextActionLabel}</button>
-                <button class="primary-action" onclick={() => void replayDominoHand()} type="button">Replay</button>
+                <button class="secondary-action" onclick={() => void replayDominoHand()} type="button">Replay</button>
+                <button class="primary-action" onclick={() => void startNextDominoHand()} type="button">{fullHandNextActionLabel}</button>
               {/if}
             {:else}
               <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
