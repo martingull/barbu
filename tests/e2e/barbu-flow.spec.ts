@@ -458,11 +458,18 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
 
   const handBeforeSelect = await page.locator(".full-hand-cards").last().boundingBox();
   expect(handBeforeSelect).not.toBeNull();
-  await page.locator(".full-hand-card.legal").first().click();
+  const firstLegalFullHandCard = page.locator(".full-hand-card.legal").first();
+  const cardBeforeSelect = await firstLegalFullHandCard.boundingBox();
+  expect(cardBeforeSelect).not.toBeNull();
+  await firstLegalFullHandCard.click();
   const handAfterSelect = await page.locator(".full-hand-cards").last().boundingBox();
+  const selectedCardAfterSelect = await page.locator(".full-hand-card.selected").first().boundingBox();
   expect(handAfterSelect).not.toBeNull();
+  expect(selectedCardAfterSelect).not.toBeNull();
   expect(Math.abs((handAfterSelect?.y ?? 0) - (handBeforeSelect?.y ?? 0))).toBeLessThanOrEqual(1);
   expect(Math.abs((handAfterSelect?.height ?? 0) - (handBeforeSelect?.height ?? 0))).toBeLessThanOrEqual(1);
+  expect(Math.abs((selectedCardAfterSelect?.width ?? 0) - (cardBeforeSelect?.width ?? 0))).toBeLessThanOrEqual(1);
+  expect(Math.abs((selectedCardAfterSelect?.height ?? 0) - (cardBeforeSelect?.height ?? 0))).toBeLessThanOrEqual(1);
   await expectHandNearActionRow(page, ".full-hand-cards");
   await page.getByRole("button", { name: "Play card" }).click();
   await expect(page.getByRole("button", { name: "Next trick", exact: true })).toBeVisible();
