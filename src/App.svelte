@@ -4252,27 +4252,6 @@
       </div>
     </header>
 
-    <section class="lesson-row" aria-label="Guided Barbu lessons">
-      {#each guidedLessons as lesson}
-        <button
-          class:active={!usingGeneratedPractice && selectedLessonId === lesson.id}
-          class="lesson-chip"
-          onclick={() => selectLesson(lesson.id)}
-          type="button"
-        >
-          <span>{lesson.contract}</span>
-          <small>{lesson.summary}</small>
-        </button>
-      {/each}
-    </section>
-
-    <section class="mode-row" aria-label="Learning mode">
-      <button class:active={!usingGeneratedPractice} class="mode-tab" onclick={showFixedLesson} type="button">Practice</button>
-      <button class:active={usingGeneratedPractice} class="mode-tab" onclick={loadGeneratedDrill} type="button">Generated</button>
-      <button class="mode-tab" type="button">Learn</button>
-      <button class="mode-tab" type="button">Rules</button>
-    </section>
-
     <section class="learning-surface" aria-label="Guided trick">
       {#if currentLessonIsDomino}
         <div class="domino-layout" aria-label="Domino lesson layout">

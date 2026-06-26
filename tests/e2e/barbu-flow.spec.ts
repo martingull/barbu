@@ -399,6 +399,8 @@ test("guided lesson accepts a legal card play", async ({ page }) => {
 
   await expect(page.getByRole("heading", { name: "Barbu" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Follow clubs without taking the heart" })).toBeVisible();
+  await expect(page.getByLabel("Guided Barbu lessons")).toHaveCount(0);
+  await expect(page.getByLabel("Learning mode")).toHaveCount(0);
 
   await page.getByRole("button", { name: "2 C" }).click();
   await expect(page.getByRole("button", { name: "Play selected" })).toBeEnabled();
