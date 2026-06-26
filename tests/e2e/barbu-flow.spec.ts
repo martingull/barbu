@@ -24,6 +24,29 @@ async function safeAreaBottom(page: Page) {
   });
 }
 
+async function safeAreaTop(page: Page) {
+  return page.evaluate(() => {
+    const value = getComputedStyle(document.documentElement).getPropertyValue("--app-safe-area-top").trim();
+    return Number.parseFloat(value) || 0;
+  });
+}
+
+async function expectControlBelowSafeArea(page: Page, selector: string) {
+  const control = page.locator(selector).first();
+  await expect(control).toBeVisible();
+  await expect
+    .poll(async () => {
+      const box = await control.boundingBox();
+      if (!box) {
+        return false;
+      }
+
+      const expectedTop = await safeAreaTop(page);
+      return box.y >= expectedTop - 1;
+    })
+    .toBe(true);
+}
+
 async function expectNoPageScroll(page: Page) {
   await expect
     .poll(async () =>
@@ -488,10 +511,12 @@ test("Quick drill runs as a generated learning loop", async ({ page }, testInfo)
 test("active game tables share one compact surface", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
+  await expectControlBelowSafeArea(page, ".table-topbar .back-button");
   await openBarbuTab(page, "Practice");
   await page.getByRole("button", { name: "Quick drill" }).click();
 
   await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
+  await expectControlBelowSafeArea(page, ".table-play-topbar .back-button");
   await expect(page.locator(".table-play-surface")).toBeVisible();
   const playBarbuTable = await page.getByLabel("Drill card table").boundingBox();
   expect(playBarbuTable).not.toBeNull();
@@ -500,12 +525,15 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
   await expectHandNearActionRow(page, ".drill-hand");
 
   await page.locator(".table-play-topbar").getByRole("button", { name: "Table" }).click();
+  await expectControlBelowSafeArea(page, ".table-topbar .back-button");
   await openBarbuTab(page, "Play");
   await page.getByRole("button", { name: "Play Barbu" }).click();
+  await expectControlBelowSafeArea(page, ".run-intro-topbar .back-button");
   await page.screenshot({ path: testInfo.outputPath("play-barbu-contract-intro.png"), fullPage: true });
   await page.getByRole("button", { name: "Start hand" }).click();
 
   await expect(page.getByRole("heading", { name: "No Hearts hand" })).toBeVisible();
+  await expectControlBelowSafeArea(page, ".table-play-topbar .back-button");
   await expect(page.locator(".table-play-surface")).toBeVisible();
   await expect(page.getByLabel("Current hand")).toBeVisible();
   await expect(page.getByLabel("Table scores")).toBeVisible();
