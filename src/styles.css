@@ -2242,6 +2242,79 @@ h2 {
   background: #10251d;
 }
 
+.trump-memory-table {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  min-height: 264px;
+  padding: 14px;
+  border: 1px solid rgba(245, 241, 207, 0.22);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at center, rgba(245, 241, 207, 0.08), transparent 58%),
+    #10251d;
+}
+
+.trump-memory-seat {
+  display: grid;
+  gap: 5px;
+  justify-items: center;
+  align-content: center;
+  min-width: 0;
+}
+
+.trump-memory-seat span {
+  color: #dbe7d1;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.trump-memory-card {
+  width: min(100%, 74px);
+  aspect-ratio: 5 / 7;
+  border-radius: 6px;
+  box-shadow: 0 8px 20px rgba(4, 15, 10, 0.42);
+}
+
+.trump-memory-card.trump {
+  outline: 3px solid #f5f1cf;
+  outline-offset: 2px;
+}
+
+.trump-memory-hidden {
+  display: grid;
+  gap: 7px;
+  min-height: 264px;
+  place-items: center;
+  padding: 18px;
+  border: 1px dashed rgba(245, 241, 207, 0.42);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(245, 241, 207, 0.07), rgba(9, 34, 24, 0.18)),
+    #10251d;
+  text-align: center;
+}
+
+.trump-memory-hidden span {
+  color: #f5f1cf;
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.trump-memory-hidden strong {
+  color: #f7faf3;
+  font-size: 1.38rem;
+}
+
+.trump-memory-hidden small {
+  max-width: 240px;
+  color: #dbe7d1;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
 .trump-seen-card {
   aspect-ratio: 5 / 7;
   border-radius: 5px;
@@ -2306,6 +2379,40 @@ h2 {
   border-left-color: #f0b3a8;
   background: rgba(240, 179, 168, 0.1);
   color: #f0b3a8;
+}
+
+.trump-count-review {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid rgba(245, 241, 207, 0.24);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(245, 241, 207, 0.08), rgba(9, 34, 24, 0.18)),
+    #182f25;
+}
+
+.trump-count-review > span {
+  color: #f5f1cf;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.trump-count-review > strong {
+  color: #f7faf3;
+  font-size: 1rem;
+}
+
+.trump-count-review > small {
+  color: #dbe7d1;
+  font-weight: 800;
+}
+
+.trump-review-cards {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
 }
 
 .card {

@@ -159,7 +159,8 @@ These are the next product increments that keep the app coherent.
 
 9. Card Sense Training v1
    - Started in the catalog and Perfect mode with a Card Counting pack.
-   - Count Trumps and Track Court Cards are the first active exercises.
+   - Count Trumps now reveals tricks one at a time, hides the cards, and asks how many trumps remain from memory.
+   - Track Court Cards is the second active exercise.
    - Add short mini-games for serious 52-card-deck skills and practical card-counting habits: Suit Count, Danger Card Tracker, Trump Count, Void Finder, High Card Memory, and Safe Exit Trainer.
    - Next: add danger-card memory and connect card-counting exercises back to Play Barbu feedback.
    - Specific future Whist idea: bake a tracking mini-game into Whist or a Whist variety where the player follows remaining trumps and court cards during play.

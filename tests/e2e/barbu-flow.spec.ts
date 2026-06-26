@@ -306,19 +306,25 @@ test("Perfect mode starts card-counting minigames", async ({ page }, testInfo) =
 
   await expect(page.getByRole("heading", { name: "Count trumps" })).toBeVisible();
   await expect(page.getByLabel("Count trumps trainer")).toContainText("Hearts are trumps");
-  await expect.poll(async () => page.getByLabel("Played cards").locator(".trump-seen-card").count()).toBeGreaterThan(10);
+  await expect(page.getByLabel("Trump trick reveal")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Next trick" })).toBeVisible();
+  let seenTrumps = 0;
+  for (let trick = 1; trick <= 5; trick += 1) {
+    await expect(page.getByLabel("Count trumps trainer")).toContainText(`Trick ${trick} of 5`);
+    seenTrumps += await page.locator(".trump-memory-card.trump").count();
+    await page.getByRole("button", { name: trick === 5 ? "Answer count" : "Next trick" }).click();
+  }
+  await expect(page.getByLabel("Trump memory prompt")).toContainText("Cards hidden");
   await expect(page.getByLabel("Trump count answers").getByRole("button")).toHaveCount(4);
   await expect(page.getByRole("button", { name: "Check count" })).toBeDisabled();
 
-  const correctAnswer = await page
-    .locator(".trump-seen-card.trump")
-    .count()
-    .then((seenTrumps) => 13 - seenTrumps);
+  const correctAnswer = 13 - seenTrumps;
   await page.getByLabel("Trump count answers").getByRole("button", { name: String(correctAnswer) }).click();
   await expect(page.getByRole("button", { name: "Check count" })).toBeEnabled();
   await page.getByRole("button", { name: "Check count" }).click();
 
   await expect(page.getByText(`Correct.`)).toBeVisible();
+  await expect(page.getByLabel("Trump count review")).toContainText(`${seenTrumps} hearts appeared`);
   await expect(page.getByRole("button", { name: "Next count" })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath("perfect-count-trumps.png"), fullPage: true });
 
