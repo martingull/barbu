@@ -426,6 +426,7 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
   await expect(page.getByLabel("Table scores")).toBeVisible();
   await expect(page.locator(".summary-row-label", { hasText: "Current hand" })).toBeVisible();
   await expect(page.locator(".summary-row-label", { hasText: "Table scores" })).toBeVisible();
+  await expect(page.locator(".card-table .cardholder")).toHaveCount(4);
   const noHeartsTable = await page.getByLabel("No Hearts hand table").boundingBox();
   expect(noHeartsTable).not.toBeNull();
   await expectNoPageScroll(page);
@@ -437,6 +438,7 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
   await page.locator(".full-hand-card.legal").first().click();
   await page.getByRole("button", { name: "Play card" }).click();
   await expect(page.getByRole("button", { name: "Next trick", exact: true })).toBeVisible();
+  await expect(page.locator(".card-table .cardholder")).toHaveCount(4);
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
 });

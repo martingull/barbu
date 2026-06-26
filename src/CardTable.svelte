@@ -14,6 +14,10 @@
     return tableCards.find((play) => play.seat === seat)?.card;
   }
 
+  function seatLabel(seat: Seat) {
+    return seat === "Tutor" ? "Barbu" : seat;
+  }
+
   const tutorCard = $derived(cardAt("Tutor"));
   const leftCard = $derived(cardAt("Left"));
   const rightCard = $derived(cardAt("Right"));
@@ -21,57 +25,56 @@
 </script>
 
 <section class="card-table" aria-label={ariaLabel}>
-  <div class="seat north">Barbu</div>
-  <div class="seat west">Left</div>
-  <div class="seat east">Right</div>
-  <div class="seat south">You</div>
-
   <div class="played-slot tutor-slot">
-    {#if tutorCard}
-      <div class:heart={tutorCard.suit === "H"} class="table-card">
-        <CardFace card={tutorCard} />
-      </div>
-    {:else if pendingBySeat.Tutor}
-      <div class="pending-card">{pendingBySeat.Tutor}</div>
-    {/if}
+    <div class:active={Boolean(pendingBySeat.Tutor)} class:occupied={Boolean(tutorCard)} class="cardholder">
+      {#if tutorCard}
+        <div class:heart={tutorCard.suit === "H"} class="table-card">
+          <CardFace card={tutorCard} />
+        </div>
+      {/if}
+      <span class="cardholder-label">{seatLabel("Tutor")}</span>
+    </div>
   </div>
 
   <div class="played-slot left-slot">
-    {#if leftCard}
-      <div class:heart={leftCard.suit === "H"} class="table-card">
-        <CardFace card={leftCard} />
-      </div>
-    {:else if pendingBySeat.Left}
-      <div class="pending-card">{pendingBySeat.Left}</div>
-    {/if}
+    <div class:active={Boolean(pendingBySeat.Left)} class:occupied={Boolean(leftCard)} class="cardholder">
+      {#if leftCard}
+        <div class:heart={leftCard.suit === "H"} class="table-card">
+          <CardFace card={leftCard} />
+        </div>
+      {/if}
+      <span class="cardholder-label">{seatLabel("Left")}</span>
+    </div>
   </div>
 
   <div class="played-slot right-slot">
-    {#if rightCard}
-      <div class:heart={rightCard.suit === "H"} class="table-card">
-        <CardFace card={rightCard} />
-      </div>
-    {:else if pendingBySeat.Right}
-      <div class="pending-card">{pendingBySeat.Right}</div>
-    {/if}
+    <div class:active={Boolean(pendingBySeat.Right)} class:occupied={Boolean(rightCard)} class="cardholder">
+      {#if rightCard}
+        <div class:heart={rightCard.suit === "H"} class="table-card">
+          <CardFace card={rightCard} />
+        </div>
+      {/if}
+      <span class="cardholder-label">{seatLabel("Right")}</span>
+    </div>
   </div>
 
   <div class="played-slot you-slot">
-    {#if youCard}
-      <div class:heart={youCard.suit === "H"} class="table-card">
-        <CardFace card={youCard} />
-      </div>
-    {:else if pendingBySeat.You}
-      <div class="pending-card">{pendingBySeat.You}</div>
-    {/if}
+    <div class:active={Boolean(pendingBySeat.You)} class:occupied={Boolean(youCard)} class="cardholder">
+      {#if youCard}
+        <div class:heart={youCard.suit === "H"} class="table-card">
+          <CardFace card={youCard} />
+        </div>
+      {/if}
+      <span class="cardholder-label">{seatLabel("You")}</span>
+    </div>
   </div>
 </section>
 
 <style>
   .card-table {
     display: grid;
-    grid-template-columns: 68px minmax(240px, 1fr) 68px;
-    grid-template-rows: 42px minmax(330px, 1fr) 42px;
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(330px, 1fr);
     align-items: center;
     min-height: 460px;
     border: 1px solid #bec8b6;
@@ -82,66 +85,39 @@
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
   }
 
-  .seat {
-    color: #f3f7ef;
-    font-size: 0.84rem;
-    font-weight: 900;
-    text-align: center;
-  }
-
-  .north {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .west {
-    grid-column: 1;
-    grid-row: 2;
-  }
-
-  .east {
-    grid-column: 3;
-    grid-row: 2;
-  }
-
-  .south {
-    grid-column: 2;
-    grid-row: 3;
-  }
-
   .played-slot {
     display: grid;
     place-items: center;
-    min-width: 72px;
-    min-height: 98px;
+    min-width: 88px;
+    min-height: 124px;
   }
 
   .tutor-slot {
-    grid-column: 2;
-    grid-row: 2;
+    grid-column: 1;
+    grid-row: 1;
     align-self: start;
-    padding-top: 44px;
+    padding-top: 54px;
   }
 
   .left-slot {
-    grid-column: 2;
-    grid-row: 2;
+    grid-column: 1;
+    grid-row: 1;
     justify-self: start;
-    padding-left: 30px;
+    padding-left: 52px;
   }
 
   .right-slot {
-    grid-column: 2;
-    grid-row: 2;
+    grid-column: 1;
+    grid-row: 1;
     justify-self: end;
-    padding-right: 30px;
+    padding-right: 52px;
   }
 
   .you-slot {
-    grid-column: 2;
-    grid-row: 2;
+    grid-column: 1;
+    grid-row: 1;
     align-self: end;
-    padding-bottom: 44px;
+    padding-bottom: 54px;
   }
 
   .table-card {
@@ -160,52 +136,99 @@
     color: #a83232;
   }
 
-  .pending-card {
+  .cardholder {
     display: grid;
-    width: 76px;
+    width: 96px;
     aspect-ratio: 5 / 7;
-    place-items: center;
-    border: 1px dashed rgba(255, 255, 255, 0.54);
+    align-items: center;
+    justify-items: center;
+    padding: 7px 7px 19px;
+    border: 2px dashed rgba(255, 255, 255, 0.54);
     border-radius: 8px;
     color: rgba(255, 255, 255, 0.82);
-    font-size: 0.9rem;
+    font-size: 0.74rem;
     font-weight: 900;
     text-align: center;
   }
 
+  .cardholder.occupied {
+    border-color: rgba(255, 255, 255, 0.36);
+    background: rgba(13, 44, 31, 0.12);
+  }
+
+  .cardholder.active {
+    border-color: rgba(245, 241, 207, 0.78);
+    color: #f5f1cf;
+    box-shadow: inset 0 0 0 1px rgba(245, 241, 207, 0.16);
+  }
+
+  .cardholder-label {
+    align-self: end;
+    grid-column: 1;
+    grid-row: 1;
+    z-index: 1;
+    min-width: 0;
+    font-size: 0.74rem;
+    line-height: 1;
+    text-shadow: 0 1px 3px rgba(8, 19, 13, 0.72);
+    text-transform: uppercase;
+  }
+
+  .table-card {
+    align-self: start;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .cardholder .table-card {
+    width: 58px;
+  }
+
   @media (max-width: 820px) {
     .card-table {
-      grid-template-columns: 52px minmax(210px, 1fr) 52px;
-      grid-template-rows: 38px 270px 38px;
+      grid-template-columns: 1fr;
+      grid-template-rows: 270px;
       min-height: auto;
     }
   }
 
   @media (max-width: 520px) {
     .card-table {
-      grid-template-columns: 44px minmax(188px, 1fr) 44px;
-      grid-template-rows: 34px 236px 34px;
+      grid-template-columns: 1fr;
+      grid-template-rows: 236px;
     }
 
-    .table-card,
-    .pending-card {
-      width: 64px;
+    .table-card {
+      width: 72px;
+    }
+
+    .cardholder .table-card {
+      width: 52px;
+    }
+
+    .cardholder {
+      width: 82px;
+      padding: 5px 5px 16px;
+    }
+
+    .cardholder-label {
+      font-size: 0.68rem;
     }
 
     .tutor-slot {
-      padding-top: 26px;
+      padding-top: 20px;
     }
 
     .left-slot {
-      padding-left: 10px;
+      padding-left: 18px;
     }
 
     .right-slot {
-      padding-right: 10px;
+      padding-right: 18px;
     }
 
     .you-slot {
-      padding-bottom: 26px;
+      padding-bottom: 20px;
     }
   }
 </style>

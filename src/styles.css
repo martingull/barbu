@@ -3030,29 +3030,33 @@ h2 {
 
   .table-play-surface.compact-play .card-table,
   .table-play-surface.compact-result .card-table {
-    grid-template-columns: 40px minmax(188px, 1fr) 40px;
-    grid-template-rows: 28px 208px 28px;
+    grid-template-columns: 1fr;
+    grid-template-rows: 256px;
   }
 
-  .table-play-surface .table-card,
-  .table-play-surface .pending-card {
+  .table-play-surface .table-card {
     width: 56px;
   }
 
+  .table-play-surface .cardholder {
+    width: 74px;
+    padding: 5px;
+  }
+
   .table-play-surface .tutor-slot {
-    padding-top: 14px;
+    padding-top: 18px;
   }
 
   .table-play-surface .left-slot {
-    padding-left: 6px;
+    padding-left: 16px;
   }
 
   .table-play-surface .right-slot {
-    padding-right: 6px;
+    padding-right: 16px;
   }
 
   .table-play-surface .you-slot {
-    padding-bottom: 14px;
+    padding-bottom: 18px;
   }
 
   .table-play-surface .table-play-panel {
