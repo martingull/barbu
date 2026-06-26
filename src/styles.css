@@ -1778,8 +1778,12 @@ h2 {
   gap: 8px;
 }
 
+.table-play-surface.compact-play .hand {
+  align-self: end;
+}
+
 .table-play-surface.compact-play .hand-card.selected {
-  transform: translateY(-2px);
+  transform: none;
 }
 
 .full-hand-result-grid,
@@ -3099,8 +3103,11 @@ h2 {
   }
 
   .fixed-play-screen .table-play-surface .table-play-panel {
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    min-height: 0;
     overflow: hidden;
-    padding-bottom: 70px;
+    padding-bottom: 10px;
   }
 
   .table-play-surface.compact-play .lesson-heading {
@@ -3212,8 +3219,15 @@ h2 {
     gap: 6px;
   }
 
+  .fixed-play-screen .table-play-surface.compact-play .hand {
+    align-self: end;
+    width: 100%;
+    margin-top: 0;
+    padding-top: 4px;
+  }
+
   .table-play-surface.compact-play .hand-card.selected {
-    transform: translateY(-2px);
+    transform: none;
   }
 
   .table-play-surface.compact-play .action-row {
@@ -3224,6 +3238,7 @@ h2 {
   .fixed-play-screen .table-play-surface.compact-play .action-row,
   .fixed-play-screen .table-play-surface.compact-result .action-row {
     position: fixed;
+    grid-row: 1;
     right: 12px;
     bottom: max(8px, env(safe-area-inset-bottom));
     left: 12px;

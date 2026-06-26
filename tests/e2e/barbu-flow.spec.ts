@@ -27,6 +27,25 @@ async function expectGameplayActionRowPinned(page: Page) {
     .toBe(true);
 }
 
+async function expectHandNearActionRow(page: Page, handSelector: string) {
+  const hand = page.locator(handSelector).last();
+  const row = page.locator(".table-play-surface .action-row").last();
+  await expect(hand).toBeVisible();
+  await expect(row).toBeVisible();
+  await expect
+    .poll(async () => {
+      const handBox = await hand.boundingBox();
+      const rowBox = await row.boundingBox();
+      if (!handBox || !rowBox) {
+        return false;
+      }
+
+      const gap = rowBox.y - (handBox.y + handBox.height);
+      return gap >= 0 && gap <= 28;
+    })
+    .toBe(true);
+}
+
 async function openBarbuTab(page: Page, tab: "Learn" | "Practice" | "Play" | "Perfect") {
   await page.getByRole("tab", { name: tab }).click();
   await expect(page.getByRole("tab", { name: tab })).toHaveAttribute("aria-selected", "true");
@@ -413,6 +432,7 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
   expect(playBarbuTable).not.toBeNull();
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
+  await expectHandNearActionRow(page, ".drill-hand");
 
   await page.locator(".table-play-topbar").getByRole("button", { name: "Table" }).click();
   await openBarbuTab(page, "Play");
@@ -431,11 +451,19 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
   expect(noHeartsTable).not.toBeNull();
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
+  await expectHandNearActionRow(page, ".full-hand-cards");
   expect(Math.abs((noHeartsTable?.width ?? 0) - (playBarbuTable?.width ?? 0))).toBeLessThanOrEqual(1);
   expect(Math.abs((noHeartsTable?.height ?? 0) - (playBarbuTable?.height ?? 0))).toBeLessThanOrEqual(1);
   await page.screenshot({ path: testInfo.outputPath("play-barbu-active-hand.png"), fullPage: true });
 
+  const handBeforeSelect = await page.locator(".full-hand-cards").last().boundingBox();
+  expect(handBeforeSelect).not.toBeNull();
   await page.locator(".full-hand-card.legal").first().click();
+  const handAfterSelect = await page.locator(".full-hand-cards").last().boundingBox();
+  expect(handAfterSelect).not.toBeNull();
+  expect(Math.abs((handAfterSelect?.y ?? 0) - (handBeforeSelect?.y ?? 0))).toBeLessThanOrEqual(1);
+  expect(Math.abs((handAfterSelect?.height ?? 0) - (handBeforeSelect?.height ?? 0))).toBeLessThanOrEqual(1);
+  await expectHandNearActionRow(page, ".full-hand-cards");
   await page.getByRole("button", { name: "Play card" }).click();
   await expect(page.getByRole("button", { name: "Next trick", exact: true })).toBeVisible();
   await expect(page.locator(".card-table .cardholder")).toHaveCount(4);
