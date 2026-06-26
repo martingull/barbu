@@ -1670,8 +1670,8 @@ h2 {
 
 .full-hand-summary.grouped-play-summary {
   grid-template-columns: 1fr;
-  gap: 6px;
-  padding: 8px;
+  gap: 5px;
+  padding: 6px;
   border: 1px solid rgba(245, 241, 207, 0.24);
   border-radius: 10px;
   background:
@@ -1681,7 +1681,7 @@ h2 {
 
 .full-hand-summary-row {
   display: grid;
-  gap: 6px;
+  gap: 5px;
   min-width: 0;
 }
 
@@ -1700,7 +1700,7 @@ h2 {
 .summary-row-label {
   grid-column: 1 / -1;
   color: #f5f1cf;
-  font-size: 0.64rem;
+  font-size: 0.58rem;
   font-weight: 900;
   line-height: 1;
   letter-spacing: 0;
@@ -1718,6 +1718,11 @@ h2 {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(9, 34, 24, 0.16)),
     #182f25;
+}
+
+.grouped-play-summary .full-hand-summary-row > div {
+  min-height: 52px;
+  padding: 8px 6px;
 }
 
 .full-hand-summary-row.table-score > div {
@@ -1741,6 +1746,10 @@ h2 {
   line-height: 1;
 }
 
+.grouped-play-summary .full-hand-summary-row strong {
+  font-size: 1rem;
+}
+
 .full-hand-summary-row.table-score strong {
   font-size: 1rem;
 }
@@ -1753,11 +1762,11 @@ h2 {
 
 .compact-run-complete > div {
   min-height: 52px;
-  padding: 8px 10px;
+  padding: 8px 6px;
 }
 
 .compact-run-complete strong {
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .full-hand-cards {
@@ -2976,9 +2985,28 @@ h2 {
     gap: 8px;
   }
 
-  .fixed-play-screen .table-play-surface.compact-play {
+  .fixed-play-screen .table-play-surface.compact-play,
+  .fixed-play-screen .table-play-surface.compact-result:not(.table-hidden) {
+    grid-template-rows: auto 256px minmax(0, 1fr);
     min-height: 0;
     overflow: hidden;
+  }
+
+  .fixed-play-screen .table-play-surface.compact-play .full-hand-summary,
+  .fixed-play-screen .table-play-surface.compact-result:not(.table-hidden) .full-hand-summary {
+    grid-row: 1;
+  }
+
+  .fixed-play-screen .table-play-surface.compact-play .card-table,
+  .fixed-play-screen .table-play-surface.compact-play .table-tap-target,
+  .fixed-play-screen .table-play-surface.compact-result:not(.table-hidden) .card-table,
+  .fixed-play-screen .table-play-surface.compact-result:not(.table-hidden) .table-tap-target {
+    grid-row: 2;
+  }
+
+  .fixed-play-screen .table-play-surface.compact-play .table-play-panel,
+  .fixed-play-screen .table-play-surface.compact-result:not(.table-hidden) .table-play-panel {
+    grid-row: 3;
   }
 
   .table-play-surface.compact-play .drill-track {
@@ -2997,7 +3025,7 @@ h2 {
 
   .table-play-surface .full-hand-summary.grouped-play-summary {
     grid-template-columns: 1fr;
-    gap: 6px;
+    gap: 5px;
     padding: 6px;
   }
 
@@ -3013,10 +3041,15 @@ h2 {
   .table-play-surface .full-hand-summary:not(.grouped-play-summary) > div,
   .table-play-surface .full-hand-summary-row > div {
     min-height: 0;
-    padding: 8px;
+    padding: 7px 6px;
   }
 
   .table-play-surface .full-hand-summary-row.table-score > div {
+    padding: 7px 6px;
+  }
+
+  .table-play-surface .full-hand-summary.compact-run-complete > div {
+    min-height: 52px;
     padding: 7px 6px;
   }
 

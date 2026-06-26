@@ -439,8 +439,27 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
   await page.getByRole("button", { name: "Play card" }).click();
   await expect(page.getByRole("button", { name: "Next trick", exact: true })).toBeVisible();
   await expect(page.locator(".card-table .cardholder")).toHaveCount(4);
+  const reviewingNoHeartsTable = await page.getByLabel("No Hearts hand table").boundingBox();
+  expect(reviewingNoHeartsTable).not.toBeNull();
+  expect(Math.abs((reviewingNoHeartsTable?.y ?? 0) - (noHeartsTable?.y ?? 0))).toBeLessThanOrEqual(1);
+  expect(Math.abs((reviewingNoHeartsTable?.height ?? 0) - (noHeartsTable?.height ?? 0))).toBeLessThanOrEqual(1);
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
+
+  await page.getByRole("button", { name: "Next trick", exact: true }).click();
+  for (let decision = 1; decision < 13; decision += 1) {
+    await playFullHandDecision(page);
+  }
+
+  await expect(page.getByRole("button", { name: "Replay" })).toBeVisible();
+  await expect(page.getByLabel("No Hearts hand table")).toBeVisible();
+  const replayNoHeartsTable = await page.getByLabel("No Hearts hand table").boundingBox();
+  expect(replayNoHeartsTable).not.toBeNull();
+  expect(Math.abs((replayNoHeartsTable?.y ?? 0) - (noHeartsTable?.y ?? 0))).toBeLessThanOrEqual(1);
+  expect(Math.abs((replayNoHeartsTable?.height ?? 0) - (noHeartsTable?.height ?? 0))).toBeLessThanOrEqual(1);
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
+  await page.screenshot({ path: testInfo.outputPath("play-barbu-replay-hand.png"), fullPage: true });
 });
 
 test("Play Barbu advances full-hand contracts with a running total", async ({ page }) => {
