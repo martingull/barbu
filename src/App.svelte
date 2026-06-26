@@ -758,6 +758,7 @@
   let lastDominoTapAt = 0;
   let dominoLastMoveReason = "";
   let fullHandRunActive = false;
+  let fullHandRunSeed = 0;
   let fullHandRunResults: FullHandRunResult[] = [];
   let pendingRunContract: FullHandContract = fullHandContracts[0];
   $: isTablePlayScreen = appView === "drill" || appView === "fullHand" || appView === "dominoHand";
@@ -1110,6 +1111,13 @@
     return seed;
   }
 
+  function runSeedForContract(contract: FullHandContract) {
+    const contractIndex = fullHandContracts.indexOf(contract);
+    const seedBase = fullHandRunSeed > 0 ? fullHandRunSeed : usePracticeSeed();
+
+    return ((Math.imul(seedBase, 1_103_515_245) + Math.imul(contractIndex + 1, 12_345)) >>> 0) || 1;
+  }
+
   function loadDrillPatternMemory() {
     if (typeof localStorage === "undefined") {
       return [];
@@ -1284,7 +1292,7 @@
     }
 
     dominoHand = null;
-    const seed = usePracticeSeed();
+    const seed = options.keepRun && fullHandRunActive ? runSeedForContract(contract) : usePracticeSeed();
     fullHandSelectedCardId = "";
     fullHandError = "";
     fullHandReviewTrickCount = 0;
@@ -1311,7 +1319,7 @@
       fullHandRunResults = [];
     }
 
-    const seed = usePracticeSeed();
+    const seed = options.keepRun && fullHandRunActive ? runSeedForContract("Domino") : usePracticeSeed();
     fullHand = null;
     dominoSelectedCardId = "";
     dominoError = "";
@@ -1437,6 +1445,7 @@
 
   function startBarbuRun() {
     fullHandRunActive = true;
+    fullHandRunSeed = usePracticeSeed();
     fullHandRunResults = [];
     fullHand = null;
     dominoHand = null;

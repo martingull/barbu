@@ -551,6 +551,9 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
   await expectFeedbackAboveHand(page, ".full-hand-cards");
   expect(Math.abs((noHeartsTable?.width ?? 0) - (playBarbuTable?.width ?? 0))).toBeLessThanOrEqual(1);
   expect(Math.abs((noHeartsTable?.height ?? 0) - (playBarbuTable?.height ?? 0))).toBeLessThanOrEqual(1);
+  const initialNoHeartsHand = await page.locator(".full-hand-cards .full-hand-card").evaluateAll((cards) =>
+    cards.map((card) => card.getAttribute("aria-label"))
+  );
   await page.screenshot({ path: testInfo.outputPath("play-barbu-active-hand.png"), fullPage: true });
 
   const handBeforeSelect = await page.locator(".full-hand-cards").last().boundingBox();
@@ -593,6 +596,20 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
   await page.screenshot({ path: testInfo.outputPath("play-barbu-replay-hand.png"), fullPage: true });
+
+  await page.getByRole("button", { name: "Replay" }).click();
+  await expect(page.getByRole("heading", { name: "No Hearts hand" })).toBeVisible();
+  await expect
+    .poll(async () =>
+      page.locator(".full-hand-cards .full-hand-card").evaluateAll((cards) =>
+        cards.map((card) => card.getAttribute("aria-label"))
+      )
+    )
+    .toEqual(initialNoHeartsHand);
+  for (let decision = 0; decision < 13; decision += 1) {
+    await playFullHandDecision(page);
+  }
+  await expect(page.getByRole("button", { name: "Next contract" })).toBeVisible();
 
   await page.getByRole("button", { name: "Next contract" }).click();
   await expect(page.getByRole("heading", { name: "No Queens" })).toBeVisible();
