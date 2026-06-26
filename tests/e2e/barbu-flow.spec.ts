@@ -70,6 +70,33 @@ async function expectHandNearActionRow(page: Page, handSelector: string) {
     .toBe(true);
 }
 
+async function expectFeedbackAboveHand(page: Page, handSelector: string) {
+  const hand = page.locator(handSelector).last();
+  const feedbackItems = page.locator(
+    ".table-play-surface.compact-play .table-play-panel .result, .table-play-surface.compact-play .table-play-panel .outcome, .table-play-surface.compact-play .table-play-panel .explanation"
+  );
+  await expect(hand).toBeVisible();
+  await expect
+    .poll(async () => {
+      const handBox = await hand.boundingBox();
+      if (!handBox) {
+        return false;
+      }
+
+      let feedbackBottom = 0;
+      const count = await feedbackItems.count();
+      for (let index = 0; index < count; index += 1) {
+        const box = await feedbackItems.nth(index).boundingBox();
+        if (box && box.width > 0 && box.height > 0) {
+          feedbackBottom = Math.max(feedbackBottom, box.y + box.height);
+        }
+      }
+
+      return feedbackBottom > 0 && feedbackBottom <= handBox.y - 8;
+    })
+    .toBe(true);
+}
+
 async function expectTableSlotsSeparated(page: Page) {
   await expect
     .poll(async () => {
@@ -491,6 +518,7 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
   await expectHandNearActionRow(page, ".full-hand-cards");
+  await expectFeedbackAboveHand(page, ".full-hand-cards");
   expect(Math.abs((noHeartsTable?.width ?? 0) - (playBarbuTable?.width ?? 0))).toBeLessThanOrEqual(1);
   expect(Math.abs((noHeartsTable?.height ?? 0) - (playBarbuTable?.height ?? 0))).toBeLessThanOrEqual(1);
   await page.screenshot({ path: testInfo.outputPath("play-barbu-active-hand.png"), fullPage: true });
@@ -556,6 +584,7 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
   await expectTableSlotsSeparated(page);
   await expect(page.locator(".full-hand-cards .full-hand-card")).toHaveCount(12);
   await expectHandNearActionRow(page, ".full-hand-cards");
+  await expectFeedbackAboveHand(page, ".full-hand-cards");
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
   await page.screenshot({ path: testInfo.outputPath("play-barbu-no-queens-after-first-trick.png"), fullPage: true });

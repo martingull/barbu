@@ -889,7 +889,6 @@
   $: fullHandIsReviewingTrick = Boolean(
     fullHandReviewTrick && fullHand?.status === "in_progress" && fullHand.completedTricks.length === fullHandReviewTrickCount
   );
-  $: fullHandLastFeedback = fullHandLastCompletedTrick ? fullHandTrickFeedback(fullHandLastCompletedTrick) : "";
   $: fullHandReviewFeedback = fullHandReviewTrick ? fullHandTrickFeedback(fullHandReviewTrick) : "";
   $: fullHandVisibleTableCards = fullHandIsReviewingTrick && fullHandReviewTrick
     ? fullHandReviewTrick.cards
@@ -3757,11 +3756,6 @@
             </div>
 
             <p class="result">{fullHand.prompt}</p>
-            {#if fullHandLastFeedback}
-              <p class:warning={fullHandTrickIsWarning(fullHandLastCompletedTrick)} class="outcome">
-                {fullHandLastFeedback}
-              </p>
-            {/if}
             {#if fullHandError}
               <p class="outcome warning">{fullHandError}</p>
             {/if}

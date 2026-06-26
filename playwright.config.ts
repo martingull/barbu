@@ -12,7 +12,7 @@ const iPhone13 = {
 
 const iPhone16Curved = {
   ...devices["iPhone 15"],
-  viewport: { width: 393, height: 852 }
+  viewport: { width: 393, height: 805 }
 };
 
 const iPhone15ProMax = {
