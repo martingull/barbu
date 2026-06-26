@@ -250,7 +250,7 @@ Purpose: train skills that make the player stronger across 52-card games.
 Current role:
 
 - Starts a Card Counting pack.
-- Offers Count Trumps as the first minigame: reveal completed tricks one at a time, hide the cards, then ask how many trumps remain.
+- Offers Count Trumps as the first minigame with two levels: Easy reveal-and-count memory, and Realistic three-trick play before a trump memory question.
 - Offers Track Court Cards as the second minigame: show played cards, count visible jacks, queens, and kings, and answer how many remain.
 
 Near-term direction:

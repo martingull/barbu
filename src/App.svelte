@@ -181,6 +181,31 @@
     options: number[];
   };
 
+  type TrumpCountMode = "easy" | "realistic";
+
+  type TrumpMemoryQuestion =
+    | {
+        kind: "count";
+        prompt: string;
+        answer: number;
+        options: number[];
+      }
+    | {
+        kind: "specific";
+        prompt: string;
+        answer: boolean;
+        targetCard: Card;
+      };
+
+  type RealisticTrumpRound = {
+    trumpSuit: Suit;
+    hands: Record<Seat, Card[]>;
+    currentTrick: TableCard[];
+    completedTricks: TableCard[][];
+    status: "playing" | "review" | "question";
+    question: TrumpMemoryQuestion;
+  };
+
   type CourtCountRound = {
     seenCards: Card[];
     answer: number;
@@ -806,6 +831,7 @@
   let fullHandRunSeed = 0;
   let fullHandRunResults: FullHandRunResult[] = [];
   let pendingRunContract: FullHandContract = fullHandContracts[0];
+  let trumpCountMode: TrumpCountMode = "easy";
   let trumpCountRound = buildTrumpCountRound(practiceSeed);
   let trumpCountRevealIndex = 0;
   let trumpCountStage: "reveal" | "answer" = "reveal";
@@ -813,6 +839,10 @@
   let trumpCountChecked = false;
   let trumpCountAttempts = 0;
   let trumpCountClean = 0;
+  let realisticTrumpRound = buildRealisticTrumpRound(practiceSeed + 29);
+  let realisticTrumpSelectedCardId = "";
+  let realisticTrumpAnswer: number | boolean | null = null;
+  let realisticTrumpChecked = false;
   let courtCountRound = buildCourtCountRound(practiceSeed + 17);
   let courtCountSelected: number | null = null;
   let courtCountChecked = false;
@@ -1065,6 +1095,31 @@
         ? `Correct. ${trumpCountSeenCount} ${suitNames[trumpCountRound.trumpSuit].toLowerCase()} have appeared, so ${trumpCountRound.answer} remain.`
         : `${trumpCountSeenCount} ${suitNames[trumpCountRound.trumpSuit].toLowerCase()} have appeared. ${trumpCountRound.answer} remain.`
       : "Keep a running trump count as each trick appears.";
+  $: realisticTrumpSeenCards = realisticTrumpRound.completedTricks.flatMap((trick) => trick.map((play) => play.card));
+  $: realisticTrumpSeenCount = realisticTrumpSeenCards.filter((card) => card.suit === realisticTrumpRound.trumpSuit).length;
+  $: realisticTrumpLegalCards = countingLegalCards(
+    realisticTrumpRound.hands.You,
+    realisticTrumpRound.currentTrick[0]?.card.suit
+  );
+  $: realisticTrumpSelectedCard = realisticTrumpRound.hands.You.find((card) => card.id === realisticTrumpSelectedCardId);
+  $: realisticTrumpPromptTitle =
+    realisticTrumpRound.status === "question"
+      ? "Answer from memory"
+      : realisticTrumpRound.status === "review"
+        ? "Read the completed trick"
+        : "Play the hand. Count hearts.";
+  $: realisticTrumpPromptBody =
+    realisticTrumpRound.status === "question"
+      ? realisticTrumpRound.question.prompt
+      : realisticTrumpRound.status === "review"
+        ? "Left has played. Lock the trump count before moving on."
+        : `Trick ${realisticTrumpRound.completedTricks.length + 1} of 3. Follow suit if you can. Hearts are trumps.`;
+  $: realisticTrumpFeedback =
+    realisticTrumpChecked && realisticTrumpAnswer !== null
+      ? realisticTrumpAnswer === realisticTrumpRound.question.answer
+        ? "Correct. You kept the trump memory while playing the hand."
+        : realisticTrumpQuestionAnswerText(realisticTrumpRound.question)
+      : "Play three realistic tricks, then answer without seeing the cards.";
   $: courtCountSeenCount = courtCountRound.seenCards.filter((card) => isCourtCard(card)).length;
   $: courtCountFeedback =
     courtCountChecked && courtCountSelected !== null
@@ -1423,6 +1478,10 @@
     trumpCountStage = "reveal";
     trumpCountSelected = null;
     trumpCountChecked = false;
+    realisticTrumpRound = buildRealisticTrumpRound(usePracticeSeed());
+    realisticTrumpSelectedCardId = "";
+    realisticTrumpAnswer = null;
+    realisticTrumpChecked = false;
     appView = "trumpCount";
   }
 
@@ -1464,6 +1523,117 @@
       seenCards,
       answer,
       options: countOptions(answer, seed, 12)
+    };
+  }
+
+  function buildRealisticTrumpRound(seed: number): RealisticTrumpRound {
+    const deck = shuffleCountingDeck(seed);
+    const hands = emptyCountingHands();
+
+    deck.forEach((card, index) => {
+      hands[countingTrickSeats[index % countingTrickSeats.length]].push(card);
+    });
+
+    for (const seat of countingTrickSeats) {
+      hands[seat] = [...hands[seat]].sort(compareCountingCards);
+    }
+
+    return beginRealisticTrumpTrick({
+      trumpSuit: "H",
+      hands,
+      currentTrick: [],
+      completedTricks: [],
+      status: "playing",
+      question: buildTrumpMemoryQuestion([], seed)
+    });
+  }
+
+  function emptyCountingHands(): Record<Seat, Card[]> {
+    return {
+      Tutor: [],
+      Right: [],
+      You: [],
+      Left: []
+    };
+  }
+
+  function beginRealisticTrumpTrick(round: RealisticTrumpRound): RealisticTrumpRound {
+    const hands = cloneCountingHands(round.hands);
+    const tutorLead = chooseCountingLeadCard(hands.Tutor);
+    removeCountingCard(hands, "Tutor", tutorLead.id);
+    const rightCard = chooseCountingAutoCard(hands.Right, tutorLead.suit);
+    removeCountingCard(hands, "Right", rightCard.id);
+
+    return {
+      ...round,
+      hands,
+      currentTrick: [
+        { seat: "Tutor", card: tutorLead },
+        { seat: "Right", card: rightCard }
+      ],
+      status: "playing"
+    };
+  }
+
+  function cloneCountingHands(hands: Record<Seat, Card[]>): Record<Seat, Card[]> {
+    return {
+      Tutor: [...hands.Tutor],
+      Right: [...hands.Right],
+      You: [...hands.You],
+      Left: [...hands.Left]
+    };
+  }
+
+  function chooseCountingLeadCard(hand: Card[]) {
+    return [...hand].sort((left, right) => {
+      const leftTrump = left.suit === "H" ? 1 : 0;
+      const rightTrump = right.suit === "H" ? 1 : 0;
+      return leftTrump - rightTrump || compareCountingCards(left, right);
+    })[0];
+  }
+
+  function chooseCountingAutoCard(hand: Card[], ledSuit: Suit) {
+    return [...countingLegalCards(hand, ledSuit)].sort(compareCountingCards)[0];
+  }
+
+  function countingLegalCards(hand: Card[], ledSuit: Suit | undefined) {
+    if (!ledSuit) {
+      return hand;
+    }
+
+    const suitedCards = hand.filter((card) => card.suit === ledSuit);
+    return suitedCards.length ? suitedCards : hand;
+  }
+
+  function compareCountingCards(left: Card, right: Card) {
+    return suitIndex(left.suit) - suitIndex(right.suit) || rankValue(left.rank) - rankValue(right.rank);
+  }
+
+  function removeCountingCard(hands: Record<Seat, Card[]>, seat: Seat, cardId: string) {
+    hands[seat] = hands[seat].filter((card) => card.id !== cardId);
+  }
+
+  function buildTrumpMemoryQuestion(tricks: TableCard[][], seed: number): TrumpMemoryQuestion {
+    const seenCards = tricks.flatMap((trick) => trick.map((play) => play.card));
+    const trumpSeen = seenCards.filter((card) => card.suit === "H").length;
+
+    if (seed % 2 === 0) {
+      return {
+        kind: "count",
+        prompt: "How many hearts were played in those three tricks?",
+        answer: trumpSeen,
+        options: countOptions(trumpSeen, seed, 13)
+      };
+    }
+
+    const hearts = countingRanks.map((rank) => ({ id: `${rank}H`, rank, suit: "H" as Suit, label: `${rank}H` }));
+    const targetCard = hearts[(seed + trumpSeen) % hearts.length];
+
+    return {
+      kind: "specific",
+      prompt: `Was ${targetCard.label} played in those three tricks?`,
+      answer: seenCards.some((card) => card.id === targetCard.id),
+      targetCard
     };
   }
 
@@ -1510,6 +1680,10 @@
     trumpCountSelected = option;
   }
 
+  function selectTrumpCountMode(mode: TrumpCountMode) {
+    trumpCountMode = mode;
+  }
+
   function checkTrumpCountAnswer() {
     if (trumpCountSelected === null || trumpCountChecked) {
       return;
@@ -1542,6 +1716,98 @@
     trumpCountStage = "reveal";
     trumpCountSelected = null;
     trumpCountChecked = false;
+  }
+
+  function selectRealisticTrumpCard(card: Card) {
+    if (realisticTrumpRound.status !== "playing") {
+      return;
+    }
+
+    realisticTrumpSelectedCardId = card.id;
+  }
+
+  function playRealisticTrumpCard() {
+    if (!realisticTrumpSelectedCard || realisticTrumpRound.status !== "playing") {
+      return;
+    }
+
+    if (!realisticTrumpLegalCards.some((card) => card.id === realisticTrumpSelectedCard.id)) {
+      return;
+    }
+
+    const hands = cloneCountingHands(realisticTrumpRound.hands);
+    removeCountingCard(hands, "You", realisticTrumpSelectedCard.id);
+    const ledSuit = realisticTrumpRound.currentTrick[0]?.card.suit;
+    const leftCard = chooseCountingAutoCard(hands.Left, ledSuit);
+    removeCountingCard(hands, "Left", leftCard.id);
+    const completedTrick = [
+      ...realisticTrumpRound.currentTrick,
+      { seat: "You" as const, card: realisticTrumpSelectedCard },
+      { seat: "Left" as const, card: leftCard }
+    ];
+    const completedTricks = [...realisticTrumpRound.completedTricks, completedTrick];
+
+    realisticTrumpRound = {
+      ...realisticTrumpRound,
+      hands,
+      currentTrick: completedTrick,
+      completedTricks,
+      question: buildTrumpMemoryQuestion(completedTricks, practiceSeed + completedTricks.length),
+      status: "review"
+    };
+    realisticTrumpSelectedCardId = "";
+  }
+
+  function continueRealisticTrumpRound() {
+    if (realisticTrumpRound.status !== "review") {
+      return;
+    }
+
+    if (realisticTrumpRound.completedTricks.length >= 3) {
+      realisticTrumpRound = {
+        ...realisticTrumpRound,
+        status: "question"
+      };
+      return;
+    }
+
+    realisticTrumpRound = beginRealisticTrumpTrick(realisticTrumpRound);
+  }
+
+  function selectRealisticTrumpAnswer(answer: number | boolean) {
+    if (realisticTrumpChecked) {
+      return;
+    }
+
+    realisticTrumpAnswer = answer;
+  }
+
+  function checkRealisticTrumpAnswer() {
+    if (realisticTrumpAnswer === null || realisticTrumpChecked) {
+      return;
+    }
+
+    realisticTrumpChecked = true;
+    trumpCountAttempts += 1;
+
+    if (realisticTrumpAnswer === realisticTrumpRound.question.answer) {
+      trumpCountClean += 1;
+    }
+  }
+
+  function nextRealisticTrumpRound() {
+    realisticTrumpRound = buildRealisticTrumpRound(usePracticeSeed());
+    realisticTrumpSelectedCardId = "";
+    realisticTrumpAnswer = null;
+    realisticTrumpChecked = false;
+  }
+
+  function realisticTrumpQuestionAnswerText(question: TrumpMemoryQuestion) {
+    if (question.kind === "count") {
+      return `${question.answer} hearts were played in those three tricks.`;
+    }
+
+    return question.answer ? `Yes. ${question.targetCard.label} was played.` : `No. ${question.targetCard.label} was not played.`;
   }
 
   function selectCourtCountAnswer(option: number) {
@@ -3730,84 +3996,242 @@
     </header>
 
     <section class="trump-count-screen" aria-label="Count trumps trainer">
-      <div class="trump-count-prompt">
-        <p class="eyebrow">Hearts are trumps</p>
-        <h2>{trumpCountPromptTitle}</h2>
-        <p>{trumpCountPromptBody}</p>
+      <div class="trump-count-mode" aria-label="Count trumps mode">
+        <button
+          aria-pressed={trumpCountMode === "easy"}
+          class:active={trumpCountMode === "easy"}
+          onclick={() => selectTrumpCountMode("easy")}
+          type="button"
+        >
+          Easy
+        </button>
+        <button
+          aria-pressed={trumpCountMode === "realistic"}
+          class:active={trumpCountMode === "realistic"}
+          onclick={() => selectTrumpCountMode("realistic")}
+          type="button"
+        >
+          Realistic
+        </button>
       </div>
 
-      {#if trumpCountStage === "reveal"}
-        <div class="trump-memory-table" aria-label="Trump trick reveal">
-          {#each trumpCountVisibleTrick as play}
-            <div class="trump-memory-seat">
-              <span>{scoreSeatLabel(play.seat)}</span>
-              <div class:trump={play.card.suit === trumpCountRound.trumpSuit} class="trump-memory-card">
-                <CardFace card={play.card} decorative />
-              </div>
-            </div>
-          {/each}
-        </div>
-      {:else}
-        <div class="trump-memory-hidden" aria-label="Trump memory prompt">
-          <span>{trumpCountTotalTricks} tricks shown</span>
-          <strong>Cards hidden</strong>
-          <small>Use the count you kept while the tricks appeared.</small>
-        </div>
-      {/if}
+      <div class="trump-count-prompt">
+        <p class="eyebrow">Hearts are trumps</p>
+        {#if trumpCountMode === "easy"}
+          <h2>{trumpCountPromptTitle}</h2>
+          <p>{trumpCountPromptBody}</p>
+        {:else}
+          <h2>{realisticTrumpPromptTitle}</h2>
+          <p>{realisticTrumpPromptBody}</p>
+        {/if}
+      </div>
 
-      {#if trumpCountStage === "answer"}
-        <div class="trump-count-options" aria-label="Trump count answers">
-          {#each trumpCountRound.options as option}
-            <button
-              aria-pressed={trumpCountSelected === option}
-              class:correct={trumpCountChecked && option === trumpCountRound.answer}
-              class:selected={trumpCountSelected === option}
-              class:wrong={trumpCountChecked && trumpCountSelected === option && option !== trumpCountRound.answer}
-              onclick={() => selectTrumpCountAnswer(option)}
-              type="button"
-            >
-              {option}
-            </button>
-          {/each}
-        </div>
-
-        <p
-          class:warning={trumpCountChecked && trumpCountSelected !== trumpCountRound.answer}
-          class="trump-count-feedback"
-        >
-          {trumpCountFeedback}
-        </p>
-      {/if}
-
-      {#if trumpCountChecked}
-        <div class="trump-count-review" aria-label="Trump count review">
-          <span>Trump cards seen</span>
-          <strong>{trumpCountSeenCount} hearts appeared</strong>
-          <small>{trumpCountRound.answer} hearts remain out.</small>
-          <div class="trump-review-cards">
-            {#each trumpCountSeenCards.filter((card) => card.suit === trumpCountRound.trumpSuit) as card}
-              <div class="trump-seen-card trump">
-                <CardFace {card} decorative />
+      {#if trumpCountMode === "easy"}
+        {#if trumpCountStage === "reveal"}
+          <div class="trump-memory-table" aria-label="Trump trick reveal">
+            {#each trumpCountVisibleTrick as play}
+              <div class="trump-memory-seat">
+                <span>{scoreSeatLabel(play.seat)}</span>
+                <div class:trump={play.card.suit === trumpCountRound.trumpSuit} class="trump-memory-card">
+                  <CardFace card={play.card} decorative />
+                </div>
               </div>
             {/each}
           </div>
-        </div>
+        {:else}
+          <div class="trump-memory-hidden" aria-label="Trump memory prompt">
+            <span>{trumpCountTotalTricks} tricks shown</span>
+            <strong>Cards hidden</strong>
+            <small>Use the count you kept while the tricks appeared.</small>
+          </div>
+        {/if}
+
+        {#if trumpCountStage === "answer"}
+          <div class="trump-count-options" aria-label="Trump count answers">
+            {#each trumpCountRound.options as option}
+              <button
+                aria-pressed={trumpCountSelected === option}
+                class:correct={trumpCountChecked && option === trumpCountRound.answer}
+                class:selected={trumpCountSelected === option}
+                class:wrong={trumpCountChecked && trumpCountSelected === option && option !== trumpCountRound.answer}
+                onclick={() => selectTrumpCountAnswer(option)}
+                type="button"
+              >
+                {option}
+              </button>
+            {/each}
+          </div>
+
+          <p
+            class:warning={trumpCountChecked && trumpCountSelected !== trumpCountRound.answer}
+            class="trump-count-feedback"
+          >
+            {trumpCountFeedback}
+          </p>
+        {/if}
+
+        {#if trumpCountChecked}
+          <div class="trump-count-review" aria-label="Trump count review">
+            <span>Trump cards seen</span>
+            <strong>{trumpCountSeenCount} hearts appeared</strong>
+            <small>{trumpCountRound.answer} hearts remain out.</small>
+            <div class="trump-review-cards">
+              {#each trumpCountSeenCards.filter((card) => card.suit === trumpCountRound.trumpSuit) as card}
+                <div class="trump-seen-card trump">
+                  <CardFace {card} decorative />
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
+      {:else}
+        {#if realisticTrumpRound.status !== "question"}
+          <CardTable
+            ariaLabel="Realistic trump table"
+            pendingBySeat={realisticTrumpRound.status === "playing" ? { You: "You", Left: "Left" } : {}}
+            tableCards={realisticTrumpRound.currentTrick}
+          />
+        {:else}
+          <div class="trump-memory-hidden" aria-label="Realistic trump memory prompt">
+            <span>3 tricks played</span>
+            <strong>Cards hidden</strong>
+            <small>{realisticTrumpRound.question.prompt}</small>
+          </div>
+        {/if}
+
+        {#if realisticTrumpRound.status === "playing"}
+          <div class="hand full-hand-cards realistic-trump-hand" aria-label="Your realistic trump hand">
+            {#each realisticTrumpRound.hands.You as card}
+              <button
+                aria-label={`${card.rank} ${card.suit}`}
+                aria-pressed={realisticTrumpSelectedCardId === card.id}
+                class:heart={card.suit === "H"}
+                class:illegal={!realisticTrumpLegalCards.some((legalCard) => legalCard.id === card.id)}
+                class:legal={realisticTrumpLegalCards.some((legalCard) => legalCard.id === card.id)}
+                class:selected={realisticTrumpSelectedCardId === card.id}
+                class="card hand-card full-hand-card"
+                onclick={() => selectRealisticTrumpCard(card)}
+                type="button"
+              >
+                <CardFace {card} decorative />
+              </button>
+            {/each}
+          </div>
+        {/if}
+
+        {#if realisticTrumpRound.status === "question"}
+          {#if realisticTrumpRound.question.kind === "count"}
+            <div class="trump-count-options" aria-label="Realistic trump count answers">
+              {#each realisticTrumpRound.question.options as option}
+                <button
+                  aria-pressed={realisticTrumpAnswer === option}
+                  class:correct={realisticTrumpChecked && option === realisticTrumpRound.question.answer}
+                  class:selected={realisticTrumpAnswer === option}
+                  class:wrong={realisticTrumpChecked && realisticTrumpAnswer === option && option !== realisticTrumpRound.question.answer}
+                  onclick={() => selectRealisticTrumpAnswer(option)}
+                  type="button"
+                >
+                  {option}
+                </button>
+              {/each}
+            </div>
+          {:else}
+            <div class="trump-count-options" aria-label="Realistic trump specific answers">
+              <button
+                aria-pressed={realisticTrumpAnswer === true}
+                class:correct={realisticTrumpChecked && realisticTrumpRound.question.answer === true}
+                class:selected={realisticTrumpAnswer === true}
+                class:wrong={realisticTrumpChecked && realisticTrumpAnswer === true && realisticTrumpRound.question.answer !== true}
+                onclick={() => selectRealisticTrumpAnswer(true)}
+                type="button"
+              >
+                Yes
+              </button>
+              <button
+                aria-pressed={realisticTrumpAnswer === false}
+                class:correct={realisticTrumpChecked && realisticTrumpRound.question.answer === false}
+                class:selected={realisticTrumpAnswer === false}
+                class:wrong={realisticTrumpChecked && realisticTrumpAnswer === false && realisticTrumpRound.question.answer !== false}
+                onclick={() => selectRealisticTrumpAnswer(false)}
+                type="button"
+              >
+                No
+              </button>
+            </div>
+          {/if}
+
+          <p
+            class:warning={realisticTrumpChecked && realisticTrumpAnswer !== realisticTrumpRound.question.answer}
+            class="trump-count-feedback"
+          >
+            {realisticTrumpFeedback}
+          </p>
+        {/if}
+
+        {#if realisticTrumpChecked}
+          <div class="trump-count-review" aria-label="Realistic trump count review">
+            <span>Trump cards seen</span>
+            <strong>{realisticTrumpSeenCount} hearts appeared</strong>
+            <small>{realisticTrumpQuestionAnswerText(realisticTrumpRound.question)}</small>
+            <div class="trump-review-cards">
+              {#each realisticTrumpSeenCards.filter((card) => card.suit === realisticTrumpRound.trumpSuit) as card}
+                <div class="trump-seen-card trump">
+                  <CardFace {card} decorative />
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
       {/if}
 
-      <div class="course-actions">
-        <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
-        {#if trumpCountStage === "reveal"}
-          <button class="primary-action" onclick={advanceTrumpCountReveal} type="button">
-            {trumpCountRevealIndex >= trumpCountRound.tricks.length - 1 ? "Answer count" : "Next trick"}
-          </button>
-        {:else if trumpCountChecked}
-          <button class="primary-action" onclick={nextTrumpCountRound} type="button">Next count</button>
-        {:else}
-          <button class="primary-action" disabled={trumpCountSelected === null} onclick={checkTrumpCountAnswer} type="button">
-            Check count
-          </button>
-        {/if}
-      </div>
+      {#if trumpCountMode === "easy"}
+        <div class="course-actions">
+          <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
+          {#if trumpCountStage === "reveal"}
+            <button class="primary-action" onclick={advanceTrumpCountReveal} type="button">
+              {trumpCountRevealIndex >= trumpCountRound.tricks.length - 1 ? "Answer count" : "Next trick"}
+            </button>
+          {:else if trumpCountChecked}
+            <button class="primary-action" onclick={nextTrumpCountRound} type="button">Next count</button>
+          {:else}
+            <button class="primary-action" disabled={trumpCountSelected === null} onclick={checkTrumpCountAnswer} type="button">
+              Check count
+            </button>
+          {/if}
+        </div>
+      {:else}
+        <div class="course-actions">
+          <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
+          {#if realisticTrumpRound.status === "playing"}
+            <button
+              class="primary-action"
+              disabled={
+                !realisticTrumpSelectedCard ||
+                !realisticTrumpLegalCards.some((card) => card.id === realisticTrumpSelectedCard.id)
+              }
+              onclick={playRealisticTrumpCard}
+              type="button"
+            >
+              Play card
+            </button>
+          {:else if realisticTrumpRound.status === "review"}
+            <button class="primary-action" onclick={continueRealisticTrumpRound} type="button">
+              {realisticTrumpRound.completedTricks.length >= 3 ? "Answer memory" : "Next trick"}
+            </button>
+          {:else if realisticTrumpChecked}
+            <button class="primary-action" onclick={nextRealisticTrumpRound} type="button">Next hand</button>
+          {:else}
+            <button
+              class="primary-action"
+              disabled={realisticTrumpAnswer === null}
+              onclick={checkRealisticTrumpAnswer}
+              type="button"
+            >
+              Check memory
+            </button>
+          {/if}
+        </div>
+      {/if}
     </section>
   {:else if appView === "courtCount"}
     <header class="topbar" aria-label="Track court cards">

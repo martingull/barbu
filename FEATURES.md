@@ -159,7 +159,7 @@ These are the next product increments that keep the app coherent.
 
 9. Card Sense Training v1
    - Started in the catalog and Perfect mode with a Card Counting pack.
-   - Count Trumps now reveals tricks one at a time, hides the cards, and asks how many trumps remain from memory.
+   - Count Trumps now has Easy and Realistic levels. Easy reveals tricks one at a time, hides the cards, and asks how many trumps remain. Realistic deals a small hand, makes the player play three tricks, then asks either how many trumps were played or whether a specific trump card appeared.
    - Track Court Cards is the second active exercise.
    - Add short mini-games for serious 52-card-deck skills and practical card-counting habits: Suit Count, Danger Card Tracker, Trump Count, Void Finder, High Card Memory, and Safe Exit Trainer.
    - Next: add danger-card memory and connect card-counting exercises back to Play Barbu feedback.

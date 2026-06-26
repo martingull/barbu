@@ -2205,6 +2205,28 @@ h2 {
   color: #f7faf3;
 }
 
+.trump-count-mode {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.trump-count-mode button {
+  min-height: 42px;
+  border: 1px solid rgba(245, 241, 207, 0.34);
+  border-radius: 8px;
+  background: rgba(245, 241, 207, 0.08);
+  color: #f5f1cf;
+  font-size: 0.95rem;
+  font-weight: 950;
+}
+
+.trump-count-mode button.active {
+  border-color: #f5f1cf;
+  background: #f5f1cf;
+  color: #21372d;
+}
+
 .trump-count-prompt {
   display: grid;
   gap: 6px;
@@ -2280,6 +2302,28 @@ h2 {
 .trump-memory-card.trump {
   outline: 3px solid #f5f1cf;
   outline-offset: 2px;
+}
+
+.realistic-trump-hand {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid rgba(245, 241, 207, 0.2);
+  border-radius: 8px;
+  background: #10251d;
+}
+
+.realistic-trump-hand .full-hand-card {
+  min-width: 0;
+}
+
+.realistic-trump-hand .full-hand-card.legal {
+  border-color: rgba(245, 241, 207, 0.62);
+}
+
+.realistic-trump-hand .full-hand-card.illegal {
+  opacity: 0.42;
 }
 
 .trump-memory-hidden {

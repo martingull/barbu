@@ -144,6 +144,14 @@ async function openBarbuContracts(page: Page) {
   await expect(page.getByRole("heading", { name: "Barbu contracts" })).toBeVisible();
 }
 
+async function gotoWithCourseProgress(page: Page, progress: Record<string, boolean>) {
+  await page.goto("/");
+  await page.evaluate((seededProgress) => {
+    localStorage.setItem("barbu.courseProgress.v1", JSON.stringify(seededProgress));
+  }, progress);
+  await page.reload();
+}
+
 async function startContractLesson(page: Page, contract: string) {
   await openBarbuContracts(page);
   await page.getByRole("button", { name: new RegExp(`^${contract}\\b`) }).click();
@@ -328,6 +336,31 @@ test("Perfect mode starts card-counting minigames", async ({ page }, testInfo) =
   await expect(page.getByRole("button", { name: "Next count" })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath("perfect-count-trumps.png"), fullPage: true });
 
+  await page.getByLabel("Count trumps mode").getByRole("button", { name: "Realistic" }).click();
+  await expect(page.getByLabel("Realistic trump table")).toBeVisible();
+  await expect(page.getByLabel("Count trumps trainer")).toContainText("Trick 1 of 3");
+
+  for (let trick = 1; trick <= 3; trick += 1) {
+    await page.locator(".realistic-trump-hand .full-hand-card.legal").first().click();
+    await expect(page.getByRole("button", { name: "Play card" })).toBeEnabled();
+    await page.getByRole("button", { name: "Play card" }).click();
+    await expect(page.getByRole("button", { name: trick === 3 ? "Answer memory" : "Next trick" })).toBeVisible();
+    await page.getByRole("button", { name: trick === 3 ? "Answer memory" : "Next trick" }).click();
+  }
+
+  await expect(page.getByLabel("Realistic trump memory prompt")).toContainText("Cards hidden");
+  const realisticCountAnswers = page.getByLabel("Realistic trump count answers").getByRole("button");
+  if ((await realisticCountAnswers.count()) > 0) {
+    await realisticCountAnswers.first().click();
+  } else {
+    await page.getByLabel("Realistic trump specific answers").getByRole("button").first().click();
+  }
+  await expect(page.getByRole("button", { name: "Check memory" })).toBeEnabled();
+  await page.getByRole("button", { name: "Check memory" }).click();
+  await expect(page.getByLabel("Realistic trump count review")).toContainText("hearts appeared");
+  await expect(page.getByRole("button", { name: "Next hand" })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("perfect-count-trumps-realistic.png"), fullPage: true });
+
   await page.getByLabel("Count trumps", { exact: true }).getByRole("button", { name: "Table" }).click();
   await page.getByLabel("Card counting pack").getByRole("button", { name: "Track court cards" }).click();
 
@@ -421,23 +454,17 @@ test("quick drill finishes after one decision per Barbu contract", async ({ page
 });
 
 test("completed standalone quick drill can repair an out-of-order practice table step", async ({ page }) => {
-  await page.addInitScript(() => {
-    localStorage.setItem(
-      "barbu.courseProgress.v1",
-      JSON.stringify({
-        "meet-contract": true,
-        "spot-danger": true,
-        "play-trick": true,
-        "contract-no-last-two": true,
-        "contract-no-tricks": true,
-        "contract-hearts-trumps": true,
-        "contract-domino": true,
-        review: true
-      })
-    );
+  await gotoWithCourseProgress(page, {
+    "meet-contract": true,
+    "spot-danger": true,
+    "play-trick": true,
+    "contract-no-last-two": true,
+    "contract-no-tricks": true,
+    "contract-hearts-trumps": true,
+    "contract-domino": true,
+    review: true
   });
 
-  await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
   await openBarbuTab(page, "Practice");
   await page.getByRole("button", { name: "Quick drill" }).click();
@@ -1041,11 +1068,8 @@ test("finishing a lesson advances course progress", async ({ page }, testInfo) =
 });
 
 test("No Queens course has concept example play and review", async ({ page }) => {
-  await page.addInitScript(() => {
-    localStorage.setItem("barbu.courseProgress.v1", JSON.stringify({ "meet-contract": true }));
-  });
+  await gotoWithCourseProgress(page, { "meet-contract": true });
 
-  await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
   await page.getByRole("button", { name: /Continue with Spot the danger/ }).click();
 
@@ -1078,14 +1102,11 @@ test("No Queens course has concept example play and review", async ({ page }) =>
 });
 
 test("King of Hearts course has concept example play and review", async ({ page }, testInfo) => {
-  await page.addInitScript(() => {
-    localStorage.setItem(
-      "barbu.courseProgress.v1",
-      JSON.stringify({ "meet-contract": true, "spot-danger": true })
-    );
+  await gotoWithCourseProgress(page, {
+    "meet-contract": true,
+    "spot-danger": true
   });
 
-  await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
   await page.getByRole("button", { name: /Continue with Play the trick/ }).click();
 
@@ -1238,22 +1259,16 @@ test("Domino course uses a layout example and guided placement", async ({ page }
 });
 
 test("training path practice step starts quick drill and marks completion", async ({ page }) => {
-  await page.addInitScript(() => {
-    localStorage.setItem(
-      "barbu.courseProgress.v1",
-      JSON.stringify({
-        "meet-contract": true,
-        "spot-danger": true,
-        "play-trick": true,
-        "contract-no-last-two": true,
-        "contract-no-tricks": true,
-        "contract-hearts-trumps": true,
-        "contract-domino": true
-      })
-    );
+  await gotoWithCourseProgress(page, {
+    "meet-contract": true,
+    "spot-danger": true,
+    "play-trick": true,
+    "contract-no-last-two": true,
+    "contract-no-tricks": true,
+    "contract-hearts-trumps": true,
+    "contract-domino": true
   });
 
-  await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
   await page.getByRole("button", { name: /Continue with Practice table/ }).click();
 
@@ -1286,24 +1301,18 @@ test("training path practice step starts quick drill and marks completion", asyn
 });
 
 test("completed course does not loop back to the first lesson", async ({ page }) => {
-  await page.addInitScript(() => {
-    localStorage.setItem(
-      "barbu.courseProgress.v1",
-      JSON.stringify({
-        "meet-contract": true,
-        "spot-danger": true,
-        "play-trick": true,
-        "contract-no-last-two": true,
-        "contract-no-tricks": true,
-        "contract-hearts-trumps": true,
-        "contract-domino": true,
-        "generated-drill": true,
-        review: true
-      })
-    );
+  await gotoWithCourseProgress(page, {
+    "meet-contract": true,
+    "spot-danger": true,
+    "play-trick": true,
+    "contract-no-last-two": true,
+    "contract-no-tricks": true,
+    "contract-hearts-trumps": true,
+    "contract-domino": true,
+    "generated-drill": true,
+    review: true
   });
 
-  await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
 
   await expect(page.getByText("9 / 9 complete")).toBeVisible();
