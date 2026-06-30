@@ -1120,8 +1120,8 @@
       : realisticTrumpRound.status === "complete"
         ? "You played the full hand while keeping track of the trump suit."
       : realisticTrumpRound.status === "review"
-        ? "Left has played. Add every heart from this trick before moving on."
-        : "Follow suit if you can. Hearts are trumps, and Barbu will test your count during the hand.";
+        ? "Add any hearts from this trick, then continue."
+        : "Follow suit. Count hearts as they hit the table.";
   $: realisticTrumpTableCards =
     realisticTrumpRound.status === "question" || realisticTrumpRound.status === "complete"
       ? []
@@ -1135,9 +1135,9 @@
   $: realisticTrumpFeedback =
     realisticTrumpChecked && realisticTrumpAnswer !== null
       ? realisticTrumpAnswer === realisticTrumpRound.question.answer
-        ? "Correct. You kept the trump memory while playing the hand."
+        ? "Correct. Memory held."
         : realisticTrumpQuestionAnswerText(realisticTrumpRound.question)
-      : "Play the hand and answer Barbu's trump checks without seeing the old tricks.";
+      : "Answer from memory. Old tricks are hidden.";
   $: courtCountSeenCount = courtCountRound.seenCards.filter((card) => isCourtCard(card)).length;
   $: courtCountFeedback =
     courtCountChecked && courtCountSelected !== null
@@ -4080,15 +4080,6 @@
 
           <p class="result" aria-label="Realistic trump challenge">{realisticTrumpPromptBody}</p>
 
-          {#if realisticTrumpRound.status === "question" && realisticTrumpRound.question.kind === "specific"}
-            <div class="trump-target-card" aria-label={`Target trump card ${realisticTrumpRound.question.targetCard.label}`}>
-              <span>Target trump</span>
-              <div class="trump-target-card-face">
-                <CardFace card={realisticTrumpRound.question.targetCard} decorative />
-              </div>
-            </div>
-          {/if}
-
           {#if realisticTrumpRound.status === "playing"}
             <div class="hand full-hand-cards realistic-trump-hand" aria-label="Your realistic trump hand">
               {#each realisticTrumpRound.hands.You as card}
@@ -4126,27 +4117,35 @@
                 {/each}
               </div>
             {:else}
-              <div class="trump-count-options" aria-label="Realistic trump specific answers">
-                <button
-                  aria-pressed={realisticTrumpAnswer === true}
-                  class:correct={realisticTrumpChecked && realisticTrumpRound.question.answer === true}
-                  class:selected={realisticTrumpAnswer === true}
-                  class:wrong={realisticTrumpChecked && realisticTrumpAnswer === true && realisticTrumpRound.question.answer !== true}
-                  onclick={() => selectRealisticTrumpAnswer(true)}
-                  type="button"
-                >
-                  Yes
-                </button>
-                <button
-                  aria-pressed={realisticTrumpAnswer === false}
-                  class:correct={realisticTrumpChecked && realisticTrumpRound.question.answer === false}
-                  class:selected={realisticTrumpAnswer === false}
-                  class:wrong={realisticTrumpChecked && realisticTrumpAnswer === false && realisticTrumpRound.question.answer !== false}
-                  onclick={() => selectRealisticTrumpAnswer(false)}
-                  type="button"
-                >
-                  No
-                </button>
+              <div class="trump-specific-check">
+                <div class="trump-target-card" aria-label={`Target trump card ${realisticTrumpRound.question.targetCard.label}`}>
+                  <span>Target</span>
+                  <div class="trump-target-card-face">
+                    <CardFace card={realisticTrumpRound.question.targetCard} decorative />
+                  </div>
+                </div>
+                <div class="trump-count-options trump-specific-options" aria-label="Realistic trump specific answers">
+                  <button
+                    aria-pressed={realisticTrumpAnswer === true}
+                    class:correct={realisticTrumpChecked && realisticTrumpRound.question.answer === true}
+                    class:selected={realisticTrumpAnswer === true}
+                    class:wrong={realisticTrumpChecked && realisticTrumpAnswer === true && realisticTrumpRound.question.answer !== true}
+                    onclick={() => selectRealisticTrumpAnswer(true)}
+                    type="button"
+                  >
+                    Yes
+                  </button>
+                  <button
+                    aria-pressed={realisticTrumpAnswer === false}
+                    class:correct={realisticTrumpChecked && realisticTrumpRound.question.answer === false}
+                    class:selected={realisticTrumpAnswer === false}
+                    class:wrong={realisticTrumpChecked && realisticTrumpAnswer === false && realisticTrumpRound.question.answer !== false}
+                    onclick={() => selectRealisticTrumpAnswer(false)}
+                    type="button"
+                  >
+                    No
+                  </button>
+                </div>
               </div>
             {/if}
 
