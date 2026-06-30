@@ -1588,7 +1588,7 @@
       }
 
       const card = currentTrick.length
-        ? chooseCountingAutoCard(hands[seat], currentTrick[0].card.suit)
+        ? chooseCountingAutoCard(hands[seat], currentTrick, round.trumpSuit, seat)
         : chooseCountingLeadCard(hands[seat]);
       removeCountingCard(hands, seat, card.id);
       currentTrick.push({ seat, card });
@@ -1619,8 +1619,15 @@
     })[0];
   }
 
-  function chooseCountingAutoCard(hand: Card[], ledSuit: Suit) {
-    return [...countingLegalCards(hand, ledSuit)].sort(compareCountingCards)[0];
+  function chooseCountingAutoCard(hand: Card[], currentTrick: TableCard[], trumpSuit: Suit, seat: Seat) {
+    const ledSuit = currentTrick[0]?.card.suit;
+    const legal = countingLegalCards(hand, ledSuit);
+
+    return (
+      [...legal]
+        .filter((card) => countingCardWouldWinTrick(currentTrick, card, trumpSuit, seat))
+        .sort(compareCountingCards)[0] ?? [...legal].sort(compareCountingCards)[0]
+    );
   }
 
   function countingPlayOrderFrom(leader: Seat) {
@@ -1662,6 +1669,20 @@
     const candidates = trumpCards.length ? trumpCards : trick.filter((play) => play.card.suit === ledSuit);
 
     return [...candidates].sort((left, right) => rankValue(right.card.rank) - rankValue(left.card.rank))[0]?.seat;
+  }
+
+  function countingCardWouldWinTrick(currentTrick: TableCard[], card: Card, trumpSuit: Suit, seat: Seat) {
+    const ledSuit = currentTrick[0]?.card.suit;
+
+    if (!ledSuit) {
+      return true;
+    }
+
+    if (card.suit !== ledSuit && card.suit !== trumpSuit) {
+      return false;
+    }
+
+    return countingTrickWinner([...currentTrick, { seat, card }], trumpSuit) === seat;
   }
 
   function countingLegalCards(hand: Card[], ledSuit: Suit | undefined) {
@@ -1810,13 +1831,12 @@
       { seat: "You" as const, card: realisticTrumpSelectedCard }
     ];
 
-    const ledSuit = completedTrick[0].card.suit;
     const playOrder = countingPlayOrderFrom(realisticTrumpRound.currentLeader);
     const playerTurnIndex = playOrder.indexOf("You");
     const remainingSeats = playerTurnIndex >= 0 ? playOrder.slice(playerTurnIndex + 1) : [];
 
     for (const seat of remainingSeats) {
-      const card = chooseCountingAutoCard(hands[seat], ledSuit);
+      const card = chooseCountingAutoCard(hands[seat], completedTrick, realisticTrumpRound.trumpSuit, seat);
       removeCountingCard(hands, seat, card.id);
       completedTrick.push({ seat, card });
     }

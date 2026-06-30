@@ -163,6 +163,7 @@ These are the next product increments that keep the app coherent.
    - Track Court Cards is the second active exercise.
    - Add short mini-games for serious 52-card-deck skills and practical card-counting habits: Suit Count, Danger Card Tracker, Trump Count, Void Finder, High Card Memory, and Safe Exit Trainer.
    - Next: add danger-card memory and connect card-counting exercises back to Play Barbu feedback.
+   - Realistic Trump Count now starts sharing table-aware trump behavior with the core game: opponents can overtrump a player's low trump when void in the led suit and able to beat it. Continue extending this only where it improves the skill being trained.
    - Specific future Whist idea: bake a tracking mini-game into Whist or a Whist variety where the player follows remaining trumps and court cards during play.
    - Keep each mini-game tied to real play, with one-sentence feedback explaining how the skill helps in Barbu, Hearts-family games, Whist, Bridge, or other classic card games.
    - Do not let these become disconnected brain-training toys; every exercise should make the player better at reading a table.
@@ -170,6 +171,7 @@ These are the next product increments that keep the app coherent.
 10. Local Opponent Policy v3
    - Improve Barbu and table seats as training opponents before any real multiplayer work.
    - Focus on believable card-player habits: avoid obvious penalties, count endgame danger, preserve exits, use trumps sensibly, and pursue reward tricks when the contract asks for it.
+   - Initial explicit overtrump behavior exists in Hearts Trumps and realistic Trump Count: when a seat is void in the led suit and a trump is already winning, it can play the lowest trump that beats it. Continue refining when seats should discard or conserve trumps according to the contract goal.
    - Great card games are often played against real people, but better local opponents are the right bridge from solo learning to real table play.
 
 11. Reference Layer v1

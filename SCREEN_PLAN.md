@@ -258,6 +258,7 @@ Near-term direction:
 - Add danger-card memory as a separate exercise.
 - Tie Perfect exercises back to Barbu, Hearts-family games, Whist, and Bridge.
 - Keep each exercise short and interactive, not a rules article.
+- Keep realistic exercises close to real table play. In Count Trumps, table seats now use the first trump-aware choice: overtrumping a low trump when void in the led suit and able to beat the current winning trump. Continue refining discard/conserve choices as the core game improves.
 
 ### Barbu Character Layer
 

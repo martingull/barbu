@@ -102,6 +102,8 @@ One specific later idea is a Whist-focused tracking mini-game, either inside Whi
 
 These should stay connected to real play. A mini-game should make the player better at Barbu, Hearts-family games, Whist, Bridge, or another real 52-card-deck game, not become abstract brain training.
 
+Realistic mini-games should also inherit believable table behavior from the core game. For example, Trump Count teaches against opponents who use the first slice of sensible trump behavior: if a player trumps with a low heart and the next seat is void in the led suit, that seat can overtrump with the lowest winning trump instead of only discarding mechanically.
+
 ## First Commands
 
 ```sh

@@ -1428,6 +1428,37 @@ mod tests {
     }
 
     #[test]
+    fn hearts_trumps_opponent_overtrumps_with_lowest_winning_heart() {
+        let state = PositiveTricksHandState {
+            id: "hearts-trumps-hand-opponent-overtrump".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Two, Suit::Diamonds),
+                    Card::new(Rank::Six, Suit::Hearts),
+                    Card::new(Rank::Eight, Suit::Hearts),
+                    Card::new(Rank::King, Suit::Hearts),
+                ],
+            ],
+            current_player: 3,
+            current_trick: vec![
+                PlayedCard::new(0, Card::new(Rank::Ace, Suit::Clubs)),
+                PlayedCard::new(1, Card::new(Rank::Three, Suit::Clubs)),
+                PlayedCard::new(2, Card::new(Rank::Seven, Suit::Hearts)),
+            ],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_positive_tricks_opponent_card(&state),
+            Some(Card::new(Rank::Eight, Suit::Hearts))
+        );
+    }
+
+    #[test]
     fn hearts_trumps_uses_led_suit_when_no_trump_appears() {
         let trick = vec![
             PlayedCard::new(0, Card::new(Rank::Two, Suit::Clubs)),

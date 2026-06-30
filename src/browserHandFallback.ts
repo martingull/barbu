@@ -229,7 +229,10 @@ function chooseOpponentCard(state: FullHandState) {
   const followsSuit = legal.every((card) => card.suit === led);
 
   if (!followsSuit) {
-    if (state.contract === "No Tricks" || state.contract === "Hearts Trumps") {
+    if (state.contract === "Hearts Trumps") {
+      return lowestCard(legal.filter((card) => cardWouldWinTrick(state, card))) ?? lowestCard(legal);
+    }
+    if (state.contract === "No Tricks") {
       return highestCard(legal);
     }
     return highestCard(legal.filter((card) => isPenaltyCard(state.contract, card))) ?? highestCard(legal);
