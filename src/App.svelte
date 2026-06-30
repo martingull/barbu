@@ -1639,7 +1639,7 @@
 
     return {
       kind: "specific",
-      prompt: `Was ${targetCard.label} played in those three tricks?`,
+      prompt: "Was this trump card played in those three tricks?",
       answer: seenCards.some((card) => card.id === targetCard.id),
       targetCard
     };
@@ -4034,6 +4034,15 @@
           </div>
 
           <p class="result" aria-label="Realistic trump challenge">{realisticTrumpPromptBody}</p>
+
+          {#if realisticTrumpRound.status === "question" && realisticTrumpRound.question.kind === "specific"}
+            <div class="trump-target-card" aria-label={`Target trump card ${realisticTrumpRound.question.targetCard.label}`}>
+              <span>Target trump</span>
+              <div class="trump-target-card-face">
+                <CardFace card={realisticTrumpRound.question.targetCard} decorative />
+              </div>
+            </div>
+          {/if}
 
           {#if realisticTrumpRound.status === "playing"}
             <div class="hand full-hand-cards realistic-trump-hand" aria-label="Your realistic trump hand">

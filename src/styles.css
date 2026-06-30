@@ -2343,6 +2343,33 @@ h2 {
   gap: 8px;
 }
 
+.trump-target-card {
+  display: grid;
+  grid-template-columns: auto 58px;
+  gap: 10px;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 8px 10px;
+  border: 1px solid rgba(245, 241, 207, 0.24);
+  border-radius: 10px;
+  background: rgba(245, 241, 207, 0.08);
+}
+
+.trump-target-card span {
+  color: #f5f1cf;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.trump-target-card-face {
+  width: 58px;
+  aspect-ratio: 5 / 7;
+  border-radius: 6px;
+  box-shadow: 0 8px 18px rgba(4, 18, 11, 0.3);
+}
+
 .trump-memory-hidden {
   display: grid;
   gap: 7px;

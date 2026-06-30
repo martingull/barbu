@@ -357,6 +357,7 @@ test("Perfect mode starts card-counting minigames", async ({ page }, testInfo) =
   if ((await realisticCountAnswers.count()) > 0) {
     await realisticCountAnswers.first().click();
   } else {
+    await expect(page.getByLabel(/Target trump card/)).toBeVisible();
     await page.getByLabel("Realistic trump specific answers").getByRole("button").first().click();
   }
   await expect(page.getByRole("button", { name: "Check memory" })).toBeEnabled();
