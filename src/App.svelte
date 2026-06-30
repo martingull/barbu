@@ -208,10 +208,28 @@
     questionsAsked: number;
   };
 
-  type CourtCountRound = {
-    seenCards: Card[];
-    answer: number;
-    options: number[];
+  type CourtMemoryQuestion =
+    | {
+        kind: "count";
+        prompt: string;
+        answer: number;
+        options: number[];
+      }
+    | {
+        kind: "specific";
+        prompt: string;
+        answer: boolean;
+        targetCard: Card;
+      };
+
+  type RealisticCourtRound = {
+    hands: Record<Seat, Card[]>;
+    currentLeader: Seat;
+    currentTrick: TableCard[];
+    completedTricks: TableCard[][];
+    status: "playing" | "review" | "question" | "complete";
+    question: CourtMemoryQuestion;
+    questionsAsked: number;
   };
 
   type SavedPlayBarbuRun = {
@@ -848,13 +866,18 @@
   let realisticTrumpSelectedCardId = "";
   let realisticTrumpAnswer: number | boolean | null = null;
   let realisticTrumpChecked = false;
-  let courtCountRound = buildCourtCountRound(practiceSeed + 17);
-  let courtCountSelected: number | null = null;
+  let realisticCourtRound = buildRealisticCourtRound(practiceSeed + 17);
+  let realisticCourtSelectedCardId = "";
+  let courtCountSelected: number | boolean | null = null;
   let courtCountChecked = false;
   let courtCountAttempts = 0;
   let courtCountClean = 0;
   $: isTablePlayScreen =
-    appView === "drill" || appView === "fullHand" || appView === "dominoHand" || (appView === "trumpCount" && trumpCountMode === "realistic");
+    appView === "drill" ||
+    appView === "fullHand" ||
+    appView === "dominoHand" ||
+    appView === "courtCount" ||
+    (appView === "trumpCount" && trumpCountMode === "realistic");
 
   function runSeatScores(results: FullHandRunResult[]) {
     const totals = emptySeatPenalties();
@@ -1140,13 +1163,43 @@
         ? "Correct. Memory held."
         : realisticTrumpQuestionAnswerText(realisticTrumpRound.question)
       : "Answer from memory. Old tricks are hidden.";
-  $: courtCountSeenCount = courtCountRound.seenCards.filter((card) => isCourtCard(card)).length;
   $: courtCountFeedback =
     courtCountChecked && courtCountSelected !== null
-      ? courtCountSelected === courtCountRound.answer
-        ? `Correct. ${courtCountSeenCount} court cards have appeared, so ${courtCountRound.answer} remain.`
-        : `${courtCountSeenCount} court cards have appeared. ${courtCountRound.answer} remain.`
-      : "Count jacks, queens, and kings, then name how many court cards are still out.";
+      ? courtCountSelected === realisticCourtRound.question.answer
+        ? `Correct. ${realisticCourtQuestionAnswerText(realisticCourtRound.question)}`
+        : realisticCourtQuestionAnswerText(realisticCourtRound.question)
+      : "Track jacks, queens, and kings as the hand plays.";
+  $: realisticCourtSelectedCard = realisticCourtRound.hands.You.find((card) => card.id === realisticCourtSelectedCardId);
+  $: realisticCourtLedSuit = realisticCourtRound.currentTrick[0]?.card.suit;
+  $: realisticCourtLegalCards = countingLegalCards(realisticCourtRound.hands.You, realisticCourtLedSuit);
+  $: realisticCourtTableCards =
+    realisticCourtRound.status === "question" || realisticCourtRound.status === "complete"
+      ? []
+      : realisticCourtRound.currentTrick;
+  $: realisticCourtPendingBySeat =
+    realisticCourtRound.status === "question" || realisticCourtRound.status === "complete"
+      ? { Tutor: "Barbu", Right: "Right", You: "You", Left: "Left" }
+      : realisticCourtRound.status === "playing"
+        ? pendingCountingSeats(realisticCourtRound)
+        : {};
+  $: realisticCourtSeenCards = realisticCourtRound.completedTricks.flatMap((trick) => trick.map((play) => play.card));
+  $: realisticCourtSeenCount = realisticCourtSeenCards.filter((card) => isCourtCard(card)).length;
+  $: realisticCourtPromptTitle =
+    realisticCourtRound.status === "playing"
+      ? "Play the trick"
+      : realisticCourtRound.status === "question"
+        ? realisticCourtRound.question.prompt
+        : realisticCourtRound.status === "complete"
+          ? "Court memory complete"
+          : "Watch the table";
+  $: realisticCourtPromptBody =
+    realisticCourtRound.status === "playing"
+      ? realisticCourtPlayPrompt(realisticCourtRound)
+      : realisticCourtRound.status === "question"
+        ? `${realisticCourtRound.completedTricks.length} tricks have passed. Answer from memory.`
+        : realisticCourtRound.status === "complete"
+          ? `You answered ${courtCountClean} of ${courtCountAttempts} court-card checks cleanly.`
+          : "The trick is complete. Keep the court cards in memory.";
 
   function loadCourseProgress() {
     if (typeof localStorage === "undefined") {
@@ -1506,7 +1559,8 @@
   }
 
   function openCourtCountTrainer() {
-    courtCountRound = buildCourtCountRound(usePracticeSeed());
+    realisticCourtRound = buildRealisticCourtRound(usePracticeSeed());
+    realisticCourtSelectedCardId = "";
     courtCountSelected = null;
     courtCountChecked = false;
     appView = "courtCount";
@@ -1533,19 +1587,6 @@
     };
   }
 
-  function buildCourtCountRound(seed: number): CourtCountRound {
-    const deck = shuffleCountingDeck(seed + 97);
-    const seenCardCount = 15 + (seed % 8);
-    const seenCards = deck.slice(0, seenCardCount);
-    const answer = 12 - seenCards.filter((card) => isCourtCard(card)).length;
-
-    return {
-      seenCards,
-      answer,
-      options: countOptions(answer, seed, 12)
-    };
-  }
-
   function buildRealisticTrumpRound(seed: number): RealisticTrumpRound {
     const deck = shuffleCountingDeck(seed);
     const hands = emptyCountingHands();
@@ -1566,6 +1607,29 @@
       completedTricks: [],
       status: "playing",
       question: buildTrumpMemoryQuestion([], seed),
+      questionsAsked: 0
+    });
+  }
+
+  function buildRealisticCourtRound(seed: number): RealisticCourtRound {
+    const deck = shuffleCountingDeck(seed + 97);
+    const hands = emptyCountingHands();
+
+    deck.forEach((card, index) => {
+      hands[countingTrickSeats[index % countingTrickSeats.length]].push(card);
+    });
+
+    for (const seat of countingTrickSeats) {
+      hands[seat] = [...hands[seat]].sort(compareCountingCards);
+    }
+
+    return beginRealisticCourtTrick({
+      hands,
+      currentLeader: countingTrickSeats[seed % countingTrickSeats.length],
+      currentTrick: [],
+      completedTricks: [],
+      status: "playing",
+      question: buildCourtMemoryQuestion([], seed),
       questionsAsked: 0
     });
   }
@@ -1638,7 +1702,7 @@
     return Array.from({ length: countingTrickSeats.length }, (_, offset) => countingTrickSeats[(startIndex + offset) % countingTrickSeats.length]);
   }
 
-  function pendingCountingSeats(round: RealisticTrumpRound): Partial<Record<Seat, string>> {
+  function pendingCountingSeats(round: { currentLeader: Seat; currentTrick: TableCard[] }): Partial<Record<Seat, string>> {
     const playedSeats = new Set(round.currentTrick.map((play) => play.seat));
 
     return countingPlayOrderFrom(round.currentLeader).reduce<Partial<Record<Seat, string>>>((pending, seat) => {
@@ -1943,7 +2007,190 @@
     return question.answer ? `Yes. ${question.targetCard.label} was played.` : `No. ${question.targetCard.label} was not played.`;
   }
 
-  function selectCourtCountAnswer(option: number) {
+  function beginRealisticCourtTrick(round: RealisticCourtRound): RealisticCourtRound {
+    const hands = cloneCountingHands(round.hands);
+    const currentTrick: TableCard[] = [];
+
+    for (const seat of countingPlayOrderFrom(round.currentLeader)) {
+      if (seat === "You") {
+        break;
+      }
+
+      const card = currentTrick.length ? chooseCountingAutoPlainCard(hands[seat], currentTrick, seat) : chooseCountingLeadCard(hands[seat]);
+      removeCountingCard(hands, seat, card.id);
+      currentTrick.push({ seat, card });
+    }
+
+    return {
+      ...round,
+      hands,
+      currentTrick,
+      status: "playing"
+    };
+  }
+
+  function chooseCountingAutoPlainCard(hand: Card[], currentTrick: TableCard[], seat: Seat) {
+    const ledSuit = currentTrick[0]?.card.suit;
+    const legal = countingLegalCards(hand, ledSuit);
+
+    return (
+      [...legal]
+        .filter((card) => countingCardWouldWinPlainTrick(currentTrick, card, seat))
+        .sort(compareCountingCards)[0] ?? [...legal].sort(compareCountingCards)[0]
+    );
+  }
+
+  function countingPlainTrickWinner(trick: TableCard[]): Seat | undefined {
+    const ledSuit = trick[0]?.card.suit;
+    const candidates = trick.filter((play) => play.card.suit === ledSuit);
+
+    return [...candidates].sort((left, right) => rankValue(right.card.rank) - rankValue(left.card.rank))[0]?.seat;
+  }
+
+  function countingCardWouldWinPlainTrick(currentTrick: TableCard[], card: Card, seat: Seat) {
+    const ledSuit = currentTrick[0]?.card.suit;
+
+    if (!ledSuit) {
+      return true;
+    }
+
+    if (card.suit !== ledSuit) {
+      return false;
+    }
+
+    return countingPlainTrickWinner([...currentTrick, { seat, card }]) === seat;
+  }
+
+  function realisticCourtPlayPrompt(round: RealisticCourtRound) {
+    const ledSuit = round.currentTrick[0]?.card.suit;
+
+    if (!ledSuit) {
+      return "Lead the trick. Track jacks, queens, and kings as they appear.";
+    }
+
+    if (round.hands.You.some((card) => card.suit === ledSuit)) {
+      return `Follow ${suitNames[ledSuit].toLowerCase()}. Keep court cards in memory.`;
+    }
+
+    return `You are void in ${suitNames[ledSuit].toLowerCase()}. Play any card and keep court cards in memory.`;
+  }
+
+  function buildCourtMemoryQuestion(tricks: TableCard[][], seed: number): CourtMemoryQuestion {
+    const seenCards = tricks.flatMap((trick) => trick.map((play) => play.card));
+    const courtSeen = seenCards.filter((card) => isCourtCard(card)).length;
+
+    if (seed % 2 === 0) {
+      return {
+        kind: "count",
+        prompt: "How many court cards have been played so far?",
+        answer: courtSeen,
+        options: countOptions(courtSeen, seed, 12)
+      };
+    }
+
+    const courtCards = countingSuits.flatMap((suit) =>
+      (["J", "Q", "K"] as Rank[]).map((rank) => ({
+        id: `${rank}${suit}`,
+        rank,
+        suit,
+        label: `${rank}${suit}`
+      }))
+    );
+    const targetCard = courtCards[(seed + courtSeen) % courtCards.length];
+
+    return {
+      kind: "specific",
+      prompt: "Has this court card been played so far?",
+      answer: seenCards.some((card) => card.id === targetCard.id),
+      targetCard
+    };
+  }
+
+  function selectRealisticCourtCard(card: Card) {
+    if (realisticCourtRound.status !== "playing") {
+      return;
+    }
+
+    realisticCourtSelectedCardId = card.id;
+  }
+
+  function playRealisticCourtCard() {
+    if (!realisticCourtSelectedCard || realisticCourtRound.status !== "playing") {
+      return;
+    }
+
+    if (!realisticCourtLegalCards.some((card) => card.id === realisticCourtSelectedCard.id)) {
+      return;
+    }
+
+    const hands = cloneCountingHands(realisticCourtRound.hands);
+    removeCountingCard(hands, "You", realisticCourtSelectedCard.id);
+    const completedTrick: TableCard[] = [
+      ...realisticCourtRound.currentTrick,
+      { seat: "You" as const, card: realisticCourtSelectedCard }
+    ];
+    const playOrder = countingPlayOrderFrom(realisticCourtRound.currentLeader);
+    const playerTurnIndex = playOrder.indexOf("You");
+    const remainingSeats = playerTurnIndex >= 0 ? playOrder.slice(playerTurnIndex + 1) : [];
+
+    for (const seat of remainingSeats) {
+      const card = chooseCountingAutoPlainCard(hands[seat], completedTrick, seat);
+      removeCountingCard(hands, seat, card.id);
+      completedTrick.push({ seat, card });
+    }
+
+    const completedTricks = [...realisticCourtRound.completedTricks, completedTrick];
+    const currentLeader = countingPlainTrickWinner(completedTrick) ?? realisticCourtRound.currentLeader;
+
+    realisticCourtRound = {
+      ...realisticCourtRound,
+      hands,
+      currentLeader,
+      currentTrick: completedTrick,
+      completedTricks,
+      question: buildCourtMemoryQuestion(completedTricks, practiceSeed + completedTricks.length + 17),
+      status: "review"
+    };
+    realisticCourtSelectedCardId = "";
+  }
+
+  function continueRealisticCourtRound() {
+    if (realisticCourtRound.status !== "review") {
+      return;
+    }
+
+    if (realisticCourtRound.completedTricks.length >= realisticTrumpTotalTricks) {
+      realisticCourtRound = {
+        ...realisticCourtRound,
+        status: "complete"
+      };
+      return;
+    }
+
+    const checkpointIndex = realisticTrumpCheckpoints.indexOf(realisticCourtRound.completedTricks.length);
+    if (checkpointIndex >= 0 && realisticCourtRound.questionsAsked <= checkpointIndex) {
+      realisticCourtRound = {
+        ...realisticCourtRound,
+        status: "question"
+      };
+      courtCountSelected = null;
+      courtCountChecked = false;
+      return;
+    }
+
+    realisticCourtRound = beginRealisticCourtTrick(realisticCourtRound);
+  }
+
+  function realisticCourtReviewActionLabel(round: RealisticCourtRound) {
+    if (round.completedTricks.length >= realisticTrumpTotalTricks) {
+      return "Finish hand";
+    }
+
+    const checkpointIndex = realisticTrumpCheckpoints.indexOf(round.completedTricks.length);
+    return checkpointIndex >= 0 && round.questionsAsked <= checkpointIndex ? "Answer memory" : "Next trick";
+  }
+
+  function selectCourtCountAnswer(option: number | boolean) {
     if (courtCountChecked) {
       return;
     }
@@ -1958,16 +2205,39 @@
 
     courtCountChecked = true;
     courtCountAttempts += 1;
+    realisticCourtRound = {
+      ...realisticCourtRound,
+      questionsAsked: realisticCourtRound.questionsAsked + 1
+    };
 
-    if (courtCountSelected === courtCountRound.answer) {
+    if (courtCountSelected === realisticCourtRound.question.answer) {
       courtCountClean += 1;
     }
   }
 
-  function nextCourtCountRound() {
-    courtCountRound = buildCourtCountRound(usePracticeSeed());
+  function continueRealisticCourtAfterQuestion() {
+    if (!courtCountChecked || realisticCourtRound.status !== "question") {
+      return;
+    }
+
     courtCountSelected = null;
     courtCountChecked = false;
+    realisticCourtRound = beginRealisticCourtTrick(realisticCourtRound);
+  }
+
+  function nextCourtCountRound() {
+    realisticCourtRound = buildRealisticCourtRound(usePracticeSeed());
+    realisticCourtSelectedCardId = "";
+    courtCountSelected = null;
+    courtCountChecked = false;
+  }
+
+  function realisticCourtQuestionAnswerText(question: CourtMemoryQuestion) {
+    if (question.kind === "count") {
+      return `${question.answer} court cards have been played so far.`;
+    }
+
+    return question.answer ? `Yes. ${question.targetCard.label} was played.` : `No. ${question.targetCard.label} was not played.`;
   }
 
   function openBarbuContracts() {
@@ -4093,29 +4363,25 @@
             </p>
           </div>
 
-          <section class="perfect-pack" aria-label="Card counting pack">
-            <div>
+          <section class="fixed-contract-practice" aria-label="Card counting pack">
+            <div class="section-heading">
               <p class="eyebrow">Card Counting</p>
               <h2>Know what is still out.</h2>
-              <p>Try two fast drills: count the remaining trumps, then track the court cards that are still out.</p>
+              <p>Build the memory habits behind trick-taking: count trumps, then track the high court cards.</p>
             </div>
-            <div class="perfect-pack-actions">
-              <button class="drill-action" onclick={openTrumpCountTrainer} type="button">Count trumps</button>
-              <button class="drill-action secondary" onclick={openCourtCountTrainer} type="button">Track court cards</button>
-            </div>
-          </section>
 
-          <section class="perfect-skill-grid" aria-label="Perfect mode skills">
-            <button class="perfect-skill-card ready" onclick={openTrumpCountTrainer} type="button">
-              <span>Card Counting</span>
-              <strong>Count trumps</strong>
-              <small>Track which trump cards have appeared and name what remains.</small>
-            </button>
-            <button class="perfect-skill-card ready" onclick={openCourtCountTrainer} type="button">
-              <span>Card Counting</span>
-              <strong>Track court cards</strong>
-              <small>Remember kings, queens, and jacks as tricks move around the table.</small>
-            </button>
+            <div class="fixed-contract-grid" aria-label="Perfect mode skills">
+              <button class="contract-card compact" onclick={openTrumpCountTrainer} type="button">
+                <span>Card counting</span>
+                <strong>Count trumps</strong>
+                <small>Track which trump cards have appeared and name what remains.</small>
+              </button>
+              <button class="contract-card compact" onclick={openCourtCountTrainer} type="button">
+                <span>High-card memory</span>
+                <strong>Track court cards</strong>
+                <small>Remember kings, queens, and jacks as tricks move around the table.</small>
+              </button>
+            </div>
           </section>
         </div>
       {/if}
@@ -4406,66 +4672,163 @@
       </section>
     {/if}
   {:else if appView === "courtCount"}
-    <header class="topbar" aria-label="Track court cards">
-      <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
-      <div>
-        <p class="eyebrow">Card Counting</p>
-        <h1>Track court cards</h1>
-      </div>
-      <div class="contract-status">
-        <span>Score</span>
-        <strong>{courtCountClean} of {courtCountAttempts}</strong>
-      </div>
-    </header>
+    <TablePlaySurface
+      mode="play"
+      ariaLabel="Track court cards trainer"
+      title="Track court cards"
+      eyebrow="Card Counting"
+      statusLabel="Score"
+      statusValue={`${courtCountClean} of ${courtCountAttempts}`}
+      tableAriaLabel="Court card memory table"
+      pendingBySeat={realisticCourtPendingBySeat}
+      tableCards={realisticCourtTableCards}
+      panelAriaLabel="Court card memory decision"
+      onBack={openBarbuTable}
+      onSurfaceClick={realisticCourtRound.status === "review" ? continueRealisticCourtRound : undefined}
+    >
+      {#snippet summary()}
+        <div class="trump-count-review" aria-label="Court card memory status">
+          <span>Court cards seen</span>
+          <strong>{realisticCourtSeenCount} of 12</strong>
+          <small>{realisticCourtRound.completedTricks.length} tricks complete.</small>
+        </div>
+      {/snippet}
 
-    <section class="trump-count-screen" aria-label="Track court cards trainer">
-      <div class="trump-count-prompt">
-        <p class="eyebrow">Jacks, queens, kings</p>
-        <h2>How many court cards are still out?</h2>
-        <p>{courtCountRound.seenCards.length} cards have appeared. Count J, Q, and K.</p>
-      </div>
+      {#snippet panel()}
+        <div class="lesson-heading">
+          <p class="eyebrow">Jacks, queens, kings</p>
+          <h2>{realisticCourtPromptTitle}</h2>
+        </div>
 
-      <div class="trump-seen-cards" aria-label="Played cards">
-        {#each courtCountRound.seenCards as card}
-          <div class:court={isCourtCard(card)} class="trump-seen-card">
-            <CardFace {card} decorative />
+        <p class="result" aria-label="Court card memory challenge">{realisticCourtPromptBody}</p>
+
+        {#if realisticCourtRound.status === "playing"}
+          <div class="hand full-hand-cards realistic-trump-hand" aria-label="Your court card memory hand">
+            {#each realisticCourtRound.hands.You as card}
+              <button
+                aria-label={`${card.rank} ${card.suit}`}
+                aria-pressed={realisticCourtSelectedCardId === card.id}
+                class:heart={card.suit === "H"}
+                class:illegal={!realisticCourtLegalCards.some((legalCard) => legalCard.id === card.id)}
+                class:legal={realisticCourtLegalCards.some((legalCard) => legalCard.id === card.id)}
+                class:selected={realisticCourtSelectedCardId === card.id}
+                class="card hand-card full-hand-card"
+                onclick={() => selectRealisticCourtCard(card)}
+                type="button"
+              >
+                <CardFace {card} decorative />
+              </button>
+            {/each}
           </div>
-        {/each}
-      </div>
-
-      <div class="trump-count-options" aria-label="Court card count answers">
-        {#each courtCountRound.options as option}
-          <button
-            aria-pressed={courtCountSelected === option}
-            class:correct={courtCountChecked && option === courtCountRound.answer}
-            class:selected={courtCountSelected === option}
-            class:wrong={courtCountChecked && courtCountSelected === option && option !== courtCountRound.answer}
-            onclick={() => selectCourtCountAnswer(option)}
-            type="button"
-          >
-            {option}
-          </button>
-        {/each}
-      </div>
-
-      <p
-        class:warning={courtCountChecked && courtCountSelected !== courtCountRound.answer}
-        class="trump-count-feedback"
-      >
-        {courtCountFeedback}
-      </p>
-
-      <div class="course-actions">
-        <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
-        {#if courtCountChecked}
-          <button class="primary-action" onclick={nextCourtCountRound} type="button">Next count</button>
-        {:else}
-          <button class="primary-action" disabled={courtCountSelected === null} onclick={checkCourtCountAnswer} type="button">
-            Check count
-          </button>
         {/if}
-      </div>
-    </section>
+
+        {#if realisticCourtRound.status === "question"}
+          {#if realisticCourtRound.question.kind === "count"}
+            <div class="trump-count-options" aria-label="Court card count answers">
+              {#each realisticCourtRound.question.options as option}
+                <button
+                  aria-pressed={courtCountSelected === option}
+                  class:correct={courtCountChecked && option === realisticCourtRound.question.answer}
+                  class:selected={courtCountSelected === option}
+                  class:wrong={courtCountChecked && courtCountSelected === option && option !== realisticCourtRound.question.answer}
+                  onclick={() => selectCourtCountAnswer(option)}
+                  type="button"
+                >
+                  {option}
+                </button>
+              {/each}
+            </div>
+          {:else}
+            <div class="trump-specific-check">
+              <div class="trump-target-card" aria-label={`Target court card ${realisticCourtRound.question.targetCard.label}`}>
+                <span>Target</span>
+                <div class="trump-target-card-face">
+                  <CardFace card={realisticCourtRound.question.targetCard} decorative />
+                </div>
+              </div>
+              <div class="trump-count-options trump-specific-options" aria-label="Court card specific answers">
+                <button
+                  aria-pressed={courtCountSelected === true}
+                  class:correct={courtCountChecked && realisticCourtRound.question.answer === true}
+                  class:selected={courtCountSelected === true}
+                  class:wrong={courtCountChecked && courtCountSelected === true && realisticCourtRound.question.answer !== true}
+                  onclick={() => selectCourtCountAnswer(true)}
+                  type="button"
+                >
+                  Yes
+                </button>
+                <button
+                  aria-pressed={courtCountSelected === false}
+                  class:correct={courtCountChecked && realisticCourtRound.question.answer === false}
+                  class:selected={courtCountSelected === false}
+                  class:wrong={courtCountChecked && courtCountSelected === false && realisticCourtRound.question.answer !== false}
+                  onclick={() => selectCourtCountAnswer(false)}
+                  type="button"
+                >
+                  No
+                </button>
+              </div>
+            </div>
+          {/if}
+
+          <p
+            class:warning={courtCountChecked && courtCountSelected !== realisticCourtRound.question.answer}
+            class="trump-count-feedback"
+          >
+            {courtCountFeedback}
+          </p>
+        {/if}
+
+        {#if courtCountChecked}
+          <div class="trump-count-review" aria-label="Court card memory review">
+            <span>Court cards seen</span>
+            <strong>{realisticCourtSeenCount} court cards appeared</strong>
+            <small>{realisticCourtQuestionAnswerText(realisticCourtRound.question)}</small>
+            <div class="trump-review-cards">
+              {#each realisticCourtSeenCards.filter(isCourtCard) as card}
+                <div class="trump-seen-card court">
+                  <CardFace {card} decorative />
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
+
+        <div class="action-row">
+          <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
+          {#if realisticCourtRound.status === "playing"}
+            <button
+              class="primary-action"
+              disabled={
+                !realisticCourtSelectedCard ||
+                !realisticCourtLegalCards.some((card) => card.id === realisticCourtSelectedCard.id)
+              }
+              onclick={playRealisticCourtCard}
+              type="button"
+            >
+              Play card
+            </button>
+          {:else if realisticCourtRound.status === "review"}
+            <button class="primary-action" onclick={continueRealisticCourtRound} type="button">
+              {realisticCourtReviewActionLabel(realisticCourtRound)}
+            </button>
+          {:else if realisticCourtRound.status === "question" && courtCountChecked}
+            <button class="primary-action" onclick={continueRealisticCourtAfterQuestion} type="button">Continue hand</button>
+          {:else if realisticCourtRound.status === "complete"}
+            <button class="primary-action" onclick={nextCourtCountRound} type="button">Next hand</button>
+          {:else}
+            <button
+              class="primary-action"
+              disabled={courtCountSelected === null}
+              onclick={checkCourtCountAnswer}
+              type="button"
+            >
+              Check memory
+            </button>
+          {/if}
+        </div>
+      {/snippet}
+    </TablePlaySurface>
   {:else if appView === "barbuContracts"}
     <header class="topbar" aria-label="Barbu contracts">
       <button class="back-button" onclick={openBarbuTable} type="button">Table</button>

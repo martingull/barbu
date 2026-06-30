@@ -439,50 +439,19 @@ button {
   gap: 10px;
 }
 
-.perfect-pack {
-  display: grid;
-  gap: 12px;
-  padding: 14px;
-  border: 1px solid rgba(245, 241, 207, 0.32);
-  border-radius: 8px;
-  background:
-    linear-gradient(180deg, rgba(245, 241, 207, 0.1), rgba(9, 34, 24, 0.22)),
-    #182f25;
-  color: #f7faf3;
-}
-
-.perfect-pack .eyebrow {
-  color: #f5f1cf;
-}
-
-.perfect-pack h2 {
-  font-size: 1.18rem;
-}
-
-.perfect-pack p:not(.eyebrow) {
-  margin-bottom: 0;
-  color: #dbe7d1;
-  font-weight: 750;
-  line-height: 1.35;
-}
-
-.perfect-pack-actions {
-  display: grid;
-  gap: 8px;
-}
-
-.perfect-panel .drill-action.secondary {
-  border-color: rgba(245, 241, 207, 0.7);
-  background: rgba(245, 241, 207, 0.08);
-  color: #f5f1cf;
-}
-
 .fixed-contract-practice .section-heading {
   color: #f7faf3;
 }
 
 .fixed-contract-practice .section-heading .eyebrow {
   color: #f5f1cf;
+}
+
+.fixed-contract-practice .section-heading p:not(.eyebrow) {
+  margin: 4px 0 0;
+  color: #dbe7d1;
+  font-weight: 750;
+  line-height: 1.35;
 }
 
 .fixed-contract-grid {
@@ -497,59 +466,6 @@ button {
   background:
     linear-gradient(180deg, rgba(245, 241, 207, 0.07), rgba(9, 34, 24, 0.18)),
     #182f25;
-}
-
-.perfect-skill-grid {
-  display: grid;
-  gap: 8px;
-}
-
-.perfect-skill-card {
-  display: grid;
-  gap: 5px;
-  min-height: 92px;
-  padding: 12px;
-  border: 1px solid rgba(245, 241, 207, 0.24);
-  border-radius: 8px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(9, 34, 24, 0.16)),
-    #182f25;
-}
-
-button.perfect-skill-card {
-  width: 100%;
-  text-align: left;
-}
-
-.perfect-skill-card.ready {
-  border-color: rgba(245, 241, 207, 0.46);
-  background:
-    linear-gradient(180deg, rgba(245, 241, 207, 0.08), rgba(9, 34, 24, 0.18)),
-    #1f4637;
-}
-
-.perfect-skill-card span {
-  color: #f0b3a8;
-  font-size: 0.7rem;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.perfect-skill-card.ready span {
-  color: #f5f1cf;
-}
-
-.perfect-skill-card strong {
-  color: #f7faf3;
-  font-size: 1rem;
-  line-height: 1.12;
-}
-
-.perfect-skill-card small {
-  color: #dbe7d1;
-  font-size: 0.8rem;
-  font-weight: 750;
-  line-height: 1.3;
 }
 
 .learn-action-grid {
