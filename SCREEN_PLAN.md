@@ -70,6 +70,7 @@ Purpose: choose the game family or core game.
 Current role:
 
 - Shows free starter tables first: Hearts, Barbu, and Solitaire.
+- Hearts opens to a small table spike with the shared Learn, Practice, Play, and Perfect structure; only Practice is active for now.
 - Shows Card Counting after the free starters as the first ready paid skill pack.
 - Shows future paid games such as Whist, Bridge, Gin Rummy, and Canasta.
 - Keeps varieties under their parent game instead of showing them as separate first-screen tables.

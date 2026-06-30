@@ -243,10 +243,10 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
 
   await expect(page.getByRole("heading", { name: "Choose a table" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Core games" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Open Hearts" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Barbu" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Card Counting" })).toContainText("Pack");
   await expect(page.getByRole("button", { name: "Open Card Counting" })).toContainText("2 minigames");
-  await expect(page.getByRole("button", { name: "Hearts planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Solitaire planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Whist planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Bridge planned" })).toBeVisible();
@@ -309,6 +309,24 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByRole("tab", { name: "Perfect" })).toHaveAttribute("aria-selected", "true");
 
   await page.screenshot({ path: testInfo.outputPath("barbu-table.png"), fullPage: true });
+});
+
+test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testInfo) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Hearts" }).click();
+
+  await expect(page.getByRole("heading", { name: "Hearts table" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByLabel("Hearts practice drills")).toContainText("Avoid hearts");
+  await page.screenshot({ path: testInfo.outputPath("hearts-practice.png"), fullPage: true });
+
+  await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Avoid hearts" }).click();
+  await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
+  await expect(page.getByLabel("Drill decision")).toContainText("Follow clubs without taking the heart");
+
+  await page.getByLabel("Drill decision").getByRole("button", { name: "Table" }).click();
+  await expect(page.getByRole("heading", { name: "Hearts table" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
 });
 
 test("Perfect mode starts card-counting minigames", async ({ page }, testInfo) => {

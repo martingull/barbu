@@ -43,6 +43,7 @@
   type AppView =
     | "catalog"
     | "barbuTable"
+    | "heartsTable"
     | "barbuContracts"
     | "practiceChooser"
     | "reference"
@@ -60,6 +61,7 @@
   type PathAction = "lesson" | "generated" | "review" | "planned";
   type CourseStage = "concept" | "example" | "review";
   type BarbuTableTab = "learn" | "practice" | "play" | "perfect";
+  type ActiveGameTable = "barbu" | "hearts";
 
   type CatalogStatus = "Ready" | "Planned";
 
@@ -251,10 +253,11 @@
       id: "hearts",
       family: "Hearts",
       title: "Hearts",
-      status: "Planned",
+      status: "Ready",
       access: "Free",
       summary: "Plain-trick foundations before the contracts expand.",
-      lessonCount: 0
+      lessonCount: 1,
+      detailLabel: "Practice spike"
     },
     {
       id: "barbu",
@@ -831,6 +834,8 @@
   let activeReferenceId = referenceCatalog[0].id;
   let activeCourseStage: CourseStage = "concept";
   let activeBarbuTableTab: BarbuTableTab = "learn";
+  let activeHeartsTableTab: BarbuTableTab = "practice";
+  let activeGameTable: ActiveGameTable = "barbu";
   let completedPathSteps: Record<string, boolean> = loadCourseProgress();
   let playBarbuHistory: PlayBarbuAttempt[] = loadPlayBarbuHistory();
   let savedPlayBarbuRun: SavedPlayBarbuRun | null = loadSavedPlayBarbuRun();
@@ -951,14 +956,8 @@
   $: lessonOutcome = selectedCard && (playedCard || !isSelectedLegal) ? buildLessonOutcome(selectedCard, playedCard) : "";
   $: activeCourse = courseCatalog.find((course) => course.id === activeCourseId) ?? courseCatalog[0];
   $: activeReference = referenceCatalog.find((reference) => reference.id === activeReferenceId) ?? referenceCatalog[0];
-  $: activeBarbuTableTabLabel =
-    activeBarbuTableTab === "learn"
-      ? "Learn"
-      : activeBarbuTableTab === "practice"
-        ? "Practice"
-        : activeBarbuTableTab === "play"
-          ? "Play"
-          : "Perfect";
+  $: activeBarbuTableTabLabel = tableTabLabel(activeBarbuTableTab);
+  $: activeHeartsTableTabLabel = tableTabLabel(activeHeartsTableTab);
   $: currentDrill = activeDrillSteps[drillIndex] ?? activeDrillSteps[0] ?? drillSteps[0];
   $: currentDrillTrick = currentDrill.trick;
   $: drillLegalCardIds = new Set(currentDrillTrick.legalCardIds);
@@ -1537,12 +1536,43 @@
     drillCheckedCardId = "";
   }
 
+  function tableTabLabel(tab: BarbuTableTab) {
+    if (tab === "learn") {
+      return "Learn";
+    }
+
+    if (tab === "practice") {
+      return "Practice";
+    }
+
+    if (tab === "play") {
+      return "Play";
+    }
+
+    return "Perfect";
+  }
+
   function openCatalog() {
     appView = "catalog";
   }
 
   function openBarbuTable() {
+    activeGameTable = "barbu";
     appView = "barbuTable";
+  }
+
+  function openHeartsTable() {
+    activeGameTable = "hearts";
+    appView = "heartsTable";
+  }
+
+  function openActiveGameTable() {
+    if (activeGameTable === "hearts") {
+      openHeartsTable();
+      return;
+    }
+
+    openBarbuTable();
   }
 
   function openTrumpCountTrainer() {
@@ -2266,6 +2296,11 @@
   }
 
   function openGame(gameId: string) {
+    if (gameId === "hearts") {
+      openHeartsTable();
+      return;
+    }
+
     if (gameId === "card-counting") {
       activeBarbuTableTab = "perfect";
       openBarbuTable();
@@ -3492,6 +3527,12 @@
     appView = "drill";
   }
 
+  function startHeartsAvoidHeartsDrill() {
+    activeGameTable = "hearts";
+    startFixedContractDrill("barbu-no-hearts");
+    drillSetTitle = "Hearts practice: avoid hearts";
+  }
+
   function continueCourse() {
     if (isCourseComplete || !nextPathStep) {
       openBarbuTable();
@@ -4386,6 +4427,124 @@
         </div>
       {/if}
     </section>
+  {:else if appView === "heartsTable"}
+    <header class="topbar table-topbar" aria-label="Hearts table">
+      <button class="back-button" onclick={openCatalog} type="button">Games</button>
+      <div class="table-title">
+        <p class="eyebrow">Hearts family</p>
+        <h1>Hearts table</h1>
+      </div>
+      <div class="contract-status">
+        <span>Current mode</span>
+        <strong>{activeHeartsTableTabLabel}</strong>
+      </div>
+    </header>
+
+    <section class="table-room" aria-label="Hearts table modes">
+      <div class="barbu-table-rail">
+        <div class="barbu-mode-box">
+          <p class="eyebrow">Table mode</p>
+          <div class="barbu-table-tabs" aria-label="Hearts table sections" role="tablist">
+            <button
+              aria-controls="hearts-learn-panel"
+              aria-selected={activeHeartsTableTab === "learn"}
+              class:active={activeHeartsTableTab === "learn"}
+              onclick={() => {
+                activeHeartsTableTab = "learn";
+              }}
+              role="tab"
+              type="button"
+            >
+              Learn
+            </button>
+            <button
+              aria-controls="hearts-practice-panel"
+              aria-selected={activeHeartsTableTab === "practice"}
+              class:active={activeHeartsTableTab === "practice"}
+              onclick={() => {
+                activeHeartsTableTab = "practice";
+              }}
+              role="tab"
+              type="button"
+            >
+              Practice
+            </button>
+            <button
+              aria-controls="hearts-play-panel"
+              aria-selected={activeHeartsTableTab === "play"}
+              class:active={activeHeartsTableTab === "play"}
+              onclick={() => {
+                activeHeartsTableTab = "play";
+              }}
+              role="tab"
+              type="button"
+            >
+              Play
+            </button>
+            <button
+              aria-controls="hearts-perfect-panel"
+              aria-selected={activeHeartsTableTab === "perfect"}
+              class:active={activeHeartsTableTab === "perfect"}
+              onclick={() => {
+                activeHeartsTableTab = "perfect";
+              }}
+              role="tab"
+              type="button"
+            >
+              Perfect
+            </button>
+          </div>
+        </div>
+
+        {#if activeHeartsTableTab === "learn"}
+          <div aria-label="Learn" class="barbu-tab-panel practice-panel" id="hearts-learn-panel" role="tabpanel">
+            <div class="barbu-mode-copy">
+              <p class="eyebrow">Learn</p>
+              <h2>Hearts lessons are next.</h2>
+              <p>Hearts will reuse the same follow-suit and penalty-card habits that Barbu is teaching now.</p>
+            </div>
+          </div>
+        {:else if activeHeartsTableTab === "practice"}
+          <div aria-label="Practice" class="barbu-tab-panel practice-panel" id="hearts-practice-panel" role="tabpanel">
+            <div class="barbu-mode-copy">
+              <p class="eyebrow">Practice</p>
+              <h2>Start with avoiding hearts.</h2>
+              <p>Use the shared Hearts-family drill surface before Hearts gets its own full game.</p>
+            </div>
+
+            <section class="fixed-contract-practice" aria-label="Hearts practice drills">
+              <div class="section-heading">
+                <p class="eyebrow">Fixed drill</p>
+                <h2>Practice one Hearts pattern.</h2>
+              </div>
+              <div class="fixed-contract-grid">
+                <button class="contract-card compact" onclick={startHeartsAvoidHeartsDrill} type="button">
+                  <span>Hearts</span>
+                  <strong>Avoid hearts</strong>
+                  <small>Borrow the No Hearts drill: follow suit and avoid taking heart penalties.</small>
+                </button>
+              </div>
+            </section>
+          </div>
+        {:else if activeHeartsTableTab === "play"}
+          <div aria-label="Play" class="barbu-tab-panel play-panel" id="hearts-play-panel" role="tabpanel">
+            <div class="barbu-mode-copy">
+              <p class="eyebrow">Play</p>
+              <h2>Full Hearts is not wired yet.</h2>
+              <p>Passing cards, queen of spades scoring, and full-hand Hearts should come after this practice spike.</p>
+            </div>
+          </div>
+        {:else}
+          <div aria-label="Perfect" class="barbu-tab-panel perfect-panel" id="hearts-perfect-panel" role="tabpanel">
+            <div class="barbu-mode-copy">
+              <p class="eyebrow">Perfect</p>
+              <h2>Card sense will connect here later.</h2>
+              <p>Trump and court-card memory should eventually feed Hearts, Whist, Bridge, and Barbu practice.</p>
+            </div>
+          </div>
+        {/if}
+      </div>
+    </section>
   {:else if appView === "trumpCount"}
     {#if trumpCountMode === "realistic"}
       <TablePlaySurface
@@ -4683,7 +4842,7 @@
       pendingBySeat={realisticCourtPendingBySeat}
       tableCards={realisticCourtTableCards}
       panelAriaLabel="Court card memory decision"
-      onBack={openBarbuTable}
+      onBack={openActiveGameTable}
       onSurfaceClick={realisticCourtRound.status === "review" ? continueRealisticCourtRound : undefined}
     >
       {#snippet summary()}
@@ -5617,7 +5776,7 @@
               {isLastDrillDecision ? "Review session" : "Next decision"}
             </button>
           {:else}
-            <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
+            <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
             <button class="primary-action" disabled={!drillSelectedCard} onclick={checkDrillAnswer} type="button">
               Check answer
             </button>
@@ -5627,7 +5786,7 @@
     </TablePlaySurface>
   {:else if appView === "drillResult"}
     <header class="topbar" aria-label="Drill result">
-      <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
+      <button class="back-button" onclick={openActiveGameTable} type="button">Table</button>
       <div>
         <p class="eyebrow">{drillSetTitle}</p>
         <h1>Session complete</h1>

@@ -31,6 +31,7 @@ The intended monetization model is free starter tables first, then optional paid
 ## Current Feature Set
 
 - Game catalog ordered with free starter tables first: Hearts, Barbu, and Solitaire, followed by paid packs/future paid games such as Card Counting, Whist, Bridge, Gin Rummy, and Canasta.
+- Hearts table spike with the shared Learn, Practice, Play, and Perfect structure; Practice currently reuses the No Hearts avoidance drill to prove Hearts-family reuse before a full Hearts game exists.
 - Barbu table with grouped Learn, Practice, Play, and Reference entry points, including a contract-hand practice chooser.
 - Five-step training path: concept, example, guided trick, practice, review.
 - Quick Drill mode as a generated practice loop: one decision at a time, immediate feedback, optional next decision, and a compact session result.

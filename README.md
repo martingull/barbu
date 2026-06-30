@@ -51,9 +51,10 @@ content/             Structured game and lesson content
 
 ## Current Product Shape
 
-- A catalog/welcome screen that treats Barbu as the first playable core game in a broader card-game curriculum, with placeholders for Hearts, Solitaire, Whist, Bridge, Gin Rummy, and Canasta.
+- A catalog/welcome screen that treats Barbu as the first playable core game in a broader card-game curriculum, with a small active Hearts practice spike and placeholders for Solitaire, Whist, Bridge, Gin Rummy, and Canasta.
 - The intended free starter catalog is Barbu, Hearts, and Solitaire; the other catalog entries can become later packs once the first game loop is strong.
 - The catalog stays focused on core games; varieties and teaching modes stay attached to their parent game screens.
+- A Hearts table spike with the same Learn, Practice, Play, and Perfect structure; Practice currently reuses the No Hearts avoidance drill before Hearts gets its own full-game rules.
 - A Barbu table screen with grouped Learn, Practice, Play, and Reference entry points, a contract-hand practice chooser, and a five-step training path.
 - Quick Drill mode with seven quick mixed-contract decisions across the playable contract roster, immediate feedback, and a compact result; Tauri builds use Rust-generated scenarios, while browser runs use a local generated fallback.
 - No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps full-hand skeletons with deterministic local deals, legal-card play, contract-aware auto opponents, hand scoring, and short per-trick feedback.
