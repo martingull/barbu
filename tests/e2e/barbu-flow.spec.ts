@@ -406,6 +406,27 @@ test("Perfect mode starts card-counting minigames", async ({ page }, testInfo) =
   await page.screenshot({ path: testInfo.outputPath("perfect-track-court-cards.png"), fullPage: true });
 });
 
+test("realistic trump counting can start with the player leading", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("barbu.practiceSeed.v1", "1");
+  });
+  await page.reload();
+
+  await page.getByRole("button", { name: /Barbu/ }).click();
+  await openBarbuTab(page, "Perfect");
+  await page.getByLabel("Card counting pack").getByRole("button", { name: "Count trumps" }).click();
+  await page.getByLabel("Count trumps mode").getByRole("button", { name: "Realistic" }).click();
+
+  await expect(page.getByLabel("Realistic trump challenge")).toContainText("Lead the trick");
+  await expect(page.getByLabel("Realistic trump table").locator(".table-card")).toHaveCount(0);
+
+  await page.locator(".realistic-trump-hand .full-hand-card.legal").first().click();
+  await page.getByRole("button", { name: "Play card" }).click();
+
+  await expect(page.getByLabel("Realistic trump table").locator(".table-card")).toHaveCount(4);
+});
+
 test("practice tab keeps contract hands hidden while fixed drills are public", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();

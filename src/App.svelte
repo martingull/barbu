@@ -200,6 +200,7 @@
   type RealisticTrumpRound = {
     trumpSuit: Suit;
     hands: Record<Seat, Card[]>;
+    currentLeader: Seat;
     currentTrick: TableCard[];
     completedTricks: TableCard[][];
     status: "playing" | "review" | "question" | "complete";
@@ -1121,7 +1122,7 @@
         ? "You played the full hand while keeping track of the trump suit."
       : realisticTrumpRound.status === "review"
         ? "Add any hearts from this trick, then continue."
-        : "Follow suit. Count hearts as they hit the table.";
+        : realisticTrumpPlayPrompt(realisticTrumpRound);
   $: realisticTrumpTableCards =
     realisticTrumpRound.status === "question" || realisticTrumpRound.status === "complete"
       ? []
@@ -1130,7 +1131,7 @@
     realisticTrumpRound.status === "question" || realisticTrumpRound.status === "complete"
       ? { Tutor: "Barbu", Right: "Right", You: "You", Left: "Left" }
       : realisticTrumpRound.status === "playing"
-        ? { You: "You", Left: "Left" }
+        ? pendingCountingSeats(realisticTrumpRound)
         : {};
   $: realisticTrumpFeedback =
     realisticTrumpChecked && realisticTrumpAnswer !== null
@@ -1559,6 +1560,7 @@
     return beginRealisticTrumpTrick({
       trumpSuit: "H",
       hands,
+      currentLeader: countingTrickSeats[seed % countingTrickSeats.length],
       currentTrick: [],
       completedTricks: [],
       status: "playing",
@@ -1578,18 +1580,24 @@
 
   function beginRealisticTrumpTrick(round: RealisticTrumpRound): RealisticTrumpRound {
     const hands = cloneCountingHands(round.hands);
-    const tutorLead = chooseCountingLeadCard(hands.Tutor);
-    removeCountingCard(hands, "Tutor", tutorLead.id);
-    const rightCard = chooseCountingAutoCard(hands.Right, tutorLead.suit);
-    removeCountingCard(hands, "Right", rightCard.id);
+    const currentTrick: TableCard[] = [];
+
+    for (const seat of countingPlayOrderFrom(round.currentLeader)) {
+      if (seat === "You") {
+        break;
+      }
+
+      const card = currentTrick.length
+        ? chooseCountingAutoCard(hands[seat], currentTrick[0].card.suit)
+        : chooseCountingLeadCard(hands[seat]);
+      removeCountingCard(hands, seat, card.id);
+      currentTrick.push({ seat, card });
+    }
 
     return {
       ...round,
       hands,
-      currentTrick: [
-        { seat: "Tutor", card: tutorLead },
-        { seat: "Right", card: rightCard }
-      ],
+      currentTrick,
       status: "playing"
     };
   }
@@ -1613,6 +1621,47 @@
 
   function chooseCountingAutoCard(hand: Card[], ledSuit: Suit) {
     return [...countingLegalCards(hand, ledSuit)].sort(compareCountingCards)[0];
+  }
+
+  function countingPlayOrderFrom(leader: Seat) {
+    const leaderIndex = countingTrickSeats.indexOf(leader);
+    const startIndex = leaderIndex >= 0 ? leaderIndex : 0;
+
+    return Array.from({ length: countingTrickSeats.length }, (_, offset) => countingTrickSeats[(startIndex + offset) % countingTrickSeats.length]);
+  }
+
+  function pendingCountingSeats(round: RealisticTrumpRound): Partial<Record<Seat, string>> {
+    const playedSeats = new Set(round.currentTrick.map((play) => play.seat));
+
+    return countingPlayOrderFrom(round.currentLeader).reduce<Partial<Record<Seat, string>>>((pending, seat) => {
+      if (!playedSeats.has(seat)) {
+        pending[seat] = scoreSeatLabel(seat);
+      }
+
+      return pending;
+    }, {});
+  }
+
+  function realisticTrumpPlayPrompt(round: RealisticTrumpRound) {
+    const ledSuit = round.currentTrick[0]?.card.suit;
+
+    if (!ledSuit) {
+      return "Lead the trick. Count hearts as they hit the table.";
+    }
+
+    if (round.hands.You.some((card) => card.suit === ledSuit)) {
+      return `Follow ${suitNames[ledSuit].toLowerCase()}. Count hearts as they hit the table.`;
+    }
+
+    return `You are void in ${suitNames[ledSuit].toLowerCase()}. Play any card and keep counting hearts.`;
+  }
+
+  function countingTrickWinner(trick: TableCard[], trumpSuit: Suit): Seat | undefined {
+    const ledSuit = trick[0]?.card.suit;
+    const trumpCards = trick.filter((play) => play.card.suit === trumpSuit);
+    const candidates = trumpCards.length ? trumpCards : trick.filter((play) => play.card.suit === ledSuit);
+
+    return [...candidates].sort((left, right) => rankValue(right.card.rank) - rankValue(left.card.rank))[0]?.seat;
   }
 
   function countingLegalCards(hand: Card[], ledSuit: Suit | undefined) {
@@ -1756,19 +1805,29 @@
 
     const hands = cloneCountingHands(realisticTrumpRound.hands);
     removeCountingCard(hands, "You", realisticTrumpSelectedCard.id);
-    const ledSuit = realisticTrumpRound.currentTrick[0]?.card.suit;
-    const leftCard = chooseCountingAutoCard(hands.Left, ledSuit);
-    removeCountingCard(hands, "Left", leftCard.id);
-    const completedTrick = [
+    const completedTrick: TableCard[] = [
       ...realisticTrumpRound.currentTrick,
-      { seat: "You" as const, card: realisticTrumpSelectedCard },
-      { seat: "Left" as const, card: leftCard }
+      { seat: "You" as const, card: realisticTrumpSelectedCard }
     ];
+
+    const ledSuit = completedTrick[0].card.suit;
+    const playOrder = countingPlayOrderFrom(realisticTrumpRound.currentLeader);
+    const playerTurnIndex = playOrder.indexOf("You");
+    const remainingSeats = playerTurnIndex >= 0 ? playOrder.slice(playerTurnIndex + 1) : [];
+
+    for (const seat of remainingSeats) {
+      const card = chooseCountingAutoCard(hands[seat], ledSuit);
+      removeCountingCard(hands, seat, card.id);
+      completedTrick.push({ seat, card });
+    }
+
     const completedTricks = [...realisticTrumpRound.completedTricks, completedTrick];
+    const currentLeader = countingTrickWinner(completedTrick, realisticTrumpRound.trumpSuit) ?? realisticTrumpRound.currentLeader;
 
     realisticTrumpRound = {
       ...realisticTrumpRound,
       hands,
+      currentLeader,
       currentTrick: completedTrick,
       completedTricks,
       question: buildTrumpMemoryQuestion(completedTricks, practiceSeed + completedTricks.length),
