@@ -3417,6 +3417,25 @@ h2 {
     background: transparent;
   }
 
+  .fixed-play-screen .table-play-surface.compact-play.table-hidden .table-play-panel:has(.trump-count-stage) {
+    grid-row: 1;
+    gap: 7px;
+    padding-bottom: calc(88px + max(8px, var(--app-safe-area-bottom)));
+  }
+
+  .fixed-play-screen .table-play-surface.compact-play.table-hidden:has(.trump-count-stage) {
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .fixed-play-screen .table-play-surface.compact-play.table-hidden .trump-count-stage {
+    min-height: 0;
+  }
+
+  .fixed-play-screen .table-play-surface.compact-play.table-hidden .trump-memory-table,
+  .fixed-play-screen .table-play-surface.compact-play.table-hidden .trump-memory-hidden {
+    min-height: 218px;
+  }
+
   .table-play-surface.compact-play .lesson-heading {
     display: none;
   }

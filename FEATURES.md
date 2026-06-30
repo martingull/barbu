@@ -55,7 +55,7 @@ The intended monetization model is free starter tables first, then optional paid
 - Compact full-hand result panel with contract result, Barbu/player penalty split, key tricks, replay, and next-contract actions.
 - Training path practice step connected to Quick Drill completion.
 - Review step with latest Quick Drill score, weakest-contract advice, recent attempts, and replay actions.
-- Perfect mode Card Counting pack started with Count Trumps and Track Court Cards minigames.
+- Perfect mode Card Counting pack started with Count Trumps, Trump Memory Hand, and Track Court Cards minigames.
 - Reason-based review advice that turns recent practice tags into one short next-step correction.
 - Local Quick Drill result history with contract-level summaries and focused replay for the weakest contract.
 - Local course progress for the playable Barbu path.
@@ -160,11 +160,12 @@ These are the next product increments that keep the app coherent.
 
 9. Card Sense Training v1
    - Started in the catalog and Perfect mode with a Card Counting pack.
-   - Count Trumps now has Easy and Realistic levels. Easy reveals tricks one at a time, hides the cards, and asks how many trumps remain. Realistic deals a small hand, makes the player play three tricks, then asks either how many trumps were played or whether a specific trump card appeared.
-   - Track Court Cards is the second active exercise.
+   - Count Trumps reveals all thirteen tricks in segments, hides the segment, then asks either how many hearts appeared or whether a specific heart appeared.
+   - Trump Memory Hand is a separate realistic table exercise: deal a hand, make the player play tricks, then ask either how many trumps were played or whether a specific trump card appeared.
+   - Track Court Cards is the third active exercise and uses the realistic table surface for high-card memory.
    - Add short mini-games for serious 52-card-deck skills and practical card-counting habits: Suit Count, Danger Card Tracker, Trump Count, Void Finder, High Card Memory, and Safe Exit Trainer.
    - Next: add danger-card memory and connect card-counting exercises back to Play Barbu feedback.
-   - Realistic Trump Count now starts sharing table-aware trump behavior with the core game: opponents can overtrump a player's low trump when void in the led suit and able to beat it. Continue extending this only where it improves the skill being trained.
+   - Trump Memory Hand now starts sharing table-aware trump behavior with the core game: opponents can overtrump a player's low trump when void in the led suit and able to beat it. Continue extending this only where it improves the skill being trained.
    - Specific future Whist idea: bake a tracking mini-game into Whist or a Whist variety where the player follows remaining trumps and court cards during play.
    - Keep each mini-game tied to real play, with one-sentence feedback explaining how the skill helps in Barbu, Hearts-family games, Whist, Bridge, or other classic card games.
    - Do not let these become disconnected brain-training toys; every exercise should make the player better at reading a table.

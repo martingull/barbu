@@ -55,6 +55,7 @@
     | "fullHand"
     | "dominoHand"
     | "trumpCount"
+    | "trumpMemory"
     | "courtCount"
     | "pathReview";
 
@@ -176,14 +177,29 @@
     habit: string;
   };
 
+  type CountMemoryQuestion =
+    | {
+        kind: "count";
+        prompt: string;
+        answer: number;
+        options: number[];
+        startTrick: number;
+        endTrick: number;
+      }
+    | {
+        kind: "specific";
+        prompt: string;
+        answer: boolean;
+        targetCard: Card;
+        startTrick: number;
+        endTrick: number;
+      };
+
   type TrumpCountRound = {
     trumpSuit: Suit;
     tricks: TableCard[][];
-    answer: number;
-    options: number[];
+    questions: CountMemoryQuestion[];
   };
-
-  type TrumpCountMode = "easy" | "realistic";
 
   type TrumpMemoryQuestion =
     | {
@@ -285,7 +301,7 @@
       access: "Pack",
       summary: "Fast minigames for tracking trumps, court cards, and what remains.",
       lessonCount: 0,
-      detailLabel: "2 minigames"
+      detailLabel: "3 minigames"
     },
     {
       id: "whist",
@@ -859,11 +875,11 @@
   let fullHandRunSeed = 0;
   let fullHandRunResults: FullHandRunResult[] = [];
   let pendingRunContract: FullHandContract = fullHandContracts[0];
-  let trumpCountMode: TrumpCountMode = "easy";
   let trumpCountRound = buildTrumpCountRound(practiceSeed);
   let trumpCountRevealIndex = 0;
+  let trumpCountQuestionIndex = 0;
   let trumpCountStage: "reveal" | "answer" = "reveal";
-  let trumpCountSelected: number | null = null;
+  let trumpCountSelected: number | boolean | null = null;
   let trumpCountChecked = false;
   let trumpCountAttempts = 0;
   let trumpCountClean = 0;
@@ -881,8 +897,9 @@
     appView === "drill" ||
     appView === "fullHand" ||
     appView === "dominoHand" ||
+    appView === "trumpCount" ||
     appView === "courtCount" ||
-    (appView === "trumpCount" && trumpCountMode === "realistic");
+    appView === "trumpMemory";
 
   function runSeatScores(results: FullHandRunResult[]) {
     const totals = emptySeatPenalties();
@@ -1109,19 +1126,30 @@
     : "";
   $: trumpCountVisibleTrick = trumpCountRound.tricks[trumpCountRevealIndex] ?? [];
   $: trumpCountTotalTricks = trumpCountRound.tricks.length;
-  $: trumpCountSeenCards = trumpCountRound.tricks.flatMap((trick) => trick.map((play) => play.card));
+  $: trumpCountQuestion = trumpCountRound.questions[trumpCountQuestionIndex] ?? trumpCountRound.questions[0];
+  $: trumpCountQuestionTricks = trumpCountQuestion
+    ? trumpCountRound.tricks.slice(trumpCountQuestion.startTrick, trumpCountQuestion.endTrick + 1)
+    : [];
+  $: trumpCountSeenCards = trumpCountQuestionTricks.flatMap((trick) => trick.map((play) => play.card));
   $: trumpCountSeenCount = trumpCountSeenCards.filter((card) => card.suit === trumpCountRound.trumpSuit).length;
+  $: trumpCountSegmentLabel = trumpCountQuestion
+    ? `tricks ${trumpCountQuestion.startTrick + 1}-${trumpCountQuestion.endTrick + 1}`
+    : "this segment";
   $: trumpCountPromptTitle =
-    trumpCountStage === "reveal" ? "Watch the trick. Count hearts." : "How many trumps are still out?";
+    trumpCountStage === "reveal"
+      ? "Watch the trick. Count hearts."
+      : trumpCountQuestion?.kind === "specific"
+        ? "Did this trump appear?"
+        : "How many trumps appeared?";
   $: trumpCountPromptBody =
     trumpCountStage === "reveal"
       ? `Trick ${trumpCountRevealIndex + 1} of ${trumpCountTotalTricks}. Keep the heart count in your head.`
-      : `${trumpCountTotalTricks} tricks have passed. The cards are hidden; answer from memory.`;
+      : (trumpCountQuestion?.prompt ?? "The cards are hidden; answer from memory.");
   $: trumpCountFeedback =
     trumpCountChecked && trumpCountSelected !== null
-      ? trumpCountSelected === trumpCountRound.answer
-        ? `Correct. ${trumpCountSeenCount} ${suitNames[trumpCountRound.trumpSuit].toLowerCase()} have appeared, so ${trumpCountRound.answer} remain.`
-        : `${trumpCountSeenCount} ${suitNames[trumpCountRound.trumpSuit].toLowerCase()} have appeared. ${trumpCountRound.answer} remain.`
+      ? trumpCountSelected === trumpCountQuestion?.answer
+        ? `Correct. ${trumpCountSeenCount} ${suitNames[trumpCountRound.trumpSuit].toLowerCase()} appeared in ${trumpCountSegmentLabel}.`
+        : `${trumpCountSeenCount} ${suitNames[trumpCountRound.trumpSuit].toLowerCase()} appeared in ${trumpCountSegmentLabel}.`
       : "Keep a running trump count as each trick appears.";
   $: realisticTrumpSeenCards = realisticTrumpRound.completedTricks.flatMap((trick) => trick.map((play) => play.card));
   $: realisticTrumpSeenCount = realisticTrumpSeenCards.filter((card) => card.suit === realisticTrumpRound.trumpSuit).length;
@@ -1578,14 +1606,19 @@
   function openTrumpCountTrainer() {
     trumpCountRound = buildTrumpCountRound(usePracticeSeed());
     trumpCountRevealIndex = 0;
+    trumpCountQuestionIndex = 0;
     trumpCountStage = "reveal";
     trumpCountSelected = null;
     trumpCountChecked = false;
+    appView = "trumpCount";
+  }
+
+  function openTrumpMemoryTrainer() {
     realisticTrumpRound = buildRealisticTrumpRound(usePracticeSeed());
     realisticTrumpSelectedCardId = "";
     realisticTrumpAnswer = null;
     realisticTrumpChecked = false;
-    appView = "trumpCount";
+    appView = "trumpMemory";
   }
 
   function openCourtCountTrainer() {
@@ -1598,23 +1631,57 @@
 
   function buildTrumpCountRound(seed: number): TrumpCountRound {
     const deck = shuffleCountingDeck(seed);
-    const trickCount = 5;
+    const trickCount = 13;
     const tricks = Array.from({ length: trickCount }, (_, trickIndex) =>
       countingTrickSeats.map((seat, seatIndex) => ({
         seat,
         card: deck[trickIndex * countingTrickSeats.length + seatIndex]
       }))
     );
-    const seenCards = tricks.flatMap((trick) => trick.map((play) => play.card));
     const trumpSuit: Suit = "H";
-    const answer = 13 - seenCards.filter((card) => card.suit === trumpSuit).length;
+    const questionRanges = [
+      [0, 3],
+      [4, 7],
+      [8, 12]
+    ] as const;
+    const trumpCards = deck.filter((card) => card.suit === trumpSuit);
+    const questions = questionRanges.map(([startTrick, endTrick], questionIndex): CountMemoryQuestion => {
+      const segmentCards = tricks
+        .slice(startTrick, endTrick + 1)
+        .flatMap((trick) => trick.map((play) => play.card));
+      const segmentTrumpCards = segmentCards.filter((card) => card.suit === trumpSuit);
+      const shouldAskSpecific = (seed + questionIndex) % 2 === 1;
 
-    return {
-      trumpSuit,
-      tricks,
-      answer,
-      options: countOptions(answer, seed, 13)
-    };
+      if (shouldAskSpecific) {
+        const seenTargets = segmentTrumpCards;
+        const unseenTargets = trumpCards.filter((card) => !segmentCards.some((segmentCard) => segmentCard.id === card.id));
+        const answer = (seed + questionIndex) % 4 !== 0 && seenTargets.length > 0;
+        const targetPool = answer ? seenTargets : unseenTargets.length > 0 ? unseenTargets : seenTargets;
+        const targetCard = targetPool[(seed + questionIndex * 3) % Math.max(1, targetPool.length)] ?? trumpCards[0];
+
+        return {
+          kind: "specific",
+          prompt: `The cards from tricks ${startTrick + 1}-${endTrick + 1} are hidden. Did this heart appear in that segment?`,
+          answer,
+          targetCard,
+          startTrick,
+          endTrick
+        };
+      }
+
+      const answer = segmentTrumpCards.length;
+
+      return {
+        kind: "count",
+        prompt: `The cards from tricks ${startTrick + 1}-${endTrick + 1} are hidden. How many hearts appeared in that segment?`,
+        answer,
+        options: countOptions(answer, seed + questionIndex, 13),
+        startTrick,
+        endTrick
+      };
+    });
+
+    return { trumpSuit, tricks, questions };
   }
 
   function buildRealisticTrumpRound(seed: number): RealisticTrumpRound {
@@ -1856,16 +1923,12 @@
     return card.rank === "J" || card.rank === "Q" || card.rank === "K";
   }
 
-  function selectTrumpCountAnswer(option: number) {
+  function selectTrumpCountAnswer(option: number | boolean) {
     if (trumpCountChecked) {
       return;
     }
 
     trumpCountSelected = option;
-  }
-
-  function selectTrumpCountMode(mode: TrumpCountMode) {
-    trumpCountMode = mode;
   }
 
   function checkTrumpCountAnswer() {
@@ -1876,7 +1939,7 @@
     trumpCountChecked = true;
     trumpCountAttempts += 1;
 
-    if (trumpCountSelected === trumpCountRound.answer) {
+    if (trumpCountSelected === trumpCountQuestion?.answer) {
       trumpCountClean += 1;
     }
   }
@@ -1886,7 +1949,7 @@
       return;
     }
 
-    if (trumpCountRevealIndex >= trumpCountRound.tricks.length - 1) {
+    if (trumpCountQuestion && trumpCountRevealIndex >= trumpCountQuestion.endTrick) {
       trumpCountStage = "answer";
       return;
     }
@@ -1897,6 +1960,22 @@
   function nextTrumpCountRound() {
     trumpCountRound = buildTrumpCountRound(usePracticeSeed());
     trumpCountRevealIndex = 0;
+    trumpCountQuestionIndex = 0;
+    trumpCountStage = "reveal";
+    trumpCountSelected = null;
+    trumpCountChecked = false;
+  }
+
+  function continueTrumpCountRound() {
+    if (trumpCountQuestionIndex >= trumpCountRound.questions.length - 1) {
+      nextTrumpCountRound();
+      return;
+    }
+
+    const nextQuestionIndex = trumpCountQuestionIndex + 1;
+    const nextQuestion = trumpCountRound.questions[nextQuestionIndex];
+    trumpCountQuestionIndex = nextQuestionIndex;
+    trumpCountRevealIndex = nextQuestion.startTrick;
     trumpCountStage = "reveal";
     trumpCountSelected = null;
     trumpCountChecked = false;
@@ -4415,7 +4494,12 @@
               <button class="contract-card compact" onclick={openTrumpCountTrainer} type="button">
                 <span>Card counting</span>
                 <strong>Count trumps</strong>
-                <small>Track which trump cards have appeared and name what remains.</small>
+                <small>Watch all thirteen tricks and answer trump-memory checks between segments.</small>
+              </button>
+              <button class="contract-card compact" onclick={openTrumpMemoryTrainer} type="button">
+                <span>Table memory</span>
+                <strong>Trump memory hand</strong>
+                <small>Play a full hand and answer trump-memory checks after real tricks.</small>
               </button>
               <button class="contract-card compact" onclick={openCourtCountTrainer} type="button">
                 <span>High-card memory</span>
@@ -4545,12 +4629,11 @@
         {/if}
       </div>
     </section>
-  {:else if appView === "trumpCount"}
-    {#if trumpCountMode === "realistic"}
+  {:else if appView === "trumpMemory"}
       <TablePlaySurface
         mode="play"
-        ariaLabel="Count trumps trainer"
-        title="Count trumps"
+        ariaLabel="Trump memory hand trainer"
+        title="Trump memory hand"
         eyebrow="Card Counting"
         statusLabel="Score"
         statusValue={`${trumpCountClean} of ${trumpCountAttempts}`}
@@ -4561,27 +4644,6 @@
         onBack={openBarbuTable}
         onSurfaceClick={realisticTrumpRound.status === "review" ? continueRealisticTrumpRound : undefined}
       >
-        {#snippet summary()}
-          <div class="trump-count-mode realistic-mode-switch" aria-label="Count trumps mode">
-            <button
-              aria-pressed={trumpCountMode === "easy"}
-              class:active={trumpCountMode === "easy"}
-              onclick={() => selectTrumpCountMode("easy")}
-              type="button"
-            >
-              Easy
-            </button>
-            <button
-              aria-pressed={trumpCountMode === "realistic"}
-              class:active={trumpCountMode === "realistic"}
-              onclick={() => selectTrumpCountMode("realistic")}
-              type="button"
-            >
-              Realistic
-            </button>
-          </div>
-        {/snippet}
-
         {#snippet panel()}
           <div class="lesson-heading">
             <p class="eyebrow">Hearts are trumps</p>
@@ -4717,93 +4779,58 @@
           </div>
         {/snippet}
       </TablePlaySurface>
-    {:else}
-      <header class="topbar" aria-label="Count trumps">
-        <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
-        <div>
-          <p class="eyebrow">Card Counting</p>
-          <h1>Count trumps</h1>
+  {:else if appView === "trumpCount"}
+    <TablePlaySurface
+      mode="play"
+      ariaLabel="Count trumps trainer"
+      title="Count trumps"
+      eyebrow="Card Counting"
+      statusLabel="Score"
+      statusValue={`${trumpCountClean} of ${trumpCountAttempts}`}
+      tableAriaLabel="Trump trick reveal"
+      tableCards={[]}
+      panelAriaLabel="Count trumps decision"
+      showTable={false}
+      onBack={openBarbuTable}
+    >
+      {#snippet panel()}
+        <div class="trump-count-stage">
+          {#if trumpCountStage === "reveal"}
+            <div class="trump-memory-table" aria-label="Trump trick reveal">
+              {#each trumpCountVisibleTrick as play}
+                <div class="trump-memory-seat">
+                  <span>{scoreSeatLabel(play.seat)}</span>
+                  <div class:trump={play.card.suit === trumpCountRound.trumpSuit} class="trump-memory-card">
+                    <CardFace card={play.card} decorative />
+                  </div>
+                </div>
+              {/each}
+            </div>
+          {:else if !trumpCountChecked}
+            <div class="trump-memory-hidden" aria-label="Trump memory prompt">
+              <span>{trumpCountSegmentLabel} shown</span>
+              <strong>Cards hidden</strong>
+              <small>Use the count you kept while the tricks appeared.</small>
+            </div>
+          {/if}
         </div>
-        <div class="contract-status">
-          <span>Score</span>
-          <strong>{trumpCountClean} of {trumpCountAttempts}</strong>
-        </div>
-      </header>
 
-      <section class="trump-count-screen" aria-label="Count trumps trainer">
-        <div class="trump-count-mode" aria-label="Count trumps mode">
-          <button
-            aria-pressed={trumpCountMode === "easy"}
-            class:active={trumpCountMode === "easy"}
-            onclick={() => selectTrumpCountMode("easy")}
-            type="button"
-          >
-            Easy
-          </button>
-          <button
-            aria-pressed={trumpCountMode === "realistic"}
-            class:active={trumpCountMode === "realistic"}
-            onclick={() => selectTrumpCountMode("realistic")}
-            type="button"
-          >
-            Realistic
-          </button>
-        </div>
-
-        <div class="trump-count-prompt">
+        <div class="lesson-heading">
           <p class="eyebrow">Hearts are trumps</p>
           <h2>{trumpCountPromptTitle}</h2>
-          <p>{trumpCountPromptBody}</p>
         </div>
-
-        {#if trumpCountStage === "reveal"}
-          <div class="trump-memory-table" aria-label="Trump trick reveal">
-            {#each trumpCountVisibleTrick as play}
-              <div class="trump-memory-seat">
-                <span>{scoreSeatLabel(play.seat)}</span>
-                <div class:trump={play.card.suit === trumpCountRound.trumpSuit} class="trump-memory-card">
-                  <CardFace card={play.card} decorative />
-                </div>
-              </div>
-            {/each}
-          </div>
-        {:else}
-          <div class="trump-memory-hidden" aria-label="Trump memory prompt">
-            <span>{trumpCountTotalTricks} tricks shown</span>
-            <strong>Cards hidden</strong>
-            <small>Use the count you kept while the tricks appeared.</small>
-          </div>
-        {/if}
-
-        {#if trumpCountStage === "answer"}
-          <div class="trump-count-options" aria-label="Trump count answers">
-            {#each trumpCountRound.options as option}
-              <button
-                aria-pressed={trumpCountSelected === option}
-                class:correct={trumpCountChecked && option === trumpCountRound.answer}
-                class:selected={trumpCountSelected === option}
-                class:wrong={trumpCountChecked && trumpCountSelected === option && option !== trumpCountRound.answer}
-                onclick={() => selectTrumpCountAnswer(option)}
-                type="button"
-              >
-                {option}
-              </button>
-            {/each}
-          </div>
-
-          <p
-            class:warning={trumpCountChecked && trumpCountSelected !== trumpCountRound.answer}
-            class="trump-count-feedback"
-          >
-            {trumpCountFeedback}
-          </p>
-        {/if}
 
         {#if trumpCountChecked}
           <div class="trump-count-review" aria-label="Trump count review">
             <span>Trump cards seen</span>
             <strong>{trumpCountSeenCount} hearts appeared</strong>
-            <small>{trumpCountRound.answer} hearts remain out.</small>
+            <small>
+              {#if trumpCountQuestion?.kind === "specific"}
+                {trumpCountQuestion.targetCard.label} {trumpCountQuestion.answer ? "was" : "was not"} in {trumpCountSegmentLabel}.
+              {:else}
+                The answer for {trumpCountSegmentLabel} was {trumpCountQuestion?.answer}.
+              {/if}
+            </small>
             <div class="trump-review-cards">
               {#each trumpCountSeenCards.filter((card) => card.suit === trumpCountRound.trumpSuit) as card}
                 <div class="trump-seen-card trump">
@@ -4814,22 +4841,79 @@
           </div>
         {/if}
 
-        <div class="course-actions">
+        <p class="result" aria-label="Trump count prompt">{trumpCountPromptBody}</p>
+
+        {#if trumpCountStage === "answer" && !trumpCountChecked}
+          {#if trumpCountQuestion?.kind === "count"}
+            <div class="trump-count-options" aria-label="Trump count answers">
+              {#each trumpCountQuestion.options as option}
+                <button
+                  aria-pressed={trumpCountSelected === option}
+                  class:selected={trumpCountSelected === option}
+                  onclick={() => selectTrumpCountAnswer(option)}
+                  type="button"
+                >
+                  {option}
+                </button>
+              {/each}
+            </div>
+          {:else if trumpCountQuestion?.kind === "specific"}
+            <div class="trump-specific-check">
+              <div class="trump-target-card" aria-label={`Target trump card ${trumpCountQuestion.targetCard.label}`}>
+                <span>Target</span>
+                <div class="trump-target-card-face">
+                  <CardFace card={trumpCountQuestion.targetCard} decorative />
+                </div>
+              </div>
+              <div class="trump-count-options trump-specific-options" aria-label="Trump specific answers">
+                <button
+                  aria-pressed={trumpCountSelected === true}
+                  class:selected={trumpCountSelected === true}
+                  onclick={() => selectTrumpCountAnswer(true)}
+                  type="button"
+                >
+                  Yes
+                </button>
+                <button
+                  aria-pressed={trumpCountSelected === false}
+                  class:selected={trumpCountSelected === false}
+                  onclick={() => selectTrumpCountAnswer(false)}
+                  type="button"
+                >
+                  No
+                </button>
+              </div>
+            </div>
+          {/if}
+        {/if}
+
+        {#if trumpCountChecked}
+          <p
+            class:warning={trumpCountChecked && trumpCountSelected !== trumpCountRound.answer}
+            class="trump-count-feedback"
+          >
+            {trumpCountFeedback}
+          </p>
+        {/if}
+
+        <div class="action-row">
           <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
           {#if trumpCountStage === "reveal"}
             <button class="primary-action" onclick={advanceTrumpCountReveal} type="button">
-              {trumpCountRevealIndex >= trumpCountRound.tricks.length - 1 ? "Answer count" : "Next trick"}
+              {trumpCountQuestion && trumpCountRevealIndex >= trumpCountQuestion.endTrick ? "Answer memory" : "Next trick"}
             </button>
           {:else if trumpCountChecked}
-            <button class="primary-action" onclick={nextTrumpCountRound} type="button">Next count</button>
+            <button class="primary-action" onclick={continueTrumpCountRound} type="button">
+              {trumpCountQuestionIndex >= trumpCountRound.questions.length - 1 ? "Next round" : "Continue"}
+            </button>
           {:else}
             <button class="primary-action" disabled={trumpCountSelected === null} onclick={checkTrumpCountAnswer} type="button">
-              Check count
+              Check memory
             </button>
           {/if}
         </div>
-      </section>
-    {/if}
+      {/snippet}
+    </TablePlaySurface>
   {:else if appView === "courtCount"}
     <TablePlaySurface
       mode="play"

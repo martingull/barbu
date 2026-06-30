@@ -251,15 +251,16 @@ Purpose: train skills that make the player stronger across 52-card games.
 Current role:
 
 - Starts a Card Counting pack.
-- Offers Count Trumps as the first minigame with two levels: Easy reveal-and-count memory, and Realistic three-trick play before a trump memory question.
-- Offers Track Court Cards as the second minigame: show played cards, count visible jacks, queens, and kings, and answer how many remain.
+- Offers Count Trumps as a thirteen-trick reveal-and-memory minigame with count and specific-card checkpoints.
+- Offers Trump Memory Hand as a separate realistic table minigame: play a hand and answer trump-memory checks after real tricks.
+- Offers Track Court Cards as a separate high-card memory minigame: play a hand and remember jacks, queens, and kings.
 
 Near-term direction:
 
 - Add danger-card memory as a separate exercise.
 - Tie Perfect exercises back to Barbu, Hearts-family games, Whist, and Bridge.
 - Keep each exercise short and interactive, not a rules article.
-- Keep realistic exercises close to real table play. In Count Trumps, table seats now use the first trump-aware choice: overtrumping a low trump when void in the led suit and able to beat the current winning trump. Continue refining discard/conserve choices as the core game improves.
+- Keep realistic exercises close to real table play. In Trump Memory Hand, table seats now use the first trump-aware choice: overtrumping a low trump when void in the led suit and able to beat the current winning trump. Continue refining discard/conserve choices as the core game improves.
 
 ### Barbu Character Layer
 
