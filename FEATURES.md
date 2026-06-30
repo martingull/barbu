@@ -172,6 +172,7 @@ These are the next product increments that keep the app coherent.
    - Improve Barbu and table seats as training opponents before any real multiplayer work.
    - Focus on believable card-player habits: avoid obvious penalties, count endgame danger, preserve exits, use trumps sensibly, and pursue reward tricks when the contract asks for it.
    - Initial explicit overtrump behavior exists in Hearts Trumps and realistic Trump Count: when a seat is void in the led suit and a trump is already winning, it can play the lowest trump that beats it. Continue refining when seats should discard or conserve trumps according to the contract goal.
+   - No Queens now has an explicit avoidance-policy slice in the shared Rust contract-policy layer: avoid queen leads, duck queen-loaded tricks when possible, dump queens when void, and shed a queen under a locked winner instead of wasting another safe high card.
    - Great card games are often played against real people, but better local opponents are the right bridge from solo learning to real table play.
 
 11. Reference Layer v1

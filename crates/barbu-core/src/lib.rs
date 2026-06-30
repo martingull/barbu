@@ -1,4 +1,5 @@
 pub mod cards;
+pub mod contract_policy;
 pub mod domino;
 pub mod guided;
 pub mod hand;

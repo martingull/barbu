@@ -223,6 +223,9 @@ function chooseOpponentCard(state: FullHandState) {
     if (state.contract === "Hearts Trumps") {
       return highestCard(legal);
     }
+    if (state.contract === "No Queens") {
+      return lowestCard(legal.filter((card) => card.rank !== "Q")) ?? lowestCard(legal);
+    }
     return lowestCard(legal.filter((card) => !isPenaltyCard(state.contract, card))) ?? lowestCard(legal);
   }
 
@@ -235,6 +238,9 @@ function chooseOpponentCard(state: FullHandState) {
     if (state.contract === "No Tricks") {
       return highestCard(legal);
     }
+    if (state.contract === "No Queens") {
+      return highestCard(legal.filter((card) => card.rank === "Q")) ?? highestCard(legal);
+    }
     return highestCard(legal.filter((card) => isPenaltyCard(state.contract, card))) ?? highestCard(legal);
   }
 
@@ -244,6 +250,10 @@ function chooseOpponentCard(state: FullHandState) {
 
   if (state.contract === "No Tricks") {
     return highestNonWinningCard(state, legal) ?? lowestCard(legal);
+  }
+
+  if (state.contract === "No Queens") {
+    return highestNonWinningQueen(state, legal) ?? highestNonWinningCard(state, legal) ?? lowestCard(legal);
   }
 
   if (state.contract === "No Last Two" && state.completedTricks.length >= 11) {
@@ -294,6 +304,10 @@ function highestCard(cards: Card[]) {
 
 function highestNonWinningCard(state: FullHandState, cards: Card[]) {
   return highestCard(cards.filter((card) => !cardWouldWinTrick(state, card)));
+}
+
+function highestNonWinningQueen(state: FullHandState, cards: Card[]) {
+  return highestCard(cards.filter((card) => card.rank === "Q" && !cardWouldWinTrick(state, card)));
 }
 
 function compareByRankThenSuit(left: Card, right: Card) {

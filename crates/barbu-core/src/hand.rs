@@ -1,4 +1,7 @@
 use crate::cards::{standard_deck, Card, Rank, Suit};
+use crate::contract_policy::{
+    choose_no_queens_opponent_card as choose_no_queens_policy_card, TrickPolicyContext,
+};
 use crate::trick::{legal_cards, trick_winner, PlayedCard, PlayerIndex};
 
 pub type TrickScoreFn = fn(&TrickTakingHandState, &[PlayedCard]) -> i32;
@@ -369,7 +372,8 @@ fn play_card_for_current_player(
 
 fn complete_trick(state: &mut TrickTakingHandState, score_trick: TrickScoreFn) {
     let cards = state.current_trick.clone();
-    let winner = trick_winner_for_state(state, &cards).expect("a four-card trick should have a winner");
+    let winner =
+        trick_winner_for_state(state, &cards).expect("a four-card trick should have a winner");
     let penalty = score_trick(state, &cards);
 
     state.completed_tricks.push(CompletedTrick {
@@ -451,35 +455,12 @@ fn choose_no_hearts_opponent_card(state: &TrickTakingHandState) -> Option<Card> 
 }
 
 fn choose_no_queens_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
-    let hand = &state.hands[state.current_player];
-    let legal = legal_cards(hand, state.led_suit());
-    let led_suit = state.led_suit();
-
-    if legal.is_empty() {
-        return None;
-    }
-
-    if led_suit.is_none() {
-        return lowest_card_matching(&legal, |card| card.rank != Rank::Queen)
-            .or_else(|| lowest_card(&legal));
-    }
-
-    let follows_suit = legal.iter().all(|card| Some(card.suit) == led_suit);
-
-    if !follows_suit {
-        return highest_card_matching(&legal, |card| card.rank == Rank::Queen)
-            .or_else(|| highest_card(&legal));
-    }
-
-    if state
-        .current_trick
-        .iter()
-        .any(|played| played.card.rank == Rank::Queen)
-    {
-        return highest_non_winning_card(state, &legal).or_else(|| lowest_card(&legal));
-    }
-
-    highest_non_winning_card(state, &legal).or_else(|| lowest_card(&legal))
+    choose_no_queens_policy_card(TrickPolicyContext {
+        hand: &state.hands[state.current_player],
+        led_suit: state.led_suit(),
+        current_trick: &state.current_trick,
+        current_player: state.current_player,
+    })
 }
 
 fn choose_king_of_hearts_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
@@ -575,13 +556,7 @@ fn score_no_hearts_hand_trick(_state: &TrickTakingHandState, cards: &[PlayedCard
     cards
         .iter()
         .filter(|played| played.card.suit == Suit::Hearts)
-        .map(|played| {
-            if played.card.rank == Rank::Ace {
-                6
-            } else {
-                2
-            }
-        })
+        .map(|played| if played.card.rank == Rank::Ace { 6 } else { 2 })
         .sum()
 }
 
@@ -663,11 +638,7 @@ fn card_would_win_trick(state: &TrickTakingHandState, card: Card) -> bool {
     card.rank > current_winner.card.rank
 }
 
-fn card_would_win_trump_trick(
-    state: &TrickTakingHandState,
-    card: Card,
-    trump_suit: Suit,
-) -> bool {
+fn card_would_win_trump_trick(state: &TrickTakingHandState, card: Card, trump_suit: Suit) -> bool {
     let Some(led_suit) = state.led_suit() else {
         return true;
     };
@@ -1078,6 +1049,60 @@ mod tests {
         assert_eq!(
             choose_no_queens_opponent_card(&state),
             Some(Card::new(Rank::Queen, Suit::Spades))
+        );
+    }
+
+    #[test]
+    fn no_queens_opponent_dumps_queen_under_locked_winner() {
+        let state = NoQueensHandState {
+            id: "opponent-dump-queen-under-ace".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Queen, Suit::Clubs),
+                    Card::new(Rank::King, Suit::Clubs),
+                    Card::new(Rank::Two, Suit::Diamonds),
+                ],
+            ],
+            current_player: 3,
+            current_trick: vec![PlayedCard::new(0, Card::new(Rank::Ace, Suit::Clubs))],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_no_queens_opponent_card(&state),
+            Some(Card::new(Rank::Queen, Suit::Clubs))
+        );
+    }
+
+    #[test]
+    fn no_queens_opponent_uses_lowest_card_when_forced_to_win_loaded_trick() {
+        let state = NoQueensHandState {
+            id: "opponent-forced-win-loaded-queen".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::King, Suit::Clubs),
+                    Card::new(Rank::Ace, Suit::Clubs),
+                ],
+            ],
+            current_player: 3,
+            current_trick: vec![
+                PlayedCard::new(0, Card::new(Rank::Seven, Suit::Clubs)),
+                PlayedCard::new(1, Card::new(Rank::Queen, Suit::Clubs)),
+            ],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_no_queens_opponent_card(&state),
+            Some(Card::new(Rank::King, Suit::Clubs))
         );
     }
 
