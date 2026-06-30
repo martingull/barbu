@@ -338,33 +338,51 @@ test("Perfect mode starts card-counting minigames", async ({ page }, testInfo) =
 
   await page.getByLabel("Count trumps mode").getByRole("button", { name: "Realistic" }).click();
   await expect(page.getByLabel("Realistic trump table")).toBeVisible();
-  await expect(page.getByLabel("Count trumps trainer")).toContainText("Trick 1 of 3");
+  await expect(page.getByLabel("Count trumps trainer")).toContainText("Trick 1 of 13");
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
   await page.screenshot({ path: testInfo.outputPath("perfect-count-trumps-realistic-play.png"), fullPage: true });
 
-  for (let trick = 1; trick <= 3; trick += 1) {
+  const answerRealisticTrumpCheck = async () => {
+    await expect(page.getByLabel("Realistic trump challenge")).toContainText(/How many hearts|Has this trump card/);
+    const realisticCountAnswers = page.getByLabel("Realistic trump count answers").getByRole("button");
+    if ((await realisticCountAnswers.count()) > 0) {
+      await realisticCountAnswers.first().click();
+    } else {
+      await expect(page.getByLabel(/Target trump card/)).toBeVisible();
+      await page.getByLabel("Realistic trump specific answers").getByRole("button").first().click();
+    }
+    await expect(page.getByRole("button", { name: "Check memory" })).toBeEnabled();
+    await page.getByRole("button", { name: "Check memory" }).click();
+    await expect(page.getByLabel("Realistic trump count review")).toContainText("hearts appeared");
+  };
+
+  let memoryChecks = 0;
+  for (let trick = 1; trick <= 13; trick += 1) {
     await page.locator(".realistic-trump-hand .full-hand-card.legal").first().click();
     await expect(page.getByRole("button", { name: "Play card" })).toBeEnabled();
     await page.getByRole("button", { name: "Play card" }).click();
-    const nextAction = page.getByRole("button", { name: trick === 3 ? "Answer memory" : "Next trick", exact: true });
+    const isCheckpoint = [3, 7, 11].includes(trick);
+    const nextAction = page.getByRole("button", {
+      name: trick === 13 ? "Finish hand" : isCheckpoint ? "Answer memory" : "Next trick",
+      exact: true
+    });
     await expect(nextAction).toBeVisible();
     await nextAction.click();
+
+    if (isCheckpoint) {
+      await answerRealisticTrumpCheck();
+      memoryChecks += 1;
+      if (trick === 3) {
+        await page.screenshot({ path: testInfo.outputPath("perfect-count-trumps-realistic.png"), fullPage: true });
+      }
+      await page.getByRole("button", { name: "Continue hand" }).click();
+    }
   }
 
-  await expect(page.getByLabel("Realistic trump challenge")).toContainText(/How many hearts|Was .* played/);
-  const realisticCountAnswers = page.getByLabel("Realistic trump count answers").getByRole("button");
-  if ((await realisticCountAnswers.count()) > 0) {
-    await realisticCountAnswers.first().click();
-  } else {
-    await expect(page.getByLabel(/Target trump card/)).toBeVisible();
-    await page.getByLabel("Realistic trump specific answers").getByRole("button").first().click();
-  }
-  await expect(page.getByRole("button", { name: "Check memory" })).toBeEnabled();
-  await page.getByRole("button", { name: "Check memory" }).click();
-  await expect(page.getByLabel("Realistic trump count review")).toContainText("hearts appeared");
+  expect(memoryChecks).toBe(3);
+  await expect(page.getByLabel("Realistic trump challenge")).toContainText("You played the full hand");
   await expect(page.getByRole("button", { name: "Next hand" })).toBeVisible();
-  await page.screenshot({ path: testInfo.outputPath("perfect-count-trumps-realistic.png"), fullPage: true });
 
   await page.getByLabel("Count trumps", { exact: true }).getByRole("button", { name: "Table" }).click();
   await page.getByLabel("Card counting pack").getByRole("button", { name: "Track court cards" }).click();

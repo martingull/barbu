@@ -202,8 +202,9 @@
     hands: Record<Seat, Card[]>;
     currentTrick: TableCard[];
     completedTricks: TableCard[][];
-    status: "playing" | "review" | "question";
+    status: "playing" | "review" | "question" | "complete";
     question: TrumpMemoryQuestion;
+    questionsAsked: number;
   };
 
   type CourtCountRound = {
@@ -311,6 +312,8 @@
   const maxStoredPlayBarbuAttempts = 8;
   const scoreSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
   const countingTrickSeats: Seat[] = ["Tutor", "Right", "You", "Left"];
+  const realisticTrumpTotalTricks = 13;
+  const realisticTrumpCheckpoints = [3, 7, 11];
   const countingRanks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
   const countingSuits: Suit[] = ["C", "D", "H", "S"];
   const dominoOrderScores = [45, 20, 5, -5];
@@ -1105,19 +1108,26 @@
   $: realisticTrumpSelectedCard = realisticTrumpRound.hands.You.find((card) => card.id === realisticTrumpSelectedCardId);
   $: realisticTrumpPromptTitle =
     realisticTrumpRound.status === "question"
-      ? "Memory check"
+      ? `Memory check ${realisticTrumpRound.questionsAsked + 1} of ${realisticTrumpCheckpoints.length}`
+      : realisticTrumpRound.status === "complete"
+        ? "Hand complete"
       : realisticTrumpRound.status === "review"
         ? "Update the count"
-        : `Trick ${realisticTrumpRound.completedTricks.length + 1} of 3`;
+        : `Trick ${realisticTrumpRound.completedTricks.length + 1} of ${realisticTrumpTotalTricks}`;
   $: realisticTrumpPromptBody =
     realisticTrumpRound.status === "question"
       ? realisticTrumpRound.question.prompt
+      : realisticTrumpRound.status === "complete"
+        ? "You played the full hand while keeping track of the trump suit."
       : realisticTrumpRound.status === "review"
         ? "Left has played. Add every heart from this trick before moving on."
-        : "Follow suit if you can. Hearts are trumps, and Barbu may test your count after the third trick.";
-  $: realisticTrumpTableCards = realisticTrumpRound.status === "question" ? [] : realisticTrumpRound.currentTrick;
+        : "Follow suit if you can. Hearts are trumps, and Barbu will test your count during the hand.";
+  $: realisticTrumpTableCards =
+    realisticTrumpRound.status === "question" || realisticTrumpRound.status === "complete"
+      ? []
+      : realisticTrumpRound.currentTrick;
   $: realisticTrumpPendingBySeat =
-    realisticTrumpRound.status === "question"
+    realisticTrumpRound.status === "question" || realisticTrumpRound.status === "complete"
       ? { Tutor: "Barbu", Right: "Right", You: "You", Left: "Left" }
       : realisticTrumpRound.status === "playing"
         ? { You: "You", Left: "Left" }
@@ -1127,7 +1137,7 @@
       ? realisticTrumpAnswer === realisticTrumpRound.question.answer
         ? "Correct. You kept the trump memory while playing the hand."
         : realisticTrumpQuestionAnswerText(realisticTrumpRound.question)
-      : "Play three realistic tricks, then answer without seeing the cards.";
+      : "Play the hand and answer Barbu's trump checks without seeing the old tricks.";
   $: courtCountSeenCount = courtCountRound.seenCards.filter((card) => isCourtCard(card)).length;
   $: courtCountFeedback =
     courtCountChecked && courtCountSelected !== null
@@ -1552,7 +1562,8 @@
       currentTrick: [],
       completedTricks: [],
       status: "playing",
-      question: buildTrumpMemoryQuestion([], seed)
+      question: buildTrumpMemoryQuestion([], seed),
+      questionsAsked: 0
     });
   }
 
@@ -1628,7 +1639,7 @@
     if (seed % 2 === 0) {
       return {
         kind: "count",
-        prompt: "How many hearts were played in those three tricks?",
+        prompt: "How many hearts have been played so far?",
         answer: trumpSeen,
         options: countOptions(trumpSeen, seed, 13)
       };
@@ -1639,7 +1650,7 @@
 
     return {
       kind: "specific",
-      prompt: "Was this trump card played in those three tricks?",
+      prompt: "Has this trump card been played so far?",
       answer: seenCards.some((card) => card.id === targetCard.id),
       targetCard
     };
@@ -1771,15 +1782,35 @@
       return;
     }
 
-    if (realisticTrumpRound.completedTricks.length >= 3) {
+    if (realisticTrumpRound.completedTricks.length >= realisticTrumpTotalTricks) {
       realisticTrumpRound = {
         ...realisticTrumpRound,
-        status: "question"
+        status: "complete"
       };
       return;
     }
 
+    const checkpointIndex = realisticTrumpCheckpoints.indexOf(realisticTrumpRound.completedTricks.length);
+    if (checkpointIndex >= 0 && realisticTrumpRound.questionsAsked <= checkpointIndex) {
+      realisticTrumpRound = {
+        ...realisticTrumpRound,
+        status: "question"
+      };
+      realisticTrumpAnswer = null;
+      realisticTrumpChecked = false;
+      return;
+    }
+
     realisticTrumpRound = beginRealisticTrumpTrick(realisticTrumpRound);
+  }
+
+  function realisticTrumpReviewActionLabel(round: RealisticTrumpRound) {
+    if (round.completedTricks.length >= realisticTrumpTotalTricks) {
+      return "Finish hand";
+    }
+
+    const checkpointIndex = realisticTrumpCheckpoints.indexOf(round.completedTricks.length);
+    return checkpointIndex >= 0 && round.questionsAsked <= checkpointIndex ? "Answer memory" : "Next trick";
   }
 
   function selectRealisticTrumpAnswer(answer: number | boolean) {
@@ -1797,10 +1828,24 @@
 
     realisticTrumpChecked = true;
     trumpCountAttempts += 1;
+    realisticTrumpRound = {
+      ...realisticTrumpRound,
+      questionsAsked: realisticTrumpRound.questionsAsked + 1
+    };
 
     if (realisticTrumpAnswer === realisticTrumpRound.question.answer) {
       trumpCountClean += 1;
     }
+  }
+
+  function continueRealisticTrumpAfterQuestion() {
+    if (!realisticTrumpChecked || realisticTrumpRound.status !== "question") {
+      return;
+    }
+
+    realisticTrumpAnswer = null;
+    realisticTrumpChecked = false;
+    realisticTrumpRound = beginRealisticTrumpTrick(realisticTrumpRound);
   }
 
   function nextRealisticTrumpRound() {
@@ -1812,7 +1857,7 @@
 
   function realisticTrumpQuestionAnswerText(question: TrumpMemoryQuestion) {
     if (question.kind === "count") {
-      return `${question.answer} hearts were played in those three tricks.`;
+      return `${question.answer} hearts have been played so far.`;
     }
 
     return question.answer ? `Yes. ${question.targetCard.label} was played.` : `No. ${question.targetCard.label} was not played.`;
@@ -4144,9 +4189,11 @@
               </button>
             {:else if realisticTrumpRound.status === "review"}
               <button class="primary-action" onclick={continueRealisticTrumpRound} type="button">
-                {realisticTrumpRound.completedTricks.length >= 3 ? "Answer memory" : "Next trick"}
+                {realisticTrumpReviewActionLabel(realisticTrumpRound)}
               </button>
-            {:else if realisticTrumpChecked}
+            {:else if realisticTrumpRound.status === "question" && realisticTrumpChecked}
+              <button class="primary-action" onclick={continueRealisticTrumpAfterQuestion} type="button">Continue hand</button>
+            {:else if realisticTrumpRound.status === "complete"}
               <button class="primary-action" onclick={nextRealisticTrumpRound} type="button">Next hand</button>
             {:else}
               <button
