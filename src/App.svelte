@@ -791,6 +791,7 @@
     title: lesson.title,
     trick: lesson.tricks[0]
   }));
+  const fixedDrillLessons = guidedLessons.filter((lesson) => lesson.contract !== "Domino");
 
   let appView: AppView = "catalog";
   let trickIndex = 0;
@@ -2884,17 +2885,6 @@
     return lane.length ? lane.map((card) => card.label).join(" ") : `Open with ${startRank}`;
   }
 
-  function dominoSeatProgressLabel(state: DominoHandState, seat: Seat) {
-    const outIndex = state.outOrder.indexOf(seat);
-
-    if (outIndex >= 0) {
-      return `${formatOrdinal(outIndex + 1)} ${formatSignedScore(dominoOrderScores[outIndex] ?? 0)}`;
-    }
-
-    const cardsLeft = state.hands[playerIndexBySeat[seat]]?.length ?? 0;
-    return `${cardsLeft} ${cardsLeft === 1 ? "card" : "cards"}`;
-  }
-
   function dominoOutOrderText(state: DominoHandState) {
     return state.outOrder.length ? state.outOrder.map((seat) => scoreSeatLabel(seat as Seat)).join(" ") : "No one out";
   }
@@ -2902,10 +2892,10 @@
   function dominoMoveExplanation(state: DominoHandState, card: Card | undefined) {
     if (!card) {
       if (state.legalCardIds.length === 0) {
-        return "You are blocked. Passing is correct because no card in your hand starts or extends a lane.";
+        return "You are blocked. Pass to wait for a lane to open.";
       }
 
-      return `Legal cards are highlighted. Open a closed suit with a ${dominoStartRank(state)}, or extend an open suit by one rank. The next player out scores ${formatSignedScore(dominoNextOutScore)}.`;
+      return `Legal cards are highlighted. Next out: ${formatSignedScore(dominoNextOutScore)}.`;
     }
 
     if (!dominoLegalCardIds.has(card.id)) {
@@ -2916,28 +2906,26 @@
     const unlockedCards = dominoCardsUnlockedByPlacement(state, card);
     const finishText =
       state.playerHand.length === 1
-        ? ` It empties your hand and claims ${formatSignedScore(dominoNextOutScore)}.`
+        ? ` Out for ${formatSignedScore(dominoNextOutScore)}.`
         : "";
-    const unlockText = unlockedCards.length
-      ? ` It also prepares ${unlockedCards.map((unlocked) => unlocked.label).join(" or ")} for a later turn.`
-      : "";
+    const unlockText = unlockedCards.length ? ` Opens ${unlockedCards.map((unlocked) => unlocked.label).join(" or ")} later.` : "";
 
     if (lane.length === 0) {
-      return `${card.label} opens the ${suitNames[card.suit]} lane from ${dominoStartRank(state)}.${unlockText}${finishText}`;
+      return `${card.label} opens ${suitNames[card.suit]} from ${dominoStartRank(state)}.${unlockText}${finishText}`;
     }
 
     const direction = dominoExtensionDirection(lane, card);
-    return `${card.label} extends ${suitNames[card.suit]} ${direction}. This reduces your hand without opening an unrelated suit.${unlockText}${finishText}`;
+    return `${card.label} extends ${suitNames[card.suit]} ${direction}.${unlockText}${finishText}`;
   }
 
   function dominoIllegalMoveExplanation(state: DominoHandState, card: Card) {
     const lane = state.layout[suitIndex(card.suit)];
 
     if (lane.length === 0) {
-      return `${card.label} is blocked because a closed suit must start with ${dominoStartRank(state)}.`;
+      return `${card.label} is blocked. Closed suits start with ${dominoStartRank(state)}.`;
     }
 
-    return `${card.label} is blocked because ${suitNames[card.suit]} currently shows ${dominoLaneText(lane, dominoStartRank(state))}; only the next lower or next higher rank fits.`;
+    return `${card.label} is blocked. ${suitNames[card.suit]} needs the next lower or higher card.`;
   }
 
   function dominoCardsUnlockedByPlacement(state: DominoHandState, card: Card) {
@@ -4040,13 +4028,27 @@
               <h2>Practice one contract pattern.</h2>
             </div>
             <div class="fixed-contract-grid">
-              {#each guidedLessons as lesson}
+              {#each fixedDrillLessons as lesson}
                 <button class="contract-card compact" onclick={() => startFixedContractDrill(lesson.id)} type="button">
                   <span>{lesson.contract}</span>
                   <strong>{lesson.title}</strong>
                   <small>One authored decision with immediate feedback.</small>
                 </button>
               {/each}
+            </div>
+          </section>
+
+          <section class="fixed-contract-practice" aria-label="Full hand practice">
+            <div class="section-heading">
+              <p class="eyebrow">Full hands</p>
+              <h2>Practice the table surface.</h2>
+            </div>
+            <div class="fixed-contract-grid">
+              <button class="contract-card compact" onclick={() => void startDominoPracticeHand()} type="button">
+                <span>Domino</span>
+                <strong>Play a full layout hand</strong>
+                <small>Use the same Domino table as Play Barbu: open suits, pass only when blocked, and race to go out.</small>
+              </button>
             </div>
           </section>
         </div>
@@ -5020,18 +5022,14 @@
         onBack={openBarbuTable}
       >
         {#snippet summary()}
-          <div
-            class:compact-run-complete={fullHandRunIsComplete}
-            class="full-hand-summary"
-            aria-label="Domino hand score"
-          >
-            {#each scoreSeats as seat}
-              <div>
-                <span>{scoreSeatRunLabel(seat)} score</span>
-                <strong>{formatSignedScore(dominoScoreMap[seat])}</strong>
-              </div>
-            {/each}
-            {#if !fullHandRunIsComplete}
+          {#if !fullHandRunIsComplete}
+            <div class="full-hand-summary grouped-play-summary" aria-label="Domino hand score">
+              <div class="full-hand-summary-row current-hand" aria-label="Current hand">
+                <span class="summary-row-label">Current hand</span>
+                <div>
+                  <span>Your score</span>
+                  <strong>{formatSignedScore(dominoScoreMap.You)}</strong>
+                </div>
               <div>
                 <span>Cards left</span>
                 <strong>{dominoHand.cardsRemaining}</strong>
@@ -5040,15 +5038,40 @@
                 <span>Next out</span>
                 <strong>{formatSignedScore(dominoNextOutScore)}</strong>
               </div>
-            {/if}
-          </div>
+                <div>
+                  <span>Order</span>
+                  <strong>{dominoOutOrderText(dominoHand)}</strong>
+                </div>
+              </div>
+              {#if fullHandRunActive}
+                <div class="full-hand-summary-row table-score" aria-label="Table scores">
+                  <span class="summary-row-label">Table scores</span>
+                  {#each scoreSeats as seat}
+                    <div>
+                      <span>{scoreSeatRunLabel(seat)} score</span>
+                      <strong>{formatSignedScore(dominoScoreMap[seat])}</strong>
+                    </div>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+          {:else}
+            <div class="full-hand-summary compact-run-complete" aria-label="Domino hand score">
+              {#each scoreSeats as seat}
+                <div>
+                  <span>{scoreSeatRunLabel(seat)} score</span>
+                  <strong>{formatSignedScore(dominoScoreMap[seat])}</strong>
+                </div>
+              {/each}
+            </div>
+          {/if}
 
           {#if !fullHandRunIsComplete}
-            <div class="domino-layout" aria-label="Domino layout">
+            <div class="domino-layout hand-domino-layout" aria-label="Domino layout">
               {#each dominoHand.layout as lane, index}
                 <div>
                   <span>{dominoSuitLabel(index)}</span>
-                  <strong>{dominoLaneText(lane)}</strong>
+                  <strong>{dominoLaneText(lane, dominoStartRank(dominoHand))}</strong>
                 </div>
               {/each}
             </div>
@@ -5096,23 +5119,6 @@
               <p class="outcome warning">{dominoError}</p>
             {/if}
             <p class="explanation">{dominoMoveReason}</p>
-
-            <div class="domino-counter" aria-label="Domino point counter">
-              {#each scoreSeats as seat}
-                <div>
-                  <span>{scoreSeatRunLabel(seat)}</span>
-                  <strong>{dominoSeatProgressLabel(dominoHand, seat)}</strong>
-                </div>
-              {/each}
-              <div>
-                <span>Next out</span>
-                <strong>{formatSignedScore(dominoNextOutScore)}</strong>
-              </div>
-              <div>
-                <span>Order</span>
-                <strong>{dominoOutOrderText(dominoHand)}</strong>
-              </div>
-            </div>
 
             <div class="hand full-hand-cards domino-cards" aria-label="Your Domino hand">
               {#each dominoHand.playerHand as card}

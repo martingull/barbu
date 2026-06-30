@@ -159,8 +159,12 @@ async function startContractLesson(page: Page, contract: string) {
 
 async function startContractHand(page: Page, contract: string) {
   await openBarbuTab(page, "Practice");
-  await page.getByRole("button", { name: "Contract hands" }).click();
-  await page.getByLabel("Contract hand choices").getByRole("button", { name: new RegExp(`^${contract}\\b`) }).click();
+  if (contract === "Domino") {
+    await page.getByLabel("Full hand practice").getByRole("button", { name: /^Domino\b/ }).click();
+    return;
+  }
+
+  await page.getByLabel("Fixed contract drills").getByRole("button", { name: new RegExp(`^${contract}\\b`) }).click();
 }
 
 async function checkDrillAnswer(page: Page) {
@@ -284,7 +288,8 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByLabel("Barbu table actions").getByRole("button", { name: "Quick drill" })).toBeVisible();
   await expect(page.getByLabel("Barbu table actions").getByRole("button", { name: "Contract hands" })).toHaveCount(0);
   await expect(page.getByLabel("Fixed contract drills")).toContainText("No Hearts");
-  await expect(page.getByLabel("Fixed contract drills")).toContainText("Domino");
+  await expect(page.getByLabel("Fixed contract drills")).not.toContainText("Domino");
+  await expect(page.getByLabel("Full hand practice")).toContainText("Domino");
   await page.screenshot({ path: testInfo.outputPath("barbu-practice.png"), fullPage: true });
 
   await openBarbuTab(page, "Play");
@@ -434,9 +439,31 @@ test("practice tab keeps contract hands hidden while fixed drills are public", a
 
   await expect(page.getByLabel("Barbu table actions").getByRole("button", { name: "Contract hands" })).toHaveCount(0);
   await expect(page.getByLabel("Fixed contract drills").getByRole("button", { name: /^No Hearts\b/ })).toBeVisible();
-  await expect(page.getByLabel("Fixed contract drills").getByRole("button", { name: /^Domino\b/ })).toBeVisible();
+  await expect(page.getByLabel("Fixed contract drills").getByRole("button", { name: /^Domino\b/ })).toHaveCount(0);
+  await expect(page.getByLabel("Full hand practice").getByRole("button", { name: /^Domino\b/ })).toBeVisible();
 
   await page.screenshot({ path: testInfo.outputPath("practice-fixed-drills.png"), fullPage: true });
+});
+
+test("practice tab starts a full Domino hand on the play table", async ({ page }, testInfo) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Barbu/ }).click();
+  await openBarbuTab(page, "Practice");
+  await page.getByLabel("Full hand practice").getByRole("button", { name: /^Domino\b/ }).click();
+
+  await expect(page.getByRole("heading", { name: "Domino hand" })).toBeVisible();
+  await expect(page.getByLabel("Domino hand score")).toContainText("Cards left");
+  await expect(page.getByLabel("Domino hand score")).toContainText("Next out");
+  await expect(page.getByLabel("Domino hand score")).toContainText("Order");
+  await expect(page.getByLabel("Domino layout")).toBeVisible();
+  await expect(page.getByLabel("Your Domino hand")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Place card" })).toBeVisible();
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
+  await expectHandNearActionRow(page, ".domino-cards");
+  await expectFeedbackAboveHand(page, ".domino-cards");
+
+  await page.screenshot({ path: testInfo.outputPath("practice-domino-full-hand.png"), fullPage: true });
 });
 
 test("quick drill is a fixed iPhone screen without page scroll", async ({ page }, testInfo) => {
@@ -1051,7 +1078,7 @@ test.skip("Domino hand plays through the layout contract", async ({ page }, test
   await expect(page.getByRole("heading", { name: "Domino hand" })).toBeVisible();
   await expect(page.getByLabel("Domino hand score")).toContainText("Cards left");
   await expect(page.getByLabel("Domino hand score")).toContainText("Next out");
-  await expect(page.getByLabel("Domino point counter")).toContainText("Next out");
+  await expect(page.getByLabel("Domino hand score")).toContainText("Order");
   await expect(page.getByLabel("Domino hand decision")).toContainText(/Open a closed suit|extend an open suit|blocked/);
   await expect(page.getByLabel("Domino layout")).toBeVisible();
   await expect(page.getByLabel("Your Domino hand")).toBeVisible();

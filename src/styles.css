@@ -810,40 +810,6 @@ button.perfect-skill-card {
   grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
-.domino-counter {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.domino-counter div {
-  display: grid;
-  gap: 3px;
-  min-height: 42px;
-  padding: 7px 8px;
-  border: 1px solid rgba(245, 241, 207, 0.22);
-  border-radius: 8px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(9, 34, 24, 0.16)),
-    #182f25;
-}
-
-.domino-counter span {
-  color: #dbe7d1;
-  font-size: 0.58rem;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.domino-counter strong {
-  overflow: hidden;
-  color: #f7faf3;
-  font-size: 0.78rem;
-  line-height: 1.1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .path-section {
   display: grid;
   gap: 12px;
@@ -1841,6 +1807,26 @@ h2 {
 .table-play-surface.compact-play .full-hand-cards {
   grid-template-columns: repeat(7, minmax(46px, 1fr));
   gap: 8px;
+}
+
+.table-play-surface .domino-layout {
+  align-self: start;
+  gap: 6px;
+}
+
+.table-play-surface .domino-layout div {
+  align-content: space-between;
+  min-height: 96px;
+  padding: 8px 9px;
+}
+
+.table-play-surface .domino-layout span {
+  font-size: 0.62rem;
+}
+
+.table-play-surface .domino-layout strong {
+  align-self: center;
+  font-size: 0.9rem;
 }
 
 .table-play-surface.compact-play .hand {
@@ -3382,6 +3368,10 @@ h2 {
     overflow: hidden;
   }
 
+  .fixed-play-screen .table-play-surface.compact-play.table-hidden:has(.hand-domino-layout) {
+    grid-template-rows: auto auto minmax(0, 1fr);
+  }
+
   .fixed-play-screen .table-play-surface.compact-play .full-hand-summary,
   .fixed-play-screen .table-play-surface.compact-result:not(.table-hidden) .full-hand-summary {
     grid-row: 1;
@@ -3389,6 +3379,7 @@ h2 {
 
   .fixed-play-screen .table-play-surface.compact-play .card-table,
   .fixed-play-screen .table-play-surface.compact-play .table-tap-target,
+  .fixed-play-screen .table-play-surface.compact-play .hand-domino-layout,
   .fixed-play-screen .table-play-surface.compact-result:not(.table-hidden) .card-table,
   .fixed-play-screen .table-play-surface.compact-result:not(.table-hidden) .table-tap-target {
     grid-row: 2;
