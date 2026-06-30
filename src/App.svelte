@@ -2876,8 +2876,12 @@
     return ["Clubs", "Diamonds", "Hearts", "Spades"][index] ?? "Suit";
   }
 
-  function dominoLaneText(lane: Card[]) {
-    return lane.length ? lane.map((card) => card.label).join(" ") : "Open with 7";
+  function dominoStartRank(state?: DominoHandState) {
+    return state?.startRank ?? "7";
+  }
+
+  function dominoLaneText(lane: Card[], startRank = "7") {
+    return lane.length ? lane.map((card) => card.label).join(" ") : `Open with ${startRank}`;
   }
 
   function dominoSeatProgressLabel(state: DominoHandState, seat: Seat) {
@@ -2901,7 +2905,7 @@
         return "You are blocked. Passing is correct because no card in your hand starts or extends a lane.";
       }
 
-      return `Legal cards are highlighted. Open a closed suit with a seven, or extend an open suit by one rank. The next player out scores ${formatSignedScore(dominoNextOutScore)}.`;
+      return `Legal cards are highlighted. Open a closed suit with a ${dominoStartRank(state)}, or extend an open suit by one rank. The next player out scores ${formatSignedScore(dominoNextOutScore)}.`;
     }
 
     if (!dominoLegalCardIds.has(card.id)) {
@@ -2919,7 +2923,7 @@
       : "";
 
     if (lane.length === 0) {
-      return `${card.label} opens the ${suitNames[card.suit]} lane from seven.${unlockText}${finishText}`;
+      return `${card.label} opens the ${suitNames[card.suit]} lane from ${dominoStartRank(state)}.${unlockText}${finishText}`;
     }
 
     const direction = dominoExtensionDirection(lane, card);
@@ -2930,10 +2934,10 @@
     const lane = state.layout[suitIndex(card.suit)];
 
     if (lane.length === 0) {
-      return `${card.label} is blocked because a closed suit must start with its seven.`;
+      return `${card.label} is blocked because a closed suit must start with ${dominoStartRank(state)}.`;
     }
 
-    return `${card.label} is blocked because ${suitNames[card.suit]} currently shows ${dominoLaneText(lane)}; only the next lower or next higher rank fits.`;
+    return `${card.label} is blocked because ${suitNames[card.suit]} currently shows ${dominoLaneText(lane, dominoStartRank(state))}; only the next lower or next higher rank fits.`;
   }
 
   function dominoCardsUnlockedByPlacement(state: DominoHandState, card: Card) {
@@ -2944,14 +2948,14 @@
 
     return state.playerHand
       .filter((heldCard) => heldCard.id !== card.id && heldCard.suit === card.suit)
-      .filter((heldCard) => isLegalDominoCardOnLayout(nextLayout, heldCard));
+      .filter((heldCard) => isLegalDominoCardOnLayout(nextLayout, heldCard, dominoStartRank(state)));
   }
 
-  function isLegalDominoCardOnLayout(layout: Card[][], card: Card) {
+  function isLegalDominoCardOnLayout(layout: Card[][], card: Card, startRank = "7") {
     const lane = layout[suitIndex(card.suit)];
 
     if (lane.length === 0) {
-      return card.rank === "7";
+      return card.rank === startRank;
     }
 
     const low = Math.min(...lane.map((played) => rankValue(played.rank)));
@@ -4705,7 +4709,7 @@
               {#each buildDominoDrillLayout(activeCourse.example.tableCards) as lane, index}
                 <div>
                   <span>{dominoSuitLabel(index)}</span>
-                  <strong>{dominoLaneText(lane)}</strong>
+                  <strong>{dominoLaneText(lane, dominoStartRank(dominoHand))}</strong>
                 </div>
               {/each}
             </div>

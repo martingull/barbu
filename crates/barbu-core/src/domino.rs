@@ -7,6 +7,7 @@ pub struct DominoHandState {
     pub id: String,
     pub hands: [Vec<Card>; 4],
     pub current_player: PlayerIndex,
+    pub start_rank: Rank,
     pub layout: [Vec<Card>; 4],
     pub passed_players: Vec<PlayerIndex>,
     pub out_order: Vec<PlayerIndex>,
@@ -32,6 +33,10 @@ pub const DOMINO_START_RANK: Rank = Rank::Seven;
 const DOMINO_SCORES: [i32; 4] = [45, 20, 5, -5];
 
 pub fn start_domino_hand(seed: u64) -> DominoHandState {
+    start_domino_hand_with_start_rank(seed, DOMINO_START_RANK)
+}
+
+pub fn start_domino_hand_with_start_rank(seed: u64, start_rank: Rank) -> DominoHandState {
     let mut deck = standard_deck();
     let mut rng = DeterministicRng::new(seed);
 
@@ -54,6 +59,7 @@ pub fn start_domino_hand(seed: u64) -> DominoHandState {
         id: format!("domino-hand-{seed}"),
         hands,
         current_player: 0,
+        start_rank,
         layout: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
         passed_players: Vec::new(),
         out_order: Vec::new(),
@@ -116,19 +122,19 @@ impl DominoHandState {
         let lane = &self.layout[suit_index(card.suit)];
 
         if lane.is_empty() {
-            return card.rank == DOMINO_START_RANK;
+            return card.rank == self.start_rank;
         }
 
         let low = lane
             .iter()
             .map(|played| played.rank as i32)
             .min()
-            .unwrap_or(7);
+            .unwrap_or(self.start_rank as i32);
         let high = lane
             .iter()
             .map(|played| played.rank as i32)
             .max()
-            .unwrap_or(7);
+            .unwrap_or(self.start_rank as i32);
         let rank = card.rank as i32;
 
         rank == low - 1 || rank == high + 1
@@ -267,6 +273,7 @@ mod tests {
                 Vec::new(),
             ],
             current_player: 2,
+            start_rank: DOMINO_START_RANK,
             layout: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
             passed_players: Vec::new(),
             out_order: Vec::new(),
@@ -294,6 +301,7 @@ mod tests {
                 Vec::new(),
             ],
             current_player: 2,
+            start_rank: DOMINO_START_RANK,
             layout: [
                 vec![Card::new(Rank::Seven, Suit::Clubs)],
                 Vec::new(),
@@ -320,5 +328,33 @@ mod tests {
         state.out_order = vec![2, 0, 3, 1];
 
         assert_eq!(state.scores(), [20, -5, 45, 5]);
+    }
+
+    #[test]
+    fn domino_can_start_from_a_configured_rank() {
+        let state = DominoHandState {
+            id: "domino-start-rank-test".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Seven, Suit::Clubs),
+                    Card::new(Rank::Eight, Suit::Clubs),
+                    Card::new(Rank::Nine, Suit::Clubs),
+                ],
+                Vec::new(),
+            ],
+            current_player: 2,
+            start_rank: Rank::Eight,
+            layout: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
+            passed_players: Vec::new(),
+            out_order: Vec::new(),
+            status: DominoStatus::InProgress,
+        };
+
+        assert_eq!(
+            state.legal_cards_for_player(2),
+            vec![Card::new(Rank::Eight, Suit::Clubs)]
+        );
     }
 }

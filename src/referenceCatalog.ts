@@ -220,7 +220,7 @@ export const referenceCatalog: GameReference[] = [
         title: "Domino",
         coreStatus: "Core",
         appStatus: "Playable",
-        note: "Fixed-seven layout v1 exists with guided course, generated practice, full hand, and Barbu run support; chooser/declarer-selected starting rank is later."
+        note: "Opening-rank state exists but the app currently defaults to fixed-seven layout v1; guided course, generated practice, full hand, and Barbu run support exist. Chooser/declarer-selected starting rank is later."
       }
     ],
     variants: [

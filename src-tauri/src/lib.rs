@@ -298,6 +298,7 @@ struct DominoHandDto {
     hands: Vec<Vec<CardDto>>,
     current_player_index: usize,
     current_player: String,
+    start_rank: Option<String>,
     layout: Vec<Vec<CardDto>>,
     passed_players: Vec<String>,
     out_order: Vec<String>,
@@ -323,6 +324,7 @@ impl DominoHandDto {
                 .collect(),
             current_player_index: state.current_player,
             current_player: player_name(state.current_player).to_string(),
+            start_rank: Some(state.start_rank.short_name().to_string()),
             layout: state
                 .layout
                 .iter()
@@ -372,6 +374,11 @@ impl DominoHandDto {
             id: self.id.clone(),
             hands,
             current_player: self.current_player_index,
+            start_rank: rank_from_label(
+                self.start_rank
+                    .as_deref()
+                    .unwrap_or(barbu_core::DOMINO_START_RANK.short_name()),
+            )?,
             layout: layout_array,
             passed_players: self
                 .passed_players
@@ -575,7 +582,20 @@ fn card_from_label(label: &str) -> Result<barbu_core::Card, String> {
     }
 
     let (rank_label, suit_label) = label.split_at(label.len() - 1);
-    let rank = match rank_label {
+    let rank = rank_from_label(rank_label)?;
+    let suit = match suit_label {
+        "C" => barbu_core::Suit::Clubs,
+        "D" => barbu_core::Suit::Diamonds,
+        "H" => barbu_core::Suit::Hearts,
+        "S" => barbu_core::Suit::Spades,
+        _ => return Err(format!("Invalid card suit: {suit_label}")),
+    };
+
+    Ok(barbu_core::Card::new(rank, suit))
+}
+
+fn rank_from_label(rank_label: &str) -> Result<barbu_core::Rank, String> {
+    Ok(match rank_label {
         "2" => barbu_core::Rank::Two,
         "3" => barbu_core::Rank::Three,
         "4" => barbu_core::Rank::Four,
@@ -590,16 +610,7 @@ fn card_from_label(label: &str) -> Result<barbu_core::Card, String> {
         "K" => barbu_core::Rank::King,
         "A" => barbu_core::Rank::Ace,
         _ => return Err(format!("Invalid card rank: {rank_label}")),
-    };
-    let suit = match suit_label {
-        "C" => barbu_core::Suit::Clubs,
-        "D" => barbu_core::Suit::Diamonds,
-        "H" => barbu_core::Suit::Hearts,
-        "S" => barbu_core::Suit::Spades,
-        _ => return Err(format!("Invalid card suit: {suit_label}")),
-    };
-
-    Ok(barbu_core::Card::new(rank, suit))
+    })
 }
 
 fn hand_prompt(state: &barbu_core::TrickTakingHandState, penalty_name: &str) -> String {
@@ -643,7 +654,10 @@ fn domino_prompt(state: &barbu_core::DominoHandState) -> String {
         return "No legal placement. Pass and wait for the layout to open.".to_string();
     }
 
-    "Play a seven to start a suit, or extend a suit by one rank.".to_string()
+    format!(
+        "Play a {} to start a suit, or extend a suit by one rank.",
+        state.start_rank.short_name()
+    )
 }
 
 fn suit_name(suit: barbu_core::Suit) -> &'static str {

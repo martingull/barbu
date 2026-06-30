@@ -38,7 +38,7 @@ The intended monetization model is free starter tables first, then optional paid
 - No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps full-hand skeletons with deterministic local deals, legal-card play, contract-aware auto opponents, hand scoring, and short per-trick feedback.
 - Generic trick-taking hand engine for deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps as the first contract adapters.
 - Opponent policy v2 baseline for avoidance contracts: auto seats now duck clean tricks with the highest safe card instead of winning avoidable tricks without a reason.
-- Domino playable hand v1 with deterministic local deals, fixed-seven layout starts, adjacent suit building, legal pass handling, four-player order-out scoring, and Play Barbu roster support.
+- Domino playable hand v1 with deterministic local deals, configurable opening-rank state currently defaulted to fixed-seven starts, adjacent suit building, legal pass handling, four-player order-out scoring, and Play Barbu roster support.
 - Domino clarity pass adds an in-hand order-out point counter and move reasoning for opening sevens, extending lanes, blocked cards, and follow-up cards.
 - Shared table-play surface for quick drills, Play Barbu, and full-hand contracts so active games keep one compact mobile layout.
 - Play Barbu v1 with a local sequence through playable full-hand contracts, four-player contract values, per-contract score rows, and a compact game-complete summary.
@@ -97,7 +97,7 @@ Core contract status:
 | No Last Two | Core | Playable | Guided course, generated practice, full-hand, and run support exist. |
 | No Tricks | Core | Playable | Guided course, generated practice, full-hand, and run support exist. |
 | Hearts Trumps | Core | Playable | Hearts are fixed as trumps for v1; guided course, generated practice, full-hand, and run support exist. |
-| Domino | Core | Playable | Fixed-seven layout v1 exists with guided course, generated practice, full hand, and run support; chooser/declarer-selected starting rank is later. |
+| Domino | Core | Playable | Opening-rank state exists but the app currently defaults to fixed-seven layout v1; chooser/declarer-selected starting rank is later. |
 
 ## Near-Term Roadmap
 
@@ -134,7 +134,7 @@ These are the next product increments that keep the app coherent.
 
 5. Full-Hand Play v2
    - Continue adding Barbu contracts on top of the generic hand engine.
-   - Improve Domino from fixed-seven v1 to the baseline Barbu chooser/declarer shape once contract selection is modeled.
+   - Improve Domino from configurable-start-rank fixed-seven v1 to the baseline Barbu chooser/declarer shape once contract selection is modeled.
    - Add full Barbu settlement scoring across contracts once the playable contracts are broader.
    - Continue expanding opponent policy beyond the first v2 baseline with endgame timing, trump preservation, and clearer table-strength decisions.
    - Add stronger tactical feedback after each completed trick.

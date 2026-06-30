@@ -22,6 +22,7 @@ const rankOrder: Record<Rank, number> = {
 const suitOrder: Record<Suit, number> = { C: 0, D: 1, H: 2, S: 3 };
 const playerNames: Seat[] = ["Tutor", "Right", "You", "Left"];
 const dominoScores = [45, 20, 5, -5];
+const defaultDominoStartRank: Rank = "7";
 
 export function startBrowserDominoHand(seed: number): DominoHandState {
   const deck = standardDeck();
@@ -43,6 +44,7 @@ export function startBrowserDominoHand(seed: number): DominoHandState {
       hands,
       currentPlayerIndex: 0,
       currentPlayer: "Tutor",
+      startRank: defaultDominoStartRank,
       layout: [[], [], [], []],
       passedPlayers: [],
       outOrder: [],
@@ -165,9 +167,10 @@ function legalDominoCards(state: DominoHandState, playerIndex: number) {
 
 function isLegalDominoCard(state: DominoHandState, card: Card) {
   const lane = state.layout[suitOrder[card.suit]];
+  const startRank = (state.startRank ?? defaultDominoStartRank) as Rank;
 
   if (!lane.length) {
-    return card.rank === "7";
+    return card.rank === startRank;
   }
 
   const low = Math.min(...lane.map((played) => rankOrder[played.rank as Rank]));
@@ -194,7 +197,7 @@ function dominoPrompt(state: DominoHandState) {
   if (!legalDominoCards(state, 2).length) {
     return "No legal placement. Pass and wait for the layout to open.";
   }
-  return "Play a seven to start a suit, or extend a suit by one rank.";
+  return `Play a ${state.startRank ?? defaultDominoStartRank} to start a suit, or extend a suit by one rank.`;
 }
 
 function standardDeck() {

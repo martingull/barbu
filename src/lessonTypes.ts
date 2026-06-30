@@ -123,6 +123,7 @@ export type DominoHandState = {
   hands: Card[][];
   currentPlayerIndex: number;
   currentPlayer: Seat | "Unknown";
+  startRank?: string;
   layout: Card[][];
   passedPlayers: Array<Seat | "Unknown">;
   outOrder: Array<Seat | "Unknown">;
