@@ -79,6 +79,53 @@ The intended monetization model is free starter tables first, then optional paid
 - Browser generated fallback for Quick Drill when Tauri is unavailable.
 - Playwright smoke tests for catalog, Barbu table, lesson flow, generated fallback, and course-complete behavior.
 
+## MVP Feature List
+
+The MVP is an iPhone-first local card tutor and practice app. It should prove that the player can learn, practice, and play real card decisions on a phone without accounts, servers, multiplayer, or monetization plumbing.
+
+Must ship:
+
+1. Free starter catalog
+   - Hearts, Barbu, and Solitaire visible first.
+   - Barbu and Hearts are active; Solitaire may remain a clearly labeled starter placeholder until the card-table loop is stable.
+   - Paid/future packs such as Whist, Bridge, Gin Rummy, Canasta, and Card Counting can stay visible as roadmap signals only.
+
+2. Barbu
+   - Learn path for the core contracts.
+   - Quick Drill mixed practice.
+   - Play Barbu local run with save/resume, current playable contract roster, four-player scoring, contract intros, and end summary.
+   - Full-hand contract practice for No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino.
+   - Reference page documenting the core game, contracts, current simplifications, and varieties.
+
+3. Hearts
+   - Hearts must be a real free starter game, not only a placeholder.
+   - MVP Hearts starts with a simplified local Hearts hand on the shared trick-taking table.
+   - MVP scoring: hearts are penalty cards and the queen of spades is the main danger card.
+   - Passing cards, hearts-broken lead restrictions, shooting the moon, and multi-hand match scoring are later Hearts v2 items unless added deliberately.
+   - Hearts Practice can reuse Hearts-family avoidance drills while Hearts-specific drills grow.
+   - Hearts Learn/Reference should explain the MVP simplification clearly.
+
+4. Card Sense / Perfect
+   - Keep the current memory mini-games small and tied to real play.
+   - Prioritize trumps, court cards, and danger-card tracking because they transfer to Barbu, Hearts, Whist, and Bridge.
+
+5. Mobile quality
+   - Active table screens should be stable on the physical iPhone.
+   - No accidental active-game page scroll.
+   - Bottom actions stay pinned and reachable.
+   - Thumb cards stay visible.
+   - Safe areas are respected after route changes.
+
+Not MVP:
+
+- Accounts, cloud sync, or backend.
+- Multiplayer.
+- Subscription or StoreKit implementation.
+- Full Hearts variants.
+- Full Bridge, Whist, Gin Rummy, Canasta, or Solitaire implementations.
+- Barbu character animation.
+- Advanced AI opponent strategy beyond useful local training behavior.
+
 ## Barbu Contract Roadmap
 
 Barbu should be presented as one core game first, then as documented teaching modes and varieties. The user should always be able to tell which rules belong to core Barbu and which screens are app-specific ways to learn or practice it.
@@ -105,14 +152,21 @@ Core contract status:
 
 These are the next product increments that keep the app coherent.
 
-1. Drill Loop v2
+1. Hearts MVP v1
+   - Turn the Hearts table from a practice spike into a real starter game.
+   - Add a simplified local Hearts hand using the shared trick-taking engine and table surface.
+   - Score hearts plus the queen of spades.
+   - Add Hearts-specific Learn and Reference copy that names the MVP simplifications.
+   - Reuse Barbu/Hearts-family practice and card-sense components where possible.
+
+2. Drill Loop v2
    - Quick Drill now generates a continuing practice loop instead of a fixed seven-exercise roster.
    - Result screen now shows next repetition, focus contract, and recent rhythm after the learner finishes the session.
    - Use stored reason tags to refine replay recommendations and review timing.
    - Next: improve review timing and focused replay selection after more real play.
    - Keep explanations to one sentence unless the player asks for more.
 
-2. Generated Practice Expansion v2
+3. Generated Practice Expansion v2
    - Hearts Trumps and Domino now rotate through multiple scenario families.
    - No Hearts, No Queens, King of Hearts, and No Tricks now include void-discard quality scenarios focused on unloading safely when another player already controls the trick.
    - Quick Drill now samples from a larger deterministic scenario pool and avoids immediate repeats when possible.
@@ -123,18 +177,18 @@ These are the next product increments that keep the app coherent.
    - Add Rust tests for every drill generator.
    - Current generated baseline covers the playable roster; remaining work is breadth and balancing rather than first coverage.
 
-3. Contract Score Model v2
+4. Contract Score Model v2
    - Move point-value definitions into shared content/core metadata instead of duplicating them across UI and scoring code.
    - Frontend score metadata now separates avoidance, reward, and layout contracts for labels and run-score direction.
    - Next: move the same model into Rust/content so hand scoring, generated practice, and UI labels share one source.
    - Next: fold Domino's order-out score table into the same shared model.
 
-4. Core Game And Variety Model v2
+5. Core Game And Variety Model v2
    - Move catalog metadata toward content-backed data as more games are added.
    - Keep core rules separate from rule/scoring/table-custom variations.
    - Let varieties link to their parent core game instead of becoming separate top-level products.
 
-5. Full-Hand Play v2
+6. Full-Hand Play v2
    - Continue adding Barbu contracts on top of the generic hand engine.
    - Improve Domino from configurable-start-rank fixed-seven v1 to the baseline Barbu chooser/declarer shape once contract selection is modeled.
    - Add full Barbu settlement scoring across contracts once the playable contracts are broader.
@@ -142,24 +196,24 @@ These are the next product increments that keep the app coherent.
    - Continue strengthening tactical feedback after each completed trick, especially when the player had a better legal alternative.
    - Decide when full hands should enter the learning path instead of living as separate practice.
 
-6. Play Barbu Flow v2
+7. Play Barbu Flow v2
    - Keep contract intros short and score-aware.
    - Keep local resume reliable for unfinished runs before adding accounts or cloud sync.
    - Clarify fixed order versus chosen/dealer-driven contract order before full settlement scoring.
    - Make Barbu feel like the contract setter without adding long dialogue.
 
-7. Play Barbu Settlement v2
+8. Play Barbu Settlement v2
    - Refine placement copy once full Barbu settlement scoring is implemented.
    - Compare best and worst contracts relative to table strength, not only raw event count.
    - Connect focused replay back into review history.
 
-8. Progress Model v2
+9. Progress Model v2
    - Store completion by lesson node, not only path step.
    - Track attempts, last result, and review due state.
    - Keep Play Barbu run resume local and simple until sync or accounts are justified.
    - Keep it local until the app needs sync or accounts.
 
-9. Card Sense Training v1
+10. Card Sense Training v1
    - Started in the catalog and Perfect mode with a Card Counting pack.
    - Count Trumps reveals all thirteen tricks in segments, hides the segment, then asks either how many hearts appeared or whether a specific heart appeared.
    - Trump Memory Hand is a separate realistic table exercise: deal a hand, make the player play tricks, then ask either how many trumps were played or whether a specific trump card appeared.
@@ -172,14 +226,14 @@ These are the next product increments that keep the app coherent.
    - Keep each mini-game tied to real play, with one-sentence feedback explaining how the skill helps in Barbu, Hearts-family games, Whist, Bridge, or other classic card games.
    - Do not let these become disconnected brain-training toys; every exercise should make the player better at reading a table.
 
-10. Local Opponent Policy v3
+11. Local Opponent Policy v3
    - Improve Barbu and table seats as training opponents before any real multiplayer work.
    - Focus on believable card-player habits: avoid obvious penalties, count endgame danger, preserve exits, use trumps sensibly, and pursue reward tricks when the contract asks for it.
    - Initial explicit overtrump behavior exists in Hearts Trumps and realistic Trump Count: when a seat is void in the led suit and a trump is already winning, it can play the lowest trump that beats it. Continue refining when seats should discard or conserve trumps according to the contract goal.
    - No Queens now has an explicit avoidance-policy slice in the shared Rust contract-policy layer: avoid queen leads, duck queen-loaded tricks when possible, dump queens when void, and shed a queen under a locked winner instead of wasting another safe high card.
    - Great card games are often played against real people, but better local opponents are the right bridge from solo learning to real table play.
 
-11. Reference Layer v1
+12. Reference Layer v1
    - Add structured reference pages for the next supported games using Parlett as the baseline source.
    - Continue expanding object, players, cards, deal, play, scoring, variants, and tactical ideas.
    - Link reference sections from lessons without making rules pages the main flow.

@@ -16,6 +16,18 @@ export type ContractScoreMeta = {
 };
 
 export const contractScoreModel: Record<FullHandContract, ContractScoreMeta> = {
+  Hearts: {
+    kind: "avoidance",
+    runSign: -1,
+    unitName: "point",
+    unitPlural: "points",
+    totalValue: 26,
+    inPlayLabel: "points in play",
+    playerValueLabel: "Your penalty",
+    resultVerb: "took",
+    bestLabel: "Best duck",
+    weakestLabel: "Costliest trick"
+  },
   "No Hearts": {
     kind: "avoidance",
     runSign: -1,

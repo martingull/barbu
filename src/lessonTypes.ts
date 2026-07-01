@@ -98,6 +98,7 @@ export type CompletedHandTrick = {
 };
 
 export type FullHandContract =
+  | "Hearts"
   | "No Hearts"
   | "No Queens"
   | "King of Hearts"

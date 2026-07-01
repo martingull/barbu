@@ -1179,7 +1179,11 @@ pub fn generate_daily_drill_set(seed: u64) -> PracticeDrillSet {
     for round in 0..DAILY_DRILL_POOL_ROUNDS {
         for (contract_index, template) in PRACTICE_SCENARIO_TEMPLATES.iter().enumerate() {
             let scenario = (template.generate)(drill_pool_seed(seed, contract_index as u64, round));
-            debug_assert_eq!(scenario.contract_kind, template.contract_kind, "{}", template.id);
+            debug_assert_eq!(
+                scenario.contract_kind, template.contract_kind,
+                "{}",
+                template.id
+            );
             scenarios.push(scenario);
         }
     }

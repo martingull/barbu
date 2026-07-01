@@ -17,13 +17,14 @@ pub use guided::{
     GuidedTrickResult, Seat,
 };
 pub use hand::{
-    completed_trick_tactical_tags, play_king_of_hearts_card, play_no_hearts_card,
+    completed_trick_tactical_tags, play_hearts_card, play_king_of_hearts_card, play_no_hearts_card,
     play_no_last_two_card, play_no_queens_card, play_no_tricks_card, play_positive_tricks_card,
-    play_trick_taking_card, start_king_of_hearts_hand, start_no_hearts_hand,
+    play_trick_taking_card, start_hearts_hand, start_king_of_hearts_hand, start_no_hearts_hand,
     start_no_last_two_hand, start_no_queens_hand, start_no_tricks_hand, start_positive_tricks_hand,
-    start_trick_taking_hand, CompletedTrick, HandStatus, HandTrickOutcome, KingOfHeartsHandState,
-    NoHeartsHandState, NoLastTwoHandState, NoQueensHandState, NoTricksHandState, OpponentPolicyFn,
-    PositiveTricksHandState, TrickScoreFn, TrickTakingHandState,
+    start_trick_taking_hand, CompletedTrick, HandStatus, HandTrickOutcome, HeartsHandState,
+    KingOfHeartsHandState, NoHeartsHandState, NoLastTwoHandState, NoQueensHandState,
+    NoTricksHandState, OpponentPolicyFn, PositiveTricksHandState, TrickScoreFn,
+    TrickTakingHandState,
 };
 pub use learning::{barbu_learning_path, ContractLesson, GameLesson, LessonStep};
 pub use practice::{

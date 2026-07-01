@@ -8,7 +8,9 @@ Barbu is an iPhone-first card-game app for learning, practicing, and exploring c
 
 The product concept is that the player learns by sitting down against Barbu, a "King of Cards" figure who introduces games, sets contracts, reacts to play, and gradually raises the difficulty. Treat this persona as a teaching and progression device, not as an excuse to hide rules or make the interface theatrical at the cost of clarity.
 
-Treat Barbu as the first game in a broader card-game catalog, not as the permanent product boundary. Favor structures that can later support other Hearts variants, then other families such as Whist and Bridge.
+Treat Barbu as the first game in a broader card-game catalog, not as the permanent product boundary. The MVP should include Hearts as a real second starter game, using shared Hearts-family and trick-taking foundations rather than a cloned implementation. Favor structures that can later support other Hearts variants, then other families such as Whist and Bridge.
+
+MVP Hearts may be deliberately simplified: local hand play with hearts and the queen of spades as penalties. Passing cards, hearts-broken lead restrictions, shooting the moon, and multi-hand Hearts scoring are later unless explicitly requested. Document simplifications clearly instead of hiding them.
 
 This is intended as a real App Store product, not a throwaway learning project. Code changes should keep maintainability, automated verification, product polish, and eventual monetization in mind.
 

@@ -331,6 +331,29 @@ test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testI
   await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
 });
 
+test("Hearts play starts a simplified local hand", async ({ page }, testInfo) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Hearts" }).click();
+
+  await page.getByRole("tab", { name: "Play" }).click();
+  const playPanel = page.getByRole("tabpanel", { name: "Play" });
+  await expect(playPanel).toContainText("hearts score 1 point");
+  await expect(playPanel).toContainText("QS scores 13");
+  await page.getByRole("button", { name: "Play Hearts" }).click();
+
+  await expect(page.getByRole("heading", { name: "Hearts hand" })).toBeVisible();
+  await expect(page.getByLabel("Hearts hand score")).toContainText("Your penalty");
+  await expect(page.getByLabel("Hearts hand score")).toContainText("26");
+  await expect(page.getByLabel("Hearts hand table")).toBeVisible();
+  await expect(page.getByLabel("Your Hearts hand")).toBeVisible();
+  await expectNoPageScroll(page);
+  await page.screenshot({ path: testInfo.outputPath("hearts-hand.png"), fullPage: true });
+
+  await page.getByLabel("Hearts full hand").getByRole("button", { name: "Table" }).click();
+  await expect(page.getByRole("heading", { name: "Hearts table" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
+});
+
 test("Perfect mode starts card-counting minigames", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();

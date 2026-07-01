@@ -2553,6 +2553,27 @@ h2 {
   margin-top: 2px;
 }
 
+.play-options {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(245, 241, 207, 0.22);
+  border-radius: 8px;
+  background: rgba(245, 241, 207, 0.08);
+}
+
+.play-options .primary-action {
+  width: 100%;
+}
+
+.supporting-copy {
+  margin: 0;
+  color: #dbe7d1;
+  font-size: 0.85rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
 .primary-action,
 .secondary-action {
   min-height: 42px;

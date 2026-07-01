@@ -86,6 +86,17 @@ content/             Structured game and lesson content
 - The Svelte app renders authored or generated scenarios and should avoid duplicating rules where Rust can provide them.
 - Barbu is the first Hearts-family core game, not the app boundary. The lesson/catalog structure should be able to grow toward related Hearts-family games first, then popular families such as Whist and Bridge after Barbu has a stable learning, practice, and play loop.
 
+## MVP Scope
+
+The MVP is a local iPhone-first card tutor with two active starter games:
+
+- **Barbu**: the main curriculum and play mode.
+- **Hearts**: the familiar free starter game that proves the shared Hearts-family engine can support more than Barbu.
+
+MVP Hearts should be real but intentionally small: a local simplified Hearts hand on the shared trick-taking table, scoring hearts plus the queen of spades. Passing cards, hearts-broken lead restrictions, shooting the moon, and multi-hand match scoring are Hearts v2 unless deliberately added later.
+
+Solitaire can remain visible as a free starter placeholder until Barbu and Hearts feel stable. Whist, Bridge, Gin Rummy, Canasta, and Card Counting can remain visible as future packs or skill areas, but should not distract from getting Barbu and Hearts playable on the phone.
+
 ## Long-Term Card Skill Direction
 
 Great card games are usually best against real people, but the app should first make local solo play and local opponents good enough to train real table habits. Barbu should become a place to practice transferable card skills and practical card-counting habits, not only a library of rules.

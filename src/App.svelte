@@ -1,12 +1,14 @@
 <script lang="ts">
   import { invoke, isTauri } from "@tauri-apps/api/core";
   import {
+    playBrowserHeartsCard,
     playBrowserKingOfHeartsCard,
     playBrowserNoHeartsCard,
     playBrowserNoLastTwoCard,
     playBrowserNoQueensCard,
     playBrowserNoTricksCard,
     playBrowserPositiveTricksCard,
+    startBrowserHeartsHand,
     startBrowserKingOfHeartsHand,
     startBrowserNoHeartsHand,
     startBrowserNoLastTwoHand,
@@ -381,6 +383,14 @@
     Left: 3
   };
   const runContractIntros: Record<FullHandContract, RunContractIntro> = {
+    Hearts: {
+      title: "Hearts and QS are dangerous.",
+      role: "Starter Hearts hand",
+      surface: "Trick-taking hand",
+      target: "Avoid penalty tricks.",
+      reason: "MVP Hearts uses the shared table to teach the familiar avoidance game before variants are added.",
+      habit: "Track hearts and the queen of spades before deciding whether to win."
+    },
     "No Hearts": {
       title: "Hearts are cargo. Do not bring them home.",
       role: "Opening avoidance contract",
@@ -2700,6 +2710,9 @@
   }
 
   function startBrowserFullHand(contract: FullHandContract, seed: number) {
+    if (contract === "Hearts") {
+      return startBrowserHeartsHand(seed);
+    }
     if (contract === "No Queens") {
       return startBrowserNoQueensHand(seed);
     }
@@ -2737,6 +2750,9 @@
   }
 
   function playBrowserFullHand(state: FullHandState, cardId: string) {
+    if (state.contract === "Hearts") {
+      return playBrowserHeartsCard(state, cardId);
+    }
     if (state.contract === "No Queens") {
       return playBrowserNoQueensCard(state, cardId);
     }
@@ -2905,6 +2921,11 @@
 
   function startNoHeartsHand() {
     void startFullHand("No Hearts");
+  }
+
+  function startHeartsHand() {
+    activeGameTable = "hearts";
+    void startFullHand("Hearts");
   }
 
   function startNoQueensHand() {
@@ -3131,6 +3152,11 @@
     }
 
     const currentIndex = fullHandContracts.indexOf(fullHand.contract);
+    if (currentIndex < 0) {
+      void startFullHand(fullHand.contract);
+      return;
+    }
+
     const nextContract = fullHandContracts[(currentIndex + 1) % fullHandContracts.length] ?? "No Hearts";
     void startFullHand(nextContract);
   }
@@ -4943,8 +4969,12 @@
           <div aria-label="Play" class="barbu-tab-panel play-panel" id="hearts-play-panel" role="tabpanel">
             <div class="barbu-mode-copy">
               <p class="eyebrow">Play</p>
-              <h2>Full Hearts is not wired yet.</h2>
-              <p>Passing cards, queen of spades scoring, and full-hand Hearts should come after this practice spike.</p>
+              <h2>Play a Hearts hand.</h2>
+              <p>MVP Hearts uses the shared trick-taking table: hearts score 1 point, and QS scores 13.</p>
+            </div>
+            <div class="play-options" aria-label="Hearts play options">
+              <button class="primary-action" onclick={startHeartsHand} type="button">Play Hearts</button>
+              <p class="supporting-copy">Passing, shooting the moon, and match scoring come after the local hand feels right.</p>
             </div>
           </div>
         {:else}
@@ -4970,7 +5000,7 @@
         pendingBySeat={realisticTrumpPendingBySeat}
         tableCards={realisticTrumpTableCards}
         panelAriaLabel="Realistic trump decision"
-        onBack={openBarbuTable}
+        onBack={openActiveGameTable}
         onSurfaceClick={realisticTrumpRound.status === "review" ? continueRealisticTrumpRound : undefined}
       >
         {#snippet panel()}
@@ -6070,7 +6100,7 @@
 
           <div class="action-row">
             {#if fullHand.status === "complete"}
-              <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
+              <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
               {#if fullHandRunIsComplete}
                 <button class="secondary-action" onclick={() => void replayWeakestRunContract()} type="button">Replay weakest</button>
                 <button class="primary-action" onclick={startBarbuRun} type="button">New game</button>
@@ -6079,10 +6109,10 @@
                 <button class="primary-action" onclick={() => void startNextFullHand()} type="button">{fullHandNextActionLabel}</button>
               {/if}
             {:else if fullHandIsReviewingTrick}
-              <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
+              <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
               <button class="primary-action" onclick={continueFullHandAfterTrick} type="button">Next trick</button>
             {:else}
-              <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
+              <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
               <button
                 class="primary-action"
                 disabled={!fullHandSelectedCard || !fullHandLegalCardIds.has(fullHandSelectedCard.id)}

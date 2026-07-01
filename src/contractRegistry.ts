@@ -16,6 +16,10 @@ export const fullHandContracts: FullHandContract[] = [
 ];
 
 export const fullHandContractCommands: Record<FullHandContract, FullHandContractCommands> = {
+  Hearts: {
+    startCommand: "start_hearts_hand",
+    playCommand: "play_hearts_hand_card"
+  },
   "No Hearts": {
     startCommand: "start_no_hearts_hand",
     playCommand: "play_no_hearts_hand_card"

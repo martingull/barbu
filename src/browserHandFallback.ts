@@ -22,6 +22,10 @@ const rankOrder: Record<Rank, number> = {
 const suitOrder: Record<Suit, number> = { C: 0, D: 1, H: 2, S: 3 };
 const playerNames: Array<Seat> = ["Tutor", "Right", "You", "Left"];
 
+export function startBrowserHeartsHand(seed: number): FullHandState {
+  return startBrowserFullHand("Hearts", seed);
+}
+
 export function startBrowserNoHeartsHand(seed: number): FullHandState {
   return startBrowserFullHand("No Hearts", seed);
 }
@@ -81,6 +85,10 @@ function startBrowserFullHand(contract: FullHandContract, seed: number): FullHan
 }
 
 export function playBrowserNoHeartsCard(state: FullHandState, cardId: string): FullHandState {
+  return playBrowserFullHandCard(state, cardId);
+}
+
+export function playBrowserHeartsCard(state: FullHandState, cardId: string): FullHandState {
   return playBrowserFullHandCard(state, cardId);
 }
 
@@ -223,7 +231,7 @@ function completedTrickTacticalTags(
       tags.push("overtrumped");
     }
   } else if (
-    (contract === "No Hearts" || contract === "No Queens" || contract === "King of Hearts") &&
+    (contract === "Hearts" || contract === "No Hearts" || contract === "No Queens" || contract === "King of Hearts") &&
     trick.penalty > 0
   ) {
     tags.push("danger_card_moved");
@@ -306,7 +314,12 @@ function chooseOpponentCard(state: FullHandState) {
     return highestNonWinningCard(state, legal) ?? lowestCard(legal);
   }
 
-  if (state.contract === "No Hearts" || state.contract === "No Queens" || state.contract === "King of Hearts") {
+  if (
+    state.contract === "Hearts" ||
+    state.contract === "No Hearts" ||
+    state.contract === "No Queens" ||
+    state.contract === "King of Hearts"
+  ) {
     return highestNonWinningCard(state, legal) ?? lowestCard(legal);
   }
 
@@ -378,6 +391,17 @@ function scoreTrick(state: FullHandState, cards: TableCard[]) {
   if (state.contract === "King of Hearts") {
     return cards.filter((played) => isKingOfHearts(played.card)).length * 20;
   }
+  if (state.contract === "Hearts") {
+    return cards.reduce((total, played) => {
+      if (played.card.suit === "H") {
+        return total + 1;
+      }
+      if (played.card.rank === "Q" && played.card.suit === "S") {
+        return total + 13;
+      }
+      return total;
+    }, 0);
+  }
 
   return cards
     .filter((played) => played.card.suit === "H")
@@ -396,6 +420,9 @@ function isPenaltyCard(contract: FullHandContract, card: Card) {
   }
   if (contract === "King of Hearts") {
     return isKingOfHearts(card);
+  }
+  if (contract === "Hearts") {
+    return card.suit === "H" || (card.rank === "Q" && card.suit === "S");
   }
 
   return card.suit === "H";
