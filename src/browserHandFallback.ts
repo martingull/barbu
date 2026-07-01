@@ -351,6 +351,9 @@ function chooseOpponentCard(state: FullHandState) {
     if (state.contract === "Hearts Trumps") {
       return highestCard(legal);
     }
+    if (state.contract === "Hearts") {
+      return lowestCard(legal.filter((card) => !isPenaltyCard("Hearts", card))) ?? lowestCard(legal);
+    }
     if (state.contract === "No Queens") {
       return lowestCard(legal.filter((card) => card.rank !== "Q")) ?? lowestCard(legal);
     }
@@ -369,6 +372,9 @@ function chooseOpponentCard(state: FullHandState) {
     if (state.contract === "No Queens") {
       return highestCard(legal.filter((card) => card.rank === "Q")) ?? highestCard(legal);
     }
+    if (state.contract === "Hearts") {
+      return highestHeartsPenaltyDiscard(legal) ?? highestCard(legal);
+    }
     return highestCard(legal.filter((card) => isPenaltyCard(state.contract, card))) ?? highestCard(legal);
   }
 
@@ -382,6 +388,10 @@ function chooseOpponentCard(state: FullHandState) {
 
   if (state.contract === "No Queens") {
     return highestNonWinningQueen(state, legal) ?? highestNonWinningCard(state, legal) ?? lowestCard(legal);
+  }
+
+  if (state.contract === "Hearts") {
+    return highestNonWinningCard(state, legal) ?? lowestCard(legal.filter((card) => !isPenaltyCard("Hearts", card))) ?? lowestCard(legal);
   }
 
   if (state.contract === "No Last Two" && state.completedTricks.length >= 11) {
@@ -441,6 +451,23 @@ function highestNonWinningCard(state: FullHandState, cards: Card[]) {
 
 function highestNonWinningQueen(state: FullHandState, cards: Card[]) {
   return highestCard(cards.filter((card) => card.rank === "Q" && !cardWouldWinTrick(state, card)));
+}
+
+function highestHeartsPenaltyDiscard(cards: Card[]) {
+  return cards
+    .filter((card) => isPenaltyCard("Hearts", card))
+    .sort((left, right) => heartsPenaltyWeight(left) - heartsPenaltyWeight(right) || compareByRankThenSuit(left, right))
+    .pop();
+}
+
+function heartsPenaltyWeight(card: Card) {
+  if (card.rank === "Q" && card.suit === "S") {
+    return 13;
+  }
+  if (card.suit === "H") {
+    return 1;
+  }
+  return 0;
 }
 
 function chooseHeartsPassCards(hand: Card[]) {
