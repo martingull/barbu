@@ -246,7 +246,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByRole("button", { name: "Open Hearts" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Barbu" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Card Counting" })).toContainText("Pack");
-  await expect(page.getByRole("button", { name: "Open Card Counting" })).toContainText("3 minigames");
+  await expect(page.getByRole("button", { name: "Open Card Counting" })).toContainText("4 minigames");
   await expect(page.getByRole("button", { name: "Solitaire planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Whist planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Bridge planned" })).toBeVisible();
@@ -302,6 +302,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByLabel("Perfect mode skills")).toContainText("Count trumps");
   await expect(page.getByLabel("Perfect mode skills")).toContainText("Trump memory hand");
   await expect(page.getByLabel("Perfect mode skills")).toContainText("Track court cards");
+  await expect(page.getByLabel("Perfect mode skills")).toContainText("Danger cards");
   await page.screenshot({ path: testInfo.outputPath("barbu-perfect.png"), fullPage: true });
 
   await page.getByRole("button", { name: "Games" }).click();
@@ -467,6 +468,37 @@ test("Perfect mode starts card-counting minigames", async ({ page }, testInfo) =
   await expect(page.getByLabel("Court card memory review")).toContainText("court cards appeared");
   await expect(page.getByRole("button", { name: "Continue hand" })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath("perfect-track-court-cards.png"), fullPage: true });
+
+  await page.getByLabel("Track court cards", { exact: true }).getByRole("button", { name: "Table" }).click();
+  await page.getByLabel("Perfect mode skills").getByRole("button", { name: "Danger cards" }).click();
+
+  await expect(page.getByRole("heading", { name: "Danger cards" })).toBeVisible();
+  await expect(page.getByLabel("Danger cards trainer")).toContainText("Queens and KH");
+  await expect(page.getByLabel("Danger card memory table")).toBeVisible();
+  await expect(page.getByLabel("Danger card memory status")).toContainText("Memory run");
+  await expect(page.getByLabel("Danger card memory status")).not.toContainText("Danger cards seen");
+
+  for (let trick = 1; trick <= 3; trick += 1) {
+    await page.locator(".realistic-trump-hand .full-hand-card.legal").first().click();
+    await expect(page.getByRole("button", { name: "Play card" })).toBeEnabled();
+    await page.getByRole("button", { name: "Play card" }).click();
+    await page.getByRole("button", { name: trick === 3 ? "Answer memory" : "Next trick", exact: true }).click();
+  }
+
+  await expect(page.getByLabel("Danger card memory challenge")).toContainText("Answer from memory");
+  const dangerCountAnswers = page.getByLabel("Danger card count answers").getByRole("button");
+  if ((await dangerCountAnswers.count()) > 0) {
+    await dangerCountAnswers.first().click();
+  } else {
+    await expect(page.getByLabel(/Target danger card/)).toBeVisible();
+    await page.getByLabel("Danger card specific answers").getByRole("button").first().click();
+  }
+  await expect(page.getByRole("button", { name: "Check memory" })).toBeEnabled();
+  await page.getByRole("button", { name: "Check memory" }).click();
+
+  await expect(page.getByLabel("Danger card memory review")).toContainText("danger cards appeared");
+  await expect(page.getByRole("button", { name: "Continue hand" })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("perfect-danger-cards.png"), fullPage: true });
 });
 
 test("Trump memory hand starts from Perfect as a realistic table game", async ({ page }) => {

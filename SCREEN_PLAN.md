@@ -254,10 +254,11 @@ Current role:
 - Offers Count Trumps as a thirteen-trick reveal-and-memory minigame with count and specific-card checkpoints.
 - Offers Trump Memory Hand as a separate realistic table minigame: play a hand and answer trump-memory checks after real tricks.
 - Offers Track Court Cards as a separate high-card memory minigame: play a hand and remember jacks, queens, and kings.
+- Offers Danger Cards as a separate Barbu memory minigame: play a hand and remember queens plus the king of hearts.
 
 Near-term direction:
 
-- Add danger-card memory as a separate exercise.
+- Connect danger-card memory back to Barbu contract feedback.
 - Tie Perfect exercises back to Barbu, Hearts-family games, Whist, and Bridge.
 - Keep each exercise short and interactive, not a rules article.
 - Keep realistic exercises close to real table play. In Trump Memory Hand, table seats now use the first trump-aware choice: overtrumping a low trump when void in the led suit and able to beat the current winning trump. Continue refining discard/conserve choices as the core game improves.
