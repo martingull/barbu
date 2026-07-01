@@ -276,8 +276,9 @@ export const referenceCatalog: GameReference[] = [
         id: "play",
         title: "Play",
         body:
-          "The leader plays first, and everyone else must follow the led suit when possible. If you are void in the led suit, you may discard another suit.",
+          "The MVP hand starts by passing three cards left. The leader then plays first, and everyone else must follow the led suit when possible. If you are void in the led suit, you may discard another suit.",
         facts: [
+          { label: "Pass", value: "Three cards left" },
           { label: "Led suit", value: "Set by the first card in the trick" },
           { label: "Legal play", value: "Follow suit when you can" },
           { label: "Trick winner", value: "Highest card in the led suit wins" }
@@ -299,7 +300,7 @@ export const referenceCatalog: GameReference[] = [
       {
         id: "mvp-hand",
         title: "MVP Hearts Hand",
-        objective: "Avoid hearts and the queen of spades while following suit.",
+        objective: "Pass three cards, then avoid hearts and the queen of spades while following suit.",
         scoring: "Hearts are 1 penalty point each; the queen of spades is 13.",
         lesson: "Start by reading who wins the trick before worrying about advanced Hearts rules."
       }
@@ -314,10 +315,10 @@ export const referenceCatalog: GameReference[] = [
       },
       {
         id: "passing",
-        title: "Passing cards",
-        coreStatus: "Hearts v2",
-        appStatus: "Later",
-        note: "Passing should come after the local hand and scoring loop feel stable."
+        title: "Pass three left",
+        coreStatus: "Hearts v1",
+        appStatus: "Playable",
+        note: "The MVP passes three cards left before the first trick. Rotating pass directions can wait until the hand loop is stronger."
       },
       {
         id: "hearts-broken",
@@ -352,7 +353,7 @@ export const referenceCatalog: GameReference[] = [
         id: "mvp-simplification",
         title: "MVP Simplification",
         note:
-          "The app currently teaches the core trick and penalty loop before adding passing, hearts-broken restrictions, moon scoring, or longer match structure."
+          "The app currently teaches pass-left, the core trick loop, and penalty scoring before adding rotating pass directions, hearts-broken restrictions, moon scoring, or longer match structure."
       }
     ]
   }

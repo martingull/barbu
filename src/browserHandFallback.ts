@@ -26,6 +26,84 @@ export function startBrowserHeartsHand(seed: number): FullHandState {
   return startBrowserFullHand("Hearts", seed);
 }
 
+export function startBrowserHeartsPassingHand(seed: number): FullHandState {
+  const deck = standardDeck();
+  const rng = new DeterministicRng(seed);
+
+  for (let index = deck.length - 1; index > 0; index -= 1) {
+    const swapIndex = rng.nextInt(index + 1);
+    [deck[index], deck[swapIndex]] = [deck[swapIndex], deck[index]];
+  }
+
+  const hands: Card[][] = [[], [], [], []];
+  deck.forEach((card, index) => hands[index % 4].push(card));
+  hands.forEach((hand) => hand.sort(compareCards));
+
+  return hydrateFullHandState({
+    id: `browser-hearts-passing-hand-${seed}`,
+    contract: "Hearts",
+    hands,
+    currentPlayerIndex: 2,
+    currentPlayer: "You",
+    currentTrick: [],
+    completedTricks: [],
+    playerHand: hands[2],
+    legalCardIds: hands[2].map((card) => card.id),
+    playerPenalty: 0,
+    totalPenalty: 0,
+    cardsRemaining: 52,
+    trickNumber: 1,
+    status: "in_progress",
+    prompt: "Choose three cards to pass left."
+  });
+}
+
+export function applyBrowserHeartsPass(state: FullHandState, cardIds: string[]): FullHandState {
+  if (state.status === "complete" || state.currentTrick.length || state.completedTricks.length) {
+    return state;
+  }
+
+  const uniqueCardIds = Array.from(new Set(cardIds));
+  if (uniqueCardIds.length !== 3) {
+    return state;
+  }
+
+  const nextState = cloneState(state);
+  const passedCards: Card[][] = [[], [], [], []];
+  passedCards[2] = uniqueCardIds
+    .map((cardId) => nextState.hands[2].find((card) => card.id === cardId))
+    .filter((card): card is Card => Boolean(card));
+
+  if (passedCards[2].length !== 3) {
+    return state;
+  }
+
+  nextState.hands.forEach((hand, player) => {
+    if (player !== 2) {
+      passedCards[player] = chooseHeartsPassCards(hand);
+    }
+  });
+
+  passedCards.forEach((cards, player) => {
+    cards.forEach((card) => removeCardFromHand(nextState.hands[player], card));
+  });
+
+  passedCards.forEach((cards, player) => {
+    const recipient = (player + 1) % 4;
+    nextState.hands[recipient].push(...cards);
+  });
+
+  nextState.hands.forEach((hand) => hand.sort(compareCards));
+  nextState.id = nextState.id.replace("hearts-passing-hand", "hearts-hand");
+  nextState.currentPlayerIndex = 0;
+  nextState.currentPlayer = "Tutor";
+  nextState.currentTrick = [];
+  nextState.completedTricks = [];
+  nextState.status = "in_progress";
+
+  return advanceToPlayerTurn(nextState);
+}
+
 export function startBrowserNoHeartsHand(seed: number): FullHandState {
   return startBrowserFullHand("No Hearts", seed);
 }
@@ -365,6 +443,34 @@ function highestNonWinningQueen(state: FullHandState, cards: Card[]) {
   return highestCard(cards.filter((card) => card.rank === "Q" && !cardWouldWinTrick(state, card)));
 }
 
+function chooseHeartsPassCards(hand: Card[]) {
+  return hand
+    .slice()
+    .sort((left, right) => {
+      const leftPenalty = isPenaltyCard("Hearts", left) ? 3 : 0;
+      const rightPenalty = isPenaltyCard("Hearts", right) ? 3 : 0;
+      const leftQueenSpades = left.rank === "Q" && left.suit === "S" ? 2 : 0;
+      const rightQueenSpades = right.rank === "Q" && right.suit === "S" ? 2 : 0;
+
+      return (
+        leftPenalty +
+        leftQueenSpades -
+        (rightPenalty + rightQueenSpades) ||
+        rankOrder[left.rank as Rank] - rankOrder[right.rank as Rank] ||
+        suitOrder[left.suit] - suitOrder[right.suit]
+      );
+    })
+    .slice(-3);
+}
+
+function removeCardFromHand(hand: Card[], card: Card) {
+  const index = hand.findIndex((heldCard) => heldCard.id === card.id);
+
+  if (index >= 0) {
+    hand.splice(index, 1);
+  }
+}
+
 function compareByRankThenSuit(left: Card, right: Card) {
   return rankOrder[left.rank as Rank] - rankOrder[right.rank as Rank] || suitOrder[left.suit] - suitOrder[right.suit];
 }
@@ -473,6 +579,10 @@ function trickWinner(contract: FullHandContract, cards: TableCard[]) {
 function promptForState(state: FullHandState, playerPenalty: number) {
   if (state.status === "complete") {
     return `Hand complete. You took ${playerPenalty} ${playerPenalty === 1 ? "point" : "points"}.`;
+  }
+
+  if (state.id.includes("hearts-passing-hand")) {
+    return "Choose three cards to pass left.";
   }
 
   const led = ledSuit(state);

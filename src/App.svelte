@@ -1,6 +1,7 @@
 <script lang="ts">
   import { invoke, isTauri } from "@tauri-apps/api/core";
   import {
+    applyBrowserHeartsPass,
     playBrowserHeartsCard,
     playBrowserKingOfHeartsCard,
     playBrowserNoHeartsCard,
@@ -9,6 +10,7 @@
     playBrowserNoTricksCard,
     playBrowserPositiveTricksCard,
     startBrowserHeartsHand,
+    startBrowserHeartsPassingHand,
     startBrowserKingOfHeartsHand,
     startBrowserNoHeartsHand,
     startBrowserNoLastTwoHand,
@@ -60,6 +62,7 @@
     | "drill"
     | "drillResult"
     | "runContractIntro"
+    | "heartsPass"
     | "fullHand"
     | "dominoHand"
     | "trumpCount"
@@ -885,13 +888,17 @@
   let usingGeneratedPractice = false;
   let generatedPracticeError = "";
   let fullHand: FullHandState | null = null;
+  let heartsPassingHand: FullHandState | null = null;
   let dominoHand: DominoHandState | null = null;
   let fullHandSelectedCardId = "";
+  let heartsPassSelectedCardIds: string[] = [];
   let dominoSelectedCardId = "";
   let fullHandError = "";
+  let heartsPassError = "";
   let dominoError = "";
   let fullHandReviewTrickCount = 0;
   let usingBrowserFullHand = false;
+  let usingBrowserHeartsPass = false;
   let usingBrowserDomino = false;
   let lastFullHandTapCardId = "";
   let lastFullHandTapAt = 0;
@@ -928,6 +935,7 @@
   let dangerCountClean = 0;
   $: isTablePlayScreen =
     appView === "drill" ||
+    appView === "heartsPass" ||
     appView === "fullHand" ||
     appView === "dominoHand" ||
     appView === "trumpCount" ||
@@ -1060,6 +1068,9 @@
   $: reviewFocusSummary = reviewContractResults.find((result) => result.contract === reviewReplayContract);
   $: fullHandLegalCardIds = new Set(fullHand?.legalCardIds ?? []);
   $: fullHandSelectedCard = fullHand?.playerHand.find((card) => card.id === fullHandSelectedCardId);
+  $: heartsPassSelectedCards =
+    heartsPassingHand?.playerHand.filter((card) => heartsPassSelectedCardIds.includes(card.id)) ?? [];
+  $: heartsPassCanSubmit = heartsPassSelectedCardIds.length === 3;
   $: fullHandLastCompletedTrick = fullHand?.completedTricks[fullHand.completedTricks.length - 1];
   $: fullHandReviewTrick =
     fullHand && fullHandReviewTrickCount > 0 ? fullHand.completedTricks[fullHandReviewTrickCount - 1] : undefined;
@@ -2787,6 +2798,7 @@
     }
 
     dominoHand = null;
+    heartsPassingHand = null;
     const seed = options.keepRun && fullHandRunActive ? runSeedForContract(contract) : usePracticeSeed();
     fullHandSelectedCardId = "";
     fullHandError = "";
@@ -2811,6 +2823,35 @@
     }
   }
 
+  async function startHeartsPassingPhase() {
+    activeGameTable = "hearts";
+    fullHandRunActive = false;
+    fullHandRunResults = [];
+    fullHand = null;
+    dominoHand = null;
+    heartsPassSelectedCardIds = [];
+    heartsPassError = "";
+    fullHandSelectedCardId = "";
+    fullHandError = "";
+    fullHandReviewTrickCount = 0;
+    lastFullHandTapCardId = "";
+    lastFullHandTapAt = 0;
+
+    const seed = usePracticeSeed();
+
+    try {
+      heartsPassingHand = await invoke<FullHandState>("start_hearts_passing_hand", {
+        seed
+      });
+      usingBrowserHeartsPass = false;
+    } catch {
+      heartsPassingHand = startBrowserHeartsPassingHand(seed);
+      usingBrowserHeartsPass = true;
+    }
+
+    appView = "heartsPass";
+  }
+
   async function startDominoHand(options: { keepRun?: boolean } = {}) {
     if (!options.keepRun) {
       fullHandRunActive = false;
@@ -2819,6 +2860,7 @@
 
     const seed = options.keepRun && fullHandRunActive ? runSeedForContract("Domino") : usePracticeSeed();
     fullHand = null;
+    heartsPassingHand = null;
     dominoSelectedCardId = "";
     dominoError = "";
     dominoLastMoveReason = "";
@@ -2848,6 +2890,63 @@
     appView = "dominoHand";
     if (options.keepRun && fullHandRunActive) {
       persistSavedPlayBarbuRun("dominoHand");
+    }
+  }
+
+  function toggleHeartsPassCard(card: Card) {
+    heartsPassError = "";
+
+    if (heartsPassSelectedCardIds.includes(card.id)) {
+      heartsPassSelectedCardIds = heartsPassSelectedCardIds.filter((cardId) => cardId !== card.id);
+      return;
+    }
+
+    if (heartsPassSelectedCardIds.length >= 3) {
+      heartsPassError = "Remove one card before choosing another.";
+      return;
+    }
+
+    heartsPassSelectedCardIds = [...heartsPassSelectedCardIds, card.id];
+  }
+
+  async function confirmHeartsPass() {
+    if (!heartsPassingHand) {
+      return;
+    }
+
+    if (heartsPassSelectedCardIds.length !== 3) {
+      heartsPassError = "Choose exactly three cards to pass.";
+      return;
+    }
+
+    try {
+      fullHand = usingBrowserHeartsPass
+        ? applyBrowserHeartsPass(heartsPassingHand, heartsPassSelectedCardIds)
+        : await invoke<FullHandState>("apply_hearts_pass", {
+            state: heartsPassingHand,
+            cardIds: heartsPassSelectedCardIds
+          });
+      usingBrowserFullHand = usingBrowserHeartsPass;
+      heartsPassingHand = null;
+      heartsPassSelectedCardIds = [];
+      heartsPassError = "";
+      fullHandSelectedCardId = "";
+      fullHandReviewTrickCount = 0;
+      lastFullHandTapCardId = "";
+      lastFullHandTapAt = 0;
+      appView = "fullHand";
+    } catch (error) {
+      if (!usingBrowserHeartsPass) {
+        fullHand = applyBrowserHeartsPass(heartsPassingHand, heartsPassSelectedCardIds);
+        usingBrowserFullHand = true;
+        heartsPassingHand = null;
+        heartsPassSelectedCardIds = [];
+        heartsPassError = "";
+        appView = "fullHand";
+        return;
+      }
+
+      heartsPassError = typeof error === "string" ? error : "Those cards could not be passed.";
     }
   }
 
@@ -2928,7 +3027,7 @@
 
   function startHeartsHand() {
     activeGameTable = "hearts";
-    void startFullHand("Hearts");
+    void startHeartsPassingPhase();
   }
 
   function startNoQueensHand() {
@@ -3965,6 +4064,12 @@
     drillSetTitle = "Hearts practice: avoid hearts";
   }
 
+  function startHeartsQueenDangerDrill() {
+    activeGameTable = "hearts";
+    startFixedContractDrill("barbu-no-queens");
+    drillSetTitle = "Hearts practice: queen danger";
+  }
+
   function continueCourse() {
     if (isCourseComplete || !nextPathStep) {
       openBarbuLearnTable();
@@ -4874,11 +4979,16 @@
           <div aria-label="Learn" class="barbu-tab-panel practice-panel" id="hearts-learn-panel" role="tabpanel">
             <div class="barbu-mode-copy">
               <p class="eyebrow">Learn</p>
-              <h2>Hearts lessons are next.</h2>
-              <p>Start with the Queen of Spades version: follow suit, avoid hearts, and avoid QS.</p>
+              <h2>Learn the Hearts danger cards.</h2>
+              <p>Start with the playable MVP hand: pass three left, follow suit, avoid hearts, and avoid the queen of spades.</p>
             </div>
             <div class="table-action-groups" aria-label="Hearts table actions">
               <section class="learn-action-grid" aria-label="Hearts learn actions">
+                <button class="learn-action-card" onclick={startHeartsHand} type="button">
+                  <span>Starter hand</span>
+                  <strong>Play Hearts</strong>
+                  <small>Pass three cards, play the simplified hand, then use the reference when a rule needs names.</small>
+                </button>
                 <button class="learn-action-card" onclick={() => openReference(gameTableDefinitions.hearts.referenceId)} type="button">
                   <span>Rules</span>
                   <strong>Reference</strong>
@@ -4891,20 +5001,25 @@
           <div aria-label="Practice" class="barbu-tab-panel practice-panel" id="hearts-practice-panel" role="tabpanel">
             <div class="barbu-mode-copy">
               <p class="eyebrow">Practice</p>
-              <h2>Start with avoiding hearts.</h2>
-              <p>Use the shared Hearts-family drill surface before Hearts gets its own full game.</p>
+              <h2>Repeat the two danger habits.</h2>
+              <p>Hearts practice uses the same trick-reading patterns as Barbu: avoid small penalties, then avoid the loaded queen.</p>
             </div>
 
             <section class="fixed-contract-practice" aria-label="Hearts practice drills">
               <div class="section-heading">
-                <p class="eyebrow">Fixed drill</p>
+                <p class="eyebrow">Fixed drills</p>
                 <h2>Practice one Hearts pattern.</h2>
               </div>
               <div class="fixed-contract-grid">
                 <button class="contract-card compact" onclick={startHeartsAvoidHeartsDrill} type="button">
                   <span>Hearts</span>
                   <strong>Avoid hearts</strong>
-                  <small>Borrow the No Hearts drill: follow suit and avoid taking heart penalties.</small>
+                  <small>Follow suit and avoid taking heart penalties when another card can duck.</small>
+                </button>
+                <button class="contract-card compact" onclick={startHeartsQueenDangerDrill} type="button">
+                  <span>Queen</span>
+                  <strong>Queen danger</strong>
+                  <small>Practice the Queen of Spades habit: avoid winning when a queen is loaded.</small>
                 </button>
               </div>
             </section>
@@ -4914,11 +5029,11 @@
             <div class="barbu-mode-copy">
               <p class="eyebrow">Play</p>
               <h2>Play a Hearts hand.</h2>
-              <p>MVP Hearts uses the shared trick-taking table: hearts score 1 point, and QS scores 13.</p>
+              <p>MVP Hearts starts with pass-three-left, then uses the shared trick-taking table: hearts score 1 point, and QS scores 13.</p>
             </div>
             <div class="play-options" aria-label="Hearts play options">
               <button class="primary-action" onclick={startHeartsHand} type="button">Play Hearts</button>
-              <p class="supporting-copy">Passing, shooting the moon, and match scoring come after the local hand feels right.</p>
+              <p class="supporting-copy">Rotating pass directions, shooting the moon, and match scoring come after the local hand feels right.</p>
             </div>
           </div>
         {:else}
@@ -5892,6 +6007,83 @@
         </div>
       </div>
     </section>
+  {:else if appView === "heartsPass"}
+    {#if heartsPassingHand}
+      <TablePlaySurface
+        mode="play"
+        ariaLabel="Hearts passing phase"
+        title="Pass cards"
+        eyebrow="Hearts"
+        statusLabel="Pass left"
+        statusValue={`${heartsPassSelectedCardIds.length} of 3`}
+        tableAriaLabel="Hearts passing table"
+        tableCards={[]}
+        showTable={false}
+        panelAriaLabel="Hearts pass cards"
+        onBack={openHeartsTable}
+      >
+        {#snippet summary()}
+          <div class="full-hand-summary grouped-play-summary" aria-label="Hearts pass summary">
+            <div class="full-hand-summary-row current-hand" aria-label="Passing direction">
+              <span class="summary-row-label">Passing</span>
+              <div>
+                <span>You pass</span>
+                <strong>Left</strong>
+              </div>
+              <div>
+                <span>You receive</span>
+                <strong>Right</strong>
+              </div>
+              <div>
+                <span>Cards</span>
+                <strong>{heartsPassSelectedCardIds.length} / 3</strong>
+              </div>
+            </div>
+          </div>
+        {/snippet}
+
+        {#snippet panel()}
+          <div class="lesson-heading">
+            <p class="eyebrow">Before the first trick</p>
+            <h2>Pass three cards</h2>
+          </div>
+
+          <p class="result">Choose exactly three cards to pass to Left. You will receive three cards from Right.</p>
+          {#if heartsPassSelectedCards.length}
+            <p class="explanation">
+              Passing: {heartsPassSelectedCards.map((card) => card.label).join(", ")}
+            </p>
+          {/if}
+          {#if heartsPassError}
+            <p class="outcome warning">{heartsPassError}</p>
+          {/if}
+
+          <div class="hand full-hand-cards hearts-pass-cards" aria-label="Your Hearts passing hand">
+            {#each heartsPassingHand.playerHand as card}
+              <button
+                aria-label={`${card.rank} ${card.suit}`}
+                aria-pressed={heartsPassSelectedCardIds.includes(card.id)}
+                class:heart={card.suit === "H"}
+                class:legal={!heartsPassSelectedCardIds.includes(card.id)}
+                class:selected={heartsPassSelectedCardIds.includes(card.id)}
+                class="card hand-card full-hand-card"
+                onclick={() => toggleHeartsPassCard(card)}
+                type="button"
+              >
+                <CardFace {card} decorative />
+              </button>
+            {/each}
+          </div>
+
+          <div class="action-row">
+            <button class="secondary-action" onclick={openHeartsTable} type="button">Table</button>
+            <button class="primary-action" disabled={!heartsPassCanSubmit} onclick={() => void confirmHeartsPass()} type="button">
+              Pass cards
+            </button>
+          </div>
+        {/snippet}
+      </TablePlaySurface>
+    {/if}
   {:else if appView === "fullHand"}
     {#if fullHand}
       <TablePlaySurface

@@ -357,6 +357,17 @@ pub fn start_hearts_hand(seed: u64) -> HeartsHandState {
     advance_to_player_turn(state, 2, score_hearts_trick, choose_hearts_opponent_card)
 }
 
+pub fn start_hearts_passing_hand(seed: u64) -> HeartsHandState {
+    start_trick_taking_hand(format!("hearts-passing-hand-{seed}"), seed, 2)
+}
+
+pub fn apply_hearts_pass(
+    state: HeartsHandState,
+    player_cards: Vec<Card>,
+) -> Result<HeartsHandState, String> {
+    apply_hearts_pass_with_direction(state, player_cards, 1)
+}
+
 pub fn play_hearts_card(
     state: HeartsHandState,
     player_card: Card,
@@ -368,6 +379,67 @@ pub fn play_hearts_card(
         score_hearts_trick,
         choose_hearts_opponent_card,
     )
+}
+
+fn apply_hearts_pass_with_direction(
+    mut state: HeartsHandState,
+    player_cards: Vec<Card>,
+    direction: usize,
+) -> Result<HeartsHandState, String> {
+    if state.status == HandStatus::Complete {
+        return Err("The hand is already complete.".to_string());
+    }
+    if !state.current_trick.is_empty() || !state.completed_tricks.is_empty() {
+        return Err("Cards can only be passed before the first trick.".to_string());
+    }
+    if direction == 0 || direction >= 4 {
+        return Err("Unsupported Hearts pass direction.".to_string());
+    }
+    if player_cards.len() != 3 {
+        return Err("Choose exactly three cards to pass.".to_string());
+    }
+    if has_duplicate_cards(&player_cards) {
+        return Err("Choose three different cards to pass.".to_string());
+    }
+    for card in &player_cards {
+        if !state.hands[2].contains(card) {
+            return Err(format!("{card} is not in your hand."));
+        }
+    }
+
+    let mut passed_cards: [Vec<Card>; 4] = [Vec::new(), Vec::new(), Vec::new(), Vec::new()];
+    passed_cards[2] = player_cards;
+
+    for (player, passed) in passed_cards.iter_mut().enumerate() {
+        if player != 2 {
+            *passed = choose_hearts_pass_cards(&state.hands[player]);
+        }
+    }
+
+    for (player, passed) in passed_cards.iter().enumerate() {
+        for card in passed {
+            remove_card_from_hand(&mut state.hands[player], *card)?;
+        }
+    }
+
+    for (player, passed) in passed_cards.iter().enumerate() {
+        let recipient = (player + direction) % 4;
+        state.hands[recipient].extend(passed.iter().copied());
+    }
+
+    for hand in &mut state.hands {
+        sort_hand(hand);
+    }
+
+    state.id = state.id.replace("hearts-passing-hand-", "hearts-hand-");
+    state.current_player = 0;
+
+    Ok(advance_to_player_turn(
+        state,
+        2,
+        score_hearts_trick,
+        choose_hearts_opponent_card,
+    ))
 }
 
 pub fn play_trick_taking_card(
@@ -684,6 +756,39 @@ fn choose_hearts_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
     }
 
     highest_non_winning_card(state, &legal).or_else(|| lowest_card(&legal))
+}
+
+fn choose_hearts_pass_cards(hand: &[Card]) -> Vec<Card> {
+    let mut cards = hand.to_vec();
+    cards.sort_by_key(|card| {
+        let penalty_priority = if is_hearts_penalty_card(*card) { 3 } else { 0 };
+        let queen_spades_priority =
+            if card.rank == Rank::Queen && card.suit == Suit::Spades { 2 } else { 0 };
+
+        (
+            penalty_priority + queen_spades_priority,
+            card.rank as u8,
+            card.suit.short_name(),
+        )
+    });
+    cards.into_iter().rev().take(3).collect()
+}
+
+fn has_duplicate_cards(cards: &[Card]) -> bool {
+    cards
+        .iter()
+        .enumerate()
+        .any(|(index, card)| cards.iter().skip(index + 1).any(|other| other == card))
+}
+
+fn remove_card_from_hand(hand: &mut Vec<Card>, card: Card) -> Result<(), String> {
+    let index = hand
+        .iter()
+        .position(|held_card| *held_card == card)
+        .ok_or_else(|| format!("{card} is not in the hand."))?;
+
+    hand.remove(index);
+    Ok(())
 }
 
 fn score_no_queens_trick(_state: &TrickTakingHandState, cards: &[PlayedCard]) -> i32 {
@@ -1131,6 +1236,50 @@ mod tests {
         ];
 
         assert_eq!(score_hearts_trick(&state, &trick), 15);
+    }
+
+    #[test]
+    fn hearts_passing_hand_starts_before_first_trick() {
+        let state = start_hearts_passing_hand(61);
+
+        assert_eq!(state.hands.iter().map(Vec::len).sum::<usize>(), 52);
+        assert_eq!(state.current_player, 2);
+        assert_eq!(state.current_trick.len(), 0);
+        assert_eq!(state.completed_tricks.len(), 0);
+        assert_eq!(state.legal_player_cards().len(), 13);
+    }
+
+    #[test]
+    fn hearts_pass_moves_three_player_cards_left_then_starts_play() {
+        let state = start_hearts_passing_hand(61);
+        let passed_cards = state.hands[2].iter().copied().take(3).collect::<Vec<_>>();
+        let left_before = state.hands[3].clone();
+        let next_state =
+            apply_hearts_pass(state, passed_cards.clone()).expect("three cards should pass");
+
+        for card in passed_cards {
+            assert!(!next_state.hands[2].contains(&card));
+            assert!(next_state.hands[3].contains(&card));
+        }
+
+        assert_eq!(next_state.hands[2].len(), 13);
+        assert_eq!(next_state.hands[3].len(), 13);
+        assert!(left_before.iter().any(|card| !next_state.hands[3].contains(card)));
+        assert_eq!(next_state.current_player, 2);
+        assert!(!next_state.current_trick.is_empty());
+    }
+
+    #[test]
+    fn hearts_pass_requires_three_distinct_player_cards() {
+        let state = start_hearts_passing_hand(61);
+        let one_card = state.hands[2][0];
+        let result = apply_hearts_pass(state.clone(), vec![one_card, one_card, one_card]);
+
+        assert!(result.is_err());
+
+        let result = apply_hearts_pass(state, vec![one_card]);
+
+        assert!(result.is_err());
     }
 
     #[test]

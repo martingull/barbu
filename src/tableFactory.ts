@@ -67,11 +67,14 @@ export const gameTableDefinitions = {
     title: "Hearts table",
     family: "Hearts",
     referenceId: "hearts",
-    defaultTab: "practice",
+    defaultTab: "play",
     actionsByTab: {
       learn: [{ id: "reference", label: "Reference", destination: "Hearts reference" }],
-      practice: [{ id: "avoid-hearts", label: "Avoid hearts", destination: "Hearts avoid-hearts drill" }],
-      play: [{ id: "play-hearts", label: "Play Hearts", destination: "Hearts MVP hand" }]
+      practice: [
+        { id: "avoid-hearts", label: "Avoid hearts", destination: "Hearts avoid-hearts drill" },
+        { id: "queen-danger", label: "Queen danger", destination: "Hearts queen danger drill" }
+      ],
+      play: [{ id: "play-hearts", label: "Play Hearts", destination: "Hearts pass-left hand" }]
     }
   }),
   barbu: createGameTableDefinition({

@@ -45,6 +45,24 @@ fn start_hearts_hand(seed: u64) -> FullHandDto {
 }
 
 #[tauri::command]
+fn start_hearts_passing_hand(seed: u64) -> FullHandDto {
+    let state = barbu_core::start_hearts_passing_hand(seed);
+    FullHandDto::from_core(&state, "Hearts", "point")
+}
+
+#[tauri::command]
+fn apply_hearts_pass(state: FullHandDto, card_ids: Vec<String>) -> Result<FullHandDto, String> {
+    let state = state.to_core()?;
+    let cards = card_ids
+        .iter()
+        .map(|card_id| card_from_label(card_id))
+        .collect::<Result<Vec<_>, _>>()?;
+    let next_state = barbu_core::apply_hearts_pass(state, cards)?;
+
+    Ok(FullHandDto::from_core(&next_state, "Hearts", "point"))
+}
+
+#[tauri::command]
 fn play_hearts_hand_card(state: FullHandDto, card_id: String) -> Result<FullHandDto, String> {
     let state = state.to_core()?;
     let card = card_from_label(&card_id)?;
@@ -715,6 +733,7 @@ fn player_index(player: &str) -> Result<barbu_core::PlayerIndex, String> {
 pub fn run() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
+            apply_hearts_pass,
             current_game,
             generate_daily_drill_set,
             generate_no_hearts_follow_suit,
@@ -729,6 +748,7 @@ pub fn run() {
             play_positive_tricks_hand_card,
             start_domino_hand,
             start_hearts_hand,
+            start_hearts_passing_hand,
             start_king_of_hearts_hand,
             start_no_hearts_hand,
             start_no_last_two_hand,

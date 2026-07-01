@@ -318,8 +318,13 @@ test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testI
   await page.getByRole("button", { name: "Open Hearts" }).click();
 
   await expect(page.getByRole("heading", { name: "Hearts table" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("button", { name: "Play Hearts" })).toBeVisible();
+
+  await page.getByRole("tab", { name: "Practice" }).click();
   await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByLabel("Hearts practice drills")).toContainText("Avoid hearts");
+  await expect(page.getByLabel("Hearts practice drills")).toContainText("Queen danger");
   await page.screenshot({ path: testInfo.outputPath("hearts-practice.png"), fullPage: true });
 
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Avoid hearts" }).click();
@@ -334,6 +339,7 @@ test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testI
 test("Hearts practice result returns to the Hearts table", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Open Hearts" }).click();
+  await page.getByRole("tab", { name: "Practice" }).click();
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Avoid hearts" }).click();
 
   await completeQuickDrillDecision(page);
@@ -360,7 +366,8 @@ test("Hearts reference explains the MVP rule boundary", async ({ page }, testInf
   await expect(page.getByLabel("Hearts overview")).toContainText("woman of spades");
   await expect(page.getByLabel("Contract reference")).toContainText("Hearts rules");
   await expect(page.getByLabel("Contract reference")).toContainText("queen of spades is 13");
-  await expect(page.getByLabel("Contract roadmap")).toContainText("Passing cards");
+  await expect(page.getByLabel("Contract roadmap")).toContainText("Pass three left");
+  await expect(page.getByLabel("Contract roadmap")).toContainText("Hearts v1");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Hearts v2");
   await expect(page.getByLabel("Variants and varieties")).toContainText("MVP Simplification");
   await page.screenshot({ path: testInfo.outputPath("hearts-reference.png"), fullPage: true });
@@ -370,15 +377,27 @@ test("Hearts reference explains the MVP rule boundary", async ({ page }, testInf
   await expect(page.getByRole("tab", { name: "Learn" })).toHaveAttribute("aria-selected", "true");
 });
 
-test("Hearts play starts a simplified local hand", async ({ page }, testInfo) => {
+test("Hearts play starts with a pass-left phase before the hand", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Open Hearts" }).click();
 
-  await page.getByRole("tab", { name: "Play" }).click();
+  await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
   const playPanel = page.getByRole("tabpanel", { name: "Play" });
   await expect(playPanel).toContainText("hearts score 1 point");
   await expect(playPanel).toContainText("QS scores 13");
   await page.getByRole("button", { name: "Play Hearts" }).click();
+
+  await expect(page.getByRole("heading", { name: "Pass cards" })).toBeVisible();
+  await expect(page.getByLabel("Hearts pass summary")).toContainText("You pass");
+  await expect(page.getByLabel("Hearts pass summary")).toContainText("Left");
+  await expect(page.getByLabel("Hearts pass cards")).toContainText("Choose exactly three cards");
+  const passingHand = page.getByLabel("Your Hearts passing hand");
+  await passingHand.locator("button").nth(0).click();
+  await passingHand.locator("button").nth(1).click();
+  await passingHand.locator("button").nth(2).click();
+  await expect(page.getByLabel("Hearts pass summary")).toContainText("3 / 3");
+  await page.screenshot({ path: testInfo.outputPath("hearts-passing.png"), fullPage: true });
+  await page.getByRole("button", { name: "Pass cards" }).click();
 
   await expect(page.getByRole("heading", { name: "Hearts hand" })).toBeVisible();
   await expect(page.getByLabel("Hearts hand score")).toContainText("Your penalty");
