@@ -85,6 +85,7 @@ export const gameTableDefinitions = {
     actionsByTab: {
       learn: [{ id: "reference", label: "Reference", destination: "Hearts reference" }],
       practice: [
+        { id: "pass-three", label: "Pass three", destination: "Hearts passing drill" },
         { id: "avoid-hearts", label: "Avoid hearts", destination: "Hearts avoid-hearts drill" },
         { id: "queen-danger", label: "Queen danger", destination: "Hearts queen danger drill" }
       ],

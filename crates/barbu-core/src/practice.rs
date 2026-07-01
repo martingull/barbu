@@ -74,6 +74,16 @@ pub struct PracticeDrillSet {
     pub scenarios: Vec<PracticeScenario>,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct HeartsPassScenario {
+    pub id: String,
+    pub title: String,
+    pub prompt: String,
+    pub player_hand: Vec<Card>,
+    pub recommended_pass: Vec<Card>,
+    pub explanation: String,
+}
+
 impl PracticeScenario {
     pub fn legal_player_cards(&self) -> Vec<Card> {
         if self.contract_kind == PracticeContractKind::Domino {
@@ -242,6 +252,56 @@ pub struct PracticeOutcome {
     pub explanation: String,
 }
 
+impl HeartsPassScenario {
+    pub fn outcome_for(&self, selected_cards: &[Card]) -> HeartsPassOutcome {
+        let selected_unique = unique_cards(selected_cards);
+        let matched_cards = selected_unique
+            .iter()
+            .copied()
+            .filter(|card| self.recommended_pass.contains(card))
+            .collect::<Vec<_>>();
+        let selected_count = selected_unique.len();
+        let is_complete = selected_count == 3;
+        let is_exact = is_complete && matched_cards.len() == 3;
+        let explanation = if !is_complete {
+            "Choose exactly three cards before checking the pass.".to_string()
+        } else if is_exact {
+            format!(
+                "Strong pass. You moved {} out of your hand: the obvious danger cards leave before trick play.",
+                join_cards(&self.recommended_pass)
+            )
+        } else if !matched_cards.is_empty() {
+            format!(
+                "Good start: {} belong in the pass. Compare the rest with {}.",
+                join_cards(&matched_cards),
+                join_cards(&self.recommended_pass)
+            )
+        } else {
+            format!(
+                "Look for the biggest dangers first. This hand wants you to pass {}.",
+                join_cards(&self.recommended_pass)
+            )
+        };
+
+        HeartsPassOutcome {
+            selected_count,
+            matched_cards,
+            is_complete,
+            is_exact,
+            explanation,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct HeartsPassOutcome {
+    pub selected_count: usize,
+    pub matched_cards: Vec<Card>,
+    pub is_complete: bool,
+    pub is_exact: bool,
+    pub explanation: String,
+}
+
 pub fn generate_no_hearts_follow_suit(seed: u64) -> PracticeScenario {
     let mut rng = DeterministicRng::new(seed);
     let led_suits = [Suit::Clubs, Suit::Diamonds, Suit::Spades];
@@ -279,6 +339,47 @@ pub fn generate_no_hearts_follow_suit(seed: u64) -> PracticeScenario {
         table_before_choice: vec![PlayedCard::new(0, lead_card), PlayedCard::new(1, heart_card)],
         player_hand,
         table_after_choice: vec![PlayedCard::new(3, right_card)],
+    }
+}
+
+pub fn generate_hearts_pass_practice(seed: u64) -> HeartsPassScenario {
+    let mut rng = DeterministicRng::new(seed);
+    let low_suit = choose_suit(&mut rng, &[Suit::Clubs, Suit::Diamonds]);
+    let side_suit = if low_suit == Suit::Clubs {
+        Suit::Diamonds
+    } else {
+        Suit::Clubs
+    };
+
+    let mut player_hand = vec![
+        Card::new(Rank::Queen, Suit::Spades),
+        Card::new(Rank::Ace, Suit::Hearts),
+        Card::new(Rank::King, Suit::Hearts),
+        Card::new(Rank::Ace, Suit::Spades),
+        Card::new(Rank::King, Suit::Spades),
+        Card::new(Rank::Two, Suit::Hearts),
+        Card::new(Rank::Three, Suit::Hearts),
+        Card::new(Rank::Two, low_suit),
+        Card::new(Rank::Four, low_suit),
+        Card::new(Rank::Six, low_suit),
+        Card::new(Rank::Three, side_suit),
+        Card::new(Rank::Five, side_suit),
+        Card::new(Rank::Seven, side_suit),
+    ];
+    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    let recommended_pass = recommend_hearts_pass_cards(&player_hand);
+
+    HeartsPassScenario {
+        id: format!("hearts-pass-{seed}"),
+        title: "Pass the danger cards".to_string(),
+        prompt:
+            "Choose three cards to pass left. Start with Queen of Spades, high hearts, then dangerous high spades."
+                .to_string(),
+        player_hand,
+        recommended_pass,
+        explanation:
+            "Beginner pass rule: move the obvious danger cards before the hand starts. Later we can teach suit-shortening and table reads."
+                .to_string(),
     }
 }
 
@@ -1209,6 +1310,40 @@ fn choose_suit(rng: &mut DeterministicRng, values: &[Suit]) -> Suit {
     values[rng.next_usize(values.len())]
 }
 
+fn recommend_hearts_pass_cards(hand: &[Card]) -> Vec<Card> {
+    let mut cards = hand.to_vec();
+    cards.sort_by_key(|card| (hearts_pass_priority(*card), card.rank as u8));
+    cards.into_iter().rev().take(3).collect()
+}
+
+fn hearts_pass_priority(card: Card) -> i32 {
+    if card.rank == Rank::Queen && card.suit == Suit::Spades {
+        return 100;
+    }
+    if card.suit == Suit::Hearts && card.rank >= Rank::Queen {
+        return 80 + card.rank as i32;
+    }
+    if card.suit == Suit::Spades && card.rank >= Rank::King {
+        return 60 + card.rank as i32;
+    }
+    if card.suit == Suit::Hearts {
+        return 20 + card.rank as i32;
+    }
+    0
+}
+
+fn unique_cards(cards: &[Card]) -> Vec<Card> {
+    let mut unique = Vec::new();
+
+    for card in cards {
+        if !unique.contains(card) {
+            unique.push(*card);
+        }
+    }
+
+    unique
+}
+
 fn first_non_matching_suit(led_suit: Suit, excluded_suit: Suit) -> Suit {
     Suit::ALL
         .into_iter()
@@ -1504,6 +1639,46 @@ mod tests {
         id.rsplit_once('-')
             .map(|(pattern, _)| pattern.to_string())
             .unwrap_or_else(|| id.to_string())
+    }
+
+    #[test]
+    fn hearts_pass_practice_recommends_obvious_danger_cards() {
+        let scenario = generate_hearts_pass_practice(11);
+
+        assert_eq!(scenario.player_hand.len(), 13);
+        assert_eq!(
+            scenario.recommended_pass,
+            vec![
+                Card::new(Rank::Queen, Suit::Spades),
+                Card::new(Rank::Ace, Suit::Hearts),
+                Card::new(Rank::King, Suit::Hearts),
+            ]
+        );
+    }
+
+    #[test]
+    fn hearts_pass_outcome_marks_exact_pass() {
+        let scenario = generate_hearts_pass_practice(11);
+        let outcome = scenario.outcome_for(&scenario.recommended_pass);
+
+        assert!(outcome.is_complete);
+        assert!(outcome.is_exact);
+        assert_eq!(outcome.matched_cards.len(), 3);
+    }
+
+    #[test]
+    fn hearts_pass_outcome_marks_partial_pass() {
+        let scenario = generate_hearts_pass_practice(11);
+        let selected = vec![
+            Card::new(Rank::Queen, Suit::Spades),
+            Card::new(Rank::Two, Suit::Clubs),
+            Card::new(Rank::Three, Suit::Diamonds),
+        ];
+        let outcome = scenario.outcome_for(&selected);
+
+        assert!(outcome.is_complete);
+        assert!(!outcome.is_exact);
+        assert_eq!(outcome.matched_cards, vec![Card::new(Rank::Queen, Suit::Spades)]);
     }
 
     #[test]

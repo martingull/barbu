@@ -67,6 +67,15 @@ export type GeneratedDrillSet = {
   scenarios: GeneratedPracticeScenario[];
 };
 
+export type HeartsPassScenario = {
+  id: string;
+  title: string;
+  prompt: string;
+  playerHand: Card[];
+  recommendedPass: Card[];
+  explanation: string;
+};
+
 export type GeneratedPracticeOutcome = {
   cardId: string;
   outcomeKind: GuidedCardOutcome | "illegal";

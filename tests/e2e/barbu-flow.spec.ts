@@ -332,6 +332,7 @@ test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testI
 
   await page.getByRole("tab", { name: "Practice" }).click();
   await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByLabel("Hearts practice drills")).toContainText("Pass three");
   await expect(page.getByLabel("Hearts practice drills")).toContainText("Avoid hearts");
   await expect(page.getByLabel("Hearts practice drills")).toContainText("Queen danger");
   await page.screenshot({ path: testInfo.outputPath("hearts-practice.png"), fullPage: true });
@@ -343,6 +344,26 @@ test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testI
   await page.getByLabel("Drill decision").getByRole("button", { name: "Table" }).click();
   await expect(page.getByRole("heading", { name: "Hearts table" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
+});
+
+test("Hearts passing drill teaches the danger-card pass", async ({ page }, testInfo) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Hearts" }).click();
+  await page.getByRole("tab", { name: "Practice" }).click();
+  await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Pass three" }).click();
+
+  await expect(page.getByRole("heading", { name: "Pass three" })).toBeVisible();
+  await expect(page.getByLabel("Hearts pass practice cards")).toContainText("Queen of Spades");
+  await page.getByRole("button", { name: "Q S" }).click();
+  await page.getByRole("button", { name: "A H" }).click();
+  await page.getByRole("button", { name: "K H" }).click();
+  await expect(page.getByLabel("Hearts pass practice summary")).toContainText("3 / 3");
+  await page.getByRole("button", { name: "Check pass" }).click();
+
+  await expect(page.getByLabel("Hearts pass practice cards")).toContainText("Good pass");
+  await expect(page.getByLabel("Hearts pass practice cards")).toContainText("Recommended: QS, AH, KH");
+  await expectNoPageScroll(page);
+  await page.screenshot({ path: testInfo.outputPath("hearts-pass-practice.png"), fullPage: true });
 });
 
 test("Hearts practice result returns to the Hearts table", async ({ page }) => {

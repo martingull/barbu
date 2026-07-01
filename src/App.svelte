@@ -2,6 +2,7 @@
   import { invoke, isTauri } from "@tauri-apps/api/core";
   import {
     applyBrowserHeartsPass,
+    generateBrowserHeartsPassPractice,
     playBrowserHeartsCard,
     playBrowserKingOfHeartsCard,
     playBrowserNoHeartsCard,
@@ -43,6 +44,7 @@
     GeneratedPracticeScenario,
     GuidedCardOutcome,
     GuidedTrick,
+    HeartsPassScenario,
     PracticeReason,
     Seat,
     Suit,
@@ -63,6 +65,7 @@
     | "drillResult"
     | "runContractIntro"
     | "heartsPass"
+    | "heartsPassPractice"
     | "fullHand"
     | "dominoHand"
     | "trumpCount"
@@ -890,9 +893,13 @@
   let generatedPracticeError = "";
   let fullHand: FullHandState | null = null;
   let heartsPassingHand: FullHandState | null = null;
+  let heartsPassPractice: HeartsPassScenario | null = null;
   let dominoHand: DominoHandState | null = null;
   let fullHandSelectedCardId = "";
   let heartsPassSelectedCardIds: string[] = [];
+  let heartsPassPracticeSelectedCardIds: string[] = [];
+  let heartsPassPracticeChecked = false;
+  let heartsPassPracticeError = "";
   let dominoSelectedCardId = "";
   let fullHandError = "";
   let heartsPassError = "";
@@ -937,6 +944,7 @@
   $: isTablePlayScreen =
     appView === "drill" ||
     appView === "heartsPass" ||
+    appView === "heartsPassPractice" ||
     appView === "fullHand" ||
     appView === "dominoHand" ||
     appView === "trumpCount" ||
@@ -1072,6 +1080,14 @@
   $: heartsPassSelectedCards =
     heartsPassingHand?.playerHand.filter((card) => heartsPassSelectedCardIds.includes(card.id)) ?? [];
   $: heartsPassCanSubmit = heartsPassSelectedCardIds.length === 3;
+  $: heartsPassPracticeSelectedCards =
+    heartsPassPractice?.playerHand.filter((card) => heartsPassPracticeSelectedCardIds.includes(card.id)) ?? [];
+  $: heartsPassPracticeRecommendedIds = new Set(heartsPassPractice?.recommendedPass.map((card) => card.id) ?? []);
+  $: heartsPassPracticeMatchCount = heartsPassPracticeSelectedCardIds.filter((cardId) =>
+    heartsPassPracticeRecommendedIds.has(cardId)
+  ).length;
+  $: heartsPassPracticeCanCheck = heartsPassPracticeSelectedCardIds.length === 3;
+  $: heartsPassPracticeExact = heartsPassPracticeCanCheck && heartsPassPracticeMatchCount === 3;
   $: fullHandLastCompletedTrick = fullHand?.completedTricks[fullHand.completedTricks.length - 1];
   $: fullHandReviewTrick =
     fullHand && fullHandReviewTrickCount > 0 ? fullHand.completedTricks[fullHandReviewTrickCount - 1] : undefined;
@@ -4147,6 +4163,52 @@
     drillSetTitle = "Hearts practice: queen danger";
   }
 
+  async function startHeartsPassPractice() {
+    activeGameTable = "hearts";
+    const seed = usePracticeSeed();
+    heartsPassPracticeSelectedCardIds = [];
+    heartsPassPracticeChecked = false;
+    heartsPassPracticeError = "";
+
+    try {
+      heartsPassPractice = await invoke<HeartsPassScenario>("generate_hearts_pass_practice", {
+        seed
+      });
+    } catch {
+      heartsPassPractice = generateBrowserHeartsPassPractice(seed);
+    }
+
+    appView = "heartsPassPractice";
+  }
+
+  function toggleHeartsPassPracticeCard(card: Card) {
+    heartsPassPracticeError = "";
+
+    if (heartsPassPracticeSelectedCardIds.includes(card.id)) {
+      heartsPassPracticeSelectedCardIds = heartsPassPracticeSelectedCardIds.filter((cardId) => cardId !== card.id);
+      heartsPassPracticeChecked = false;
+      return;
+    }
+
+    if (heartsPassPracticeSelectedCardIds.length >= 3) {
+      heartsPassPracticeError = "Remove one card before choosing another.";
+      return;
+    }
+
+    heartsPassPracticeSelectedCardIds = [...heartsPassPracticeSelectedCardIds, card.id];
+    heartsPassPracticeChecked = false;
+  }
+
+  function checkHeartsPassPractice() {
+    if (!heartsPassPracticeCanCheck) {
+      heartsPassPracticeError = "Choose exactly three cards to pass.";
+      return;
+    }
+
+    heartsPassPracticeError = "";
+    heartsPassPracticeChecked = true;
+  }
+
   function continueCourse() {
     if (isCourseComplete || !nextPathStep) {
       openBarbuLearnTable();
@@ -5113,6 +5175,11 @@
                 <h2>Practice one Hearts pattern.</h2>
               </div>
               <div class="fixed-contract-grid">
+                <button class="contract-card compact" onclick={() => void startHeartsPassPractice()} type="button">
+                  <span>Passing</span>
+                  <strong>Pass three</strong>
+                  <small>Choose the three danger cards to pass left before the hand begins.</small>
+                </button>
                 <button class="contract-card compact" onclick={startHeartsAvoidHeartsDrill} type="button">
                   <span>Hearts</span>
                   <strong>Avoid hearts</strong>
@@ -6109,6 +6176,102 @@
         </div>
       </div>
     </section>
+  {:else if appView === "heartsPassPractice"}
+    {#if heartsPassPractice}
+      <TablePlaySurface
+        mode="play"
+        ariaLabel="Hearts pass practice"
+        title="Pass three"
+        eyebrow="Hearts practice"
+        statusLabel="Selected"
+        statusValue={`${heartsPassPracticeSelectedCardIds.length} of 3`}
+        tableAriaLabel="Hearts pass practice table"
+        tableCards={[]}
+        showTable={false}
+        panelAriaLabel="Hearts pass practice cards"
+        onBack={openHeartsTable}
+      >
+        {#snippet summary()}
+          <div class="full-hand-summary grouped-play-summary" aria-label="Hearts pass practice summary">
+            <div class="full-hand-summary-row current-hand" aria-label="Passing drill status">
+              <span class="summary-row-label">Passing drill</span>
+              <div>
+                <span>Goal</span>
+                <strong>Danger</strong>
+              </div>
+              <div>
+                <span>Selected</span>
+                <strong>{heartsPassPracticeSelectedCardIds.length} / 3</strong>
+              </div>
+              <div>
+                <span>Matched</span>
+                <strong>{heartsPassPracticeChecked ? `${heartsPassPracticeMatchCount} / 3` : "-"}</strong>
+              </div>
+            </div>
+          </div>
+        {/snippet}
+
+        {#snippet panel()}
+          <div class="lesson-heading">
+            <p class="eyebrow">Before the hand</p>
+            <h2>{heartsPassPractice.title}</h2>
+          </div>
+
+          <p class="result">{heartsPassPractice.prompt}</p>
+          {#if heartsPassPracticeError}
+            <p class="outcome warning">{heartsPassPracticeError}</p>
+          {:else if heartsPassPracticeChecked}
+            <p class:warning={!heartsPassPracticeExact} class="outcome">
+              {heartsPassPracticeExact
+                ? "Good pass. You moved the obvious danger cards."
+                : `${heartsPassPracticeMatchCount} of 3 matched. Compare your pass with the recommendation.`}
+            </p>
+            <p class="explanation">
+              Recommended: {heartsPassPractice.recommendedPass.map((card) => card.label).join(", ")}.
+              {heartsPassPractice.explanation}
+            </p>
+          {:else if heartsPassPracticeSelectedCards.length}
+            <p class="explanation">
+              Passing: {heartsPassPracticeSelectedCards.map((card) => card.label).join(", ")}
+            </p>
+          {/if}
+
+          <div class="hand full-hand-cards hearts-pass-cards" aria-label="Your Hearts pass practice hand">
+            {#each heartsPassPractice.playerHand as card}
+              <button
+                aria-label={`${card.rank} ${card.suit}`}
+                aria-pressed={heartsPassPracticeSelectedCardIds.includes(card.id)}
+                class:heart={card.suit === "H"}
+                class:legal={!heartsPassPracticeSelectedCardIds.includes(card.id)}
+                class:recommended={heartsPassPracticeChecked && heartsPassPracticeRecommendedIds.has(card.id)}
+                class:selected={heartsPassPracticeSelectedCardIds.includes(card.id)}
+                class="card hand-card full-hand-card"
+                onclick={() => toggleHeartsPassPracticeCard(card)}
+                type="button"
+              >
+                <CardFace {card} decorative />
+              </button>
+            {/each}
+          </div>
+
+          <div class="action-row">
+            <button class="secondary-action" onclick={openHeartsTable} type="button">Table</button>
+            {#if heartsPassPracticeChecked}
+              <button class="primary-action" onclick={() => void startHeartsPassPractice()} type="button">Try another</button>
+            {:else}
+              <button
+                class="primary-action"
+                disabled={!heartsPassPracticeCanCheck}
+                onclick={checkHeartsPassPractice}
+                type="button"
+              >
+                Check pass
+              </button>
+            {/if}
+          </div>
+        {/snippet}
+      </TablePlaySurface>
+    {/if}
   {:else if appView === "heartsPass"}
     {#if heartsPassingHand}
       <TablePlaySurface

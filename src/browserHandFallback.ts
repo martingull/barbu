@@ -1,4 +1,13 @@
-import type { Card, CompletedHandTrick, FullHandContract, FullHandState, Seat, Suit, TableCard } from "./lessonTypes";
+import type {
+  Card,
+  CompletedHandTrick,
+  FullHandContract,
+  FullHandState,
+  HeartsPassScenario,
+  Seat,
+  Suit,
+  TableCard
+} from "./lessonTypes";
 
 type Rank = "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "J" | "Q" | "K" | "A";
 
@@ -24,6 +33,37 @@ const playerNames: Array<Seat> = ["Tutor", "Right", "You", "Left"];
 
 export function startBrowserHeartsHand(seed: number): FullHandState {
   return startBrowserFullHand("Hearts", seed);
+}
+
+export function generateBrowserHeartsPassPractice(seed: number): HeartsPassScenario {
+  const lowSuit = seed % 2 === 0 ? "C" : "D";
+  const sideSuit = lowSuit === "C" ? "D" : "C";
+  const playerHand = [
+    card("Q", "S"),
+    card("A", "H"),
+    card("K", "H"),
+    card("A", "S"),
+    card("K", "S"),
+    card("2", "H"),
+    card("3", "H"),
+    card("2", lowSuit),
+    card("4", lowSuit),
+    card("6", lowSuit),
+    card("3", sideSuit),
+    card("5", sideSuit),
+    card("7", sideSuit)
+  ].sort(compareCards);
+
+  return {
+    id: `browser-hearts-pass-${seed}`,
+    title: "Pass the danger cards",
+    prompt:
+      "Choose three cards to pass left. Start with Queen of Spades, high hearts, then dangerous high spades.",
+    playerHand,
+    recommendedPass: recommendBrowserHeartsPassCards(playerHand),
+    explanation:
+      "Beginner pass rule: move the obvious danger cards before the hand starts. Later we can teach suit-shortening and table reads."
+  };
 }
 
 export function startBrowserHeartsPassingHand(seed: number): FullHandState {
@@ -488,6 +528,30 @@ function chooseHeartsPassCards(hand: Card[]) {
       );
     })
     .slice(-3);
+}
+
+function recommendBrowserHeartsPassCards(hand: Card[]) {
+  return hand
+    .slice()
+    .sort((left, right) => heartsPassPriority(left) - heartsPassPriority(right) || compareByRankThenSuit(left, right))
+    .slice(-3)
+    .reverse();
+}
+
+function heartsPassPriority(card: Card) {
+  if (card.rank === "Q" && card.suit === "S") {
+    return 100;
+  }
+  if (card.suit === "H" && rankOrder[card.rank as Rank] >= rankOrder.Q) {
+    return 80 + rankOrder[card.rank as Rank];
+  }
+  if (card.suit === "S" && rankOrder[card.rank as Rank] >= rankOrder.K) {
+    return 60 + rankOrder[card.rank as Rank];
+  }
+  if (card.suit === "H") {
+    return 20 + rankOrder[card.rank as Rank];
+  }
+  return 0;
 }
 
 function removeCardFromHand(hand: Card[], card: Card) {

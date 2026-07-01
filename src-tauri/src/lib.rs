@@ -24,6 +24,12 @@ fn generate_daily_drill_set(seed: u64) -> PracticeDrillSetDto {
 }
 
 #[tauri::command]
+fn generate_hearts_pass_practice(seed: u64) -> HeartsPassScenarioDto {
+    let scenario = barbu_core::generate_hearts_pass_practice(seed);
+    HeartsPassScenarioDto::from_core(&scenario)
+}
+
+#[tauri::command]
 fn start_no_hearts_hand(seed: u64) -> FullHandDto {
     let state = barbu_core::start_no_hearts_hand(seed);
     FullHandDto::from_core(&state, "No Hearts", "point")
@@ -266,6 +272,40 @@ impl PracticeScenarioDto {
                 .copied()
                 .map(|card| PracticeOutcomeDto::from_core(scenario.outcome_for(card)))
                 .collect(),
+        }
+    }
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct HeartsPassScenarioDto {
+    id: String,
+    title: String,
+    prompt: String,
+    player_hand: Vec<CardDto>,
+    recommended_pass: Vec<CardDto>,
+    explanation: String,
+}
+
+impl HeartsPassScenarioDto {
+    fn from_core(scenario: &barbu_core::HeartsPassScenario) -> Self {
+        Self {
+            id: scenario.id.clone(),
+            title: scenario.title.clone(),
+            prompt: scenario.prompt.clone(),
+            player_hand: scenario
+                .player_hand
+                .iter()
+                .copied()
+                .map(CardDto::from_core)
+                .collect(),
+            recommended_pass: scenario
+                .recommended_pass
+                .iter()
+                .copied()
+                .map(CardDto::from_core)
+                .collect(),
+            explanation: scenario.explanation.clone(),
         }
     }
 }
@@ -736,6 +776,7 @@ pub fn run() {
             apply_hearts_pass,
             current_game,
             generate_daily_drill_set,
+            generate_hearts_pass_practice,
             generate_no_hearts_follow_suit,
             pass_domino_turn,
             play_domino_card,
