@@ -98,6 +98,8 @@ MVP Hearts should be real but intentionally small: pass three cards left, then p
 
 Solitaire can remain visible as a free starter placeholder until Barbu and Hearts feel stable. Whist, Bridge, Gin Rummy, Canasta, and Card Counting can remain visible as future packs or skill areas, but should not distract from getting Barbu and Hearts playable on the phone.
 
+For launch-focused planning, use the MVP Rounding-Off Roadmap in [FEATURES.md](./FEATURES.md). That list is the current stop-building guide before adding new game families or monetization surfaces.
+
 ## Long-Term Card Skill Direction
 
 Great card games are usually best against real people, but the app should first make local solo play and local opponents good enough to train real table habits. Barbu should become a place to practice transferable card skills and practical card-counting habits, not only a library of rules.

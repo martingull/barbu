@@ -129,6 +129,44 @@ Not MVP:
 - Barbu character animation.
 - Advanced AI opponent strategy beyond useful local training behavior.
 
+## MVP Rounding-Off Roadmap
+
+This section is the short list for getting from the current app to something that can be tested seriously on an iPhone. Prefer finishing these items before adding new game families, new monetization surfaces, or larger visual systems.
+
+1. Stabilize the active phone table
+   - Keep Quick Drill, full-hand practice, Play Barbu, Hearts, Domino, and Perfect mini-games on stable iPhone layouts.
+   - Prevent active-game scrolling, safe-area collisions, shifting score boxes, and thumb-card/action collisions.
+   - Keep the shared table surface consistent across Barbu practice, Barbu play, Hearts play, and realistic mini-games.
+
+2. Finish Barbu v1 play
+   - Keep the current playable roster: No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino.
+   - Tighten full-hand feedback so the player understands why a trick was good, risky, or costly.
+   - Improve local opponent policy only where bad table behavior damages the feel of the hand.
+   - Decide whether v1 Play Barbu stays fixed-order or adds a simple contract-choice step.
+   - Defer full historical/Parlett settlement details unless they block a believable local session.
+
+3. Finish Hearts v1 play
+   - Keep Hearts as the second active free starter game.
+   - Maintain the current v1 rules: pass three left, 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, hearts plus queen-of-spades scoring.
+   - Add only the Hearts-specific practice needed to support the play mode: passing, queen danger, safe heart avoidance, and basic score reading.
+   - Defer rotating pass direction, shooting the moon, and long match scoring unless the single-hand loop feels incomplete without them.
+
+4. Keep Perfect small but useful
+   - Treat Perfect as card-sense training, not a second game catalog.
+   - Keep Count Trumps, Trump Memory Hand, Track Court Cards, and Danger Cards if they remain tied to real table play.
+   - Stop adding mini-games until each active one has clear feedback and a reason to return.
+
+5. Product shell and launch readiness
+   - Keep the catalog free-first: Hearts, Barbu, Solitaire, then paid/future packs.
+   - Solitaire may remain a polished placeholder for MVP if Barbu and Hearts feel good.
+   - Make app icon, launch screen, iPhone safe areas, and local Tauri/iOS packaging reliable.
+   - Add a short manual smoke checklist for physical iPhone testing before each TestFlight-style build.
+
+6. Documentation and verification gate
+   - Keep README, FEATURES, SCREEN_PLAN, and AGENTS aligned with the MVP scope.
+   - Every completed feature should include a "Try it yourself" path.
+   - Before calling the MVP ready, run core Rust tests, UI tests on phone profiles, Tauri check, and at least one physical-device smoke pass.
+
 ## Barbu Contract Roadmap
 
 Barbu should be presented as one core game first, then as documented teaching modes and varieties. The user should always be able to tell which rules belong to core Barbu and which screens are app-specific ways to learn or practice it.
