@@ -885,6 +885,7 @@
   let completedPathSteps: Record<string, boolean> = loadCourseProgress();
   let playBarbuHistory: PlayBarbuAttempt[] = loadPlayBarbuHistory();
   let savedPlayBarbuRun: SavedPlayBarbuRun | null = loadSavedPlayBarbuRun();
+  let heartsSessionScores: Record<Seat, number> = emptySeatPenalties();
   let usingGeneratedPractice = false;
   let generatedPracticeError = "";
   let fullHand: FullHandState | null = null;
@@ -1105,7 +1106,10 @@
   $: fullHandWorstTrick = fullHand ? fullHandWorstTrickLabel(fullHand) : "";
   $: fullHandIsHeartsGame = activeGameTable === "hearts" && fullHand?.contract === "Hearts" && !fullHandRunActive;
   $: heartsScorecardMeta = gameTableDefinitions.hearts.scorecard;
-  $: heartsStandings = heartsScorecardStandings(fullHandSeatPenalties);
+  $: heartsVisibleScores = fullHandIsHeartsGame
+    ? addSeatPenalties(heartsSessionScores, fullHandSeatPenalties)
+    : heartsSessionScores;
+  $: heartsStandings = heartsScorecardStandings(heartsVisibleScores);
   $: heartsLeader = heartsStandings[0];
   $: heartsPlayerStanding = heartsStandings.find((standing) => standing.seat === "You");
   $: heartsLeaderLabel = heartsLeader
@@ -1164,7 +1168,9 @@
           : dominoHand
             ? `${dominoHand.cardsRemaining} cards left`
             : "Ready";
-  $: fullHandNextActionLabel = fullHandRunActive
+  $: fullHandNextActionLabel = fullHandIsHeartsGame
+    ? "Next hand"
+    : fullHandRunActive
     ? fullHandRunIsComplete
       ? "New game"
       : "Next contract"
@@ -2832,12 +2838,15 @@
     }
   }
 
-  async function startHeartsPassingPhase() {
+  async function startHeartsPassingPhase(options: { keepSession?: boolean } = {}) {
     activeGameTable = "hearts";
     fullHandRunActive = false;
     fullHandRunResults = [];
     fullHand = null;
     dominoHand = null;
+    if (!options.keepSession) {
+      heartsSessionScores = emptySeatPenalties();
+    }
     heartsPassSelectedCardIds = [];
     heartsPassError = "";
     fullHandSelectedCardId = "";
@@ -3248,6 +3257,12 @@
       return;
     }
 
+    if (fullHandIsHeartsGame) {
+      heartsSessionScores = addSeatPenalties(heartsSessionScores, fullHandSeatPenalties);
+      void startHeartsPassingPhase({ keepSession: true });
+      return;
+    }
+
     if (fullHandRunActive) {
       recordCompletedFullHandRunResult(fullHand);
 
@@ -3274,6 +3289,11 @@
 
   function replayFullHand() {
     if (!fullHand) {
+      return;
+    }
+
+    if (fullHandIsHeartsGame) {
+      void startHeartsPassingPhase({ keepSession: true });
       return;
     }
 
@@ -3339,6 +3359,15 @@
       Right: 0,
       You: 0,
       Left: 0
+    };
+  }
+
+  function addSeatPenalties(left: Record<Seat, number>, right: Record<Seat, number>) {
+    return {
+      Tutor: left.Tutor + right.Tutor,
+      Right: left.Right + right.Right,
+      You: left.You + right.You,
+      Left: left.Left + right.Left
     };
   }
 
@@ -4670,7 +4699,7 @@
           {scoreSeatLabel(seat)}
           <small>{seat === "You" ? "You" : "Table"}</small>
         </span>
-        <strong>{fullHandSeatPenalties[seat]}</strong>
+        <strong>{heartsVisibleScores[seat]}</strong>
         <strong>{formatOrdinal(heartsStandings.find((standing) => standing.seat === seat)?.rank ?? 1)}</strong>
       </div>
     {/each}
@@ -6208,7 +6237,7 @@
                   {#each scoreSeats as seat}
                     <div>
                       <span>{scoreSeatRunLabel(seat)} penalty</span>
-                      <strong>{fullHandSeatPenalties[seat]}</strong>
+                      <strong>{heartsVisibleScores[seat]}</strong>
                     </div>
                   {/each}
                 </div>

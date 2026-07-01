@@ -196,6 +196,15 @@ async function playFullHandDecision(page: Page) {
   }
 }
 
+async function passThreeHeartsCards(page: Page) {
+  const passingHand = page.getByLabel("Your Hearts passing hand");
+  await passingHand.locator("button").nth(0).click();
+  await passingHand.locator("button").nth(1).click();
+  await passingHand.locator("button").nth(2).click();
+  await expect(page.getByLabel("Hearts pass summary")).toContainText("3 / 3");
+  await page.getByRole("button", { name: "Pass cards" }).click();
+}
+
 async function playDominoDecision(page: Page) {
   const handRegion = page.getByRole("region", { name: "Domino hand", exact: true });
   const previousState = await handRegion.innerText();
@@ -391,13 +400,8 @@ test("Hearts play starts with a pass-left phase before the hand", async ({ page 
   await expect(page.getByLabel("Hearts pass summary")).toContainText("You pass");
   await expect(page.getByLabel("Hearts pass summary")).toContainText("Left");
   await expect(page.getByLabel("Hearts pass cards")).toContainText("Choose exactly three cards");
-  const passingHand = page.getByLabel("Your Hearts passing hand");
-  await passingHand.locator("button").nth(0).click();
-  await passingHand.locator("button").nth(1).click();
-  await passingHand.locator("button").nth(2).click();
-  await expect(page.getByLabel("Hearts pass summary")).toContainText("3 / 3");
   await page.screenshot({ path: testInfo.outputPath("hearts-passing.png"), fullPage: true });
-  await page.getByRole("button", { name: "Pass cards" }).click();
+  await passThreeHeartsCards(page);
 
   await expect(page.getByRole("heading", { name: "Hearts hand" })).toBeVisible();
   await expect(page.getByLabel("Hearts hand score")).toContainText("Your penalty");
@@ -414,6 +418,26 @@ test("Hearts play starts with a pass-left phase before the hand", async ({ page 
   await page.getByLabel("Hearts full hand").getByRole("button", { name: "Table" }).click();
   await expect(page.getByRole("heading", { name: "Hearts table" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
+});
+
+test("Hearts next hand carries score and starts with passing again", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Hearts" }).click();
+  await page.getByRole("button", { name: "Play Hearts" }).click();
+  await passThreeHeartsCards(page);
+
+  for (let decision = 0; decision < 13; decision += 1) {
+    await playFullHandDecision(page);
+  }
+
+  await expect(page.getByRole("button", { name: "Next hand" })).toBeVisible();
+  await expect(page.getByLabel("Hearts final scorecard")).toContainText("Low score leads");
+  await page.getByRole("button", { name: "Next hand" }).click();
+
+  await expect(page.getByRole("heading", { name: "Pass cards" })).toBeVisible();
+  await passThreeHeartsCards(page);
+  await expect(page.getByRole("heading", { name: "Hearts hand" })).toBeVisible();
+  await expect(page.getByLabel("Hearts table score")).toContainText(/[1-9]\d*/);
 });
 
 test("Perfect mode starts card-counting minigames", async ({ page }, testInfo) => {
