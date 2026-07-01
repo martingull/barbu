@@ -348,6 +348,28 @@ test("Hearts practice result returns to the Hearts table", async ({ page }) => {
   await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
 });
 
+test("Hearts reference explains the MVP rule boundary", async ({ page }, testInfo) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Hearts" }).click();
+
+  await page.getByRole("tab", { name: "Learn" }).click();
+  await page.getByLabel("Hearts learn actions").getByRole("button", { name: "Rules Reference" }).click();
+
+  await expect(page.getByRole("heading", { name: "Hearts reference" })).toBeVisible();
+  await expect(page.getByLabel("Hearts overview")).toContainText("Queen of Spades");
+  await expect(page.getByLabel("Hearts overview")).toContainText("woman of spades");
+  await expect(page.getByLabel("Contract reference")).toContainText("Hearts rules");
+  await expect(page.getByLabel("Contract reference")).toContainText("queen of spades is 13");
+  await expect(page.getByLabel("Contract roadmap")).toContainText("Passing cards");
+  await expect(page.getByLabel("Contract roadmap")).toContainText("Hearts v2");
+  await expect(page.getByLabel("Variants and varieties")).toContainText("MVP Simplification");
+  await page.screenshot({ path: testInfo.outputPath("hearts-reference.png"), fullPage: true });
+
+  await page.getByRole("button", { name: "Back to Hearts table" }).click();
+  await expect(page.getByRole("heading", { name: "Hearts table" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Learn" })).toHaveAttribute("aria-selected", "true");
+});
+
 test("Hearts play starts a simplified local hand", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Open Hearts" }).click();
@@ -1520,4 +1542,14 @@ test("completed course does not loop back to the first lesson", async ({ page })
   await expect(page.getByRole("button", { name: "Review results" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Reset path" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Continue with Meet the contract/ })).toHaveCount(0);
+
+  await openBarbuTab(page, "Perfect");
+  await expect(page.getByRole("tab", { name: "Perfect" })).toHaveAttribute("aria-selected", "true");
+  await page.getByRole("button", { name: "Games" }).click();
+  await page.getByRole("button", { name: /Open Barbu/ }).click();
+  await expect(page.getByRole("tab", { name: "Learn" })).toHaveAttribute("aria-selected", "true");
+  await page.getByRole("button", { name: "Review results" }).click();
+  await page.getByRole("button", { name: "Finish review" }).click();
+  await expect(page.getByRole("heading", { name: "Barbu's table" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Learn" })).toHaveAttribute("aria-selected", "true");
 });

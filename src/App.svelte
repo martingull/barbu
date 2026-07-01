@@ -286,9 +286,9 @@
       title: "Hearts",
       status: "Ready",
       access: "Free",
-      summary: "Plain-trick foundations before the contracts expand.",
+      summary: "Queen of Spades style penalty play.",
       lessonCount: 1,
-      detailLabel: "Practice spike"
+      detailLabel: "MVP hand"
     },
     {
       id: "barbu",
@@ -1003,6 +1003,7 @@
   $: lessonOutcome = selectedCard && (playedCard || !isSelectedLegal) ? buildLessonOutcome(selectedCard, playedCard) : "";
   $: activeCourse = courseCatalog.find((course) => course.id === activeCourseId) ?? courseCatalog[0];
   $: activeReference = referenceCatalog.find((reference) => reference.id === activeReferenceId) ?? referenceCatalog[0];
+  $: activeReferenceIsBarbu = activeReference.id === "barbu";
   $: activeBarbuTableTabLabel = tableTabLabel(activeBarbuTableTab);
   $: activeHeartsTableTabLabel = tableTabLabel(activeHeartsTableTab);
   $: currentDrill = activeDrillSteps[drillIndex] ?? activeDrillSteps[0] ?? drillSteps[0];
@@ -1663,6 +1664,11 @@
   function openBarbuTable() {
     activeGameTable = "barbu";
     appView = "barbuTable";
+  }
+
+  function openBarbuLearnTable() {
+    activeBarbuTableTab = "learn";
+    openBarbuTable();
   }
 
   function openHeartsTable() {
@@ -2704,7 +2710,7 @@
       return;
     }
 
-    openBarbuTable();
+    openBarbuLearnTable();
   }
 
   function catalogDetailLabel(entry: CatalogEntry) {
@@ -3973,7 +3979,7 @@
 
   function continueCourse() {
     if (isCourseComplete || !nextPathStep) {
-      openBarbuTable();
+      openBarbuLearnTable();
       return;
     }
 
@@ -4070,7 +4076,7 @@
 
   function finishPathReview() {
     saveCourseProgress({ ...completedPathSteps, review: true });
-    openBarbuTable();
+    openBarbuLearnTable();
   }
 
   function selectDrillCard(card: Card) {
@@ -4949,7 +4955,16 @@
             <div class="barbu-mode-copy">
               <p class="eyebrow">Learn</p>
               <h2>Hearts lessons are next.</h2>
-              <p>Hearts will reuse the same follow-suit and penalty-card habits that Barbu is teaching now.</p>
+              <p>Start with the Queen of Spades version: follow suit, avoid hearts, and avoid QS.</p>
+            </div>
+            <div class="table-action-groups" aria-label="Hearts table actions">
+              <section class="learn-action-grid" aria-label="Hearts learn actions">
+                <button class="learn-action-card" onclick={() => openReference("hearts")} type="button">
+                  <span>Rules</span>
+                  <strong>Reference</strong>
+                  <small>See the current MVP rules and the later Hearts rules we have not added yet.</small>
+                </button>
+              </section>
             </div>
           </div>
         {:else if activeHeartsTableTab === "practice"}
@@ -5686,7 +5701,7 @@
     </section>
   {:else if appView === "reference"}
     <header class="topbar" aria-label={`${activeReference.title} reference`}>
-      <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
+      <button class="back-button" onclick={openActiveGameTable} type="button">Table</button>
       <div>
         <p class="eyebrow">{activeReference.family} family</p>
         <h1>{activeReference.title} reference</h1>
@@ -5725,8 +5740,8 @@
 
       <section class="reference-list" aria-label="Contract reference">
         <div class="section-heading">
-          <p class="eyebrow">Core game</p>
-          <h2>Barbu contracts</h2>
+          <p class="eyebrow">{activeReferenceIsBarbu ? "Core game" : "Current game"}</p>
+          <h2>{activeReferenceIsBarbu ? "Barbu contracts" : `${activeReference.title} rules`}</h2>
         </div>
         <div class="reference-list-grid">
           {#each activeReference.contracts as contract}
@@ -5742,8 +5757,8 @@
 
       <section class="reference-list" aria-label="Contract roadmap">
         <div class="section-heading">
-          <p class="eyebrow">Core roadmap</p>
-          <h2>Contract status</h2>
+          <p class="eyebrow">{activeReferenceIsBarbu ? "Core roadmap" : "Rule boundary"}</p>
+          <h2>{activeReferenceIsBarbu ? "Contract status" : "Current and later rules"}</h2>
         </div>
         <div class="contract-roadmap-list">
           {#each activeReference.contractRoadmap as item}
@@ -5775,8 +5790,12 @@
       </section>
 
       <div class="course-actions">
-        <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
-        <button class="primary-action" onclick={continueCourse} type="button">Continue path</button>
+        <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
+        {#if activeReferenceIsBarbu}
+          <button class="primary-action" onclick={continueCourse} type="button">Continue path</button>
+        {:else}
+          <button class="primary-action" onclick={openActiveGameTable} type="button">Back to {activeReference.title} table</button>
+        {/if}
       </div>
     </section>
   {:else if appView === "courseContent"}
@@ -6488,7 +6507,7 @@
     </section>
   {:else if appView === "pathReview"}
     <header class="topbar" aria-label="Barbu review">
-      <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
+      <button class="back-button" onclick={openBarbuLearnTable} type="button">Table</button>
       <div>
         <p class="eyebrow">Review</p>
         <h1>Review the hand</h1>
@@ -6568,7 +6587,7 @@
       {/if}
 
       <div class="course-actions">
-        <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
+        <button class="secondary-action" onclick={openBarbuLearnTable} type="button">Table</button>
         <button class="secondary-action" onclick={() => void replayReviewWeakContract()} type="button">
           Replay {reviewReplayContract || "table"}
         </button>

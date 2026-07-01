@@ -243,5 +243,117 @@ export const referenceCatalog: GameReference[] = [
           "Later game varieties can change contract order, scoring, or table customs, but those differences should be documented in this reference layer."
       }
     ]
+  },
+  {
+    id: "hearts",
+    title: "Hearts",
+    family: "Hearts",
+    baseline: "David Parlett, The Penguin Book of Card Games",
+    overview:
+      "The MVP Hearts table is the Queen of Spades style known in some places as the woman of spades. The current app version is deliberately small: play a local hand, follow suit, avoid hearts, and avoid the queen of spades.",
+    sections: [
+      {
+        id: "object",
+        title: "Object",
+        body:
+          "Avoid winning tricks that contain penalty cards. A clean trick may be legal, but it is still a decision to think about because taking the lead can expose you later.",
+        facts: [
+          { label: "Main danger", value: "Queen of spades" },
+          { label: "Other danger", value: "Any heart" }
+        ]
+      },
+      {
+        id: "players",
+        title: "Players And Seats",
+        body:
+          "The Hearts table uses the same four-seat trick-taking surface as Barbu: Barbu teaches from the top, You play from the bottom, and the side seats complete the table.",
+        facts: [
+          { label: "Players", value: "Four" },
+          { label: "Tutor", value: "Barbu, the King of Cards" }
+        ]
+      },
+      {
+        id: "play",
+        title: "Play",
+        body:
+          "The leader plays first, and everyone else must follow the led suit when possible. If you are void in the led suit, you may discard another suit.",
+        facts: [
+          { label: "Led suit", value: "Set by the first card in the trick" },
+          { label: "Legal play", value: "Follow suit when you can" },
+          { label: "Trick winner", value: "Highest card in the led suit wins" }
+        ]
+      },
+      {
+        id: "scoring",
+        title: "Scoring",
+        body:
+          "MVP Hearts scores each heart as one penalty point and the queen of spades as thirteen penalty points. The trick winner receives all penalty cards in that trick.",
+        facts: [
+          { label: "Heart", value: "1 penalty point" },
+          { label: "Queen of spades", value: "13 penalty points" },
+          { label: "Points in play", value: "26" }
+        ]
+      }
+    ],
+    contracts: [
+      {
+        id: "mvp-hand",
+        title: "MVP Hearts Hand",
+        objective: "Avoid hearts and the queen of spades while following suit.",
+        scoring: "Hearts are 1 penalty point each; the queen of spades is 13.",
+        lesson: "Start by reading who wins the trick before worrying about advanced Hearts rules."
+      }
+    ],
+    contractRoadmap: [
+      {
+        id: "mvp-hand",
+        title: "Simplified local hand",
+        coreStatus: "MVP",
+        appStatus: "Playable",
+        note: "The shared trick-taking table supports follow-suit legality, trick winners, hearts, and queen-of-spades scoring."
+      },
+      {
+        id: "passing",
+        title: "Passing cards",
+        coreStatus: "Hearts v2",
+        appStatus: "Later",
+        note: "Passing should come after the local hand and scoring loop feel stable."
+      },
+      {
+        id: "hearts-broken",
+        title: "Hearts-broken lead restriction",
+        coreStatus: "Hearts v2",
+        appStatus: "Later",
+        note: "The current MVP does not restrict heart leads before hearts are broken."
+      },
+      {
+        id: "shooting-moon",
+        title: "Shooting the moon",
+        coreStatus: "Hearts v2",
+        appStatus: "Later",
+        note: "Moon scoring is intentionally excluded until normal penalty avoidance is clear."
+      },
+      {
+        id: "match-scoring",
+        title: "Multi-hand match scoring",
+        coreStatus: "Hearts v2",
+        appStatus: "Later",
+        note: "The MVP focuses on a single hand rather than a match to a target score."
+      }
+    ],
+    variants: [
+      {
+        id: "queen-of-spades",
+        title: "Queen Of Spades / Woman Of Spades",
+        note:
+          "This is the named danger-card style the MVP starts from: hearts are penalties, and the queen of spades is the large penalty card."
+      },
+      {
+        id: "mvp-simplification",
+        title: "MVP Simplification",
+        note:
+          "The app currently teaches the core trick and penalty loop before adding passing, hearts-broken restrictions, moon scoring, or longer match structure."
+      }
+    ]
   }
 ];
