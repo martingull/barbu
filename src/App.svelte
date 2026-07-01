@@ -1193,8 +1193,8 @@
   $: courtCountFeedback =
     courtCountChecked && courtCountSelected !== null
       ? courtCountSelected === realisticCourtRound.question.answer
-        ? `Correct. ${realisticCourtQuestionAnswerText(realisticCourtRound.question)}`
-        : realisticCourtQuestionAnswerText(realisticCourtRound.question)
+        ? "Correct."
+        : "Not this time."
       : "Track jacks, queens, and kings as the hand plays.";
   $: realisticCourtSelectedCard = realisticCourtRound.hands.You.find((card) => card.id === realisticCourtSelectedCardId);
   $: realisticCourtLedSuit = realisticCourtRound.currentTrick[0]?.card.suit;
@@ -2343,7 +2343,7 @@
 
   function realisticCourtQuestionAnswerText(question: CourtMemoryQuestion) {
     if (question.kind === "count") {
-      return `${question.answer} court cards have been played so far.`;
+      return `The answer was ${question.answer}.`;
     }
 
     return question.answer ? `Yes. ${question.targetCard.label} was played.` : `No. ${question.targetCard.label} was not played.`;
@@ -4931,9 +4931,9 @@
     >
       {#snippet summary()}
         <div class="trump-count-review" aria-label="Court card memory status">
-          <span>Court cards seen</span>
-          <strong>{realisticCourtSeenCount} of 12</strong>
-          <small>{realisticCourtRound.completedTricks.length} tricks complete.</small>
+          <span>Memory run</span>
+          <strong>{realisticCourtRound.completedTricks.length} tricks complete</strong>
+          <small>Track jacks, queens, and kings from memory.</small>
         </div>
       {/snippet}
 
@@ -4943,7 +4943,24 @@
           <h2>{realisticCourtPromptTitle}</h2>
         </div>
 
-        <p class="result" aria-label="Court card memory challenge">{realisticCourtPromptBody}</p>
+        {#if courtCountChecked}
+          <div class="trump-count-review" aria-label="Court card memory review">
+            <span>Court cards seen</span>
+            <strong>{realisticCourtSeenCount} court cards appeared</strong>
+            <small>{realisticCourtQuestionAnswerText(realisticCourtRound.question)}</small>
+            <div class="trump-review-cards">
+              {#each realisticCourtSeenCards.filter(isCourtCard) as card}
+                <div class="trump-seen-card court">
+                  <CardFace {card} decorative />
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
+
+        <p class="result" aria-label="Court card memory challenge">
+          {courtCountChecked ? "Review the court cards that had already left the table." : realisticCourtPromptBody}
+        </p>
 
         {#if realisticCourtRound.status === "playing"}
           <div class="hand full-hand-cards realistic-trump-hand" aria-label="Your court card memory hand">
@@ -4965,7 +4982,7 @@
           </div>
         {/if}
 
-        {#if realisticCourtRound.status === "question"}
+        {#if realisticCourtRound.status === "question" && !courtCountChecked}
           {#if realisticCourtRound.question.kind === "count"}
             <div class="trump-count-options" aria-label="Court card count answers">
               {#each realisticCourtRound.question.options as option}
@@ -5014,27 +5031,12 @@
             </div>
           {/if}
 
-          <p
-            class:warning={courtCountChecked && courtCountSelected !== realisticCourtRound.question.answer}
-            class="trump-count-feedback"
-          >
-            {courtCountFeedback}
-          </p>
         {/if}
 
         {#if courtCountChecked}
-          <div class="trump-count-review" aria-label="Court card memory review">
-            <span>Court cards seen</span>
-            <strong>{realisticCourtSeenCount} court cards appeared</strong>
-            <small>{realisticCourtQuestionAnswerText(realisticCourtRound.question)}</small>
-            <div class="trump-review-cards">
-              {#each realisticCourtSeenCards.filter(isCourtCard) as card}
-                <div class="trump-seen-card court">
-                  <CardFace {card} decorative />
-                </div>
-              {/each}
-            </div>
-          </div>
+          <p class:warning={courtCountSelected !== realisticCourtRound.question.answer} class="trump-count-feedback">
+            {courtCountFeedback}
+          </p>
         {/if}
 
         <div class="action-row">

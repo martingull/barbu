@@ -441,7 +441,8 @@ test("Perfect mode starts card-counting minigames", async ({ page }, testInfo) =
   await expect(page.getByRole("heading", { name: "Track court cards" })).toBeVisible();
   await expect(page.getByLabel("Track court cards trainer")).toContainText("Jacks, queens, kings");
   await expect(page.getByLabel("Court card memory table")).toBeVisible();
-  await expect(page.getByLabel("Court card memory status")).toContainText("Court cards seen");
+  await expect(page.getByLabel("Court card memory status")).toContainText("Memory run");
+  await expect(page.getByLabel("Court card memory status")).not.toContainText("Court cards seen");
   await expect(page.getByLabel("Court card memory challenge")).toContainText(/Lead|Follow|void/);
   await expect(page.getByRole("button", { name: "Play card" })).toBeDisabled();
 
