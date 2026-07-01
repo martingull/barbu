@@ -1103,6 +1103,15 @@
   $: fullHandResultSummary = fullHand ? fullHandResultText(fullHand) : "";
   $: fullHandBestTrick = fullHand ? fullHandBestTrickLabel(fullHand) : "";
   $: fullHandWorstTrick = fullHand ? fullHandWorstTrickLabel(fullHand) : "";
+  $: fullHandIsHeartsGame = activeGameTable === "hearts" && fullHand?.contract === "Hearts" && !fullHandRunActive;
+  $: heartsScorecardMeta = gameTableDefinitions.hearts.scorecard;
+  $: heartsStandings = heartsScorecardStandings(fullHandSeatPenalties);
+  $: heartsLeader = heartsStandings[0];
+  $: heartsPlayerStanding = heartsStandings.find((standing) => standing.seat === "You");
+  $: heartsLeaderLabel = heartsLeader
+    ? `${scoreSeatLabel(heartsLeader.seat)} ${heartsLeader.score} ${heartsLeader.score === 1 ? "point" : "points"}`
+    : "You 0 points";
+  $: heartsPlayerPlaceLabel = heartsPlayerStanding ? formatOrdinal(heartsPlayerStanding.rank) : "1st";
   $: activeRunContract = fullHand?.contract ?? dominoHand?.contract;
   $: fullHandRunCurrentIndex = activeRunContract ? fullHandContracts.indexOf(activeRunContract) : -1;
   $: pendingRunContractIndex = fullHandContracts.indexOf(pendingRunContract);
@@ -3394,6 +3403,25 @@
     });
   }
 
+  function heartsScorecardStandings(scores: Record<Seat, number>): RunStanding[] {
+    const orderedScores = scoreSeats
+      .map((seat) => ({ seat, score: scores[seat] }))
+      .sort((left, right) => left.score - right.score);
+    let previousScore = -1;
+    let previousRank = 0;
+
+    return orderedScores.map((standing, index) => {
+      const rank = index > 0 && standing.score === previousScore ? previousRank : index + 1;
+      previousScore = standing.score;
+      previousRank = rank;
+
+      return {
+        ...standing,
+        rank
+      };
+    });
+  }
+
   function runResultHeading(standings: RunStanding[]) {
     const player = standings.find((standing) => standing.seat === "You");
 
@@ -3604,6 +3632,20 @@
   }
 
   function fullHandResultHeading(hand: FullHandState) {
+    if (activeGameTable === "hearts" && hand.contract === "Hearts") {
+      const player = heartsPlayerStanding;
+
+      if (!player) {
+        return "Hearts hand complete";
+      }
+      if (player.rank === 1) {
+        const tiedLeaders = heartsStandings.filter((standing) => standing.rank === 1);
+        return tiedLeaders.length > 1 ? "You tied the table" : "You led the table";
+      }
+
+      return `You finished ${formatOrdinal(player.rank)}`;
+    }
+
     if (hand.contract === "Hearts Trumps") {
       return hand.playerPenalty >= 5 ? "Strong trick count" : "Keep fighting for tricks";
     }
@@ -3617,6 +3659,12 @@
   }
 
   function fullHandResultText(hand: FullHandState) {
+    if (activeGameTable === "hearts" && hand.contract === "Hearts") {
+      return `${heartsScorecardMeta.objective}. You took ${formatFullHandPenalty(
+        hand.playerPenalty
+      )}; ${heartsLeaderLabel} leads the hand.`;
+    }
+
     if (hand.contract === "Hearts Trumps") {
       return `You won ${formatFullHandPenalty(hand.playerPenalty)}. The table won ${formatFullHandPenalty(
         hand.totalPenalty - hand.playerPenalty
@@ -4605,6 +4653,31 @@
           {formatSignedScore(fullHandRunSeatScores[seat])}
         </strong>
       {/each}
+    </div>
+  </div>
+{/snippet}
+
+{#snippet heartsScorecard(label = heartsScorecardMeta.label)}
+  <div class="run-scorecard hearts-scorecard" aria-label={label}>
+    <div class="run-scorecard-row hearts-scorecard-row header">
+      <span>Player</span>
+      <span>{heartsScorecardMeta.unitLabel}</span>
+      <span>Place</span>
+    </div>
+    {#each scoreSeats as seat}
+      <div class:active={seat === "You"} class="run-scorecard-row hearts-scorecard-row">
+        <span>
+          {scoreSeatLabel(seat)}
+          <small>{seat === "You" ? "You" : "Table"}</small>
+        </span>
+        <strong>{fullHandSeatPenalties[seat]}</strong>
+        <strong>{formatOrdinal(heartsStandings.find((standing) => standing.seat === seat)?.rank ?? 1)}</strong>
+      </div>
+    {/each}
+    <div class="run-scorecard-row hearts-scorecard-row total">
+      <span>{heartsScorecardMeta.objective}</span>
+      <strong>{heartsLeader ? scoreSeatLabel(heartsLeader.seat) : "You"}</strong>
+      <strong>{heartsPlayerPlaceLabel}</strong>
     </div>
   </div>
 {/snippet}
@@ -6129,6 +6202,17 @@
                   </div>
                 {/if}
               </div>
+              {#if fullHandIsHeartsGame}
+                <div class="full-hand-summary-row table-score" aria-label="Hearts table score">
+                  <span class="summary-row-label">{heartsScorecardMeta.label}</span>
+                  {#each scoreSeats as seat}
+                    <div>
+                      <span>{scoreSeatRunLabel(seat)} penalty</span>
+                      <strong>{fullHandSeatPenalties[seat]}</strong>
+                    </div>
+                  {/each}
+                </div>
+              {/if}
               {#if fullHandRunActive}
                 <div class="full-hand-summary-row table-score" aria-label="Table scores">
                   <span class="summary-row-label">Table scores</span>
@@ -6183,16 +6267,20 @@
 
               <p class="result" aria-label={`${fullHand.contract} result summary`}>{fullHandResultSummary}</p>
 
-              <div class="full-hand-result-tricks" aria-label={`${fullHand.contract} key tricks`}>
-                <div>
-                  <span>{fullHandContractMeta.bestLabel}</span>
-                  <strong>{fullHandBestTrick}</strong>
+              {#if fullHandIsHeartsGame}
+                {@render heartsScorecard("Hearts final scorecard")}
+              {:else}
+                <div class="full-hand-result-tricks" aria-label={`${fullHand.contract} key tricks`}>
+                  <div>
+                    <span>{fullHandContractMeta.bestLabel}</span>
+                    <strong>{fullHandBestTrick}</strong>
+                  </div>
+                  <div>
+                    <span>{fullHandContractMeta.weakestLabel}</span>
+                    <strong>{fullHandWorstTrick}</strong>
+                  </div>
                 </div>
-                <div>
-                  <span>{fullHandContractMeta.weakestLabel}</span>
-                  <strong>{fullHandWorstTrick}</strong>
-                </div>
-              </div>
+              {/if}
             {/if}
           {:else if fullHandIsReviewingTrick}
             <div class="lesson-heading">

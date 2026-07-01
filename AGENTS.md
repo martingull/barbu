@@ -10,7 +10,7 @@ The product concept is that the player learns by sitting down against Barbu, a "
 
 Treat Barbu as the first game in a broader card-game catalog, not as the permanent product boundary. The MVP should include Hearts as a real second starter game, using shared Hearts-family and trick-taking foundations rather than a cloned implementation. Favor structures that can later support other Hearts variants, then other families such as Whist and Bridge.
 
-MVP Hearts may be deliberately simplified: local hand play with hearts and the queen of spades as penalties. Passing cards, hearts-broken lead restrictions, shooting the moon, and multi-hand Hearts scoring are later unless explicitly requested. Document simplifications clearly instead of hiding them.
+MVP Hearts may be deliberately simplified: pass three cards left, then play a local hand with hearts and the queen of spades as penalties. Rotating pass directions, hearts-broken lead restrictions, shooting the moon, and multi-hand Hearts scoring are later unless explicitly requested. Document simplifications clearly instead of hiding them.
 
 This is intended as a real App Store product, not a throwaway learning project. Code changes should keep maintainability, automated verification, product polish, and eventual monetization in mind.
 

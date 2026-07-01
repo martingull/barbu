@@ -402,6 +402,10 @@ test("Hearts play starts with a pass-left phase before the hand", async ({ page 
   await expect(page.getByRole("heading", { name: "Hearts hand" })).toBeVisible();
   await expect(page.getByLabel("Hearts hand score")).toContainText("Your penalty");
   await expect(page.getByLabel("Hearts hand score")).toContainText("26");
+  await expect(page.getByLabel("Hearts table score")).toContainText("Your penalty");
+  await expect(page.getByLabel("Hearts table score")).toContainText("Barbu penalty");
+  await expect(page.getByLabel("Hearts table score")).toContainText("Left penalty");
+  await expect(page.getByLabel("Hearts table score")).toContainText("Right penalty");
   await expect(page.getByLabel("Hearts hand table")).toBeVisible();
   await expect(page.getByLabel("Your Hearts hand")).toBeVisible();
   await expectNoPageScroll(page);

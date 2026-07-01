@@ -9,6 +9,13 @@ export type TableActionDefinition = {
   destination: string;
 };
 
+export type TableScorecardDefinition = {
+  label: string;
+  unitLabel: string;
+  objective: string;
+  leaderRule: "high-score" | "low-score";
+};
+
 export type TableTabDefinition = {
   id: TableTabId;
   label: string;
@@ -21,6 +28,7 @@ export type GameTableDefinition = {
   title: string;
   family: string;
   referenceId: string;
+  scorecard: TableScorecardDefinition;
   defaultTab: TableTabId;
   tabs: Record<TableTabId, TableTabDefinition>;
 };
@@ -67,6 +75,12 @@ export const gameTableDefinitions = {
     title: "Hearts table",
     family: "Hearts",
     referenceId: "hearts",
+    scorecard: {
+      label: "Hearts scorecard",
+      unitLabel: "Penalty",
+      objective: "Low score leads",
+      leaderRule: "low-score"
+    },
     defaultTab: "play",
     actionsByTab: {
       learn: [{ id: "reference", label: "Reference", destination: "Hearts reference" }],
@@ -82,6 +96,12 @@ export const gameTableDefinitions = {
     title: "Barbu's table",
     family: "Hearts",
     referenceId: "barbu",
+    scorecard: {
+      label: "Barbu scorecard",
+      unitLabel: "Score",
+      objective: "High score leads",
+      leaderRule: "high-score"
+    },
     defaultTab: "learn",
     actionsByTab: {
       learn: [

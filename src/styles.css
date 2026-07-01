@@ -1085,6 +1085,10 @@ button {
   border-radius: 6px;
 }
 
+.run-scorecard-row.hearts-scorecard-row {
+  grid-template-columns: minmax(86px, 1.3fr) repeat(2, minmax(48px, 0.72fr));
+}
+
 .run-scorecard-row.header,
 .run-scorecard-row.total {
   background: rgba(245, 241, 207, 0.14);
