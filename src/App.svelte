@@ -1029,6 +1029,15 @@
   $: completedPracticeTableSession =
     !activeDrillFocusContract && activeDrillSteps.length >= fullHandContracts.length && drillResults.length >= activeDrillSteps.length;
   $: canMarkPracticeTableComplete = completedPracticeTableSession && !completedPathSteps["generated-drill"];
+  $: drillResultIsHeartsPractice = activeGameTable === "hearts";
+  $: drillResultMessage =
+    drillResults.length > 0 && cleanDrillCount === drillResults.length
+      ? drillResultIsHeartsPractice
+        ? "Clean Hearts practice. Keep avoiding penalty tricks until the danger cards feel automatic."
+        : "Clean session. Barbu is ready to raise the pressure."
+      : drillResultIsHeartsPractice
+        ? "Repeat the Hearts pattern until following suit and avoiding penalties feels automatic."
+        : "Use the next repetition to make the weak decision automatic.";
   $: currentContractResults = summarizeContractResults(drillResults);
   $: weakContract = weakestContractFromResults(currentContractResults);
   $: recentPlayBarbuAttempts = playBarbuHistory.slice(0, 3);
@@ -6415,21 +6424,22 @@
           <strong>{drillLoopInsight.streakText}</strong>
         </div>
         <div class="drill-loop-actions">
-          <button class="primary-action" onclick={() => void replayWeakContract()} type="button">
-            Replay {drillLoopFocus}
-          </button>
-          <button class="secondary-action" onclick={() => void startDailyDrill()} type="button">Try again</button>
+          {#if drillResultIsHeartsPractice}
+            <button class="primary-action" onclick={startHeartsAvoidHeartsDrill} type="button">Practice Hearts again</button>
+            <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
+          {:else}
+            <button class="primary-action" onclick={() => void replayWeakContract()} type="button">
+              Replay {drillLoopFocus}
+            </button>
+            <button class="secondary-action" onclick={() => void startDailyDrill()} type="button">Try again</button>
+          {/if}
         </div>
       </div>
 
       <div class="drill-score-card">
         <p class="eyebrow">Result</p>
         <h2>{cleanDrillCount} / {drillResults.length} clean decisions</h2>
-        <p>
-          {drillResults.length > 0 && cleanDrillCount === drillResults.length
-            ? "Clean session. Barbu is ready to raise the pressure."
-            : "Use the next repetition to make the weak decision automatic."}
-        </p>
+        <p>{drillResultMessage}</p>
       </div>
 
       <div class="drill-result-list" aria-label="Decision results">
@@ -6466,10 +6476,14 @@
       {/if}
 
       <div class="course-actions drill-result-actions">
-        {#if canMarkPracticeTableComplete}
+        {#if canMarkPracticeTableComplete && !drillResultIsHeartsPractice}
           <button class="primary-action" onclick={markPracticeTableComplete} type="button">Mark Practice table complete</button>
         {/if}
-        <button class="primary-action" onclick={continueCourse} type="button">Continue path</button>
+        {#if drillResultIsHeartsPractice}
+          <button class="primary-action" onclick={openActiveGameTable} type="button">Back to Hearts practice</button>
+        {:else}
+          <button class="primary-action" onclick={continueCourse} type="button">Continue path</button>
+        {/if}
       </div>
     </section>
   {:else if appView === "pathReview"}

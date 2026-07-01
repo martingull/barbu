@@ -331,6 +331,23 @@ test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testI
   await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
 });
 
+test("Hearts practice result returns to the Hearts table", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Hearts" }).click();
+  await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Avoid hearts" }).click();
+
+  await completeQuickDrillDecision(page);
+  await continueDrillFromCheckedAnswer(page, "Review session");
+
+  await expect(page.getByRole("heading", { name: "Session complete" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Back to Hearts practice" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue path" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Back to Hearts practice" }).click();
+  await expect(page.getByRole("heading", { name: "Hearts table" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
+});
+
 test("Hearts play starts a simplified local hand", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Open Hearts" }).click();
