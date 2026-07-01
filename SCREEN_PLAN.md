@@ -36,7 +36,7 @@ When a feature is added, it should have one primary home. Cross-links are allowe
 
 Barbu is the first playable game, not the product boundary. The app should grow from shared game families rather than isolated one-off games. The product priority is still to make Barbu feel good first: clear learning, reliable full-hand play, useful practice, and a coherent local game loop.
 
-The MVP should include Hearts as the second active starter game. Hearts should reuse the shared trick-taking table and engine instead of becoming a separate implementation. MVP Hearts may be a documented simplification: pass-three-left, then local hand play with hearts and the queen of spades as penalties, while rotating pass directions, hearts-broken lead restrictions, shooting the moon, and multi-hand match scoring wait for Hearts v2.
+The MVP should include Hearts as the second active starter game. Hearts should reuse the shared trick-taking table and engine instead of becoming a separate implementation. MVP Hearts should be a focused local game: pass-three-left, 2C opening, first-trick penalty restrictions, no heart leads until hearts are broken, and hearts plus the queen of spades as penalties. Rotating pass directions, shooting the moon, and fuller match scoring can wait for Hearts v2.
 
 The Hearts family is the first expansion area because many games share:
 
@@ -72,7 +72,7 @@ Purpose: choose the game family or core game.
 Current role:
 
 - Shows free starter tables first: Hearts, Barbu, and Solitaire.
-- Hearts opens to a starter table with the shared Learn, Practice, Play, and Perfect structure. Play is active with pass-three-left and a simplified local Hearts hand.
+- Hearts opens to a starter table with the shared Learn, Practice, Play, and Perfect structure. Play is active with pass-three-left and a focused local Hearts hand.
 - Shows Card Counting after the free starters as the first ready paid skill pack.
 - Shows future paid games such as Whist, Bridge, Gin Rummy, and Canasta.
 - Keeps varieties under their parent game instead of showing them as separate first-screen tables.
@@ -99,12 +99,13 @@ Current role:
 
 - Uses the same Learn, Practice, Play, and Perfect grouping as Barbu.
 - Practice starts with shared hearts and queen-danger patterns.
-- Play starts with pass-three-left, then a simplified local Hearts hand on the shared table surface.
+- Play starts with pass-three-left, then a focused local Hearts hand on the shared table surface.
 
 MVP rule boundary:
 
 - Score hearts and the queen of spades as penalties.
 - Pass three cards left before the first trick.
+- Start the first trick with 2C, block first-trick penalty dumps when safe cards exist, and block heart leads until hearts are broken.
 - Keep follow-suit legality and trick resolution shared with Barbu.
 - Document missing Hearts v2 rules rather than pretending they are implemented.
 

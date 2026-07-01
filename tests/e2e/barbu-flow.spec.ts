@@ -399,7 +399,7 @@ test("Hearts reference explains the MVP rule boundary", async ({ page }, testInf
   await expect(page.getByLabel("Contract roadmap")).toContainText("Pass three left");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Hearts v1");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Hearts v2");
-  await expect(page.getByLabel("Variants and varieties")).toContainText("MVP Simplification");
+  await expect(page.getByLabel("Variants and varieties")).toContainText("MVP Boundary");
   await page.screenshot({ path: testInfo.outputPath("hearts-reference.png"), fullPage: true });
 
   await page.getByRole("button", { name: "Back to Hearts table" }).click();
@@ -413,8 +413,8 @@ test("Hearts play starts with a pass-left phase before the hand", async ({ page 
 
   await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
   const playPanel = page.getByRole("tabpanel", { name: "Play" });
-  await expect(playPanel).toContainText("hearts score 1 point");
-  await expect(playPanel).toContainText("QS scores 13");
+  await expect(playPanel).toContainText("hearts at 1 point");
+  await expect(playPanel).toContainText("QS at 13");
   await page.getByRole("button", { name: "Play Hearts" }).click();
 
   await expect(page.getByRole("heading", { name: "Pass cards" })).toBeVisible();

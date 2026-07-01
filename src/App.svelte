@@ -398,7 +398,7 @@
       role: "Starter Hearts hand",
       surface: "Trick-taking hand",
       target: "Avoid penalty tricks.",
-      reason: "MVP Hearts uses the shared table to teach the familiar avoidance game before variants are added.",
+      reason: "MVP Hearts now starts like Hearts: pass left, open with 2C, and keep hearts back until they are broken.",
       habit: "Track hearts and the queen of spades before deciding whether to win."
     },
     "No Hearts": {
@@ -5144,14 +5144,14 @@
             <div class="barbu-mode-copy">
               <p class="eyebrow">Learn</p>
               <h2>Learn the Hearts danger cards.</h2>
-              <p>Start with the playable MVP hand: pass three left, follow suit, avoid hearts, and avoid the queen of spades.</p>
+              <p>Start with the playable MVP hand: pass three left, open with 2C, follow suit, avoid hearts, and avoid the queen of spades.</p>
             </div>
             <div class="table-action-groups" aria-label="Hearts table actions">
               <section class="learn-action-grid" aria-label="Hearts learn actions">
                 <button class="learn-action-card" onclick={startHeartsHand} type="button">
                   <span>Starter hand</span>
                   <strong>Play Hearts</strong>
-                  <small>Pass three cards, play the simplified hand, then use the reference when a rule needs names.</small>
+                  <small>Pass three cards, play the focused hand, then use the reference when a rule needs names.</small>
                 </button>
                 <button class="learn-action-card" onclick={() => openReference(gameTableDefinitions.hearts.referenceId)} type="button">
                   <span>Rules</span>
@@ -5198,7 +5198,7 @@
             <div class="barbu-mode-copy">
               <p class="eyebrow">Play</p>
               <h2>Play a Hearts hand.</h2>
-              <p>MVP Hearts starts with pass-three-left, then uses the shared trick-taking table: hearts score 1 point, and QS scores 13.</p>
+              <p>MVP Hearts starts with pass-three-left, 2C opening, hearts-broken lead restrictions, hearts at 1 point, and QS at 13.</p>
             </div>
             <div class="play-options" aria-label="Hearts play options">
               <button class="primary-action" onclick={startHeartsHand} type="button">Play Hearts</button>

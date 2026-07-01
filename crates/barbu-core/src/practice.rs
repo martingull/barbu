@@ -1678,7 +1678,10 @@ mod tests {
 
         assert!(outcome.is_complete);
         assert!(!outcome.is_exact);
-        assert_eq!(outcome.matched_cards, vec![Card::new(Rank::Queen, Suit::Spades)]);
+        assert_eq!(
+            outcome.matched_cards,
+            vec![Card::new(Rank::Queen, Suit::Spades)]
+        );
     }
 
     #[test]

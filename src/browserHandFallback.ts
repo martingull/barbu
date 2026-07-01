@@ -32,7 +32,7 @@ const suitOrder: Record<Suit, number> = { C: 0, D: 1, H: 2, S: 3 };
 const playerNames: Array<Seat> = ["Tutor", "Right", "You", "Left"];
 
 export function startBrowserHeartsHand(seed: number): FullHandState {
-  return startBrowserFullHand("Hearts", seed);
+  return startBrowserFullHand("Hearts", seed, { startAtTwoOfClubs: true });
 }
 
 export function generateBrowserHeartsPassPractice(seed: number): HeartsPassScenario {
@@ -135,8 +135,8 @@ export function applyBrowserHeartsPass(state: FullHandState, cardIds: string[]):
 
   nextState.hands.forEach((hand) => hand.sort(compareCards));
   nextState.id = nextState.id.replace("hearts-passing-hand", "hearts-hand");
-  nextState.currentPlayerIndex = 0;
-  nextState.currentPlayer = "Tutor";
+  nextState.currentPlayerIndex = playerWithCard(nextState.hands, "2C") ?? 0;
+  nextState.currentPlayer = playerNames[nextState.currentPlayerIndex];
   nextState.currentTrick = [];
   nextState.completedTricks = [];
   nextState.status = "in_progress";
@@ -168,7 +168,11 @@ export function startBrowserPositiveTricksHand(seed: number): FullHandState {
   return startBrowserFullHand("Hearts Trumps", seed);
 }
 
-function startBrowserFullHand(contract: FullHandContract, seed: number): FullHandState {
+function startBrowserFullHand(
+  contract: FullHandContract,
+  seed: number,
+  options: { startAtTwoOfClubs?: boolean } = {}
+): FullHandState {
   const deck = standardDeck();
   const rng = new DeterministicRng(seed);
 
@@ -181,13 +185,15 @@ function startBrowserFullHand(contract: FullHandContract, seed: number): FullHan
   deck.forEach((card, index) => hands[index % 4].push(card));
   hands.forEach((hand) => hand.sort(compareCards));
 
+  const currentPlayerIndex = options.startAtTwoOfClubs ? playerWithCard(hands, "2C") ?? 0 : 0;
+
   return advanceToPlayerTurn(
     hydrateFullHandState({
       id: `browser-${contract.toLowerCase().replace(/\s+/g, "-")}-hand-${seed}`,
       contract,
       hands,
-      currentPlayerIndex: 0,
-      currentPlayer: "Tutor",
+      currentPlayerIndex,
+      currentPlayer: playerNames[currentPlayerIndex],
       currentTrick: [],
       completedTricks: [],
       playerHand: hands[2],
@@ -237,7 +243,7 @@ function playBrowserFullHandCard(state: FullHandState, cardId: string): FullHand
     return state;
   }
 
-  if (!legalCards(state.hands[2], ledSuit(state)).some((card) => card.id === cardId)) {
+  if (!legalCardsForState(state, 2).some((card) => card.id === cardId)) {
     return state;
   }
 
@@ -360,7 +366,7 @@ function completedTrickTacticalTags(
 
 function hydrateFullHandState(state: FullHandState): FullHandState {
   const playerHand = state.hands[2];
-  const legal = state.status === "in_progress" && state.currentPlayerIndex === 2 ? legalCards(playerHand, ledSuit(state)) : [];
+  const legal = state.status === "in_progress" && state.currentPlayerIndex === 2 ? legalCardsForState(state, 2) : [];
   const playerPenalty = state.completedTricks
     .filter((trick) => trick.winnerIndex === 2)
     .reduce((total, trick) => total + trick.penalty, 0);
@@ -380,7 +386,7 @@ function hydrateFullHandState(state: FullHandState): FullHandState {
 }
 
 function chooseOpponentCard(state: FullHandState) {
-  const legal = legalCards(state.hands[state.currentPlayerIndex], ledSuit(state));
+  const legal = legalCardsForState(state, state.currentPlayerIndex);
   const led = ledSuit(state);
 
   if (!legal.length) {
@@ -636,6 +642,45 @@ function legalCards(hand: Card[], led: Suit | undefined) {
 
   const suitedCards = hand.filter((card) => card.suit === led);
   return suitedCards.length ? suitedCards : hand;
+}
+
+function legalCardsForState(state: FullHandState, playerIndex: number) {
+  const basicLegal = legalCards(state.hands[playerIndex], ledSuit(state));
+
+  if (state.contract !== "Hearts" || !basicLegal.length) {
+    return basicLegal;
+  }
+
+  if (!state.completedTricks.length && !state.currentTrick.length) {
+    return basicLegal.filter((card) => card.id === "2C");
+  }
+
+  if (!state.currentTrick.length) {
+    if (heartsHaveBeenBroken(state)) {
+      return basicLegal;
+    }
+
+    const nonHearts = basicLegal.filter((card) => card.suit !== "H");
+    return nonHearts.length ? nonHearts : basicLegal;
+  }
+
+  if (!state.completedTricks.length) {
+    const nonPenalties = basicLegal.filter((card) => !isPenaltyCard("Hearts", card));
+    return nonPenalties.length ? nonPenalties : basicLegal;
+  }
+
+  return basicLegal;
+}
+
+function heartsHaveBeenBroken(state: FullHandState) {
+  return [...state.completedTricks.flatMap((trick) => trick.cards), ...state.currentTrick].some(
+    (played) => played.card.suit === "H"
+  );
+}
+
+function playerWithCard(hands: Card[][], cardId: string) {
+  const playerIndex = hands.findIndex((hand) => hand.some((card) => card.id === cardId));
+  return playerIndex >= 0 ? playerIndex : undefined;
 }
 
 function ledSuit(state: FullHandState): Suit | undefined {

@@ -250,7 +250,7 @@ export const referenceCatalog: GameReference[] = [
     family: "Hearts",
     baseline: "David Parlett, The Penguin Book of Card Games",
     overview:
-      "The MVP Hearts table is the Queen of Spades style known in some places as the woman of spades. The current app version is deliberately small: play a local hand, follow suit, avoid hearts, and avoid the queen of spades.",
+      "The MVP Hearts table is the Queen of Spades style known in some places as the woman of spades. The current app version is focused: pass three cards left, open with 2C, follow suit, avoid hearts, and avoid the queen of spades.",
     sections: [
       {
         id: "object",
@@ -276,11 +276,13 @@ export const referenceCatalog: GameReference[] = [
         id: "play",
         title: "Play",
         body:
-          "The MVP hand starts by passing three cards left. The leader then plays first, and everyone else must follow the led suit when possible. If you are void in the led suit, you may discard another suit.",
+          "The MVP hand starts by passing three cards left. The two of clubs opens the first trick, and everyone else must follow the led suit when possible. First-trick penalty dumps are blocked when safe cards exist. Hearts cannot be led until a heart has already been played, unless a player has only hearts.",
         facts: [
           { label: "Pass", value: "Three cards left" },
+          { label: "Opening lead", value: "2C starts the first trick" },
           { label: "Led suit", value: "Set by the first card in the trick" },
           { label: "Legal play", value: "Follow suit when you can" },
+          { label: "Heart leads", value: "Blocked until hearts are broken" },
           { label: "Trick winner", value: "Highest card in the led suit wins" }
         ]
       },
@@ -308,10 +310,10 @@ export const referenceCatalog: GameReference[] = [
     contractRoadmap: [
       {
         id: "mvp-hand",
-        title: "Simplified local hand",
+        title: "Focused local hand",
         coreStatus: "MVP",
         appStatus: "Playable",
-        note: "The shared trick-taking table supports follow-suit legality, trick winners, hearts, and queen-of-spades scoring."
+        note: "The shared trick-taking table supports 2C opening, follow-suit legality, first-trick penalty restrictions, hearts-broken lead restrictions, trick winners, hearts, and queen-of-spades scoring."
       },
       {
         id: "passing",
@@ -323,9 +325,9 @@ export const referenceCatalog: GameReference[] = [
       {
         id: "hearts-broken",
         title: "Hearts-broken lead restriction",
-        coreStatus: "Hearts v2",
-        appStatus: "Later",
-        note: "The current MVP does not restrict heart leads before hearts are broken."
+        coreStatus: "Hearts v1",
+        appStatus: "Playable",
+        note: "Heart leads are blocked until hearts are broken unless the player has only hearts."
       },
       {
         id: "shooting-moon",
@@ -351,9 +353,9 @@ export const referenceCatalog: GameReference[] = [
       },
       {
         id: "mvp-simplification",
-        title: "MVP Simplification",
+        title: "MVP Boundary",
         note:
-          "The app currently teaches pass-left, the core trick loop, and penalty scoring before adding rotating pass directions, hearts-broken restrictions, moon scoring, or longer match structure."
+          "The app currently teaches pass-left, the core trick loop, Hearts opening restrictions, and penalty scoring before adding rotating pass directions, moon scoring, or longer match structure."
       }
     ]
   }
