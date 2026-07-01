@@ -166,7 +166,14 @@ function completeTrick(state: FullHandState) {
     winner: playerNames[winnerIndex],
     winnerIndex,
     penalty,
-    outcome: completedTrickOutcome(winnerIndex, penalty)
+    outcome: completedTrickOutcome(winnerIndex, penalty),
+    tacticalTags: completedTrickTacticalTags(state.contract, state.completedTricks.length + 1, {
+      cards: [...state.currentTrick],
+      winner: playerNames[winnerIndex],
+      winnerIndex,
+      penalty,
+      outcome: completedTrickOutcome(winnerIndex, penalty)
+    })
   });
   state.currentTrick = [];
   state.currentPlayerIndex = winnerIndex;
@@ -188,6 +195,41 @@ function completedTrickOutcome(winnerIndex: number, penalty: number): CompletedH
     return "won_clean_trick";
   }
   return "stayed_clear";
+}
+
+function completedTrickTacticalTags(
+  contract: FullHandContract,
+  trickNumber: number,
+  trick: CompletedHandTrick
+): CompletedHandTrick["tacticalTags"] {
+  const tags: NonNullable<CompletedHandTrick["tacticalTags"]> = [];
+  const led = trick.cards[0]?.card.suit;
+  const playerCard = trick.cards.find((played) => played.seat === "You")?.card;
+
+  if (led && playerCard) {
+    tags.push(playerCard.suit === led ? "followed_suit" : "void_discard");
+  }
+
+  if (contract === "No Last Two") {
+    tags.push(trickNumber >= 12 ? "final_two_trick" : "setup_trick");
+  } else if (contract === "Hearts Trumps") {
+    const trumpCards = trick.cards.filter((played) => played.card.suit === "H");
+    const winnerCard = trick.cards.find((played) => played.seat === trick.winner)?.card;
+
+    if (winnerCard?.suit === "H") {
+      tags.push("trump_won");
+    }
+    if (winnerCard?.suit === "H" && trumpCards.length > 1) {
+      tags.push("overtrumped");
+    }
+  } else if (
+    (contract === "No Hearts" || contract === "No Queens" || contract === "King of Hearts") &&
+    trick.penalty > 0
+  ) {
+    tags.push("danger_card_moved");
+  }
+
+  return tags;
 }
 
 function hydrateFullHandState(state: FullHandState): FullHandState {
@@ -439,7 +481,8 @@ function cloneState(state: FullHandState): FullHandState {
     currentTrick: [...state.currentTrick],
     completedTricks: state.completedTricks.map((trick) => ({
       ...trick,
-      cards: [...trick.cards]
+      cards: [...trick.cards],
+      tacticalTags: [...(trick.tacticalTags ?? [])]
     })),
     playerHand: [...state.playerHand],
     legalCardIds: [...state.legalCardIds]

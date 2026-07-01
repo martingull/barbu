@@ -424,7 +424,8 @@ impl FullHandDto {
             completed_tricks: state
                 .completed_tricks
                 .iter()
-                .map(CompletedTrickDto::from_core)
+                .enumerate()
+                .map(|(index, trick)| CompletedTrickDto::from_core(trick, contract, index + 1))
                 .collect(),
             player_hand: state.hands[2]
                 .iter()
@@ -479,10 +480,12 @@ struct CompletedTrickDto {
     winner_index: usize,
     penalty: i32,
     outcome: String,
+    #[serde(default)]
+    tactical_tags: Vec<String>,
 }
 
 impl CompletedTrickDto {
-    fn from_core(trick: &barbu_core::CompletedTrick) -> Self {
+    fn from_core(trick: &barbu_core::CompletedTrick, contract: &str, trick_number: usize) -> Self {
         Self {
             cards: trick
                 .cards
@@ -494,6 +497,10 @@ impl CompletedTrickDto {
             winner_index: trick.winner,
             penalty: trick.penalty,
             outcome: trick.player_outcome().as_str().to_string(),
+            tactical_tags: barbu_core::completed_trick_tactical_tags(contract, trick_number, trick)
+                .into_iter()
+                .map(str::to_string)
+                .collect(),
         }
     }
 

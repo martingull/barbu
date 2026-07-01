@@ -53,6 +53,7 @@ The intended monetization model is free starter tables first, then optional paid
 - Local full-hand contract value tracking with contract-specific point values for the currently playable contracts. Full settlement rules are a later feature.
 - Shared frontend contract score model that separates avoidance, reward, and layout contracts for labels, run-score direction, and contract totals.
 - Compact full-hand result panel with contract result, Barbu/player penalty split, key tricks, replay, and next-contract actions.
+- Full-hand tactical feedback v1 with structured trick tags for followed suit, void discards, moved danger cards, No Last Two setup/final tricks, trump wins, and overtrumps.
 - Training path practice step connected to Quick Drill completion.
 - Review step with latest Quick Drill score, weakest-contract advice, recent attempts, and replay actions.
 - Perfect mode Card Counting pack started with Count Trumps, Trump Memory Hand, Track Court Cards, and Danger Cards minigames.
@@ -138,7 +139,7 @@ These are the next product increments that keep the app coherent.
    - Improve Domino from configurable-start-rank fixed-seven v1 to the baseline Barbu chooser/declarer shape once contract selection is modeled.
    - Add full Barbu settlement scoring across contracts once the playable contracts are broader.
    - Continue expanding opponent policy beyond the first v2 baseline with endgame timing, trump preservation, and clearer table-strength decisions.
-   - Add stronger tactical feedback after each completed trick.
+   - Continue strengthening tactical feedback after each completed trick, especially when the player had a better legal alternative.
    - Decide when full hands should enter the learning path instead of living as separate practice.
 
 6. Play Barbu Flow v2

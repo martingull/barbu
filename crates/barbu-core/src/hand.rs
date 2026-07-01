@@ -64,6 +64,66 @@ impl CompletedTrick {
     }
 }
 
+pub fn completed_trick_tactical_tags(
+    contract: &str,
+    trick_number: usize,
+    trick: &CompletedTrick,
+) -> Vec<&'static str> {
+    let mut tags = Vec::new();
+
+    if let (Some(led), Some(player_card)) = (
+        trick.cards.first().map(|played| played.card.suit),
+        trick
+            .cards
+            .iter()
+            .find(|played| played.player == 2)
+            .map(|played| played.card),
+    ) {
+        if player_card.suit == led {
+            tags.push("followed_suit");
+        } else {
+            tags.push("void_discard");
+        }
+    }
+
+    match contract {
+        "No Last Two" => {
+            if trick_number >= 12 {
+                tags.push("final_two_trick");
+            } else {
+                tags.push("setup_trick");
+            }
+        }
+        "Hearts Trumps" => {
+            let trump_cards = trick
+                .cards
+                .iter()
+                .filter(|played| played.card.suit == HEARTS_TRUMP_SUIT)
+                .count();
+            let winner_used_trump = trick
+                .cards
+                .iter()
+                .find(|played| played.player == trick.winner)
+                .is_some_and(|played| played.card.suit == HEARTS_TRUMP_SUIT);
+
+            if winner_used_trump {
+                tags.push("trump_won");
+            }
+            if winner_used_trump && trump_cards > 1 {
+                tags.push("overtrumped");
+            }
+        }
+        "No Hearts" | "No Queens" | "King of Hearts" => {
+            if trick.penalty > 0 {
+                tags.push("danger_card_moved");
+            }
+        }
+        _ => {}
+    }
+
+    tags
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum HandStatus {
     InProgress,
@@ -812,6 +872,63 @@ mod tests {
         assert_eq!(avoided.player_outcome(), HandTrickOutcome::AvoidedPenalty);
         assert_eq!(won_clean.player_outcome(), HandTrickOutcome::WonCleanTrick);
         assert_eq!(stayed_clear.player_outcome(), HandTrickOutcome::StayedClear);
+    }
+
+    #[test]
+    fn completed_trick_tags_void_discard_and_moved_danger_card() {
+        let trick = CompletedTrick {
+            cards: vec![
+                PlayedCard::new(0, Card::new(Rank::Seven, Suit::Clubs)),
+                PlayedCard::new(1, Card::new(Rank::Queen, Suit::Diamonds)),
+                PlayedCard::new(2, Card::new(Rank::Two, Suit::Hearts)),
+                PlayedCard::new(3, Card::new(Rank::Four, Suit::Clubs)),
+            ],
+            winner: 0,
+            penalty: 6,
+        };
+
+        let tags = completed_trick_tactical_tags("No Queens", 4, &trick);
+
+        assert!(tags.contains(&"void_discard"));
+        assert!(tags.contains(&"danger_card_moved"));
+    }
+
+    #[test]
+    fn completed_trick_tags_no_last_two_phase() {
+        let trick = CompletedTrick {
+            cards: vec![
+                PlayedCard::new(0, Card::new(Rank::Seven, Suit::Clubs)),
+                PlayedCard::new(1, Card::new(Rank::Eight, Suit::Clubs)),
+                PlayedCard::new(2, Card::new(Rank::Two, Suit::Clubs)),
+                PlayedCard::new(3, Card::new(Rank::Four, Suit::Clubs)),
+            ],
+            winner: 1,
+            penalty: 0,
+        };
+
+        assert!(completed_trick_tactical_tags("No Last Two", 11, &trick).contains(&"setup_trick"));
+        assert!(
+            completed_trick_tactical_tags("No Last Two", 12, &trick).contains(&"final_two_trick")
+        );
+    }
+
+    #[test]
+    fn completed_trick_tags_trump_wins_and_overtrumps() {
+        let trick = CompletedTrick {
+            cards: vec![
+                PlayedCard::new(0, Card::new(Rank::Seven, Suit::Clubs)),
+                PlayedCard::new(1, Card::new(Rank::Four, Suit::Hearts)),
+                PlayedCard::new(2, Card::new(Rank::Two, Suit::Clubs)),
+                PlayedCard::new(3, Card::new(Rank::Nine, Suit::Hearts)),
+            ],
+            winner: 3,
+            penalty: 5,
+        };
+
+        let tags = completed_trick_tactical_tags("Hearts Trumps", 2, &trick);
+
+        assert!(tags.contains(&"trump_won"));
+        assert!(tags.contains(&"overtrumped"));
     }
 
     #[test]

@@ -79,6 +79,14 @@ export type GeneratedPracticeOutcome = {
 };
 
 export type HandStatus = "in_progress" | "complete";
+export type FullHandTacticalTag =
+  | "followed_suit"
+  | "void_discard"
+  | "danger_card_moved"
+  | "setup_trick"
+  | "final_two_trick"
+  | "trump_won"
+  | "overtrumped";
 
 export type CompletedHandTrick = {
   cards: TableCard[];
@@ -86,6 +94,7 @@ export type CompletedHandTrick = {
   winnerIndex: number;
   penalty: number;
   outcome: "captured_penalty" | "avoided_penalty" | "won_clean_trick" | "stayed_clear";
+  tacticalTags?: FullHandTacticalTag[];
 };
 
 export type FullHandContract =

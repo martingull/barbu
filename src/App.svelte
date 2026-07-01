@@ -3395,21 +3395,35 @@
     return fullHand ? fullHand.completedTricks.indexOf(trick) + 1 : 0;
   }
 
+  function fullHandTrickHasTag(trick: CompletedHandTrick, tag: NonNullable<CompletedHandTrick["tacticalTags"]>[number]) {
+    return (trick.tacticalTags ?? []).includes(tag);
+  }
+
   function fullHandTrickFeedback(trick: CompletedHandTrick) {
     const penaltyText = `${trick.penalty} ${trick.penalty === 1 ? fullHandPenaltyName : fullHandPenaltyPlural}`;
 
     if (fullHand?.contract === "Hearts Trumps") {
+      if (fullHandTrickHasTag(trick, "overtrumped")) {
+        return trick.winner === "You"
+          ? `You overtrumped and banked ${penaltyText}. Good: your heart beat the previous trump.`
+          : `${trick.winner} overtrumped and banked ${penaltyText}. A higher heart took control.`;
+      }
+      if (fullHandTrickHasTag(trick, "trump_won")) {
+        return trick.winner === "You"
+          ? `Your heart won the trick and banked ${penaltyText}. Good: trumps beat the led suit.`
+          : `${trick.winner} won with a heart and banked ${penaltyText}. Count which trumps are still out.`;
+      }
       return trick.winner === "You"
-        ? `You won the trick and banked ${penaltyText}. Good: hearts are trumps in this contract.`
+        ? `You won the trick and banked ${penaltyText}. Good: you took control without needing a trump.`
         : `${trick.winner} won the trick and banked ${penaltyText}. Look for a heart or higher control next time.`;
     }
 
     if (fullHand?.contract === "No Last Two") {
       const trickNumber = fullHandCompletedTrickNumber(trick);
-      if (trickNumber <= 11) {
+      if (fullHandTrickHasTag(trick, "setup_trick")) {
         return trick.winner === "You"
-          ? "You won a setup trick. No score yet; high cards are being shed before the final two."
-          : `${trick.winner} won a setup trick. No score yet; high cards are being shed before the final two.`;
+          ? "You won a setup trick. No score yet; use these tricks to shed awkward high cards."
+          : `${trick.winner} won a setup trick. No score yet; the final two tricks are still ahead.`;
       }
       return trick.winner === "You"
         ? `You won trick ${trickNumber} and took ${penaltyText}. This is one of the final two.`
@@ -3417,9 +3431,18 @@
     }
 
     if (trick.outcome === "captured_penalty") {
+      if (fullHandTrickHasTag(trick, "danger_card_moved")) {
+        return `You won the trick and took ${penaltyText}. Penalty cards moved, and your card held the trick.`;
+      }
       return `You won the trick and took ${penaltyText}. Risky: your card became the highest card in the led suit.`;
     }
     if (trick.outcome === "avoided_penalty") {
+      if (fullHandTrickHasTag(trick, "void_discard")) {
+        return `${trick.winner} won the trick and took ${penaltyText}. Good: you were void, so your discard stayed clear.`;
+      }
+      if (fullHandTrickHasTag(trick, "danger_card_moved")) {
+        return `${trick.winner} won the trick and took ${penaltyText}. Good: you kept below the danger.`;
+      }
       return `${trick.winner} won the trick and took ${penaltyText}. Good: you stayed out of the penalty trick.`;
     }
     if (trick.outcome === "won_clean_trick") {
@@ -3432,6 +3455,9 @@
       if (fullHand?.contract === "No Tricks") {
         return "You won a trick. Legal, but every trick you win scores in this contract.";
       }
+      if (fullHandTrickHasTag(trick, "followed_suit")) {
+        return `You followed suit and won a clean trick. Legal, but check whether ${fullHandPenaltyPlural} can still enter later.`;
+      }
       return `You won a clean trick. Legal, but keep checking whether ${fullHandPenaltyPlural} can still enter the trick.`;
     }
     if (fullHand?.contract === "King of Hearts") {
@@ -3442,6 +3468,9 @@
     }
     if (fullHand?.contract === "No Tricks") {
       return `${trick.winner} won the trick. Good: you stayed out of it.`;
+    }
+    if (fullHandTrickHasTag(trick, "void_discard")) {
+      return `${trick.winner} won a clean trick. Good: your void discard could not take the led suit.`;
     }
     return `${trick.winner} won a clean trick. No ${fullHandPenaltyPlural} moved, so you stayed clear.`;
   }
