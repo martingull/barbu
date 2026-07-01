@@ -85,6 +85,7 @@ content/             Structured game and lesson content
 - Full Barbu settlement scoring is not implemented yet; current full-hand play tracks local contract values for the hand being practiced.
 - The Svelte app renders authored or generated scenarios and should avoid duplicating rules where Rust can provide them.
 - Barbu is the first Hearts-family core game, not the app boundary. The lesson/catalog structure should be able to grow toward related Hearts-family games first, then popular families such as Whist and Bridge after Barbu has a stable learning, practice, and play loop.
+- Frontend game tables should be registered through `src/tableFactory.ts` so new ready games follow the shared `Learn`, `Practice`, `Play`, and `Perfect` structure, declare their reference id, and name their key actions before custom UI is added.
 
 ## MVP Scope
 

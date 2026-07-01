@@ -25,6 +25,12 @@
   import { contractRunScore, contractScoreMeta, formatContractValue } from "./contractScoring";
   import { guidedLessons } from "./lessons/catalog";
   import { referenceCatalog } from "./referenceCatalog";
+  import {
+    gameTableDefinitions,
+    tableTabsFor,
+    type ActiveGameTable,
+    type TableTabId
+  } from "./tableFactory";
   import type {
     Card,
     CompletedHandTrick,
@@ -64,8 +70,6 @@
 
   type PathAction = "lesson" | "generated" | "review" | "planned";
   type CourseStage = "concept" | "example" | "review";
-  type BarbuTableTab = "learn" | "practice" | "play" | "perfect";
-  type ActiveGameTable = "barbu" | "hearts";
 
   type CatalogStatus = "Ready" | "Planned";
 
@@ -872,8 +876,8 @@
   let activeCourseId = courseCatalog[0].id;
   let activeReferenceId = referenceCatalog[0].id;
   let activeCourseStage: CourseStage = "concept";
-  let activeBarbuTableTab: BarbuTableTab = "learn";
-  let activeHeartsTableTab: BarbuTableTab = "practice";
+  let activeBarbuTableTab: TableTabId = gameTableDefinitions.barbu.defaultTab;
+  let activeHeartsTableTab: TableTabId = gameTableDefinitions.hearts.defaultTab;
   let activeGameTable: ActiveGameTable = "barbu";
   let completedPathSteps: Record<string, boolean> = loadCourseProgress();
   let playBarbuHistory: PlayBarbuAttempt[] = loadPlayBarbuHistory();
@@ -1004,8 +1008,8 @@
   $: activeCourse = courseCatalog.find((course) => course.id === activeCourseId) ?? courseCatalog[0];
   $: activeReference = referenceCatalog.find((reference) => reference.id === activeReferenceId) ?? referenceCatalog[0];
   $: activeReferenceIsBarbu = activeReference.id === "barbu";
-  $: activeBarbuTableTabLabel = tableTabLabel(activeBarbuTableTab);
-  $: activeHeartsTableTabLabel = tableTabLabel(activeHeartsTableTab);
+  $: activeBarbuTableTabLabel = gameTableDefinitions.barbu.tabs[activeBarbuTableTab].label;
+  $: activeHeartsTableTabLabel = gameTableDefinitions.hearts.tabs[activeHeartsTableTab].label;
   $: currentDrill = activeDrillSteps[drillIndex] ?? activeDrillSteps[0] ?? drillSteps[0];
   $: currentDrillTrick = currentDrill.trick;
   $: drillLegalCardIds = new Set(currentDrillTrick.legalCardIds);
@@ -1641,22 +1645,6 @@
     drillCheckedCardId = "";
   }
 
-  function tableTabLabel(tab: BarbuTableTab) {
-    if (tab === "learn") {
-      return "Learn";
-    }
-
-    if (tab === "practice") {
-      return "Practice";
-    }
-
-    if (tab === "play") {
-      return "Play";
-    }
-
-    return "Perfect";
-  }
-
   function openCatalog() {
     appView = "catalog";
   }
@@ -1667,7 +1655,7 @@
   }
 
   function openBarbuLearnTable() {
-    activeBarbuTableTab = "learn";
+    activeBarbuTableTab = gameTableDefinitions.barbu.defaultTab;
     openBarbuTable();
   }
 
@@ -2670,7 +2658,7 @@
   }
 
   function openBarbuContracts() {
-    activeBarbuTableTab = "learn";
+    activeBarbuTableTab = gameTableDefinitions.barbu.defaultTab;
     appView = "barbuContracts";
   }
 
@@ -2678,7 +2666,7 @@
     appView = "practiceChooser";
   }
 
-  function openReference(referenceId = "barbu") {
+  function openReference(referenceId = gameTableDefinitions.barbu.referenceId) {
     const reference = referenceCatalog.find((item) => item.id === referenceId);
 
     if (!reference) {
@@ -4144,7 +4132,7 @@
 
   function markPracticeTableComplete() {
     saveCourseProgress({ ...completedPathSteps, "generated-drill": true });
-    activeBarbuTableTab = "learn";
+    activeBarbuTableTab = gameTableDefinitions.barbu.defaultTab;
 
     if (completedPathSteps.review) {
       openBarbuTable();
@@ -4621,54 +4609,20 @@
         <div class="barbu-mode-box">
           <p class="eyebrow">Table mode</p>
           <div class="barbu-table-tabs" aria-label="Barbu table sections" role="tablist">
-            <button
-              aria-controls="barbu-learn-panel"
-              aria-selected={activeBarbuTableTab === "learn"}
-              class:active={activeBarbuTableTab === "learn"}
-              onclick={() => {
-                activeBarbuTableTab = "learn";
-              }}
-              role="tab"
-              type="button"
-            >
-              Learn
-            </button>
-            <button
-              aria-controls="barbu-practice-panel"
-              aria-selected={activeBarbuTableTab === "practice"}
-              class:active={activeBarbuTableTab === "practice"}
-              onclick={() => {
-                activeBarbuTableTab = "practice";
-              }}
-              role="tab"
-              type="button"
-            >
-              Practice
-            </button>
-            <button
-              aria-controls="barbu-play-panel"
-              aria-selected={activeBarbuTableTab === "play"}
-              class:active={activeBarbuTableTab === "play"}
-              onclick={() => {
-                activeBarbuTableTab = "play";
-              }}
-              role="tab"
-              type="button"
-            >
-              Play
-            </button>
-            <button
-              aria-controls="barbu-perfect-panel"
-              aria-selected={activeBarbuTableTab === "perfect"}
-              class:active={activeBarbuTableTab === "perfect"}
-              onclick={() => {
-                activeBarbuTableTab = "perfect";
-              }}
-              role="tab"
-              type="button"
-            >
-              Perfect
-            </button>
+            {#each tableTabsFor(gameTableDefinitions.barbu) as tab}
+              <button
+                aria-controls={tab.panelId}
+                aria-selected={activeBarbuTableTab === tab.id}
+                class:active={activeBarbuTableTab === tab.id}
+                onclick={() => {
+                  activeBarbuTableTab = tab.id;
+                }}
+                role="tab"
+                type="button"
+              >
+                {tab.label}
+              </button>
+            {/each}
           </div>
         </div>
       </div>
@@ -4700,7 +4654,7 @@
                   <small>Return to the next short card decision.</small>
                 </button>
               {/if}
-              <button class="learn-action-card" onclick={() => openReference("barbu")} type="button">
+              <button class="learn-action-card" onclick={() => openReference(gameTableDefinitions.barbu.referenceId)} type="button">
                 <span class="eyebrow">Rules</span>
                 <strong>Reference</strong>
                 <small>Check the baseline rules, scoring, and variants.</small>
@@ -4899,54 +4853,20 @@
         <div class="barbu-mode-box">
           <p class="eyebrow">Table mode</p>
           <div class="barbu-table-tabs" aria-label="Hearts table sections" role="tablist">
-            <button
-              aria-controls="hearts-learn-panel"
-              aria-selected={activeHeartsTableTab === "learn"}
-              class:active={activeHeartsTableTab === "learn"}
-              onclick={() => {
-                activeHeartsTableTab = "learn";
-              }}
-              role="tab"
-              type="button"
-            >
-              Learn
-            </button>
-            <button
-              aria-controls="hearts-practice-panel"
-              aria-selected={activeHeartsTableTab === "practice"}
-              class:active={activeHeartsTableTab === "practice"}
-              onclick={() => {
-                activeHeartsTableTab = "practice";
-              }}
-              role="tab"
-              type="button"
-            >
-              Practice
-            </button>
-            <button
-              aria-controls="hearts-play-panel"
-              aria-selected={activeHeartsTableTab === "play"}
-              class:active={activeHeartsTableTab === "play"}
-              onclick={() => {
-                activeHeartsTableTab = "play";
-              }}
-              role="tab"
-              type="button"
-            >
-              Play
-            </button>
-            <button
-              aria-controls="hearts-perfect-panel"
-              aria-selected={activeHeartsTableTab === "perfect"}
-              class:active={activeHeartsTableTab === "perfect"}
-              onclick={() => {
-                activeHeartsTableTab = "perfect";
-              }}
-              role="tab"
-              type="button"
-            >
-              Perfect
-            </button>
+            {#each tableTabsFor(gameTableDefinitions.hearts) as tab}
+              <button
+                aria-controls={tab.panelId}
+                aria-selected={activeHeartsTableTab === tab.id}
+                class:active={activeHeartsTableTab === tab.id}
+                onclick={() => {
+                  activeHeartsTableTab = tab.id;
+                }}
+                role="tab"
+                type="button"
+              >
+                {tab.label}
+              </button>
+            {/each}
           </div>
         </div>
 
@@ -4959,7 +4879,7 @@
             </div>
             <div class="table-action-groups" aria-label="Hearts table actions">
               <section class="learn-action-grid" aria-label="Hearts learn actions">
-                <button class="learn-action-card" onclick={() => openReference("hearts")} type="button">
+                <button class="learn-action-card" onclick={() => openReference(gameTableDefinitions.hearts.referenceId)} type="button">
                   <span>Rules</span>
                   <strong>Reference</strong>
                   <small>See the current MVP rules and the later Hearts rules we have not added yet.</small>
