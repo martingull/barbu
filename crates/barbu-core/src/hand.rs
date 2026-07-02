@@ -815,8 +815,7 @@ fn choose_hearts_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
     }
 
     if led_suit.is_none() {
-        return lowest_card_matching(&legal, |card| !is_hearts_penalty_card(card))
-            .or_else(|| lowest_card(&legal));
+        return choose_hearts_lead_card(state, &legal);
     }
 
     let follows_suit = legal.iter().all(|card| Some(card.suit) == led_suit);
@@ -831,6 +830,40 @@ fn choose_hearts_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
 
     lowest_card_matching(&legal, |card| !is_hearts_penalty_card(card))
         .or_else(|| lowest_card(&legal))
+}
+
+fn choose_hearts_lead_card(state: &TrickTakingHandState, legal: &[Card]) -> Option<Card> {
+    if hearts_have_been_broken(state) {
+        return lowest_card_matching(legal, |card| card.suit == Suit::Hearts)
+            .or_else(|| {
+                highest_card_from_shortest_suit(legal, |card| !is_hearts_penalty_card(card))
+            })
+            .or_else(|| lowest_card(legal));
+    }
+
+    highest_card_from_shortest_suit(legal, |card| !is_hearts_penalty_card(card))
+        .or_else(|| lowest_card_matching(legal, |card| !is_hearts_penalty_card(card)))
+        .or_else(|| lowest_card(legal))
+}
+
+fn highest_card_from_shortest_suit(
+    cards: &[Card],
+    predicate: impl Fn(Card) -> bool,
+) -> Option<Card> {
+    cards
+        .iter()
+        .copied()
+        .filter(|card| predicate(*card))
+        .min_by(|left, right| {
+            suit_count(cards, left.suit)
+                .cmp(&suit_count(cards, right.suit))
+                .then_with(|| right.rank.cmp(&left.rank))
+                .then_with(|| left.suit.short_name().cmp(right.suit.short_name()))
+        })
+}
+
+fn suit_count(cards: &[Card], suit: Suit) -> usize {
+    cards.iter().filter(|card| card.suit == suit).count()
 }
 
 fn choose_hearts_pass_cards(hand: &[Card]) -> Vec<Card> {
@@ -1501,6 +1534,78 @@ mod tests {
         let result = apply_hearts_pass(state, vec![one_card]);
 
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn hearts_opponent_leads_high_from_short_safe_suit() {
+        let state = HeartsHandState {
+            id: "hearts-pressure-short-suit".to_string(),
+            hands: [
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Two, Suit::Clubs),
+                    Card::new(Rank::King, Suit::Clubs),
+                    Card::new(Rank::Five, Suit::Diamonds),
+                    Card::new(Rank::Nine, Suit::Spades),
+                    Card::new(Rank::Ace, Suit::Hearts),
+                ],
+                Vec::new(),
+                Vec::new(),
+            ],
+            current_player: 1,
+            current_trick: Vec::new(),
+            completed_tricks: vec![CompletedTrick {
+                cards: vec![
+                    PlayedCard::new(0, Card::new(Rank::Two, Suit::Clubs)),
+                    PlayedCard::new(1, Card::new(Rank::Three, Suit::Clubs)),
+                    PlayedCard::new(2, Card::new(Rank::Four, Suit::Clubs)),
+                    PlayedCard::new(3, Card::new(Rank::Five, Suit::Clubs)),
+                ],
+                winner: 3,
+                penalty: 0,
+            }],
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_hearts_opponent_card(&state),
+            Some(Card::new(Rank::Nine, Suit::Spades))
+        );
+    }
+
+    #[test]
+    fn hearts_opponent_leads_hearts_after_they_are_broken() {
+        let state = HeartsHandState {
+            id: "hearts-lead-broken-heart".to_string(),
+            hands: [
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Two, Suit::Hearts),
+                    Card::new(Rank::King, Suit::Hearts),
+                    Card::new(Rank::Nine, Suit::Spades),
+                ],
+                Vec::new(),
+                Vec::new(),
+            ],
+            current_player: 1,
+            current_trick: Vec::new(),
+            completed_tricks: vec![CompletedTrick {
+                cards: vec![
+                    PlayedCard::new(0, Card::new(Rank::Four, Suit::Diamonds)),
+                    PlayedCard::new(1, Card::new(Rank::Six, Suit::Diamonds)),
+                    PlayedCard::new(2, Card::new(Rank::Ace, Suit::Hearts)),
+                    PlayedCard::new(3, Card::new(Rank::Seven, Suit::Diamonds)),
+                ],
+                winner: 3,
+                penalty: 1,
+            }],
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_hearts_opponent_card(&state),
+            Some(Card::new(Rank::Two, Suit::Hearts))
+        );
     }
 
     #[test]

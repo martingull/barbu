@@ -33,7 +33,7 @@ The intended monetization model is free starter tables first, then optional paid
 - Game catalog ordered with free starter tables first: Hearts, Barbu, and Solitaire, followed by paid packs/future paid games such as Card Counting, Whist, Bridge, Gin Rummy, and Canasta.
 - Hearts table with the shared Learn, Practice, Play, and Perfect structure; Play opens with pass-three-left and then a local Hearts hand with 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, while Practice covers avoiding hearts and the queen-danger pattern.
 - Hearts Passing Drill v1 teaches the beginner pass-three-left habit: identify Queen of Spades, high hearts, and dangerous high spades before hand play begins.
-- Hearts opponent policy v1 has started: local opponents avoid Queen of Spades wins when possible, dump Queen of Spades before hearts when void, and dump Queen of Spades safely under higher spades.
+- Hearts opponent policy v1 has started: local opponents avoid Queen of Spades wins when possible, dump Queen of Spades before hearts when void, dump Queen of Spades safely under higher spades, lead from short safe suits to create pressure, and lead hearts once hearts are broken.
 - Barbu table with grouped Learn, Practice, Play, and Reference entry points, including a contract-hand practice chooser.
 - Five-step training path: concept, example, guided trick, practice, review.
 - Quick Drill mode as a generated practice loop: one decision at a time, immediate feedback, optional next decision, and a compact session result.
@@ -199,7 +199,7 @@ These are the next product increments that keep the app coherent.
    - Hearts is now an active starter table with pass-three-left and a local hand using the shared trick-taking engine and table surface.
    - Current MVP scoring covers hearts plus the queen of spades.
    - Current MVP legality covers 2C opening, first-trick penalty restrictions, and hearts-broken lead restrictions.
-   - Hearts opponent policy now treats Queen of Spades as the main danger card in void discards and spade-following decisions.
+   - Hearts opponent policy now treats Queen of Spades as the main danger card in void discards and spade-following decisions, and uses short-suit/heart-broken leads so passive zero-point play is harder.
    - Hearts Passing Drill v1 teaches the first pass-three-left heuristic.
    - Hearts Learn and Reference name the MVP simplifications.
    - Hearts Practice reuses Hearts-family patterns for avoiding hearts and queen danger.

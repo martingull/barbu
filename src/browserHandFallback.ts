@@ -398,7 +398,7 @@ function chooseOpponentCard(state: FullHandState) {
       return highestCard(legal);
     }
     if (state.contract === "Hearts") {
-      return lowestCard(legal.filter((card) => !isPenaltyCard("Hearts", card))) ?? lowestCard(legal);
+      return chooseHeartsLeadCard(state, legal);
     }
     if (state.contract === "No Queens") {
       return lowestCard(legal.filter((card) => card.rank !== "Q")) ?? lowestCard(legal);
@@ -504,6 +504,34 @@ function highestHeartsPenaltyDiscard(cards: Card[]) {
     .filter((card) => isPenaltyCard("Hearts", card))
     .sort((left, right) => heartsPenaltyWeight(left) - heartsPenaltyWeight(right) || compareByRankThenSuit(left, right))
     .pop();
+}
+
+function chooseHeartsLeadCard(state: FullHandState, cards: Card[]) {
+  if (heartsHaveBeenBroken(state)) {
+    return (
+      lowestCard(cards.filter((card) => card.suit === "H")) ??
+      highestCardFromShortestSuit(cards.filter((card) => !isPenaltyCard("Hearts", card)), cards) ??
+      lowestCard(cards)
+    );
+  }
+
+  return (
+    highestCardFromShortestSuit(cards.filter((card) => !isPenaltyCard("Hearts", card)), cards) ??
+    lowestCard(cards.filter((card) => !isPenaltyCard("Hearts", card))) ??
+    lowestCard(cards)
+  );
+}
+
+function highestCardFromShortestSuit(candidates: Card[], fullHand: Card[]) {
+  return candidates.slice().sort((left, right) => {
+    const suitPressure = suitCount(fullHand, left.suit) - suitCount(fullHand, right.suit);
+
+    return suitPressure || rankOrder[right.rank as Rank] - rankOrder[left.rank as Rank] || suitOrder[left.suit] - suitOrder[right.suit];
+  })[0];
+}
+
+function suitCount(cards: Card[], suit: Suit) {
+  return cards.filter((card) => card.suit === suit).length;
 }
 
 function heartsPenaltyWeight(card: Card) {
