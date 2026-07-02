@@ -359,6 +359,23 @@ function completedTrickTacticalTags(
     trick.penalty > 0
   ) {
     tags.push("danger_card_moved");
+    if (contract === "Hearts") {
+      if (trick.cards.some((played) => played.card.id === "QS")) {
+        tags.push("queen_spades_moved");
+      }
+      if (trick.cards.some((played) => played.card.suit === "H")) {
+        tags.push("hearts_moved");
+      }
+      if (
+        trick.winnerIndex === 2 &&
+        trick.cards.some((played) => played.seat !== "You" && played.card.suit !== led)
+      ) {
+        tags.push("opponent_loaded_player_trick");
+      }
+      if (trick.winnerIndex === 2 && trick.cards[0]?.seat !== "You") {
+        tags.push("pressure_lead");
+      }
+    }
   }
 
   return tags;
@@ -747,6 +764,10 @@ function promptForState(state: FullHandState, playerPenalty: number) {
 
   if (state.id.includes("hearts-passing-hand")) {
     return "Choose three cards to pass left.";
+  }
+
+  if (state.contract === "Hearts" && !state.completedTricks.length && !state.currentTrick.length) {
+    return "You hold 2C, so you must open the first trick with 2C.";
   }
 
   const led = ledSuit(state);

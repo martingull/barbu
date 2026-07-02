@@ -248,9 +248,9 @@ export const referenceCatalog: GameReference[] = [
     id: "hearts",
     title: "Hearts",
     family: "Hearts",
-    baseline: "David Parlett, The Penguin Book of Card Games",
+    baseline: "David Parlett structure, Wikipedia-style MVP opening convention",
     overview:
-      "The MVP Hearts table is the Queen of Spades style known in some places as the woman of spades. The current app version is focused: pass three cards left, open with 2C, follow suit, avoid hearts, and avoid the queen of spades.",
+      "The MVP Hearts table is the Queen of Spades style known in some places as the woman of spades. The reference structure follows the Parlett-style object, play, and scoring format, while the current opening convention follows the common Wikipedia-described rule that 2C opens the first trick.",
     sections: [
       {
         id: "object",
@@ -276,10 +276,11 @@ export const referenceCatalog: GameReference[] = [
         id: "play",
         title: "Play",
         body:
-          "The MVP hand starts by passing three cards left. The two of clubs opens the first trick, and everyone else must follow the led suit when possible. First-trick penalty dumps are blocked when safe cards exist. Hearts cannot be led until a heart has already been played, unless a player has only hearts.",
+          "The MVP hand starts by passing three cards left. The holder of the two of clubs opens the first trick with 2C, following a common Wikipedia-described Hearts convention. Everyone else must follow the led suit when possible. First-trick penalty dumps are blocked when safe cards exist. Hearts cannot be led until a heart has already been played, unless a player has only hearts.",
         facts: [
           { label: "Pass", value: "Three cards left" },
-          { label: "Opening lead", value: "2C starts the first trick" },
+          { label: "Opening lead", value: "Holder of 2C leads 2C" },
+          { label: "Opening source", value: "Wikipedia-style Hearts convention" },
           { label: "Led suit", value: "Set by the first card in the trick" },
           { label: "Legal play", value: "Follow suit when you can" },
           { label: "Heart leads", value: "Blocked until hearts are broken" },

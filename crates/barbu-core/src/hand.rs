@@ -118,11 +118,48 @@ pub fn completed_trick_tactical_tags(
             if trick.penalty > 0 {
                 tags.push("danger_card_moved");
             }
+            if contract == "Hearts" {
+                if trick.cards.iter().any(|played| {
+                    played.card.rank == Rank::Queen && played.card.suit == Suit::Spades
+                }) {
+                    tags.push("queen_spades_moved");
+                }
+                if trick
+                    .cards
+                    .iter()
+                    .any(|played| played.card.suit == Suit::Hearts)
+                {
+                    tags.push("hearts_moved");
+                }
+                if trick.winner == 2
+                    && trick.penalty > 0
+                    && trick
+                        .cards
+                        .iter()
+                        .any(|played| played.player != 2 && played.card.suit != led_suit(trick))
+                {
+                    tags.push("opponent_loaded_player_trick");
+                }
+                if trick.winner == 2
+                    && trick.penalty > 0
+                    && trick.cards.first().is_some_and(|played| played.player != 2)
+                {
+                    tags.push("pressure_lead");
+                }
+            }
         }
         _ => {}
     }
 
     tags
+}
+
+fn led_suit(trick: &CompletedTrick) -> Suit {
+    trick
+        .cards
+        .first()
+        .map(|played| played.card.suit)
+        .unwrap_or(Suit::Clubs)
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1356,6 +1393,28 @@ mod tests {
 
         assert!(tags.contains(&"trump_won"));
         assert!(tags.contains(&"overtrumped"));
+    }
+
+    #[test]
+    fn hearts_tactical_tags_identify_queen_and_heart_pressure() {
+        let trick = CompletedTrick {
+            cards: vec![
+                PlayedCard::new(1, Card::new(Rank::King, Suit::Clubs)),
+                PlayedCard::new(2, Card::new(Rank::Ace, Suit::Clubs)),
+                PlayedCard::new(3, Card::new(Rank::Queen, Suit::Spades)),
+                PlayedCard::new(0, Card::new(Rank::Two, Suit::Hearts)),
+            ],
+            winner: 2,
+            penalty: 14,
+        };
+
+        let tags = completed_trick_tactical_tags("Hearts", 6, &trick);
+
+        assert!(tags.contains(&"danger_card_moved"));
+        assert!(tags.contains(&"queen_spades_moved"));
+        assert!(tags.contains(&"hearts_moved"));
+        assert!(tags.contains(&"opponent_loaded_player_trick"));
+        assert!(tags.contains(&"pressure_lead"));
     }
 
     #[test]

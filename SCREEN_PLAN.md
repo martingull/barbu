@@ -36,7 +36,7 @@ When a feature is added, it should have one primary home. Cross-links are allowe
 
 Barbu is the first playable game, not the product boundary. The app should grow from shared game families rather than isolated one-off games. The product priority is still to make Barbu feel good first: clear learning, reliable full-hand play, useful practice, and a coherent local game loop.
 
-The MVP should include Hearts as the second active starter game. Hearts should reuse the shared trick-taking table and engine instead of becoming a separate implementation. MVP Hearts should be a focused local game: pass-three-left, 2C opening, first-trick penalty restrictions, no heart leads until hearts are broken, and hearts plus the queen of spades as penalties. Rotating pass directions, shooting the moon, and fuller match scoring can wait for Hearts v2.
+The MVP should include Hearts as the second active starter game. Hearts should reuse the shared trick-taking table and engine instead of becoming a separate implementation. MVP Hearts should be a focused local game: pass-three-left, the Wikipedia-style holder-of-2C opening, first-trick penalty restrictions, no heart leads until hearts are broken, and hearts plus the queen of spades as penalties. Rotating pass directions, shooting the moon, and fuller match scoring can wait for Hearts v2.
 
 The Hearts family is the first expansion area because many games share:
 
@@ -105,7 +105,7 @@ MVP rule boundary:
 
 - Score hearts and the queen of spades as penalties.
 - Pass three cards left before the first trick.
-- Start the first trick with 2C, block first-trick penalty dumps when safe cards exist, and block heart leads until hearts are broken.
+- Start the first trick with the holder of 2C leading 2C, block first-trick penalty dumps when safe cards exist, and block heart leads until hearts are broken.
 - Keep follow-suit legality and trick resolution shared with Barbu.
 - Document missing Hearts v2 rules rather than pretending they are implemented.
 

@@ -708,6 +708,17 @@ fn hand_prompt(state: &barbu_core::TrickTakingHandState, penalty_name: &str) -> 
         );
     }
 
+    if state.id.starts_with("hearts-passing-hand-") {
+        return "Choose three cards to pass left.".to_string();
+    }
+
+    if state.id.starts_with("hearts-hand-")
+        && state.completed_tricks.is_empty()
+        && state.current_trick.is_empty()
+    {
+        return "You hold 2C, so you must open the first trick with 2C.".to_string();
+    }
+
     if state.current_trick.is_empty() {
         return "You won the last trick. Lead any card to the next trick.".to_string();
     }
