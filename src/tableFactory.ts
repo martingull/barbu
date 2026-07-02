@@ -14,7 +14,7 @@ export type CatalogStatus = "Ready" | "Planned";
 export type CatalogAccess = "Free" | "Pack";
 export type CatalogAccessModel = "free-starter" | "metered-pack";
 export type BarbuLearnPathAction = "lesson" | "generated" | "review" | "planned";
-export type HeartsLearnPathAction = "object" | "queen" | "avoid" | "pass" | "score";
+export type HeartsLearnPathAction = "object" | "queen" | "avoid" | "pass" | "break" | "moon" | "score";
 export type BarbuPracticeAction = "quick" | "fixed" | "domino";
 export type HeartsPracticeAction = "pass" | "avoid" | "queen" | "break" | "moon" | "score";
 
@@ -221,6 +221,20 @@ export const heartsLearnPathSteps: HeartsLearnPathStep[] = [
     title: "Pass three",
     summary: "Move obvious danger cards before the first trick starts.",
     action: "pass"
+  }),
+  createLearnPathStep({
+    id: "hearts-break",
+    step: "Rule",
+    title: "Break hearts",
+    summary: "Learn when hearts can legally be led.",
+    action: "break"
+  }),
+  createLearnPathStep({
+    id: "hearts-moon",
+    step: "Tactic",
+    title: "Stop the moon",
+    summary: "Take danger on purpose when one player is collecting everything.",
+    action: "moon"
   }),
   createLearnPathStep({
     id: "hearts-score",

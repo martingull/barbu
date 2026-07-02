@@ -3128,6 +3128,16 @@
       return;
     }
 
+    if (step.action === "break") {
+      startHeartsBreakHeartsDrill(step.id);
+      return;
+    }
+
+    if (step.action === "moon") {
+      startHeartsStopMoonDrill(step.id);
+      return;
+    }
+
     startHeartsScoreHandDrill(step.id);
   }
 
@@ -5515,111 +5525,29 @@
             </div>
 
             <div class="path-grid">
-              <button
-                class:active={nextHeartsPathStep?.id === "hearts-object" && !completedPathSteps["hearts-object"]}
-                class:complete={completedPathSteps["hearts-object"]}
-                class="path-card"
-                onclick={startHeartsObjectLesson}
-                type="button"
-              >
-                <span class="path-index">1</span>
-                <span class="path-step">Concept</span>
-                <strong>Object of Hearts</strong>
-                <small>Avoid penalty tricks. Hearts are small penalties; QS is the large one.</small>
-                <span class="path-status">
-                  {#if completedPathSteps["hearts-object"]}
-                    Complete
-                  {:else if nextHeartsPathStep?.id === "hearts-object"}
-                    Next
-                  {:else}
-                    Open
-                  {/if}
-                </span>
-              </button>
-              <button
-                class:active={nextHeartsPathStep?.id === "hearts-queen" && !completedPathSteps["hearts-queen"]}
-                class:complete={completedPathSteps["hearts-queen"]}
-                class="path-card"
-                onclick={() => startHeartsQueenDangerDrill("hearts-queen")}
-                type="button"
-              >
-                <span class="path-index">2</span>
-                <span class="path-step">Example</span>
-                <strong>Queen of Spades</strong>
-                <small>Read whether QS is moving into your trick or safely away.</small>
-                <span class="path-status">
-                  {#if completedPathSteps["hearts-queen"]}
-                    Complete
-                  {:else if nextHeartsPathStep?.id === "hearts-queen"}
-                    Next
-                  {:else}
-                    Open
-                  {/if}
-                </span>
-              </button>
-              <button
-                class:active={nextHeartsPathStep?.id === "hearts-avoid" && !completedPathSteps["hearts-avoid"]}
-                class:complete={completedPathSteps["hearts-avoid"]}
-                class="path-card"
-                onclick={() => startHeartsAvoidHeartsDrill("hearts-avoid")}
-                type="button"
-              >
-                <span class="path-index">3</span>
-                <span class="path-step">Guided trick</span>
-                <strong>Avoid hearts</strong>
-                <small>Follow suit, stay below the winner, and let heart points move away.</small>
-                <span class="path-status">
-                  {#if completedPathSteps["hearts-avoid"]}
-                    Complete
-                  {:else if nextHeartsPathStep?.id === "hearts-avoid"}
-                    Next
-                  {:else}
-                    Open
-                  {/if}
-                </span>
-              </button>
-              <button
-                class:active={nextHeartsPathStep?.id === "hearts-pass" && !completedPathSteps["hearts-pass"]}
-                class:complete={completedPathSteps["hearts-pass"]}
-                class="path-card"
-                onclick={() => void startHeartsPassPractice("hearts-pass")}
-                type="button"
-              >
-                <span class="path-index">4</span>
-                <span class="path-step">Before play</span>
-                <strong>Pass three</strong>
-                <small>Move obvious danger cards before the first trick starts.</small>
-                <span class="path-status">
-                  {#if completedPathSteps["hearts-pass"]}
-                    Complete
-                  {:else if nextHeartsPathStep?.id === "hearts-pass"}
-                    Next
-                  {:else}
-                    Open
-                  {/if}
-                </span>
-              </button>
-              <button
-                class:active={nextHeartsPathStep?.id === "hearts-score" && !completedPathSteps["hearts-score"]}
-                class:complete={completedPathSteps["hearts-score"]}
-                class="path-card"
-                onclick={() => startHeartsScoreHandDrill("hearts-score")}
-                type="button"
-              >
-                <span class="path-index">5</span>
-                <span class="path-step">Review</span>
-                <strong>Score a hand</strong>
-                <small>Find why QS makes a trick much more expensive.</small>
-                <span class="path-status">
-                  {#if completedPathSteps["hearts-score"]}
-                    Complete
-                  {:else if nextHeartsPathStep?.id === "hearts-score"}
-                    Next
-                  {:else}
-                    Open
-                  {/if}
-                </span>
-              </button>
+              {#each heartsPathSteps as step, index}
+                <button
+                  class:active={nextHeartsPathStep?.id === step.id && !completedPathSteps[step.id]}
+                  class:complete={completedPathSteps[step.id]}
+                  class="path-card"
+                  onclick={() => startHeartsPathStep(step)}
+                  type="button"
+                >
+                  <span class="path-index">{index + 1}</span>
+                  <span class="path-step">{step.step}</span>
+                  <strong>{step.title}</strong>
+                  <small>{step.summary}</small>
+                  <span class="path-status">
+                    {#if completedPathSteps[step.id]}
+                      Complete
+                    {:else if nextHeartsPathStep?.id === step.id}
+                      Next
+                    {:else}
+                      Open
+                    {/if}
+                  </span>
+                </button>
+              {/each}
             </div>
           </section>
         </div>

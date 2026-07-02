@@ -336,6 +336,8 @@ test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testI
   await expect(page.getByLabel("Hearts lesson path")).toContainText("Object of Hearts");
   await expect(page.getByLabel("Hearts lesson path")).toContainText("Queen of Spades");
   await expect(page.getByLabel("Hearts lesson path")).toContainText("Pass three");
+  await expect(page.getByLabel("Hearts lesson path")).toContainText("Break hearts");
+  await expect(page.getByLabel("Hearts lesson path")).toContainText("Stop the moon");
   await expect(page.getByLabel("Hearts lesson path")).toContainText("Score a hand");
 
   await page.getByRole("tab", { name: "Practice" }).click();
@@ -410,7 +412,7 @@ test("Hearts passing drill teaches the danger-card pass", async ({ page }, testI
   await page.screenshot({ path: testInfo.outputPath("hearts-pass-practice.png"), fullPage: true });
 });
 
-test("Hearts pass lesson completes and advances to score lesson", async ({ page }) => {
+test("Hearts pass lesson completes and advances to rule lesson", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Open Hearts" }).click();
   await page.getByRole("tab", { name: "Learn" }).click();
@@ -426,7 +428,7 @@ test("Hearts pass lesson completes and advances to score lesson", async ({ page 
 
   await page.getByRole("button", { name: "Continue Hearts path" }).click();
   await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
-  await expect(page.getByLabel("Drill decision")).toContainText("Find the 13-point card");
+  await expect(page.getByLabel("Drill decision")).toContainText("Can you lead a heart?");
 });
 
 test("Hearts micro drills teach broken hearts moon defense and score reading", async ({ page }) => {
