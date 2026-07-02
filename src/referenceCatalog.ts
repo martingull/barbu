@@ -336,15 +336,15 @@ export const referenceCatalog: GameReference[] = [
         id: "shooting-moon",
         title: "Shooting the moon",
         coreStatus: "Hearts v2",
-        appStatus: "Later",
-        note: "Moon scoring is intentionally excluded until normal penalty avoidance is clear."
+        appStatus: "Playable",
+        note: "If one seat captures all 26 points in a hand, that seat scores 0 and the other seats score 26. Trick feedback calls out an active moon threat before the hand ends."
       },
       {
         id: "match-scoring",
         title: "Multi-hand match scoring",
         coreStatus: "Hearts v2",
-        appStatus: "Later",
-        note: "The MVP focuses on a single hand rather than a match to a target score."
+        appStatus: "Playable",
+        note: "The local match repeats hands until one seat reaches 50 penalty points. Low score wins."
       }
     ],
     variants: [
@@ -358,7 +358,7 @@ export const referenceCatalog: GameReference[] = [
         id: "mvp-simplification",
         title: "MVP Boundary",
         note:
-          "The app currently teaches pass-left, the core trick loop, Hearts opening restrictions, and penalty scoring before adding rotating pass directions, moon scoring, or longer match structure."
+          "The app currently teaches pass-left, the core trick loop, Hearts opening restrictions, penalty scoring, shooting the moon, and a 50-point local match before adding rotating pass directions or richer Hearts varieties."
       }
     ]
   }

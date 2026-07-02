@@ -5365,20 +5365,40 @@
           <div aria-label="Learn" class="barbu-tab-panel practice-panel" id="hearts-learn-panel" role="tabpanel">
             <div class="barbu-mode-copy">
               <p class="eyebrow">Learn</p>
-              <h2>Learn the Hearts danger cards.</h2>
-              <p>Start with the playable MVP hand: pass three left, open with 2C, follow suit, avoid hearts, and avoid the queen of spades.</p>
+              <h2>Learn the Hearts match.</h2>
+              <p>Build the same habits as Barbu: identify the danger, make the card decision, then read the score.</p>
             </div>
             <div class="table-action-groups" aria-label="Hearts table actions">
               <section class="learn-action-grid" aria-label="Hearts learn actions">
+                <button class="learn-action-card primary" onclick={startHeartsHand} type="button">
+                  <span class="eyebrow">Concept</span>
+                  <strong>Object of Hearts</strong>
+                  <small>Avoid penalty tricks. Hearts are small penalties; the Queen of Spades is the large one.</small>
+                </button>
+                <button class="learn-action-card" onclick={startHeartsQueenDangerDrill} type="button">
+                  <span class="eyebrow">Example</span>
+                  <strong>Queen of Spades</strong>
+                  <small>Practice reading whether QS is moving into your trick or safely into someone else's.</small>
+                </button>
+                <button class="learn-action-card" onclick={startHeartsAvoidHeartsDrill} type="button">
+                  <span class="eyebrow">Guided trick</span>
+                  <strong>Avoid hearts</strong>
+                  <small>Follow suit, stay below the current winner, and let heart points move away.</small>
+                </button>
+                <button class="learn-action-card" onclick={() => void startHeartsPassPractice()} type="button">
+                  <span class="eyebrow">Before play</span>
+                  <strong>Pass three</strong>
+                  <small>Move obvious danger cards before the first trick starts.</small>
+                </button>
                 <button class="learn-action-card" onclick={startHeartsHand} type="button">
-                  <span>Starter hand</span>
-                  <strong>Play Hearts</strong>
-                  <small>Pass three cards, play the focused hand, then use the reference when a rule needs names.</small>
+                  <span class="eyebrow">Review</span>
+                  <strong>Score a hand</strong>
+                  <small>Play a hand and read the low-score table, moon threat, and match target.</small>
                 </button>
                 <button class="learn-action-card" onclick={() => openReference(gameTableDefinitions.hearts.referenceId)} type="button">
-                  <span>Rules</span>
+                  <span class="eyebrow">Rules</span>
                   <strong>Reference</strong>
-                  <small>See the current MVP rules and the later Hearts rules we have not added yet.</small>
+                  <small>Check the current MVP rules, names, scoring, and documented simplifications.</small>
                 </button>
               </section>
             </div>
@@ -5387,13 +5407,13 @@
           <div aria-label="Practice" class="barbu-tab-panel practice-panel" id="hearts-practice-panel" role="tabpanel">
             <div class="barbu-mode-copy">
               <p class="eyebrow">Practice</p>
-              <h2>Repeat the two danger habits.</h2>
-              <p>Hearts practice uses the same trick-reading patterns as Barbu: avoid small penalties, then avoid the loaded queen.</p>
+              <h2>Repeat the Hearts habits.</h2>
+              <p>Use short drills for the danger cards, then move into live-hand practice for broken hearts, moon defense, and score reading.</p>
             </div>
 
             <section class="fixed-contract-practice" aria-label="Hearts practice drills">
               <div class="section-heading">
-                <p class="eyebrow">Fixed drills</p>
+                <p class="eyebrow">Practice set</p>
                 <h2>Practice one Hearts pattern.</h2>
               </div>
               <div class="fixed-contract-grid">
@@ -5412,6 +5432,21 @@
                   <strong>Queen danger</strong>
                   <small>Practice the Queen of Spades habit: avoid winning when a queen is loaded.</small>
                 </button>
+                <button class="contract-card compact" onclick={startHeartsHand} type="button">
+                  <span>Play restriction</span>
+                  <strong>Break hearts</strong>
+                  <small>Enter a live hand and watch when hearts become legal to lead.</small>
+                </button>
+                <button class="contract-card compact" onclick={startHeartsHand} type="button">
+                  <span>Moon defense</span>
+                  <strong>Stop the moon</strong>
+                  <small>Play a live hand and notice when one seat is collecting every point.</small>
+                </button>
+                <button class="contract-card compact" onclick={startHeartsHand} type="button">
+                  <span>Scorecard</span>
+                  <strong>Score a hand</strong>
+                  <small>Finish a hand and read how hearts, QS, and moon scoring change the table.</small>
+                </button>
               </div>
             </section>
           </div>
@@ -5424,7 +5459,7 @@
             </div>
             <div class="play-options" aria-label="Hearts play options">
               <button class="primary-action" onclick={startHeartsHand} type="button">Play Hearts</button>
-              <p class="supporting-copy">Rotating pass directions and shooting the moon come after the local match feels right.</p>
+              <p class="supporting-copy">Play repeated pass-left hands to 50 penalty points. Low score wins; shooting the moon is active.</p>
             </div>
           </div>
         {:else}

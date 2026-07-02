@@ -330,11 +330,20 @@ test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testI
   await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("button", { name: "Play Hearts" })).toBeVisible();
 
+  await page.getByRole("tab", { name: "Learn" }).click();
+  await expect(page.getByLabel("Hearts learn actions")).toContainText("Object of Hearts");
+  await expect(page.getByLabel("Hearts learn actions")).toContainText("Queen of Spades");
+  await expect(page.getByLabel("Hearts learn actions")).toContainText("Pass three");
+  await expect(page.getByLabel("Hearts learn actions")).toContainText("Score a hand");
+
   await page.getByRole("tab", { name: "Practice" }).click();
   await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByLabel("Hearts practice drills")).toContainText("Pass three");
   await expect(page.getByLabel("Hearts practice drills")).toContainText("Avoid hearts");
   await expect(page.getByLabel("Hearts practice drills")).toContainText("Queen danger");
+  await expect(page.getByLabel("Hearts practice drills")).toContainText("Break hearts");
+  await expect(page.getByLabel("Hearts practice drills")).toContainText("Stop the moon");
+  await expect(page.getByLabel("Hearts practice drills")).toContainText("Score a hand");
   await page.screenshot({ path: testInfo.outputPath("hearts-practice.png"), fullPage: true });
 
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Avoid hearts" }).click();
@@ -406,6 +415,7 @@ test("Hearts reference explains the MVP rule boundary", async ({ page }, testInf
   await expect(page.getByLabel("Contract roadmap")).toContainText("Pass three left");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Hearts v1");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Hearts v2");
+  await expect(page.getByLabel("Contract roadmap")).toContainText("Playable");
   await expect(page.getByLabel("Variants and varieties")).toContainText("MVP Boundary");
   await page.screenshot({ path: testInfo.outputPath("hearts-reference.png"), fullPage: true });
 

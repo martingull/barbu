@@ -83,11 +83,20 @@ export const gameTableDefinitions = {
     },
     defaultTab: "play",
     actionsByTab: {
-      learn: [{ id: "reference", label: "Reference", destination: "Hearts reference" }],
+      learn: [
+        { id: "object", label: "Object", destination: "Hearts object concept" },
+        { id: "queen-danger", label: "Queen danger", destination: "Queen of Spades concept" },
+        { id: "passing", label: "Pass three", destination: "Hearts passing concept" },
+        { id: "scorecard", label: "Scorecard", destination: "Hearts score concept" },
+        { id: "reference", label: "Reference", destination: "Hearts reference" }
+      ],
       practice: [
         { id: "pass-three", label: "Pass three", destination: "Hearts passing drill" },
         { id: "avoid-hearts", label: "Avoid hearts", destination: "Hearts avoid-hearts drill" },
-        { id: "queen-danger", label: "Queen danger", destination: "Hearts queen danger drill" }
+        { id: "queen-danger", label: "Queen danger", destination: "Hearts queen danger drill" },
+        { id: "break-hearts", label: "Break hearts", destination: "Hearts full hand practice" },
+        { id: "stop-the-moon", label: "Stop the moon", destination: "Hearts moon-defense practice" },
+        { id: "score-a-hand", label: "Score a hand", destination: "Hearts scorecard practice" }
       ],
       play: [{ id: "play-hearts", label: "Play Hearts", destination: "Hearts pass-left hand" }]
     }
