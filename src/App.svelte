@@ -178,6 +178,7 @@
   type HeartsHandResult = {
     handNumber: number;
     seatPenalties: Record<Seat, number>;
+    moonShooter?: Seat;
   };
 
   type RunStanding = {
@@ -385,6 +386,7 @@
   const countingRanks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
   const countingSuits: Suit[] = ["C", "D", "H", "S"];
   const dominoOrderScores = [45, 20, 5, -5];
+  const heartsHandPenaltyTotal = 26;
   const heartsMatchTarget = 50;
   const seatByPlayerIndex: Record<number, Seat> = {
     0: "Tutor",
@@ -1128,11 +1130,16 @@
   $: fullHandBestTrick = fullHand ? fullHandBestTrickLabel(fullHand) : "";
   $: fullHandWorstTrick = fullHand ? fullHandWorstTrickLabel(fullHand) : "";
   $: fullHandIsHeartsGame = activeGameTable === "hearts" && fullHand?.contract === "Hearts" && !fullHandRunActive;
+  $: heartsCurrentMoonShooter = fullHandIsHeartsGame ? heartsMoonShooter(fullHandSeatPenalties) : undefined;
+  $: heartsCurrentScoredSeatPenalties = fullHandIsHeartsGame
+    ? heartsScoredSeatPenalties(fullHandSeatPenalties)
+    : emptySeatPenalties();
   $: currentHeartsHandResult =
     fullHandIsHeartsGame && fullHand?.status === "complete"
       ? ({
           handNumber: heartsHandResults.length + 1,
-          seatPenalties: fullHandSeatPenalties
+          seatPenalties: heartsCurrentScoredSeatPenalties,
+          moonShooter: heartsCurrentMoonShooter
         } satisfies HeartsHandResult)
       : null;
   $: heartsVisibleHandResults = currentHeartsHandResult
@@ -1141,7 +1148,7 @@
   $: heartsVisibleHandCount = heartsVisibleHandResults.length;
   $: heartsScorecardMeta = gameTableDefinitions.hearts.scorecard;
   $: heartsVisibleScores = fullHandIsHeartsGame
-    ? addSeatPenalties(heartsSessionScores, fullHandSeatPenalties)
+    ? addSeatPenalties(heartsSessionScores, heartsCurrentScoredSeatPenalties)
     : heartsSessionScores;
   $: heartsStandings = heartsScorecardStandings(heartsVisibleScores);
   $: heartsLeader = heartsStandings[0];
@@ -3314,10 +3321,11 @@
         ...heartsHandResults,
         {
           handNumber: heartsHandResults.length + 1,
-          seatPenalties: fullHandSeatPenalties
+          seatPenalties: heartsCurrentScoredSeatPenalties,
+          moonShooter: heartsCurrentMoonShooter
         }
       ];
-      heartsSessionScores = addSeatPenalties(heartsSessionScores, fullHandSeatPenalties);
+      heartsSessionScores = addSeatPenalties(heartsSessionScores, heartsCurrentScoredSeatPenalties);
       void startHeartsPassingPhase({ keepSession: true });
       return;
     }
@@ -3510,6 +3518,42 @@
     });
   }
 
+  function heartsMoonShooter(rawSeatPenalties: Record<Seat, number>) {
+    const total = scoreSeats.reduce((sum, seat) => sum + (rawSeatPenalties[seat] ?? 0), 0);
+
+    if (total !== heartsHandPenaltyTotal) {
+      return undefined;
+    }
+
+    return scoreSeats.find((seat) => rawSeatPenalties[seat] === heartsHandPenaltyTotal);
+  }
+
+  function heartsScoredSeatPenalties(rawSeatPenalties: Record<Seat, number>) {
+    const shooter = heartsMoonShooter(rawSeatPenalties);
+
+    if (!shooter) {
+      return rawSeatPenalties;
+    }
+
+    return scoreSeats.reduce(
+      (scores, seat) => ({
+        ...scores,
+        [seat]: seat === shooter ? 0 : heartsHandPenaltyTotal
+      }),
+      emptySeatPenalties()
+    );
+  }
+
+  function heartsMoonResultText(shooter: Seat) {
+    if (shooter === "You") {
+      return "You shot the moon. This hand scores 0 for you and 26 for everyone else.";
+    }
+
+    return `${scoreSeatLabel(shooter)} shot the moon. This hand scores 0 for ${scoreSeatLabel(
+      shooter
+    )} and 26 for everyone else.`;
+  }
+
   function heartsMatchResultHeading() {
     if (!heartsPlayerStanding) {
       return "Hearts match complete";
@@ -3556,7 +3600,13 @@
 
   function heartsHandResultLabel(result: HeartsHandResult) {
     const score = result.seatPenalties.You ?? 0;
-    return `Hand ${result.handNumber}: ${score} ${score === 1 ? "point" : "points"}`;
+    const moonText = result.moonShooter
+      ? result.moonShooter === "You"
+        ? " (shot moon)"
+        : ` (${scoreSeatLabel(result.moonShooter)} shot moon)`
+      : "";
+
+    return `Hand ${result.handNumber}: ${score} ${score === 1 ? "point" : "points"}${moonText}`;
   }
 
   function runResultHeading(standings: RunStanding[]) {
@@ -3807,6 +3857,11 @@
       if (heartsMatchIsComplete) {
         return heartsMatchResultHeading();
       }
+      if (heartsCurrentMoonShooter) {
+        return heartsCurrentMoonShooter === "You"
+          ? "You shot the moon"
+          : `${scoreSeatLabel(heartsCurrentMoonShooter)} shot the moon`;
+      }
 
       const player = heartsPlayerStanding;
 
@@ -3836,7 +3891,10 @@
   function fullHandResultText(hand: FullHandState) {
     if (activeGameTable === "hearts" && hand.contract === "Hearts") {
       if (heartsMatchIsComplete) {
-        return heartsMatchSummary;
+        return heartsCurrentMoonShooter ? `${heartsMoonResultText(heartsCurrentMoonShooter)} ${heartsMatchSummary}` : heartsMatchSummary;
+      }
+      if (heartsCurrentMoonShooter) {
+        return heartsMoonResultText(heartsCurrentMoonShooter);
       }
 
       return `${heartsScorecardMeta.objective}. You took ${formatFullHandPenalty(
@@ -5335,7 +5393,7 @@
             <div class="barbu-mode-copy">
               <p class="eyebrow">Play</p>
               <h2>Play a Hearts match.</h2>
-              <p>MVP Hearts plays repeated hands to 50 points with pass-three-left, 2C opening, hearts at 1 point, and QS at 13.</p>
+              <p>MVP Hearts plays repeated hands to 50 points with pass-three-left, 2C opening, QS at 13, and shoot-the-moon scoring.</p>
             </div>
             <div class="play-options" aria-label="Hearts play options">
               <button class="primary-action" onclick={startHeartsHand} type="button">Play Hearts</button>

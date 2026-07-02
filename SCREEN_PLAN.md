@@ -36,7 +36,7 @@ When a feature is added, it should have one primary home. Cross-links are allowe
 
 Barbu is the first playable game, not the product boundary. The app should grow from shared game families rather than isolated one-off games. The product priority is still to make Barbu feel good first: clear learning, reliable full-hand play, useful practice, and a coherent local game loop.
 
-The MVP should include Hearts as the second active starter game. Hearts should reuse the shared trick-taking table and engine instead of becoming a separate implementation. MVP Hearts should be a focused local multi-hand game: pass-three-left, the Wikipedia-style holder-of-2C opening, first-trick penalty restrictions, no heart leads until hearts are broken, hearts plus the queen of spades as penalties, and a 50-point match target for mobile testing. Rotating pass directions, shooting the moon, and fuller match options can wait for Hearts v2.
+The MVP should include Hearts as the second active starter game. Hearts should reuse the shared trick-taking table and engine instead of becoming a separate implementation. MVP Hearts should be a focused local multi-hand game: pass-three-left, the Wikipedia-style holder-of-2C opening, first-trick penalty restrictions, no heart leads until hearts are broken, hearts plus the queen of spades as penalties, shoot-the-moon scoring, and a 50-point match target for mobile testing. Rotating pass directions and fuller match options can wait for Hearts v2.
 
 The Hearts family is the first expansion area because many games share:
 
@@ -104,6 +104,7 @@ Current role:
 MVP rule boundary:
 
 - Score hearts and the queen of spades as penalties.
+- If one seat captures all 26 points in a hand, score shooting the moon as 0 for that seat and 26 for every other seat.
 - Pass three cards left before the first trick.
 - Start the first trick with the holder of 2C leading 2C, block first-trick penalty dumps when safe cards exist, and block heart leads until hearts are broken.
 - Continue hands until one seat reaches 50 points; low score wins the match.

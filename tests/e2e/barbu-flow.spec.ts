@@ -396,6 +396,7 @@ test("Hearts reference explains the MVP rule boundary", async ({ page }, testInf
   await expect(page.getByLabel("Hearts overview")).toContainText("woman of spades");
   await expect(page.getByLabel("Contract reference")).toContainText("Hearts rules");
   await expect(page.getByLabel("Contract reference")).toContainText("queen of spades is 13");
+  await expect(page.getByLabel("Contract reference")).toContainText("shooting the moon");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Pass three left");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Hearts v1");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Hearts v2");
@@ -413,8 +414,8 @@ test("Hearts play starts with a pass-left phase before the hand", async ({ page 
 
   await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
   const playPanel = page.getByRole("tabpanel", { name: "Play" });
-  await expect(playPanel).toContainText("hearts at 1 point");
   await expect(playPanel).toContainText("QS at 13");
+  await expect(playPanel).toContainText("shoot-the-moon scoring");
   await page.getByRole("button", { name: "Play Hearts" }).click();
 
   await expect(page.getByRole("heading", { name: "Pass cards" })).toBeVisible();

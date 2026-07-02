@@ -250,7 +250,7 @@ export const referenceCatalog: GameReference[] = [
     family: "Hearts",
     baseline: "David Parlett structure, Wikipedia-style MVP opening convention",
     overview:
-      "The MVP Hearts table is the Queen of Spades style known in some places as the woman of spades. The reference structure follows the Parlett-style object, play, and scoring format, while the current opening convention follows the common Wikipedia-described rule that 2C opens the first trick. The app currently plays repeated hands to 50 points.",
+      "The MVP Hearts table is the Queen of Spades style known in some places as the woman of spades. The reference structure follows the Parlett-style object, play, and scoring format, while the current opening convention follows the common Wikipedia-described rule that 2C opens the first trick. The app currently plays repeated hands to 50 points with shooting the moon enabled.",
     sections: [
       {
         id: "object",
@@ -291,11 +291,12 @@ export const referenceCatalog: GameReference[] = [
         id: "scoring",
         title: "Scoring",
         body:
-          "MVP Hearts scores each heart as one penalty point and the queen of spades as thirteen penalty points. The trick winner receives all penalty cards in that trick. Hands repeat until one seat reaches 50 points; low score wins the match.",
+          "MVP Hearts scores each heart as one penalty point and the queen of spades as thirteen penalty points. The trick winner receives all penalty cards in that trick. If one seat captures all 26 points in a hand, that seat shoots the moon and scores 0 while every other seat scores 26. Hands repeat until one seat reaches 50 points; low score wins the match.",
         facts: [
           { label: "Heart", value: "1 penalty point" },
           { label: "Queen of spades", value: "13 penalty points" },
           { label: "Points in play", value: "26 per hand" },
+          { label: "Shoot the moon", value: "Shooter 0, others 26" },
           { label: "MVP target", value: "50 points" }
         ]
       }
@@ -305,7 +306,7 @@ export const referenceCatalog: GameReference[] = [
         id: "mvp-hand",
         title: "MVP Hearts Match",
         objective: "Pass three cards, then avoid hearts and the queen of spades across repeated hands.",
-        scoring: "Hearts are 1 penalty point each; the queen of spades is 13.",
+        scoring: "Hearts are 1 penalty point each; the queen of spades is 13; shooting the moon scores 0 for the shooter and 26 for the others.",
         lesson: "Start by reading who wins the trick, then manage the cumulative score over several hands."
       }
     ],
@@ -315,7 +316,7 @@ export const referenceCatalog: GameReference[] = [
         title: "Focused local match",
         coreStatus: "MVP",
         appStatus: "Playable",
-        note: "The shared trick-taking table supports 2C opening, follow-suit legality, first-trick penalty restrictions, hearts-broken lead restrictions, trick winners, hearts, queen-of-spades scoring, and a 50-point local match."
+        note: "The shared trick-taking table supports 2C opening, follow-suit legality, first-trick penalty restrictions, hearts-broken lead restrictions, trick winners, hearts, queen-of-spades scoring, shoot-the-moon scoring, and a 50-point local match."
       },
       {
         id: "passing",
