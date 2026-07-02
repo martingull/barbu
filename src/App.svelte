@@ -1131,6 +1131,7 @@
   $: fullHandWorstTrick = fullHand ? fullHandWorstTrickLabel(fullHand) : "";
   $: fullHandIsHeartsGame = activeGameTable === "hearts" && fullHand?.contract === "Hearts" && !fullHandRunActive;
   $: heartsCurrentMoonShooter = fullHandIsHeartsGame ? heartsMoonShooter(fullHandSeatPenalties) : undefined;
+  $: heartsCurrentMoonThreatSeat = fullHandIsHeartsGame ? heartsMoonThreatSeat(fullHandSeatPenalties) : undefined;
   $: heartsCurrentScoredSeatPenalties = fullHandIsHeartsGame
     ? heartsScoredSeatPenalties(fullHandSeatPenalties)
     : emptySeatPenalties();
@@ -3528,6 +3529,16 @@
     return scoreSeats.find((seat) => rawSeatPenalties[seat] === heartsHandPenaltyTotal);
   }
 
+  function heartsMoonThreatSeat(rawSeatPenalties: Record<Seat, number>) {
+    const total = scoreSeats.reduce((sum, seat) => sum + (rawSeatPenalties[seat] ?? 0), 0);
+
+    if (total <= 0 || total >= heartsHandPenaltyTotal) {
+      return undefined;
+    }
+
+    return scoreSeats.find((seat) => rawSeatPenalties[seat] === total);
+  }
+
   function heartsScoredSeatPenalties(rawSeatPenalties: Record<Seat, number>) {
     const shooter = heartsMoonShooter(rawSeatPenalties);
 
@@ -3552,6 +3563,22 @@
     return `${scoreSeatLabel(shooter)} shot the moon. This hand scores 0 for ${scoreSeatLabel(
       shooter
     )} and 26 for everyone else.`;
+  }
+
+  function heartsMoonThreatText() {
+    if (!fullHandIsHeartsGame || !heartsCurrentMoonThreatSeat || fullHand?.status !== "in_progress") {
+      return "";
+    }
+
+    if (heartsCurrentMoonThreatSeat === "You") {
+      return " You have every point so far; the table will try to break the moon.";
+    }
+
+    return ` ${scoreSeatLabel(heartsCurrentMoonThreatSeat)} has every point so far; break the moon by making someone else take points.`;
+  }
+
+  function withHeartsMoonThreat(message: string) {
+    return `${message}${heartsMoonThreatText()}`;
   }
 
   function heartsMatchResultHeading() {
@@ -3748,35 +3775,35 @@
     if (fullHandIsHeartsGame) {
       if (trick.outcome === "captured_penalty") {
         if (fullHandTrickHasTag(trick, "opponent_loaded_player_trick")) {
-          return fullHandTrickHasTag(trick, "queen_spades_moved")
+          return withHeartsMoonThreat(fullHandTrickHasTag(trick, "queen_spades_moved")
             ? `You held the trick and the table loaded QS into it. That is 13 danger points plus any hearts.`
-            : `You held the trick and the table loaded hearts into it. The lead created pressure; look for a lower exit next time.`;
+            : `You held the trick and the table loaded hearts into it. The lead created pressure; look for a lower exit next time.`);
         }
         if (fullHandTrickHasTag(trick, "queen_spades_moved")) {
-          return `You captured QS and took ${penaltyText}. In Hearts, that one card is the big danger.`;
+          return withHeartsMoonThreat(`You captured QS and took ${penaltyText}. In Hearts, that one card is the big danger.`);
         }
         if (fullHandTrickHasTag(trick, "hearts_moved")) {
-          return `You captured hearts and took ${penaltyText}. Once hearts are broken, every heart can become cargo.`;
+          return withHeartsMoonThreat(`You captured hearts and took ${penaltyText}. Once hearts are broken, every heart can become cargo.`);
         }
-        return `You won the trick and took ${penaltyText}. Try to stay below the current winner when danger can enter.`;
+        return withHeartsMoonThreat(`You won the trick and took ${penaltyText}. Try to stay below the current winner when danger can enter.`);
       }
       if (trick.outcome === "avoided_penalty") {
         if (fullHandTrickHasTag(trick, "queen_spades_moved")) {
-          return `${trick.winner} took QS. Good: the queen moved, but not into your score.`;
+          return withHeartsMoonThreat(`${trick.winner} took QS. Good: the queen moved, but not into your score.`);
         }
         if (fullHandTrickHasTag(trick, "hearts_moved")) {
-          return `${trick.winner} took ${penaltyText}. Good: the hearts moved away from you.`;
+          return withHeartsMoonThreat(`${trick.winner} took ${penaltyText}. Good: the hearts moved away from you.`);
         }
-        return `${trick.winner} took ${penaltyText}. Good: you stayed out of the loaded trick.`;
+        return withHeartsMoonThreat(`${trick.winner} took ${penaltyText}. Good: you stayed out of the loaded trick.`);
       }
       if (trick.outcome === "won_clean_trick") {
-        return fullHandTrickHasTag(trick, "pressure_lead")
+        return withHeartsMoonThreat(fullHandTrickHasTag(trick, "pressure_lead")
           ? "You won a clean trick after pressure from the lead. No points, but watch whether this gives you the next lead."
-          : "You won a clean trick. No points moved, but Hearts is still about avoiding the loaded tricks.";
+          : "You won a clean trick. No points moved, but Hearts is still about avoiding the loaded tricks.");
       }
-      return fullHandTrickHasTag(trick, "void_discard")
+      return withHeartsMoonThreat(fullHandTrickHasTag(trick, "void_discard")
         ? `${trick.winner} won a clean trick. Good: your void discard could not take the led suit.`
-        : `${trick.winner} won a clean trick. No hearts or QS moved.`;
+        : `${trick.winner} won a clean trick. No hearts or QS moved.`);
     }
 
     if (fullHand?.contract === "Hearts Trumps") {

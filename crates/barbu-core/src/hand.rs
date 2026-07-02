@@ -856,9 +856,37 @@ fn choose_hearts_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
     }
 
     let follows_suit = legal.iter().all(|card| Some(card.suit) == led_suit);
+    let moon_candidate = hearts_moon_candidate(state);
+    let current_winner = if state.current_trick.is_empty() {
+        None
+    } else {
+        trick_winner_for_state(state, &state.current_trick)
+    };
+    let current_trick_is_loaded = hearts_trick_penalty(&state.current_trick) > 0;
 
     if !follows_suit {
+        if let Some(candidate) = moon_candidate {
+            if state.current_player != candidate && current_winner == Some(candidate) {
+                return lowest_card_matching(&legal, |card| !is_hearts_penalty_card(card))
+                    .or_else(|| lowest_card(&legal));
+            }
+        }
+
         return highest_hearts_penalty_discard(&legal).or_else(|| highest_card(&legal));
+    }
+
+    if let Some(candidate) = moon_candidate {
+        if current_trick_is_loaded {
+            if state.current_player == candidate {
+                return lowest_winning_card(state, &legal).or_else(|| lowest_card(&legal));
+            }
+
+            if current_winner == Some(candidate) {
+                if let Some(card) = lowest_winning_card(state, &legal) {
+                    return Some(card);
+                }
+            }
+        }
     }
 
     if let Some(card) = highest_non_winning_card(state, &legal) {
@@ -901,6 +929,36 @@ fn highest_card_from_shortest_suit(
 
 fn suit_count(cards: &[Card], suit: Suit) -> usize {
     cards.iter().filter(|card| card.suit == suit).count()
+}
+
+fn hearts_moon_candidate(state: &TrickTakingHandState) -> Option<PlayerIndex> {
+    let mut scores = [0, 0, 0, 0];
+
+    for trick in &state.completed_tricks {
+        scores[trick.winner] += trick.penalty;
+    }
+
+    let total: i32 = scores.iter().sum();
+
+    if total == 0 {
+        return None;
+    }
+
+    scores
+        .iter()
+        .enumerate()
+        .find_map(|(player, score)| (*score == total).then_some(player))
+}
+
+fn hearts_trick_penalty(cards: &[PlayedCard]) -> i32 {
+    cards
+        .iter()
+        .map(|played| hearts_penalty_weight(played.card))
+        .sum()
+}
+
+fn lowest_winning_card(state: &TrickTakingHandState, cards: &[Card]) -> Option<Card> {
+    lowest_card_matching(cards, |card| card_would_win_trick(state, card))
 }
 
 fn choose_hearts_pass_cards(hand: &[Card]) -> Vec<Card> {
@@ -1664,6 +1722,115 @@ mod tests {
         assert_eq!(
             choose_hearts_opponent_card(&state),
             Some(Card::new(Rank::Two, Suit::Hearts))
+        );
+    }
+
+    #[test]
+    fn hearts_opponent_void_avoids_feeding_player_moon_candidate() {
+        let state = HeartsHandState {
+            id: "hearts-stop-feeding-player-moon".to_string(),
+            hands: [
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Queen, Suit::Spades),
+                    Card::new(Rank::Ace, Suit::Hearts),
+                    Card::new(Rank::Two, Suit::Diamonds),
+                ],
+                Vec::new(),
+                Vec::new(),
+            ],
+            current_player: 1,
+            current_trick: vec![PlayedCard::new(2, Card::new(Rank::Ace, Suit::Clubs))],
+            completed_tricks: vec![CompletedTrick {
+                cards: vec![
+                    PlayedCard::new(2, Card::new(Rank::King, Suit::Clubs)),
+                    PlayedCard::new(3, Card::new(Rank::Queen, Suit::Spades)),
+                    PlayedCard::new(0, Card::new(Rank::Two, Suit::Hearts)),
+                    PlayedCard::new(1, Card::new(Rank::Three, Suit::Hearts)),
+                ],
+                winner: 2,
+                penalty: 15,
+            }],
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_hearts_opponent_card(&state),
+            Some(Card::new(Rank::Two, Suit::Diamonds))
+        );
+    }
+
+    #[test]
+    fn hearts_opponent_takes_loaded_trick_away_from_moon_candidate() {
+        let state = HeartsHandState {
+            id: "hearts-steal-loaded-player-moon".to_string(),
+            hands: [
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Ace, Suit::Clubs),
+                    Card::new(Rank::Three, Suit::Clubs),
+                ],
+                Vec::new(),
+                Vec::new(),
+            ],
+            current_player: 1,
+            current_trick: vec![
+                PlayedCard::new(2, Card::new(Rank::King, Suit::Clubs)),
+                PlayedCard::new(3, Card::new(Rank::Two, Suit::Hearts)),
+            ],
+            completed_tricks: vec![CompletedTrick {
+                cards: vec![
+                    PlayedCard::new(2, Card::new(Rank::Queen, Suit::Clubs)),
+                    PlayedCard::new(3, Card::new(Rank::Queen, Suit::Spades)),
+                    PlayedCard::new(0, Card::new(Rank::Three, Suit::Hearts)),
+                    PlayedCard::new(1, Card::new(Rank::Four, Suit::Hearts)),
+                ],
+                winner: 2,
+                penalty: 15,
+            }],
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_hearts_opponent_card(&state),
+            Some(Card::new(Rank::Ace, Suit::Clubs))
+        );
+    }
+
+    #[test]
+    fn hearts_opponent_moon_candidate_captures_loaded_trick() {
+        let state = HeartsHandState {
+            id: "hearts-opponent-pursues-moon".to_string(),
+            hands: [
+                Vec::new(),
+                vec![
+                    Card::new(Rank::King, Suit::Clubs),
+                    Card::new(Rank::Two, Suit::Clubs),
+                ],
+                Vec::new(),
+                Vec::new(),
+            ],
+            current_player: 1,
+            current_trick: vec![
+                PlayedCard::new(0, Card::new(Rank::Ten, Suit::Clubs)),
+                PlayedCard::new(2, Card::new(Rank::Two, Suit::Hearts)),
+            ],
+            completed_tricks: vec![CompletedTrick {
+                cards: vec![
+                    PlayedCard::new(1, Card::new(Rank::Queen, Suit::Clubs)),
+                    PlayedCard::new(2, Card::new(Rank::Queen, Suit::Spades)),
+                    PlayedCard::new(3, Card::new(Rank::Three, Suit::Hearts)),
+                    PlayedCard::new(0, Card::new(Rank::Four, Suit::Hearts)),
+                ],
+                winner: 1,
+                penalty: 15,
+            }],
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_hearts_opponent_card(&state),
+            Some(Card::new(Rank::King, Suit::Clubs))
         );
     }
 

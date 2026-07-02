@@ -201,12 +201,12 @@ These are the next product increments that keep the app coherent.
    - Current MVP scoring covers hearts plus the queen of spades.
    - Current MVP legality covers the Wikipedia-style holder-of-2C opening, first-trick penalty restrictions, and hearts-broken lead restrictions.
    - Shooting the moon is active: if one seat captures all 26 hand points, that seat scores 0 and every other seat scores 26 for that hand.
-   - Hearts opponent policy now treats Queen of Spades as the main danger card in void discards and spade-following decisions, and uses short-suit/heart-broken leads so passive zero-point play is harder.
+   - Hearts opponent policy now treats Queen of Spades as the main danger card in void discards and spade-following decisions, uses short-suit/heart-broken leads so passive zero-point play is harder, and has moon awareness so seats avoid feeding a moon candidate or deliberately take loaded tricks to stop one. Trick feedback also calls out an active moon threat before the hand ends.
    - Hearts match v1 tracks cumulative table scores until someone reaches 50, then shows the winner, your place, and your best/worst hand.
    - Hearts Passing Drill v1 teaches the first pass-three-left heuristic.
    - Hearts Learn and Reference name the MVP simplifications.
    - Hearts Practice reuses Hearts-family patterns for avoiding hearts and queen danger.
-   - Next: add Hearts-specific generated trick drills and continue improving local Hearts opponent policy before adding Hearts v2 rules.
+   - Next: expand Hearts Learn and Practice toward Barbu-level coverage: moon threat, breaking hearts, queen handling, score reading, and match review.
 
 2. Drill Loop v2
    - Quick Drill now generates a continuing practice loop instead of a fixed seven-exercise roster.
