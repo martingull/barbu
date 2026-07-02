@@ -60,6 +60,7 @@
     | "practiceChooser"
     | "reference"
     | "courseContent"
+    | "heartsLearnObject"
     | "lesson"
     | "drill"
     | "drillResult"
@@ -97,6 +98,16 @@
     summary: string;
     action: PathAction;
     lessonId?: string;
+  };
+
+  type HeartsPathAction = "object" | "queen" | "avoid" | "pass" | "score";
+
+  type HeartsPathStep = {
+    id: string;
+    step: string;
+    title: string;
+    summary: string;
+    action: HeartsPathAction;
   };
 
   type CoursePanel = {
@@ -546,6 +557,43 @@
       action: "review"
     }
   ];
+  const heartsPathSteps: HeartsPathStep[] = [
+    {
+      id: "hearts-object",
+      step: "Concept",
+      title: "Object of Hearts",
+      summary: "Avoid penalty points. Hearts are small; QS is large.",
+      action: "object"
+    },
+    {
+      id: "hearts-queen",
+      step: "Example",
+      title: "Queen of Spades",
+      summary: "Read whether QS is moving into your trick or safely away.",
+      action: "queen"
+    },
+    {
+      id: "hearts-avoid",
+      step: "Guided trick",
+      title: "Avoid hearts",
+      summary: "Follow suit and let heart points move away.",
+      action: "avoid"
+    },
+    {
+      id: "hearts-pass",
+      step: "Before play",
+      title: "Pass three",
+      summary: "Move obvious danger cards before the first trick starts.",
+      action: "pass"
+    },
+    {
+      id: "hearts-score",
+      step: "Review",
+      title: "Score a hand",
+      summary: "Find why QS makes a trick much more expensive.",
+      action: "score"
+    }
+  ];
 
   const suitNames: Record<Suit, string> = {
     C: "clubs",
@@ -907,6 +955,42 @@
       }
     }
   };
+  const heartsQueenDangerDrillStep: DrillStep = {
+    scenarioId: "hearts-queen-of-spades-duck",
+    contract: "Hearts",
+    title: "Queen danger",
+    trick: {
+      title: "Duck the Queen of Spades",
+      beforeResult: "Spades were led. Right has put QS into the trick, and you still have spades.",
+      afterResult: "In Hearts, the Queen of Spades is the one queen that matters: it is worth 13 penalty points.",
+      emptyExplanation: "Follow spades without winning the trick that contains QS.",
+      legalCardIds: ["2S", "AS"],
+      hand: [
+        { id: "2S", rank: "2", suit: "S", label: "2S" },
+        { id: "AS", rank: "A", suit: "S", label: "AS" },
+        { id: "4H", rank: "4", suit: "H", label: "4H" }
+      ],
+      tableBeforeChoice: [
+        { seat: "Tutor", card: { id: "10S", rank: "10", suit: "S", label: "10S" } },
+        { seat: "Right", card: { id: "QS", rank: "Q", suit: "S", label: "QS" } }
+      ],
+      tableAfterChoice: [{ seat: "Left", card: { id: "7S", rank: "7", suit: "S", label: "7S" } }],
+      pendingBySeat: { Left: "follow spades" },
+      playedExplanations: {
+        "2S": "2S is good. You followed spades without taking the Queen of Spades.",
+        AS: "AS wins the trick and captures QS, which is 13 penalty points.",
+        "4H": "4H is off suit while you still have spades."
+      },
+      cardOutcomes: {
+        "2S": "good",
+        AS: "penalty"
+      },
+      cardReasons: {
+        "2S": "avoided_penalty",
+        AS: "captured_penalty"
+      }
+    }
+  };
   const heartsStopMoonDrillStep: DrillStep = {
     scenarioId: "hearts-stop-moon-loaded-trick",
     contract: "Hearts",
@@ -1146,6 +1230,9 @@
   $: completedCount = playablePathSteps.filter((step) => completedPathSteps[step.id]).length;
   $: nextPathStep = playablePathSteps.find((step) => !completedPathSteps[step.id]);
   $: isCourseComplete = completedCount === playablePathSteps.length;
+  $: heartsCompletedCount = heartsPathSteps.filter((step) => completedPathSteps[step.id]).length;
+  $: nextHeartsPathStep = heartsPathSteps.find((step) => !completedPathSteps[step.id]);
+  $: isHeartsCourseComplete = heartsCompletedCount === heartsPathSteps.length;
   $: lessonOutcome = selectedCard && (playedCard || !isSelectedLegal) ? buildLessonOutcome(selectedCard, playedCard) : "";
   $: activeCourse = courseCatalog.find((course) => course.id === activeCourseId) ?? courseCatalog[0];
   $: activeReference = referenceCatalog.find((reference) => reference.id === activeReferenceId) ?? referenceCatalog[0];
@@ -3219,6 +3306,76 @@
     void startHeartsPassingPhase();
   }
 
+  function startHeartsObjectLesson() {
+    activeGameTable = "hearts";
+    activePathStepId = "hearts-object";
+    appView = "heartsLearnObject";
+  }
+
+  function continueHeartsObjectLesson() {
+    completeHeartsPathStep("hearts-object");
+    startHeartsQueenDangerDrill("hearts-queen");
+  }
+
+  function completeHeartsPathStep(stepId = activePathStepId) {
+    if (!stepId.startsWith("hearts-")) {
+      return;
+    }
+
+    saveCourseProgress({ ...completedPathSteps, [stepId]: true });
+  }
+
+  function startHeartsPathStep(step: HeartsPathStep) {
+    if (step.action === "object") {
+      startHeartsObjectLesson();
+      return;
+    }
+
+    if (step.action === "queen") {
+      startHeartsQueenDangerDrill(step.id);
+      return;
+    }
+
+    if (step.action === "avoid") {
+      startHeartsAvoidHeartsDrill(step.id);
+      return;
+    }
+
+    if (step.action === "pass") {
+      void startHeartsPassPractice(step.id);
+      return;
+    }
+
+    startHeartsScoreHandDrill(step.id);
+  }
+
+  function findNextHeartsPathStep(fromStepId = "") {
+    const currentStepIndex = heartsPathSteps.findIndex((step) => step.id === fromStepId);
+    if (currentStepIndex >= 0 && completedPathSteps[fromStepId]) {
+      const nextSequentialStep = heartsPathSteps
+        .slice(currentStepIndex + 1)
+        .find((step) => !completedPathSteps[step.id]);
+
+      if (nextSequentialStep) {
+        return nextSequentialStep;
+      }
+    }
+
+    return heartsPathSteps.find((step) => !completedPathSteps[step.id]);
+  }
+
+  function continueHeartsPath(fromStepId = activePathStepId) {
+    const nextStep = findNextHeartsPathStep(fromStepId);
+
+    if (!nextStep) {
+      activeHeartsTableTab = "learn";
+      openHeartsTable();
+      return;
+    }
+
+    startHeartsPathStep(nextStep);
+  }
+
   function startNoQueensHand() {
     void startFullHand("No Queens");
   }
@@ -4486,21 +4643,20 @@
     appView = "drill";
   }
 
-  function startHeartsAvoidHeartsDrill() {
+  function startHeartsAvoidHeartsDrill(pathStepId = "") {
     activeGameTable = "hearts";
     startFixedContractDrill("barbu-no-hearts");
+    activePathStepId = pathStepId;
     drillSetTitle = "Hearts practice: avoid hearts";
   }
 
-  function startHeartsQueenDangerDrill() {
-    activeGameTable = "hearts";
-    startFixedContractDrill("barbu-no-queens");
-    drillSetTitle = "Hearts practice: queen danger";
+  function startHeartsQueenDangerDrill(pathStepId = "") {
+    startHeartsMicroDrill(heartsQueenDangerDrillStep, "Hearts practice: queen danger", pathStepId);
   }
 
-  function startHeartsMicroDrill(step: DrillStep, title: string) {
+  function startHeartsMicroDrill(step: DrillStep, title: string, pathStepId = "") {
     activeGameTable = "hearts";
-    activePathStepId = "";
+    activePathStepId = pathStepId;
     activeDrillFocusContract = "Hearts";
     drillIndex = 0;
     drillResults = [];
@@ -4510,20 +4666,21 @@
     appView = "drill";
   }
 
-  function startHeartsBreakHeartsDrill() {
-    startHeartsMicroDrill(heartsBreakHeartsDrillStep, "Hearts practice: break hearts");
+  function startHeartsBreakHeartsDrill(pathStepId = "") {
+    startHeartsMicroDrill(heartsBreakHeartsDrillStep, "Hearts practice: break hearts", pathStepId);
   }
 
-  function startHeartsStopMoonDrill() {
-    startHeartsMicroDrill(heartsStopMoonDrillStep, "Hearts practice: stop the moon");
+  function startHeartsStopMoonDrill(pathStepId = "") {
+    startHeartsMicroDrill(heartsStopMoonDrillStep, "Hearts practice: stop the moon", pathStepId);
   }
 
-  function startHeartsScoreHandDrill() {
-    startHeartsMicroDrill(heartsScoreHandDrillStep, "Hearts practice: score a hand");
+  function startHeartsScoreHandDrill(pathStepId = "") {
+    startHeartsMicroDrill(heartsScoreHandDrillStep, "Hearts practice: score a hand", pathStepId);
   }
 
-  async function startHeartsPassPractice() {
+  async function startHeartsPassPractice(pathStepId = "") {
     activeGameTable = "hearts";
+    activePathStepId = pathStepId;
     const seed = usePracticeSeed();
     heartsPassPracticeSelectedCardIds = [];
     heartsPassPracticeChecked = false;
@@ -4566,6 +4723,10 @@
 
     heartsPassPracticeError = "";
     heartsPassPracticeChecked = true;
+
+    if (activePathStepId === "hearts-pass") {
+      completeHeartsPathStep("hearts-pass");
+    }
   }
 
   function continueCourse() {
@@ -4715,11 +4876,14 @@
 
   function finishDrill() {
     const completedPathPracticeTable = activePathStepId === "generated-drill" && completedPracticeTableSession;
+    const completedHeartsPathStepId = activePathStepId.startsWith("hearts-") ? activePathStepId : "";
 
     try {
       saveCompletedDrillSession();
       if (completedPathPracticeTable) {
         saveCourseProgress({ ...completedPathSteps, "generated-drill": true });
+      } else if (completedHeartsPathStepId) {
+        completeHeartsPathStep(completedHeartsPathStepId);
       }
     } catch {
       // The result screen should still open if local storage is unavailable.
@@ -5506,10 +5670,22 @@
         <div aria-label="Learn" class="barbu-tab-panel learn-panel" id="hearts-learn-panel" role="tabpanel">
             <div class="table-action-groups" aria-label="Hearts table actions">
               <section class="learn-action-grid" aria-label="Hearts learn actions">
-                <button class="learn-action-card primary" onclick={startHeartsHand} type="button">
-                  <span class="eyebrow">Start lesson</span>
-                  <strong>Continue with Hearts object</strong>
-                  <small>Play first, then read the score and danger cards.</small>
+                <button class="learn-action-card primary" onclick={() => continueHeartsPath("")} type="button">
+                  <span class="eyebrow">{isHeartsCourseComplete ? "Review" : "Next lesson"}</span>
+                  <strong>
+                    {#if isHeartsCourseComplete}
+                      Hearts path complete
+                    {:else}
+                      Continue with {nextHeartsPathStep?.title ?? "Hearts"}
+                    {/if}
+                  </strong>
+                  <small>
+                    {#if isHeartsCourseComplete}
+                      Replay any Hearts lesson or move into practice.
+                    {:else}
+                      {heartsCompletedCount} / {heartsPathSteps.length} complete.
+                    {/if}
+                  </small>
                 </button>
                 <button class="learn-action-card" onclick={() => openReference(gameTableDefinitions.hearts.referenceId)} type="button">
                   <span class="eyebrow">Rules</span>
@@ -5519,7 +5695,7 @@
               </section>
             </div>
 
-          <button class="learn-action-card" onclick={startHeartsHand} type="button">
+          <button class="learn-action-card" onclick={() => startHeartsScoreHandDrill()} type="button">
             <span class="eyebrow">Core game</span>
             <strong>Hearts scorecard</strong>
             <small>Open the current match view and see how hearts, QS, and moon scoring shape the table.</small>
@@ -5532,40 +5708,110 @@
             </div>
 
             <div class="path-grid">
-              <button class="path-card active" onclick={startHeartsHand} type="button">
+              <button
+                class:active={nextHeartsPathStep?.id === "hearts-object" && !completedPathSteps["hearts-object"]}
+                class:complete={completedPathSteps["hearts-object"]}
+                class="path-card"
+                onclick={startHeartsObjectLesson}
+                type="button"
+              >
                 <span class="path-index">1</span>
                 <span class="path-step">Concept</span>
                 <strong>Object of Hearts</strong>
                 <small>Avoid penalty tricks. Hearts are small penalties; QS is the large one.</small>
-                <span class="path-status">Open</span>
+                <span class="path-status">
+                  {#if completedPathSteps["hearts-object"]}
+                    Complete
+                  {:else if nextHeartsPathStep?.id === "hearts-object"}
+                    Next
+                  {:else}
+                    Open
+                  {/if}
+                </span>
               </button>
-              <button class="path-card" onclick={startHeartsQueenDangerDrill} type="button">
+              <button
+                class:active={nextHeartsPathStep?.id === "hearts-queen" && !completedPathSteps["hearts-queen"]}
+                class:complete={completedPathSteps["hearts-queen"]}
+                class="path-card"
+                onclick={() => startHeartsQueenDangerDrill("hearts-queen")}
+                type="button"
+              >
                 <span class="path-index">2</span>
                 <span class="path-step">Example</span>
                 <strong>Queen of Spades</strong>
                 <small>Read whether QS is moving into your trick or safely away.</small>
-                <span class="path-status">Open</span>
+                <span class="path-status">
+                  {#if completedPathSteps["hearts-queen"]}
+                    Complete
+                  {:else if nextHeartsPathStep?.id === "hearts-queen"}
+                    Next
+                  {:else}
+                    Open
+                  {/if}
+                </span>
               </button>
-              <button class="path-card" onclick={startHeartsAvoidHeartsDrill} type="button">
+              <button
+                class:active={nextHeartsPathStep?.id === "hearts-avoid" && !completedPathSteps["hearts-avoid"]}
+                class:complete={completedPathSteps["hearts-avoid"]}
+                class="path-card"
+                onclick={() => startHeartsAvoidHeartsDrill("hearts-avoid")}
+                type="button"
+              >
                 <span class="path-index">3</span>
                 <span class="path-step">Guided trick</span>
                 <strong>Avoid hearts</strong>
                 <small>Follow suit, stay below the winner, and let heart points move away.</small>
-                <span class="path-status">Open</span>
+                <span class="path-status">
+                  {#if completedPathSteps["hearts-avoid"]}
+                    Complete
+                  {:else if nextHeartsPathStep?.id === "hearts-avoid"}
+                    Next
+                  {:else}
+                    Open
+                  {/if}
+                </span>
               </button>
-              <button class="path-card" onclick={() => void startHeartsPassPractice()} type="button">
+              <button
+                class:active={nextHeartsPathStep?.id === "hearts-pass" && !completedPathSteps["hearts-pass"]}
+                class:complete={completedPathSteps["hearts-pass"]}
+                class="path-card"
+                onclick={() => void startHeartsPassPractice("hearts-pass")}
+                type="button"
+              >
                 <span class="path-index">4</span>
                 <span class="path-step">Before play</span>
                 <strong>Pass three</strong>
                 <small>Move obvious danger cards before the first trick starts.</small>
-                <span class="path-status">Open</span>
+                <span class="path-status">
+                  {#if completedPathSteps["hearts-pass"]}
+                    Complete
+                  {:else if nextHeartsPathStep?.id === "hearts-pass"}
+                    Next
+                  {:else}
+                    Open
+                  {/if}
+                </span>
               </button>
-              <button class="path-card" onclick={startHeartsScoreHandDrill} type="button">
+              <button
+                class:active={nextHeartsPathStep?.id === "hearts-score" && !completedPathSteps["hearts-score"]}
+                class:complete={completedPathSteps["hearts-score"]}
+                class="path-card"
+                onclick={() => startHeartsScoreHandDrill("hearts-score")}
+                type="button"
+              >
                 <span class="path-index">5</span>
                 <span class="path-step">Review</span>
                 <strong>Score a hand</strong>
                 <small>Find why QS makes a trick much more expensive.</small>
-                <span class="path-status">Open</span>
+                <span class="path-status">
+                  {#if completedPathSteps["hearts-score"]}
+                    Complete
+                  {:else if nextHeartsPathStep?.id === "hearts-score"}
+                    Next
+                  {:else}
+                    Open
+                  {/if}
+                </span>
               </button>
             </div>
           </section>
@@ -5589,27 +5835,27 @@
                   <strong>Pass three</strong>
                   <small>Choose the three danger cards to pass left before the hand begins.</small>
                 </button>
-                <button class="contract-card compact" onclick={startHeartsAvoidHeartsDrill} type="button">
+                <button class="contract-card compact" onclick={() => startHeartsAvoidHeartsDrill()} type="button">
                   <span>Hearts</span>
                   <strong>Avoid hearts</strong>
                   <small>Follow suit and avoid taking heart penalties when another card can duck.</small>
                 </button>
-                <button class="contract-card compact" onclick={startHeartsQueenDangerDrill} type="button">
+                <button class="contract-card compact" onclick={() => startHeartsQueenDangerDrill()} type="button">
                   <span>Queen</span>
                   <strong>Queen danger</strong>
                   <small>Practice the Queen of Spades habit: avoid winning when a queen is loaded.</small>
                 </button>
-                <button class="contract-card compact" onclick={startHeartsBreakHeartsDrill} type="button">
+                <button class="contract-card compact" onclick={() => startHeartsBreakHeartsDrill()} type="button">
                   <span>Play restriction</span>
                   <strong>Break hearts</strong>
                   <small>Decide whether a heart lead is legal before hearts have been broken.</small>
                 </button>
-                <button class="contract-card compact" onclick={startHeartsStopMoonDrill} type="button">
+                <button class="contract-card compact" onclick={() => startHeartsStopMoonDrill()} type="button">
                   <span>Moon defense</span>
                   <strong>Stop the moon</strong>
                   <small>Take a loaded trick when that is the only way to stop a moon threat.</small>
                 </button>
-                <button class="contract-card compact" onclick={startHeartsScoreHandDrill} type="button">
+                <button class="contract-card compact" onclick={() => startHeartsScoreHandDrill()} type="button">
                   <span>Scorecard</span>
                   <strong>Score a hand</strong>
                   <small>Identify why QS makes a Hearts trick much more expensive.</small>
@@ -6528,6 +6774,49 @@
         </button>
       </div>
     </section>
+  {:else if appView === "heartsLearnObject"}
+    <header class="topbar" aria-label="Hearts object lesson">
+      <button class="back-button" onclick={openHeartsTable} type="button">Table</button>
+      <div>
+        <p class="eyebrow">Hearts</p>
+        <h1>Object of Hearts</h1>
+      </div>
+      <div class="contract-status">
+        <span>Lesson</span>
+        <strong>Concept</strong>
+      </div>
+    </header>
+
+    <section class="course-screen" aria-label="Hearts object lesson content">
+      <div class="course-copy">
+        <p class="eyebrow">Concept</p>
+        <h2>Take as few penalty points as possible.</h2>
+        <p>
+          Hearts is a penalty game. Each heart is worth one point, the Queen of Spades is worth thirteen,
+          and the low score wins the match.
+        </p>
+      </div>
+
+      <div class="course-points" aria-label="Hearts object points">
+        <div>
+          <span>1</span>
+          <strong>Duck tricks when hearts or QS are likely to land there.</strong>
+        </div>
+        <div>
+          <span>2</span>
+          <strong>Follow suit when you can; off-suit danger cards matter only when you are void.</strong>
+        </div>
+        <div>
+          <span>3</span>
+          <strong>Watch for moon threats: sometimes taking points stops one player from taking all of them.</strong>
+        </div>
+      </div>
+
+      <div class="course-actions">
+        <button class="secondary-action" onclick={openHeartsTable} type="button">Table</button>
+        <button class="primary-action" onclick={continueHeartsObjectLesson} type="button">Next lesson</button>
+      </div>
+    </section>
   {:else if appView === "runContractIntro"}
     <header class="topbar run-intro-topbar" aria-label={`${pendingRunContract} game intro`}>
       <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
@@ -6682,7 +6971,13 @@
           <div class="action-row">
             <button class="secondary-action" onclick={openHeartsTable} type="button">Table</button>
             {#if heartsPassPracticeChecked}
-              <button class="primary-action" onclick={() => void startHeartsPassPractice()} type="button">Try another</button>
+              {#if activePathStepId === "hearts-pass"}
+                <button class="primary-action" onclick={() => continueHeartsPath()} type="button">
+                  {isHeartsCourseComplete ? "Back to Hearts table" : "Continue Hearts path"}
+                </button>
+              {:else}
+                <button class="primary-action" onclick={() => void startHeartsPassPractice()} type="button">Try another</button>
+              {/if}
             {:else}
               <button
                 class="primary-action"
@@ -7281,8 +7576,15 @@
         </div>
         <div class="drill-loop-actions">
           {#if drillResultIsHeartsPractice}
-            <button class="primary-action" onclick={startHeartsAvoidHeartsDrill} type="button">Practice Hearts again</button>
-            <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
+            {#if activePathStepId.startsWith("hearts-")}
+              <button class="primary-action" onclick={() => continueHeartsPath()} type="button">
+                {isHeartsCourseComplete ? "Back to Hearts table" : "Continue Hearts path"}
+              </button>
+              <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
+            {:else}
+              <button class="primary-action" onclick={() => startHeartsAvoidHeartsDrill()} type="button">Practice Hearts again</button>
+              <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
+            {/if}
           {:else}
             <button class="primary-action" onclick={() => void replayWeakContract()} type="button">
               Replay {drillLoopFocus}
@@ -7336,7 +7638,9 @@
           <button class="primary-action" onclick={markPracticeTableComplete} type="button">Mark Practice table complete</button>
         {/if}
         {#if drillResultIsHeartsPractice}
-          <button class="primary-action" onclick={openActiveGameTable} type="button">Back to Hearts practice</button>
+          {#if !activePathStepId.startsWith("hearts-")}
+            <button class="primary-action" onclick={openActiveGameTable} type="button">Back to Hearts practice</button>
+          {/if}
         {:else}
           <button class="primary-action" onclick={continueCourse} type="button">Continue path</button>
         {/if}
