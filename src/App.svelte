@@ -29,6 +29,7 @@
   import { guidedLessons } from "./lessons/catalog";
   import { referenceCatalog } from "./referenceCatalog";
   import {
+    barbuLearnPathSteps as barbuPathSteps,
     barbuPracticeEntries,
     catalogDetailLabel,
     createCatalogEntries,
@@ -37,6 +38,7 @@
     heartsPracticeEntries,
     tableTabsFor,
     type ActiveGameTable,
+    type BarbuLearnPathStep,
     type BarbuPracticeAction,
     type CatalogGameId,
     type HeartsLearnPathStep,
@@ -84,17 +86,7 @@
     | "dangerCount"
     | "pathReview";
 
-  type PathAction = "lesson" | "generated" | "review" | "planned";
   type CourseStage = "concept" | "example" | "review";
-
-  type BarbuPathStep = {
-    id: string;
-    step: string;
-    title: string;
-    summary: string;
-    action: PathAction;
-    lessonId?: string;
-  };
 
   type CoursePanel = {
     heading: string;
@@ -396,78 +388,6 @@
   };
   const cleanDrillOutcomes: Array<GuidedCardOutcome | "illegal"> = ["good"];
 
-  const barbuPathSteps: BarbuPathStep[] = [
-    {
-      id: "meet-contract",
-      step: "Concept",
-      title: "Meet the contract",
-      summary: "Barbu names the danger cards and the object before play begins.",
-      action: "lesson",
-      lessonId: "barbu-no-hearts"
-    },
-    {
-      id: "spot-danger",
-      step: "Example",
-      title: "Spot the danger",
-      summary: "Read the table, identify who is likely to take the penalty, then choose.",
-      action: "lesson",
-      lessonId: "barbu-no-queens"
-    },
-    {
-      id: "play-trick",
-      step: "Guided trick",
-      title: "Play the trick",
-      summary: "Make the legal play and get immediate feedback from Barbu.",
-      action: "lesson",
-      lessonId: "barbu-king-of-hearts"
-    },
-    {
-      id: "contract-no-last-two",
-      step: "Contract",
-      title: "Avoid the final tricks",
-      summary: "Learn why the final two tricks change the hand.",
-      action: "lesson",
-      lessonId: "barbu-no-last-two"
-    },
-    {
-      id: "contract-no-tricks",
-      step: "Contract",
-      title: "Avoid every trick",
-      summary: "Practice ducking under the current winner.",
-      action: "lesson",
-      lessonId: "barbu-no-tricks"
-    },
-    {
-      id: "contract-hearts-trumps",
-      step: "Contract",
-      title: "Use trumps",
-      summary: "See when a heart can cut the led suit.",
-      action: "lesson",
-      lessonId: "barbu-hearts-trumps"
-    },
-    {
-      id: "contract-domino",
-      step: "Layout",
-      title: "Build Domino",
-      summary: "Place sevens and extend suit lanes.",
-      action: "lesson",
-      lessonId: "barbu-domino"
-    },
-    {
-      id: "generated-drill",
-      step: "Practice",
-      title: "Practice table",
-      summary: "Run generated practice decisions and review the next repetition.",
-      action: "generated"
-    },
-    {
-      id: "review",
-      step: "Review",
-      title: "Review the hand",
-      summary: "Review your latest table and choose what to practice next.",
-      action: "review"
-    }
-  ];
   const suitNames: Record<Suit, string> = {
     C: "clubs",
     D: "diamonds",
@@ -4617,7 +4537,7 @@
     startPathStep(nextPathStep);
   }
 
-  function startPathStep(step: BarbuPathStep) {
+  function startPathStep(step: BarbuLearnPathStep) {
     const course = courseCatalog.find((item) => item.pathStepId === step.id);
 
     if (course) {

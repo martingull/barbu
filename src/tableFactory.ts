@@ -13,6 +13,7 @@ export type CatalogGameId =
 export type CatalogStatus = "Ready" | "Planned";
 export type CatalogAccess = "Free" | "Pack";
 export type CatalogAccessModel = "free-starter" | "metered-pack";
+export type BarbuLearnPathAction = "lesson" | "generated" | "review" | "planned";
 export type HeartsLearnPathAction = "object" | "queen" | "avoid" | "pass" | "score";
 export type BarbuPracticeAction = "quick" | "fixed" | "domino";
 export type HeartsPracticeAction = "pass" | "avoid" | "queen" | "break" | "moon" | "score";
@@ -75,6 +76,10 @@ export type LearnPathStep<Action extends string = string> = {
   action: Action;
 };
 
+export type BarbuLearnPathStep = LearnPathStep<BarbuLearnPathAction> & {
+  lessonId?: string;
+};
+
 export type HeartsLearnPathStep = LearnPathStep<HeartsLearnPathAction>;
 
 export type PracticeEntry<Action extends string = string> = {
@@ -110,6 +115,83 @@ const tabLabels: Record<TableTabId, string> = {
 function createLearnPathStep<Action extends string>(step: LearnPathStep<Action>): LearnPathStep<Action> {
   return step;
 }
+
+function createBarbuLearnPathStep(step: BarbuLearnPathStep): BarbuLearnPathStep {
+  return step;
+}
+
+export const barbuLearnPathSteps: BarbuLearnPathStep[] = [
+  createBarbuLearnPathStep({
+    id: "meet-contract",
+    step: "Concept",
+    title: "Meet the contract",
+    summary: "Barbu names the danger cards and the object before play begins.",
+    action: "lesson",
+    lessonId: "barbu-no-hearts"
+  }),
+  createBarbuLearnPathStep({
+    id: "spot-danger",
+    step: "Example",
+    title: "Spot the danger",
+    summary: "Read the table, identify who is likely to take the penalty, then choose.",
+    action: "lesson",
+    lessonId: "barbu-no-queens"
+  }),
+  createBarbuLearnPathStep({
+    id: "play-trick",
+    step: "Guided trick",
+    title: "Play the trick",
+    summary: "Make the legal play and get immediate feedback from Barbu.",
+    action: "lesson",
+    lessonId: "barbu-king-of-hearts"
+  }),
+  createBarbuLearnPathStep({
+    id: "contract-no-last-two",
+    step: "Contract",
+    title: "Avoid the final tricks",
+    summary: "Learn why the final two tricks change the hand.",
+    action: "lesson",
+    lessonId: "barbu-no-last-two"
+  }),
+  createBarbuLearnPathStep({
+    id: "contract-no-tricks",
+    step: "Contract",
+    title: "Avoid every trick",
+    summary: "Practice ducking under the current winner.",
+    action: "lesson",
+    lessonId: "barbu-no-tricks"
+  }),
+  createBarbuLearnPathStep({
+    id: "contract-hearts-trumps",
+    step: "Contract",
+    title: "Use trumps",
+    summary: "See when a heart can cut the led suit.",
+    action: "lesson",
+    lessonId: "barbu-hearts-trumps"
+  }),
+  createBarbuLearnPathStep({
+    id: "contract-domino",
+    step: "Layout",
+    title: "Build Domino",
+    summary: "Place sevens and extend suit lanes.",
+    action: "lesson",
+    lessonId: "barbu-domino"
+  }),
+  createBarbuLearnPathStep({
+    id: "generated-drill",
+    step: "Practice",
+    title: "Practice table",
+    summary: "Run generated practice decisions and review the next repetition.",
+    action: "generated"
+  }),
+  createBarbuLearnPathStep({
+    id: "review",
+    step: "Review",
+    title: "Review the hand",
+    summary: "Review your latest table and choose what to practice next.",
+    action: "review"
+  })
+];
 
 export const heartsLearnPathSteps: HeartsLearnPathStep[] = [
   createLearnPathStep({
