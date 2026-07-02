@@ -6439,7 +6439,9 @@
             <h2>{heartsPassPractice.title}</h2>
           </div>
 
-          <p class="result">{heartsPassPractice.prompt}</p>
+          {#if !heartsPassPracticeChecked}
+            <p class="result">{heartsPassPractice.prompt}</p>
+          {/if}
           {#if heartsPassPracticeError}
             <p class="outcome warning">{heartsPassPracticeError}</p>
           {:else if heartsPassPracticeChecked}
@@ -6448,9 +6450,9 @@
                 ? "Good pass. You moved the obvious danger cards."
                 : `${heartsPassPracticeMatchCount} of 3 matched. Compare your pass with the recommendation.`}
             </p>
-            <p class="explanation">
+            <p class="explanation pass-recommendation">
               Recommended: {heartsPassPractice.recommendedPass.map((card) => card.label).join(", ")}.
-              {heartsPassPractice.explanation}
+              Move the obvious danger cards before play starts.
             </p>
           {:else if heartsPassPracticeSelectedCards.length}
             <p class="explanation">

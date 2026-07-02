@@ -347,6 +347,10 @@ test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testI
 });
 
 test("Hearts passing drill teaches the danger-card pass", async ({ page }, testInfo) => {
+  if (testInfo.project.name === "iphone-16") {
+    await page.setViewportSize({ width: 393, height: 740 });
+  }
+
   await page.goto("/");
   await page.getByRole("button", { name: "Open Hearts" }).click();
   await page.getByRole("tab", { name: "Practice" }).click();
@@ -362,6 +366,8 @@ test("Hearts passing drill teaches the danger-card pass", async ({ page }, testI
 
   await expect(page.getByLabel("Hearts pass practice cards")).toContainText("Good pass");
   await expect(page.getByLabel("Hearts pass practice cards")).toContainText("Recommended: QS, AH, KH");
+  await expectFeedbackAboveHand(page, ".hearts-pass-cards");
+  await expectHandNearActionRow(page, ".hearts-pass-cards");
   await expectNoPageScroll(page);
   await page.screenshot({ path: testInfo.outputPath("hearts-pass-practice.png"), fullPage: true });
 });

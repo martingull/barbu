@@ -3319,6 +3319,11 @@ h2 {
     grid-template-rows: auto auto minmax(0, 1fr);
   }
 
+  .fixed-play-screen
+    .table-play-surface.compact-play.table-hidden:not(:has(.hand-domino-layout)):not(:has(.trump-count-stage)) {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
   .fixed-play-screen .table-play-surface.compact-play .full-hand-summary,
   .fixed-play-screen .table-play-surface.compact-result:not(.table-hidden) .full-hand-summary {
     grid-row: 1;
@@ -3335,6 +3340,12 @@ h2 {
   .fixed-play-screen .table-play-surface.compact-play .table-play-panel,
   .fixed-play-screen .table-play-surface.compact-result:not(.table-hidden) .table-play-panel {
     grid-row: 3;
+  }
+
+  .fixed-play-screen
+    .table-play-surface.compact-play.table-hidden:not(:has(.hand-domino-layout)):not(:has(.trump-count-stage))
+    .table-play-panel {
+    grid-row: 2;
   }
 
   .table-play-surface.compact-play .drill-track {
