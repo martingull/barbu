@@ -5500,40 +5500,16 @@
             {/each}
           </div>
         </div>
+      </div>
 
-        {#if activeHeartsTableTab === "learn"}
-          <div aria-label="Learn" class="barbu-tab-panel practice-panel" id="hearts-learn-panel" role="tabpanel">
-            <div class="barbu-mode-copy">
-              <p class="eyebrow">Learn</p>
-              <h2>Learn the Hearts match.</h2>
-              <p>Build the same habits as Barbu: identify the danger, make the card decision, then read the score.</p>
-            </div>
+      {#if activeHeartsTableTab === "learn"}
+        <div aria-label="Learn" class="barbu-tab-panel learn-panel" id="hearts-learn-panel" role="tabpanel">
             <div class="table-action-groups" aria-label="Hearts table actions">
               <section class="learn-action-grid" aria-label="Hearts learn actions">
                 <button class="learn-action-card primary" onclick={startHeartsHand} type="button">
-                  <span class="eyebrow">Concept</span>
-                  <strong>Object of Hearts</strong>
-                  <small>Avoid penalty tricks. Hearts are small penalties; the Queen of Spades is the large one.</small>
-                </button>
-                <button class="learn-action-card" onclick={startHeartsQueenDangerDrill} type="button">
-                  <span class="eyebrow">Example</span>
-                  <strong>Queen of Spades</strong>
-                  <small>Practice reading whether QS is moving into your trick or safely into someone else's.</small>
-                </button>
-                <button class="learn-action-card" onclick={startHeartsAvoidHeartsDrill} type="button">
-                  <span class="eyebrow">Guided trick</span>
-                  <strong>Avoid hearts</strong>
-                  <small>Follow suit, stay below the current winner, and let heart points move away.</small>
-                </button>
-                <button class="learn-action-card" onclick={() => void startHeartsPassPractice()} type="button">
-                  <span class="eyebrow">Before play</span>
-                  <strong>Pass three</strong>
-                  <small>Move obvious danger cards before the first trick starts.</small>
-                </button>
-                <button class="learn-action-card" onclick={startHeartsHand} type="button">
-                  <span class="eyebrow">Review</span>
-                  <strong>Score a hand</strong>
-                  <small>Play a hand and read the low-score table, moon threat, and match target.</small>
+                  <span class="eyebrow">Start lesson</span>
+                  <strong>Continue with Hearts object</strong>
+                  <small>Play first, then read the score and danger cards.</small>
                 </button>
                 <button class="learn-action-card" onclick={() => openReference(gameTableDefinitions.hearts.referenceId)} type="button">
                   <span class="eyebrow">Rules</span>
@@ -5542,9 +5518,60 @@
                 </button>
               </section>
             </div>
-          </div>
-        {:else if activeHeartsTableTab === "practice"}
-          <div aria-label="Practice" class="barbu-tab-panel practice-panel" id="hearts-practice-panel" role="tabpanel">
+
+          <button class="learn-action-card" onclick={startHeartsHand} type="button">
+            <span class="eyebrow">Core game</span>
+            <strong>Hearts scorecard</strong>
+            <small>Open the current match view and see how hearts, QS, and moon scoring shape the table.</small>
+          </button>
+
+          <section class="path-section" aria-label="Hearts lesson path">
+            <div class="section-heading">
+              <p class="eyebrow">Training path</p>
+              <h2>Learn the Hearts table</h2>
+            </div>
+
+            <div class="path-grid">
+              <button class="path-card active" onclick={startHeartsHand} type="button">
+                <span class="path-index">1</span>
+                <span class="path-step">Concept</span>
+                <strong>Object of Hearts</strong>
+                <small>Avoid penalty tricks. Hearts are small penalties; QS is the large one.</small>
+                <span class="path-status">Open</span>
+              </button>
+              <button class="path-card" onclick={startHeartsQueenDangerDrill} type="button">
+                <span class="path-index">2</span>
+                <span class="path-step">Example</span>
+                <strong>Queen of Spades</strong>
+                <small>Read whether QS is moving into your trick or safely away.</small>
+                <span class="path-status">Open</span>
+              </button>
+              <button class="path-card" onclick={startHeartsAvoidHeartsDrill} type="button">
+                <span class="path-index">3</span>
+                <span class="path-step">Guided trick</span>
+                <strong>Avoid hearts</strong>
+                <small>Follow suit, stay below the winner, and let heart points move away.</small>
+                <span class="path-status">Open</span>
+              </button>
+              <button class="path-card" onclick={() => void startHeartsPassPractice()} type="button">
+                <span class="path-index">4</span>
+                <span class="path-step">Before play</span>
+                <strong>Pass three</strong>
+                <small>Move obvious danger cards before the first trick starts.</small>
+                <span class="path-status">Open</span>
+              </button>
+              <button class="path-card" onclick={startHeartsScoreHandDrill} type="button">
+                <span class="path-index">5</span>
+                <span class="path-step">Review</span>
+                <strong>Score a hand</strong>
+                <small>Find why QS makes a trick much more expensive.</small>
+                <span class="path-status">Open</span>
+              </button>
+            </div>
+          </section>
+        </div>
+      {:else if activeHeartsTableTab === "practice"}
+        <div aria-label="Practice" class="barbu-tab-panel practice-panel" id="hearts-practice-panel" role="tabpanel">
             <div class="barbu-mode-copy">
               <p class="eyebrow">Practice</p>
               <h2>Repeat the Hearts habits.</h2>
@@ -5590,8 +5617,8 @@
               </div>
             </section>
           </div>
-        {:else if activeHeartsTableTab === "play"}
-          <div aria-label="Play" class="barbu-tab-panel play-panel" id="hearts-play-panel" role="tabpanel">
+      {:else if activeHeartsTableTab === "play"}
+        <div aria-label="Play" class="barbu-tab-panel play-panel" id="hearts-play-panel" role="tabpanel">
             <div class="barbu-mode-copy">
               <p class="eyebrow">Play</p>
               <h2>Play a Hearts match.</h2>
@@ -5602,16 +5629,15 @@
               <p class="supporting-copy">Play repeated pass-left hands to 50 penalty points. Low score wins; shooting the moon is active.</p>
             </div>
           </div>
-        {:else}
-          <div aria-label="Perfect" class="barbu-tab-panel perfect-panel" id="hearts-perfect-panel" role="tabpanel">
+      {:else}
+        <div aria-label="Perfect" class="barbu-tab-panel perfect-panel" id="hearts-perfect-panel" role="tabpanel">
             <div class="barbu-mode-copy">
               <p class="eyebrow">Perfect</p>
               <h2>Card sense will connect here later.</h2>
               <p>Trump and court-card memory should eventually feed Hearts, Whist, Bridge, and Barbu practice.</p>
             </div>
           </div>
-        {/if}
-      </div>
+      {/if}
     </section>
   {:else if appView === "trumpMemory"}
       <TablePlaySurface

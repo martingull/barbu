@@ -331,10 +331,11 @@ test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testI
   await expect(page.getByRole("button", { name: "Play Hearts" })).toBeVisible();
 
   await page.getByRole("tab", { name: "Learn" }).click();
-  await expect(page.getByLabel("Hearts learn actions")).toContainText("Object of Hearts");
-  await expect(page.getByLabel("Hearts learn actions")).toContainText("Queen of Spades");
-  await expect(page.getByLabel("Hearts learn actions")).toContainText("Pass three");
-  await expect(page.getByLabel("Hearts learn actions")).toContainText("Score a hand");
+  await expect(page.getByLabel("Hearts learn actions")).toContainText("Continue with Hearts object");
+  await expect(page.getByLabel("Hearts lesson path")).toContainText("Object of Hearts");
+  await expect(page.getByLabel("Hearts lesson path")).toContainText("Queen of Spades");
+  await expect(page.getByLabel("Hearts lesson path")).toContainText("Pass three");
+  await expect(page.getByLabel("Hearts lesson path")).toContainText("Score a hand");
 
   await page.getByRole("tab", { name: "Practice" }).click();
   await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
@@ -450,7 +451,7 @@ test("Hearts reference explains the MVP rule boundary", async ({ page }, testInf
   await page.screenshot({ path: testInfo.outputPath("hearts-reference.png"), fullPage: true });
 
   await page.getByRole("button", { name: "Back to Hearts table" }).click();
-  await expect(page.getByRole("heading", { name: "Hearts table" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Hearts table", exact: true })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Learn" })).toHaveAttribute("aria-selected", "true");
 });
 
