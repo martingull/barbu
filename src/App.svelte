@@ -29,9 +29,14 @@
   import { guidedLessons } from "./lessons/catalog";
   import { referenceCatalog } from "./referenceCatalog";
   import {
+    catalogDetailLabel,
+    createCatalogEntries,
     gameTableDefinitions,
+    heartsLearnPathSteps as heartsPathSteps,
     tableTabsFor,
     type ActiveGameTable,
+    type CatalogGameId,
+    type HeartsLearnPathStep,
     type TableTabId
   } from "./tableFactory";
   import type {
@@ -78,19 +83,6 @@
   type PathAction = "lesson" | "generated" | "review" | "planned";
   type CourseStage = "concept" | "example" | "review";
 
-  type CatalogStatus = "Ready" | "Planned";
-
-  type CatalogEntry = {
-    id: string;
-    family: string;
-    title: string;
-    status: CatalogStatus;
-    access: "Free" | "Pack";
-    summary: string;
-    lessonCount: number;
-    detailLabel?: string;
-  };
-
   type BarbuPathStep = {
     id: string;
     step: string;
@@ -98,16 +90,6 @@
     summary: string;
     action: PathAction;
     lessonId?: string;
-  };
-
-  type HeartsPathAction = "object" | "queen" | "avoid" | "pass" | "score";
-
-  type HeartsPathStep = {
-    id: string;
-    step: string;
-    title: string;
-    summary: string;
-    action: HeartsPathAction;
   };
 
   type CoursePanel = {
@@ -306,82 +288,7 @@
     savedAt: string;
   };
 
-  const catalogEntries: CatalogEntry[] = [
-    {
-      id: "hearts",
-      family: "Hearts",
-      title: "Hearts",
-      status: "Ready",
-      access: "Free",
-      summary: "Queen of Spades style penalty play.",
-      lessonCount: 1,
-      detailLabel: "MVP hand"
-    },
-    {
-      id: "barbu",
-      family: "Hearts",
-      title: "Barbu",
-      status: "Ready",
-      access: "Free",
-      summary: "Contract trick-taking against the King of Cards.",
-      lessonCount: guidedLessons.length
-    },
-    {
-      id: "solitaire",
-      family: "Patience",
-      title: "Solitaire",
-      status: "Planned",
-      access: "Free",
-      summary: "Solo card play for practicing order, suits, and patience habits.",
-      lessonCount: 0
-    },
-    {
-      id: "card-counting",
-      family: "Skill pack",
-      title: "Card Counting",
-      status: "Ready",
-      access: "Pack",
-      summary: "Fast minigames for tracking trumps, court cards, and what remains.",
-      lessonCount: 0,
-      detailLabel: "4 minigames"
-    },
-    {
-      id: "whist",
-      family: "Whist",
-      title: "Whist",
-      status: "Planned",
-      access: "Pack",
-      summary: "Partnership trick play and long-suit development.",
-      lessonCount: 0
-    },
-    {
-      id: "bridge",
-      family: "Bridge",
-      title: "Bridge",
-      status: "Planned",
-      access: "Pack",
-      summary: "Declarer play, defense, and bidding concepts.",
-      lessonCount: 0
-    },
-    {
-      id: "gin-rummy",
-      family: "Rummy",
-      title: "Gin Rummy",
-      status: "Planned",
-      access: "Pack",
-      summary: "Draw, discard, meld, and read what the opponent is collecting.",
-      lessonCount: 0
-    },
-    {
-      id: "canasta",
-      family: "Rummy",
-      title: "Canasta",
-      status: "Planned",
-      access: "Pack",
-      summary: "Partnership meld-building with wild cards, packs, and bonuses.",
-      lessonCount: 0
-    }
-  ];
+  const catalogEntries = createCatalogEntries({ barbuLessonCount: guidedLessons.length });
 
   const progressStorageKey = "barbu.courseProgress.v1";
   const practiceSeedStorageKey = "barbu.practiceSeed.v1";
@@ -557,44 +464,6 @@
       action: "review"
     }
   ];
-  const heartsPathSteps: HeartsPathStep[] = [
-    {
-      id: "hearts-object",
-      step: "Concept",
-      title: "Object of Hearts",
-      summary: "Avoid penalty points. Hearts are small; QS is large.",
-      action: "object"
-    },
-    {
-      id: "hearts-queen",
-      step: "Example",
-      title: "Queen of Spades",
-      summary: "Read whether QS is moving into your trick or safely away.",
-      action: "queen"
-    },
-    {
-      id: "hearts-avoid",
-      step: "Guided trick",
-      title: "Avoid hearts",
-      summary: "Follow suit and let heart points move away.",
-      action: "avoid"
-    },
-    {
-      id: "hearts-pass",
-      step: "Before play",
-      title: "Pass three",
-      summary: "Move obvious danger cards before the first trick starts.",
-      action: "pass"
-    },
-    {
-      id: "hearts-score",
-      step: "Review",
-      title: "Score a hand",
-      summary: "Find why QS makes a trick much more expensive.",
-      action: "score"
-    }
-  ];
-
   const suitNames: Record<Suit, string> = {
     C: "clubs",
     D: "diamonds",
@@ -2965,7 +2834,7 @@
     appView = "pathReview";
   }
 
-  function openGame(gameId: string) {
+  function openGame(gameId: CatalogGameId) {
     if (gameId === "hearts") {
       openHeartsTable();
       return;
@@ -2982,17 +2851,6 @@
     }
 
     openBarbuLearnTable();
-  }
-
-  function catalogDetailLabel(entry: CatalogEntry) {
-    if (entry.detailLabel) {
-      return entry.detailLabel;
-    }
-
-    if (entry.lessonCount > 0) {
-      return `${entry.lessonCount} ${entry.lessonCount === 1 ? "lesson" : "lessons"}`;
-    }
-    return "No lessons yet";
   }
 
   function startBrowserFullHand(contract: FullHandContract, seed: number) {
@@ -3325,7 +3183,7 @@
     saveCourseProgress({ ...completedPathSteps, [stepId]: true });
   }
 
-  function startHeartsPathStep(step: HeartsPathStep) {
+  function startHeartsPathStep(step: HeartsLearnPathStep) {
     if (step.action === "object") {
       startHeartsObjectLesson();
       return;

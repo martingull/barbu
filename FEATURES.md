@@ -10,7 +10,7 @@ Barbu is an iPhone-first learning app for classic card games. The first playable
 
 Barbu is the first complete curriculum, not the app boundary. The product should grow through reusable game-family foundations, starting with Hearts-family overlap such as follow-suit trick taking, contract scoring, penalty cards, reward tricks, and clockwise table play.
 
-Whist and Bridge are important future families, but they should wait until Barbu has a strong learning, practice, and play loop. New family work should reuse shared card and trick-taking foundations without weakening the current Barbu experience.
+Whist is the next intended free starter after Hearts and Barbu because it can reuse the shared trick-taking foundations while introducing partnerships and trump tracking. Bridge is an important later family, but it should wait until Barbu, Hearts, and Whist have a strong learning, practice, and play loop.
 
 David Parlett's *The Penguin Book of Card Games* is the baseline reference for how supported games are played and described. Product variants are allowed only when they are deliberate and documented.
 
@@ -26,11 +26,13 @@ The default loop is: play first, get fast feedback, read a tiny explanation, rep
 
 The broader ambition is to make players stronger with a 52-card deck, not only to teach individual rule sets. Barbu should train transferable card skills: suit counting, danger-card memory, void inference, trump awareness, safe exits, table-strength reading, and knowing when to win or duck. Learning explains games; practice builds card sense; Play modes should feel like trying to beat the table.
 
-The intended monetization model is free starter tables first, then optional paid packs. Players should be able to buy individual packs or subscribe to unlock the full catalog. Entitlement checks should stay centralized when implemented; do not scatter subscription logic through game screens.
+The intended monetization model is free starter tables first, then paid packs with limited free usage. A paid pack should allow a small number of free usage units per time window, such as a three-hour window, before asking the player to buy that pack or subscribe to unlock the full catalog. Entitlement and usage-meter checks should stay centralized when implemented; do not scatter subscription or payment logic through game screens.
 
 ## Current Feature Set
 
-- Game catalog ordered with free starter tables first: Hearts, Barbu, and Solitaire, followed by paid packs/future paid games such as Card Counting, Whist, Bridge, Gin Rummy, and Canasta.
+- Game catalog ordered with free starter tables first: Hearts, Barbu, and Whist, followed by paid packs/future paid games such as Card Counting, Solitaire, Bridge, Gin Rummy, and Canasta.
+- Game catalog metadata now comes from a shared table/catalog factory, including free starter versus metered pack access metadata, so future game additions do not start as hardcoded home-screen branches.
+- Hearts Learn path metadata now comes from the shared table/catalog factory, so lesson order, progress labels, and continuation behavior have one source of truth before more games add their own paths.
 - Hearts table with the shared Learn, Practice, Play, and Perfect structure; Play opens with pass-three-left and then a local multi-hand Hearts match to 50 points with 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, and shoot-the-moon scoring, while Practice covers avoiding hearts and the queen-danger pattern.
 - Hearts Passing Drill v1 teaches the beginner pass-three-left habit: identify Queen of Spades, high hearts, and dangerous high spades before hand play begins.
 - Hearts opponent policy v1 has started: local opponents avoid Queen of Spades wins when possible, dump Queen of Spades before hearts when void, dump Queen of Spades safely under higher spades, lead from short safe suits to create pressure, and lead hearts once hearts are broken.
@@ -90,9 +92,9 @@ The MVP is an iPhone-first local card tutor and practice app. It should prove th
 Must ship:
 
 1. Free starter catalog
-   - Hearts, Barbu, and Solitaire visible first.
-   - Barbu and Hearts are active; Solitaire may remain a clearly labeled starter placeholder until the card-table loop is stable.
-   - Paid/future packs such as Whist, Bridge, Gin Rummy, Canasta, and Card Counting can stay visible as roadmap signals only.
+   - Hearts, Barbu, and Whist visible first.
+   - Barbu and Hearts are active; Whist may remain a clearly labeled starter placeholder until the shared trick-taking loop is stable enough to support it.
+   - Paid/future packs such as Solitaire, Bridge, Gin Rummy, Canasta, and Card Counting can stay visible as roadmap signals only.
 
 2. Barbu
    - Learn path for the core contracts.
@@ -160,8 +162,8 @@ This section is the short list for getting from the current app to something tha
    - Stop adding mini-games until each active one has clear feedback and a reason to return.
 
 5. Product shell and launch readiness
-   - Keep the catalog free-first: Hearts, Barbu, Solitaire, then paid/future packs.
-   - Solitaire may remain a polished placeholder for MVP if Barbu and Hearts feel good.
+   - Keep the catalog free-first: Hearts, Barbu, Whist, then paid/future packs.
+   - Whist may remain a polished placeholder for MVP if Barbu and Hearts feel good, but it should be the next game implementation target before Solitaire.
    - Make app icon, launch screen, iPhone safe areas, and local Tauri/iOS packaging reliable.
    - Add a short manual smoke checklist for physical iPhone testing before each TestFlight-style build.
 

@@ -261,14 +261,15 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByRole("button", { name: "Bridge planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Gin Rummy planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Canasta planned" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Solitaire planned" })).toContainText("Free");
+  await expect(page.getByRole("button", { name: "Whist planned" })).toContainText("Free");
+  await expect(page.getByRole("button", { name: "Solitaire planned" })).toContainText("Pack");
   await expect(page.getByRole("heading", { name: "Varieties of play" })).toHaveCount(0);
   await expect(page.getByText("Barbu Learning Table")).toHaveCount(0);
   await expect
     .poll(async () =>
       page.locator(".game-card strong").evaluateAll((items) => items.slice(0, 4).map((item) => item.textContent?.trim()))
     )
-    .toEqual(["Hearts", "Barbu", "Solitaire", "Card Counting"]);
+    .toEqual(["Hearts", "Barbu", "Whist", "Card Counting"]);
 
   await page.screenshot({ path: testInfo.outputPath("catalog.png"), fullPage: true });
 

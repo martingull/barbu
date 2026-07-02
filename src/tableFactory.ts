@@ -2,6 +2,18 @@ export const tableTabIds = ["learn", "practice", "play", "perfect"] as const;
 
 export type TableTabId = (typeof tableTabIds)[number];
 export type ActiveGameTable = "barbu" | "hearts";
+export type CatalogGameId =
+  | ActiveGameTable
+  | "solitaire"
+  | "card-counting"
+  | "whist"
+  | "bridge"
+  | "gin-rummy"
+  | "canasta";
+export type CatalogStatus = "Ready" | "Planned";
+export type CatalogAccess = "Free" | "Pack";
+export type CatalogAccessModel = "free-starter" | "metered-pack";
+export type HeartsLearnPathAction = "object" | "queen" | "avoid" | "pass" | "score";
 
 export type TableActionDefinition = {
   id: string;
@@ -37,12 +49,90 @@ type CreateGameTableInput = Omit<GameTableDefinition, "tabs"> & {
   actionsByTab: Partial<Record<TableTabId, TableActionDefinition[]>>;
 };
 
+export type CatalogEntry = {
+  id: CatalogGameId;
+  family: string;
+  title: string;
+  status: CatalogStatus;
+  access: CatalogAccess;
+  accessModel: CatalogAccessModel;
+  summary: string;
+  lessonCount: number;
+  detailLabel?: string;
+};
+
+export type CatalogDefinitionInput = {
+  barbuLessonCount: number;
+};
+
+export type LearnPathStep<Action extends string = string> = {
+  id: string;
+  step: string;
+  title: string;
+  summary: string;
+  action: Action;
+};
+
+export type HeartsLearnPathStep = LearnPathStep<HeartsLearnPathAction>;
+
+export const monetizationPolicy = {
+  model: "free-usage-then-unlock",
+  freeStarterIds: ["hearts", "barbu", "whist"],
+  paidUnlocks: ["individual-pack", "subscription"],
+  meteredFreeUsage: {
+    unitLimit: "tbd",
+    windowHours: 3
+  }
+} as const;
+
 const tabLabels: Record<TableTabId, string> = {
   learn: "Learn",
   practice: "Practice",
   play: "Play",
   perfect: "Perfect"
 };
+
+function createLearnPathStep<Action extends string>(step: LearnPathStep<Action>): LearnPathStep<Action> {
+  return step;
+}
+
+export const heartsLearnPathSteps: HeartsLearnPathStep[] = [
+  createLearnPathStep({
+    id: "hearts-object",
+    step: "Concept",
+    title: "Object of Hearts",
+    summary: "Avoid penalty points. Hearts are small; QS is large.",
+    action: "object"
+  }),
+  createLearnPathStep({
+    id: "hearts-queen",
+    step: "Example",
+    title: "Queen of Spades",
+    summary: "Read whether QS is moving into your trick or safely away.",
+    action: "queen"
+  }),
+  createLearnPathStep({
+    id: "hearts-avoid",
+    step: "Guided trick",
+    title: "Avoid hearts",
+    summary: "Follow suit and let heart points move away.",
+    action: "avoid"
+  }),
+  createLearnPathStep({
+    id: "hearts-pass",
+    step: "Before play",
+    title: "Pass three",
+    summary: "Move obvious danger cards before the first trick starts.",
+    action: "pass"
+  }),
+  createLearnPathStep({
+    id: "hearts-score",
+    step: "Review",
+    title: "Score a hand",
+    summary: "Find why QS makes a trick much more expensive.",
+    action: "score"
+  })
+];
 
 export function createGameTableDefinition(config: CreateGameTableInput): GameTableDefinition {
   return {
@@ -67,6 +157,109 @@ export function tableTabLabel(tab: TableTabId) {
 
 export function tableTabsFor(table: GameTableDefinition) {
   return tableTabIds.map((tab) => table.tabs[tab]);
+}
+
+export function catalogDetailLabel(entry: CatalogEntry) {
+  if (entry.detailLabel) {
+    return entry.detailLabel;
+  }
+
+  if (entry.lessonCount > 0) {
+    return `${entry.lessonCount} ${entry.lessonCount === 1 ? "lesson" : "lessons"}`;
+  }
+
+  return "No lessons yet";
+}
+
+function createCatalogEntry(entry: CatalogEntry): CatalogEntry {
+  return entry;
+}
+
+export function createCatalogEntries({ barbuLessonCount }: CatalogDefinitionInput): CatalogEntry[] {
+  return [
+    createCatalogEntry({
+      id: "hearts",
+      family: "Hearts",
+      title: "Hearts",
+      status: "Ready",
+      access: "Free",
+      accessModel: "free-starter",
+      summary: "Queen of Spades style penalty play.",
+      lessonCount: heartsLearnPathSteps.length,
+      detailLabel: "MVP hand"
+    }),
+    createCatalogEntry({
+      id: "barbu",
+      family: "Hearts",
+      title: "Barbu",
+      status: "Ready",
+      access: "Free",
+      accessModel: "free-starter",
+      summary: "Contract trick-taking against the King of Cards.",
+      lessonCount: barbuLessonCount
+    }),
+    createCatalogEntry({
+      id: "whist",
+      family: "Whist",
+      title: "Whist",
+      status: "Planned",
+      access: "Free",
+      accessModel: "free-starter",
+      summary: "Partnership trick play and long-suit development.",
+      lessonCount: 0
+    }),
+    createCatalogEntry({
+      id: "card-counting",
+      family: "Skill pack",
+      title: "Card Counting",
+      status: "Ready",
+      access: "Pack",
+      accessModel: "metered-pack",
+      summary: "Fast minigames for tracking trumps, court cards, and what remains.",
+      lessonCount: 0,
+      detailLabel: "4 minigames"
+    }),
+    createCatalogEntry({
+      id: "solitaire",
+      family: "Patience",
+      title: "Solitaire",
+      status: "Planned",
+      access: "Pack",
+      accessModel: "metered-pack",
+      summary: "Solo card play for practicing order, suits, and patience habits.",
+      lessonCount: 0
+    }),
+    createCatalogEntry({
+      id: "bridge",
+      family: "Bridge",
+      title: "Bridge",
+      status: "Planned",
+      access: "Pack",
+      accessModel: "metered-pack",
+      summary: "Declarer play, defense, and bidding concepts.",
+      lessonCount: 0
+    }),
+    createCatalogEntry({
+      id: "gin-rummy",
+      family: "Rummy",
+      title: "Gin Rummy",
+      status: "Planned",
+      access: "Pack",
+      accessModel: "metered-pack",
+      summary: "Draw, discard, meld, and read what the opponent is collecting.",
+      lessonCount: 0
+    }),
+    createCatalogEntry({
+      id: "canasta",
+      family: "Rummy",
+      title: "Canasta",
+      status: "Planned",
+      access: "Pack",
+      accessModel: "metered-pack",
+      summary: "Partnership meld-building with wild cards, packs, and bonuses.",
+      lessonCount: 0
+    })
+  ];
 }
 
 export const gameTableDefinitions = {

@@ -50,7 +50,7 @@ The Hearts family is the first expansion area because many games share:
 
 Barbu should therefore be implemented as the first complete curriculum and play mode on top of reusable Hearts-family and trick-taking foundations. Later Hearts-family games should reuse as much of this as possible: table layout, legality engine, card rendering, trick feedback, generated practice primitives, and reference structure.
 
-Whist and Bridge are important later families because they are popular classic card games. They may reuse card and trick-taking primitives, but they should get their own family-level concepts when partnerships, bidding, declarer play, or other rules make the Hearts-family model too narrow. They should not pull attention away from making Barbu strong first.
+Whist is the next intended free starter because it can reuse card and trick-taking primitives while introducing partnerships, trumps, and stronger table-reading habits. Bridge is an important later family, but it should get its own family-level concepts when bidding and declarer play make the Hearts/Whist model too narrow.
 
 Design implication:
 
@@ -59,9 +59,9 @@ Design implication:
 - Shared Hearts-family concepts should not be hardcoded as Barbu-only UI or copy.
 - Variants should remain attached to their parent core game.
 - New games should be added through family-aware data and reusable rules where practical, not by cloning the whole Barbu interface.
-- Bridge, Whist, Gin Rummy, Canasta, and Solitaire should stay visible as future product direction, but not become active implementation work until Barbu has a stable learning, practice, and play loop. Barbu, Hearts, and Solitaire are intended as the free starter catalog.
-- Catalog order should show free starter tables first: Hearts, Barbu, and Solitaire. Paid packs and paid future games should follow.
-- Monetization should support both individual pack purchases and one subscription that unlocks the full catalog. UI can label packs before entitlement plumbing exists, but access decisions should later be centralized.
+- Whist, Bridge, Gin Rummy, Canasta, and Solitaire should stay visible as future product direction, but only Whist should be treated as the next free starter implementation target after Barbu and Hearts. Hearts, Barbu, and Whist are intended as the free starter catalog.
+- Catalog order should show free starter tables first: Hearts, Barbu, and Whist. Paid packs and paid future games should follow.
+- Monetization should support limited free usage for paid packs, individual pack purchases, and one subscription that unlocks the full catalog. UI can label packs before entitlement plumbing exists, but access and usage-meter decisions should later be centralized.
 
 ## Screen Map
 
@@ -71,10 +71,10 @@ Purpose: choose the game family or core game.
 
 Current role:
 
-- Shows free starter tables first: Hearts, Barbu, and Solitaire.
+- Shows free starter tables first: Hearts, Barbu, and Whist.
 - Hearts opens to a starter table with the shared Learn, Practice, Play, and Perfect structure. Play is active with pass-three-left and a focused local Hearts hand.
 - Shows Card Counting after the free starters as the first ready paid skill pack.
-- Shows future paid games such as Whist, Bridge, Gin Rummy, and Canasta.
+- Shows future paid games such as Solitaire, Bridge, Gin Rummy, and Canasta.
 - Keeps varieties under their parent game instead of showing them as separate first-screen tables.
 - Signals that Barbu belongs to a broader Hearts-family catalog.
 
@@ -83,6 +83,7 @@ Future role:
 - Resume the most relevant learning or play activity.
 - Browse Hearts-family games that share trick-taking and avoidance foundations.
 - Introduce paid packs or locked families without mixing entitlements into game logic.
+- Render catalog cards from shared catalog metadata instead of one-off home-screen definitions.
 - Keep the first screen useful, not a marketing landing page.
 
 Should not contain:
