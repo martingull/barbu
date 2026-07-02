@@ -175,6 +175,11 @@
     seatPenalties: Record<Seat, number>;
   };
 
+  type HeartsHandResult = {
+    handNumber: number;
+    seatPenalties: Record<Seat, number>;
+  };
+
   type RunStanding = {
     rank: number;
     seat: Seat;
@@ -380,6 +385,7 @@
   const countingRanks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
   const countingSuits: Suit[] = ["C", "D", "H", "S"];
   const dominoOrderScores = [45, 20, 5, -5];
+  const heartsMatchTarget = 50;
   const seatByPlayerIndex: Record<number, Seat> = {
     0: "Tutor",
     1: "Right",
@@ -889,6 +895,7 @@
   let playBarbuHistory: PlayBarbuAttempt[] = loadPlayBarbuHistory();
   let savedPlayBarbuRun: SavedPlayBarbuRun | null = loadSavedPlayBarbuRun();
   let heartsSessionScores: Record<Seat, number> = emptySeatPenalties();
+  let heartsHandResults: HeartsHandResult[] = [];
   let usingGeneratedPractice = false;
   let generatedPracticeError = "";
   let fullHand: FullHandState | null = null;
@@ -1121,17 +1128,38 @@
   $: fullHandBestTrick = fullHand ? fullHandBestTrickLabel(fullHand) : "";
   $: fullHandWorstTrick = fullHand ? fullHandWorstTrickLabel(fullHand) : "";
   $: fullHandIsHeartsGame = activeGameTable === "hearts" && fullHand?.contract === "Hearts" && !fullHandRunActive;
+  $: currentHeartsHandResult =
+    fullHandIsHeartsGame && fullHand?.status === "complete"
+      ? ({
+          handNumber: heartsHandResults.length + 1,
+          seatPenalties: fullHandSeatPenalties
+        } satisfies HeartsHandResult)
+      : null;
+  $: heartsVisibleHandResults = currentHeartsHandResult
+    ? [...heartsHandResults, currentHeartsHandResult]
+    : heartsHandResults;
+  $: heartsVisibleHandCount = heartsVisibleHandResults.length;
   $: heartsScorecardMeta = gameTableDefinitions.hearts.scorecard;
   $: heartsVisibleScores = fullHandIsHeartsGame
     ? addSeatPenalties(heartsSessionScores, fullHandSeatPenalties)
     : heartsSessionScores;
   $: heartsStandings = heartsScorecardStandings(heartsVisibleScores);
   $: heartsLeader = heartsStandings[0];
+  $: heartsHighestScore = scoreSeats
+    .map((seat) => ({ seat, score: heartsVisibleScores[seat] }))
+    .sort((left, right) => right.score - left.score)[0];
+  $: heartsMatchIsComplete =
+    fullHandIsHeartsGame && fullHand?.status === "complete" && Boolean(heartsHighestScore?.score >= heartsMatchTarget);
   $: heartsPlayerStanding = heartsStandings.find((standing) => standing.seat === "You");
   $: heartsLeaderLabel = heartsLeader
     ? `${scoreSeatLabel(heartsLeader.seat)} ${heartsLeader.score} ${heartsLeader.score === 1 ? "point" : "points"}`
     : "You 0 points";
   $: heartsPlayerPlaceLabel = heartsPlayerStanding ? formatOrdinal(heartsPlayerStanding.rank) : "1st";
+  $: heartsMatchSummary = heartsMatchIsComplete ? heartsMatchResultSummary() : "";
+  $: heartsBestHand = heartsPlayerHandResult("best");
+  $: heartsWorstHand = heartsPlayerHandResult("worst");
+  $: heartsBestHandLabel = heartsBestHand ? heartsHandResultLabel(heartsBestHand) : "No hands yet";
+  $: heartsWorstHandLabel = heartsWorstHand ? heartsHandResultLabel(heartsWorstHand) : "No hands yet";
   $: activeRunContract = fullHand?.contract ?? dominoHand?.contract;
   $: fullHandRunCurrentIndex = activeRunContract ? fullHandContracts.indexOf(activeRunContract) : -1;
   $: pendingRunContractIndex = fullHandContracts.indexOf(pendingRunContract);
@@ -1185,7 +1213,9 @@
             ? `${dominoHand.cardsRemaining} cards left`
             : "Ready";
   $: fullHandNextActionLabel = fullHandIsHeartsGame
-    ? "Next hand"
+    ? heartsMatchIsComplete
+      ? "New match"
+      : "Next hand"
     : fullHandRunActive
     ? fullHandRunIsComplete
       ? "New game"
@@ -2862,6 +2892,7 @@
     dominoHand = null;
     if (!options.keepSession) {
       heartsSessionScores = emptySeatPenalties();
+      heartsHandResults = [];
     }
     heartsPassSelectedCardIds = [];
     heartsPassError = "";
@@ -3274,6 +3305,18 @@
     }
 
     if (fullHandIsHeartsGame) {
+      if (heartsMatchIsComplete) {
+        startHeartsHand();
+        return;
+      }
+
+      heartsHandResults = [
+        ...heartsHandResults,
+        {
+          handNumber: heartsHandResults.length + 1,
+          seatPenalties: fullHandSeatPenalties
+        }
+      ];
       heartsSessionScores = addSeatPenalties(heartsSessionScores, fullHandSeatPenalties);
       void startHeartsPassingPhase({ keepSession: true });
       return;
@@ -3465,6 +3508,55 @@
         rank
       };
     });
+  }
+
+  function heartsMatchResultHeading() {
+    if (!heartsPlayerStanding) {
+      return "Hearts match complete";
+    }
+    if (heartsPlayerStanding.rank === 1) {
+      const tiedWinners = heartsStandings.filter((standing) => standing.rank === 1);
+      return tiedWinners.length > 1 ? "You tied the match" : "You won Hearts";
+    }
+
+    return `You finished ${formatOrdinal(heartsPlayerStanding.rank)}`;
+  }
+
+  function heartsMatchResultSummary() {
+    const winner = heartsStandings[0];
+    const trigger = heartsHighestScore;
+
+    if (!winner || !trigger) {
+      return "Hearts match complete. Low score wins.";
+    }
+
+    return `${scoreSeatLabel(trigger.seat)} reached ${trigger.score} points. ${scoreSeatLabel(winner.seat)} wins with ${
+      winner.score
+    }. You finished ${heartsPlayerPlaceLabel} after ${heartsVisibleHandCount} ${
+      heartsVisibleHandCount === 1 ? "hand" : "hands"
+    }.`;
+  }
+
+  function heartsPlayerHandResult(kind: "best" | "worst") {
+    const results = [...heartsVisibleHandResults];
+
+    if (!results.length) {
+      return undefined;
+    }
+
+    return results.sort((left, right) => {
+      const leftScore = left.seatPenalties.You ?? 0;
+      const rightScore = right.seatPenalties.You ?? 0;
+
+      return kind === "best"
+        ? leftScore - rightScore || left.handNumber - right.handNumber
+        : rightScore - leftScore || left.handNumber - right.handNumber;
+    })[0];
+  }
+
+  function heartsHandResultLabel(result: HeartsHandResult) {
+    const score = result.seatPenalties.You ?? 0;
+    return `Hand ${result.handNumber}: ${score} ${score === 1 ? "point" : "points"}`;
   }
 
   function runResultHeading(standings: RunStanding[]) {
@@ -3712,6 +3804,10 @@
 
   function fullHandResultHeading(hand: FullHandState) {
     if (activeGameTable === "hearts" && hand.contract === "Hearts") {
+      if (heartsMatchIsComplete) {
+        return heartsMatchResultHeading();
+      }
+
       const player = heartsPlayerStanding;
 
       if (!player) {
@@ -3739,6 +3835,10 @@
 
   function fullHandResultText(hand: FullHandState) {
     if (activeGameTable === "hearts" && hand.contract === "Hearts") {
+      if (heartsMatchIsComplete) {
+        return heartsMatchSummary;
+      }
+
       return `${heartsScorecardMeta.objective}. You took ${formatFullHandPenalty(
         hand.playerPenalty
       )}; ${heartsLeaderLabel} leads the hand.`;
@@ -4800,8 +4900,11 @@
       </div>
     {/each}
     <div class="run-scorecard-row hearts-scorecard-row total">
-      <span>{heartsScorecardMeta.objective}</span>
-      <strong>{heartsLeader ? scoreSeatLabel(heartsLeader.seat) : "You"}</strong>
+      <span>
+        {heartsScorecardMeta.objective}
+        <small>Hand {heartsVisibleHandCount}</small>
+      </span>
+      <strong>Target {heartsMatchTarget}</strong>
       <strong>{heartsPlayerPlaceLabel}</strong>
     </div>
   </div>
@@ -5231,12 +5334,12 @@
           <div aria-label="Play" class="barbu-tab-panel play-panel" id="hearts-play-panel" role="tabpanel">
             <div class="barbu-mode-copy">
               <p class="eyebrow">Play</p>
-              <h2>Play a Hearts hand.</h2>
-              <p>MVP Hearts starts with pass-three-left, 2C opening, hearts-broken lead restrictions, hearts at 1 point, and QS at 13.</p>
+              <h2>Play a Hearts match.</h2>
+              <p>MVP Hearts plays repeated hands to 50 points with pass-three-left, 2C opening, hearts at 1 point, and QS at 13.</p>
             </div>
             <div class="play-options" aria-label="Hearts play options">
               <button class="primary-action" onclick={startHeartsHand} type="button">Play Hearts</button>
-              <p class="supporting-copy">Rotating pass directions, shooting the moon, and match scoring come after the local hand feels right.</p>
+              <p class="supporting-copy">Rotating pass directions and shooting the moon come after the local match feels right.</p>
             </div>
           </div>
         {:else}
@@ -6495,6 +6598,26 @@
 
               {#if fullHandIsHeartsGame}
                 {@render heartsScorecard("Hearts final scorecard")}
+                {#if heartsMatchIsComplete}
+                  <div class="full-hand-result-tricks" aria-label="Hearts match summary">
+                    <div>
+                      <span>Winner</span>
+                      <strong>{heartsLeader ? scoreSeatLabel(heartsLeader.seat) : "You"}</strong>
+                    </div>
+                    <div>
+                      <span>Your place</span>
+                      <strong>{heartsPlayerPlaceLabel}</strong>
+                    </div>
+                    <div>
+                      <span>Best hand</span>
+                      <strong>{heartsBestHandLabel}</strong>
+                    </div>
+                    <div>
+                      <span>Hardest hand</span>
+                      <strong>{heartsWorstHandLabel}</strong>
+                    </div>
+                  </div>
+                {/if}
               {:else}
                 <div class="full-hand-result-tricks" aria-label={`${fullHand.contract} key tricks`}>
                   <div>

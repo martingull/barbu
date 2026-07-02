@@ -456,6 +456,8 @@ test("Hearts next hand carries score and starts with passing again", async ({ pa
 
   await expect(page.getByRole("button", { name: "Next hand" })).toBeVisible();
   await expect(page.getByLabel("Hearts final scorecard")).toContainText("Low score leads");
+  await expect(page.getByLabel("Hearts final scorecard")).toContainText("Target 50");
+  await expect(page.getByLabel("Hearts final scorecard")).toContainText("Hand 1");
   await page.getByRole("button", { name: "Next hand" }).click();
 
   await expect(page.getByRole("heading", { name: "Pass cards" })).toBeVisible();

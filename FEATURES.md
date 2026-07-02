@@ -31,7 +31,7 @@ The intended monetization model is free starter tables first, then optional paid
 ## Current Feature Set
 
 - Game catalog ordered with free starter tables first: Hearts, Barbu, and Solitaire, followed by paid packs/future paid games such as Card Counting, Whist, Bridge, Gin Rummy, and Canasta.
-- Hearts table with the shared Learn, Practice, Play, and Perfect structure; Play opens with pass-three-left and then a local Hearts hand with 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, while Practice covers avoiding hearts and the queen-danger pattern.
+- Hearts table with the shared Learn, Practice, Play, and Perfect structure; Play opens with pass-three-left and then a local multi-hand Hearts match to 50 points with 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, while Practice covers avoiding hearts and the queen-danger pattern.
 - Hearts Passing Drill v1 teaches the beginner pass-three-left habit: identify Queen of Spades, high hearts, and dangerous high spades before hand play begins.
 - Hearts opponent policy v1 has started: local opponents avoid Queen of Spades wins when possible, dump Queen of Spades before hearts when void, dump Queen of Spades safely under higher spades, lead from short safe suits to create pressure, and lead hearts once hearts are broken.
 - Hearts trick feedback now calls out queen-of-spades danger, hearts moving, and opponent-loaded tricks so harder hands feel explainable rather than random.
@@ -103,10 +103,10 @@ Must ship:
 
 3. Hearts
    - Hearts must be a real free starter game, not only a placeholder.
-   - MVP Hearts starts with pass-three-left, then a local Hearts hand on the shared trick-taking table.
+   - MVP Hearts starts with pass-three-left, then a local multi-hand Hearts match on the shared trick-taking table.
    - MVP scoring: hearts are penalty cards and the queen of spades is the main danger card.
    - Current Hearts rules should include the Wikipedia-style 2C opening convention where the holder of 2C leads it to the first trick, no first-trick penalty dump when avoidable, and no heart leads until hearts are broken. Source note: https://en.wikipedia.org/wiki/Hearts_(card_game)#Minor_rule_variants.
-   - Rotating pass directions, shooting the moon, and fuller match scoring remain later Hearts v2 items unless added deliberately.
+   - The current match target is 50 points for mobile testing; rotating pass directions, shooting the moon, and fuller scoring options remain later Hearts v2 items unless added deliberately.
    - Hearts Practice can reuse Hearts-family avoidance drills while Hearts-specific drills grow.
    - Hearts Learn/Reference should explain the current MVP boundary clearly.
 
@@ -197,10 +197,11 @@ Core contract status:
 These are the next product increments that keep the app coherent.
 
 1. Hearts MVP v1
-   - Hearts is now an active starter table with pass-three-left and a local hand using the shared trick-taking engine and table surface.
+   - Hearts is now an active starter table with pass-three-left and a local multi-hand match using the shared trick-taking engine and table surface.
    - Current MVP scoring covers hearts plus the queen of spades.
    - Current MVP legality covers the Wikipedia-style holder-of-2C opening, first-trick penalty restrictions, and hearts-broken lead restrictions.
    - Hearts opponent policy now treats Queen of Spades as the main danger card in void discards and spade-following decisions, and uses short-suit/heart-broken leads so passive zero-point play is harder.
+   - Hearts match v1 tracks cumulative table scores until someone reaches 50, then shows the winner, your place, and your best/worst hand.
    - Hearts Passing Drill v1 teaches the first pass-three-left heuristic.
    - Hearts Learn and Reference name the MVP simplifications.
    - Hearts Practice reuses Hearts-family patterns for avoiding hearts and queen danger.

@@ -54,7 +54,7 @@ content/             Structured game and lesson content
 - A catalog/welcome screen that treats Barbu as the first playable core game in a broader card-game curriculum, with Hearts as the second active starter table and placeholders for Solitaire, Whist, Bridge, Gin Rummy, and Canasta.
 - The intended free starter catalog is Barbu, Hearts, and Solitaire; the other catalog entries can become later packs once the first game loop is strong.
 - The catalog stays focused on core games; varieties and teaching modes stay attached to their parent game screens.
-- A Hearts table with the same Learn, Practice, Play, and Perfect structure; Play starts with pass-three-left and then moves into a local Hearts hand with 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, and queen-danger scoring, while Practice trains hearts and queen-danger patterns on the shared trick-taking surface.
+- A Hearts table with the same Learn, Practice, Play, and Perfect structure; Play starts with pass-three-left and then moves into a local multi-hand Hearts match to 50 points with 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, and queen-danger scoring, while Practice trains hearts and queen-danger patterns on the shared trick-taking surface.
 - A Barbu table screen with grouped Learn, Practice, Play, and Reference entry points, a contract-hand practice chooser, and a five-step training path.
 - Quick Drill mode with seven quick mixed-contract decisions across the playable contract roster, immediate feedback, and a compact result; Tauri builds use Rust-generated scenarios, while browser runs use a local generated fallback.
 - No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps full-hand skeletons with deterministic local deals, legal-card play, contract-aware auto opponents, hand scoring, and short per-trick feedback.
@@ -94,7 +94,7 @@ The MVP is a local iPhone-first card tutor with two active starter games:
 - **Barbu**: the main curriculum and play mode.
 - **Hearts**: the familiar free starter game that proves the shared Hearts-family engine can support more than Barbu.
 
-MVP Hearts should be real but intentionally small: pass three cards left, then play a local Hearts hand on the shared trick-taking table, scoring hearts plus the queen of spades. The current MVP rule target includes 2C opening, first-trick penalty restrictions, and no heart leads until hearts are broken. Rotating pass directions, shooting the moon, and fuller match scoring are Hearts v2 unless deliberately added later.
+MVP Hearts should be real but intentionally small: pass three cards left, then play local Hearts hands on the shared trick-taking table until one seat reaches a 50-point testing target, scoring hearts plus the queen of spades. The current MVP rule target includes the Wikipedia-style holder-of-2C opening, first-trick penalty restrictions, and no heart leads until hearts are broken. Rotating pass directions, shooting the moon, and fuller match options are Hearts v2 unless deliberately added later.
 
 Solitaire can remain visible as a free starter placeholder until Barbu and Hearts feel stable. Whist, Bridge, Gin Rummy, Canasta, and Card Counting can remain visible as future packs or skill areas, but should not distract from getting Barbu and Hearts playable on the phone.
 
