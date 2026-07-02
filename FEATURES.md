@@ -80,6 +80,7 @@ The intended monetization model is free starter tables first, then optional paid
 - Practice Template Model v1 has started with a Rust-side template roster that maps playable contracts to generator functions before a broader scenario-template DSL is justified.
 - Browser generated fallback for Quick Drill when Tauri is unavailable.
 - Playwright smoke tests for catalog, Barbu table, lesson flow, generated fallback, and course-complete behavior.
+- Focused active-table stability checks cover iPhone no-scroll, safe-area controls, pinned bottom actions, thumb-card spacing, and feedback/card collision checks across Quick Drill, Play Barbu, Hearts, Domino, and Perfect table games.
 
 ## MVP Feature List
 
@@ -137,6 +138,7 @@ This section is the short list for getting from the current app to something tha
    - Keep Quick Drill, full-hand practice, Play Barbu, Hearts, Domino, and Perfect mini-games on stable iPhone layouts.
    - Prevent active-game scrolling, safe-area collisions, shifting score boxes, and thumb-card/action collisions.
    - Keep the shared table surface consistent across Barbu practice, Barbu play, Hearts play, and realistic mini-games.
+   - Current gate: `task ui:test:tables` runs the focused iPhone table-stability suite.
 
 2. Finish Barbu v1 play
    - Keep the current playable roster: No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino.

@@ -434,6 +434,9 @@ test("Hearts play starts with a pass-left phase before the hand", async ({ page 
   await expect(page.getByLabel("Hearts hand table")).toBeVisible();
   await expect(page.getByLabel("Your Hearts hand")).toBeVisible();
   await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
+  await expectHandNearActionRow(page, ".full-hand-cards");
+  await expectFeedbackAboveHand(page, ".full-hand-cards");
   await page.screenshot({ path: testInfo.outputPath("hearts-hand.png"), fullPage: true });
 
   await page.getByLabel("Hearts full hand").getByRole("button", { name: "Table" }).click();
@@ -523,6 +526,8 @@ test("Perfect mode starts card-counting minigames", async ({ page }, testInfo) =
   await expect(page.getByLabel("Trump memory hand trainer")).toContainText("Trick 1 of 13");
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
+  await expectHandNearActionRow(page, ".realistic-trump-hand");
+  await expectFeedbackAboveHand(page, ".realistic-trump-hand");
   await page.screenshot({ path: testInfo.outputPath("perfect-count-trumps-realistic-play.png"), fullPage: true });
 
   const answerRealisticTrumpCheck = async () => {
@@ -576,6 +581,10 @@ test("Perfect mode starts card-counting minigames", async ({ page }, testInfo) =
   await expect(page.getByLabel("Court card memory status")).not.toContainText("Court cards seen");
   await expect(page.getByLabel("Court card memory challenge")).toContainText(/Lead|Follow|void/);
   await expect(page.getByRole("button", { name: "Play card" })).toBeDisabled();
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
+  await expectHandNearActionRow(page, ".realistic-trump-hand");
+  await expectFeedbackAboveHand(page, ".realistic-trump-hand");
 
   for (let trick = 1; trick <= 3; trick += 1) {
     await page.locator(".realistic-trump-hand .full-hand-card.legal").first().click();
@@ -607,6 +616,10 @@ test("Perfect mode starts card-counting minigames", async ({ page }, testInfo) =
   await expect(page.getByLabel("Danger card memory table")).toBeVisible();
   await expect(page.getByLabel("Danger card memory status")).toContainText("Memory run");
   await expect(page.getByLabel("Danger card memory status")).not.toContainText("Danger cards seen");
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
+  await expectHandNearActionRow(page, ".realistic-trump-hand");
+  await expectFeedbackAboveHand(page, ".realistic-trump-hand");
 
   for (let trick = 1; trick <= 3; trick += 1) {
     await page.locator(".realistic-trump-hand .full-hand-card.legal").first().click();
@@ -645,11 +658,17 @@ test("Trump memory hand starts from Perfect as a realistic table game", async ({
   await expect(page.getByRole("heading", { name: "Trump memory hand" })).toBeVisible();
   await expect(page.getByLabel("Realistic trump table")).toBeVisible();
   await expect(page.getByLabel("Realistic trump challenge")).toContainText(/Lead the trick|Follow|void/);
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
+  await expectHandNearActionRow(page, ".realistic-trump-hand");
+  await expectFeedbackAboveHand(page, ".realistic-trump-hand");
 
   await page.locator(".realistic-trump-hand .full-hand-card.legal").first().click();
   await page.getByRole("button", { name: "Play card" }).click();
 
   await expect(page.getByLabel("Realistic trump table").locator(".table-card")).toHaveCount(4);
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
 });
 
 test("practice tab keeps contract hands hidden while fixed drills are public", async ({ page }, testInfo) => {
