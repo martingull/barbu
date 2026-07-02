@@ -14,6 +14,8 @@ export type CatalogStatus = "Ready" | "Planned";
 export type CatalogAccess = "Free" | "Pack";
 export type CatalogAccessModel = "free-starter" | "metered-pack";
 export type HeartsLearnPathAction = "object" | "queen" | "avoid" | "pass" | "score";
+export type BarbuPracticeAction = "quick" | "fixed" | "domino";
+export type HeartsPracticeAction = "pass" | "avoid" | "queen" | "break" | "moon" | "score";
 
 export type TableActionDefinition = {
   id: string;
@@ -75,6 +77,19 @@ export type LearnPathStep<Action extends string = string> = {
 
 export type HeartsLearnPathStep = LearnPathStep<HeartsLearnPathAction>;
 
+export type PracticeEntry<Action extends string = string> = {
+  id: string;
+  label: string;
+  title: string;
+  summary: string;
+  action: Action;
+};
+
+export type HeartsPracticeEntry = PracticeEntry<HeartsPracticeAction>;
+export type BarbuPracticeEntry = PracticeEntry<BarbuPracticeAction> & {
+  group: "practice-actions" | "fixed-drills" | "full-hands";
+};
+
 export const monetizationPolicy = {
   model: "free-usage-then-unlock",
   freeStarterIds: ["hearts", "barbu", "whist"],
@@ -130,6 +145,86 @@ export const heartsLearnPathSteps: HeartsLearnPathStep[] = [
     step: "Review",
     title: "Score a hand",
     summary: "Find why QS makes a trick much more expensive.",
+    action: "score"
+  })
+];
+
+function createPracticeEntry<Action extends string>(entry: PracticeEntry<Action>): PracticeEntry<Action> {
+  return entry;
+}
+
+function createBarbuPracticeEntry(entry: BarbuPracticeEntry): BarbuPracticeEntry {
+  return entry;
+}
+
+export const barbuPracticeEntries: BarbuPracticeEntry[] = [
+  createBarbuPracticeEntry({
+    id: "quick-drill",
+    label: "Practice",
+    title: "Quick drill",
+    summary: "Run a short mixed-contract loop with immediate feedback.",
+    action: "quick",
+    group: "practice-actions"
+  }),
+  createBarbuPracticeEntry({
+    id: "fixed-drills",
+    label: "Fixed drills",
+    title: "Practice one contract pattern.",
+    summary: "Repeat one authored decision when a specific contract rule feels weak.",
+    action: "fixed",
+    group: "fixed-drills"
+  }),
+  createBarbuPracticeEntry({
+    id: "domino-hand",
+    label: "Domino",
+    title: "Play a full layout hand",
+    summary: "Use the same Domino table as Play Barbu: open suits, pass only when blocked, and race to go out.",
+    action: "domino",
+    group: "full-hands"
+  })
+];
+
+export const heartsPracticeEntries: HeartsPracticeEntry[] = [
+  createPracticeEntry({
+    id: "pass-three",
+    label: "Passing",
+    title: "Pass three",
+    summary: "Choose the three danger cards to pass left before the hand begins.",
+    action: "pass"
+  }),
+  createPracticeEntry({
+    id: "avoid-hearts",
+    label: "Hearts",
+    title: "Avoid hearts",
+    summary: "Follow suit and avoid taking heart penalties when another card can duck.",
+    action: "avoid"
+  }),
+  createPracticeEntry({
+    id: "queen-danger",
+    label: "Queen",
+    title: "Queen danger",
+    summary: "Practice the Queen of Spades habit: avoid winning when a queen is loaded.",
+    action: "queen"
+  }),
+  createPracticeEntry({
+    id: "break-hearts",
+    label: "Play restriction",
+    title: "Break hearts",
+    summary: "Decide whether a heart lead is legal before hearts have been broken.",
+    action: "break"
+  }),
+  createPracticeEntry({
+    id: "stop-the-moon",
+    label: "Moon defense",
+    title: "Stop the moon",
+    summary: "Take a loaded trick when that is the only way to stop a moon threat.",
+    action: "moon"
+  }),
+  createPracticeEntry({
+    id: "score-a-hand",
+    label: "Scorecard",
+    title: "Score a hand",
+    summary: "Identify why QS makes a Hearts trick much more expensive.",
     action: "score"
   })
 ];
@@ -283,14 +378,11 @@ export const gameTableDefinitions = {
         { id: "scorecard", label: "Scorecard", destination: "Hearts score concept" },
         { id: "reference", label: "Reference", destination: "Hearts reference" }
       ],
-      practice: [
-        { id: "pass-three", label: "Pass three", destination: "Hearts passing drill" },
-        { id: "avoid-hearts", label: "Avoid hearts", destination: "Hearts avoid-hearts drill" },
-        { id: "queen-danger", label: "Queen danger", destination: "Hearts queen danger drill" },
-        { id: "break-hearts", label: "Break hearts", destination: "Hearts full hand practice" },
-        { id: "stop-the-moon", label: "Stop the moon", destination: "Hearts moon-defense practice" },
-        { id: "score-a-hand", label: "Score a hand", destination: "Hearts scorecard practice" }
-      ],
+      practice: heartsPracticeEntries.map((entry) => ({
+        id: entry.id,
+        label: entry.title,
+        destination: `Hearts practice: ${entry.title}`
+      })),
       play: [{ id: "play-hearts", label: "Play Hearts", destination: "Hearts pass-left hand" }]
     }
   }),
@@ -314,11 +406,11 @@ export const gameTableDefinitions = {
         { id: "reference", label: "Reference", destination: "Barbu reference" },
         { id: "contracts", label: "Barbu contracts", destination: "Barbu contract map" }
       ],
-      practice: [
-        { id: "quick-drill", label: "Quick drill", destination: "Mixed Barbu quick drill" },
-        { id: "fixed-drills", label: "Contract drill", destination: "Fixed contract drill" },
-        { id: "domino-hand", label: "Play a full layout hand", destination: "Domino full hand practice" }
-      ],
+      practice: barbuPracticeEntries.map((entry) => ({
+        id: entry.id,
+        label: entry.title,
+        destination: `Barbu practice: ${entry.title}`
+      })),
       play: [
         { id: "continue-play-barbu", label: "Continue Play Barbu", destination: "Saved Play Barbu run" },
         { id: "play-barbu", label: "Play Barbu", destination: "New Play Barbu run" }

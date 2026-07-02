@@ -29,14 +29,18 @@
   import { guidedLessons } from "./lessons/catalog";
   import { referenceCatalog } from "./referenceCatalog";
   import {
+    barbuPracticeEntries,
     catalogDetailLabel,
     createCatalogEntries,
     gameTableDefinitions,
     heartsLearnPathSteps as heartsPathSteps,
+    heartsPracticeEntries,
     tableTabsFor,
     type ActiveGameTable,
+    type BarbuPracticeAction,
     type CatalogGameId,
     type HeartsLearnPathStep,
+    type HeartsPracticeAction,
     type TableTabId
   } from "./tableFactory";
   import type {
@@ -3258,6 +3262,14 @@
     void startFullHand("Domino");
   }
 
+  const barbuPracticeActions: Record<BarbuPracticeAction, () => void> = {
+    quick: () => void startDailyDrill(),
+    fixed: () => {
+      activeBarbuTableTab = "practice";
+    },
+    domino: () => void startDominoPracticeHand()
+  };
+
   function startBarbuRun() {
     fullHandRunActive = true;
     fullHandRunSeed = usePracticeSeed();
@@ -4587,6 +4599,15 @@
     }
   }
 
+  const heartsPracticeActions: Record<HeartsPracticeAction, () => void> = {
+    pass: () => void startHeartsPassPractice(),
+    avoid: () => startHeartsAvoidHeartsDrill(),
+    queen: () => startHeartsQueenDangerDrill(),
+    break: () => startHeartsBreakHeartsDrill(),
+    moon: () => startHeartsStopMoonDrill(),
+    score: () => startHeartsScoreHandDrill()
+  };
+
   function continueCourse() {
     if (isCourseComplete || !nextPathStep) {
       openBarbuLearnTable();
@@ -5378,27 +5399,33 @@
             <p>Use short mixed drills when you want rhythm, or isolate one contract pattern when a rule feels weak.</p>
           </div>
           <div class="table-action-groups" aria-label="Barbu table actions">
-            <section class="table-action-group" aria-label="Practice actions">
-              <p class="eyebrow">Practice</p>
-              <button class="drill-action" onclick={() => void startDailyDrill()} type="button">Quick drill</button>
-            </section>
+            {#each barbuPracticeEntries.filter((entry) => entry.group === "practice-actions") as entry}
+              <section class="table-action-group" aria-label="Practice actions">
+                <p class="eyebrow">{entry.label}</p>
+                <button class="drill-action" onclick={barbuPracticeActions[entry.action]} type="button">
+                  {entry.title}
+                </button>
+              </section>
+            {/each}
           </div>
 
-          <section class="fixed-contract-practice" aria-label="Fixed contract drills">
-            <div class="section-heading">
-              <p class="eyebrow">Fixed drills</p>
-              <h2>Practice one contract pattern.</h2>
-            </div>
-            <div class="fixed-contract-grid">
-              {#each fixedDrillLessons as lesson}
-                <button class="contract-card compact" onclick={() => startFixedContractDrill(lesson.id)} type="button">
-                  <span>{lesson.contract}</span>
-                  <strong>{lesson.title}</strong>
-                  <small>One authored decision with immediate feedback.</small>
-                </button>
-              {/each}
-            </div>
-          </section>
+          {#each barbuPracticeEntries.filter((entry) => entry.group === "fixed-drills") as entry}
+            <section class="fixed-contract-practice" aria-label="Fixed contract drills">
+              <div class="section-heading">
+                <p class="eyebrow">{entry.label}</p>
+                <h2>{entry.title}</h2>
+              </div>
+              <div class="fixed-contract-grid">
+                {#each fixedDrillLessons as lesson}
+                  <button class="contract-card compact" onclick={() => startFixedContractDrill(lesson.id)} type="button">
+                    <span>{lesson.contract}</span>
+                    <strong>{lesson.title}</strong>
+                    <small>One authored decision with immediate feedback.</small>
+                  </button>
+                {/each}
+              </div>
+            </section>
+          {/each}
 
           <section class="fixed-contract-practice" aria-label="Full hand practice">
             <div class="section-heading">
@@ -5406,11 +5433,13 @@
               <h2>Practice the table surface.</h2>
             </div>
             <div class="fixed-contract-grid">
-              <button class="contract-card compact" onclick={() => void startDominoPracticeHand()} type="button">
-                <span>Domino</span>
-                <strong>Play a full layout hand</strong>
-                <small>Use the same Domino table as Play Barbu: open suits, pass only when blocked, and race to go out.</small>
-              </button>
+              {#each barbuPracticeEntries.filter((entry) => entry.group === "full-hands") as entry}
+                <button class="contract-card compact" onclick={barbuPracticeActions[entry.action]} type="button">
+                  <span>{entry.label}</span>
+                  <strong>{entry.title}</strong>
+                  <small>{entry.summary}</small>
+                </button>
+              {/each}
             </div>
           </section>
         </div>
@@ -5688,36 +5717,13 @@
                 <h2>Practice one Hearts pattern.</h2>
               </div>
               <div class="fixed-contract-grid">
-                <button class="contract-card compact" onclick={() => void startHeartsPassPractice()} type="button">
-                  <span>Passing</span>
-                  <strong>Pass three</strong>
-                  <small>Choose the three danger cards to pass left before the hand begins.</small>
-                </button>
-                <button class="contract-card compact" onclick={() => startHeartsAvoidHeartsDrill()} type="button">
-                  <span>Hearts</span>
-                  <strong>Avoid hearts</strong>
-                  <small>Follow suit and avoid taking heart penalties when another card can duck.</small>
-                </button>
-                <button class="contract-card compact" onclick={() => startHeartsQueenDangerDrill()} type="button">
-                  <span>Queen</span>
-                  <strong>Queen danger</strong>
-                  <small>Practice the Queen of Spades habit: avoid winning when a queen is loaded.</small>
-                </button>
-                <button class="contract-card compact" onclick={() => startHeartsBreakHeartsDrill()} type="button">
-                  <span>Play restriction</span>
-                  <strong>Break hearts</strong>
-                  <small>Decide whether a heart lead is legal before hearts have been broken.</small>
-                </button>
-                <button class="contract-card compact" onclick={() => startHeartsStopMoonDrill()} type="button">
-                  <span>Moon defense</span>
-                  <strong>Stop the moon</strong>
-                  <small>Take a loaded trick when that is the only way to stop a moon threat.</small>
-                </button>
-                <button class="contract-card compact" onclick={() => startHeartsScoreHandDrill()} type="button">
-                  <span>Scorecard</span>
-                  <strong>Score a hand</strong>
-                  <small>Identify why QS makes a Hearts trick much more expensive.</small>
-                </button>
+                {#each heartsPracticeEntries as entry}
+                  <button class="contract-card compact" onclick={heartsPracticeActions[entry.action]} type="button">
+                    <span>{entry.label}</span>
+                    <strong>{entry.title}</strong>
+                    <small>{entry.summary}</small>
+                  </button>
+                {/each}
               </div>
             </section>
           </div>
