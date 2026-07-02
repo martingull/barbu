@@ -479,6 +479,14 @@ function chooseOpponentCard(state: FullHandState) {
       }
     }
 
+    if (currentWinner === 2 && !currentTrickIsLoaded) {
+      const pressureCard = lowestWinningNonPenaltyCard(state, legal);
+
+      if (pressureCard) {
+        return pressureCard;
+      }
+    }
+
     return highestNonWinningCard(state, legal) ?? lowestCard(legal.filter((card) => !isPenaltyCard("Hearts", card))) ?? lowestCard(legal);
   }
 
@@ -539,6 +547,10 @@ function highestNonWinningCard(state: FullHandState, cards: Card[]) {
 
 function lowestWinningCard(state: FullHandState, cards: Card[]) {
   return lowestCard(cards.filter((card) => cardWouldWinTrick(state, card)));
+}
+
+function lowestWinningNonPenaltyCard(state: FullHandState, cards: Card[]) {
+  return lowestCard(cards.filter((card) => cardWouldWinTrick(state, card) && !isPenaltyCard("Hearts", card)));
 }
 
 function highestNonWinningQueen(state: FullHandState, cards: Card[]) {

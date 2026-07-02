@@ -889,6 +889,12 @@ fn choose_hearts_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
         }
     }
 
+    if current_winner == Some(2) && !current_trick_is_loaded {
+        if let Some(card) = lowest_winning_non_penalty_card(state, &legal) {
+            return Some(card);
+        }
+    }
+
     if let Some(card) = highest_non_winning_card(state, &legal) {
         return Some(card);
     }
@@ -959,6 +965,12 @@ fn hearts_trick_penalty(cards: &[PlayedCard]) -> i32 {
 
 fn lowest_winning_card(state: &TrickTakingHandState, cards: &[Card]) -> Option<Card> {
     lowest_card_matching(cards, |card| card_would_win_trick(state, card))
+}
+
+fn lowest_winning_non_penalty_card(state: &TrickTakingHandState, cards: &[Card]) -> Option<Card> {
+    lowest_card_matching(cards, |card| {
+        card_would_win_trick(state, card) && !is_hearts_penalty_card(card)
+    })
 }
 
 fn choose_hearts_pass_cards(hand: &[Card]) -> Vec<Card> {
@@ -1831,6 +1843,57 @@ mod tests {
         assert_eq!(
             choose_hearts_opponent_card(&state),
             Some(Card::new(Rank::King, Suit::Clubs))
+        );
+    }
+
+    #[test]
+    fn hearts_opponent_takes_clean_trick_from_player_with_lowest_safe_winner() {
+        let state = HeartsHandState {
+            id: "hearts-pressure-player-clean-trick".to_string(),
+            hands: [
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Nine, Suit::Clubs),
+                    Card::new(Rank::Ace, Suit::Clubs),
+                    Card::new(Rank::Queen, Suit::Spades),
+                ],
+                Vec::new(),
+                Vec::new(),
+            ],
+            current_player: 1,
+            current_trick: vec![PlayedCard::new(2, Card::new(Rank::Seven, Suit::Clubs))],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_hearts_opponent_card(&state),
+            Some(Card::new(Rank::Nine, Suit::Clubs))
+        );
+    }
+
+    #[test]
+    fn hearts_opponent_does_not_take_loaded_trick_from_player_without_moon_pressure() {
+        let state = HeartsHandState {
+            id: "hearts-avoid-player-loaded-trick".to_string(),
+            hands: [
+                Vec::new(),
+                vec![Card::new(Rank::Two, Suit::Clubs), Card::new(Rank::Nine, Suit::Clubs)],
+                Vec::new(),
+                Vec::new(),
+            ],
+            current_player: 1,
+            current_trick: vec![
+                PlayedCard::new(2, Card::new(Rank::Seven, Suit::Clubs)),
+                PlayedCard::new(3, Card::new(Rank::Two, Suit::Hearts)),
+            ],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_hearts_opponent_card(&state),
+            Some(Card::new(Rank::Two, Suit::Clubs))
         );
     }
 
