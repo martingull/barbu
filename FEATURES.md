@@ -205,8 +205,9 @@ These are the next product increments that keep the app coherent.
    - Hearts match v1 tracks cumulative table scores until someone reaches 50, then shows the winner, your place, and your best/worst hand.
    - Hearts Passing Drill v1 teaches the first pass-three-left heuristic.
    - Hearts Learn now gives a Barbu-like path through object, queen danger, avoiding hearts, passing, score reading, and reference.
-   - Hearts Practice covers pass-three, avoid-hearts, queen-danger, break-hearts, stop-the-moon, and score-a-hand entry points. The last three currently use live-hand practice until dedicated generated drills exist.
-   - Next: add Hearts-specific generated micro-drills for breaking hearts, moon defense, and scorecard review.
+   - Hearts Practice covers pass-three, avoid-hearts, queen-danger, break-hearts, stop-the-moon, and score-a-hand entry points.
+   - Hearts micro-drills now teach early heart lead restrictions, moon defense, and Queen of Spades score reading.
+   - Next: move the Hearts micro-drills into Rust-backed generated scenario families so they can vary like Barbu practice.
 
 2. Drill Loop v2
    - Quick Drill now generates a continuing practice loop instead of a fixed seven-exercise roster.

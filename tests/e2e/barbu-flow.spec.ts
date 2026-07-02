@@ -381,6 +381,36 @@ test("Hearts passing drill teaches the danger-card pass", async ({ page }, testI
   await page.screenshot({ path: testInfo.outputPath("hearts-pass-practice.png"), fullPage: true });
 });
 
+test("Hearts micro drills teach broken hearts moon defense and score reading", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Hearts" }).click();
+  await page.getByRole("tab", { name: "Practice" }).click();
+
+  await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Break hearts" }).click();
+  await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
+  await expect(page.getByLabel("Drill decision")).toContainText("Can you lead a heart?");
+  await page.getByRole("button", { name: "2 H" }).click();
+  await page.getByRole("button", { name: "Check answer" }).click();
+  await expect(page.getByLabel("Drill decision")).toContainText("Illegal");
+  await expect(page.getByLabel("Drill decision")).toContainText("not legal yet");
+  await page.getByRole("button", { name: "Table" }).first().click();
+
+  await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Stop the moon" }).click();
+  await expect(page.getByLabel("Drill decision")).toContainText("Break the moon threat");
+  await page.getByRole("button", { name: "A C" }).click();
+  await page.getByRole("button", { name: "Check answer" }).click();
+  await expect(page.getByLabel("Drill decision")).toContainText("Good");
+  await expect(page.getByLabel("Drill decision")).toContainText("moon defense");
+  await page.getByRole("button", { name: "Table" }).first().click();
+
+  await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Score a hand" }).click();
+  await expect(page.getByLabel("Drill decision")).toContainText("Find the 13-point card");
+  await page.getByRole("button", { name: "Q S" }).click();
+  await page.getByRole("button", { name: "Check answer" }).click();
+  await expect(page.getByLabel("Drill decision")).toContainText("Good");
+  await expect(page.getByLabel("Drill decision")).toContainText("13-point danger card");
+});
+
 test("Hearts practice result returns to the Hearts table", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Open Hearts" }).click();

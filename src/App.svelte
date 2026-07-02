@@ -870,6 +870,122 @@
     trick: lesson.tricks[0]
   }));
   const fixedDrillLessons = guidedLessons.filter((lesson) => lesson.contract !== "Domino");
+  const heartsBreakHeartsDrillStep: DrillStep = {
+    scenarioId: "hearts-break-hearts-lead",
+    contract: "Hearts",
+    title: "Break hearts",
+    trick: {
+      title: "Can you lead a heart?",
+      beforeResult: "You are on lead. Hearts have not been broken, and you still have non-hearts.",
+      afterResult: "A non-heart lead keeps the hand legal until a heart has been played.",
+      emptyExplanation: "Choose a legal opening lead. In MVP Hearts, hearts cannot be led before they are broken unless you only have hearts.",
+      legalCardIds: ["9C", "QD", "AS"],
+      hand: [
+        { id: "2H", rank: "2", suit: "H", label: "2H" },
+        { id: "9C", rank: "9", suit: "C", label: "9C" },
+        { id: "QD", rank: "Q", suit: "D", label: "QD" },
+        { id: "AS", rank: "A", suit: "S", label: "AS" }
+      ],
+      tableBeforeChoice: [],
+      tableAfterChoice: [],
+      pendingBySeat: { Tutor: "waiting", Left: "waiting", Right: "waiting" },
+      playedExplanations: {
+        "2H": "2H is not legal yet. Hearts have not been broken and you still have another suit.",
+        "9C": "9C is legal. You led a non-heart while hearts are still unbroken.",
+        QD: "QD is legal. Diamonds can be led before hearts are broken.",
+        AS: "AS is legal. Spades can be led before hearts are broken."
+      },
+      cardOutcomes: {
+        "9C": "good",
+        QD: "good",
+        AS: "good"
+      },
+      cardReasons: {
+        "9C": "followed_suit",
+        QD: "followed_suit",
+        AS: "followed_suit"
+      }
+    }
+  };
+  const heartsStopMoonDrillStep: DrillStep = {
+    scenarioId: "hearts-stop-moon-loaded-trick",
+    contract: "Hearts",
+    title: "Stop the moon",
+    trick: {
+      title: "Break the moon threat",
+      beforeResult: "Barbu has every point so far and is winning this loaded club trick.",
+      afterResult: "Sometimes the right Hearts play is to take points so one player cannot shoot the moon.",
+      emptyExplanation: "Clubs were led. Choose whether to let Barbu keep collecting every point or take the loaded trick away.",
+      legalCardIds: ["AC", "2C"],
+      hand: [
+        { id: "AC", rank: "A", suit: "C", label: "AC" },
+        { id: "2C", rank: "2", suit: "C", label: "2C" },
+        { id: "5D", rank: "5", suit: "D", label: "5D" }
+      ],
+      tableBeforeChoice: [
+        { seat: "Tutor", card: { id: "KC", rank: "K", suit: "C", label: "KC" } },
+        { seat: "Right", card: { id: "4H", rank: "4", suit: "H", label: "4H" } }
+      ],
+      tableAfterChoice: [{ seat: "Left", card: { id: "8C", rank: "8", suit: "C", label: "8C" } }],
+      pendingBySeat: { Left: "follow clubs" },
+      playedExplanations: {
+        AC: "AC is good moon defense because it takes the heart point away from Barbu.",
+        "2C": "2C follows suit, but it lets Barbu keep every point so far. That can feed a moon attempt.",
+        "5D": "5D is off suit while you still have clubs."
+      },
+      cardOutcomes: {
+        AC: "good",
+        "2C": "risky"
+      },
+      cardReasons: {
+        AC: "captured_penalty",
+        "2C": "avoided_penalty"
+      }
+    }
+  };
+  const heartsScoreHandDrillStep: DrillStep = {
+    scenarioId: "hearts-score-hand-danger-card",
+    contract: "Hearts",
+    title: "Score a hand",
+    trick: {
+      title: "Find the 13-point card",
+      beforeResult: "This trick contains several cards, but one card explains most of the score.",
+      afterResult: "The queen of spades is worth 13 penalty points in the Hearts MVP.",
+      emptyExplanation: "Choose the card that makes this trick much more expensive than an ordinary heart trick.",
+      legalCardIds: ["QS", "7H", "9D", "KC"],
+      hand: [
+        { id: "QS", rank: "Q", suit: "S", label: "QS" },
+        { id: "7H", rank: "7", suit: "H", label: "7H" },
+        { id: "9D", rank: "9", suit: "D", label: "9D" },
+        { id: "KC", rank: "K", suit: "C", label: "KC" }
+      ],
+      tableBeforeChoice: [
+        { seat: "Tutor", card: { id: "AH", rank: "A", suit: "H", label: "AH" } },
+        { seat: "Right", card: { id: "3H", rank: "3", suit: "H", label: "3H" } },
+        { seat: "Left", card: { id: "10S", rank: "10", suit: "S", label: "10S" } }
+      ],
+      tableAfterChoice: [],
+      pendingBySeat: { You: "identify danger" },
+      playedExplanations: {
+        QS: "QS is the 13-point danger card. Hearts add one point each, but QS changes the whole trick.",
+        "7H": "7H is a penalty card, but it is worth one point, not thirteen.",
+        "9D": "9D is not a penalty card in Hearts.",
+        KC: "KC is not a penalty card in Hearts."
+      },
+      cardOutcomes: {
+        QS: "good",
+        "7H": "risky",
+        "9D": "penalty",
+        KC: "penalty"
+      },
+      cardReasons: {
+        QS: "avoided_penalty",
+        "7H": "captured_penalty",
+        "9D": "won_clean_trick",
+        KC: "won_clean_trick"
+      }
+    }
+  };
 
   let appView: AppView = "catalog";
   let trickIndex = 0;
@@ -4382,6 +4498,30 @@
     drillSetTitle = "Hearts practice: queen danger";
   }
 
+  function startHeartsMicroDrill(step: DrillStep, title: string) {
+    activeGameTable = "hearts";
+    activePathStepId = "";
+    activeDrillFocusContract = "Hearts";
+    drillIndex = 0;
+    drillResults = [];
+    drillSetTitle = title;
+    activeDrillSteps = [step];
+    resetDrillDecision();
+    appView = "drill";
+  }
+
+  function startHeartsBreakHeartsDrill() {
+    startHeartsMicroDrill(heartsBreakHeartsDrillStep, "Hearts practice: break hearts");
+  }
+
+  function startHeartsStopMoonDrill() {
+    startHeartsMicroDrill(heartsStopMoonDrillStep, "Hearts practice: stop the moon");
+  }
+
+  function startHeartsScoreHandDrill() {
+    startHeartsMicroDrill(heartsScoreHandDrillStep, "Hearts practice: score a hand");
+  }
+
   async function startHeartsPassPractice() {
     activeGameTable = "hearts";
     const seed = usePracticeSeed();
@@ -4637,7 +4777,7 @@
 
   function buildDrillFeedback(card: Card) {
     if (!drillLegalCardIds.has(card.id)) {
-      return `${card.label} is off suit while you still have a legal card.`;
+      return firstSentence(currentDrillTrick.playedExplanations[card.id] ?? `${card.label} is not legal while you still have a legal card.`);
     }
 
     return firstSentence(currentDrillTrick.playedExplanations[card.id] ?? "That legal play completes the trick.");
@@ -5432,20 +5572,20 @@
                   <strong>Queen danger</strong>
                   <small>Practice the Queen of Spades habit: avoid winning when a queen is loaded.</small>
                 </button>
-                <button class="contract-card compact" onclick={startHeartsHand} type="button">
+                <button class="contract-card compact" onclick={startHeartsBreakHeartsDrill} type="button">
                   <span>Play restriction</span>
                   <strong>Break hearts</strong>
-                  <small>Enter a live hand and watch when hearts become legal to lead.</small>
+                  <small>Decide whether a heart lead is legal before hearts have been broken.</small>
                 </button>
-                <button class="contract-card compact" onclick={startHeartsHand} type="button">
+                <button class="contract-card compact" onclick={startHeartsStopMoonDrill} type="button">
                   <span>Moon defense</span>
                   <strong>Stop the moon</strong>
-                  <small>Play a live hand and notice when one seat is collecting every point.</small>
+                  <small>Take a loaded trick when that is the only way to stop a moon threat.</small>
                 </button>
-                <button class="contract-card compact" onclick={startHeartsHand} type="button">
+                <button class="contract-card compact" onclick={startHeartsScoreHandDrill} type="button">
                   <span>Scorecard</span>
                   <strong>Score a hand</strong>
-                  <small>Finish a hand and read how hearts, QS, and moon scoring change the table.</small>
+                  <small>Identify why QS makes a Hearts trick much more expensive.</small>
                 </button>
               </div>
             </section>
@@ -5635,7 +5775,7 @@
       tableCards={[]}
       panelAriaLabel="Count trumps decision"
       showTable={false}
-      onBack={openBarbuTable}
+      onBack={openActiveGameTable}
     >
       {#snippet panel()}
         <div class="trump-count-stage">
@@ -7007,7 +7147,7 @@
       showTable={!currentDrillIsDomino}
       tableCards={currentDrillIsDomino ? [] : drillCompletedTable}
       panelAriaLabel="Drill decision"
-      onBack={openBarbuTable}
+      onBack={openActiveGameTable}
     >
       {#snippet summary()}
         {#if currentDrillIsDomino}
