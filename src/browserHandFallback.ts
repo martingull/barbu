@@ -57,7 +57,7 @@ export function generateBrowserHeartsPassPractice(seed: number): HeartsPassScena
       id: `browser-hearts-pass-long-clubs-${seed}`,
       title: "Build a long suit",
       prompt:
-        "Choose three cards to pass left while keeping the long club run together for later control.",
+        "Choose three cards to pass while keeping the long club run together for later control.",
       playerHand,
       recommendedPass: [card("Q", "S"), card("A", "H"), card("K", "H")],
       explanation:
@@ -87,7 +87,7 @@ export function generateBrowserHeartsPassPractice(seed: number): HeartsPassScena
     id: `browser-hearts-pass-${seed}`,
     title: "Pass the danger cards",
     prompt:
-      "Choose three cards to pass left. Start with Queen of Spades, high hearts, then dangerous high spades.",
+      "Choose three cards to pass. Start with Queen of Spades, high hearts, then dangerous high spades.",
     playerHand,
     recommendedPass: recommendBrowserHeartsPassCards(playerHand),
     explanation:
@@ -123,12 +123,16 @@ export function startBrowserHeartsPassingHand(seed: number): FullHandState {
     cardsRemaining: 52,
     trickNumber: 1,
     status: "in_progress",
-    prompt: "Choose three cards to pass left."
+    prompt: "Choose three cards to pass."
   });
 }
 
-export function applyBrowserHeartsPass(state: FullHandState, cardIds: string[]): FullHandState {
+export function applyBrowserHeartsPass(state: FullHandState, cardIds: string[], direction = 1): FullHandState {
   if (state.status === "complete" || state.currentTrick.length || state.completedTricks.length) {
+    return state;
+  }
+
+  if (direction < 1 || direction > 3) {
     return state;
   }
 
@@ -158,7 +162,7 @@ export function applyBrowserHeartsPass(state: FullHandState, cardIds: string[]):
   });
 
   passedCards.forEach((cards, player) => {
-    const recipient = (player + 1) % 4;
+    const recipient = (player + direction) % 4;
     nextState.hands[recipient].push(...cards);
   });
 
@@ -854,7 +858,7 @@ function promptForState(state: FullHandState, playerPenalty: number) {
   }
 
   if (state.id.includes("hearts-passing-hand")) {
-    return "Choose three cards to pass left.";
+    return "Choose three cards to pass.";
   }
 
   if (state.contract === "Hearts" && !state.completedTricks.length && !state.currentTrick.length) {

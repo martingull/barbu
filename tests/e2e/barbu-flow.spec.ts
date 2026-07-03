@@ -572,7 +572,7 @@ test("Black Lady reference explains the current rule boundary", async ({ page },
   await expect(page.getByLabel("Contract reference")).toContainText("Black Lady rules");
   await expect(page.getByLabel("Contract reference")).toContainText("queen of spades is 13");
   await expect(page.getByLabel("Contract reference")).toContainText("shooting the moon");
-  await expect(page.getByLabel("Contract roadmap")).toContainText("Pass three left");
+  await expect(page.getByLabel("Contract roadmap")).toContainText("Rotating pass");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Hearts v1");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Hearts v2");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Playable");
@@ -584,7 +584,7 @@ test("Black Lady reference explains the current rule boundary", async ({ page },
   await expect(page.getByRole("tab", { name: "Learn" })).toHaveAttribute("aria-selected", "true");
 });
 
-test("Black Lady play starts with a pass-left phase before the hand", async ({ page }, testInfo) => {
+test("Black Lady play starts with a rotating pass phase before the hand", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Open Black Lady" }).click();
 
@@ -635,7 +635,7 @@ test("Black Lady play can resume a saved local hand", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Black Lady table", exact: true })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("button", { name: "Continue Black Lady" })).toBeVisible();
-  await expect(page.getByText("Passing hand 1, 1 of 3 selected")).toBeVisible();
+  await expect(page.getByText("Hand 1, pass left, 1 of 3 selected")).toBeVisible();
 
   await page.getByRole("button", { name: "Continue Black Lady" }).click();
   await expect(page.getByRole("heading", { name: "Pass cards" })).toBeVisible();
@@ -654,7 +654,7 @@ test("Black Lady next hand carries score and starts with passing again", async (
 
   await expect(page.getByRole("button", { name: "Next hand" })).toBeVisible();
   await expect(page.getByLabel("Black Lady final scorecard")).toContainText("Low score leads");
-  await expect(page.getByLabel("Black Lady final scorecard")).toContainText("Target 50");
+  await expect(page.getByLabel("Black Lady final scorecard")).toContainText("Target 100");
   await expect(page.getByLabel("Black Lady final scorecard")).toContainText("Hand 1");
   await expect(page.getByLabel("This hand breakdown")).toContainText("Tricks");
   await expect(page.getByLabel("This hand breakdown")).toContainText("Points");
@@ -664,6 +664,7 @@ test("Black Lady next hand carries score and starts with passing again", async (
   await page.getByRole("button", { name: "Next hand" }).click();
 
   await expect(page.getByRole("heading", { name: "Pass cards" })).toBeVisible();
+  await expect(page.getByLabel("Black Lady pass summary")).toContainText("Right");
   await passThreeHeartsCards(page);
   await expect(page.getByRole("heading", { name: "Black Lady hand" })).toBeVisible();
   await expect(page.getByLabel("Black Lady table score")).toContainText(/[1-9]\d*/);

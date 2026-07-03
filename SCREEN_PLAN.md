@@ -36,7 +36,7 @@ When a feature is added, it should have one primary home. Cross-links are allowe
 
 Barbu is the first playable game, not the product boundary. The app should grow from shared game families rather than isolated one-off games. The product priority is still to make Barbu feel good first: clear learning, reliable full-hand play, useful practice, and a coherent local game loop.
 
-The product should include Black Lady as the second active starter game. Black Lady should reuse the shared Hearts-family trick-taking table and engine instead of becoming a separate implementation. Black Lady should be a focused local multi-hand game: pass-three-left, the Wikipedia-style holder-of-2C opening, first-trick penalty restrictions, no heart leads until hearts are broken, hearts plus the queen of spades as penalties, shoot-the-moon scoring, and a 50-point match target for mobile testing. Rotating pass directions and fuller match options can wait.
+The product should include Black Lady as the second active starter game. Black Lady should reuse the shared Hearts-family trick-taking table and engine instead of becoming a separate implementation. Black Lady should be a focused local multi-hand game: rotating pass directions, the Wikipedia-style holder-of-2C opening, first-trick penalty restrictions, no heart leads until hearts are broken, hearts plus the queen of spades as penalties, shoot-the-moon scoring, and a 100-point match target. Locked danger spades and bonus-jack rules can wait as named variants.
 
 The Hearts family is the first expansion area because many games share:
 
@@ -72,7 +72,7 @@ Purpose: choose the game family or core game.
 Current role:
 
 - Shows free starter tables first: Hearts, Barbu, and Whist.
-- Black Lady opens to a starter table with the shared Learn, Practice, Play, and Perfect structure. Play is active with pass-three-left and a focused local hand.
+- Black Lady opens to a starter table with the shared Learn, Practice, Play, and Perfect structure. Play is active with rotating passes and a focused local hand.
 - Shows Card Counting after the free starters as the first ready paid skill pack.
 - Shows future paid games such as Solitaire, Bridge, Gin Rummy, and Canasta.
 - Keeps varieties under their parent game instead of showing them as separate first-screen tables.
@@ -100,15 +100,15 @@ Current role:
 
 - Uses the same Learn, Practice, Play, and Perfect grouping as Barbu.
 - Practice starts with shared hearts and queen-danger patterns.
-- Play starts with pass-three-left, then a focused local Hearts match on the shared table surface.
+- Play starts with rotating passes, then a focused local Hearts-family match on the shared table surface.
 
 Current rule boundary:
 
 - Score hearts and the queen of spades as penalties.
 - If one seat captures all 26 points in a hand, score shooting the moon as 0 for that seat and 26 for every other seat.
-- Pass three cards left before the first trick.
+- Rotate pass directions left, right, across, and hold before the first trick.
 - Start the first trick with the holder of 2C leading 2C, block first-trick penalty dumps when safe cards exist, and block heart leads until hearts are broken.
-- Continue hands until one seat reaches 50 points; low score wins the match.
+- Continue hands until one seat reaches 100 points; low score wins the match.
 - Keep follow-suit legality and trick resolution shared with Barbu.
 - Document missing Hearts v2 rules rather than pretending they are implemented.
 

@@ -287,9 +287,12 @@
     savedAt: string;
   };
 
+  type HeartsPassDirection = "left" | "right" | "across" | "hold";
+
   type SavedHeartsRun = {
     version: 1;
     view: "heartsPass" | "fullHand";
+    passDirection: HeartsPassDirection;
     scores: Record<Seat, number>;
     results: HeartsHandResult[];
     heartsPassingHand: FullHandState | null;
@@ -320,7 +323,7 @@
   const countingSuits: Suit[] = ["C", "D", "H", "S"];
   const dominoOrderScores = [45, 20, 5, -5];
   const heartsHandPenaltyTotal = 26;
-  const heartsMatchTarget = 50;
+  const heartsMatchTarget = 100;
   const seatByPlayerIndex: Record<number, Seat> = {
     0: "Tutor",
     1: "Right",
@@ -339,7 +342,7 @@
       role: "Starter Black Lady hand",
       surface: "Trick-taking hand",
       target: "Avoid penalty tricks.",
-      reason: "Black Lady starts with a Hearts-family shape: pass left, open with 2C, and keep hearts back until they are broken.",
+      reason: "Black Lady rotates the pass, opens with 2C, and keeps hearts back until they are broken.",
       habit: "Track hearts and the queen of spades before deciding whether to win."
     },
     "No Hearts": {
@@ -1352,6 +1355,7 @@
   let dominoHand: DominoHandState | null = null;
   let fullHandSelectedCardId = "";
   let heartsPassSelectedCardIds: string[] = [];
+  let heartsPassDirection: HeartsPassDirection = "left";
   let heartsPassPracticeSelectedCardIds: string[] = [];
   let heartsPassPracticeChecked = false;
   let heartsPassPracticeError = "";
@@ -2115,6 +2119,7 @@
     return {
       version: 1,
       view,
+      passDirection: normalizeHeartsPassDirection(candidate.passDirection),
       scores: normalizeSeatScoreMap(candidate.scores),
       results: Array.isArray(candidate.results) ? candidate.results.filter(isHeartsHandResult) : [],
       heartsPassingHand,
@@ -2155,6 +2160,43 @@
     return Number.isInteger(candidate.handNumber) && typeof candidate.seatPenalties === "object";
   }
 
+  function normalizeHeartsPassDirection(direction: unknown): HeartsPassDirection {
+    return direction === "right" || direction === "across" || direction === "hold" ? direction : "left";
+  }
+
+  function heartsPassDirectionForHand(handNumber: number): HeartsPassDirection {
+    const rotation = ["left", "right", "across", "hold"] satisfies HeartsPassDirection[];
+    return rotation[(Math.max(1, handNumber) - 1) % rotation.length] ?? "left";
+  }
+
+  function heartsPassTauriDirection(direction: HeartsPassDirection) {
+    return direction === "right" ? 3 : direction === "across" ? 2 : 1;
+  }
+
+  function heartsPassDirectionLabel(direction: HeartsPassDirection) {
+    return direction === "hold" ? "No pass" : `Pass ${direction}`;
+  }
+
+  function heartsPassTargetLabel(direction: HeartsPassDirection) {
+    if (direction === "right") {
+      return "Right";
+    }
+    if (direction === "across") {
+      return "Barbu";
+    }
+    return "Left";
+  }
+
+  function heartsPassReceiveLabel(direction: HeartsPassDirection) {
+    if (direction === "right") {
+      return "Left";
+    }
+    if (direction === "across") {
+      return "Barbu";
+    }
+    return "Right";
+  }
+
   function persistSavedHeartsRun(view: SavedHeartsRun["view"] = savedHeartsView()) {
     const isHeartsFullHand = activeGameTable === "hearts" && fullHand?.contract === "Hearts" && !fullHandRunActive;
     const currentHandScores = isHeartsFullHand
@@ -2180,6 +2222,7 @@
     const nextSavedRun: SavedHeartsRun = {
       version: 1,
       view,
+      passDirection: heartsPassDirection,
       scores: heartsSessionScores,
       results: heartsHandResults,
       heartsPassingHand,
@@ -2217,7 +2260,9 @@
         : `Hand ${savedRun.results.length + 1}, trick ${savedRun.fullHand.trickNumber}`;
     }
 
-    return `Passing hand ${savedRun.results.length + 1}, ${savedRun.heartsPassSelectedCardIds.length} of 3 selected`;
+    return `Hand ${savedRun.results.length + 1}, ${heartsPassDirectionLabel(savedRun.passDirection).toLowerCase()}, ${
+      savedRun.heartsPassSelectedCardIds.length
+    } of 3 selected`;
   }
 
   function continueSavedHeartsRun() {
@@ -2237,6 +2282,7 @@
     heartsPassingHand = savedRun.heartsPassingHand;
     fullHand = savedRun.fullHand;
     heartsPassSelectedCardIds = savedRun.heartsPassSelectedCardIds;
+    heartsPassDirection = savedRun.passDirection;
     fullHandReviewTrickCount = savedRun.fullHandReviewTrickCount;
     usingBrowserHeartsPass = savedRun.usingBrowserHeartsPass || !hasTauriRuntime();
     usingBrowserFullHand = savedRun.usingBrowserFullHand || !hasTauriRuntime();
@@ -3515,6 +3561,14 @@
     lastFullHandTapAt = 0;
 
     const seed = usePracticeSeed();
+    heartsPassDirection = heartsPassDirectionForHand(heartsHandResults.length + 1);
+
+    if (heartsPassDirection === "hold") {
+      heartsPassingHand = null;
+      usingBrowserHeartsPass = false;
+      await startHeartsNoPassHand(seed);
+      return;
+    }
 
     try {
       heartsPassingHand = await invoke<FullHandState>("start_hearts_passing_hand", {
@@ -3528,6 +3582,21 @@
 
     appView = "heartsPass";
     persistSavedHeartsRun("heartsPass");
+  }
+
+  async function startHeartsNoPassHand(seed: number) {
+    try {
+      fullHand = await invoke<FullHandState>("start_hearts_hand", {
+        seed
+      });
+      usingBrowserFullHand = false;
+    } catch {
+      fullHand = startBrowserHeartsHand(seed);
+      usingBrowserFullHand = true;
+    }
+
+    appView = "fullHand";
+    persistSavedHeartsRun("fullHand");
   }
 
   async function startDominoHand(options: { keepRun?: boolean } = {}) {
@@ -3601,10 +3670,11 @@
 
     try {
       fullHand = usingBrowserHeartsPass
-        ? applyBrowserHeartsPass(heartsPassingHand, heartsPassSelectedCardIds)
+        ? applyBrowserHeartsPass(heartsPassingHand, heartsPassSelectedCardIds, heartsPassTauriDirection(heartsPassDirection))
         : await invoke<FullHandState>("apply_hearts_pass", {
             state: heartsPassingHand,
-            cardIds: heartsPassSelectedCardIds
+            cardIds: heartsPassSelectedCardIds,
+            direction: heartsPassTauriDirection(heartsPassDirection)
           });
       usingBrowserFullHand = usingBrowserHeartsPass;
       heartsPassingHand = null;
@@ -3618,7 +3688,11 @@
       persistSavedHeartsRun("fullHand");
     } catch (error) {
       if (!usingBrowserHeartsPass) {
-        fullHand = applyBrowserHeartsPass(heartsPassingHand, heartsPassSelectedCardIds);
+        fullHand = applyBrowserHeartsPass(
+          heartsPassingHand,
+          heartsPassSelectedCardIds,
+          heartsPassTauriDirection(heartsPassDirection)
+        );
         usingBrowserFullHand = true;
         heartsPassingHand = null;
         heartsPassSelectedCardIds = [];
@@ -6219,7 +6293,7 @@
                   Play Black Lady
                 </button>
               </section>
-              <p class="supporting-copy">Play repeated pass-left hands to 50 penalty points. Low score wins; shooting the moon is active.</p>
+              <p class="supporting-copy">Play repeated rotating-pass hands to 100 penalty points. Low score wins; shooting the moon is active.</p>
             </div>
           </div>
       {:else}
@@ -7344,7 +7418,7 @@
         ariaLabel="Black Lady passing phase"
         title="Pass cards"
         eyebrow="Hearts"
-        statusLabel="Pass left"
+        statusLabel={heartsPassDirectionLabel(heartsPassDirection)}
         statusValue={`${heartsPassSelectedCardIds.length} of 3`}
         tableAriaLabel="Hearts passing table"
         tableCards={[]}
@@ -7358,11 +7432,11 @@
               <span class="summary-row-label">Passing</span>
               <div>
                 <span>You pass</span>
-                <strong>Left</strong>
+                <strong>{heartsPassTargetLabel(heartsPassDirection)}</strong>
               </div>
               <div>
                 <span>You receive</span>
-                <strong>Right</strong>
+                <strong>{heartsPassReceiveLabel(heartsPassDirection)}</strong>
               </div>
               <div>
                 <span>Cards</span>
@@ -7378,7 +7452,10 @@
             <h2>Pass three cards</h2>
           </div>
 
-          <p class="result">Choose exactly three cards to pass to Left. You will receive three cards from Right.</p>
+          <p class="result">
+            Choose exactly three cards to pass to {heartsPassTargetLabel(heartsPassDirection)}. You will receive three cards
+            from {heartsPassReceiveLabel(heartsPassDirection)}.
+          </p>
           {#if heartsPassSelectedCards.length}
             <p class="explanation">
               Passing: {heartsPassSelectedCards.map((card) => card.label).join(", ")}

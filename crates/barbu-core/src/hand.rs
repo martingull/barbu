@@ -410,6 +410,14 @@ pub fn apply_hearts_pass(
     apply_hearts_pass_with_direction(state, player_cards, 1)
 }
 
+pub fn apply_hearts_pass_direction(
+    state: HeartsHandState,
+    player_cards: Vec<Card>,
+    direction: usize,
+) -> Result<HeartsHandState, String> {
+    apply_hearts_pass_with_direction(state, player_cards, direction)
+}
+
 pub fn play_hearts_card(
     state: HeartsHandState,
     player_card: Card,
@@ -1653,6 +1661,49 @@ mod tests {
     }
 
     #[test]
+    fn hearts_pass_can_move_right_or_across() {
+        fn player_still_controls_card(
+            state: &HeartsHandState,
+            player: PlayerIndex,
+            card: Card,
+        ) -> bool {
+            state.hands[player].contains(&card)
+                || state
+                    .current_trick
+                    .iter()
+                    .any(|played| played.player == player && played.card == card)
+        }
+
+        let right_state = start_hearts_passing_hand(61);
+        let right_cards = right_state.hands[2]
+            .iter()
+            .copied()
+            .take(3)
+            .collect::<Vec<_>>();
+        let right_next = apply_hearts_pass_direction(right_state, right_cards.clone(), 3)
+            .expect("three cards should pass right");
+
+        for card in right_cards {
+            assert!(!right_next.hands[2].contains(&card));
+            assert!(player_still_controls_card(&right_next, 1, card));
+        }
+
+        let across_state = start_hearts_passing_hand(62);
+        let across_cards = across_state.hands[2]
+            .iter()
+            .copied()
+            .take(3)
+            .collect::<Vec<_>>();
+        let across_next = apply_hearts_pass_direction(across_state, across_cards.clone(), 2)
+            .expect("three cards should pass across");
+
+        for card in across_cards {
+            assert!(!across_next.hands[2].contains(&card));
+            assert!(player_still_controls_card(&across_next, 0, card));
+        }
+    }
+
+    #[test]
     fn hearts_pass_requires_three_distinct_player_cards() {
         let state = start_hearts_passing_hand(61);
         let one_card = state.hands[2][0];
@@ -1878,7 +1929,10 @@ mod tests {
             id: "hearts-avoid-player-loaded-trick".to_string(),
             hands: [
                 Vec::new(),
-                vec![Card::new(Rank::Two, Suit::Clubs), Card::new(Rank::Nine, Suit::Clubs)],
+                vec![
+                    Card::new(Rank::Two, Suit::Clubs),
+                    Card::new(Rank::Nine, Suit::Clubs),
+                ],
                 Vec::new(),
                 Vec::new(),
             ],

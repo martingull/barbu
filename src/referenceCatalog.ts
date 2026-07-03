@@ -250,7 +250,7 @@ export const referenceCatalog: GameReference[] = [
     family: "Hearts",
     baseline: "David Parlett structure, Wikipedia-style opening convention",
     overview:
-      "Black Lady is the Queen of Spades style known in some places as the woman of spades. The reference structure follows the Parlett-style object, play, and scoring format, while the current opening convention follows the common Wikipedia-described rule that 2C opens the first trick. The app currently plays repeated hands to 50 points with shooting the moon enabled.",
+      "Black Lady is the Queen of Spades style known in some places as the woman of spades. The reference structure follows the Parlett-style object, play, and scoring format, while the current opening convention follows the common Wikipedia-described rule that 2C opens the first trick. The app currently plays repeated hands to 100 points with rotating pass directions and shooting the moon enabled.",
     sections: [
       {
         id: "object",
@@ -276,9 +276,9 @@ export const referenceCatalog: GameReference[] = [
         id: "play",
         title: "Play",
         body:
-          "The current hand starts by passing three cards left. The holder of the two of clubs opens the first trick with 2C, following a common Wikipedia-described Hearts convention. Everyone else must follow the led suit when possible. First-trick penalty dumps are blocked when safe cards exist. Hearts cannot be led until a heart has already been played, unless a player has only hearts.",
+          "The current match rotates pass direction: left, right, across, then no pass. The holder of the two of clubs opens the first trick with 2C, following a common Wikipedia-described Hearts convention. Everyone else must follow the led suit when possible. First-trick penalty dumps are blocked when safe cards exist. Hearts cannot be led until a heart has already been played, unless a player has only hearts.",
         facts: [
-          { label: "Pass", value: "Three cards left" },
+          { label: "Pass", value: "Left, right, across, hold" },
           { label: "Opening lead", value: "Holder of 2C leads 2C" },
           { label: "Opening source", value: "Wikipedia-style Hearts convention" },
           { label: "Led suit", value: "Set by the first card in the trick" },
@@ -291,13 +291,13 @@ export const referenceCatalog: GameReference[] = [
         id: "scoring",
         title: "Scoring",
         body:
-          "Hearts scores each heart as one penalty point and the queen of spades as thirteen penalty points. The trick winner receives all penalty cards in that trick. If one seat captures all 26 points in a hand, that seat shoots the moon and scores 0 while every other seat scores 26. Hands repeat until one seat reaches 50 points; low score wins the match.",
+          "Hearts scores each heart as one penalty point and the queen of spades as thirteen penalty points. The trick winner receives all penalty cards in that trick. If one seat captures all 26 points in a hand, that seat shoots the moon and scores 0 while every other seat scores 26. Hands repeat until one seat reaches 100 points; low score wins the match.",
         facts: [
           { label: "Heart", value: "1 penalty point" },
           { label: "Queen of spades", value: "13 penalty points" },
           { label: "Points in play", value: "26 per hand" },
           { label: "Shoot the moon", value: "Shooter 0, others 26" },
-          { label: "Match target", value: "50 points" }
+          { label: "Match target", value: "100 points" }
         ]
       }
     ],
@@ -305,7 +305,7 @@ export const referenceCatalog: GameReference[] = [
       {
         id: "mvp-hand",
         title: "Black Lady Match",
-        objective: "Pass three cards, then avoid hearts and the queen of spades across repeated hands.",
+        objective: "Rotate the pass, then avoid hearts and the queen of spades across repeated hands.",
         scoring: "Hearts are 1 penalty point each; the queen of spades is 13; shooting the moon scores 0 for the shooter and 26 for the others.",
         lesson: "Start by reading who wins the trick, then manage the cumulative score over several hands."
       }
@@ -316,14 +316,14 @@ export const referenceCatalog: GameReference[] = [
         title: "Focused local match",
         coreStatus: "Hearts v1",
         appStatus: "Playable",
-        note: "The shared trick-taking table supports 2C opening, follow-suit legality, first-trick penalty restrictions, hearts-broken lead restrictions, trick winners, hearts, queen-of-spades scoring, shoot-the-moon scoring, and a 50-point local match."
+        note: "The shared trick-taking table supports rotating pass directions, 2C opening, follow-suit legality, first-trick penalty restrictions, hearts-broken lead restrictions, trick winners, hearts, queen-of-spades scoring, shoot-the-moon scoring, and a 100-point local match."
       },
       {
         id: "passing",
-        title: "Pass three left",
+        title: "Rotating pass",
         coreStatus: "Hearts v1",
         appStatus: "Playable",
-        note: "The current table passes three cards left before the first trick. Rotating pass directions can wait until the hand loop is stronger."
+        note: "The current table rotates left, right, across, and hold. Queen of spades is passable by default; locked danger spades can be a later house rule."
       },
       {
         id: "hearts-broken",
@@ -344,7 +344,7 @@ export const referenceCatalog: GameReference[] = [
         title: "Multi-hand match scoring",
         coreStatus: "Hearts v2",
         appStatus: "Playable",
-        note: "The local match repeats hands until one seat reaches 50 penalty points. Low score wins."
+        note: "The local match repeats hands until one seat reaches 100 penalty points. Low score wins."
       }
     ],
     variants: [
@@ -358,7 +358,7 @@ export const referenceCatalog: GameReference[] = [
         id: "current-rule-boundary",
         title: "Current Rule Boundary",
         note:
-          "The app currently teaches pass-left, the core trick loop, Hearts opening restrictions, penalty scoring, shooting the moon, and a 50-point local match before adding rotating pass directions or richer Hearts varieties."
+          "The app currently teaches rotating passes, the core trick loop, Hearts opening restrictions, penalty scoring, shooting the moon, and a 100-point local match before adding richer Hearts varieties such as locked danger spades or bonus-jack rules."
       }
     ]
   }

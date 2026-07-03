@@ -337,7 +337,7 @@ export const heartsPracticeEntries: HeartsPracticeEntry[] = [
     id: "pass-three",
     label: "Passing",
     title: "Pass three",
-    summary: "Choose the three danger cards to pass left before the hand begins.",
+    summary: "Choose the three danger cards before the hand begins.",
     action: "pass",
     group: "fixed-drills"
   }),
@@ -605,7 +605,7 @@ export const gameTableDefinitions = {
         eyebrow: "Play",
         title: "Play a Black Lady match.",
         summary:
-          "Black Lady plays repeated hands to 50 points with pass-three-left, 2C opening, QS at 13, and shoot-the-moon scoring."
+          "Black Lady plays repeated hands to 100 points with rotating passes, 2C opening, QS at 13, and shoot-the-moon scoring."
       },
       perfect: {
         eyebrow: "Perfect",
@@ -627,7 +627,7 @@ export const gameTableDefinitions = {
         label: entry.title,
         destination: `Black Lady practice: ${entry.title}`
       })),
-      play: [{ id: "play-hearts", label: "Play Black Lady", destination: "Black Lady pass-left hand" }]
+      play: [{ id: "play-hearts", label: "Play Black Lady", destination: "Black Lady rotating-pass match" }]
     }
   }),
   barbu: createGameTableDefinition({

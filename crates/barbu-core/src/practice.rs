@@ -365,7 +365,7 @@ pub fn generate_hearts_pass_practice(seed: u64) -> HeartsPassScenario {
             id: format!("hearts-pass-long-clubs-{seed}"),
             title: "Build a long suit".to_string(),
             prompt:
-                "Choose three cards to pass left while keeping the long club run together for later control."
+                "Choose three cards to pass while keeping the long club run together for later control."
                     .to_string(),
             player_hand,
             recommended_pass: vec![
@@ -409,7 +409,7 @@ pub fn generate_hearts_pass_practice(seed: u64) -> HeartsPassScenario {
         id: format!("hearts-pass-{seed}"),
         title: "Pass the danger cards".to_string(),
         prompt:
-            "Choose three cards to pass left. Start with Queen of Spades, high hearts, then dangerous high spades."
+            "Choose three cards to pass. Start with Queen of Spades, high hearts, then dangerous high spades."
                 .to_string(),
         player_hand,
         recommended_pass,
@@ -1698,8 +1698,12 @@ mod tests {
 
         assert_eq!(scenario.title, "Build a long suit");
         assert!(scenario.prompt.contains("long club run"));
-        assert!(scenario.player_hand.contains(&Card::new(Rank::Two, Suit::Clubs)));
-        assert!(scenario.player_hand.contains(&Card::new(Rank::Eight, Suit::Clubs)));
+        assert!(scenario
+            .player_hand
+            .contains(&Card::new(Rank::Two, Suit::Clubs)));
+        assert!(scenario
+            .player_hand
+            .contains(&Card::new(Rank::Eight, Suit::Clubs)));
         assert_eq!(
             scenario.recommended_pass,
             vec![

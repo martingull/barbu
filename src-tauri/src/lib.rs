@@ -57,13 +57,17 @@ fn start_hearts_passing_hand(seed: u64) -> FullHandDto {
 }
 
 #[tauri::command]
-fn apply_hearts_pass(state: FullHandDto, card_ids: Vec<String>) -> Result<FullHandDto, String> {
+fn apply_hearts_pass(
+    state: FullHandDto,
+    card_ids: Vec<String>,
+    direction: Option<usize>,
+) -> Result<FullHandDto, String> {
     let state = state.to_core()?;
     let cards = card_ids
         .iter()
         .map(|card_id| card_from_label(card_id))
         .collect::<Result<Vec<_>, _>>()?;
-    let next_state = barbu_core::apply_hearts_pass(state, cards)?;
+    let next_state = barbu_core::apply_hearts_pass_direction(state, cards, direction.unwrap_or(1))?;
 
     Ok(FullHandDto::from_core(&next_state, "Hearts", "point"))
 }
@@ -709,7 +713,7 @@ fn hand_prompt(state: &barbu_core::TrickTakingHandState, penalty_name: &str) -> 
     }
 
     if state.id.starts_with("hearts-passing-hand-") {
-        return "Choose three cards to pass left.".to_string();
+        return "Choose three cards to pass.".to_string();
     }
 
     if state.id.starts_with("hearts-hand-")
