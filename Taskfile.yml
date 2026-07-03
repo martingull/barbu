@@ -79,6 +79,15 @@ tasks:
     cmds:
       - npm run tauri -- ios build {{.CLI_ARGS}}
 
+  ios:install:device:
+    desc: Build, install, and launch a self-contained iOS app on the default physical iPhone; override with `IOS_DEVICE_ID=...`
+    vars:
+      IOS_DEVICE_ID: '{{default "00008140-001814310187001C" .IOS_DEVICE_ID}}'
+    cmds:
+      - npm run tauri -- ios build --debug --target aarch64
+      - xcrun devicectl device install app --device {{.IOS_DEVICE_ID}} src-tauri/gen/apple/build/arm64/Barbu.ipa
+      - xcrun devicectl device process launch --device {{.IOS_DEVICE_ID}} com.martin.barbu
+
   ios:devices:
     desc: List iOS simulators and connected devices known to Xcode
     cmds:
