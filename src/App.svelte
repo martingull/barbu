@@ -21,8 +21,10 @@
   } from "./browserHandFallback";
   import { passBrowserDominoTurn, playBrowserDominoCard, startBrowserDominoHand } from "./browserDominoFallback";
   import { generateBrowserPlayBarbuDrillSteps } from "./browserDrillFallback";
+  import CardChoiceHand from "./CardChoiceHand.svelte";
   import CardFace from "./CardFace.svelte";
   import CardTable from "./CardTable.svelte";
+  import ExerciseFeedback from "./ExerciseFeedback.svelte";
   import PracticePanel from "./PracticePanel.svelte";
   import TablePlaySurface from "./TablePlaySurface.svelte";
   import { fullHandContractCommands, fullHandContracts } from "./contractRegistry";
@@ -6052,23 +6054,20 @@
           <p class="result" aria-label="Realistic trump challenge">{realisticTrumpPromptBody}</p>
 
           {#if realisticTrumpRound.status === "playing"}
-            <div class="hand full-hand-cards realistic-trump-hand" aria-label="Your realistic trump hand">
-              {#each realisticTrumpRound.hands.You as card}
-                <button
-                  aria-label={`${card.rank} ${card.suit}`}
-                  aria-pressed={realisticTrumpSelectedCardId === card.id}
-                  class:heart={card.suit === "H"}
-                  class:illegal={!realisticTrumpLegalCards.some((legalCard) => legalCard.id === card.id)}
-                  class:legal={realisticTrumpLegalCards.some((legalCard) => legalCard.id === card.id)}
-                  class:selected={realisticTrumpSelectedCardId === card.id}
-                  class="card hand-card full-hand-card"
-                  onclick={() => selectRealisticTrumpCard(card)}
-                  type="button"
-                >
-                  <CardFace {card} decorative />
-                </button>
-              {/each}
-            </div>
+            <CardChoiceHand
+              cards={realisticTrumpRound.hands.You}
+              ariaLabel="Your realistic trump hand"
+              className="hand full-hand-cards realistic-trump-hand"
+              cardClassName="card hand-card full-hand-card"
+              getCardClasses={(card) => ({
+                heart: card.suit === "H",
+                illegal: !realisticTrumpLegalCards.some((legalCard) => legalCard.id === card.id),
+                legal: realisticTrumpLegalCards.some((legalCard) => legalCard.id === card.id),
+                selected: realisticTrumpSelectedCardId === card.id
+              })}
+              isPressed={(card) => realisticTrumpSelectedCardId === card.id}
+              onSelect={selectRealisticTrumpCard}
+            />
           {/if}
 
           {#if realisticTrumpRound.status === "question"}
@@ -6362,23 +6361,20 @@
         </p>
 
         {#if realisticCourtRound.status === "playing"}
-          <div class="hand full-hand-cards realistic-trump-hand" aria-label="Your court card memory hand">
-            {#each realisticCourtRound.hands.You as card}
-              <button
-                aria-label={`${card.rank} ${card.suit}`}
-                aria-pressed={realisticCourtSelectedCardId === card.id}
-                class:heart={card.suit === "H"}
-                class:illegal={!realisticCourtLegalCards.some((legalCard) => legalCard.id === card.id)}
-                class:legal={realisticCourtLegalCards.some((legalCard) => legalCard.id === card.id)}
-                class:selected={realisticCourtSelectedCardId === card.id}
-                class="card hand-card full-hand-card"
-                onclick={() => selectRealisticCourtCard(card)}
-                type="button"
-              >
-                <CardFace {card} decorative />
-              </button>
-            {/each}
-          </div>
+          <CardChoiceHand
+            cards={realisticCourtRound.hands.You}
+            ariaLabel="Your court card memory hand"
+            className="hand full-hand-cards realistic-trump-hand"
+            cardClassName="card hand-card full-hand-card"
+            getCardClasses={(card) => ({
+              heart: card.suit === "H",
+              illegal: !realisticCourtLegalCards.some((legalCard) => legalCard.id === card.id),
+              legal: realisticCourtLegalCards.some((legalCard) => legalCard.id === card.id),
+              selected: realisticCourtSelectedCardId === card.id
+            })}
+            isPressed={(card) => realisticCourtSelectedCardId === card.id}
+            onSelect={selectRealisticCourtCard}
+          />
         {/if}
 
         {#if realisticCourtRound.status === "question" && !courtCountChecked}
@@ -6522,23 +6518,20 @@
         </p>
 
         {#if realisticDangerRound.status === "playing"}
-          <div class="hand full-hand-cards realistic-trump-hand" aria-label="Your danger card memory hand">
-            {#each realisticDangerRound.hands.You as card}
-              <button
-                aria-label={`${card.rank} ${card.suit}`}
-                aria-pressed={realisticDangerSelectedCardId === card.id}
-                class:heart={card.suit === "H"}
-                class:illegal={!realisticDangerLegalCards.some((legalCard) => legalCard.id === card.id)}
-                class:legal={realisticDangerLegalCards.some((legalCard) => legalCard.id === card.id)}
-                class:selected={realisticDangerSelectedCardId === card.id}
-                class="card hand-card full-hand-card"
-                onclick={() => selectRealisticDangerCard(card)}
-                type="button"
-              >
-                <CardFace {card} decorative />
-              </button>
-            {/each}
-          </div>
+          <CardChoiceHand
+            cards={realisticDangerRound.hands.You}
+            ariaLabel="Your danger card memory hand"
+            className="hand full-hand-cards realistic-trump-hand"
+            cardClassName="card hand-card full-hand-card"
+            getCardClasses={(card) => ({
+              heart: card.suit === "H",
+              illegal: !realisticDangerLegalCards.some((legalCard) => legalCard.id === card.id),
+              legal: realisticDangerLegalCards.some((legalCard) => legalCard.id === card.id),
+              selected: realisticDangerSelectedCardId === card.id
+            })}
+            isPressed={(card) => realisticDangerSelectedCardId === card.id}
+            onSelect={selectRealisticDangerCard}
+          />
         {/if}
 
         {#if realisticDangerRound.status === "question" && !dangerCountChecked}
@@ -7097,23 +7090,20 @@
             </p>
           {/if}
 
-          <div class="hand full-hand-cards hearts-pass-cards" aria-label="Your Hearts pass practice hand">
-            {#each heartsPassPractice.playerHand as card}
-              <button
-                aria-label={`${card.rank} ${card.suit}`}
-                aria-pressed={heartsPassPracticeSelectedCardIds.includes(card.id)}
-                class:heart={card.suit === "H"}
-                class:legal={!heartsPassPracticeSelectedCardIds.includes(card.id)}
-                class:recommended={heartsPassPracticeChecked && heartsPassPracticeRecommendedIds.has(card.id)}
-                class:selected={heartsPassPracticeSelectedCardIds.includes(card.id)}
-                class="card hand-card full-hand-card"
-                onclick={() => toggleHeartsPassPracticeCard(card)}
-                type="button"
-              >
-                <CardFace {card} decorative />
-              </button>
-            {/each}
-          </div>
+          <CardChoiceHand
+            cards={heartsPassPractice.playerHand}
+            ariaLabel="Your Hearts pass practice hand"
+            className="hand full-hand-cards hearts-pass-cards"
+            cardClassName="card hand-card full-hand-card"
+            getCardClasses={(card) => ({
+              heart: card.suit === "H",
+              legal: !heartsPassPracticeSelectedCardIds.includes(card.id),
+              recommended: heartsPassPracticeChecked && heartsPassPracticeRecommendedIds.has(card.id),
+              selected: heartsPassPracticeSelectedCardIds.includes(card.id)
+            })}
+            isPressed={(card) => heartsPassPracticeSelectedCardIds.includes(card.id)}
+            onSelect={toggleHeartsPassPracticeCard}
+          />
 
           <div class="action-row">
             <button class="secondary-action" onclick={openHeartsTable} type="button">Table</button>
@@ -7196,22 +7186,19 @@
             <p class="outcome warning">{heartsPassError}</p>
           {/if}
 
-          <div class="hand full-hand-cards hearts-pass-cards" aria-label="Your Hearts passing hand">
-            {#each heartsPassingHand.playerHand as card}
-              <button
-                aria-label={`${card.rank} ${card.suit}`}
-                aria-pressed={heartsPassSelectedCardIds.includes(card.id)}
-                class:heart={card.suit === "H"}
-                class:legal={!heartsPassSelectedCardIds.includes(card.id)}
-                class:selected={heartsPassSelectedCardIds.includes(card.id)}
-                class="card hand-card full-hand-card"
-                onclick={() => toggleHeartsPassCard(card)}
-                type="button"
-              >
-                <CardFace {card} decorative />
-              </button>
-            {/each}
-          </div>
+          <CardChoiceHand
+            cards={heartsPassingHand.playerHand}
+            ariaLabel="Your Hearts passing hand"
+            className="hand full-hand-cards hearts-pass-cards"
+            cardClassName="card hand-card full-hand-card"
+            getCardClasses={(card) => ({
+              heart: card.suit === "H",
+              legal: !heartsPassSelectedCardIds.includes(card.id),
+              selected: heartsPassSelectedCardIds.includes(card.id)
+            })}
+            isPressed={(card) => heartsPassSelectedCardIds.includes(card.id)}
+            onSelect={toggleHeartsPassCard}
+          />
 
           <div class="action-row">
             <button class="secondary-action" onclick={openHeartsTable} type="button">Table</button>
@@ -7398,33 +7385,17 @@
                 : "Left's card is on the table. Tap the table or press Next trick when you are ready."}
             </p>
           {:else}
-            <div class="lesson-heading">
-              <p class="eyebrow">Your turn</p>
-              <h2>Choose your card</h2>
-            </div>
+            <ExerciseFeedback eyebrow="Your turn" title="Choose your card" result={fullHand.prompt} error={fullHandError} />
 
-            <p class="result">{fullHand.prompt}</p>
-            {#if fullHandError}
-              <p class="outcome warning">{fullHandError}</p>
-            {/if}
-
-            <div class="hand full-hand-cards" aria-label={`Your ${fullHand.contract} hand`}>
-              {#each fullHand.playerHand as card}
-                <button
-                  aria-label={`${card.rank} ${card.suit}`}
-                  aria-pressed={fullHandSelectedCardId === card.id}
-                  class:heart={fullHandCardClasses(card).heart}
-                  class:illegal={fullHandCardClasses(card).illegal}
-                  class:legal={fullHandCardClasses(card).legal}
-                  class:selected={fullHandCardClasses(card).selected}
-                  class="card hand-card full-hand-card"
-                  onclick={() => void selectFullHandCard(card)}
-                  type="button"
-                >
-                  <CardFace {card} decorative />
-                </button>
-              {/each}
-            </div>
+            <CardChoiceHand
+              cards={fullHand.playerHand}
+              ariaLabel={`Your ${fullHand.contract} hand`}
+              className="hand full-hand-cards"
+              cardClassName="card hand-card full-hand-card"
+              getCardClasses={fullHandCardClasses}
+              isPressed={(card) => fullHandSelectedCardId === card.id}
+              onSelect={(card) => void selectFullHandCard(card)}
+            />
           {/if}
 
           <div class="action-row">
@@ -7558,37 +7529,26 @@
               <p class="result" aria-label="Domino result summary">{dominoResultSummary}</p>
             {/if}
           {:else}
-            <div class="lesson-heading">
-              <p class="eyebrow">Your turn</p>
-              <h2>Place a card</h2>
-            </div>
+            <ExerciseFeedback
+              eyebrow="Your turn"
+              title="Place a card"
+              result={dominoHand.prompt}
+              error={dominoError}
+              explanation={dominoMoveReason}
+            />
 
-            <p class="result">{dominoHand.prompt}</p>
-            {#if dominoError}
-              <p class="outcome warning">{dominoError}</p>
-            {/if}
-            <p class="explanation">{dominoMoveReason}</p>
-
-            <div class="hand full-hand-cards domino-cards" aria-label="Your Domino hand">
-              {#each dominoHand.playerHand as card}
-                <button
-                  aria-label={`${card.rank} ${card.suit}`}
-                  aria-pressed={dominoSelectedCardId === card.id}
-                  class:heart={dominoCardClasses(card).heart}
-                  class:illegal={dominoCardClasses(card).illegal}
-                  class:legal={dominoCardClasses(card).legal}
-                  class:selected={dominoCardClasses(card).selected}
-                  class="card hand-card full-hand-card"
-                  onclick={() => void selectDominoCard(card)}
-                  onfocus={() => {
-                    dominoSelectedCardId = card.id;
-                  }}
-                  type="button"
-                >
-                  <CardFace {card} decorative />
-                </button>
-              {/each}
-            </div>
+            <CardChoiceHand
+              cards={dominoHand.playerHand}
+              ariaLabel="Your Domino hand"
+              className="hand full-hand-cards domino-cards"
+              cardClassName="card hand-card full-hand-card"
+              getCardClasses={dominoCardClasses}
+              isPressed={(card) => dominoSelectedCardId === card.id}
+              onSelect={(card) => void selectDominoCard(card)}
+              onFocus={(card) => {
+                dominoSelectedCardId = card.id;
+              }}
+            />
           {/if}
 
           <div class="action-row">
@@ -7661,40 +7621,23 @@
       {/snippet}
 
       {#snippet panel()}
-        <div class="lesson-heading">
-          <p class="eyebrow">{currentDrill.contract}</p>
-          <h2>{currentDrillTrick.title}</h2>
-        </div>
+        <ExerciseFeedback
+          eyebrow={currentDrill.contract}
+          title={currentDrillTrick.title}
+          result={currentDrillTrick.beforeResult}
+          explanation={drillFeedback}
+          outcome={drillOutcome}
+          warning={drillOutcome === "Illegal" || drillOutcome === "Risky" || drillOutcome === "Penalty"}
+        />
 
-        <p class="result">{currentDrillTrick.beforeResult}</p>
-        <p class="explanation">{drillFeedback}</p>
-        {#if drillOutcome}
-          <p
-            class:warning={drillOutcome === "Illegal" || drillOutcome === "Risky" || drillOutcome === "Penalty"}
-            class="outcome"
-          >
-            {drillOutcome}
-          </p>
-        {/if}
-
-        <div class="hand drill-hand" aria-label="Your drill hand">
-          {#each currentDrillTrick.hand as card}
-            <button
-              aria-label={`${card.rank} ${card.suit}`}
-              aria-pressed={drillSelectedCardId === card.id}
-              class:heart={drillCardClasses(card).heart}
-              class:illegal={drillCardClasses(card).illegal}
-              class:legal={drillCardClasses(card).legal}
-              class:played={drillCardClasses(card).played}
-              class:selected={drillCardClasses(card).selected}
-              class="card hand-card"
-              onclick={() => selectDrillCard(card)}
-              type="button"
-            >
-              <CardFace {card} decorative />
-            </button>
-          {/each}
-        </div>
+        <CardChoiceHand
+          cards={currentDrillTrick.hand}
+          ariaLabel="Your drill hand"
+          className="hand drill-hand"
+          getCardClasses={drillCardClasses}
+          isPressed={(card) => drillSelectedCardId === card.id}
+          onSelect={selectDrillCard}
+        />
 
         <div class="action-row">
           {#if drillCheckedCard}
@@ -7933,40 +7876,22 @@
       {/if}
 
       <section class="lesson-panel" aria-label="Current lesson">
-        <div class="lesson-heading">
-          <p class="eyebrow">{contractLabel}</p>
-          <h2>{currentTrick.title}</h2>
-        </div>
+        <ExerciseFeedback
+          eyebrow={contractLabel}
+          title={currentTrick.title}
+          result={resultText}
+          explanation={explanation}
+          outcome={lessonOutcome}
+          warning={lessonOutcome === "Illegal" || lessonOutcome === "Risky" || lessonOutcome === "Penalty"}
+        />
 
-        <p class="result">{resultText}</p>
-        <p class="explanation">{explanation}</p>
-        {#if lessonOutcome}
-          <p
-            class:warning={lessonOutcome === "Illegal" || lessonOutcome === "Risky" || lessonOutcome === "Penalty"}
-            class="outcome"
-          >
-            {lessonOutcome}
-          </p>
-        {/if}
-
-        <div class="hand" aria-label="Your hand">
-          {#each hand as card}
-            <button
-              aria-label={`${card.rank} ${card.suit}`}
-              aria-pressed={selectedCardId === card.id}
-              class:heart={card.suit === "H"}
-              class:illegal={cardClasses(card).illegal}
-              class:legal={cardClasses(card).legal}
-              class:played={cardClasses(card).played}
-              class:selected={cardClasses(card).selected}
-              class="card hand-card"
-              onclick={() => selectCard(card)}
-              type="button"
-            >
-              <CardFace {card} decorative />
-            </button>
-          {/each}
-        </div>
+        <CardChoiceHand
+          cards={hand}
+          ariaLabel="Your hand"
+          getCardClasses={cardClasses}
+          isPressed={(card) => selectedCardId === card.id}
+          onSelect={selectCard}
+        />
 
         <div class="action-row">
           {#if generatedPracticeError}
