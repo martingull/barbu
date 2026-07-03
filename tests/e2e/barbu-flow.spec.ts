@@ -284,10 +284,13 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await page.getByRole("button", { name: "Open Barbu" }).click();
 
   await expect(page.getByRole("heading", { name: "Barbu's table" })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Learn" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByLabel("Barbu table actions").getByRole("button", { name: "Play Barbu" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Practice" })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Play" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Learn" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Perfect" })).toBeVisible();
+
+  await openBarbuTab(page, "Learn");
   await expect(page.getByRole("button", { name: /Continue with Meet the contract/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /^1 Concept Meet the contract/ })).toBeVisible();
   await expect(page.getByLabel("Barbu course progress")).toContainText("0 / 9 complete");

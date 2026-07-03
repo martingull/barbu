@@ -2170,7 +2170,7 @@
   }
 
   function openBarbuLearnTable() {
-    activeBarbuTableTab = gameTableDefinitions.barbu.defaultTab;
+    activeBarbuTableTab = "learn";
     openBarbuTable();
   }
 
@@ -3213,7 +3213,8 @@
       return;
     }
 
-    openBarbuLearnTable();
+    activeBarbuTableTab = "play";
+    openBarbuTable();
   }
 
   function startBrowserFullHand(contract: FullHandContract, seed: number) {
