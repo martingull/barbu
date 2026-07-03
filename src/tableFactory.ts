@@ -421,7 +421,7 @@ export const barbuPracticeGroups: BarbuPracticeGroup[] = [
 export const heartsPracticeGroups: HeartsPracticeGroup[] = [
   createPracticeGroup({
     id: "practice-actions",
-    ariaLabel: "Hearts table actions",
+    ariaLabel: "Black Lady table actions",
     eyebrow: "Practice",
     title: "Practice actions",
     layout: "action-list",
@@ -429,9 +429,9 @@ export const heartsPracticeGroups: HeartsPracticeGroup[] = [
   }),
   createPracticeGroup({
     id: "fixed-drills",
-    ariaLabel: "Hearts practice drills",
+    ariaLabel: "Black Lady practice drills",
     eyebrow: "Practice set",
-    title: "Practice one Hearts pattern.",
+    title: "Practice one Black Lady pattern.",
     layout: "entry-grid",
     entries: heartsPracticeEntries.filter((entry) => entry.group === "fixed-drills")
   })
@@ -484,13 +484,13 @@ export function createCatalogEntries({ barbuLessonCount }: CatalogDefinitionInpu
     createCatalogEntry({
       id: "hearts",
       family: "Hearts",
-      title: "Hearts",
+      title: "Black Lady",
       status: "Ready",
       access: "Free",
       accessModel: "free-starter",
       summary: "Queen of Spades style penalty play.",
       lessonCount: heartsLearnPathSteps.length,
-      detailLabel: "MVP hand"
+      detailLabel: "Starter game"
     }),
     createCatalogEntry({
       id: "barbu",
@@ -571,28 +571,28 @@ export function createCatalogEntries({ barbuLessonCount }: CatalogDefinitionInpu
 export const gameTableDefinitions = {
   hearts: createGameTableDefinition({
     id: "hearts",
-    title: "Hearts table",
+    title: "Black Lady table",
     family: "Hearts",
     referenceId: "hearts",
     scorecard: {
-      label: "Hearts scorecard",
+      label: "Black Lady scorecard",
       unitLabel: "Penalty",
       objective: "Low score leads",
       leaderRule: "low-score"
     },
     learn: {
-      pathAriaLabel: "Hearts lesson path",
+      pathAriaLabel: "Black Lady lesson path",
       pathEyebrow: "Training path",
-      pathTitle: "Learn the Hearts table",
-      progressAriaLabel: "Hearts course progress",
-      nextSummary: "Return to the next short Hearts decision.",
-      completeSummary: "Replay any Hearts lesson or move into practice.",
-      referenceSummary: "Check the current MVP rules, names, scoring, and documented simplifications."
+      pathTitle: "Learn the Black Lady table",
+      progressAriaLabel: "Black Lady course progress",
+      nextSummary: "Return to the next short Black Lady decision.",
+      completeSummary: "Replay any Black Lady lesson or move into practice.",
+      referenceSummary: "Check the current Black Lady rules, names, scoring, and documented simplifications."
     },
     tabIntros: {
       learn: {
         eyebrow: "Learn",
-        title: "Learn the Hearts table.",
+        title: "Learn the Black Lady table.",
         summary: "Move through short card decisions before playing full hands."
       },
       practice: {
@@ -603,9 +603,9 @@ export const gameTableDefinitions = {
       },
       play: {
         eyebrow: "Play",
-        title: "Play a Hearts match.",
+        title: "Play a Black Lady match.",
         summary:
-          "MVP Hearts plays repeated hands to 50 points with pass-three-left, 2C opening, QS at 13, and shoot-the-moon scoring."
+          "Black Lady plays repeated hands to 50 points with pass-three-left, 2C opening, QS at 13, and shoot-the-moon scoring."
       },
       perfect: {
         eyebrow: "Perfect",
@@ -616,18 +616,18 @@ export const gameTableDefinitions = {
     defaultTab: "play",
     actionsByTab: {
       learn: [
-        { id: "object", label: "Object", destination: "Hearts object concept" },
+        { id: "object", label: "Object", destination: "Black Lady object concept" },
         { id: "queen-danger", label: "Queen danger", destination: "Queen of Spades concept" },
-        { id: "passing", label: "Pass three", destination: "Hearts passing concept" },
-        { id: "score-reading", label: "Score reading", destination: "Hearts score concept" },
-        { id: "reference", label: "Reference", destination: "Hearts reference" }
+        { id: "passing", label: "Pass three", destination: "Black Lady passing concept" },
+        { id: "score-reading", label: "Score reading", destination: "Black Lady score concept" },
+        { id: "reference", label: "Reference", destination: "Black Lady reference" }
       ],
       practice: heartsPracticeEntries.map((entry) => ({
         id: entry.id,
         label: entry.title,
-        destination: `Hearts practice: ${entry.title}`
+        destination: `Black Lady practice: ${entry.title}`
       })),
-      play: [{ id: "play-hearts", label: "Play Hearts", destination: "Hearts pass-left hand" }]
+      play: [{ id: "play-hearts", label: "Play Black Lady", destination: "Black Lady pass-left hand" }]
     }
   }),
   barbu: createGameTableDefinition({

@@ -336,10 +336,10 @@
   const runContractIntros: Record<FullHandContract, RunContractIntro> = {
     Hearts: {
       title: "Hearts and QS are dangerous.",
-      role: "Starter Hearts hand",
+      role: "Starter Black Lady hand",
       surface: "Trick-taking hand",
       target: "Avoid penalty tricks.",
-      reason: "MVP Hearts now starts like Hearts: pass left, open with 2C, and keep hearts back until they are broken.",
+      reason: "Black Lady starts with a Hearts-family shape: pass left, open with 2C, and keep hearts back until they are broken.",
       habit: "Track hearts and the queen of spades before deciding whether to win."
     },
     "No Hearts": {
@@ -920,7 +920,7 @@
       title: "Can you lead a heart?",
       beforeResult: "You are on lead. Hearts have not been broken, and you still have non-hearts.",
       afterResult: "A non-heart lead keeps the hand legal until a heart has been played.",
-      emptyExplanation: "Choose a legal opening lead. In MVP Hearts, hearts cannot be led before they are broken unless you only have hearts.",
+      emptyExplanation: "Choose a legal opening lead. In Black Lady, hearts cannot be led before they are broken unless you only have hearts.",
       legalCardIds: ["9C", "QD", "AS"],
       hand: [
         { id: "2H", rank: "2", suit: "H", label: "2H" },
@@ -1209,7 +1209,7 @@
     trick: {
       title: "Find the 13-point card",
       beforeResult: "This trick contains several cards, but one card explains most of the score.",
-      afterResult: "The queen of spades is worth 13 penalty points in the Hearts MVP.",
+      afterResult: "The queen of spades is worth 13 penalty points in Black Lady.",
       emptyExplanation: "Choose the card that makes this trick much more expensive than an ordinary heart trick.",
       legalCardIds: ["QS", "7H", "9D", "KC"],
       hand: [
@@ -1513,7 +1513,7 @@
   $: drillResultMessage =
     drillResults.length > 0 && cleanDrillCount === drillResults.length
       ? drillResultIsHeartsPractice
-        ? "Clean Hearts practice. Keep avoiding penalty tricks until the danger cards feel automatic."
+        ? "Clean Black Lady practice. Keep avoiding penalty tricks until the danger cards feel automatic."
         : "Clean session. Barbu is ready to raise the pressure."
       : drillResultIsHeartsPractice
         ? "Repeat the Hearts pattern until following suit and avoiding penalties feels automatic."
@@ -4608,7 +4608,7 @@
       const player = heartsPlayerStanding;
 
       if (!player) {
-        return "Hearts hand complete";
+        return "Black Lady hand complete";
       }
       if (player.rank === 1) {
         const tiedLeaders = heartsStandings.filter((standing) => standing.rank === 1);
@@ -4628,6 +4628,10 @@
       return "Barbu caught you";
     }
     return "Damage limited";
+  }
+
+  function fullHandDisplayName(hand: FullHandState) {
+    return activeGameTable === "hearts" && hand.contract === "Hearts" ? "Black Lady" : hand.contract;
   }
 
   function fullHandResultText(hand: FullHandState) {
@@ -5086,15 +5090,15 @@
   }
 
   function startHeartsAvoidHeartsDrill(pathStepId = "") {
-    startHeartsMicroDrill(heartsAvoidHeartsDrillStep, "Hearts practice: avoid hearts", pathStepId);
+    startHeartsMicroDrill(heartsAvoidHeartsDrillStep, "Black Lady practice: avoid hearts", pathStepId);
   }
 
   function startHeartsFirstTrickDrill(pathStepId = "") {
-    startHeartsMicroDrill(heartsFirstTrickRestrictionDrillStep, "Hearts practice: first trick", pathStepId);
+    startHeartsMicroDrill(heartsFirstTrickRestrictionDrillStep, "Black Lady practice: first trick", pathStepId);
   }
 
   function startHeartsQueenDangerDrill(pathStepId = "") {
-    startHeartsMicroDrill(heartsQueenDangerDrillStep, "Hearts practice: queen danger", pathStepId);
+    startHeartsMicroDrill(heartsQueenDangerDrillStep, "Black Lady practice: queen danger", pathStepId);
   }
 
   function startHeartsQuickDrill() {
@@ -5126,15 +5130,15 @@
   }
 
   function startHeartsBreakHeartsDrill(pathStepId = "") {
-    startHeartsMicroDrill(heartsBreakHeartsDrillStep, "Hearts practice: break hearts", pathStepId);
+    startHeartsMicroDrill(heartsBreakHeartsDrillStep, "Black Lady practice: break hearts", pathStepId);
   }
 
   function startHeartsStopMoonDrill(pathStepId = "") {
-    startHeartsMicroDrill(heartsStopMoonDrillStep, "Hearts practice: stop the moon", pathStepId);
+    startHeartsMicroDrill(heartsStopMoonDrillStep, "Black Lady practice: stop the moon", pathStepId);
   }
 
   function startHeartsScoreHandDrill(pathStepId = "") {
-    startHeartsMicroDrill(heartsScoreHandDrillStep, "Hearts practice: score a hand", pathStepId);
+    startHeartsMicroDrill(heartsScoreHandDrillStep, "Black Lady practice: score a hand", pathStepId);
   }
 
   function replayHeartsPracticeDrill() {
@@ -6086,7 +6090,7 @@
       {/if}
     </section>
   {:else if appView === "heartsTable"}
-    <header class="topbar table-topbar" aria-label="Hearts table">
+    <header class="topbar table-topbar" aria-label="Black Lady table">
       <button class="back-button" onclick={openCatalog} type="button">Games</button>
       <div class="table-title">
         <p class="eyebrow">{gameTableDefinitions.hearts.family} family</p>
@@ -6098,11 +6102,11 @@
       </div>
     </header>
 
-    <section class="table-room" aria-label="Hearts table modes">
+    <section class="table-room" aria-label="Black Lady table modes">
       <div class="barbu-table-rail">
         <div class="barbu-mode-box">
           <p class="eyebrow">Table mode</p>
-          <div class="barbu-table-tabs" aria-label="Hearts table sections" role="tablist">
+          <div class="barbu-table-tabs" aria-label="Black Lady table sections" role="tablist">
             {#each tableTabsFor(gameTableDefinitions.hearts) as tab}
               <button
                 aria-controls={tab.panelId}
@@ -6123,8 +6127,8 @@
 
       {#if activeHeartsTableTab === "learn"}
         <div aria-label="Learn" class="barbu-tab-panel learn-panel" id={gameTableDefinitions.hearts.tabs.learn.panelId} role="tabpanel">
-          <div class="table-action-groups" aria-label="Hearts table actions">
-            <section class="learn-action-grid" aria-label="Hearts learn actions">
+          <div class="table-action-groups" aria-label="Black Lady table actions">
+            <section class="learn-action-grid" aria-label="Black Lady learn actions">
               <button class="learn-action-card primary" onclick={() => continueHeartsPath("")} type="button">
                 <span class="eyebrow">{isHeartsCourseComplete ? "Review" : "Next lesson"}</span>
                 <strong>
@@ -6204,15 +6208,15 @@
               <h2>{gameTableDefinitions.hearts.tabs.play.intro.title}</h2>
               <p>{gameTableDefinitions.hearts.tabs.play.intro.summary}</p>
             </div>
-            <div class="table-action-groups" aria-label="Hearts table actions">
-              <section class="table-action-group" aria-label="Play Hearts actions">
+            <div class="table-action-groups" aria-label="Black Lady table actions">
+              <section class="table-action-group" aria-label="Play Black Lady actions">
                 <p class="eyebrow">Play</p>
                 {#if savedHeartsRun}
-                  <button class="drill-action" onclick={continueSavedHeartsRun} type="button">Continue Hearts</button>
+                  <button class="drill-action" onclick={continueSavedHeartsRun} type="button">Continue Black Lady</button>
                   <small class="saved-run-note">{savedHeartsRunSummary(savedHeartsRun)}</small>
                 {/if}
                 <button class:resume-secondary={Boolean(savedHeartsRun)} class="drill-action" onclick={startHeartsHand} type="button">
-                  Play Hearts
+                  Play Black Lady
                 </button>
               </section>
               <p class="supporting-copy">Play repeated pass-left hands to 50 penalty points. Low score wins; shooting the moon is active.</p>
@@ -7109,7 +7113,7 @@
       </div>
     </section>
   {:else if appView === "heartsLearnObject"}
-    <header class="topbar" aria-label="Hearts object lesson">
+    <header class="topbar" aria-label="Black Lady object lesson">
       <button class="back-button" onclick={openHeartsTable} type="button">Table</button>
       <div>
         <p class="eyebrow">Hearts</p>
@@ -7121,7 +7125,7 @@
       </div>
     </header>
 
-    <section class="course-screen" aria-label="Hearts object lesson content">
+    <section class="course-screen" aria-label="Black Lady object lesson content">
       <div class="course-copy">
         <p class="eyebrow">Concept</p>
         <h2>Take as few penalty points as possible.</h2>
@@ -7228,7 +7232,7 @@
         mode="play"
         ariaLabel="Hearts pass practice"
         title="Pass three"
-        eyebrow="Hearts practice"
+        eyebrow="Black Lady practice"
         statusLabel="Exercise"
         statusValue={`${heartsPassPracticeStepIndex + 1} of ${heartsPassPracticeTotalSteps}`}
         tableAriaLabel="Hearts pass practice table"
@@ -7310,8 +7314,8 @@
                 <button class="primary-action" onclick={() => void nextHeartsPassPracticeStep()} type="button">
                   {heartsPassPracticeIsLastStep
                     ? isHeartsCourseComplete
-                      ? "Back to Hearts table"
-                      : "Continue Hearts path"
+                      ? "Back to Black Lady table"
+                      : "Continue Black Lady path"
                     : "Next pass"}
                 </button>
               {:else}
@@ -7337,7 +7341,7 @@
     {#if heartsPassingHand}
       <TablePlaySurface
         mode="play"
-        ariaLabel="Hearts passing phase"
+        ariaLabel="Black Lady passing phase"
         title="Pass cards"
         eyebrow="Hearts"
         statusLabel="Pass left"
@@ -7345,11 +7349,11 @@
         tableAriaLabel="Hearts passing table"
         tableCards={[]}
         showTable={false}
-        panelAriaLabel="Hearts pass cards"
+        panelAriaLabel="Black Lady pass cards"
         onBack={openHeartsTable}
       >
         {#snippet summary()}
-          <div class="full-hand-summary grouped-play-summary" aria-label="Hearts pass summary">
+          <div class="full-hand-summary grouped-play-summary" aria-label="Black Lady pass summary">
             <div class="full-hand-summary-row current-hand" aria-label="Passing direction">
               <span class="summary-row-label">Passing</span>
               <div>
@@ -7386,7 +7390,7 @@
 
           <CardChoiceHand
             cards={heartsPassingHand.playerHand}
-            ariaLabel="Your Hearts passing hand"
+            ariaLabel="Your Black Lady passing hand"
             className="hand full-hand-cards hearts-pass-cards"
             cardClassName="card hand-card full-hand-card"
             getCardClasses={(card) => ({
@@ -7411,22 +7415,22 @@
     {#if fullHand}
       <TablePlaySurface
         mode={fullHand.status === "complete" ? "result" : "play"}
-        ariaLabel={`${fullHand.contract} full hand`}
-        title={`${fullHand.contract} hand`}
-        eyebrow={fullHandRunActive ? "Play Barbu" : "Contract hand"}
+        ariaLabel={`${fullHandDisplayName(fullHand)} full hand`}
+        title={`${fullHandDisplayName(fullHand)} hand`}
+        eyebrow={fullHandIsHeartsGame ? "Black Lady" : fullHandRunActive ? "Play Barbu" : "Contract hand"}
         statusLabel={fullHandRunStatusLabel}
         statusValue={`${fullHand.playerPenalty} ${fullHandPlayerPenaltyLabel}`}
-        tableAriaLabel={`${fullHand.contract} hand table`}
+        tableAriaLabel={`${fullHandDisplayName(fullHand)} hand table`}
         pendingBySeat={fullHandPendingBySeat}
         showTable={!fullHandRunIsComplete && !(fullHandIsHeartsGame && fullHand.status === "complete")}
         tableCards={fullHandVisibleTableCards}
-        panelAriaLabel={`${fullHand.contract} hand decision`}
+        panelAriaLabel={`${fullHandDisplayName(fullHand)} hand decision`}
         onBack={openBarbuTable}
         onSurfaceClick={fullHandIsReviewingTrick ? continueFullHandAfterTrick : undefined}
       >
         {#snippet summary()}
           {#if !fullHandRunIsComplete}
-            <div class="full-hand-summary grouped-play-summary" aria-label={`${fullHand.contract} hand score`}>
+            <div class="full-hand-summary grouped-play-summary" aria-label={`${fullHandDisplayName(fullHand)} hand score`}>
               <div
                 class:no-last-two={fullHand.contract === "No Last Two"}
                 class="full-hand-summary-row current-hand"
@@ -7453,7 +7457,7 @@
                 {/if}
               </div>
               {#if fullHandIsHeartsGame}
-                <div class="full-hand-summary-row table-score" aria-label="Hearts table score">
+                <div class="full-hand-summary-row table-score" aria-label="Black Lady table score">
                   <span class="summary-row-label">{heartsScorecardMeta.label}</span>
                   {#each scoreSeats as seat}
                     <div>
@@ -7518,8 +7522,8 @@
               <p class="result" aria-label={`${fullHand.contract} result summary`}>{fullHandResultSummary}</p>
 
               {#if fullHandIsHeartsGame}
-                <div class="hearts-result-stack" aria-label="Hearts hand score">
-                  {@render heartsScorecard("Hearts final scorecard")}
+                <div class="hearts-result-stack" aria-label="Black Lady hand score">
+                  {@render heartsScorecard("Black Lady final scorecard")}
                   <div class="hearts-hand-breakdown" aria-label="This hand breakdown">
                     <div class="hearts-hand-breakdown-row header">
                       <span>This hand</span>
@@ -7587,7 +7591,7 @@
 
             <CardChoiceHand
               cards={fullHand.playerHand}
-              ariaLabel={`Your ${fullHand.contract} hand`}
+              ariaLabel={`Your ${fullHandDisplayName(fullHand)} hand`}
               className="hand full-hand-cards"
               cardClassName="card hand-card full-hand-card"
               getCardClasses={fullHandCardClasses}
@@ -7888,7 +7892,7 @@
           {#if drillResultIsHeartsPractice}
             {#if activePathStepId.startsWith("hearts-")}
               <button class="primary-action" onclick={() => continueHeartsPath()} type="button">
-                {isHeartsCourseComplete ? "Back to Hearts table" : "Continue Hearts path"}
+                {isHeartsCourseComplete ? "Back to Black Lady table" : "Continue Black Lady path"}
               </button>
               <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
             {:else}
@@ -7949,7 +7953,7 @@
         {/if}
         {#if drillResultIsHeartsPractice}
           {#if !activePathStepId.startsWith("hearts-")}
-            <button class="primary-action" onclick={openActiveGameTable} type="button">Back to Hearts practice</button>
+            <button class="primary-action" onclick={openActiveGameTable} type="button">Back to Black Lady practice</button>
           {/if}
         {:else}
           <button class="primary-action" onclick={continueCourse} type="button">Continue path</button>
