@@ -543,6 +543,7 @@ test("Hearts play starts with a pass-left phase before the hand", async ({ page 
   await expectGameplayActionRowPinned(page);
   await expectHandNearActionRow(page, ".full-hand-cards");
   await expectFeedbackAboveHand(page, ".full-hand-cards");
+  await expect(page.locator(".full-hand-card").first()).toHaveCSS("touch-action", "manipulation");
   await page.screenshot({ path: testInfo.outputPath("hearts-hand.png"), fullPage: true });
 
   await page.getByLabel("Hearts full hand").getByRole("button", { name: "Table" }).click();
@@ -550,7 +551,7 @@ test("Hearts play starts with a pass-left phase before the hand", async ({ page 
   await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
 });
 
-test("Hearts next hand carries score and starts with passing again", async ({ page }) => {
+test("Hearts next hand carries score and starts with passing again", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Open Hearts" }).click();
   await page.getByRole("button", { name: "Play Hearts" }).click();
@@ -564,6 +565,11 @@ test("Hearts next hand carries score and starts with passing again", async ({ pa
   await expect(page.getByLabel("Hearts final scorecard")).toContainText("Low score leads");
   await expect(page.getByLabel("Hearts final scorecard")).toContainText("Target 50");
   await expect(page.getByLabel("Hearts final scorecard")).toContainText("Hand 1");
+  await expect(page.getByLabel("This hand breakdown")).toContainText("Tricks");
+  await expect(page.getByLabel("This hand breakdown")).toContainText("Points");
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
+  await page.screenshot({ path: testInfo.outputPath("hearts-scoreboard.png"), fullPage: true });
   await page.getByRole("button", { name: "Next hand" }).click();
 
   await expect(page.getByRole("heading", { name: "Pass cards" })).toBeVisible();

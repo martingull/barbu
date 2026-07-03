@@ -1121,6 +1121,7 @@
   $: fullHandPlayerPenaltyLabel =
     fullHand?.playerPenalty === 1 ? fullHandPenaltyName : fullHandPenaltyPlural;
   $: fullHandSeatPenalties = fullHand ? seatPenaltiesForTricks(fullHand.completedTricks) : emptySeatPenalties();
+  $: fullHandSeatTrickCounts = fullHand ? seatTricksWonForTricks(fullHand.completedTricks) : emptySeatPenalties();
   $: fullHandResultTitle = fullHand ? fullHandResultHeading(fullHand) : "";
   $: fullHandResultSummary = fullHand ? fullHandResultText(fullHand) : "";
   $: fullHandBestTrick = fullHand ? fullHandBestTrickLabel(fullHand) : "";
@@ -3520,6 +3521,20 @@
 
       if (seat) {
         totals[seat] += trick.penalty;
+      }
+    }
+
+    return totals;
+  }
+
+  function seatTricksWonForTricks(tricks: CompletedHandTrick[]) {
+    const totals = emptySeatPenalties();
+
+    for (const trick of tricks) {
+      const seat = seatByPlayerIndex[trick.winnerIndex];
+
+      if (seat) {
+        totals[seat] += 1;
       }
     }
 
@@ -6792,7 +6807,7 @@
         statusValue={`${fullHand.playerPenalty} ${fullHandPlayerPenaltyLabel}`}
         tableAriaLabel={`${fullHand.contract} hand table`}
         pendingBySeat={fullHandPendingBySeat}
-        showTable={!fullHandRunIsComplete}
+        showTable={!fullHandRunIsComplete && !(fullHandIsHeartsGame && fullHand.status === "complete")}
         tableCards={fullHandVisibleTableCards}
         panelAriaLabel={`${fullHand.contract} hand decision`}
         onBack={openBarbuTable}
@@ -6892,7 +6907,23 @@
               <p class="result" aria-label={`${fullHand.contract} result summary`}>{fullHandResultSummary}</p>
 
               {#if fullHandIsHeartsGame}
-                {@render heartsScorecard("Hearts final scorecard")}
+                <div class="hearts-result-stack" aria-label="Hearts hand score">
+                  {@render heartsScorecard("Hearts final scorecard")}
+                  <div class="hearts-hand-breakdown" aria-label="This hand breakdown">
+                    <div class="hearts-hand-breakdown-row header">
+                      <span>This hand</span>
+                      <span>Tricks</span>
+                      <span>Points</span>
+                    </div>
+                    {#each scoreSeats as seat}
+                      <div class:active={seat === "You"} class="hearts-hand-breakdown-row">
+                        <span>{scoreSeatLabel(seat)}</span>
+                        <strong>{fullHandSeatTrickCounts[seat]}</strong>
+                        <strong>{heartsCurrentScoredSeatPenalties[seat]}</strong>
+                      </div>
+                    {/each}
+                  </div>
+                </div>
                 {#if heartsMatchIsComplete}
                   <div class="full-hand-result-tricks" aria-label="Hearts match summary">
                     <div>

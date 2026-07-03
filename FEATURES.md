@@ -41,6 +41,7 @@ The intended monetization model is free starter tables first, then paid packs wi
 - Hearts Passing Drill v1 teaches the beginner pass-three-left habit: identify Queen of Spades, high hearts, and dangerous high spades before hand play begins.
 - Hearts opponent policy v1 has started: local opponents avoid Queen of Spades wins when possible, dump Queen of Spades before hearts when void, dump Queen of Spades safely under higher spades, lead from short safe suits to create pressure, and lead hearts once hearts are broken.
 - Black Lady opponent policy now pressures the player on clean tricks: opponents can take a cheap non-penalty winner from the player to regain lead control, while still ducking tricks already loaded with hearts or QS unless moon defense requires intervention.
+- Phone play surfaces now suppress double-tap zoom, tap highlights, text selection, and iOS callouts on card/button controls so selecting a card does not break game flow.
 - Hearts trick feedback now calls out queen-of-spades danger, hearts moving, and opponent-loaded tricks so harder hands feel explainable rather than random.
 - Barbu table with grouped Learn, Practice, Play, and Reference entry points, including a contract-hand practice chooser.
 - Five-step training path: concept, example, guided trick, practice, review.
