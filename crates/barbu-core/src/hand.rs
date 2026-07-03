@@ -880,7 +880,7 @@ fn choose_hearts_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
             }
         }
 
-        return highest_hearts_penalty_discard(&legal).or_else(|| highest_card(&legal));
+        return choose_hearts_void_discard(&legal, current_winner, current_trick_is_loaded);
     }
 
     if let Some(candidate) = moon_candidate {
@@ -923,6 +923,26 @@ fn choose_hearts_lead_card(state: &TrickTakingHandState, legal: &[Card]) -> Opti
     highest_card_from_shortest_suit(legal, |card| !is_hearts_penalty_card(card))
         .or_else(|| lowest_card_matching(legal, |card| !is_hearts_penalty_card(card)))
         .or_else(|| lowest_card(legal))
+}
+
+fn choose_hearts_void_discard(
+    legal: &[Card],
+    current_winner: Option<PlayerIndex>,
+    current_trick_is_loaded: bool,
+) -> Option<Card> {
+    let queen_spades = Card::new(Rank::Queen, Suit::Spades);
+
+    if legal.contains(&queen_spades) {
+        if current_winner == Some(2) || current_trick_is_loaded {
+            return Some(queen_spades);
+        }
+
+        return highest_card_matching(legal, |card| card.suit == Suit::Hearts)
+            .or_else(|| highest_card_matching(legal, |card| card != queen_spades))
+            .or(Some(queen_spades));
+    }
+
+    highest_hearts_penalty_discard(legal).or_else(|| highest_card(legal))
 }
 
 fn highest_card_from_shortest_suit(
@@ -1952,9 +1972,9 @@ mod tests {
     }
 
     #[test]
-    fn hearts_opponent_discards_queen_of_spades_before_hearts_when_void() {
+    fn hearts_opponent_holds_queen_of_spades_on_clean_opponent_trick() {
         let state = HeartsHandState {
-            id: "hearts-dump-queen-spades".to_string(),
+            id: "hearts-hold-queen-spades".to_string(),
             hands: [
                 Vec::new(),
                 vec![
@@ -1967,6 +1987,35 @@ mod tests {
             ],
             current_player: 1,
             current_trick: vec![PlayedCard::new(0, Card::new(Rank::Seven, Suit::Clubs))],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_hearts_opponent_card(&state),
+            Some(Card::new(Rank::Ace, Suit::Hearts))
+        );
+    }
+
+    #[test]
+    fn hearts_opponent_dumps_queen_of_spades_on_player_winning_trick() {
+        let state = HeartsHandState {
+            id: "hearts-dump-queen-spades-on-player".to_string(),
+            hands: [
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Queen, Suit::Spades),
+                    Card::new(Rank::Ace, Suit::Hearts),
+                    Card::new(Rank::King, Suit::Hearts),
+                ],
+                Vec::new(),
+                Vec::new(),
+            ],
+            current_player: 1,
+            current_trick: vec![
+                PlayedCard::new(0, Card::new(Rank::Seven, Suit::Clubs)),
+                PlayedCard::new(2, Card::new(Rank::Ace, Suit::Clubs)),
+            ],
             completed_tricks: Vec::new(),
             status: HandStatus::InProgress,
         };

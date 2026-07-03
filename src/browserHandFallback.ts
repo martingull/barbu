@@ -476,7 +476,7 @@ function chooseOpponentCard(state: FullHandState) {
         return lowestCard(legal.filter((card) => !isPenaltyCard("Hearts", card))) ?? lowestCard(legal);
       }
 
-      return highestHeartsPenaltyDiscard(legal) ?? highestCard(legal);
+      return chooseHeartsVoidDiscard(legal, currentWinner, heartsTrickPenalty(state.currentTrick) > 0);
     }
     return highestCard(legal.filter((card) => isPenaltyCard(state.contract, card))) ?? highestCard(legal);
   }
@@ -595,6 +595,20 @@ function highestHeartsPenaltyDiscard(cards: Card[]) {
     .filter((card) => isPenaltyCard("Hearts", card))
     .sort((left, right) => heartsPenaltyWeight(left) - heartsPenaltyWeight(right) || compareByRankThenSuit(left, right))
     .pop();
+}
+
+function chooseHeartsVoidDiscard(cards: Card[], currentWinner: number | undefined, currentTrickIsLoaded: boolean) {
+  const queenSpades = cards.find((card) => card.id === "QS");
+
+  if (queenSpades) {
+    if (currentWinner === 2 || currentTrickIsLoaded) {
+      return queenSpades;
+    }
+
+    return highestCard(cards.filter((card) => card.suit === "H")) ?? highestCard(cards.filter((card) => card.id !== "QS")) ?? queenSpades;
+  }
+
+  return highestHeartsPenaltyDiscard(cards) ?? highestCard(cards);
 }
 
 function chooseHeartsLeadCard(state: FullHandState, cards: Card[]) {
