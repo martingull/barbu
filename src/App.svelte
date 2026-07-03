@@ -23,6 +23,7 @@
   import { generateBrowserPlayBarbuDrillSteps } from "./browserDrillFallback";
   import CardFace from "./CardFace.svelte";
   import CardTable from "./CardTable.svelte";
+  import PracticePanel from "./PracticePanel.svelte";
   import TablePlaySurface from "./TablePlaySurface.svelte";
   import { fullHandContractCommands, fullHandContracts } from "./contractRegistry";
   import { contractRunScore, contractScoreMeta, formatContractValue } from "./contractScoring";
@@ -5814,64 +5815,14 @@
           </section>
         </div>
       {:else if activeBarbuTableTab === "practice"}
-        <div
-          aria-label="Practice"
-          class="barbu-tab-panel practice-panel"
+        <PracticePanel
           id={gameTableDefinitions.barbu.tabs.practice.panelId}
-          role="tabpanel"
-        >
-          <div class="barbu-mode-copy">
-            <p class="eyebrow">{gameTableDefinitions.barbu.tabs.practice.intro.eyebrow}</p>
-            <h2>{gameTableDefinitions.barbu.tabs.practice.intro.title}</h2>
-            <p>{gameTableDefinitions.barbu.tabs.practice.intro.summary}</p>
-          </div>
-          {#each barbuPracticeGroups as group}
-            {#if group.layout === "action-list"}
-              <div class="table-action-groups" aria-label={group.ariaLabel}>
-                {#each group.entries ?? [] as entry}
-                  <section class="table-action-group" aria-label="Practice actions">
-                    <p class="eyebrow">{entry.label}</p>
-                    <button class="drill-action" onclick={barbuPracticeActions[entry.action]} type="button">
-                      {entry.title}
-                    </button>
-                  </section>
-                {/each}
-              </div>
-            {:else if group.layout === "lesson-grid" && group.lessonSource === "barbu-fixed-lessons"}
-              <section class="fixed-contract-practice" aria-label={group.ariaLabel}>
-                <div class="section-heading">
-                  <p class="eyebrow">{group.eyebrow}</p>
-                  <h2>{group.title}</h2>
-                </div>
-                <div class="fixed-contract-grid">
-                  {#each fixedDrillLessons as lesson}
-                    <button class="contract-card compact" onclick={() => startFixedContractDrill(lesson.id)} type="button">
-                      <span>{lesson.contract}</span>
-                      <strong>{lesson.title}</strong>
-                      <small>One authored decision with immediate feedback.</small>
-                    </button>
-                  {/each}
-                </div>
-              </section>
-            {:else}
-              <section class="fixed-contract-practice" aria-label={group.ariaLabel}>
-                <div class="section-heading">
-                  <p class="eyebrow">{group.eyebrow}</p>
-                  <h2>{group.title}</h2>
-                </div>
-                <div class="fixed-contract-grid">
-                  {#each group.entries ?? [] as entry}
-                    <button class="contract-card compact" onclick={barbuPracticeActions[entry.action]} type="button">
-                      <span>{entry.label}</span>
-                      <strong>{entry.title}</strong>
-                      <small>{entry.summary}</small>
-                    </button>
-                  {/each}
-                </div>
-              </section>
-            {/if}
-          {/each}
-        </div>
+          intro={gameTableDefinitions.barbu.tabs.practice.intro}
+          groups={barbuPracticeGroups}
+          actions={barbuPracticeActions}
+          lessonEntries={fixedDrillLessons}
+          onLessonSelect={startFixedContractDrill}
+        />
       {:else if activeBarbuTableTab === "play"}
         <div
           aria-label="Play"
@@ -6049,44 +6000,12 @@
           </section>
         </div>
       {:else if activeHeartsTableTab === "practice"}
-        <div aria-label="Practice" class="barbu-tab-panel practice-panel" id={gameTableDefinitions.hearts.tabs.practice.panelId} role="tabpanel">
-            <div class="barbu-mode-copy">
-              <p class="eyebrow">{gameTableDefinitions.hearts.tabs.practice.intro.eyebrow}</p>
-              <h2>{gameTableDefinitions.hearts.tabs.practice.intro.title}</h2>
-              <p>{gameTableDefinitions.hearts.tabs.practice.intro.summary}</p>
-            </div>
-
-            {#each heartsPracticeGroups as group}
-              {#if group.layout === "action-list"}
-                <div class="table-action-groups" aria-label={group.ariaLabel}>
-                  {#each group.entries ?? [] as entry}
-                    <section class="table-action-group" aria-label="Practice actions">
-                      <p class="eyebrow">{entry.label}</p>
-                      <button class="drill-action" onclick={heartsPracticeActions[entry.action]} type="button">
-                        {entry.title}
-                      </button>
-                    </section>
-                  {/each}
-                </div>
-              {:else}
-                <section class="fixed-contract-practice" aria-label={group.ariaLabel}>
-                  <div class="section-heading">
-                    <p class="eyebrow">{group.eyebrow}</p>
-                    <h2>{group.title}</h2>
-                  </div>
-                  <div class="fixed-contract-grid">
-                    {#each group.entries ?? [] as entry}
-                      <button class="contract-card compact" onclick={heartsPracticeActions[entry.action]} type="button">
-                        <span>{entry.label}</span>
-                        <strong>{entry.title}</strong>
-                        <small>{entry.summary}</small>
-                      </button>
-                    {/each}
-                  </div>
-                </section>
-              {/if}
-            {/each}
-          </div>
+        <PracticePanel
+          id={gameTableDefinitions.hearts.tabs.practice.panelId}
+          intro={gameTableDefinitions.hearts.tabs.practice.intro}
+          groups={heartsPracticeGroups}
+          actions={heartsPracticeActions}
+        />
       {:else if activeHeartsTableTab === "play"}
         <div aria-label="Play" class="barbu-tab-panel play-panel" id={gameTableDefinitions.hearts.tabs.play.panelId} role="tabpanel">
             <div class="barbu-mode-copy">
