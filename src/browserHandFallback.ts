@@ -30,6 +30,7 @@ const rankOrder: Record<Rank, number> = {
 };
 const suitOrder: Record<Suit, number> = { C: 0, D: 1, H: 2, S: 3 };
 const playerNames: Array<Seat> = ["Tutor", "Right", "You", "Left"];
+const blackLadyMoonLeadThreshold = 8;
 
 export function startBrowserHeartsHand(seed: number): FullHandState {
   return startBrowserFullHand("Hearts", seed, { startAtTwoOfClubs: true });
@@ -612,19 +613,45 @@ function chooseHeartsVoidDiscard(cards: Card[], currentWinner: number | undefine
 }
 
 function chooseHeartsLeadCard(state: FullHandState, cards: Card[]) {
-  if (heartsHaveBeenBroken(state)) {
+  if (heartsMoonLeadCandidate(state, state.currentPlayerIndex)) {
     return (
-      lowestCard(cards.filter((card) => card.suit === "H")) ??
+      highestCard(cards.filter((card) => card.suit === "H")) ??
       highestCardFromShortestSuit(cards.filter((card) => !isPenaltyCard("Hearts", card)), cards) ??
-      lowestCard(cards)
+      highestCard(cards)
     );
   }
 
   return (
-    highestCardFromShortestSuit(cards.filter((card) => !isPenaltyCard("Hearts", card)), cards) ??
-    lowestCard(cards.filter((card) => !isPenaltyCard("Hearts", card))) ??
+    highestCardFromShortestSuit(
+      cards.filter((card) => !isPenaltyCard("Hearts", card) && !isDangerousHighSpadeLead(state, state.currentPlayerIndex, card)),
+      cards
+    ) ??
+    lowestCard(cards.filter((card) => !isPenaltyCard("Hearts", card) && !isDangerousHighSpadeLead(state, state.currentPlayerIndex, card))) ??
+    lowestCard(cards.filter((card) => card.suit === "H")) ??
     lowestCard(cards)
   );
+}
+
+function isDangerousHighSpadeLead(state: FullHandState, playerIndex: number, card: Card) {
+  return card.suit === "S" && rankOrder[card.rank as Rank] > rankOrder.Q && queenSpadesIsUnresolvedForPlayer(state, playerIndex);
+}
+
+function queenSpadesIsUnresolvedForPlayer(state: FullHandState, playerIndex: number) {
+  if (state.hands[playerIndex].some((card) => card.id === "QS")) {
+    return false;
+  }
+
+  return ![...state.completedTricks.flatMap((trick) => trick.cards), ...state.currentTrick].some((played) => played.card.id === "QS");
+}
+
+function heartsMoonLeadCandidate(state: FullHandState, playerIndex: number) {
+  return heartsMoonCandidate(state) === playerIndex && heartsPlayerPenaltySoFar(state, playerIndex) >= blackLadyMoonLeadThreshold;
+}
+
+function heartsPlayerPenaltySoFar(state: FullHandState, playerIndex: number) {
+  return state.completedTricks
+    .filter((trick) => trick.winnerIndex === playerIndex)
+    .reduce((total, trick) => total + trick.penalty, 0);
 }
 
 function highestCardFromShortestSuit(candidates: Card[], fullHand: Card[]) {
