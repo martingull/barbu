@@ -148,6 +148,7 @@ async function openBarbuTab(page: Page, tab: "Learn" | "Practice" | "Play" | "Pe
 }
 
 async function openBarbuContracts(page: Page) {
+  await openBarbuTab(page, "Learn");
   await page.getByRole("button", { name: /Barbu contracts/ }).click();
   await expect(page.getByRole("heading", { name: "Barbu contracts" })).toBeVisible();
 }
@@ -205,11 +206,11 @@ async function playFullHandDecision(page: Page) {
 }
 
 async function passThreeHeartsCards(page: Page) {
-  const passingHand = page.getByLabel("Your Black Lady passing hand");
+  const passingHand = page.getByLabel("Your Hearts passing hand");
   await passingHand.locator("button").nth(0).click();
   await passingHand.locator("button").nth(1).click();
   await passingHand.locator("button").nth(2).click();
-  await expect(page.getByLabel("Black Lady pass summary")).toContainText("3 / 3");
+  await expect(page.getByLabel("Hearts pass summary")).toContainText("3 / 3");
   await page.getByRole("button", { name: "Pass cards" }).click();
 }
 
@@ -260,7 +261,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
 
   await expect(page.getByRole("heading", { name: "Choose a table" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Core games" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Open Black Lady" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Open Hearts" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Barbu" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Card Counting" })).toContainText("Pack");
   await expect(page.getByRole("button", { name: "Open Card Counting" })).toContainText("4 minigames");
@@ -336,61 +337,61 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await page.screenshot({ path: testInfo.outputPath("barbu-table.png"), fullPage: true });
 });
 
-test("Black Lady table reuses the shared avoid-hearts drill", async ({ page }, testInfo) => {
+test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testInfo) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Open Black Lady" }).click();
+  await page.getByRole("button", { name: "Open Hearts" }).click();
 
-  await expect(page.getByRole("heading", { name: "Black Lady table" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Hearts table" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByRole("button", { name: "Play Black Lady" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Play Hearts" })).toBeVisible();
 
   await page.getByRole("tab", { name: "Learn" }).click();
-  await expect(page.getByLabel("Black Lady learn actions")).toContainText("Continue with Object of Hearts");
-  await expect(page.getByLabel("Black Lady learn actions")).toContainText("Reference");
-  await expect(page.getByLabel("Black Lady learn actions")).not.toContainText("Hearts scorecard");
-  await expect(page.getByLabel("Black Lady course progress")).toContainText("0 / 7 complete");
-  await expect(page.getByLabel("Black Lady lesson path")).toContainText("Learn the Black Lady table");
-  await expect(page.getByLabel("Black Lady lesson path")).toContainText("Object of Hearts");
-  await expect(page.getByLabel("Black Lady lesson path")).toContainText("Queen of Spades");
-  await expect(page.getByLabel("Black Lady lesson path")).toContainText("Pass three");
-  await expect(page.getByLabel("Black Lady lesson path")).toContainText("Break hearts");
-  await expect(page.getByLabel("Black Lady lesson path")).toContainText("Stop the moon");
-  await expect(page.getByLabel("Black Lady lesson path")).toContainText("Score a hand");
+  await expect(page.getByLabel("Hearts learn actions")).toContainText("Continue with Object of Hearts");
+  await expect(page.getByLabel("Hearts learn actions")).toContainText("Reference");
+  await expect(page.getByLabel("Hearts learn actions")).not.toContainText("Hearts scorecard");
+  await expect(page.getByLabel("Hearts course progress")).toContainText("0 / 7 complete");
+  await expect(page.getByLabel("Hearts lesson path")).toContainText("Learn the Hearts table");
+  await expect(page.getByLabel("Hearts lesson path")).toContainText("Object of Hearts");
+  await expect(page.getByLabel("Hearts lesson path")).toContainText("Queen of Spades");
+  await expect(page.getByLabel("Hearts lesson path")).toContainText("Pass three");
+  await expect(page.getByLabel("Hearts lesson path")).toContainText("Break hearts");
+  await expect(page.getByLabel("Hearts lesson path")).toContainText("Stop the moon");
+  await expect(page.getByLabel("Hearts lesson path")).toContainText("Score a hand");
 
   await page.getByRole("tab", { name: "Practice" }).click();
   await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByLabel("Black Lady table actions").getByRole("button", { name: "Quick drill" })).toBeVisible();
-  await expect(page.getByLabel("Black Lady practice drills")).toContainText("Pass three");
-  await expect(page.getByLabel("Black Lady practice drills")).toContainText("First trick");
-  await expect(page.getByLabel("Black Lady practice drills")).toContainText("Avoid hearts");
-  await expect(page.getByLabel("Black Lady practice drills")).toContainText("Queen danger");
-  await expect(page.getByLabel("Black Lady practice drills")).toContainText("Break hearts");
-  await expect(page.getByLabel("Black Lady practice drills")).toContainText("Stop the moon");
-  await expect(page.getByLabel("Black Lady practice drills")).toContainText("Score a hand");
+  await expect(page.getByLabel("Hearts table actions").getByRole("button", { name: "Quick drill" })).toBeVisible();
+  await expect(page.getByLabel("Hearts practice drills")).toContainText("Pass three");
+  await expect(page.getByLabel("Hearts practice drills")).toContainText("First trick");
+  await expect(page.getByLabel("Hearts practice drills")).toContainText("Avoid hearts");
+  await expect(page.getByLabel("Hearts practice drills")).toContainText("Queen danger");
+  await expect(page.getByLabel("Hearts practice drills")).toContainText("Break hearts");
+  await expect(page.getByLabel("Hearts practice drills")).toContainText("Stop the moon");
+  await expect(page.getByLabel("Hearts practice drills")).toContainText("Score a hand");
   await page.screenshot({ path: testInfo.outputPath("hearts-practice.png"), fullPage: true });
 
-  await page.getByLabel("Black Lady table actions").getByRole("button", { name: "Quick drill" }).click();
+  await page.getByLabel("Hearts table actions").getByRole("button", { name: "Quick drill" }).click();
   await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
   await expect(page.getByLabel("Drill decision")).toContainText("Hearts");
   await page.getByLabel("Drill decision").getByRole("button", { name: "Table" }).click();
-  await expect(page.getByRole("heading", { name: "Black Lady table" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Hearts table" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
 
-  await page.getByLabel("Black Lady practice drills").getByRole("button", { name: "Avoid hearts" }).click();
+  await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Avoid hearts" }).click();
   await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
   await expect(page.getByLabel("Drill decision")).toContainText("Follow clubs without taking the heart");
 
   await page.getByLabel("Drill decision").getByRole("button", { name: "Table" }).click();
-  await expect(page.getByRole("heading", { name: "Black Lady table" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Hearts table" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
 });
 
 test("Hearts learn start advances through learning stages instead of play loop", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Open Black Lady" }).click();
+  await page.getByRole("button", { name: "Open Hearts" }).click();
   await page.getByRole("tab", { name: "Learn" }).click();
 
-  await page.getByLabel("Black Lady learn actions").getByRole("button", { name: /Continue with Object of Hearts/ }).click();
+  await page.getByLabel("Hearts learn actions").getByRole("button", { name: /Continue with Object of Hearts/ }).click();
   await expect(page.getByRole("heading", { name: "Object of Hearts" })).toBeVisible();
   await expect(page.getByLabel("Hearts object lesson content")).toContainText("low score wins");
   await expect(page.getByRole("heading", { name: "Pass cards" })).toHaveCount(0);
@@ -404,9 +405,9 @@ test("Hearts learn start advances through learning stages instead of play loop",
   await page.getByRole("button", { name: "Check answer" }).click();
   await page.getByRole("button", { name: "Review session" }).click();
   await expect(page.getByRole("heading", { name: "Session complete" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Continue Black Lady path" }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue Hearts path" }).first()).toBeVisible();
 
-  await page.getByRole("button", { name: "Continue Black Lady path" }).first().click();
+  await page.getByRole("button", { name: "Continue Hearts path" }).first().click();
   await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
   await expect(page.getByLabel("Drill decision")).toContainText("Follow clubs without taking the heart");
   await expect(page.getByLabel("Drill decision")).not.toContainText("Queen of Spades");
@@ -418,9 +419,9 @@ test("Hearts passing drill teaches the danger-card pass", async ({ page }, testI
   }
 
   await gotoWithPracticeSeed(page, 12);
-  await page.getByRole("button", { name: "Open Black Lady" }).click();
+  await page.getByRole("button", { name: "Open Hearts" }).click();
   await page.getByRole("tab", { name: "Practice" }).click();
-  await page.getByLabel("Black Lady practice drills").getByRole("button", { name: "Pass three" }).click();
+  await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Pass three" }).click();
 
   await expect(page.getByRole("heading", { name: "Pass three" })).toBeVisible();
   await expect(page.getByLabel("Hearts pass practice cards")).toContainText("Queen of Spades");
@@ -450,9 +451,9 @@ test("Hearts passing drill teaches the danger-card pass", async ({ page }, testI
 
 test("Hearts passing drill can preserve a long suit", async ({ page }) => {
   await gotoWithPracticeSeed(page, 11);
-  await page.getByRole("button", { name: "Open Black Lady" }).click();
+  await page.getByRole("button", { name: "Open Hearts" }).click();
   await page.getByRole("tab", { name: "Practice" }).click();
-  await page.getByLabel("Black Lady practice drills").getByRole("button", { name: "Pass three" }).click();
+  await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Pass three" }).click();
 
   await expect(page.getByRole("heading", { name: "Pass three" })).toBeVisible();
   await expect(page.getByLabel("Hearts pass practice cards")).toContainText("Build a long suit");
@@ -469,9 +470,9 @@ test("Hearts passing drill can preserve a long suit", async ({ page }) => {
 
 test("Hearts pass lesson completes and advances to rule lesson", async ({ page }) => {
   await gotoWithPracticeSeed(page, 12);
-  await page.getByRole("button", { name: "Open Black Lady" }).click();
+  await page.getByRole("button", { name: "Open Hearts" }).click();
   await page.getByRole("tab", { name: "Learn" }).click();
-  await page.getByLabel("Black Lady lesson path").getByRole("button", { name: /Pass three/ }).click();
+  await page.getByLabel("Hearts lesson path").getByRole("button", { name: /Pass three/ }).click();
 
   await expect(page.getByRole("heading", { name: "Pass three" })).toBeVisible();
   await page.getByRole("button", { name: "Q S" }).click();
@@ -487,19 +488,19 @@ test("Hearts pass lesson completes and advances to rule lesson", async ({ page }
   await page.getByRole("button", { name: "A H" }).click();
   await page.getByRole("button", { name: "K H" }).click();
   await page.getByRole("button", { name: "Check pass" }).click();
-  await expect(page.getByRole("button", { name: "Continue Black Lady path" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue Hearts path" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Continue Black Lady path" }).click();
+  await page.getByRole("button", { name: "Continue Hearts path" }).click();
   await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
   await expect(page.getByLabel("Drill decision")).toContainText("Can you lead a heart?");
 });
 
 test("Hearts micro drills teach broken hearts moon defense and score reading", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Open Black Lady" }).click();
+  await page.getByRole("button", { name: "Open Hearts" }).click();
   await page.getByRole("tab", { name: "Practice" }).click();
 
-  await page.getByLabel("Black Lady practice drills").getByRole("button", { name: "First trick" }).click();
+  await page.getByLabel("Hearts practice drills").getByRole("button", { name: "First trick" }).click();
   await expect(page.getByLabel("Drill decision")).toContainText("Follow clubs first");
   await page.getByRole("button", { name: "3 C" }).click();
   await page.getByRole("button", { name: "Check answer" }).click();
@@ -507,7 +508,7 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
   await expect(page.getByLabel("Drill decision")).toContainText("3C is good");
   await page.getByRole("button", { name: "Table" }).first().click();
 
-  await page.getByLabel("Black Lady practice drills").getByRole("button", { name: "Break hearts" }).click();
+  await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Break hearts" }).click();
   await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
   await expect(page.getByLabel("Drill decision")).toContainText("Can you lead a heart?");
   await page.getByRole("button", { name: "2 H" }).click();
@@ -516,7 +517,7 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
   await expect(page.getByLabel("Drill decision")).toContainText("not legal yet");
   await page.getByRole("button", { name: "Table" }).first().click();
 
-  await page.getByLabel("Black Lady practice drills").getByRole("button", { name: "Stop the moon" }).click();
+  await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Stop the moon" }).click();
   await expect(page.getByLabel("Drill decision")).toContainText("Break the moon threat");
   await page.getByRole("button", { name: "A C" }).click();
   await page.getByRole("button", { name: "Check answer" }).click();
@@ -524,7 +525,7 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
   await expect(page.getByLabel("Drill decision")).toContainText("moon defense");
   await page.getByRole("button", { name: "Table" }).first().click();
 
-  await page.getByLabel("Black Lady practice drills").getByRole("button", { name: "Queen danger" }).click();
+  await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Queen danger" }).click();
   await expect(page.getByLabel("Drill decision")).toContainText("Duck the Queen of Spades");
   await expect(page.getByLabel("Drill decision")).not.toContainText("No Queens");
   await page.getByRole("button", { name: "2 S" }).click();
@@ -533,7 +534,7 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
   await expect(page.getByLabel("Drill decision")).toContainText("Queen of Spades");
   await page.getByRole("button", { name: "Table" }).first().click();
 
-  await page.getByLabel("Black Lady practice drills").getByRole("button", { name: "Score a hand" }).click();
+  await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Score a hand" }).click();
   await expect(page.getByLabel("Drill decision")).toContainText("Find the 13-point card");
   await page.getByRole("button", { name: "Q S" }).click();
   await page.getByRole("button", { name: "Check answer" }).click();
@@ -541,75 +542,75 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
   await expect(page.getByLabel("Drill decision")).toContainText("13-point danger card");
 });
 
-test("Hearts practice result returns to the Black Lady table", async ({ page }) => {
+test("Hearts practice result returns to the Hearts table", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Open Black Lady" }).click();
+  await page.getByRole("button", { name: "Open Hearts" }).click();
   await page.getByRole("tab", { name: "Practice" }).click();
-  await page.getByLabel("Black Lady practice drills").getByRole("button", { name: "Avoid hearts" }).click();
+  await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Avoid hearts" }).click();
 
   await completeQuickDrillDecision(page);
   await continueDrillFromCheckedAnswer(page, "Review session");
 
   await expect(page.getByRole("heading", { name: "Session complete" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Back to Black Lady practice" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Back to Hearts practice" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Continue path" })).toHaveCount(0);
 
-  await page.getByRole("button", { name: "Back to Black Lady practice" }).click();
-  await expect(page.getByRole("heading", { name: "Black Lady table" })).toBeVisible();
+  await page.getByRole("button", { name: "Back to Hearts practice" }).click();
+  await expect(page.getByRole("heading", { name: "Hearts table" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
 });
 
-test("Black Lady reference explains the current rule boundary", async ({ page }, testInfo) => {
+test("Hearts reference explains the MVP rule boundary", async ({ page }, testInfo) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Open Black Lady" }).click();
+  await page.getByRole("button", { name: "Open Hearts" }).click();
 
   await page.getByRole("tab", { name: "Learn" }).click();
-  await page.getByLabel("Black Lady learn actions").getByRole("button", { name: "Rules Reference" }).click();
+  await page.getByLabel("Hearts learn actions").getByRole("button", { name: "Rules Reference" }).click();
 
-  await expect(page.getByRole("heading", { name: "Black Lady reference" })).toBeVisible();
-  await expect(page.getByLabel("Black Lady overview")).toContainText("Queen of Spades");
-  await expect(page.getByLabel("Black Lady overview")).toContainText("woman of spades");
-  await expect(page.getByLabel("Contract reference")).toContainText("Black Lady rules");
+  await expect(page.getByRole("heading", { name: "Hearts reference" })).toBeVisible();
+  await expect(page.getByLabel("Hearts overview")).toContainText("Queen of Spades");
+  await expect(page.getByLabel("Hearts overview")).toContainText("woman of spades");
+  await expect(page.getByLabel("Contract reference")).toContainText("Hearts rules");
   await expect(page.getByLabel("Contract reference")).toContainText("queen of spades is 13");
   await expect(page.getByLabel("Contract reference")).toContainText("shooting the moon");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Rotating pass");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Hearts v1");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Hearts v2");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Playable");
-  await expect(page.getByLabel("Variants and varieties")).toContainText("Current Rule Boundary");
+  await expect(page.getByLabel("Variants and varieties")).toContainText("MVP Boundary");
   await page.screenshot({ path: testInfo.outputPath("hearts-reference.png"), fullPage: true });
 
-  await page.getByRole("button", { name: "Back to Black Lady table" }).click();
-  await expect(page.getByRole("heading", { name: "Black Lady table", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Back to Hearts table" }).click();
+  await expect(page.getByRole("heading", { name: "Hearts table", exact: true })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Learn" })).toHaveAttribute("aria-selected", "true");
 });
 
-test("Black Lady play starts with a rotating pass phase before the hand", async ({ page }, testInfo) => {
+test("Hearts play starts with a rotating pass phase before the hand", async ({ page }, testInfo) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Open Black Lady" }).click();
+  await page.getByRole("button", { name: "Open Hearts" }).click();
 
   await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
   const playPanel = page.getByRole("tabpanel", { name: "Play" });
   await expect(playPanel).toContainText("QS at 13");
   await expect(playPanel).toContainText("shoot-the-moon scoring");
-  await page.getByRole("button", { name: "Play Black Lady" }).click();
+  await page.getByRole("button", { name: "Play Hearts" }).click();
 
   await expect(page.getByRole("heading", { name: "Pass cards" })).toBeVisible();
-  await expect(page.getByLabel("Black Lady pass summary")).toContainText("You pass");
-  await expect(page.getByLabel("Black Lady pass summary")).toContainText("Left");
-  await expect(page.getByLabel("Black Lady pass cards")).toContainText("Choose exactly three cards");
+  await expect(page.getByLabel("Hearts pass summary")).toContainText("You pass");
+  await expect(page.getByLabel("Hearts pass summary")).toContainText("Left");
+  await expect(page.getByLabel("Hearts pass cards")).toContainText("Choose exactly three cards");
   await page.screenshot({ path: testInfo.outputPath("hearts-passing.png"), fullPage: true });
   await passThreeHeartsCards(page);
 
-  await expect(page.getByRole("heading", { name: "Black Lady hand" })).toBeVisible();
-  await expect(page.getByLabel("Black Lady hand score")).toContainText("Your penalty");
-  await expect(page.getByLabel("Black Lady hand score")).toContainText("26");
-  await expect(page.getByLabel("Black Lady table score")).toContainText("Your penalty");
-  await expect(page.getByLabel("Black Lady table score")).toContainText("Barbu penalty");
-  await expect(page.getByLabel("Black Lady table score")).toContainText("Left penalty");
-  await expect(page.getByLabel("Black Lady table score")).toContainText("Right penalty");
-  await expect(page.getByLabel("Black Lady hand table")).toBeVisible();
-  await expect(page.getByLabel("Your Black Lady hand")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Hearts hand" })).toBeVisible();
+  await expect(page.getByLabel("Hearts hand score")).toContainText("Your penalty");
+  await expect(page.getByLabel("Hearts hand score")).toContainText("26");
+  await expect(page.getByLabel("Hearts table score")).toContainText("Your penalty");
+  await expect(page.getByLabel("Hearts table score")).toContainText("Barbu penalty");
+  await expect(page.getByLabel("Hearts table score")).toContainText("Left penalty");
+  await expect(page.getByLabel("Hearts table score")).toContainText("Right penalty");
+  await expect(page.getByLabel("Hearts hand table")).toBeVisible();
+  await expect(page.getByLabel("Your Hearts hand")).toBeVisible();
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
   await expectHandNearActionRow(page, ".full-hand-cards");
@@ -617,35 +618,35 @@ test("Black Lady play starts with a rotating pass phase before the hand", async 
   await expect(page.locator(".full-hand-card").first()).toHaveCSS("touch-action", "manipulation");
   await page.screenshot({ path: testInfo.outputPath("hearts-hand.png"), fullPage: true });
 
-  await page.getByLabel("Black Lady full hand").getByRole("button", { name: "Table" }).click();
-  await expect(page.getByRole("heading", { name: "Black Lady table" })).toBeVisible();
+  await page.getByLabel("Hearts full hand").getByRole("button", { name: "Table" }).click();
+  await expect(page.getByRole("heading", { name: "Hearts table" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
 });
 
-test("Black Lady play can resume a saved local hand", async ({ page }) => {
+test("Hearts play can resume a saved local hand", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Open Black Lady" }).click();
-  await page.getByRole("button", { name: "Play Black Lady" }).click();
+  await page.getByRole("button", { name: "Open Hearts" }).click();
+  await page.getByRole("button", { name: "Play Hearts" }).click();
 
   await expect(page.getByRole("heading", { name: "Pass cards" })).toBeVisible();
-  await page.getByLabel("Your Black Lady passing hand").locator("button").nth(0).click();
-  await expect(page.getByLabel("Black Lady pass summary")).toContainText("1 / 3");
-  await page.getByLabel("Black Lady pass cards").getByRole("button", { name: "Table" }).click();
+  await page.getByLabel("Your Hearts passing hand").locator("button").nth(0).click();
+  await expect(page.getByLabel("Hearts pass summary")).toContainText("1 / 3");
+  await page.getByLabel("Hearts pass cards").getByRole("button", { name: "Table" }).click();
 
-  await expect(page.getByRole("heading", { name: "Black Lady table", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Hearts table", exact: true })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByRole("button", { name: "Continue Black Lady" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue Hearts" })).toBeVisible();
   await expect(page.getByText("Hand 1, pass left, 1 of 3 selected")).toBeVisible();
 
-  await page.getByRole("button", { name: "Continue Black Lady" }).click();
+  await page.getByRole("button", { name: "Continue Hearts" }).click();
   await expect(page.getByRole("heading", { name: "Pass cards" })).toBeVisible();
-  await expect(page.getByLabel("Black Lady pass summary")).toContainText("1 / 3");
+  await expect(page.getByLabel("Hearts pass summary")).toContainText("1 / 3");
 });
 
-test("Black Lady next hand carries score and starts with passing again", async ({ page }, testInfo) => {
+test("Hearts next hand carries score and starts with passing again", async ({ page }, testInfo) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Open Black Lady" }).click();
-  await page.getByRole("button", { name: "Play Black Lady" }).click();
+  await page.getByRole("button", { name: "Open Hearts" }).click();
+  await page.getByRole("button", { name: "Play Hearts" }).click();
   await passThreeHeartsCards(page);
 
   for (let decision = 0; decision < 13; decision += 1) {
@@ -653,9 +654,9 @@ test("Black Lady next hand carries score and starts with passing again", async (
   }
 
   await expect(page.getByRole("button", { name: "Next hand" })).toBeVisible();
-  await expect(page.getByLabel("Black Lady final scorecard")).toContainText("Low score leads");
-  await expect(page.getByLabel("Black Lady final scorecard")).toContainText("Target 100");
-  await expect(page.getByLabel("Black Lady final scorecard")).toContainText("Hand 1");
+  await expect(page.getByLabel("Hearts final scorecard")).toContainText("Low score leads");
+  await expect(page.getByLabel("Hearts final scorecard")).toContainText("Target 100");
+  await expect(page.getByLabel("Hearts final scorecard")).toContainText("Hand 1");
   await expect(page.getByLabel("This hand breakdown")).toContainText("Tricks");
   await expect(page.getByLabel("This hand breakdown")).toContainText("Points");
   await expectNoPageScroll(page);
@@ -664,10 +665,10 @@ test("Black Lady next hand carries score and starts with passing again", async (
   await page.getByRole("button", { name: "Next hand" }).click();
 
   await expect(page.getByRole("heading", { name: "Pass cards" })).toBeVisible();
-  await expect(page.getByLabel("Black Lady pass summary")).toContainText("Right");
+  await expect(page.getByLabel("Hearts pass summary")).toContainText("Right");
   await passThreeHeartsCards(page);
-  await expect(page.getByRole("heading", { name: "Black Lady hand" })).toBeVisible();
-  await expect(page.getByLabel("Black Lady table score")).toContainText(/[1-9]\d*/);
+  await expect(page.getByRole("heading", { name: "Hearts hand" })).toBeVisible();
+  await expect(page.getByLabel("Hearts table score")).toContainText(/[1-9]\d*/);
 });
 
 test("Perfect mode starts card-counting minigames", async ({ page }, testInfo) => {
@@ -1022,6 +1023,7 @@ test("guided lesson accepts a legal card play", async ({ page }) => {
 test("No Hearts example shows clockwise order after Barbu leads", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
+  await openBarbuTab(page, "Learn");
   await page.getByRole("button", { name: /Continue with Meet the contract/ }).click();
   await page.getByRole("button", { name: "See example" }).click();
 
@@ -1037,6 +1039,7 @@ test("No Hearts example shows clockwise order after Barbu leads", async ({ page 
 test("Barbu reference exposes baseline rules and varieties", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
+  await openBarbuTab(page, "Learn");
   await page.getByRole("button", { name: "Reference" }).click();
 
   await expect(page.getByRole("heading", { name: "Barbu reference" })).toBeVisible();
@@ -1142,7 +1145,7 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
   await page.screenshot({ path: testInfo.outputPath("play-barbu-contract-intro.png"), fullPage: true });
   await page.getByRole("button", { name: "Start hand" }).click();
 
-  await expect(page.getByRole("heading", { name: "No Black Lady hand" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No Hearts hand" })).toBeVisible();
   await expectControlBelowSafeArea(page, ".table-play-topbar .back-button");
   await expect(page.locator(".table-play-surface")).toBeVisible();
   await expect(page.getByLabel("Current hand")).toBeVisible();
@@ -1151,7 +1154,7 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
   await expect(page.locator(".summary-row-label", { hasText: "Table scores" })).toBeVisible();
   await expect(page.locator(".card-table .cardholder")).toHaveCount(4);
   await expectTableSlotsSeparated(page);
-  const noHeartsTable = await page.getByLabel("No Black Lady hand table").boundingBox();
+  const noHeartsTable = await page.getByLabel("No Hearts hand table").boundingBox();
   expect(noHeartsTable).not.toBeNull();
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
@@ -1183,7 +1186,7 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
   await expect(page.getByRole("button", { name: "Next trick", exact: true })).toBeVisible();
   await expect(page.locator(".card-table .cardholder")).toHaveCount(4);
   await expectTableSlotsSeparated(page);
-  const reviewingNoHeartsTable = await page.getByLabel("No Black Lady hand table").boundingBox();
+  const reviewingNoHeartsTable = await page.getByLabel("No Hearts hand table").boundingBox();
   expect(reviewingNoHeartsTable).not.toBeNull();
   expect(Math.abs((reviewingNoHeartsTable?.y ?? 0) - (noHeartsTable?.y ?? 0))).toBeLessThanOrEqual(1);
   expect(Math.abs((reviewingNoHeartsTable?.height ?? 0) - (noHeartsTable?.height ?? 0))).toBeLessThanOrEqual(1);
@@ -1196,8 +1199,8 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
   }
 
   await expect(page.getByRole("button", { name: "Replay" })).toBeVisible();
-  await expect(page.getByLabel("No Black Lady hand table")).toBeVisible();
-  const replayNoHeartsTable = await page.getByLabel("No Black Lady hand table").boundingBox();
+  await expect(page.getByLabel("No Hearts hand table")).toBeVisible();
+  const replayNoHeartsTable = await page.getByLabel("No Hearts hand table").boundingBox();
   expect(replayNoHeartsTable).not.toBeNull();
   expect(Math.abs((replayNoHeartsTable?.y ?? 0) - (noHeartsTable?.y ?? 0))).toBeLessThanOrEqual(1);
   expect(Math.abs((replayNoHeartsTable?.height ?? 0) - (noHeartsTable?.height ?? 0))).toBeLessThanOrEqual(1);
@@ -1206,7 +1209,7 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
   await page.screenshot({ path: testInfo.outputPath("play-barbu-replay-hand.png"), fullPage: true });
 
   await page.getByRole("button", { name: "Replay" }).click();
-  await expect(page.getByRole("heading", { name: "No Black Lady hand" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No Hearts hand" })).toBeVisible();
   await expect
     .poll(async () =>
       page.locator(".full-hand-cards .full-hand-card").evaluateAll((cards) =>
@@ -1252,7 +1255,7 @@ test("Play Barbu can resume a saved local run", async ({ page }) => {
   await page.getByRole("button", { name: "Play Barbu" }).click();
   await page.getByRole("button", { name: "Start hand" }).click();
 
-  await expect(page.getByRole("heading", { name: "No Black Lady hand" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No Hearts hand" })).toBeVisible();
   await expect(page.locator(".full-hand-cards .full-hand-card")).toHaveCount(13);
   await expect.poll(async () => page.evaluate(() => localStorage.getItem("barbu.savedPlayRun.v1"))).not.toBeNull();
 
@@ -1263,7 +1266,7 @@ test("Play Barbu can resume a saved local run", async ({ page }) => {
   await expect(page.getByText("No Hearts, trick 1")).toBeVisible();
 
   await page.getByRole("button", { name: "Continue Play Barbu" }).click();
-  await expect(page.getByRole("heading", { name: "No Black Lady hand" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No Hearts hand" })).toBeVisible();
   await expect(page.locator(".full-hand-cards .full-hand-card")).toHaveCount(13);
   await expectNoPageScroll(page);
 });
@@ -1341,22 +1344,22 @@ test("Play Barbu advances full-hand contracts with a running total", async ({ pa
   await expect(page.getByRole("button", { name: "New game" })).toBeVisible();
   await expectNoPageScroll(page);
   await page.getByRole("button", { name: "Replay weakest" }).click();
-  await expect(page.getByRole("heading", { name: /No Black Lady hand|No Queens hand|King of Black Lady hand|No Last Two hand|No Tricks hand|Hearts Trumps hand|Domino hand/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /No Hearts hand|No Queens hand|King of Hearts hand|No Last Two hand|No Tricks hand|Hearts Trumps hand|Domino hand/ })).toBeVisible();
 });
 
-test.skip("No Black Lady hand plays through thirteen tricks", async ({ page }, testInfo) => {
+test.skip("No Hearts hand plays through thirteen tricks", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
   await startContractHand(page, "No Hearts");
 
-  await expect(page.getByRole("heading", { name: "No Black Lady hand" })).toBeVisible();
-  await expect(page.getByLabel("No Black Lady hand score")).toContainText("Your penalty");
-  await expect(page.getByLabel("No Black Lady hand table")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No Hearts hand" })).toBeVisible();
+  await expect(page.getByLabel("No Hearts hand score")).toContainText("Your penalty");
+  await expect(page.getByLabel("No Hearts hand table")).toBeVisible();
   await expectNoPageScroll(page);
 
   await page.locator(".full-hand-card.legal").first().dblclick();
-  await expect(page.getByLabel("No Black Lady hand decision")).toContainText("Left's card is on the table");
-  await expect(page.getByLabel("No Black Lady hand table").locator(".table-card")).toHaveCount(4);
+  await expect(page.getByLabel("No Hearts hand decision")).toContainText("Left's card is on the table");
+  await expect(page.getByLabel("No Hearts hand table").locator(".table-card")).toHaveCount(4);
   await expect(page.locator(".table-play-panel p.outcome").filter({ hasText: /(won the trick|won a clean trick)/ })).toBeVisible();
   await page.getByRole("button", { name: "Next trick", exact: true }).click();
 
@@ -1365,7 +1368,7 @@ test.skip("No Black Lady hand plays through thirteen tricks", async ({ page }, t
   }
 
   await expect(page.getByRole("heading", { name: /Clean hand|Damage limited|Barbu caught you/ })).toBeVisible();
-  await expect(page.getByLabel("No Black Lady hand score")).toContainText("30 / 30");
+  await expect(page.getByLabel("No Hearts hand score")).toContainText("30 / 30");
   await expect(page.getByLabel("No Hearts result summary")).toContainText("Barbu took");
   await expect(page.getByLabel("No Hearts key tricks")).toContainText("Best escape");
   await expect(page.getByRole("button", { name: "Replay" })).toBeVisible();
@@ -1400,14 +1403,14 @@ test.skip("No Queens hand plays through thirteen tricks", async ({ page }, testI
   await page.screenshot({ path: testInfo.outputPath("no-queens-hand.png"), fullPage: true });
 });
 
-test.skip("King of Black Lady hand plays through thirteen tricks", async ({ page }, testInfo) => {
+test.skip("King of Hearts hand plays through thirteen tricks", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
   await startContractHand(page, "King of Hearts");
 
-  await expect(page.getByRole("heading", { name: "King of Black Lady hand" })).toBeVisible();
-  await expect(page.getByLabel("King of Black Lady hand score")).toContainText("points in play");
-  await expect(page.getByLabel("King of Black Lady hand table")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "King of Hearts hand" })).toBeVisible();
+  await expect(page.getByLabel("King of Hearts hand score")).toContainText("points in play");
+  await expect(page.getByLabel("King of Hearts hand table")).toBeVisible();
   await expectNoPageScroll(page);
 
   for (let decision = 0; decision < 13; decision += 1) {
@@ -1415,7 +1418,7 @@ test.skip("King of Black Lady hand plays through thirteen tricks", async ({ page
   }
 
   await expect(page.getByRole("heading", { name: /Clean hand|Damage limited|Barbu caught you/ })).toBeVisible();
-  await expect(page.getByLabel("King of Black Lady hand score")).toContainText("20 / 20");
+  await expect(page.getByLabel("King of Hearts hand score")).toContainText("20 / 20");
   await expect(page.getByLabel("King of Hearts result summary")).toContainText("You took");
   await expect(page.getByLabel("King of Hearts key tricks")).toContainText("Best escape");
   await expect(page.getByRole("button", { name: "Replay" })).toBeVisible();
@@ -1551,6 +1554,7 @@ test.skip("Domino hand plays through the layout contract", async ({ page }, test
 test("finishing a lesson advances course progress", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
+  await openBarbuTab(page, "Learn");
   await page.getByRole("button", { name: /Continue with Meet the contract/ }).click();
 
   await expect(page.getByRole("heading", { name: "Meet the contract" })).toBeVisible();
@@ -1587,6 +1591,7 @@ test("No Queens course has concept example play and review", async ({ page }) =>
   await gotoWithCourseProgress(page, { "meet-contract": true });
 
   await page.getByRole("button", { name: /Barbu/ }).click();
+  await openBarbuTab(page, "Learn");
   await page.getByRole("button", { name: /Continue with Spot the danger/ }).click();
 
   await expect(page.getByRole("heading", { name: "Spot the danger" })).toBeVisible();
@@ -1624,6 +1629,7 @@ test("King of Hearts course has concept example play and review", async ({ page 
   });
 
   await page.getByRole("button", { name: /Barbu/ }).click();
+  await openBarbuTab(page, "Learn");
   await page.getByRole("button", { name: /Continue with Play the trick/ }).click();
 
   await expect(page.getByRole("heading", { name: "Avoid the king" })).toBeVisible();
@@ -1786,6 +1792,7 @@ test("training path practice step starts quick drill and marks completion", asyn
   });
 
   await page.getByRole("button", { name: /Barbu/ }).click();
+  await openBarbuTab(page, "Learn");
   await page.getByRole("button", { name: /Continue with Practice table/ }).click();
 
   await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
@@ -1830,6 +1837,7 @@ test("completed course does not loop back to the first lesson", async ({ page })
   });
 
   await page.getByRole("button", { name: /Barbu/ }).click();
+  await openBarbuTab(page, "Learn");
 
   await expect(page.getByText("9 / 9 complete")).toBeVisible();
   await expect(page.getByRole("button", { name: "Review results" })).toBeVisible();
@@ -1840,7 +1848,7 @@ test("completed course does not loop back to the first lesson", async ({ page })
   await expect(page.getByRole("tab", { name: "Perfect" })).toHaveAttribute("aria-selected", "true");
   await page.getByRole("button", { name: "Games" }).click();
   await page.getByRole("button", { name: /Open Barbu/ }).click();
-  await expect(page.getByRole("tab", { name: "Learn" })).toHaveAttribute("aria-selected", "true");
+  await openBarbuTab(page, "Learn");
   await page.getByRole("button", { name: "Review results" }).click();
   await page.getByRole("button", { name: "Finish review" }).click();
   await expect(page.getByRole("heading", { name: "Barbu's table" })).toBeVisible();

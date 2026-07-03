@@ -246,11 +246,11 @@ export const referenceCatalog: GameReference[] = [
   },
   {
     id: "hearts",
-    title: "Black Lady",
+    title: "Hearts",
     family: "Hearts",
-    baseline: "David Parlett structure, Wikipedia-style opening convention",
+    baseline: "David Parlett structure, Wikipedia-style MVP opening convention",
     overview:
-      "Black Lady is the Queen of Spades style known in some places as the woman of spades. The reference structure follows the Parlett-style object, play, and scoring format, while the current opening convention follows the common Wikipedia-described rule that 2C opens the first trick. The app currently plays repeated hands to 100 points with rotating pass directions and shooting the moon enabled.",
+      "Hearts is the Queen of Spades style known in some places as the woman of spades. The reference structure follows the Parlett-style object, play, and scoring format, while the current opening convention follows the common Wikipedia-described rule that 2C opens the first trick. The app currently plays repeated hands to 100 points with rotating pass directions and shooting the moon enabled.",
     sections: [
       {
         id: "object",
@@ -266,7 +266,7 @@ export const referenceCatalog: GameReference[] = [
         id: "players",
         title: "Players And Seats",
         body:
-          "The Black Lady table uses the same four-seat trick-taking surface as Barbu: Barbu teaches from the top, You play from the bottom, and the side seats complete the table.",
+          "The Hearts table uses the same four-seat trick-taking surface as Barbu: Barbu teaches from the top, You play from the bottom, and the side seats complete the table.",
         facts: [
           { label: "Players", value: "Four" },
           { label: "Tutor", value: "Barbu, the King of Cards" }
@@ -304,7 +304,7 @@ export const referenceCatalog: GameReference[] = [
     contracts: [
       {
         id: "mvp-hand",
-        title: "Black Lady Match",
+        title: "Hearts Match",
         objective: "Rotate the pass, then avoid hearts and the queen of spades across repeated hands.",
         scoring: "Hearts are 1 penalty point each; the queen of spades is 13; shooting the moon scores 0 for the shooter and 26 for the others.",
         lesson: "Start by reading who wins the trick, then manage the cumulative score over several hands."
@@ -314,7 +314,7 @@ export const referenceCatalog: GameReference[] = [
       {
         id: "mvp-hand",
         title: "Focused local match",
-        coreStatus: "Hearts v1",
+        coreStatus: "MVP",
         appStatus: "Playable",
         note: "The shared trick-taking table supports rotating pass directions, 2C opening, follow-suit legality, first-trick penalty restrictions, hearts-broken lead restrictions, trick winners, hearts, queen-of-spades scoring, shoot-the-moon scoring, and a 100-point local match."
       },
@@ -352,11 +352,11 @@ export const referenceCatalog: GameReference[] = [
         id: "queen-of-spades",
         title: "Queen Of Spades / Woman Of Spades",
         note:
-          "This is the named danger-card style the app starts from: hearts are penalties, and the queen of spades is the large penalty card."
+          "This is the named danger-card style the MVP starts from: hearts are penalties, and the queen of spades is the large penalty card."
       },
       {
-        id: "current-rule-boundary",
-        title: "Current Rule Boundary",
+        id: "mvp-simplification",
+        title: "MVP Boundary",
         note:
           "The app currently teaches rotating passes, the core trick loop, Hearts opening restrictions, penalty scoring, shooting the moon, and a 100-point local match before adding richer Hearts varieties such as locked danger spades or bonus-jack rules."
       }
