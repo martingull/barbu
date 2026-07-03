@@ -622,6 +622,26 @@ test("Hearts play starts with a pass-left phase before the hand", async ({ page 
   await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
 });
 
+test("Hearts play can resume a saved local hand", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Hearts" }).click();
+  await page.getByRole("button", { name: "Play Hearts" }).click();
+
+  await expect(page.getByRole("heading", { name: "Pass cards" })).toBeVisible();
+  await page.getByLabel("Your Hearts passing hand").locator("button").nth(0).click();
+  await expect(page.getByLabel("Hearts pass summary")).toContainText("1 / 3");
+  await page.getByLabel("Hearts pass cards").getByRole("button", { name: "Table" }).click();
+
+  await expect(page.getByRole("heading", { name: "Hearts table", exact: true })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("button", { name: "Continue Hearts" })).toBeVisible();
+  await expect(page.getByText("Passing hand 1, 1 of 3 selected")).toBeVisible();
+
+  await page.getByRole("button", { name: "Continue Hearts" }).click();
+  await expect(page.getByRole("heading", { name: "Pass cards" })).toBeVisible();
+  await expect(page.getByLabel("Hearts pass summary")).toContainText("1 / 3");
+});
+
 test("Hearts next hand carries score and starts with passing again", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Open Hearts" }).click();
