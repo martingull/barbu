@@ -36,6 +36,35 @@ export function startBrowserHeartsHand(seed: number): FullHandState {
 }
 
 export function generateBrowserHeartsPassPractice(seed: number): HeartsPassScenario {
+  if (seed % 2 === 1) {
+    const playerHand = [
+      card("2", "C"),
+      card("3", "C"),
+      card("4", "C"),
+      card("5", "C"),
+      card("6", "C"),
+      card("7", "C"),
+      card("8", "C"),
+      card("Q", "S"),
+      card("A", "H"),
+      card("K", "H"),
+      card("2", "D"),
+      card("4", "D"),
+      card("9", "S")
+    ].sort(compareCards);
+
+    return {
+      id: `browser-hearts-pass-long-clubs-${seed}`,
+      title: "Build a long suit",
+      prompt:
+        "Choose three cards to pass left while keeping the long club run together for later control.",
+      playerHand,
+      recommendedPass: [card("Q", "S"), card("A", "H"), card("K", "H")],
+      explanation:
+        "This hand keeps 2C through 8C together. A long suit can become a planned exit route, so pass the danger cards without breaking the run."
+    };
+  }
+
   const lowSuit = seed % 2 === 0 ? "C" : "D";
   const sideSuit = lowSuit === "C" ? "D" : "C";
   const playerHand = [

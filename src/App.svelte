@@ -297,6 +297,7 @@
   const countingTrickSeats: Seat[] = ["Tutor", "Right", "You", "Left"];
   const realisticTrumpTotalTricks = 13;
   const realisticTrumpCheckpoints = [3, 7, 11];
+  const heartsPassPracticeTotalSteps = 2;
   const countingRanks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
   const countingSuits: Suit[] = ["C", "D", "H", "S"];
   const dominoOrderScores = [45, 20, 5, -5];
@@ -785,6 +786,114 @@
       }
     }
   };
+  const heartsAvoidHighHeartDrillStep: DrillStep = {
+    scenarioId: "hearts-avoid-high-heart-follow",
+    contract: "Hearts",
+    title: "Avoid hearts",
+    trick: {
+      title: "Follow low in hearts",
+      beforeResult: "Hearts were led. Right is winning with QH, and you must follow hearts.",
+      afterResult: "When you must follow the penalty suit, stay under the current winner if you can.",
+      emptyExplanation: "Choose the heart that follows suit without taking the trick.",
+      legalCardIds: ["3H", "AH"],
+      hand: [
+        { id: "3H", rank: "3", suit: "H", label: "3H" },
+        { id: "AH", rank: "A", suit: "H", label: "AH" },
+        { id: "6C", rank: "6", suit: "C", label: "6C" }
+      ],
+      tableBeforeChoice: [
+        { seat: "Tutor", card: { id: "9H", rank: "9", suit: "H", label: "9H" } },
+        { seat: "Right", card: { id: "QH", rank: "Q", suit: "H", label: "QH" } }
+      ],
+      tableAfterChoice: [{ seat: "Left", card: { id: "5H", rank: "5", suit: "H", label: "5H" } }],
+      pendingBySeat: { Left: "follow hearts" },
+      playedExplanations: {
+        "3H": "3H is good. You follow hearts and stay under QH.",
+        AH: "AH wins the heart trick and collects the penalty cards.",
+        "6C": "6C is off suit while you still have hearts."
+      },
+      cardOutcomes: {
+        "3H": "good",
+        AH: "penalty"
+      },
+      cardReasons: {
+        "3H": "avoided_penalty",
+        AH: "captured_penalty"
+      }
+    }
+  };
+  const heartsFirstTrickRestrictionDrillStep: DrillStep = {
+    scenarioId: "hearts-first-trick-no-penalty-dump",
+    contract: "Hearts",
+    title: "First trick",
+    trick: {
+      title: "Follow clubs first",
+      beforeResult: "This is the first trick. Barbu led 2C, and you still have a club.",
+      afterResult: "On the opening trick, follow clubs when you can. Do not dump hearts or QS while a safe club is available.",
+      emptyExplanation: "Choose the legal first-trick play.",
+      legalCardIds: ["3C"],
+      hand: [
+        { id: "3C", rank: "3", suit: "C", label: "3C" },
+        { id: "QS", rank: "Q", suit: "S", label: "QS" },
+        { id: "5H", rank: "5", suit: "H", label: "5H" }
+      ],
+      tableBeforeChoice: [
+        { seat: "Tutor", card: { id: "2C", rank: "2", suit: "C", label: "2C" } },
+        { seat: "Right", card: { id: "7C", rank: "7", suit: "C", label: "7C" } }
+      ],
+      tableAfterChoice: [{ seat: "Left", card: { id: "9C", rank: "9", suit: "C", label: "9C" } }],
+      pendingBySeat: { Left: "follow clubs" },
+      playedExplanations: {
+        "3C": "3C is good. You follow clubs on the opening trick.",
+        QS: "QS cannot be dumped here because you still have a club.",
+        "5H": "5H cannot be dumped here because you still have a club."
+      },
+      cardOutcomes: {
+        "3C": "good"
+      },
+      cardReasons: {
+        "3C": "followed_suit"
+      }
+    }
+  };
+  const heartsFirstTrickVoidSafeDiscardDrillStep: DrillStep = {
+    scenarioId: "hearts-first-trick-void-safe-discard",
+    contract: "Hearts",
+    title: "First trick",
+    trick: {
+      title: "No clubs on the first trick",
+      beforeResult: "This is the first trick. Clubs were led, but you have no clubs.",
+      afterResult: "If you are void on the opening trick, prefer a non-penalty discard before throwing hearts or QS.",
+      emptyExplanation: "Choose the safest first-trick discard.",
+      legalCardIds: ["8D", "5H", "QS"],
+      hand: [
+        { id: "8D", rank: "8", suit: "D", label: "8D" },
+        { id: "5H", rank: "5", suit: "H", label: "5H" },
+        { id: "QS", rank: "Q", suit: "S", label: "QS" }
+      ],
+      tableBeforeChoice: [
+        { seat: "Tutor", card: { id: "2C", rank: "2", suit: "C", label: "2C" } },
+        { seat: "Right", card: { id: "KC", rank: "K", suit: "C", label: "KC" } }
+      ],
+      tableAfterChoice: [{ seat: "Left", card: { id: "4C", rank: "4", suit: "C", label: "4C" } }],
+      pendingBySeat: { Left: "follow clubs" },
+      playedExplanations: {
+        "8D": "8D is good. It avoids adding a penalty on the first trick.",
+        "5H": "5H is legal because you are void, but it adds a heart point immediately.",
+        QS: "QS is legal because you are void, but dumping 13 points on trick one is dangerous."
+      },
+      cardOutcomes: {
+        "8D": "good",
+        "5H": "risky",
+        QS: "penalty"
+      },
+      cardReasons: {
+        "8D": "void_discard",
+        "5H": "void_discard",
+        QS: "void_discard"
+      }
+    }
+  };
   const heartsBreakHeartsDrillStep: DrillStep = {
     scenarioId: "hearts-break-hearts-lead",
     contract: "Hearts",
@@ -931,6 +1040,42 @@
       }
     }
   };
+  const heartsQueenDangerousDumpDrillStep: DrillStep = {
+    scenarioId: "hearts-queen-of-spades-dangerous-dump",
+    contract: "Hearts",
+    title: "Queen danger",
+    trick: {
+      title: "Do not win with QS",
+      beforeResult: "Spades were led. You hold QS, and no higher spade is protecting you.",
+      afterResult: "Dumping QS is only safe when someone else is winning. Here, QS would win the trick.",
+      emptyExplanation: "Follow spades without making QS take the trick.",
+      legalCardIds: ["3S", "QS"],
+      hand: [
+        { id: "3S", rank: "3", suit: "S", label: "3S" },
+        { id: "QS", rank: "Q", suit: "S", label: "QS" },
+        { id: "6H", rank: "6", suit: "H", label: "6H" }
+      ],
+      tableBeforeChoice: [
+        { seat: "Tutor", card: { id: "9S", rank: "9", suit: "S", label: "9S" } },
+        { seat: "Right", card: { id: "JS", rank: "J", suit: "S", label: "JS" } }
+      ],
+      tableAfterChoice: [{ seat: "Left", card: { id: "4S", rank: "4", suit: "S", label: "4S" } }],
+      pendingBySeat: { Left: "follow spades" },
+      playedExplanations: {
+        "3S": "3S is good. You keep QS out of a trick you might win.",
+        QS: "QS wins this trick and gives you 13 penalty points.",
+        "6H": "6H is off suit while you still have spades."
+      },
+      cardOutcomes: {
+        "3S": "good",
+        QS: "penalty"
+      },
+      cardReasons: {
+        "3S": "avoided_penalty",
+        QS: "captured_penalty"
+      }
+    }
+  };
   const heartsStopMoonDrillStep: DrillStep = {
     scenarioId: "hearts-stop-moon-loaded-trick",
     contract: "Hearts",
@@ -1000,6 +1145,42 @@
       cardReasons: {
         KS: "captured_penalty",
         "3S": "avoided_penalty"
+      }
+    }
+  };
+  const heartsStopMoonSmallPointDrillStep: DrillStep = {
+    scenarioId: "hearts-stop-moon-small-heart",
+    contract: "Hearts",
+    title: "Stop the moon",
+    trick: {
+      title: "Take one point now",
+      beforeResult: "Barbu has all the points so far and is about to win another heart trick.",
+      afterResult: "Taking one heart can be correct if it breaks a moon attempt before the hand gets away.",
+      emptyExplanation: "Hearts were led. Decide whether to take one point to stop Barbu from collecting everything.",
+      legalCardIds: ["KH", "2H"],
+      hand: [
+        { id: "KH", rank: "K", suit: "H", label: "KH" },
+        { id: "2H", rank: "2", suit: "H", label: "2H" },
+        { id: "8D", rank: "8", suit: "D", label: "8D" }
+      ],
+      tableBeforeChoice: [
+        { seat: "Tutor", card: { id: "QH", rank: "Q", suit: "H", label: "QH" } },
+        { seat: "Right", card: { id: "7H", rank: "7", suit: "H", label: "7H" } }
+      ],
+      tableAfterChoice: [{ seat: "Left", card: { id: "4H", rank: "4", suit: "H", label: "4H" } }],
+      pendingBySeat: { Left: "follow hearts" },
+      playedExplanations: {
+        KH: "KH is good moon defense here. You take a heart point so Barbu cannot keep every point.",
+        "2H": "2H follows suit, but it lets Barbu keep collecting all the points.",
+        "8D": "8D is off suit while you still have hearts."
+      },
+      cardOutcomes: {
+        KH: "good",
+        "2H": "risky"
+      },
+      cardReasons: {
+        KH: "captured_penalty",
+        "2H": "avoided_penalty"
       }
     }
   };
@@ -1085,12 +1266,29 @@
       }
     }
   };
-  const heartsAvoidHeartsDrillPool = [heartsAvoidHeartsDrillStep, heartsAvoidHeartVoidDumpDrillStep];
-  const heartsQueenDangerDrillPool = [heartsQueenDangerDrillStep, heartsQueenDumpDrillStep];
+  const heartsAvoidHeartsDrillPool = [
+    heartsAvoidHeartsDrillStep,
+    heartsAvoidHeartVoidDumpDrillStep,
+    heartsAvoidHighHeartDrillStep
+  ];
+  const heartsFirstTrickDrillPool = [
+    heartsFirstTrickRestrictionDrillStep,
+    heartsFirstTrickVoidSafeDiscardDrillStep
+  ];
+  const heartsQueenDangerDrillPool = [
+    heartsQueenDangerDrillStep,
+    heartsQueenDumpDrillStep,
+    heartsQueenDangerousDumpDrillStep
+  ];
   const heartsBreakHeartsDrillPool = [heartsBreakHeartsDrillStep, heartsBreakHeartsOnlyHeartsDrillStep];
-  const heartsStopMoonDrillPool = [heartsStopMoonDrillStep, heartsStopMoonQueenDrillStep];
+  const heartsStopMoonDrillPool = [
+    heartsStopMoonDrillStep,
+    heartsStopMoonQueenDrillStep,
+    heartsStopMoonSmallPointDrillStep
+  ];
   const heartsScoreHandDrillPool = [heartsScoreHandDrillStep, heartsScoreHeartPointDrillStep];
   const heartsQuickDrillPools = [
+    heartsFirstTrickDrillPool,
     heartsAvoidHeartsDrillPool,
     heartsQueenDangerDrillPool,
     heartsBreakHeartsDrillPool,
@@ -1130,6 +1328,8 @@
   let fullHand: FullHandState | null = null;
   let heartsPassingHand: FullHandState | null = null;
   let heartsPassPractice: HeartsPassScenario | null = null;
+  let heartsPassPracticeBaseSeed = 1;
+  let heartsPassPracticeStepIndex = 0;
   let dominoHand: DominoHandState | null = null;
   let fullHandSelectedCardId = "";
   let heartsPassSelectedCardIds: string[] = [];
@@ -1327,6 +1527,7 @@
   ).length;
   $: heartsPassPracticeCanCheck = heartsPassPracticeSelectedCardIds.length === 3;
   $: heartsPassPracticeExact = heartsPassPracticeCanCheck && heartsPassPracticeMatchCount === 3;
+  $: heartsPassPracticeIsLastStep = heartsPassPracticeStepIndex >= heartsPassPracticeTotalSteps - 1;
   $: fullHandLastCompletedTrick = fullHand?.completedTricks[fullHand.completedTricks.length - 1];
   $: fullHandReviewTrick =
     fullHand && fullHandReviewTrickCount > 0 ? fullHand.completedTricks[fullHandReviewTrickCount - 1] : undefined;
@@ -4696,6 +4897,10 @@
     startHeartsMicroDrill(heartsAvoidHeartsDrillStep, "Hearts practice: avoid hearts", pathStepId);
   }
 
+  function startHeartsFirstTrickDrill(pathStepId = "") {
+    startHeartsMicroDrill(heartsFirstTrickRestrictionDrillStep, "Hearts practice: first trick", pathStepId);
+  }
+
   function startHeartsQueenDangerDrill(pathStepId = "") {
     startHeartsMicroDrill(heartsQueenDangerDrillStep, "Hearts practice: queen danger", pathStepId);
   }
@@ -4752,7 +4957,14 @@
   async function startHeartsPassPractice(pathStepId = "") {
     activeGameTable = "hearts";
     activePathStepId = pathStepId;
-    const seed = usePracticeSeed();
+    heartsPassPracticeBaseSeed = usePracticeSeed();
+    heartsPassPracticeStepIndex = 0;
+    await loadHeartsPassPracticeStep();
+    appView = "heartsPassPractice";
+  }
+
+  async function loadHeartsPassPracticeStep() {
+    const seed = heartsPassPracticeBaseSeed + heartsPassPracticeStepIndex;
     heartsPassPracticeSelectedCardIds = [];
     heartsPassPracticeChecked = false;
     heartsPassPracticeError = "";
@@ -4764,8 +4976,20 @@
     } catch {
       heartsPassPractice = generateBrowserHeartsPassPractice(seed);
     }
+  }
 
-    appView = "heartsPassPractice";
+  async function nextHeartsPassPracticeStep() {
+    if (heartsPassPracticeIsLastStep) {
+      if (activePathStepId === "hearts-pass") {
+        continueHeartsPath();
+      } else {
+        openHeartsTable();
+      }
+      return;
+    }
+
+    heartsPassPracticeStepIndex += 1;
+    await loadHeartsPassPracticeStep();
   }
 
   function toggleHeartsPassPracticeCard(card: Card) {
@@ -4803,6 +5027,7 @@
   const heartsPracticeActions: Record<HeartsPracticeAction, () => void> = {
     quick: () => startHeartsQuickDrill(),
     pass: () => void startHeartsPassPractice(),
+    first: () => startHeartsFirstTrickDrill(),
     avoid: () => startHeartsAvoidHeartsDrill(),
     queen: () => startHeartsQueenDangerDrill(),
     break: () => startHeartsBreakHeartsDrill(),
@@ -6888,8 +7113,8 @@
         ariaLabel="Hearts pass practice"
         title="Pass three"
         eyebrow="Hearts practice"
-        statusLabel="Selected"
-        statusValue={`${heartsPassPracticeSelectedCardIds.length} of 3`}
+        statusLabel="Exercise"
+        statusValue={`${heartsPassPracticeStepIndex + 1} of ${heartsPassPracticeTotalSteps}`}
         tableAriaLabel="Hearts pass practice table"
         tableCards={[]}
         showTable={false}
@@ -6901,8 +7126,12 @@
             <div class="full-hand-summary-row current-hand" aria-label="Passing drill status">
               <span class="summary-row-label">Passing drill</span>
               <div>
+                <span>Exercise</span>
+                <strong>{heartsPassPracticeStepIndex + 1} / {heartsPassPracticeTotalSteps}</strong>
+              </div>
+              <div>
                 <span>Goal</span>
-                <strong>Danger</strong>
+                <strong>{heartsPassPractice.title}</strong>
               </div>
               <div>
                 <span>Selected</span>
@@ -6965,11 +7194,17 @@
             <button class="secondary-action" onclick={openHeartsTable} type="button">Table</button>
             {#if heartsPassPracticeChecked}
               {#if activePathStepId === "hearts-pass"}
-                <button class="primary-action" onclick={() => continueHeartsPath()} type="button">
-                  {isHeartsCourseComplete ? "Back to Hearts table" : "Continue Hearts path"}
+                <button class="primary-action" onclick={() => void nextHeartsPassPracticeStep()} type="button">
+                  {heartsPassPracticeIsLastStep
+                    ? isHeartsCourseComplete
+                      ? "Back to Hearts table"
+                      : "Continue Hearts path"
+                    : "Next pass"}
                 </button>
               {:else}
-                <button class="primary-action" onclick={() => void startHeartsPassPractice()} type="button">Try another</button>
+                <button class="primary-action" onclick={() => void nextHeartsPassPracticeStep()} type="button">
+                  {heartsPassPracticeIsLastStep ? "Complete exercise" : "Next pass"}
+                </button>
               {/if}
             {:else}
               <button

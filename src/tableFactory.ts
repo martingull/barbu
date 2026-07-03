@@ -16,7 +16,7 @@ export type CatalogAccessModel = "free-starter" | "metered-pack";
 export type BarbuLearnPathAction = "lesson" | "generated" | "review" | "planned";
 export type HeartsLearnPathAction = "object" | "queen" | "avoid" | "pass" | "break" | "moon" | "score";
 export type BarbuPracticeAction = "quick" | "fixed" | "domino";
-export type HeartsPracticeAction = "quick" | "pass" | "avoid" | "queen" | "break" | "moon" | "score";
+export type HeartsPracticeAction = "quick" | "pass" | "first" | "avoid" | "queen" | "break" | "moon" | "score";
 
 export type TableActionDefinition = {
   id: string;
@@ -320,6 +320,14 @@ export const heartsPracticeEntries: HeartsPracticeEntry[] = [
     title: "Pass three",
     summary: "Choose the three danger cards to pass left before the hand begins.",
     action: "pass",
+    group: "fixed-drills"
+  }),
+  createHeartsPracticeEntry({
+    id: "first-trick",
+    label: "Opening",
+    title: "First trick",
+    summary: "Follow clubs on the opening trick instead of dumping penalties.",
+    action: "first",
     group: "fixed-drills"
   }),
   createHeartsPracticeEntry({

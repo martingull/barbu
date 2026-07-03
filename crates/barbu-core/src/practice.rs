@@ -343,6 +343,42 @@ pub fn generate_no_hearts_follow_suit(seed: u64) -> PracticeScenario {
 }
 
 pub fn generate_hearts_pass_practice(seed: u64) -> HeartsPassScenario {
+    if seed % 2 == 1 {
+        let mut player_hand = vec![
+            Card::new(Rank::Two, Suit::Clubs),
+            Card::new(Rank::Three, Suit::Clubs),
+            Card::new(Rank::Four, Suit::Clubs),
+            Card::new(Rank::Five, Suit::Clubs),
+            Card::new(Rank::Six, Suit::Clubs),
+            Card::new(Rank::Seven, Suit::Clubs),
+            Card::new(Rank::Eight, Suit::Clubs),
+            Card::new(Rank::Queen, Suit::Spades),
+            Card::new(Rank::Ace, Suit::Hearts),
+            Card::new(Rank::King, Suit::Hearts),
+            Card::new(Rank::Two, Suit::Diamonds),
+            Card::new(Rank::Four, Suit::Diamonds),
+            Card::new(Rank::Nine, Suit::Spades),
+        ];
+        player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+
+        return HeartsPassScenario {
+            id: format!("hearts-pass-long-clubs-{seed}"),
+            title: "Build a long suit".to_string(),
+            prompt:
+                "Choose three cards to pass left while keeping the long club run together for later control."
+                    .to_string(),
+            player_hand,
+            recommended_pass: vec![
+                Card::new(Rank::Queen, Suit::Spades),
+                Card::new(Rank::Ace, Suit::Hearts),
+                Card::new(Rank::King, Suit::Hearts),
+            ],
+            explanation:
+                "This hand keeps 2C through 8C together. A long suit can become a planned exit route, so pass the danger cards without breaking the run."
+                    .to_string(),
+        };
+    }
+
     let mut rng = DeterministicRng::new(seed);
     let low_suit = choose_suit(&mut rng, &[Suit::Clubs, Suit::Diamonds]);
     let side_suit = if low_suit == Suit::Clubs {
@@ -1643,9 +1679,27 @@ mod tests {
 
     #[test]
     fn hearts_pass_practice_recommends_obvious_danger_cards() {
-        let scenario = generate_hearts_pass_practice(11);
+        let scenario = generate_hearts_pass_practice(12);
 
         assert_eq!(scenario.player_hand.len(), 13);
+        assert_eq!(
+            scenario.recommended_pass,
+            vec![
+                Card::new(Rank::Queen, Suit::Spades),
+                Card::new(Rank::Ace, Suit::Hearts),
+                Card::new(Rank::King, Suit::Hearts),
+            ]
+        );
+    }
+
+    #[test]
+    fn hearts_pass_practice_can_preserve_long_suit() {
+        let scenario = generate_hearts_pass_practice(11);
+
+        assert_eq!(scenario.title, "Build a long suit");
+        assert!(scenario.prompt.contains("long club run"));
+        assert!(scenario.player_hand.contains(&Card::new(Rank::Two, Suit::Clubs)));
+        assert!(scenario.player_hand.contains(&Card::new(Rank::Eight, Suit::Clubs)));
         assert_eq!(
             scenario.recommended_pass,
             vec![
