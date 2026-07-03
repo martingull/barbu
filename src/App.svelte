@@ -5259,7 +5259,7 @@
                 <button class="learn-action-card primary" onclick={openPathReview} type="button">
                   <span class="eyebrow">Review</span>
                   <strong>Review results</strong>
-                  <small>Look over the first Barbu table before another pass.</small>
+                  <small>{gameTableDefinitions.barbu.learn.completeSummary}</small>
                 </button>
                 <button class="learn-action-card" onclick={resetCourseProgress} type="button">
                   <span class="eyebrow">Reset</span>
@@ -5270,13 +5270,13 @@
                 <button class="learn-action-card primary" onclick={continueCourse} type="button">
                   <span class="eyebrow">Next lesson</span>
                   <strong>Continue with {nextPathStep.title}</strong>
-                  <small>Return to the next short card decision.</small>
+                  <small>{gameTableDefinitions.barbu.learn.nextSummary}</small>
                 </button>
               {/if}
               <button class="learn-action-card" onclick={() => openReference(gameTableDefinitions.barbu.referenceId)} type="button">
                 <span class="eyebrow">Rules</span>
                 <strong>Reference</strong>
-                <small>Check the baseline rules, scoring, and variants.</small>
+                <small>{gameTableDefinitions.barbu.learn.referenceSummary}</small>
               </button>
             </section>
           </div>
@@ -5287,10 +5287,10 @@
             <small>Open the contract map.</small>
           </button>
 
-          <section class="path-section" aria-label="Barbu lesson path">
+          <section class="path-section" aria-label={gameTableDefinitions.barbu.learn.pathAriaLabel}>
             <div class="section-heading">
-              <p class="eyebrow">Training path</p>
-              <h2>Learn the Barbu table</h2>
+              <p class="eyebrow">{gameTableDefinitions.barbu.learn.pathEyebrow}</p>
+              <h2>{gameTableDefinitions.barbu.learn.pathTitle}</h2>
             </div>
 
             <div class="course-progress path-progress" aria-label="Course progress">
@@ -5500,43 +5500,44 @@
 
       {#if activeHeartsTableTab === "learn"}
         <div aria-label="Learn" class="barbu-tab-panel learn-panel" id="hearts-learn-panel" role="tabpanel">
-            <div class="table-action-groups" aria-label="Hearts table actions">
-              <section class="learn-action-grid" aria-label="Hearts learn actions">
-                <button class="learn-action-card primary" onclick={() => continueHeartsPath("")} type="button">
-                  <span class="eyebrow">{isHeartsCourseComplete ? "Review" : "Next lesson"}</span>
-                  <strong>
-                    {#if isHeartsCourseComplete}
-                      Hearts path complete
-                    {:else}
-                      Continue with {nextHeartsPathStep?.title ?? "Hearts"}
-                    {/if}
-                  </strong>
-                  <small>
-                    {#if isHeartsCourseComplete}
-                      Replay any Hearts lesson or move into practice.
-                    {:else}
-                      {heartsCompletedCount} / {heartsPathSteps.length} complete.
-                    {/if}
-                  </small>
-                </button>
-                <button class="learn-action-card" onclick={() => openReference(gameTableDefinitions.hearts.referenceId)} type="button">
-                  <span class="eyebrow">Rules</span>
-                  <strong>Reference</strong>
-                  <small>Check the current MVP rules, names, scoring, and documented simplifications.</small>
-                </button>
-              </section>
+          <div class="table-action-groups" aria-label="Hearts table actions">
+            <section class="learn-action-grid" aria-label="Hearts learn actions">
+              <button class="learn-action-card primary" onclick={() => continueHeartsPath("")} type="button">
+                <span class="eyebrow">{isHeartsCourseComplete ? "Review" : "Next lesson"}</span>
+                <strong>
+                  {#if isHeartsCourseComplete}
+                    Hearts path complete
+                  {:else}
+                    Continue with {nextHeartsPathStep?.title ?? "Hearts"}
+                  {/if}
+                </strong>
+                <small>
+                  {#if isHeartsCourseComplete}
+                    {gameTableDefinitions.hearts.learn.completeSummary}
+                  {:else}
+                    {gameTableDefinitions.hearts.learn.nextSummary}
+                  {/if}
+                </small>
+              </button>
+              <button class="learn-action-card" onclick={() => openReference(gameTableDefinitions.hearts.referenceId)} type="button">
+                <span class="eyebrow">Rules</span>
+                <strong>Reference</strong>
+                <small>{gameTableDefinitions.hearts.learn.referenceSummary}</small>
+              </button>
+            </section>
+          </div>
+
+          <section class="path-section" aria-label={gameTableDefinitions.hearts.learn.pathAriaLabel}>
+            <div class="section-heading">
+              <p class="eyebrow">{gameTableDefinitions.hearts.learn.pathEyebrow}</p>
+              <h2>{gameTableDefinitions.hearts.learn.pathTitle}</h2>
             </div>
 
-          <button class="learn-action-card" onclick={() => startHeartsScoreHandDrill()} type="button">
-            <span class="eyebrow">Core game</span>
-            <strong>Hearts scorecard</strong>
-            <small>Open the current match view and see how hearts, QS, and moon scoring shape the table.</small>
-          </button>
-
-          <section class="path-section" aria-label="Hearts lesson path">
-            <div class="section-heading">
-              <p class="eyebrow">Training path</p>
-              <h2>Learn the Hearts table</h2>
+            <div class="course-progress path-progress" aria-label="Hearts course progress">
+              <span>{heartsCompletedCount} / {heartsPathSteps.length} complete</span>
+              <div class="progress-track">
+                <div class="progress-fill" style={`width: ${(heartsCompletedCount / heartsPathSteps.length) * 100}%`}></div>
+              </div>
             </div>
 
             <div class="path-grid">

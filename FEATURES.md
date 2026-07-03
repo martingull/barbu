@@ -32,6 +32,7 @@ The intended monetization model is free starter tables first, then paid packs wi
 
 - Game catalog ordered with free starter tables first: Hearts, Barbu, and Whist, followed by paid packs/future paid games such as Card Counting, Solitaire, Bridge, Gin Rummy, and Canasta.
 - Game catalog metadata now comes from a shared table/catalog factory, including free starter versus metered pack access metadata, so future game additions do not start as hardcoded home-screen branches.
+- Learn tab shell metadata now comes from the shared table/catalog factory: each active game declares its path title, progress label, continue summary, complete summary, and reference summary before screen-specific content is added.
 - Hearts Learn path metadata now comes from the shared table/catalog factory, so lesson order, progress labels, and continuation behavior have one source of truth before more games add their own paths.
 - Hearts Learn coverage now includes break-hearts legality and moon-defense tactics, reusing the existing practice drills as path steps instead of creating separate implementations.
 - Barbu Learn path metadata now comes from the shared table/catalog factory, so the first curriculum uses the same scalable pattern as Hearts.

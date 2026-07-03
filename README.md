@@ -85,7 +85,7 @@ content/             Structured game and lesson content
 - Full Barbu settlement scoring is not implemented yet; current full-hand play tracks local contract values for the hand being practiced.
 - The Svelte app renders authored or generated scenarios and should avoid duplicating rules where Rust can provide them.
 - Barbu is the first Hearts-family core game, not the app boundary. The lesson/catalog structure should be able to grow toward related Hearts-family games first, then popular families such as Whist and Bridge after Barbu has a stable learning, practice, and play loop.
-- Frontend game tables should be registered through `src/tableFactory.ts` so new ready games follow the shared `Learn`, `Practice`, `Play`, and `Perfect` structure, declare their reference id, and name their key actions before custom UI is added.
+- Frontend game tables should be registered through `src/tableFactory.ts` so new ready games follow the shared `Learn`, `Practice`, `Play`, and `Perfect` structure, declare their reference id, name their key actions, and provide Learn-tab shell copy before custom UI is added.
 
 ## MVP Scope
 
@@ -96,7 +96,7 @@ The MVP is a local iPhone-first card tutor with two active starter games:
 
 MVP Hearts should be real but intentionally small: pass three cards left, then play local Hearts hands on the shared trick-taking table until one seat reaches a 50-point testing target, scoring hearts plus the queen of spades. The current MVP rule target includes the Wikipedia-style holder-of-2C opening, first-trick penalty restrictions, no heart leads until hearts are broken, and shooting the moon as 0 for the shooter and 26 for every other seat. Rotating pass directions and fuller match options are Hearts v2 unless deliberately added later.
 
-Solitaire can remain visible as a free starter placeholder until Barbu and Hearts feel stable. Whist, Bridge, Gin Rummy, Canasta, and Card Counting can remain visible as future packs or skill areas, but should not distract from getting Barbu and Hearts playable on the phone.
+Whist can remain visible as the next free starter placeholder until Barbu and Hearts feel stable. Solitaire, Bridge, Gin Rummy, Canasta, and Card Counting can remain visible as future packs or skill areas, but should not distract from getting Barbu and Hearts playable on the phone.
 
 For launch-focused planning, use the MVP Rounding-Off Roadmap in [FEATURES.md](./FEATURES.md). That list is the current stop-building guide before adding new game families or monetization surfaces.
 

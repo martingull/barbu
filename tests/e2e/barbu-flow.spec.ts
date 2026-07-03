@@ -333,6 +333,10 @@ test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testI
 
   await page.getByRole("tab", { name: "Learn" }).click();
   await expect(page.getByLabel("Hearts learn actions")).toContainText("Continue with Object of Hearts");
+  await expect(page.getByLabel("Hearts learn actions")).toContainText("Reference");
+  await expect(page.getByLabel("Hearts learn actions")).not.toContainText("Hearts scorecard");
+  await expect(page.getByLabel("Hearts course progress")).toContainText("0 / 7 complete");
+  await expect(page.getByLabel("Hearts lesson path")).toContainText("Learn the Hearts table");
   await expect(page.getByLabel("Hearts lesson path")).toContainText("Object of Hearts");
   await expect(page.getByLabel("Hearts lesson path")).toContainText("Queen of Spades");
   await expect(page.getByLabel("Hearts lesson path")).toContainText("Pass three");

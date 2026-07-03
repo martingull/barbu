@@ -38,12 +38,22 @@ export type TableTabDefinition = {
   actions: TableActionDefinition[];
 };
 
+export type TableLearnDefinition = {
+  pathAriaLabel: string;
+  pathEyebrow: string;
+  pathTitle: string;
+  nextSummary: string;
+  completeSummary: string;
+  referenceSummary: string;
+};
+
 export type GameTableDefinition = {
   id: ActiveGameTable;
   title: string;
   family: string;
   referenceId: string;
   scorecard: TableScorecardDefinition;
+  learn: TableLearnDefinition;
   defaultTab: TableTabId;
   tabs: Record<TableTabId, TableTabDefinition>;
 };
@@ -453,6 +463,8 @@ export function createCatalogEntries({ barbuLessonCount }: CatalogDefinitionInpu
   ];
 }
 
+// Canonical table metadata for the shared Learn | Practice | Play | Perfect shell.
+// UI screens should consume this shape instead of inventing one-off tab copy per game.
 export const gameTableDefinitions = {
   hearts: createGameTableDefinition({
     id: "hearts",
@@ -465,13 +477,21 @@ export const gameTableDefinitions = {
       objective: "Low score leads",
       leaderRule: "low-score"
     },
+    learn: {
+      pathAriaLabel: "Hearts lesson path",
+      pathEyebrow: "Training path",
+      pathTitle: "Learn the Hearts table",
+      nextSummary: "Return to the next short Hearts decision.",
+      completeSummary: "Replay any Hearts lesson or move into practice.",
+      referenceSummary: "Check the current MVP rules, names, scoring, and documented simplifications."
+    },
     defaultTab: "play",
     actionsByTab: {
       learn: [
         { id: "object", label: "Object", destination: "Hearts object concept" },
         { id: "queen-danger", label: "Queen danger", destination: "Queen of Spades concept" },
         { id: "passing", label: "Pass three", destination: "Hearts passing concept" },
-        { id: "scorecard", label: "Scorecard", destination: "Hearts score concept" },
+        { id: "score-reading", label: "Score reading", destination: "Hearts score concept" },
         { id: "reference", label: "Reference", destination: "Hearts reference" }
       ],
       practice: heartsPracticeEntries.map((entry) => ({
@@ -492,6 +512,14 @@ export const gameTableDefinitions = {
       unitLabel: "Score",
       objective: "High score leads",
       leaderRule: "high-score"
+    },
+    learn: {
+      pathAriaLabel: "Barbu lesson path",
+      pathEyebrow: "Training path",
+      pathTitle: "Learn the Barbu table",
+      nextSummary: "Return to the next short card decision.",
+      completeSummary: "Look over the first Barbu table before another pass.",
+      referenceSummary: "Check the baseline rules, scoring, and variants."
     },
     defaultTab: "learn",
     actionsByTab: {
