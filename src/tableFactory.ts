@@ -116,6 +116,21 @@ export type HeartsPracticeEntry = PracticeEntry<HeartsPracticeAction> & {
   group: "practice-actions" | "fixed-drills";
 };
 
+export type PracticeGroupLayout = "action-list" | "entry-grid" | "lesson-grid";
+
+export type PracticeGroup<Action extends string = string> = {
+  id: string;
+  ariaLabel: string;
+  eyebrow: string;
+  title: string;
+  layout: PracticeGroupLayout;
+  entries?: PracticeEntry<Action>[];
+  lessonSource?: "barbu-fixed-lessons";
+};
+
+export type BarbuPracticeGroup = PracticeGroup<BarbuPracticeAction>;
+export type HeartsPracticeGroup = PracticeGroup<HeartsPracticeAction>;
+
 export const monetizationPolicy = {
   model: "free-usage-then-unlock",
   freeStarterIds: ["hearts", "barbu", "whist"],
@@ -278,6 +293,10 @@ function createHeartsPracticeEntry(entry: HeartsPracticeEntry): HeartsPracticeEn
   return entry;
 }
 
+function createPracticeGroup<Action extends string>(group: PracticeGroup<Action>): PracticeGroup<Action> {
+  return group;
+}
+
 export const barbuPracticeEntries: BarbuPracticeEntry[] = [
   createBarbuPracticeEntry({
     id: "quick-drill",
@@ -369,6 +388,52 @@ export const heartsPracticeEntries: HeartsPracticeEntry[] = [
     summary: "Identify why QS makes a Hearts trick much more expensive.",
     action: "score",
     group: "fixed-drills"
+  })
+];
+
+export const barbuPracticeGroups: BarbuPracticeGroup[] = [
+  createPracticeGroup({
+    id: "practice-actions",
+    ariaLabel: "Barbu table actions",
+    eyebrow: "Practice",
+    title: "Practice actions",
+    layout: "action-list",
+    entries: barbuPracticeEntries.filter((entry) => entry.group === "practice-actions")
+  }),
+  createPracticeGroup({
+    id: "fixed-drills",
+    ariaLabel: "Fixed contract drills",
+    eyebrow: "Fixed drills",
+    title: "Practice one contract pattern.",
+    layout: "lesson-grid",
+    lessonSource: "barbu-fixed-lessons"
+  }),
+  createPracticeGroup({
+    id: "full-hands",
+    ariaLabel: "Full hand practice",
+    eyebrow: "Full hands",
+    title: "Practice the table surface.",
+    layout: "entry-grid",
+    entries: barbuPracticeEntries.filter((entry) => entry.group === "full-hands")
+  })
+];
+
+export const heartsPracticeGroups: HeartsPracticeGroup[] = [
+  createPracticeGroup({
+    id: "practice-actions",
+    ariaLabel: "Hearts table actions",
+    eyebrow: "Practice",
+    title: "Practice actions",
+    layout: "action-list",
+    entries: heartsPracticeEntries.filter((entry) => entry.group === "practice-actions")
+  }),
+  createPracticeGroup({
+    id: "fixed-drills",
+    ariaLabel: "Hearts practice drills",
+    eyebrow: "Practice set",
+    title: "Practice one Hearts pattern.",
+    layout: "entry-grid",
+    entries: heartsPracticeEntries.filter((entry) => entry.group === "fixed-drills")
   })
 ];
 
