@@ -282,6 +282,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByRole("tab", { name: "Perfect" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Continue with Meet the contract/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /^1 Concept Meet the contract/ })).toBeVisible();
+  await expect(page.getByLabel("Barbu course progress")).toContainText("0 / 9 complete");
   await expect(page.getByLabel("Barbu lesson path")).toContainText("Meet the contract");
   await expect(page.getByLabel("Barbu lesson path")).toContainText("Learn the Barbu table");
   await expect(page.getByRole("button", { name: /Barbu contracts/ })).toBeVisible();
@@ -295,6 +296,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await page.getByRole("button", { name: "Table" }).click();
 
   await openBarbuTab(page, "Practice");
+  await expect(page.getByRole("heading", { name: "Sharpen one decision at a time." })).toBeVisible();
   await expect(page.getByLabel("Barbu table actions").getByRole("button", { name: "Quick drill" })).toBeVisible();
   await expect(page.getByLabel("Barbu table actions").getByRole("button", { name: "Contract hands" })).toHaveCount(0);
   await expect(page.getByLabel("Fixed contract drills")).toContainText("No Hearts");
@@ -346,6 +348,7 @@ test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testI
 
   await page.getByRole("tab", { name: "Practice" }).click();
   await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByLabel("Hearts table actions").getByRole("button", { name: "Quick drill" })).toBeVisible();
   await expect(page.getByLabel("Hearts practice drills")).toContainText("Pass three");
   await expect(page.getByLabel("Hearts practice drills")).toContainText("Avoid hearts");
   await expect(page.getByLabel("Hearts practice drills")).toContainText("Queen danger");
@@ -353,6 +356,13 @@ test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testI
   await expect(page.getByLabel("Hearts practice drills")).toContainText("Stop the moon");
   await expect(page.getByLabel("Hearts practice drills")).toContainText("Score a hand");
   await page.screenshot({ path: testInfo.outputPath("hearts-practice.png"), fullPage: true });
+
+  await page.getByLabel("Hearts table actions").getByRole("button", { name: "Quick drill" }).click();
+  await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
+  await expect(page.getByLabel("Drill decision")).toContainText("Hearts");
+  await page.getByLabel("Drill decision").getByRole("button", { name: "Table" }).click();
+  await expect(page.getByRole("heading", { name: "Hearts table" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
 
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Avoid hearts" }).click();
   await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();

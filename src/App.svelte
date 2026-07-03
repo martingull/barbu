@@ -711,6 +711,42 @@
     trick: lesson.tricks[0]
   }));
   const fixedDrillLessons = guidedLessons.filter((lesson) => lesson.contract !== "Domino");
+  const heartsAvoidHeartsDrillStep: DrillStep = {
+    scenarioId: "hearts-avoid-heart-duck",
+    contract: "Hearts",
+    title: "Avoid hearts",
+    trick: {
+      title: "Duck the heart point",
+      beforeResult: "Clubs were led. Right is winning with KC, and you still have clubs.",
+      afterResult: "In Hearts, each heart you take is a penalty point. Follow clubs and let Right keep this trick.",
+      emptyExplanation: "Follow clubs without taking the heart.",
+      legalCardIds: ["2C", "AC"],
+      hand: [
+        { id: "2C", rank: "2", suit: "C", label: "2C" },
+        { id: "AC", rank: "A", suit: "C", label: "AC" },
+        { id: "7D", rank: "7", suit: "D", label: "7D" }
+      ],
+      tableBeforeChoice: [
+        { seat: "Tutor", card: { id: "9C", rank: "9", suit: "C", label: "9C" } },
+        { seat: "Right", card: { id: "KC", rank: "K", suit: "C", label: "KC" } }
+      ],
+      tableAfterChoice: [{ seat: "Left", card: { id: "4H", rank: "4", suit: "H", label: "4H" } }],
+      pendingBySeat: { Left: "void: heart discard" },
+      playedExplanations: {
+        "2C": "2C is good. You follow clubs without taking the heart point.",
+        AC: "AC wins the trick and captures the heart point.",
+        "7D": "7D is off suit while you still have clubs."
+      },
+      cardOutcomes: {
+        "2C": "good",
+        AC: "penalty"
+      },
+      cardReasons: {
+        "2C": "avoided_penalty",
+        AC: "captured_penalty"
+      }
+    }
+  };
   const heartsBreakHeartsDrillStep: DrillStep = {
     scenarioId: "hearts-break-hearts-lead",
     contract: "Hearts",
@@ -4459,14 +4495,32 @@
   }
 
   function startHeartsAvoidHeartsDrill(pathStepId = "") {
-    activeGameTable = "hearts";
-    startFixedContractDrill("barbu-no-hearts");
-    activePathStepId = pathStepId;
-    drillSetTitle = "Hearts practice: avoid hearts";
+    startHeartsMicroDrill(heartsAvoidHeartsDrillStep, "Hearts practice: avoid hearts", pathStepId);
   }
 
   function startHeartsQueenDangerDrill(pathStepId = "") {
     startHeartsMicroDrill(heartsQueenDangerDrillStep, "Hearts practice: queen danger", pathStepId);
+  }
+
+  function startHeartsQuickDrill() {
+    const steps = [
+      heartsAvoidHeartsDrillStep,
+      heartsQueenDangerDrillStep,
+      heartsBreakHeartsDrillStep,
+      heartsStopMoonDrillStep,
+      heartsScoreHandDrillStep
+    ];
+    const offset = usePracticeSeed() % steps.length;
+
+    activeGameTable = "hearts";
+    activePathStepId = "";
+    activeDrillFocusContract = "Hearts";
+    drillIndex = 0;
+    drillResults = [];
+    drillSetTitle = "Hearts quick drill";
+    activeDrillSteps = [...steps.slice(offset), ...steps.slice(0, offset)];
+    resetDrillDecision();
+    appView = "drill";
   }
 
   function startHeartsMicroDrill(step: DrillStep, title: string, pathStepId = "") {
@@ -4545,6 +4599,7 @@
   }
 
   const heartsPracticeActions: Record<HeartsPracticeAction, () => void> = {
+    quick: () => startHeartsQuickDrill(),
     pass: () => void startHeartsPassPractice(),
     avoid: () => startHeartsAvoidHeartsDrill(),
     queen: () => startHeartsQueenDangerDrill(),
@@ -5214,8 +5269,8 @@
     <header class="topbar table-topbar" aria-label="Barbu table">
       <button class="back-button" onclick={openCatalog} type="button">Games</button>
       <div class="table-title">
-        <p class="eyebrow">Hearts family</p>
-        <h1>Barbu's table</h1>
+        <p class="eyebrow">{gameTableDefinitions.barbu.family} family</p>
+        <h1>{gameTableDefinitions.barbu.title}</h1>
       </div>
       <div class="contract-status">
         <span>Current mode</span>
@@ -5250,7 +5305,7 @@
         <div
           aria-label="Learn"
           class="barbu-tab-panel learn-panel"
-          id="barbu-learn-panel"
+          id={gameTableDefinitions.barbu.tabs.learn.panelId}
           role="tabpanel"
         >
           <div class="table-action-groups" aria-label="Barbu table actions">
@@ -5293,7 +5348,7 @@
               <h2>{gameTableDefinitions.barbu.learn.pathTitle}</h2>
             </div>
 
-            <div class="course-progress path-progress" aria-label="Course progress">
+            <div class="course-progress path-progress" aria-label={gameTableDefinitions.barbu.learn.progressAriaLabel}>
               <span>{completedCount} / {playablePathSteps.length} complete</span>
               <div class="progress-track">
                 <div class="progress-fill" style={`width: ${(completedCount / playablePathSteps.length) * 100}%`}></div>
@@ -5335,13 +5390,13 @@
         <div
           aria-label="Practice"
           class="barbu-tab-panel practice-panel"
-          id="barbu-practice-panel"
+          id={gameTableDefinitions.barbu.tabs.practice.panelId}
           role="tabpanel"
         >
           <div class="barbu-mode-copy">
-            <p class="eyebrow">Practice</p>
-            <h2>Sharpen one decision at a time.</h2>
-            <p>Use short mixed drills when you want rhythm, or isolate one contract pattern when a rule feels weak.</p>
+            <p class="eyebrow">{gameTableDefinitions.barbu.tabs.practice.intro.eyebrow}</p>
+            <h2>{gameTableDefinitions.barbu.tabs.practice.intro.title}</h2>
+            <p>{gameTableDefinitions.barbu.tabs.practice.intro.summary}</p>
           </div>
           <div class="table-action-groups" aria-label="Barbu table actions">
             {#each barbuPracticeEntries.filter((entry) => entry.group === "practice-actions") as entry}
@@ -5392,13 +5447,13 @@
         <div
           aria-label="Play"
           class="barbu-tab-panel play-panel"
-          id="barbu-play-panel"
+          id={gameTableDefinitions.barbu.tabs.play.panelId}
           role="tabpanel"
         >
           <div class="barbu-mode-copy">
-            <p class="eyebrow">Play</p>
-            <h2>Challenge the table.</h2>
-            <p>Play the current local Barbu run: contracts in sequence, cumulative score, and a final table result.</p>
+            <p class="eyebrow">{gameTableDefinitions.barbu.tabs.play.intro.eyebrow}</p>
+            <h2>{gameTableDefinitions.barbu.tabs.play.intro.title}</h2>
+            <p>{gameTableDefinitions.barbu.tabs.play.intro.summary}</p>
           </div>
           <div class="table-action-groups" aria-label="Barbu table actions">
             <section class="table-action-group" aria-label="Play actions">
@@ -5417,16 +5472,13 @@
         <div
           aria-label="Perfect"
           class="barbu-tab-panel perfect-panel"
-          id="barbu-perfect-panel"
+          id={gameTableDefinitions.barbu.tabs.perfect.panelId}
           role="tabpanel"
         >
           <div class="barbu-mode-copy">
-            <p class="eyebrow">Perfect</p>
-            <h2>Train the skills behind strong card play.</h2>
-            <p>
-              Short minigames for card-counting habits: remembering trumps, court cards, and cards that have left the
-              deck.
-            </p>
+            <p class="eyebrow">{gameTableDefinitions.barbu.tabs.perfect.intro.eyebrow}</p>
+            <h2>{gameTableDefinitions.barbu.tabs.perfect.intro.title}</h2>
+            <p>{gameTableDefinitions.barbu.tabs.perfect.intro.summary}</p>
           </div>
 
           <section class="fixed-contract-practice" aria-label="Card counting pack">
@@ -5466,8 +5518,8 @@
     <header class="topbar table-topbar" aria-label="Hearts table">
       <button class="back-button" onclick={openCatalog} type="button">Games</button>
       <div class="table-title">
-        <p class="eyebrow">Hearts family</p>
-        <h1>Hearts table</h1>
+        <p class="eyebrow">{gameTableDefinitions.hearts.family} family</p>
+        <h1>{gameTableDefinitions.hearts.title}</h1>
       </div>
       <div class="contract-status">
         <span>Current mode</span>
@@ -5499,7 +5551,7 @@
       </div>
 
       {#if activeHeartsTableTab === "learn"}
-        <div aria-label="Learn" class="barbu-tab-panel learn-panel" id="hearts-learn-panel" role="tabpanel">
+        <div aria-label="Learn" class="barbu-tab-panel learn-panel" id={gameTableDefinitions.hearts.tabs.learn.panelId} role="tabpanel">
           <div class="table-action-groups" aria-label="Hearts table actions">
             <section class="learn-action-grid" aria-label="Hearts learn actions">
               <button class="learn-action-card primary" onclick={() => continueHeartsPath("")} type="button">
@@ -5533,7 +5585,7 @@
               <h2>{gameTableDefinitions.hearts.learn.pathTitle}</h2>
             </div>
 
-            <div class="course-progress path-progress" aria-label="Hearts course progress">
+            <div class="course-progress path-progress" aria-label={gameTableDefinitions.hearts.learn.progressAriaLabel}>
               <span>{heartsCompletedCount} / {heartsPathSteps.length} complete</span>
               <div class="progress-track">
                 <div class="progress-fill" style={`width: ${(heartsCompletedCount / heartsPathSteps.length) * 100}%`}></div>
@@ -5568,11 +5620,22 @@
           </section>
         </div>
       {:else if activeHeartsTableTab === "practice"}
-        <div aria-label="Practice" class="barbu-tab-panel practice-panel" id="hearts-practice-panel" role="tabpanel">
+        <div aria-label="Practice" class="barbu-tab-panel practice-panel" id={gameTableDefinitions.hearts.tabs.practice.panelId} role="tabpanel">
             <div class="barbu-mode-copy">
-              <p class="eyebrow">Practice</p>
-              <h2>Repeat the Hearts habits.</h2>
-              <p>Use short drills for the danger cards, then move into live-hand practice for broken hearts, moon defense, and score reading.</p>
+              <p class="eyebrow">{gameTableDefinitions.hearts.tabs.practice.intro.eyebrow}</p>
+              <h2>{gameTableDefinitions.hearts.tabs.practice.intro.title}</h2>
+              <p>{gameTableDefinitions.hearts.tabs.practice.intro.summary}</p>
+            </div>
+
+            <div class="table-action-groups" aria-label="Hearts table actions">
+              {#each heartsPracticeEntries.filter((entry) => entry.group === "practice-actions") as entry}
+                <section class="table-action-group" aria-label="Practice actions">
+                  <p class="eyebrow">{entry.label}</p>
+                  <button class="drill-action" onclick={heartsPracticeActions[entry.action]} type="button">
+                    {entry.title}
+                  </button>
+                </section>
+              {/each}
             </div>
 
             <section class="fixed-contract-practice" aria-label="Hearts practice drills">
@@ -5581,7 +5644,7 @@
                 <h2>Practice one Hearts pattern.</h2>
               </div>
               <div class="fixed-contract-grid">
-                {#each heartsPracticeEntries as entry}
+                {#each heartsPracticeEntries.filter((entry) => entry.group === "fixed-drills") as entry}
                   <button class="contract-card compact" onclick={heartsPracticeActions[entry.action]} type="button">
                     <span>{entry.label}</span>
                     <strong>{entry.title}</strong>
@@ -5592,11 +5655,11 @@
             </section>
           </div>
       {:else if activeHeartsTableTab === "play"}
-        <div aria-label="Play" class="barbu-tab-panel play-panel" id="hearts-play-panel" role="tabpanel">
+        <div aria-label="Play" class="barbu-tab-panel play-panel" id={gameTableDefinitions.hearts.tabs.play.panelId} role="tabpanel">
             <div class="barbu-mode-copy">
-              <p class="eyebrow">Play</p>
-              <h2>Play a Hearts match.</h2>
-              <p>MVP Hearts plays repeated hands to 50 points with pass-three-left, 2C opening, QS at 13, and shoot-the-moon scoring.</p>
+              <p class="eyebrow">{gameTableDefinitions.hearts.tabs.play.intro.eyebrow}</p>
+              <h2>{gameTableDefinitions.hearts.tabs.play.intro.title}</h2>
+              <p>{gameTableDefinitions.hearts.tabs.play.intro.summary}</p>
             </div>
             <div class="play-options" aria-label="Hearts play options">
               <button class="primary-action" onclick={startHeartsHand} type="button">Play Hearts</button>
@@ -5604,11 +5667,11 @@
             </div>
           </div>
       {:else}
-        <div aria-label="Perfect" class="barbu-tab-panel perfect-panel" id="hearts-perfect-panel" role="tabpanel">
+        <div aria-label="Perfect" class="barbu-tab-panel perfect-panel" id={gameTableDefinitions.hearts.tabs.perfect.panelId} role="tabpanel">
             <div class="barbu-mode-copy">
-              <p class="eyebrow">Perfect</p>
-              <h2>Card sense will connect here later.</h2>
-              <p>Trump and court-card memory should eventually feed Hearts, Whist, Bridge, and Barbu practice.</p>
+              <p class="eyebrow">{gameTableDefinitions.hearts.tabs.perfect.intro.eyebrow}</p>
+              <h2>{gameTableDefinitions.hearts.tabs.perfect.intro.title}</h2>
+              <p>{gameTableDefinitions.hearts.tabs.perfect.intro.summary}</p>
             </div>
           </div>
       {/if}

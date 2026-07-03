@@ -16,7 +16,7 @@ export type CatalogAccessModel = "free-starter" | "metered-pack";
 export type BarbuLearnPathAction = "lesson" | "generated" | "review" | "planned";
 export type HeartsLearnPathAction = "object" | "queen" | "avoid" | "pass" | "break" | "moon" | "score";
 export type BarbuPracticeAction = "quick" | "fixed" | "domino";
-export type HeartsPracticeAction = "pass" | "avoid" | "queen" | "break" | "moon" | "score";
+export type HeartsPracticeAction = "quick" | "pass" | "avoid" | "queen" | "break" | "moon" | "score";
 
 export type TableActionDefinition = {
   id: string;
@@ -31,10 +31,17 @@ export type TableScorecardDefinition = {
   leaderRule: "high-score" | "low-score";
 };
 
+export type TableTabIntroDefinition = {
+  eyebrow: string;
+  title: string;
+  summary: string;
+};
+
 export type TableTabDefinition = {
   id: TableTabId;
   label: string;
   panelId: string;
+  intro: TableTabIntroDefinition;
   actions: TableActionDefinition[];
 };
 
@@ -42,6 +49,7 @@ export type TableLearnDefinition = {
   pathAriaLabel: string;
   pathEyebrow: string;
   pathTitle: string;
+  progressAriaLabel: string;
   nextSummary: string;
   completeSummary: string;
   referenceSummary: string;
@@ -59,6 +67,7 @@ export type GameTableDefinition = {
 };
 
 type CreateGameTableInput = Omit<GameTableDefinition, "tabs"> & {
+  tabIntros: Record<TableTabId, TableTabIntroDefinition>;
   actionsByTab: Partial<Record<TableTabId, TableActionDefinition[]>>;
 };
 
@@ -100,9 +109,11 @@ export type PracticeEntry<Action extends string = string> = {
   action: Action;
 };
 
-export type HeartsPracticeEntry = PracticeEntry<HeartsPracticeAction>;
 export type BarbuPracticeEntry = PracticeEntry<BarbuPracticeAction> & {
   group: "practice-actions" | "fixed-drills" | "full-hands";
+};
+export type HeartsPracticeEntry = PracticeEntry<HeartsPracticeAction> & {
+  group: "practice-actions" | "fixed-drills";
 };
 
 export const monetizationPolicy = {
@@ -263,6 +274,10 @@ function createBarbuPracticeEntry(entry: BarbuPracticeEntry): BarbuPracticeEntry
   return entry;
 }
 
+function createHeartsPracticeEntry(entry: HeartsPracticeEntry): HeartsPracticeEntry {
+  return entry;
+}
+
 export const barbuPracticeEntries: BarbuPracticeEntry[] = [
   createBarbuPracticeEntry({
     id: "quick-drill",
@@ -291,47 +306,61 @@ export const barbuPracticeEntries: BarbuPracticeEntry[] = [
 ];
 
 export const heartsPracticeEntries: HeartsPracticeEntry[] = [
-  createPracticeEntry({
+  createHeartsPracticeEntry({
+    id: "quick-drill",
+    label: "Practice",
+    title: "Quick drill",
+    summary: "Run a short mixed Hearts loop with immediate feedback.",
+    action: "quick",
+    group: "practice-actions"
+  }),
+  createHeartsPracticeEntry({
     id: "pass-three",
     label: "Passing",
     title: "Pass three",
     summary: "Choose the three danger cards to pass left before the hand begins.",
-    action: "pass"
+    action: "pass",
+    group: "fixed-drills"
   }),
-  createPracticeEntry({
+  createHeartsPracticeEntry({
     id: "avoid-hearts",
     label: "Hearts",
     title: "Avoid hearts",
     summary: "Follow suit and avoid taking heart penalties when another card can duck.",
-    action: "avoid"
+    action: "avoid",
+    group: "fixed-drills"
   }),
-  createPracticeEntry({
+  createHeartsPracticeEntry({
     id: "queen-danger",
     label: "Queen",
     title: "Queen danger",
     summary: "Practice the Queen of Spades habit: avoid winning when a queen is loaded.",
-    action: "queen"
+    action: "queen",
+    group: "fixed-drills"
   }),
-  createPracticeEntry({
+  createHeartsPracticeEntry({
     id: "break-hearts",
     label: "Play restriction",
     title: "Break hearts",
     summary: "Decide whether a heart lead is legal before hearts have been broken.",
-    action: "break"
+    action: "break",
+    group: "fixed-drills"
   }),
-  createPracticeEntry({
+  createHeartsPracticeEntry({
     id: "stop-the-moon",
     label: "Moon defense",
     title: "Stop the moon",
     summary: "Take a loaded trick when that is the only way to stop a moon threat.",
-    action: "moon"
+    action: "moon",
+    group: "fixed-drills"
   }),
-  createPracticeEntry({
+  createHeartsPracticeEntry({
     id: "score-a-hand",
     label: "Scorecard",
     title: "Score a hand",
     summary: "Identify why QS makes a Hearts trick much more expensive.",
-    action: "score"
+    action: "score",
+    group: "fixed-drills"
   })
 ];
 
@@ -345,6 +374,7 @@ export function createGameTableDefinition(config: CreateGameTableInput): GameTab
           id: tab,
           label: tabLabels[tab],
           panelId: `${config.id}-${tab}-panel`,
+          intro: config.tabIntros[tab],
           actions: config.actionsByTab[tab] ?? []
         }
       ])
@@ -481,9 +511,34 @@ export const gameTableDefinitions = {
       pathAriaLabel: "Hearts lesson path",
       pathEyebrow: "Training path",
       pathTitle: "Learn the Hearts table",
+      progressAriaLabel: "Hearts course progress",
       nextSummary: "Return to the next short Hearts decision.",
       completeSummary: "Replay any Hearts lesson or move into practice.",
       referenceSummary: "Check the current MVP rules, names, scoring, and documented simplifications."
+    },
+    tabIntros: {
+      learn: {
+        eyebrow: "Learn",
+        title: "Learn the Hearts table.",
+        summary: "Move through short card decisions before playing full hands."
+      },
+      practice: {
+        eyebrow: "Practice",
+        title: "Repeat the Hearts habits.",
+        summary:
+          "Use short drills for the danger cards, then move into live-hand practice for broken hearts, moon defense, and score reading."
+      },
+      play: {
+        eyebrow: "Play",
+        title: "Play a Hearts match.",
+        summary:
+          "MVP Hearts plays repeated hands to 50 points with pass-three-left, 2C opening, QS at 13, and shoot-the-moon scoring."
+      },
+      perfect: {
+        eyebrow: "Perfect",
+        title: "Card sense will connect here later.",
+        summary: "Trump and court-card memory should eventually feed Hearts, Whist, Bridge, and Barbu practice."
+      }
     },
     defaultTab: "play",
     actionsByTab: {
@@ -517,9 +572,33 @@ export const gameTableDefinitions = {
       pathAriaLabel: "Barbu lesson path",
       pathEyebrow: "Training path",
       pathTitle: "Learn the Barbu table",
+      progressAriaLabel: "Barbu course progress",
       nextSummary: "Return to the next short card decision.",
       completeSummary: "Look over the first Barbu table before another pass.",
       referenceSummary: "Check the baseline rules, scoring, and variants."
+    },
+    tabIntros: {
+      learn: {
+        eyebrow: "Learn",
+        title: "Learn the Barbu table.",
+        summary: "Start with compact guided card decisions, then move into drills and a full table session."
+      },
+      practice: {
+        eyebrow: "Practice",
+        title: "Sharpen one decision at a time.",
+        summary: "Use short mixed drills when you want rhythm, or isolate one contract pattern when a rule feels weak."
+      },
+      play: {
+        eyebrow: "Play",
+        title: "Challenge the table.",
+        summary: "Play the current local Barbu run: contracts in sequence, cumulative score, and a final table result."
+      },
+      perfect: {
+        eyebrow: "Perfect",
+        title: "Train the skills behind strong card play.",
+        summary:
+          "Short minigames for card-counting habits: remembering trumps, court cards, and cards that have left the deck."
+      }
     },
     defaultTab: "learn",
     actionsByTab: {
