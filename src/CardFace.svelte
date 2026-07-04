@@ -36,10 +36,7 @@
   }
 
   function cardImagePath(card: Card) {
-    const alternateArtworkSuffix =
-      ["A", "J", "Q", "K"].includes(card.rank) ? "2" : "";
-
-    return `/cards/PNG-cards-1.3/${rankFileName(card.rank)}_of_${suitFileNames[card.suit]}${alternateArtworkSuffix}.png`;
+    return `/cards/cards/${rankFileName(card.rank)}_of_${suitFileNames[card.suit]}.png`;
   }
 
   const imagePath = $derived(cardImagePath(card));
