@@ -24,7 +24,7 @@ tasks:
   ui:test:tables:
     desc: Run focused iPhone active-table stability checks
     cmds:
-      - npm run test:e2e -- --grep "active game tables share|Hearts play starts|practice tab starts a full Domino|Perfect mode starts|Trump memory hand starts"
+      - npm run test:e2e -- --grep "active game tables share|quick drill is a fixed|Hearts passing drill teaches|Hearts play starts|Hearts next hand carries|practice tab starts a full Domino|Perfect mode starts|Trump memory hand starts"
 
   core:test:
     desc: Run Rust tests for the card and rules engine

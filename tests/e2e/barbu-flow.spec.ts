@@ -93,31 +93,37 @@ async function expectHandNearActionRow(page: Page, handSelector: string) {
     .toBe(true);
 }
 
-async function expectFeedbackAboveHand(page: Page, handSelector: string) {
-  const hand = page.locator(handSelector).last();
-  const feedbackItems = page.locator(
-    ".table-play-surface.compact-play .table-play-panel .result, .table-play-surface.compact-play .table-play-panel .outcome, .table-play-surface.compact-play .table-play-panel .explanation"
-  );
-  await expect(hand).toBeVisible();
+async function expectNoVerticalCollision(page: Page, upperSelector: string, lowerSelector: string, minimumGap = 8) {
+  const upperItems = page.locator(upperSelector);
+  const lower = page.locator(lowerSelector).last();
+  await expect(lower).toBeVisible();
   await expect
     .poll(async () => {
-      const handBox = await hand.boundingBox();
-      if (!handBox) {
+      const lowerBox = await lower.boundingBox();
+      if (!lowerBox) {
         return false;
       }
 
-      let feedbackBottom = 0;
-      const count = await feedbackItems.count();
+      let upperBottom = 0;
+      const count = await upperItems.count();
       for (let index = 0; index < count; index += 1) {
-        const box = await feedbackItems.nth(index).boundingBox();
+        const box = await upperItems.nth(index).boundingBox();
         if (box && box.width > 0 && box.height > 0) {
-          feedbackBottom = Math.max(feedbackBottom, box.y + box.height);
+          upperBottom = Math.max(upperBottom, box.y + box.height);
         }
       }
 
-      return feedbackBottom > 0 && feedbackBottom <= handBox.y - 8;
+      return upperBottom > 0 && upperBottom <= lowerBox.y - minimumGap;
     })
     .toBe(true);
+}
+
+async function expectFeedbackAboveHand(page: Page, handSelector: string) {
+  await expectNoVerticalCollision(
+    page,
+    ".table-play-surface.compact-play .table-play-panel .result, .table-play-surface.compact-play .table-play-panel .outcome, .table-play-surface.compact-play .table-play-panel .explanation",
+    handSelector
+  );
 }
 
 async function gotoWithPracticeSeed(page: Page, seed: number) {
@@ -598,6 +604,10 @@ test("Hearts play starts with a rotating pass phase before the hand", async ({ p
   await expect(page.getByLabel("Hearts pass summary")).toContainText("You pass");
   await expect(page.getByLabel("Hearts pass summary")).toContainText("Left");
   await expect(page.getByLabel("Hearts pass cards")).toContainText("Choose exactly three cards");
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
+  await expectHandNearActionRow(page, ".hearts-pass-cards");
+  await expectFeedbackAboveHand(page, ".hearts-pass-cards");
   await page.screenshot({ path: testInfo.outputPath("hearts-passing.png"), fullPage: true });
   await passThreeHeartsCards(page);
 
@@ -922,6 +932,7 @@ test("quick drill is a fixed iPhone screen without page scroll", async ({ page }
   await expect(page.getByRole("button", { name: "Check answer" })).toBeVisible();
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
+  await expectFeedbackAboveHand(page, ".drill-hand");
 
   const firstLegalCard = page.locator(".drill-hand .hand-card.legal").first();
   await firstLegalCard.tap();
@@ -1133,6 +1144,7 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
   await expectHandNearActionRow(page, ".drill-hand");
+  await expectFeedbackAboveHand(page, ".drill-hand");
 
   await page.locator(".table-play-topbar").getByRole("button", { name: "Table" }).click();
   await expectControlBelowSafeArea(page, ".table-topbar .back-button");

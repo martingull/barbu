@@ -222,6 +222,36 @@ Should not contain:
 - Mixed drill history.
 - Full game settlement beyond the current hand.
 
+### Active Phone Table Contract
+
+Purpose: define what every in-hand phone screen must preserve before more games or variants are added.
+
+Applies to:
+
+- Quick Drill.
+- Fixed contract drills.
+- Full-hand contract practice.
+- Play Barbu.
+- Hearts play and passing.
+- Domino full-hand practice.
+- Perfect/Card Sense realistic table games.
+
+Layout contract:
+
+- Active play screens should fit the physical iPhone viewport without page scrolling.
+- Top controls must respect the iPhone safe area after every route change.
+- Bottom actions must stay pinned in the thumb area.
+- The player's cards should stay directly above the bottom actions with a small stable gap.
+- Feedback, prompts, and recommendations must render above the player's cards, never underneath them.
+- Selecting a card must not resize the hand row, move the table, or shift the action buttons.
+- Completed-trick, result, replay, and next-hand states should keep the same table shell when the table remains visible.
+- Domino may replace the trick table with a layout grid, but it should still use the same active-game shell, safe-area rules, and thumb-area action model.
+
+Verification:
+
+- `task ui:test:tables` is the focused active-phone-table gate.
+- The gate should include screenshots and collision checks for the main active surfaces rather than relying on visual memory from a physical phone.
+
 ### Play Barbu
 
 Purpose: play a sequence of full-hand contracts as the early version of a full Barbu game.
