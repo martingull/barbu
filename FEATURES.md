@@ -93,6 +93,7 @@ The intended monetization model is free starter tables first, then paid packs wi
 - Practice Template Model v1 has started with a Rust-side template roster that maps playable contracts to generator functions before a broader scenario-template DSL is justified.
 - Browser generated fallback for Quick Drill when Tauri is unavailable.
 - Playwright smoke tests for catalog, Barbu table, lesson flow, generated fallback, and course-complete behavior.
+- Individual Playwright full-hand smoke tests now cover every playable Barbu contract from the Play Barbu hand path: No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino.
 - Focused active-table stability checks cover iPhone no-scroll, safe-area controls, pinned bottom actions, thumb-card spacing, and feedback/card collision checks across Quick Drill, Play Barbu, Hearts, Domino, and Perfect table games.
 
 ## Launch Feature List
@@ -164,7 +165,7 @@ This section is the short list for getting from the current app to something tha
    - Keep the current playable roster: No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino.
    - Tighten full-hand feedback so the player understands why a trick was good, risky, or costly.
    - Improve local opponent policy only where bad table behavior damages the feel of the hand.
-   - Before calling this production ready, unskip or replace the individual full-hand contract smoke tests; the full Play Barbu roster test is active, but each contract should also have its own focused gate.
+   - Keep the individual full-hand contract smoke tests active as the focused production gate for every playable contract; the full Play Barbu roster test remains the end-to-end sequence gate.
    - Decide whether v1 Play Barbu stays fixed-order or adds a simple contract-choice step.
    - Defer full historical/Parlett settlement details unless they block a believable local session.
 
