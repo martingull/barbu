@@ -43,7 +43,7 @@ The intended monetization model is free starter tables first, then paid packs wi
 - Hearts table with the shared Learn, Practice, Play, and Perfect structure; Play opens with rotating passes and then a local multi-hand Black Lady-style match to 100 points with 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, and shoot-the-moon scoring, while Practice covers avoiding hearts and the queen-of-spades pattern.
 - Hearts Passing Drill v1 teaches the beginner pass-three habit: identify the queen of spades, high hearts, and dangerous high spades before hand play begins.
 - Hearts Practice Scenario Pool v1 adds a small authored pool behind Quick Drill, varying first-trick restrictions, avoid-hearts, safe and dangerous queen-of-spades play, break-hearts, moon-defense, and score-reading decisions without expanding the Learn path. Pass-three practice now covers both danger-card passing and a long-suit preservation pattern.
-- Hearts Generated Practice v2A moves first-trick, avoid-hearts, and queen-of-spades danger practice into Rust-backed generated scenario families while keeping the shared Svelte drill surface and browser fallback. Focused Hearts practice buttons now run through their small scenario pool once instead of showing a single repeated sample.
+- Hearts Generated Practice v2B moves first-trick, avoid-hearts, queen-of-spades danger, break-hearts legality, stop-the-moon defense, and score-reading practice into Rust-backed generated scenario families while keeping the shared Svelte drill surface and browser fallback. Focused Hearts practice buttons now run through their small scenario pool once instead of showing a single repeated sample.
 - Hearts opponent policy v1 has started: local opponents avoid queen-of-spades wins when possible, dump the queen of spades before hearts when void, dump the queen of spades safely under higher spades, lead from short safe suits to create pressure, and lead hearts once hearts are broken.
 - Hearts opponent policy now pressures the player on clean tricks: opponents can take a cheap non-penalty winner from the player to regain lead control, while still ducking tricks already loaded with hearts or the queen of spades unless moon defense requires intervention.
 - Phone play surfaces now suppress double-tap zoom, tap highlights, text selection, and iOS callouts on card/button controls so selecting a card does not break game flow.
@@ -229,9 +229,9 @@ These are the next product increments that keep the app coherent.
    - Hearts Passing Drill v1 teaches the first pass-three heuristic.
    - Hearts Learn now gives a Barbu-like path through object, queen-of-spades danger, avoiding hearts, passing, score reading, and reference.
    - Hearts Practice covers pass-three, avoid-hearts, queen-of-spades danger, break-hearts, stop-the-moon, and score-a-hand entry points.
-   - Hearts generated practice v2A now backs first-trick, avoid-hearts, and queen-of-spades danger drills from Rust so those families can vary like Barbu practice, and focused practice buttons now run their small pools once per session.
-   - Hearts micro-drills still teach early heart lead restrictions, moon defense, and queen-of-spades score reading.
-   - Next: move break-hearts, stop-the-moon, and score-reading into Rust-backed generated scenario families.
+   - Hearts generated practice v2B now backs first-trick, avoid-hearts, queen-of-spades danger, break-hearts legality, stop-the-moon defense, and score-reading drills from Rust so those families can vary like Barbu practice, and focused practice buttons now run their small pools once per session.
+   - Hearts micro-drills still use authored browser fallbacks, while Tauri/iOS uses Rust-backed generated scenario families.
+   - Next: tune the generated Hearts scenario mix after phone testing and decide whether pass-three needs a larger generated pool.
 
 2. Drill Loop v2
    - Quick Drill now generates a continuing practice loop instead of a fixed seven-exercise roster.

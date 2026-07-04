@@ -1027,6 +1027,45 @@
       }
     }
   };
+  const heartsBreakHeartsAlreadyBrokenDrillStep: DrillStep = {
+    scenarioId: "hearts-break-hearts-already-broken",
+    contract: "Hearts",
+    title: "Break hearts",
+    trick: {
+      title: "Hearts are open",
+      beforeResult: "You are on lead. Hearts have already been broken.",
+      afterResult: "Once hearts are broken, a heart lead is legal. A low heart is usually the safer exit.",
+      emptyExplanation: "Choose a lead now that hearts are open.",
+      legalCardIds: ["3H", "JH", "6D", "10S"],
+      hand: [
+        { id: "3H", rank: "3", suit: "H", label: "3H" },
+        { id: "JH", rank: "J", suit: "H", label: "JH" },
+        { id: "6D", rank: "6", suit: "D", label: "6D" },
+        { id: "10S", rank: "10", suit: "S", label: "10S" }
+      ],
+      tableBeforeChoice: [],
+      tableAfterChoice: [],
+      pendingBySeat: { Tutor: "waiting", Left: "waiting", Right: "waiting" },
+      playedExplanations: {
+        "3H": "3H is good. Hearts are open, and the low heart is a safe exit.",
+        JH: "JH is legal, but leading a higher heart can give away control.",
+        "6D": "6D is legal. Non-hearts are still safe leads.",
+        "10S": "10S is legal, but watch whether the queen of spades is still live."
+      },
+      cardOutcomes: {
+        "3H": "good",
+        JH: "risky",
+        "6D": "good",
+        "10S": "risky"
+      },
+      cardReasons: {
+        "3H": "followed_suit",
+        JH: "followed_suit",
+        "6D": "followed_suit",
+        "10S": "won_clean_trick"
+      }
+    }
+  };
   const heartsQueenDangerDrillStep: DrillStep = {
     scenarioId: "hearts-black-lady-duck",
     contract: "Hearts",
@@ -1327,6 +1366,45 @@
       }
     }
   };
+  const heartsScoreCleanCardDrillStep: DrillStep = {
+    scenarioId: "hearts-score-hand-clean-card",
+    contract: "Hearts",
+    title: "Score a hand",
+    trick: {
+      title: "Find the clean card",
+      beforeResult: "This trick contains one heart and the queen of spades. One candidate card does not score.",
+      afterResult: "Clean cards are neither hearts nor the queen of spades.",
+      emptyExplanation: "Choose the card that adds no Hearts penalty points.",
+      legalCardIds: ["5D", "9H", "QS"],
+      hand: [
+        { id: "5D", rank: "5", suit: "D", label: "5D" },
+        { id: "9H", rank: "9", suit: "H", label: "9H" },
+        { id: "QS", rank: "Q", suit: "S", label: "QS" }
+      ],
+      tableBeforeChoice: [
+        { seat: "Tutor", card: { id: "2C", rank: "2", suit: "C", label: "2C" } },
+        { seat: "Right", card: { id: "8S", rank: "8", suit: "S", label: "8S" } },
+        { seat: "Left", card: { id: "KD", rank: "K", suit: "D", label: "KD" } }
+      ],
+      tableAfterChoice: [],
+      pendingBySeat: { You: "identify clean card" },
+      playedExplanations: {
+        "5D": "5D is good. It is a clean card with no Hearts penalty value.",
+        "9H": "9H is a heart, so it is worth one penalty point.",
+        QS: "Queen of Spades is the 13-point danger card."
+      },
+      cardOutcomes: {
+        "5D": "good",
+        "9H": "risky",
+        QS: "penalty"
+      },
+      cardReasons: {
+        "5D": "won_clean_trick",
+        "9H": "captured_penalty",
+        QS: "captured_penalty"
+      }
+    }
+  };
   const heartsAvoidHeartsDrillPool = [
     heartsAvoidHeartsDrillStep,
     heartsAvoidHeartVoidDumpDrillStep,
@@ -1342,13 +1420,21 @@
     heartsQueenDumpDrillStep,
     heartsQueenDangerousDumpDrillStep
   ];
-  const heartsBreakHeartsDrillPool = [heartsBreakHeartsDrillStep, heartsBreakHeartsOnlyHeartsDrillStep];
+  const heartsBreakHeartsDrillPool = [
+    heartsBreakHeartsDrillStep,
+    heartsBreakHeartsOnlyHeartsDrillStep,
+    heartsBreakHeartsAlreadyBrokenDrillStep
+  ];
   const heartsStopMoonDrillPool = [
     heartsStopMoonDrillStep,
     heartsStopMoonQueenDrillStep,
     heartsStopMoonSmallPointDrillStep
   ];
-  const heartsScoreHandDrillPool = [heartsScoreHandDrillStep, heartsScoreHeartPointDrillStep];
+  const heartsScoreHandDrillPool = [
+    heartsScoreHandDrillStep,
+    heartsScoreHeartPointDrillStep,
+    heartsScoreCleanCardDrillStep
+  ];
   const heartsQuickDrillPools = [
     heartsFirstTrickDrillPool,
     heartsAvoidHeartsDrillPool,
@@ -3970,16 +4056,16 @@
     }
 
     if (step.action === "break") {
-      startHeartsBreakHeartsDrill(step.id);
+      void startHeartsBreakHeartsDrill(step.id);
       return;
     }
 
     if (step.action === "moon") {
-      startHeartsStopMoonDrill(step.id);
+      void startHeartsStopMoonDrill(step.id);
       return;
     }
 
-    startHeartsScoreHandDrill(step.id);
+    void startHeartsScoreHandDrill(step.id);
   }
 
   function findNextHeartsPathStep(fromStepId = "") {
@@ -5299,12 +5385,21 @@
     appView = "drill";
   }
 
-  type HeartsGeneratedPracticeFocus = "first-trick" | "avoid-hearts" | "queen-danger";
+  type HeartsGeneratedPracticeFocus =
+    | "first-trick"
+    | "avoid-hearts"
+    | "queen-danger"
+    | "break-hearts"
+    | "stop-moon"
+    | "score-hand";
 
   const heartsGeneratedFallbackPools: Record<HeartsGeneratedPracticeFocus, DrillStep[]> = {
     "first-trick": heartsFirstTrickDrillPool,
     "avoid-hearts": heartsAvoidHeartsDrillPool,
-    "queen-danger": heartsQueenDangerDrillPool
+    "queen-danger": heartsQueenDangerDrillPool,
+    "break-hearts": heartsBreakHeartsDrillPool,
+    "stop-moon": heartsStopMoonDrillPool,
+    "score-hand": heartsScoreHandDrillPool
   };
 
   async function loadGeneratedHeartsPracticeSteps(seed: number, focus = "") {
@@ -5331,7 +5426,14 @@
   }
 
   function isHeartsGeneratedPracticeFocus(focus: string): focus is HeartsGeneratedPracticeFocus {
-    return focus === "first-trick" || focus === "avoid-hearts" || focus === "queen-danger";
+    return (
+      focus === "first-trick" ||
+      focus === "avoid-hearts" ||
+      focus === "queen-danger" ||
+      focus === "break-hearts" ||
+      focus === "stop-moon" ||
+      focus === "score-hand"
+    );
   }
 
   async function startGeneratedHeartsMicroDrill(
@@ -5366,18 +5468,20 @@
   async function startHeartsQuickDrill() {
     const seed = usePracticeSeed();
     const generatedSteps = await loadGeneratedHeartsPracticeSteps(seed);
-    const generatedFamilies: HeartsGeneratedPracticeFocus[] = ["first-trick", "avoid-hearts", "queen-danger"];
-    const generatedFamilySteps = generatedFamilies
-      .map((family, index) => {
-        const familyCandidates = generatedSteps.filter((step) => step.scenarioId?.startsWith(`hearts-${family}`));
-        return familyCandidates.length > 0
-          ? selectGeneratedDrillCandidate(familyCandidates, seed + index * 11, [])
-          : heartsGeneratedFallbackPools[family][(seed + index) % heartsGeneratedFallbackPools[family].length];
-      });
-    const remainingSteps = [heartsBreakHeartsDrillPool, heartsStopMoonDrillPool, heartsScoreHandDrillPool].map(
-      (pool, index) => pool[(seed + generatedFamilySteps.length + index) % pool.length]
-    );
-    const steps = [...generatedFamilySteps, ...remainingSteps];
+    const generatedFamilies: HeartsGeneratedPracticeFocus[] = [
+      "first-trick",
+      "avoid-hearts",
+      "queen-danger",
+      "break-hearts",
+      "stop-moon",
+      "score-hand"
+    ];
+    const steps = generatedFamilies.map((family, index) => {
+      const familyCandidates = generatedSteps.filter((step) => step.scenarioId?.startsWith(`hearts-${family}`));
+      return familyCandidates.length > 0
+        ? selectGeneratedDrillCandidate(familyCandidates, seed + index * 11, [])
+        : heartsGeneratedFallbackPools[family][(seed + index) % heartsGeneratedFallbackPools[family].length];
+    });
     const offset = seed % steps.length;
 
     activeGameTable = "hearts";
@@ -5416,25 +5520,16 @@
     return [...steps.slice(offset), ...steps.slice(0, offset)];
   }
 
-  function startHeartsBreakHeartsDrill(pathStepId = "") {
-    const seed = usePracticeSeed();
-    const steps = pathStepId ? [heartsBreakHeartsDrillStep] : orderPracticePool(heartsBreakHeartsDrillPool, seed);
-
-    startHeartsMicroDrillSession(steps, "Hearts practice: break hearts", pathStepId);
+  async function startHeartsBreakHeartsDrill(pathStepId = "") {
+    await startGeneratedHeartsMicroDrill("break-hearts", "Hearts practice: break hearts", pathStepId);
   }
 
-  function startHeartsStopMoonDrill(pathStepId = "") {
-    const seed = usePracticeSeed();
-    const steps = pathStepId ? [heartsStopMoonDrillStep] : orderPracticePool(heartsStopMoonDrillPool, seed);
-
-    startHeartsMicroDrillSession(steps, "Hearts practice: stop the moon", pathStepId);
+  async function startHeartsStopMoonDrill(pathStepId = "") {
+    await startGeneratedHeartsMicroDrill("stop-moon", "Hearts practice: stop the moon", pathStepId);
   }
 
-  function startHeartsScoreHandDrill(pathStepId = "") {
-    const seed = usePracticeSeed();
-    const steps = pathStepId ? [heartsScoreHandDrillStep] : orderPracticePool(heartsScoreHandDrillPool, seed);
-
-    startHeartsMicroDrillSession(steps, "Hearts practice: score a hand", pathStepId);
+  async function startHeartsScoreHandDrill(pathStepId = "") {
+    await startGeneratedHeartsMicroDrill("score-hand", "Hearts practice: score a hand", pathStepId);
   }
 
   function replayHeartsPracticeDrill() {
@@ -5522,9 +5617,9 @@
     first: () => void startHeartsFirstTrickDrill(),
     avoid: () => void startHeartsAvoidHeartsDrill(),
     queen: () => void startHeartsQueenDangerDrill(),
-    break: () => startHeartsBreakHeartsDrill(),
-    moon: () => startHeartsStopMoonDrill(),
-    score: () => startHeartsScoreHandDrill()
+    break: () => void startHeartsBreakHeartsDrill(),
+    moon: () => void startHeartsStopMoonDrill(),
+    score: () => void startHeartsScoreHandDrill()
   };
 
   function continueCourse() {

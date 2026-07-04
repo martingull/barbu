@@ -30,8 +30,10 @@ pub use hand::{
 pub use learning::{barbu_learning_path, ContractLesson, GameLesson, LessonStep};
 pub use practice::{
     generate_daily_drill_set, generate_hearts_avoid_hearts_practice,
-    generate_hearts_first_trick_practice, generate_hearts_pass_practice,
-    generate_hearts_practice_set, generate_hearts_queen_danger_practice,
+    generate_hearts_break_hearts_practice, generate_hearts_first_trick_practice,
+    generate_hearts_pass_practice, generate_hearts_practice_set,
+    generate_hearts_queen_danger_practice, generate_hearts_score_hand_practice,
+    generate_hearts_stop_moon_practice,
     generate_king_of_hearts_capture, generate_king_of_hearts_practice,
     generate_king_of_hearts_void_discard, generate_no_hearts_follow_suit,
     generate_no_hearts_practice, generate_no_hearts_void_discard, generate_no_last_two_duck,

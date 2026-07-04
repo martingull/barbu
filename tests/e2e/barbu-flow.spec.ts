@@ -581,7 +581,7 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
 
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Break hearts" }).click();
   await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
-  await expect(page.getByLabel("Drill progress")).toContainText("0 / 2 played");
+  await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
   await expect(page.getByLabel("Drill decision")).toContainText(/Can you lead a heart\?|Only hearts remain/);
   await completeQuickDrillDecision(page);
   await expect(page.getByLabel("Drill decision")).toContainText(/Good|Illegal/);
@@ -607,7 +607,7 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
   await page.getByRole("button", { name: "Table" }).first().click();
 
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Score a hand" }).click();
-  await expect(page.getByLabel("Drill progress")).toContainText("0 / 2 played");
+  await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
   await expect(page.getByLabel("Drill decision")).toContainText(/Find the 13-point card|Find the one-point card/);
   await completeQuickDrillDecision(page);
   await expect(page.getByLabel("Drill decision")).toContainText("Good");
