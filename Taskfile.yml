@@ -64,6 +64,17 @@ tasks:
     cmds:
       - npm run tauri -- ios init
 
+  ios:clean:generated:
+    desc: Delete the ignored generated Tauri iOS project so the next init/build starts from tracked config
+    cmds:
+      - rm -rf src-tauri/gen/apple
+
+  ios:reinit:
+    desc: Delete and recreate the generated Tauri iOS project
+    cmds:
+      - task: ios:clean:generated
+      - npm run tauri -- ios init
+
   ios:dev:device:
     desc: Run on a physical iPhone with network dev-server support; pass device name with `task ios:dev:device -- "Martin's iPhone"`
     cmds:
@@ -84,6 +95,16 @@ tasks:
     vars:
       IOS_DEVICE_ID: '{{default "00008140-001814310187001C" .IOS_DEVICE_ID}}'
     cmds:
+      - npm run tauri -- ios build --debug --target aarch64
+      - xcrun devicectl device install app --device {{.IOS_DEVICE_ID}} src-tauri/gen/apple/build/arm64/Barbu.ipa
+      - xcrun devicectl device process launch --device {{.IOS_DEVICE_ID}} com.martin.barbu
+
+  ios:install:device:clean:
+    desc: Recreate the generated iOS project, then build, install, and launch on the default physical iPhone
+    vars:
+      IOS_DEVICE_ID: '{{default "00008140-001814310187001C" .IOS_DEVICE_ID}}'
+    cmds:
+      - task: ios:reinit
       - npm run tauri -- ios build --debug --target aarch64
       - xcrun devicectl device install app --device {{.IOS_DEVICE_ID}} src-tauri/gen/apple/build/arm64/Barbu.ipa
       - xcrun devicectl device process launch --device {{.IOS_DEVICE_ID}} com.martin.barbu

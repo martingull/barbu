@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:ios-assets": "vite build && rsync -a --delete dist/ src-tauri/gen/apple/assets/",
+    "prepare:ios": "npm run build:ios-assets",
     "test:e2e": "playwright test",
     "preview": "vite preview",
     "tauri": "tauri",
