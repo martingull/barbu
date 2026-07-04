@@ -6,6 +6,7 @@ export type CatalogGameId =
   | ActiveGameTable
   | "solitaire"
   | "card-counting"
+  | "card-counting-ii"
   | "whist"
   | "bridge"
   | "gin-rummy"
@@ -139,7 +140,7 @@ const tabLabels: Record<TableTabId, string> = {
   learn: "Learn",
   practice: "Practice",
   play: "Play",
-  perfect: "Perfect"
+  perfect: "Pro"
 };
 
 function createLearnPathStep<Action extends string>(step: LearnPathStep<Action>): LearnPathStep<Action> {
@@ -493,11 +494,20 @@ export function createCatalogEntries(): CatalogEntry[] {
     createCatalogEntry({
       id: "card-counting",
       family: "Skill pack",
-      title: "Card Counting",
+      title: "Card Counting I",
       status: "Ready",
       access: "Pack",
       accessModel: "metered-pack",
       summary: "4 minigames for tracking trumps, court cards, and what remains."
+    }),
+    createCatalogEntry({
+      id: "card-counting-ii",
+      family: "Skill pack",
+      title: "Card Counting II",
+      status: "Planned",
+      access: "Pack",
+      accessModel: "metered-pack",
+      summary: "Bridge-oriented counting for suits, high cards, and table inference."
     }),
     createCatalogEntry({
       id: "solitaire",
@@ -538,7 +548,7 @@ export function createCatalogEntries(): CatalogEntry[] {
   ];
 }
 
-// Canonical table metadata for the shared Learn | Practice | Play | Perfect shell.
+// Canonical table metadata for the shared Learn | Practice | Play | Pro shell.
 // UI screens should consume this shape instead of inventing one-off tab copy per game.
 export const gameTableDefinitions = {
   hearts: createGameTableDefinition({
@@ -580,9 +590,10 @@ export const gameTableDefinitions = {
           "Hearts plays repeated hands to 100 points with rotating passes, 2C opening, Queen of Spades at 13, and shoot-the-moon scoring."
       },
       perfect: {
-        eyebrow: "Perfect",
+        eyebrow: "Pro",
         title: "Train Hearts card sense.",
-        summary: "Start with one high-card memory exercise that supports Queen of Spades and safe-ducking decisions."
+        summary:
+          "Subscriber skill training starts with high-card memory, with AI play and opponent play planned for the Pro layer."
       }
     },
     defaultTab: "play",
@@ -639,10 +650,10 @@ export const gameTableDefinitions = {
         summary: "Play the current local Barbu run: contracts in sequence, cumulative score, and a final table result."
       },
       perfect: {
-        eyebrow: "Perfect",
+        eyebrow: "Pro",
         title: "Train the skills behind strong card play.",
         summary:
-          "Short minigames for card-counting habits: remembering trumps, court cards, and cards that have left the deck."
+          "Short card-sense games now, with subscriber AI play, opponent play, and advanced Bridge-style counting planned."
       }
     },
     defaultTab: "learn",

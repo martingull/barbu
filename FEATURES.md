@@ -30,17 +30,17 @@ The intended monetization model is free starter tables first, then paid packs wi
 
 ## Current Feature Set
 
-- Game catalog ordered with free starter tables first: Hearts, Barbu, and Whist, followed by paid packs/future paid games such as Card Counting, Solitaire, Bridge, Gin Rummy, and Canasta.
+- Game catalog ordered with free starter tables first: Hearts, Barbu, and Whist, followed by paid packs/future paid games such as Card Counting I, Card Counting II, Solitaire, Bridge, Gin Rummy, and Canasta.
 - Game catalog metadata now comes from a shared table/catalog factory, including free starter versus metered pack access metadata, so future game additions do not start as hardcoded home-screen branches.
 - Learn tab shell metadata now comes from the shared table/catalog factory: each active game declares its path title, progress label, continue summary, complete summary, and reference summary before screen-specific content is added.
-- Table tab intro metadata now comes from the shared table/catalog factory: Learn, Practice, Play, and Perfect each declare their heading copy in one place before game-specific controls render underneath.
+- Table tab intro metadata now comes from the shared table/catalog factory: Learn, Practice, Play, and Pro each declare their heading copy in one place before game-specific controls render underneath.
 - Barbu and Hearts Learn tabs now render through a shared Svelte LearnPanel template backed by the table factory, so future games can reuse the same path/progress/action structure instead of cloning the tab markup.
 - Hearts Learn path metadata now comes from the shared table/catalog factory, so lesson order, progress labels, and continuation behavior have one source of truth before more games add their own paths.
 - Hearts Learn coverage now includes break-hearts legality and moon-defense tactics, reusing the existing practice drills as path steps instead of creating separate implementations.
 - Barbu Learn path metadata now comes from the shared table/catalog factory, so the first curriculum uses the same scalable pattern as Hearts.
 - Hearts Practice entry metadata now comes from the shared table/catalog factory, so practice buttons, tab metadata, and action keys stay aligned as more games add practice sets.
 - Barbu Practice entry metadata now comes from the shared table/catalog factory for Quick Drill, fixed drills, and Domino full-hand practice.
-- Hearts table with the shared Learn, Practice, Play, and Perfect structure; Play opens with rotating passes and then a local multi-hand Black Lady-style match to 100 points with 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, and shoot-the-moon scoring, while Practice covers avoiding hearts and the queen-of-spades pattern.
+- Hearts table with the shared Learn, Practice, Play, and Pro structure; Play opens with rotating passes and then a local multi-hand Black Lady-style match to 100 points with 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, and shoot-the-moon scoring, while Practice covers avoiding hearts and the queen-of-spades pattern.
 - Hearts Passing Drill v1 teaches the beginner pass-three habit: identify the queen of spades, high hearts, and dangerous high spades before hand play begins.
 - Hearts Practice Scenario Pool v1 adds a small authored pool behind Quick Drill, varying first-trick restrictions, avoid-hearts, safe and dangerous queen-of-spades play, break-hearts, moon-defense, and score-reading decisions without expanding the Learn path. Pass-three practice now covers both danger-card passing and a long-suit preservation pattern.
 - Hearts Generated Practice v2B moves first-trick, avoid-hearts, queen-of-spades danger, break-hearts legality, stop-the-moon defense, and score-reading practice into Rust-backed generated scenario families while keeping the shared Svelte drill surface and browser fallback. Focused Hearts practice buttons now run through their small scenario pool once instead of showing a single repeated sample.
@@ -48,7 +48,7 @@ The intended monetization model is free starter tables first, then paid packs wi
 - Hearts opponent policy now pressures the player on clean tricks: opponents can take a cheap non-penalty winner from the player to regain lead control, while still ducking tricks already loaded with hearts or the queen of spades unless moon defense requires intervention.
 - Phone play surfaces now suppress double-tap zoom, tap highlights, text selection, and iOS callouts on card/button controls so selecting a card does not break game flow.
 - Hearts trick feedback now calls out queen-of-spades danger, hearts moving, and opponent-loaded tricks so harder hands feel explainable rather than random.
-- Barbu table with grouped Learn, Practice, Play, and Perfect entry points; Reference and contract map actions live inside Learn.
+- Barbu table with grouped Learn, Practice, Play, and Pro entry points; Reference and contract map actions live inside Learn.
 - Nine-step Barbu training path that moves through concept, example, guided trick, contract concepts, Domino layout, practice, and review.
 - Quick Drill mode as a generated practice loop: one decision at a time, immediate feedback, optional next decision, and a compact session result.
 - Quick Drill result loop with next-repetition guidance, focused replay, recent rhythm, and local attempt history after the learner finishes a generated session.
@@ -72,7 +72,7 @@ The intended monetization model is free starter tables first, then paid packs wi
 - Full-hand tactical feedback v1 with structured trick tags for followed suit, void discards, moved danger cards, No Last Two setup/final tricks, trump wins, and overtrumps.
 - Training path practice step connected to Quick Drill completion.
 - Review step with latest Quick Drill score, weakest-contract advice, recent attempts, and replay actions.
-- Card Counting pack started with its own Learn/Play table plus Count Trumps, Trump Memory Hand, Track Court Cards, and Danger Cards minigames. Barbu Perfect reuses the same exercise grid.
+- Card Counting I pack started with its own Learn/Play table plus Count Trumps, Trump Memory Hand, Track Court Cards, and Danger Cards. Card Counting II is visible as a planned subscriber pack for Bridge-oriented counting. Barbu Pro reuses the Card Counting I exercise grid.
 - Reason-based review advice that turns recent practice tags into one short next-step correction.
 - Local Quick Drill result history with contract-level summaries and focused replay for the weakest contract.
 - Local course progress for the playable Barbu path.
@@ -95,7 +95,7 @@ The intended monetization model is free starter tables first, then paid packs wi
 - Browser generated fallback for Quick Drill when Tauri is unavailable.
 - Playwright smoke tests for catalog, Barbu table, lesson flow, generated fallback, course-complete behavior, and current Hearts/Barbu table navigation.
 - Individual Playwright full-hand smoke tests now cover every playable Barbu contract from the Play Barbu hand path: No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino.
-- Focused active-table stability checks cover iPhone no-scroll, safe-area controls, pinned bottom actions, thumb-card spacing, and feedback/card collision checks across Quick Drill, Play Barbu, Hearts, Domino, and Perfect table games.
+- Focused active-table stability checks cover iPhone no-scroll, safe-area controls, pinned bottom actions, thumb-card spacing, and feedback/card collision checks across Quick Drill, Play Barbu, Hearts, Domino, and Pro table games.
 
 ## Launch Feature List
 
@@ -106,7 +106,7 @@ Must ship:
 1. Free starter catalog
    - Hearts, Barbu, and Whist visible first.
    - Barbu and Hearts are active; Whist may remain a clearly labeled starter placeholder until the shared trick-taking loop is stable enough to support it.
-   - Paid/future packs such as Solitaire, Bridge, Gin Rummy, Canasta, and Card Counting can stay visible as roadmap signals only.
+   - Paid/future packs such as Card Counting II, Solitaire, Bridge, Gin Rummy, and Canasta can stay visible as roadmap signals only.
 
 2. Barbu
    - Learn path for the core contracts.
@@ -124,7 +124,7 @@ Must ship:
    - Hearts Practice can reuse Hearts-family avoidance drills while Hearts-specific drills grow.
    - Hearts Learn/Reference should explain the current rule boundary clearly.
 
-4. Card Sense / Perfect
+4. Pro / Card Sense
    - Keep the current memory mini-games small and tied to real play.
    - Prioritize trumps, court cards, and danger-card tracking because they transfer to Barbu, Hearts, Whist, and Bridge.
 
@@ -157,7 +157,7 @@ This section is the short list for getting from the current app to something tha
    - Near-term implementation task: identify the shared Rust primitives versus the Barbu contract-policy layer and the Hearts/Black Lady avoidance-policy layer before changing more opponent behavior.
 
 1. Stabilize the active phone table
-   - Keep Quick Drill, full-hand practice, Play Barbu, Hearts, Domino, and Perfect mini-games on stable iPhone layouts.
+   - Keep Quick Drill, full-hand practice, Play Barbu, Hearts, Domino, and Pro mini-games on stable iPhone layouts.
    - Prevent active-game scrolling, safe-area collisions, shifting score boxes, and thumb-card/action collisions.
    - Keep the shared table surface consistent across Barbu practice, Barbu play, Hearts play, and realistic mini-games.
    - Current gate: `task ui:test:tables` runs the focused iPhone table-stability suite.
@@ -177,8 +177,8 @@ This section is the short list for getting from the current app to something tha
    - Add only the Hearts-specific practice needed to support the play mode: passing, queen-of-spades danger, safe heart avoidance, and basic score reading.
    - Defer locked danger spades, bonus-jack scoring, and richer Hearts-family varieties unless the current Hearts loop feels incomplete without them.
 
-4. Keep Perfect small but useful
-   - Treat Perfect as card-sense training, not a second game catalog.
+4. Keep Pro small but useful
+   - Treat Pro as card-sense training plus planned subscriber AI/opponent play, not a second game catalog.
    - Keep Count Trumps, Trump Memory Hand, Track Court Cards, and Danger Cards if they remain tied to real table play.
    - Stop adding mini-games until each active one has clear feedback and a reason to return.
 
@@ -288,7 +288,7 @@ These are the next product increments that keep the app coherent.
    - Keep it local until the app needs sync or accounts.
 
 10. Card Sense Training v1
-   - Started in the catalog and Perfect mode with a Card Counting pack.
+   - Started in the catalog and Pro mode with the Card Counting I pack.
    - Count Trumps reveals all thirteen tricks in segments, hides the segment, then asks either how many hearts appeared or whether a specific heart appeared.
    - Trump Memory Hand is a separate realistic table exercise: deal a hand, make the player play tricks, then ask either how many trumps were played or whether a specific trump card appeared.
    - Track Court Cards is the third active exercise and uses the realistic table surface for high-card memory.

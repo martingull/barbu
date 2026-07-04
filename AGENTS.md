@@ -64,7 +64,7 @@ Keep game logic independent of the UI. The frontend may present and explain rule
 Use `src/tableFactory.ts` as the first stop when adding or changing a game table. The factory is the source of truth for:
 
 - catalog entries and free/pack access labels
-- the shared `Learn | Practice | Play | Perfect` tab metadata
+- the shared `Learn | Practice | Play | Pro` tab metadata
 - table title, family, reference id, scorecard direction, and default tab
 - learn path step metadata
 - practice entry and practice group metadata
@@ -75,7 +75,7 @@ Use `src/tableFactory.ts` as the first stop when adding or changing a game table
 - render Learn with `LearnPanel`
 - render Practice with `PracticePanel`
 - keep Play bodies in `App.svelte` only when they need game-specific state, saved games, or full-hand actions
-- keep Perfect bodies in `App.svelte` only when they launch specific mini-games or reuse shared snippets such as the Card Counting exercise grid
+- keep Pro bodies in `App.svelte` only when they launch specific mini-games, AI/opponent-play affordances, or reuse shared snippets such as the Card Counting I exercise grid
 
 When starting Whist, do not copy the Barbu or Hearts table markup wholesale. Add Whist metadata to `tableFactory.ts`, then add the smallest route/view glue in `App.svelte`:
 
@@ -85,7 +85,7 @@ When starting Whist, do not copy the Barbu or Hearts table markup wholesale. Add
 4. render Whist Learn through `LearnPanel`
 5. render Whist Practice through `PracticePanel`
 6. add only Whist-specific Play actions that cannot live in factory data
-7. add Playwright smoke coverage for catalog navigation, Learn, Practice, Play, and any Perfect entry
+7. add Playwright smoke coverage for catalog navigation, Learn, Practice, Play, and any Pro entry
 
 If a new table needs a visual layout already used by Barbu or Hearts, extract a shared Svelte component or snippet before adding another large inline branch. If the new behavior is game rules, scoring, generated practice, or opponent policy, prefer `crates/barbu-core` or a browser fallback module rather than embedding it in the table UI.
 

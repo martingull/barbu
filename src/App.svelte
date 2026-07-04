@@ -6293,11 +6293,11 @@
       </div>
     </section>
   {:else if appView === "cardCountingTable"}
-    <header class="topbar table-topbar" aria-label="Card Counting table">
+    <header class="topbar table-topbar" aria-label="Card Counting I table">
       <button class="back-button" onclick={openCatalog} type="button">Games</button>
       <div class="table-title">
         <p class="eyebrow">Skill pack</p>
-        <h1>Card Counting</h1>
+        <h1>Card Counting I</h1>
       </div>
       <div class="contract-status">
         <span>Current mode</span>
@@ -6305,11 +6305,11 @@
       </div>
     </header>
 
-    <section class="table-room" aria-label="Card Counting modes">
+    <section class="table-room" aria-label="Card Counting I modes">
       <div class="barbu-table-rail">
         <div class="barbu-mode-box">
           <p class="eyebrow">Table mode</p>
-          <div class="barbu-table-tabs compact" aria-label="Card Counting sections" role="tablist">
+          <div class="barbu-table-tabs compact" aria-label="Card Counting I sections" role="tablist">
             <button
               aria-controls="card-counting-learn-panel"
               aria-selected={activeCardCountingTab === "learn"}
@@ -6346,7 +6346,7 @@
             <p>Card counting here means table memory: notice trumps, court cards, and danger cards as play moves.</p>
           </div>
 
-          <div class="learn-action-grid" aria-label="Card Counting learning path">
+          <div class="learn-action-grid" aria-label="Card Counting I learning path">
             <div class="learn-action-card">
               <p class="eyebrow">1 Concept</p>
               <strong>Count a suit</strong>
@@ -6372,8 +6372,8 @@
             <p>Play the current card-sense exercises we have built so far.</p>
           </div>
 
-          <section class="fixed-contract-practice" aria-label="Card Counting pack">
-            {@render cardCountingExerciseGrid("Card Counting exercises")}
+          <section class="fixed-contract-practice" aria-label="Card Counting I pack">
+            {@render cardCountingExerciseGrid("Card Counting I exercises")}
           </section>
         </div>
       {/if}
@@ -6461,7 +6461,7 @@
         </div>
       {:else}
         <div
-          aria-label="Perfect"
+          aria-label="Pro"
           class="barbu-tab-panel perfect-panel"
           id={gameTableDefinitions.barbu.tabs.perfect.panelId}
           role="tabpanel"
@@ -6472,14 +6472,14 @@
             <p>{gameTableDefinitions.barbu.tabs.perfect.intro.summary}</p>
           </div>
 
-          <section class="fixed-contract-practice" aria-label="Card counting pack">
+          <section class="fixed-contract-practice" aria-label="Card Counting I pack">
             <div class="section-heading">
-              <p class="eyebrow">Card Counting</p>
+              <p class="eyebrow">Card Counting I</p>
               <h2>Know what is still out.</h2>
               <p>Build the memory habits behind trick-taking: count trumps, then track the high court cards.</p>
             </div>
 
-            {@render cardCountingExerciseGrid("Perfect mode skills")}
+            {@render cardCountingExerciseGrid("Pro mode skills")}
           </section>
         </div>
       {/if}
@@ -6559,15 +6559,15 @@
             </div>
           </div>
       {:else}
-        <div aria-label="Perfect" class="barbu-tab-panel perfect-panel" id={gameTableDefinitions.hearts.tabs.perfect.panelId} role="tabpanel">
+        <div aria-label="Pro" class="barbu-tab-panel perfect-panel" id={gameTableDefinitions.hearts.tabs.perfect.panelId} role="tabpanel">
             <div class="barbu-mode-copy">
               <p class="eyebrow">{gameTableDefinitions.hearts.tabs.perfect.intro.eyebrow}</p>
               <h2>{gameTableDefinitions.hearts.tabs.perfect.intro.title}</h2>
               <p>{gameTableDefinitions.hearts.tabs.perfect.intro.summary}</p>
             </div>
 
-            <section class="fixed-contract-practice" aria-label="Hearts Perfect exercise">
-              <div class="fixed-contract-grid single" aria-label="Hearts Perfect skills">
+            <section class="fixed-contract-practice" aria-label="Hearts Pro exercise">
+              <div class="fixed-contract-grid single" aria-label="Hearts Pro skills">
                 <button class="contract-card compact" onclick={openCourtCountTrainer} type="button">
                   <span>High-card memory</span>
                   <strong>Track court cards</strong>
@@ -6583,7 +6583,7 @@
         mode="play"
         ariaLabel="Trump memory hand trainer"
         title="Trump memory hand"
-        eyebrow="Card Counting"
+        eyebrow="Card Counting I"
         statusLabel="Score"
         statusValue={`${trumpCountClean} of ${trumpCountAttempts}`}
         tableAriaLabel="Realistic trump table"
@@ -6730,7 +6730,7 @@
       mode="play"
       ariaLabel="Count trumps trainer"
       title="Count trumps"
-      eyebrow="Card Counting"
+      eyebrow="Card Counting I"
       statusLabel="Score"
       statusValue={`${trumpCountClean} of ${trumpCountAttempts}`}
       tableAriaLabel="Trump trick reveal"
@@ -6865,7 +6865,7 @@
       mode="play"
       ariaLabel="Track court cards trainer"
       title="Track court cards"
-      eyebrow="Card Counting"
+      eyebrow="Card Counting I"
       statusLabel="Score"
       statusValue={`${courtCountClean} of ${courtCountAttempts}`}
       tableAriaLabel="Court card memory table"
@@ -7022,7 +7022,7 @@
       mode="play"
       ariaLabel="Danger cards trainer"
       title="Danger cards"
-      eyebrow="Card Counting"
+      eyebrow="Card Counting I"
       statusLabel="Score"
       statusValue={`${dangerCountClean} of ${dangerCountAttempts}`}
       tableAriaLabel="Danger card memory table"

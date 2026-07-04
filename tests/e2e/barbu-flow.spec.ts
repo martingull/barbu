@@ -148,7 +148,7 @@ async function expectTableSlotsSeparated(page: Page) {
     .toBe(true);
 }
 
-async function openBarbuTab(page: Page, tab: "Learn" | "Practice" | "Play" | "Perfect") {
+async function openBarbuTab(page: Page, tab: "Learn" | "Practice" | "Play" | "Pro") {
   await page.getByRole("tab", { name: tab }).click();
   await expect(page.getByRole("tab", { name: tab })).toHaveAttribute("aria-selected", "true");
 }
@@ -314,8 +314,11 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByRole("heading", { name: "Core games" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Hearts" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Barbu" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Open Card Counting" })).toContainText("Pack");
-  await expect(page.getByRole("button", { name: "Open Card Counting" })).toContainText("4 minigames");
+  await expect(page.getByRole("button", { name: "Open Card Counting I" })).toContainText("Pack");
+  await expect(page.getByRole("button", { name: "Open Card Counting I" })).toContainText("4 minigames");
+  await expect(page.getByRole("button", { name: "Card Counting II planned" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Card Counting II planned" })).toContainText("Pack");
+  await expect(page.getByRole("button", { name: "Card Counting II planned" })).toContainText("Bridge-oriented");
   await expect(page.getByRole("button", { name: "Solitaire planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Whist planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Bridge planned" })).toBeVisible();
@@ -327,9 +330,9 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByText("Barbu Learning Table")).toHaveCount(0);
   await expect
     .poll(async () =>
-      page.locator(".game-card strong").evaluateAll((items) => items.slice(0, 4).map((item) => item.textContent?.trim()))
+      page.locator(".game-card strong").evaluateAll((items) => items.slice(0, 5).map((item) => item.textContent?.trim()))
     )
-    .toEqual(["Hearts", "Barbu", "Whist", "Card Counting"]);
+    .toEqual(["Hearts", "Barbu", "Whist", "Card Counting I", "Card Counting II"]);
 
   await page.screenshot({ path: testInfo.outputPath("catalog.png"), fullPage: true });
 
@@ -340,7 +343,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByLabel("Barbu table actions").getByRole("button", { name: "Play Barbu" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Practice" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Learn" })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Perfect" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Pro" })).toBeVisible();
 
   await openBarbuTab(page, "Learn");
   await expect(page.getByRole("button", { name: /Continue with Meet the contract/ })).toBeVisible();
@@ -371,30 +374,30 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByLabel("Barbu table actions").getByRole("button", { name: "Play Barbu" })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath("barbu-play.png"), fullPage: true });
 
-  await openBarbuTab(page, "Perfect");
+  await openBarbuTab(page, "Pro");
   await expect(page.getByRole("heading", { name: "Train the skills behind strong card play." })).toBeVisible();
-  await expect(page.getByLabel("Card counting pack")).toContainText("Know what is still out.");
-  await expect(page.getByLabel("Perfect mode skills")).toContainText("Count trumps");
-  await expect(page.getByLabel("Perfect mode skills")).toContainText("Trump memory hand");
-  await expect(page.getByLabel("Perfect mode skills")).toContainText("Track court cards");
-  await expect(page.getByLabel("Perfect mode skills")).toContainText("Danger cards");
+  await expect(page.getByLabel("Card Counting I pack")).toContainText("Know what is still out.");
+  await expect(page.getByLabel("Pro mode skills")).toContainText("Count trumps");
+  await expect(page.getByLabel("Pro mode skills")).toContainText("Trump memory hand");
+  await expect(page.getByLabel("Pro mode skills")).toContainText("Track court cards");
+  await expect(page.getByLabel("Pro mode skills")).toContainText("Danger cards");
   await page.screenshot({ path: testInfo.outputPath("barbu-perfect.png"), fullPage: true });
 
   await page.getByRole("button", { name: "Games" }).click();
-  await page.getByRole("button", { name: "Open Card Counting" }).click();
-  await expect(page.getByRole("heading", { name: "Card Counting" })).toBeVisible();
+  await page.getByRole("button", { name: "Open Card Counting I" }).click();
+  await expect(page.getByRole("heading", { name: "Card Counting I" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByLabel("Card Counting exercises")).toContainText("Count trumps");
-  await expect(page.getByLabel("Card Counting exercises")).toContainText("Trump memory hand");
-  await expect(page.getByLabel("Card Counting exercises")).toContainText("Track court cards");
-  await expect(page.getByLabel("Card Counting exercises")).toContainText("Danger cards");
+  await expect(page.getByLabel("Card Counting I exercises")).toContainText("Count trumps");
+  await expect(page.getByLabel("Card Counting I exercises")).toContainText("Trump memory hand");
+  await expect(page.getByLabel("Card Counting I exercises")).toContainText("Track court cards");
+  await expect(page.getByLabel("Card Counting I exercises")).toContainText("Danger cards");
   await page.getByRole("tab", { name: "Learn" }).click();
-  await expect(page.getByLabel("Card Counting learning path")).toContainText("Count a suit");
+  await expect(page.getByLabel("Card Counting I learning path")).toContainText("Count a suit");
   await page.getByRole("tab", { name: "Play" }).click();
-  await page.getByLabel("Card Counting exercises").getByRole("button", { name: "Count trumps" }).click();
+  await page.getByLabel("Card Counting I exercises").getByRole("button", { name: "Count trumps" }).click();
   await expect(page.getByRole("heading", { name: "Count trumps" })).toBeVisible();
   await page.getByLabel("Count trumps", { exact: true }).getByRole("button", { name: "Table" }).click();
-  await expect(page.getByRole("heading", { name: "Card Counting" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Card Counting I" })).toBeVisible();
 
   await page.screenshot({ path: testInfo.outputPath("card-counting-table.png"), fullPage: true });
 });
@@ -451,11 +454,11 @@ test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testI
   await expect(page.getByRole("heading", { name: "Hearts table" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
 
-  await page.getByRole("tab", { name: "Perfect" }).click();
-  await expect(page.getByRole("tab", { name: "Perfect" })).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByLabel("Hearts Perfect skills").getByRole("button")).toHaveCount(1);
-  await expect(page.getByLabel("Hearts Perfect skills")).toContainText("Track court cards");
-  await page.getByLabel("Hearts Perfect skills").getByRole("button", { name: "Track court cards" }).click();
+  await page.getByRole("tab", { name: "Pro" }).click();
+  await expect(page.getByRole("tab", { name: "Pro" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByLabel("Hearts Pro skills").getByRole("button")).toHaveCount(1);
+  await expect(page.getByLabel("Hearts Pro skills")).toContainText("Track court cards");
+  await page.getByLabel("Hearts Pro skills").getByRole("button", { name: "Track court cards" }).click();
   await expect(page.getByRole("heading", { name: "Track court cards" })).toBeVisible();
 });
 
@@ -748,11 +751,11 @@ test("Hearts next hand carries score and starts with passing again", async ({ pa
   await expect(page.getByLabel("Hearts table score")).toContainText(/[1-9]\d*/);
 });
 
-test("Perfect mode starts card-counting minigames", async ({ page }, testInfo) => {
+test("Pro mode starts card-counting minigames", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
-  await openBarbuTab(page, "Perfect");
-  await page.getByLabel("Perfect mode skills").getByRole("button", { name: "Count trumps" }).click();
+  await openBarbuTab(page, "Pro");
+  await page.getByLabel("Pro mode skills").getByRole("button", { name: "Count trumps" }).click();
 
   await expect(page.getByRole("heading", { name: "Count trumps" })).toBeVisible();
   await expect(page.getByLabel("Count trumps trainer")).toContainText("Hearts are trumps");
@@ -805,7 +808,7 @@ test("Perfect mode starts card-counting minigames", async ({ page }, testInfo) =
   expect(countCheckpointIndex).toBe(3);
 
   await page.getByLabel("Count trumps", { exact: true }).getByRole("button", { name: "Table" }).click();
-  await page.getByLabel("Perfect mode skills").getByRole("button", { name: "Trump memory hand" }).click();
+  await page.getByLabel("Pro mode skills").getByRole("button", { name: "Trump memory hand" }).click();
   await expect(page.getByLabel("Realistic trump table")).toBeVisible();
   await expect(page.getByLabel("Trump memory hand trainer")).toContainText("Trick 1 of 13");
   await expectNoPageScroll(page);
@@ -856,7 +859,7 @@ test("Perfect mode starts card-counting minigames", async ({ page }, testInfo) =
   await expect(page.getByRole("button", { name: "Next hand" })).toBeVisible();
 
   await page.getByLabel("Trump memory hand", { exact: true }).getByRole("button", { name: "Table" }).click();
-  await page.getByLabel("Perfect mode skills").getByRole("button", { name: "Track court cards" }).click();
+  await page.getByLabel("Pro mode skills").getByRole("button", { name: "Track court cards" }).click();
 
   await expect(page.getByRole("heading", { name: "Track court cards" })).toBeVisible();
   await expect(page.getByLabel("Track court cards trainer")).toContainText("Jacks, queens, kings");
@@ -893,7 +896,7 @@ test("Perfect mode starts card-counting minigames", async ({ page }, testInfo) =
   await page.screenshot({ path: testInfo.outputPath("perfect-track-court-cards.png"), fullPage: true });
 
   await page.getByLabel("Track court cards", { exact: true }).getByRole("button", { name: "Table" }).click();
-  await page.getByLabel("Perfect mode skills").getByRole("button", { name: "Danger cards" }).click();
+  await page.getByLabel("Pro mode skills").getByRole("button", { name: "Danger cards" }).click();
 
   await expect(page.getByRole("heading", { name: "Danger cards" })).toBeVisible();
   await expect(page.getByLabel("Danger cards trainer")).toContainText("Queens and KH");
@@ -928,7 +931,7 @@ test("Perfect mode starts card-counting minigames", async ({ page }, testInfo) =
   await page.screenshot({ path: testInfo.outputPath("perfect-danger-cards.png"), fullPage: true });
 });
 
-test("Trump memory hand starts from Perfect as a realistic table game", async ({ page }) => {
+test("Trump memory hand starts from Pro as a realistic table game", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
     localStorage.setItem("barbu.practiceSeed.v1", "1");
@@ -936,8 +939,8 @@ test("Trump memory hand starts from Perfect as a realistic table game", async ({
   await page.reload();
 
   await page.getByRole("button", { name: /Barbu/ }).click();
-  await openBarbuTab(page, "Perfect");
-  await page.getByLabel("Perfect mode skills").getByRole("button", { name: "Trump memory hand" }).click();
+  await openBarbuTab(page, "Pro");
+  await page.getByLabel("Pro mode skills").getByRole("button", { name: "Trump memory hand" }).click();
 
   await expect(page.getByRole("heading", { name: "Trump memory hand" })).toBeVisible();
   await expect(page.getByLabel("Realistic trump table")).toBeVisible();
@@ -1801,8 +1804,8 @@ test("completed course does not loop back to the first lesson", async ({ page })
   await expect(page.getByRole("button", { name: "Reset path" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Continue with Meet the contract/ })).toHaveCount(0);
 
-  await openBarbuTab(page, "Perfect");
-  await expect(page.getByRole("tab", { name: "Perfect" })).toHaveAttribute("aria-selected", "true");
+  await openBarbuTab(page, "Pro");
+  await expect(page.getByRole("tab", { name: "Pro" })).toHaveAttribute("aria-selected", "true");
   await page.getByRole("button", { name: "Games" }).click();
   await page.getByRole("button", { name: /Open Barbu/ }).click();
   await openBarbuTab(page, "Learn");

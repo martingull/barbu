@@ -28,7 +28,7 @@ The app should separate these concerns:
 - **Playing**: full hands and Play Barbu sessions.
 - **Reference**: Parlett-style rule structure and variants.
 - **Meta features**: progress, monetization, multiplayer, accounts, and future character presentation.
-- **Perfect/card sense**: short skill trainers for transferable counting, memory, and table-reading habits.
+- **Pro/card sense**: short skill trainers for transferable counting, memory, and table-reading habits, with future subscriber AI play and opponent play.
 
 When a feature is added, it should have one primary home. Cross-links are allowed, but the feature should not become another button scattered across every screen.
 
@@ -72,8 +72,8 @@ Purpose: choose the game family or core game.
 Current role:
 
 - Shows free starter tables first: Hearts, Barbu, and Whist.
-- Hearts opens to a starter table with the shared Learn, Practice, Play, and Perfect structure. Play is active with rotating passes and a focused local hand.
-- Shows Card Counting after the free starters as the first ready paid skill pack.
+- Hearts opens to a starter table with the shared Learn, Practice, Play, and Pro structure. Play is active with rotating passes and a focused local hand.
+- Shows Card Counting I after the free starters as the first ready paid skill pack and Card Counting II as a planned subscriber pack.
 - Shows future paid games such as Solitaire, Bridge, Gin Rummy, and Canasta.
 - Keeps varieties under their parent game instead of showing them as separate first-screen tables.
 - Signals that Barbu belongs to a broader Hearts-family catalog.
@@ -98,7 +98,7 @@ Purpose: the familiar free starter game and proof that Barbu's Hearts-family fou
 
 Current role:
 
-- Uses the same Learn, Practice, Play, and Perfect grouping as Barbu.
+- Uses the same Learn, Practice, Play, and Pro grouping as Barbu.
 - Practice starts with shared hearts and queen-of-spades patterns.
 - Play starts with rotating passes, then a focused local Hearts-family match on the shared table surface.
 
@@ -234,7 +234,7 @@ Applies to:
 - Play Barbu.
 - Hearts play and passing.
 - Domino full-hand practice.
-- Perfect/Card Sense realistic table games.
+- Pro/Card Sense realistic table games.
 
 Layout contract:
 
@@ -303,13 +303,13 @@ Should not contain:
 - Practice results.
 - Character dialogue unless it clarifies a rule.
 
-### Perfect / Card Sense
+### Pro / Card Sense
 
 Purpose: train skills that make the player stronger across 52-card games.
 
 Current role:
 
-- Starts a Card Counting pack.
+- Starts the Card Counting I pack.
 - Offers Count Trumps as a thirteen-trick reveal-and-memory minigame with count and specific-card checkpoints.
 - Offers Trump Memory Hand as a separate realistic table minigame: play a hand and answer trump-memory checks after real tricks.
 - Offers Track Court Cards as a separate high-card memory minigame: play a hand and remember jacks, queens, and kings.
@@ -318,7 +318,7 @@ Current role:
 Near-term direction:
 
 - Connect danger-card memory back to Barbu contract feedback.
-- Tie Perfect exercises back to Barbu, Hearts-family games, Whist, and Bridge.
+- Tie Pro exercises back to Barbu, Hearts-family games, Whist, and Bridge.
 - Keep each exercise short and interactive, not a rules article.
 - Keep realistic exercises close to real table play. In Trump Memory Hand, table seats now use the first trump-aware choice: overtrumping a low trump when void in the led suit and able to beat the current winning trump. Continue refining discard/conserve choices as the core game improves.
 
