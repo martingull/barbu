@@ -30,6 +30,12 @@ fn generate_hearts_pass_practice(seed: u64) -> HeartsPassScenarioDto {
 }
 
 #[tauri::command]
+fn generate_hearts_practice_set(seed: u64, focus: Option<String>) -> PracticeDrillSetDto {
+    let drill_set = barbu_core::generate_hearts_practice_set(seed, focus.as_deref());
+    PracticeDrillSetDto::from_core(&drill_set)
+}
+
+#[tauri::command]
 fn start_no_hearts_hand(seed: u64) -> FullHandDto {
     let state = barbu_core::start_no_hearts_hand(seed);
     FullHandDto::from_core(&state, "No Hearts", "point")
@@ -792,6 +798,7 @@ pub fn run() {
             current_game,
             generate_daily_drill_set,
             generate_hearts_pass_practice,
+            generate_hearts_practice_set,
             generate_no_hearts_follow_suit,
             pass_domino_turn,
             play_domino_card,

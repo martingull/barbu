@@ -227,6 +227,23 @@ async function completeQuickDrillDecision(page: Page) {
   await checkDrillAnswer(page);
 }
 
+async function completeVisibleDrillSession(page: Page) {
+  for (let decision = 0; decision < 10; decision += 1) {
+    await completeQuickDrillDecision(page);
+
+    const reviewSession = page.getByRole("button", { name: "Review session" });
+    if (await reviewSession.isVisible()) {
+      await expect(reviewSession).toBeEnabled();
+      await reviewSession.tap();
+      return;
+    }
+
+    await continueDrillFromCheckedAnswer(page, "Next decision");
+  }
+
+  throw new Error("Drill session did not finish within 10 decisions");
+}
+
 async function playFullHandDecision(page: Page) {
   await page.locator(".full-hand-card.legal").first().dblclick();
 
@@ -424,7 +441,11 @@ test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testI
 
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Avoid hearts" }).click();
   await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
-  await expect(page.getByLabel("Drill decision")).toContainText("Follow clubs without taking the heart");
+  await expect(page.getByLabel("Drill decision")).toContainText("Hearts");
+  await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
+  await expect(page.getByLabel("Drill decision")).toContainText(
+    /Duck the heart point|Discard without adding points|Follow low in hearts/
+  );
 
   await page.getByLabel("Drill decision").getByRole("button", { name: "Table" }).click();
   await expect(page.getByRole("heading", { name: "Hearts table" })).toBeVisible();
@@ -453,15 +474,14 @@ test("Hearts learn start advances through learning stages instead of play loop",
   await expect(page.getByLabel("Drill decision")).toContainText("Queen of Spades");
   await expect(page.getByLabel("Drill decision")).not.toContainText("No Queens");
 
-  await page.getByRole("button", { name: "2 S" }).click();
-  await page.getByRole("button", { name: "Check answer" }).click();
+  await completeQuickDrillDecision(page);
   await page.getByRole("button", { name: "Review session" }).click();
   await expect(page.getByRole("heading", { name: "Session complete" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Continue Hearts path" }).first()).toBeVisible();
 
   await page.getByRole("button", { name: "Continue Hearts path" }).first().click();
   await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
-  await expect(page.getByLabel("Drill decision")).toContainText("Follow clubs without taking the heart");
+  await expect(page.getByLabel("Drill decision")).toContainText(/Avoid hearts|Hearts/);
   await expect(page.getByLabel("Drill decision")).not.toContainText("Queen of Spades");
 });
 
@@ -553,45 +573,45 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
   await page.getByRole("tab", { name: "Practice" }).click();
 
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "First trick" }).click();
-  await expect(page.getByLabel("Drill decision")).toContainText("Follow clubs first");
-  await page.getByRole("button", { name: "3 C" }).click();
-  await page.getByRole("button", { name: "Check answer" }).click();
+  await expect(page.getByLabel("Drill decision")).toContainText(/first trick/i);
+  await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
+  await completeQuickDrillDecision(page);
   await expect(page.getByLabel("Drill decision")).toContainText("Good");
-  await expect(page.getByLabel("Drill decision")).toContainText("3C is good");
   await page.getByRole("button", { name: "Table" }).first().click();
 
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Break hearts" }).click();
   await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
-  await expect(page.getByLabel("Drill decision")).toContainText("Can you lead a heart?");
-  await page.getByRole("button", { name: "2 H" }).click();
-  await page.getByRole("button", { name: "Check answer" }).click();
-  await expect(page.getByLabel("Drill decision")).toContainText("Illegal");
-  await expect(page.getByLabel("Drill decision")).toContainText("not legal yet");
+  await expect(page.getByLabel("Drill progress")).toContainText("0 / 2 played");
+  await expect(page.getByLabel("Drill decision")).toContainText(/Can you lead a heart\?|Only hearts remain/);
+  await completeQuickDrillDecision(page);
+  await expect(page.getByLabel("Drill decision")).toContainText(/Good|Illegal/);
   await page.getByRole("button", { name: "Table" }).first().click();
 
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Stop the moon" }).click();
-  await expect(page.getByLabel("Drill decision")).toContainText("Break the moon threat");
-  await page.getByRole("button", { name: "A C" }).click();
-  await page.getByRole("button", { name: "Check answer" }).click();
+  await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
+  await expect(page.getByLabel("Drill decision")).toContainText(
+    /Break the moon threat|Take Queen of Spades away|Take one point now/
+  );
+  await completeQuickDrillDecision(page);
   await expect(page.getByLabel("Drill decision")).toContainText("Good");
   await expect(page.getByLabel("Drill decision")).toContainText("moon defense");
   await page.getByRole("button", { name: "Table" }).first().click();
 
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Queen of Spades danger" }).click();
-  await expect(page.getByLabel("Drill decision")).toContainText("Duck the Queen of Spades");
+  await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
+  await expect(page.getByLabel("Drill decision")).toContainText("Queen of Spades");
   await expect(page.getByLabel("Drill decision")).not.toContainText("No Queens");
-  await page.getByRole("button", { name: "2 S" }).click();
-  await page.getByRole("button", { name: "Check answer" }).click();
+  await completeQuickDrillDecision(page);
   await expect(page.getByLabel("Drill decision")).toContainText("Good");
   await expect(page.getByLabel("Drill decision")).toContainText("Queen of Spades");
   await page.getByRole("button", { name: "Table" }).first().click();
 
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Score a hand" }).click();
-  await expect(page.getByLabel("Drill decision")).toContainText("Find the 13-point card");
-  await page.getByRole("button", { name: "Q S" }).click();
-  await page.getByRole("button", { name: "Check answer" }).click();
+  await expect(page.getByLabel("Drill progress")).toContainText("0 / 2 played");
+  await expect(page.getByLabel("Drill decision")).toContainText(/Find the 13-point card|Find the one-point card/);
+  await completeQuickDrillDecision(page);
   await expect(page.getByLabel("Drill decision")).toContainText("Good");
-  await expect(page.getByLabel("Drill decision")).toContainText("13-point danger card");
+  await expect(page.getByLabel("Drill decision")).toContainText(/13-point danger card|7H is good/);
 });
 
 test("Hearts practice result returns to the Hearts table", async ({ page }) => {
@@ -600,8 +620,7 @@ test("Hearts practice result returns to the Hearts table", async ({ page }) => {
   await page.getByRole("tab", { name: "Practice" }).click();
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Avoid hearts" }).click();
 
-  await completeQuickDrillDecision(page);
-  await continueDrillFromCheckedAnswer(page, "Review session");
+  await completeVisibleDrillSession(page);
 
   await expect(page.getByRole("heading", { name: "Session complete" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Back to Hearts practice" })).toBeVisible();

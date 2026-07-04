@@ -919,6 +919,42 @@
       }
     }
   };
+  const heartsFirstTrickDuckClubsDrillStep: DrillStep = {
+    scenarioId: "hearts-first-trick-duck-clubs",
+    contract: "Hearts",
+    title: "First trick",
+    trick: {
+      title: "Stay low in clubs",
+      beforeResult: "This is the first trick. Clubs were led, and the current winner is KC.",
+      afterResult: "Following with a low club keeps the first trick cheap and avoids taking control too early.",
+      emptyExplanation: "Choose the club that follows suit without winning the trick.",
+      legalCardIds: ["4C", "AC"],
+      hand: [
+        { id: "4C", rank: "4", suit: "C", label: "4C" },
+        { id: "AC", rank: "A", suit: "C", label: "AC" },
+        { id: "6D", rank: "6", suit: "D", label: "6D" }
+      ],
+      tableBeforeChoice: [
+        { seat: "Tutor", card: { id: "2C", rank: "2", suit: "C", label: "2C" } },
+        { seat: "Right", card: { id: "KC", rank: "K", suit: "C", label: "KC" } }
+      ],
+      tableAfterChoice: [{ seat: "Left", card: { id: "7C", rank: "7", suit: "C", label: "7C" } }],
+      pendingBySeat: { Left: "follow clubs" },
+      playedExplanations: {
+        "4C": "4C is good. You follow clubs and stay under KC.",
+        AC: "AC follows suit, but it wins the opening trick and puts you on lead.",
+        "6D": "6D is off suit while you still have clubs."
+      },
+      cardOutcomes: {
+        "4C": "good",
+        AC: "risky"
+      },
+      cardReasons: {
+        "4C": "followed_suit",
+        AC: "won_clean_trick"
+      }
+    }
+  };
   const heartsBreakHeartsDrillStep: DrillStep = {
     scenarioId: "hearts-break-hearts-lead",
     contract: "Hearts",
@@ -1298,7 +1334,8 @@
   ];
   const heartsFirstTrickDrillPool = [
     heartsFirstTrickRestrictionDrillStep,
-    heartsFirstTrickVoidSafeDiscardDrillStep
+    heartsFirstTrickVoidSafeDiscardDrillStep,
+    heartsFirstTrickDuckClubsDrillStep
   ];
   const heartsQueenDangerDrillPool = [
     heartsQueenDangerDrillStep,
@@ -3900,7 +3937,7 @@
 
   function continueHeartsObjectLesson() {
     completeHeartsPathStep("hearts-object");
-    startHeartsQueenDangerDrill("hearts-queen");
+    void startHeartsQueenDangerDrill("hearts-queen");
   }
 
   function completeHeartsPathStep(stepId = activePathStepId) {
@@ -3918,12 +3955,12 @@
     }
 
     if (step.action === "queen") {
-      startHeartsQueenDangerDrill(step.id);
+      void startHeartsQueenDangerDrill(step.id);
       return;
     }
 
     if (step.action === "avoid") {
-      startHeartsAvoidHeartsDrill(step.id);
+      void startHeartsAvoidHeartsDrill(step.id);
       return;
     }
 
@@ -5262,21 +5299,85 @@
     appView = "drill";
   }
 
-  function startHeartsAvoidHeartsDrill(pathStepId = "") {
-    startHeartsMicroDrill(heartsAvoidHeartsDrillStep, "Hearts practice: avoid hearts", pathStepId);
+  type HeartsGeneratedPracticeFocus = "first-trick" | "avoid-hearts" | "queen-danger";
+
+  const heartsGeneratedFallbackPools: Record<HeartsGeneratedPracticeFocus, DrillStep[]> = {
+    "first-trick": heartsFirstTrickDrillPool,
+    "avoid-hearts": heartsAvoidHeartsDrillPool,
+    "queen-danger": heartsQueenDangerDrillPool
+  };
+
+  async function loadGeneratedHeartsPracticeSteps(seed: number, focus = "") {
+    try {
+      const drillSet = await invoke<GeneratedDrillSet>("generate_hearts_practice_set", {
+        seed,
+        focus: focus || null
+      });
+
+      const candidates = drillSet.scenarios.map(drillStepFromGeneratedScenario);
+
+      if (candidates.length > 0) {
+        return candidates;
+      }
+    } catch {
+      // Browser dev mode keeps using the authored fallback pools.
+    }
+
+    if (isHeartsGeneratedPracticeFocus(focus)) {
+      return heartsGeneratedFallbackPools[focus];
+    }
+
+    return heartsQuickDrillPools.flat();
   }
 
-  function startHeartsFirstTrickDrill(pathStepId = "") {
-    startHeartsMicroDrill(heartsFirstTrickRestrictionDrillStep, "Hearts practice: first trick", pathStepId);
+  function isHeartsGeneratedPracticeFocus(focus: string): focus is HeartsGeneratedPracticeFocus {
+    return focus === "first-trick" || focus === "avoid-hearts" || focus === "queen-danger";
   }
 
-  function startHeartsQueenDangerDrill(pathStepId = "") {
-    startHeartsMicroDrill(heartsQueenDangerDrillStep, "Hearts practice: Queen of Spades danger", pathStepId);
-  }
-
-  function startHeartsQuickDrill() {
+  async function startGeneratedHeartsMicroDrill(
+    focus: HeartsGeneratedPracticeFocus,
+    title: string,
+    pathStepId = ""
+  ) {
     const seed = usePracticeSeed();
-    const steps = heartsQuickDrillPools.map((pool, index) => pool[(seed + index) % pool.length]);
+    const candidates = await loadGeneratedHeartsPracticeSteps(seed, focus);
+    const orderedCandidates = orderPracticePool(candidates, seed);
+
+    if (pathStepId) {
+      startHeartsMicroDrill(selectGeneratedDrillCandidate(candidates, seed, []), title, pathStepId);
+      return;
+    }
+
+    startHeartsMicroDrillSession(orderedCandidates, title);
+  }
+
+  async function startHeartsAvoidHeartsDrill(pathStepId = "") {
+    await startGeneratedHeartsMicroDrill("avoid-hearts", "Hearts practice: avoid hearts", pathStepId);
+  }
+
+  async function startHeartsFirstTrickDrill(pathStepId = "") {
+    await startGeneratedHeartsMicroDrill("first-trick", "Hearts practice: first trick", pathStepId);
+  }
+
+  async function startHeartsQueenDangerDrill(pathStepId = "") {
+    await startGeneratedHeartsMicroDrill("queen-danger", "Hearts practice: Queen of Spades danger", pathStepId);
+  }
+
+  async function startHeartsQuickDrill() {
+    const seed = usePracticeSeed();
+    const generatedSteps = await loadGeneratedHeartsPracticeSteps(seed);
+    const generatedFamilies: HeartsGeneratedPracticeFocus[] = ["first-trick", "avoid-hearts", "queen-danger"];
+    const generatedFamilySteps = generatedFamilies
+      .map((family, index) => {
+        const familyCandidates = generatedSteps.filter((step) => step.scenarioId?.startsWith(`hearts-${family}`));
+        return familyCandidates.length > 0
+          ? selectGeneratedDrillCandidate(familyCandidates, seed + index * 11, [])
+          : heartsGeneratedFallbackPools[family][(seed + index) % heartsGeneratedFallbackPools[family].length];
+      });
+    const remainingSteps = [heartsBreakHeartsDrillPool, heartsStopMoonDrillPool, heartsScoreHandDrillPool].map(
+      (pool, index) => pool[(seed + generatedFamilySteps.length + index) % pool.length]
+    );
+    const steps = [...generatedFamilySteps, ...remainingSteps];
     const offset = seed % steps.length;
 
     activeGameTable = "hearts";
@@ -5291,36 +5392,58 @@
   }
 
   function startHeartsMicroDrill(step: DrillStep, title: string, pathStepId = "") {
+    startHeartsMicroDrillSession([step], title, pathStepId);
+  }
+
+  function startHeartsMicroDrillSession(steps: DrillStep[], title: string, pathStepId = "") {
     activeGameTable = "hearts";
     activePathStepId = pathStepId;
     activeDrillFocusContract = "Hearts";
     drillIndex = 0;
     drillResults = [];
     drillSetTitle = title;
-    activeDrillSteps = [step];
+    activeDrillSteps = steps.length > 0 ? steps : [heartsAvoidHeartsDrillStep];
     resetDrillDecision();
     appView = "drill";
   }
 
+  function orderPracticePool(steps: DrillStep[], seed: number) {
+    if (steps.length <= 1) {
+      return steps;
+    }
+
+    const offset = seed % steps.length;
+    return [...steps.slice(offset), ...steps.slice(0, offset)];
+  }
+
   function startHeartsBreakHeartsDrill(pathStepId = "") {
-    startHeartsMicroDrill(heartsBreakHeartsDrillStep, "Hearts practice: break hearts", pathStepId);
+    const seed = usePracticeSeed();
+    const steps = pathStepId ? [heartsBreakHeartsDrillStep] : orderPracticePool(heartsBreakHeartsDrillPool, seed);
+
+    startHeartsMicroDrillSession(steps, "Hearts practice: break hearts", pathStepId);
   }
 
   function startHeartsStopMoonDrill(pathStepId = "") {
-    startHeartsMicroDrill(heartsStopMoonDrillStep, "Hearts practice: stop the moon", pathStepId);
+    const seed = usePracticeSeed();
+    const steps = pathStepId ? [heartsStopMoonDrillStep] : orderPracticePool(heartsStopMoonDrillPool, seed);
+
+    startHeartsMicroDrillSession(steps, "Hearts practice: stop the moon", pathStepId);
   }
 
   function startHeartsScoreHandDrill(pathStepId = "") {
-    startHeartsMicroDrill(heartsScoreHandDrillStep, "Hearts practice: score a hand", pathStepId);
+    const seed = usePracticeSeed();
+    const steps = pathStepId ? [heartsScoreHandDrillStep] : orderPracticePool(heartsScoreHandDrillPool, seed);
+
+    startHeartsMicroDrillSession(steps, "Hearts practice: score a hand", pathStepId);
   }
 
   function replayHeartsPracticeDrill() {
     if (drillSetTitle === "Hearts quick drill") {
-      startHeartsQuickDrill();
+      void startHeartsQuickDrill();
       return;
     }
 
-    startHeartsAvoidHeartsDrill();
+    void startHeartsAvoidHeartsDrill();
   }
 
   async function startHeartsPassPractice(pathStepId = "") {
@@ -5394,11 +5517,11 @@
   }
 
   const heartsPracticeActions: Record<HeartsPracticeAction, () => void> = {
-    quick: () => startHeartsQuickDrill(),
+    quick: () => void startHeartsQuickDrill(),
     pass: () => void startHeartsPassPractice(),
-    first: () => startHeartsFirstTrickDrill(),
-    avoid: () => startHeartsAvoidHeartsDrill(),
-    queen: () => startHeartsQueenDangerDrill(),
+    first: () => void startHeartsFirstTrickDrill(),
+    avoid: () => void startHeartsAvoidHeartsDrill(),
+    queen: () => void startHeartsQueenDangerDrill(),
     break: () => startHeartsBreakHeartsDrill(),
     moon: () => startHeartsStopMoonDrill(),
     score: () => startHeartsScoreHandDrill()

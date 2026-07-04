@@ -16,6 +16,7 @@ pub struct PracticeScenario {
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PracticeContractKind {
+    Hearts,
     NoHearts,
     NoQueens,
     KingOfHearts,
@@ -204,6 +205,8 @@ impl PracticeScenario {
                         winner_name
                     )
                 }
+            } else if self.contract_kind == PracticeContractKind::Hearts {
+                hearts_practice_explanation(player_card, self.led_suit, winner, penalty)
             } else if self.contract_kind == PracticeContractKind::NoLastTwo && winner != 2 {
                 format!(
                     "{} follows {} and loses the late trick. That is good in No Last Two because {} takes {} instead.",
@@ -416,6 +419,229 @@ pub fn generate_hearts_pass_practice(seed: u64) -> HeartsPassScenario {
         explanation:
             "Beginner pass rule: move the obvious danger cards before the hand starts. Later we can teach suit-shortening and table reads."
                 .to_string(),
+    }
+}
+
+pub fn generate_hearts_first_trick_practice(seed: u64) -> PracticeScenario {
+    if seed % 2 == 0 {
+        let mut player_hand = vec![
+            Card::new(Rank::Three, Suit::Clubs),
+            Card::new(Rank::Queen, Suit::Spades),
+            Card::new(Rank::Five, Suit::Hearts),
+        ];
+        player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+
+        return PracticeScenario {
+            id: format!("hearts-first-trick-follow-clubs-{seed}"),
+            title: "First trick".to_string(),
+            contract: "Hearts".to_string(),
+            contract_kind: PracticeContractKind::Hearts,
+            led_suit: Suit::Clubs,
+            prompt:
+                "This is the first trick. Barbu led 2C, and you still have a club. Choose the legal play."
+                    .to_string(),
+            table_before_choice: vec![
+                PlayedCard::new(0, Card::new(Rank::Two, Suit::Clubs)),
+                PlayedCard::new(1, Card::new(Rank::Seven, Suit::Clubs)),
+            ],
+            player_hand,
+            table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Nine, Suit::Clubs))],
+        };
+    }
+
+    let mut player_hand = vec![
+        Card::new(Rank::Four, Suit::Clubs),
+        Card::new(Rank::Ace, Suit::Clubs),
+        Card::new(Rank::Six, Suit::Diamonds),
+    ];
+    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+
+    PracticeScenario {
+        id: format!("hearts-first-trick-duck-clubs-{seed}"),
+        title: "First trick".to_string(),
+        contract: "Hearts".to_string(),
+        contract_kind: PracticeContractKind::Hearts,
+        led_suit: Suit::Clubs,
+        prompt:
+            "The opening trick is clean so far. Follow clubs without taking control if you can."
+                .to_string(),
+        table_before_choice: vec![
+            PlayedCard::new(0, Card::new(Rank::Two, Suit::Clubs)),
+            PlayedCard::new(1, Card::new(Rank::King, Suit::Clubs)),
+        ],
+        player_hand,
+        table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Nine, Suit::Clubs))],
+    }
+}
+
+pub fn generate_hearts_avoid_hearts_practice(seed: u64) -> PracticeScenario {
+    match seed % 3 {
+        0 => generate_hearts_avoid_heart_duck(seed),
+        1 => generate_hearts_void_discard(seed),
+        _ => generate_hearts_follow_low_heart(seed),
+    }
+}
+
+pub fn generate_hearts_avoid_heart_duck(seed: u64) -> PracticeScenario {
+    let mut player_hand = vec![
+        Card::new(Rank::Two, Suit::Clubs),
+        Card::new(Rank::Ace, Suit::Clubs),
+        Card::new(Rank::Seven, Suit::Diamonds),
+    ];
+    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+
+    PracticeScenario {
+        id: format!("hearts-avoid-heart-duck-{seed}"),
+        title: "Avoid hearts".to_string(),
+        contract: "Hearts".to_string(),
+        contract_kind: PracticeContractKind::Hearts,
+        led_suit: Suit::Clubs,
+        prompt:
+            "Clubs were led. Right is winning with KC, and Left may add a heart. Follow clubs without taking the point."
+                .to_string(),
+        table_before_choice: vec![
+            PlayedCard::new(0, Card::new(Rank::Nine, Suit::Clubs)),
+            PlayedCard::new(1, Card::new(Rank::King, Suit::Clubs)),
+        ],
+        player_hand,
+        table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Four, Suit::Hearts))],
+    }
+}
+
+pub fn generate_hearts_void_discard(seed: u64) -> PracticeScenario {
+    let mut player_hand = vec![
+        Card::new(Rank::Four, Suit::Clubs),
+        Card::new(Rank::Queen, Suit::Hearts),
+        Card::new(Rank::Eight, Suit::Spades),
+    ];
+    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+
+    PracticeScenario {
+        id: format!("hearts-void-discard-{seed}"),
+        title: "Avoid hearts".to_string(),
+        contract: "Hearts".to_string(),
+        contract_kind: PracticeContractKind::Hearts,
+        led_suit: Suit::Diamonds,
+        prompt: "Diamonds were led. You are void, and Right is already winning. Choose a discard."
+            .to_string(),
+        table_before_choice: vec![
+            PlayedCard::new(0, Card::new(Rank::Nine, Suit::Diamonds)),
+            PlayedCard::new(1, Card::new(Rank::Ace, Suit::Diamonds)),
+        ],
+        player_hand,
+        table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Five, Suit::Diamonds))],
+    }
+}
+
+pub fn generate_hearts_follow_low_heart(seed: u64) -> PracticeScenario {
+    let mut player_hand = vec![
+        Card::new(Rank::Three, Suit::Hearts),
+        Card::new(Rank::Ace, Suit::Hearts),
+        Card::new(Rank::Six, Suit::Clubs),
+    ];
+    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+
+    PracticeScenario {
+        id: format!("hearts-follow-low-heart-{seed}"),
+        title: "Avoid hearts".to_string(),
+        contract: "Hearts".to_string(),
+        contract_kind: PracticeContractKind::Hearts,
+        led_suit: Suit::Hearts,
+        prompt:
+            "Hearts were led. Right is winning with QH, and you must follow hearts. Stay under the winner if you can."
+                .to_string(),
+        table_before_choice: vec![
+            PlayedCard::new(0, Card::new(Rank::Nine, Suit::Hearts)),
+            PlayedCard::new(1, Card::new(Rank::Queen, Suit::Hearts)),
+        ],
+        player_hand,
+        table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Five, Suit::Hearts))],
+    }
+}
+
+pub fn generate_hearts_queen_danger_practice(seed: u64) -> PracticeScenario {
+    match seed % 3 {
+        0 => generate_hearts_queen_duck(seed),
+        1 => generate_hearts_queen_safe_dump(seed),
+        _ => generate_hearts_queen_dangerous_dump(seed),
+    }
+}
+
+pub fn generate_hearts_queen_duck(seed: u64) -> PracticeScenario {
+    let mut player_hand = vec![
+        Card::new(Rank::Two, Suit::Spades),
+        Card::new(Rank::Ace, Suit::Spades),
+        Card::new(Rank::Four, Suit::Hearts),
+    ];
+    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+
+    PracticeScenario {
+        id: format!("hearts-queen-duck-{seed}"),
+        title: "Queen of Spades danger".to_string(),
+        contract: "Hearts".to_string(),
+        contract_kind: PracticeContractKind::Hearts,
+        led_suit: Suit::Spades,
+        prompt:
+            "Spades were led. Right has put the queen of spades into the trick. Follow spades without winning it."
+                .to_string(),
+        table_before_choice: vec![
+            PlayedCard::new(0, Card::new(Rank::Ten, Suit::Spades)),
+            PlayedCard::new(1, Card::new(Rank::Queen, Suit::Spades)),
+        ],
+        player_hand,
+        table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Seven, Suit::Spades))],
+    }
+}
+
+pub fn generate_hearts_queen_safe_dump(seed: u64) -> PracticeScenario {
+    let mut player_hand = vec![
+        Card::new(Rank::Queen, Suit::Spades),
+        Card::new(Rank::Six, Suit::Hearts),
+        Card::new(Rank::Nine, Suit::Diamonds),
+    ];
+    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+
+    PracticeScenario {
+        id: format!("hearts-queen-safe-dump-{seed}"),
+        title: "Queen of Spades danger".to_string(),
+        contract: "Hearts".to_string(),
+        contract_kind: PracticeContractKind::Hearts,
+        led_suit: Suit::Clubs,
+        prompt:
+            "Clubs were led. You are void, and Barbu is already winning. This is a chance to move the queen of spades."
+                .to_string(),
+        table_before_choice: vec![
+            PlayedCard::new(0, Card::new(Rank::Ace, Suit::Clubs)),
+            PlayedCard::new(1, Card::new(Rank::Eight, Suit::Clubs)),
+        ],
+        player_hand,
+        table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Three, Suit::Clubs))],
+    }
+}
+
+pub fn generate_hearts_queen_dangerous_dump(seed: u64) -> PracticeScenario {
+    let mut player_hand = vec![
+        Card::new(Rank::Three, Suit::Spades),
+        Card::new(Rank::Queen, Suit::Spades),
+        Card::new(Rank::Six, Suit::Hearts),
+    ];
+    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+
+    PracticeScenario {
+        id: format!("hearts-queen-dangerous-dump-{seed}"),
+        title: "Queen of Spades danger".to_string(),
+        contract: "Hearts".to_string(),
+        contract_kind: PracticeContractKind::Hearts,
+        led_suit: Suit::Spades,
+        prompt:
+            "Spades were led. You hold the queen of spades, but no higher spade is protecting you."
+                .to_string(),
+        table_before_choice: vec![
+            PlayedCard::new(0, Card::new(Rank::Nine, Suit::Spades)),
+            PlayedCard::new(1, Card::new(Rank::Jack, Suit::Spades)),
+        ],
+        player_hand,
+        table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Four, Suit::Spades))],
     }
 }
 
@@ -1263,6 +1489,7 @@ pub fn generate_domino_practice(seed: u64) -> PracticeScenario {
 }
 
 const DAILY_DRILL_POOL_ROUNDS: u64 = 3;
+const HEARTS_DRILL_POOL_ROUNDS: u64 = 3;
 
 type PracticeScenarioGenerator = fn(u64) -> PracticeScenario;
 
@@ -1310,6 +1537,24 @@ const PRACTICE_SCENARIO_TEMPLATES: [PracticeScenarioTemplate; 7] = [
     },
 ];
 
+const HEARTS_PRACTICE_SCENARIO_TEMPLATES: [PracticeScenarioTemplate; 3] = [
+    PracticeScenarioTemplate {
+        id: "first-trick",
+        contract_kind: PracticeContractKind::Hearts,
+        generate: generate_hearts_first_trick_practice,
+    },
+    PracticeScenarioTemplate {
+        id: "avoid-hearts",
+        contract_kind: PracticeContractKind::Hearts,
+        generate: generate_hearts_avoid_hearts_practice,
+    },
+    PracticeScenarioTemplate {
+        id: "queen-danger",
+        contract_kind: PracticeContractKind::Hearts,
+        generate: generate_hearts_queen_danger_practice,
+    },
+];
+
 pub fn generate_daily_drill_set(seed: u64) -> PracticeDrillSet {
     let mut scenarios = Vec::new();
 
@@ -1328,6 +1573,35 @@ pub fn generate_daily_drill_set(seed: u64) -> PracticeDrillSet {
     PracticeDrillSet {
         id: format!("play-barbu-{seed}"),
         title: "Play Barbu".to_string(),
+        scenarios,
+    }
+}
+
+pub fn generate_hearts_practice_set(seed: u64, focus: Option<&str>) -> PracticeDrillSet {
+    let mut scenarios = Vec::new();
+
+    for round in 0..HEARTS_DRILL_POOL_ROUNDS {
+        for (template_index, template) in HEARTS_PRACTICE_SCENARIO_TEMPLATES.iter().enumerate() {
+            if focus.is_some_and(|focus_id| focus_id != template.id) {
+                continue;
+            }
+
+            let scenario = (template.generate)(drill_pool_seed(seed, template_index as u64, round));
+            debug_assert_eq!(
+                scenario.contract_kind, template.contract_kind,
+                "{}",
+                template.id
+            );
+            scenarios.push(scenario);
+        }
+    }
+
+    PracticeDrillSet {
+        id: format!(
+            "hearts-practice-{}-{seed}",
+            focus.filter(|value| !value.is_empty()).unwrap_or("mixed")
+        ),
+        title: "Hearts practice".to_string(),
         scenarios,
     }
 }
@@ -1401,6 +1675,18 @@ fn join_cards(cards: &[Card]) -> String {
 
 fn score_practice_trick(contract_kind: PracticeContractKind, played_cards: &[PlayedCard]) -> i32 {
     match contract_kind {
+        PracticeContractKind::Hearts => played_cards
+            .iter()
+            .map(|played| {
+                if played.card == Card::new(Rank::Queen, Suit::Spades) {
+                    13
+                } else if played.card.suit == Suit::Hearts {
+                    1
+                } else {
+                    0
+                }
+            })
+            .sum(),
         PracticeContractKind::NoHearts => score_no_hearts_trick(played_cards),
         PracticeContractKind::NoQueens => played_cards
             .iter()
@@ -1424,6 +1710,7 @@ fn score_practice_trick(contract_kind: PracticeContractKind, played_cards: &[Pla
 
 fn penalty_label(contract_kind: PracticeContractKind, penalty: i32) -> String {
     match contract_kind {
+        PracticeContractKind::Hearts => format!("{penalty} Hearts penalty"),
         PracticeContractKind::NoHearts => format!("{penalty} heart penalty"),
         PracticeContractKind::NoQueens => format!("{penalty} queen penalty"),
         PracticeContractKind::KingOfHearts => "the king of hearts penalty".to_string(),
@@ -1432,6 +1719,51 @@ fn penalty_label(contract_kind: PracticeContractKind, penalty: i32) -> String {
         PracticeContractKind::HeartsTrumps => format!("{penalty} trick point"),
         PracticeContractKind::Domino => "0 points".to_string(),
     }
+}
+
+fn hearts_practice_explanation(
+    player_card: Card,
+    led_suit: Suit,
+    winner: PlayerIndex,
+    penalty: i32,
+) -> String {
+    let winner_name = player_name(winner);
+
+    if !matches!(player_card.suit, Suit::Hearts | Suit::Spades) && penalty == 0 {
+        return format!(
+            "{player_card} follows {}. {winner_name} wins the trick, and no Hearts penalty was added.",
+            suit_name(led_suit)
+        );
+    }
+
+    if winner == 2 && penalty > 0 {
+        return format!(
+            "{player_card} follows {}. You win the trick and take {penalty} Hearts penalty points.",
+            suit_name(led_suit)
+        );
+    }
+
+    if player_card == Card::new(Rank::Queen, Suit::Spades) && winner != 2 {
+        return format!(
+            "Queen of Spades leaves your hand. {winner_name} wins the trick and takes the 13-point danger card."
+        );
+    }
+
+    if player_card.suit == Suit::Hearts && winner != 2 {
+        return format!(
+            "{player_card} moves a heart point away from you. {winner_name} wins the trick and takes {penalty} Hearts penalty points."
+        );
+    }
+
+    if winner == 2 {
+        return format!(
+            "{player_card} takes control. That is legal, but winning clean tricks in Hearts can put you on lead."
+        );
+    }
+
+    format!(
+        "{player_card} is legal. {winner_name} wins the trick and takes {penalty} Hearts penalty points."
+    )
 }
 
 fn practice_trick_winner(
@@ -1638,6 +1970,56 @@ mod tests {
         assert_eq!(drill_set.scenarios[4].contract, "No Tricks");
         assert_eq!(drill_set.scenarios[5].contract, "Hearts Trumps");
         assert_eq!(drill_set.scenarios[6].contract, "Domino");
+    }
+
+    #[test]
+    fn hearts_practice_set_contains_core_generated_families() {
+        let drill_set = generate_hearts_practice_set(13, None);
+
+        assert_eq!(drill_set.scenarios.len(), 9);
+        assert!(drill_set
+            .scenarios
+            .iter()
+            .all(|scenario| scenario.contract == "Hearts"));
+        assert!(drill_set
+            .scenarios
+            .iter()
+            .any(|scenario| scenario.id.starts_with("hearts-first-trick")));
+        assert!(drill_set
+            .scenarios
+            .iter()
+            .any(|scenario| scenario.id.starts_with("hearts-avoid")));
+        assert!(drill_set
+            .scenarios
+            .iter()
+            .any(|scenario| scenario.id.starts_with("hearts-queen")));
+    }
+
+    #[test]
+    fn hearts_practice_set_can_focus_one_family() {
+        let drill_set = generate_hearts_practice_set(13, Some("queen-danger"));
+
+        assert_eq!(drill_set.scenarios.len(), 3);
+        assert!(drill_set
+            .scenarios
+            .iter()
+            .all(|scenario| scenario.id.starts_with("hearts-queen")));
+    }
+
+    #[test]
+    fn generated_hearts_queen_danger_penalizes_capturing_black_lady() {
+        let scenario = generate_hearts_queen_duck(12);
+        let ace = Card::new(Rank::Ace, Suit::Spades);
+        let low_spade = Card::new(Rank::Two, Suit::Spades);
+
+        assert_eq!(
+            scenario.outcome_for(ace).outcome_kind,
+            PracticeOutcomeKind::Penalty
+        );
+        assert_eq!(
+            scenario.outcome_for(low_spade).outcome_kind,
+            PracticeOutcomeKind::Good
+        );
     }
 
     #[test]

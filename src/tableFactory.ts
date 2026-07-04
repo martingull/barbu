@@ -559,7 +559,7 @@ export const gameTableDefinitions = {
       progressAriaLabel: "Hearts course progress",
       nextSummary: "Return to the next short Hearts decision.",
       completeSummary: "Replay any Hearts lesson or move into practice.",
-      referenceSummary: "Check the current MVP rules, names, scoring, and documented simplifications."
+      referenceSummary: "Check the current rules, names, scoring, and documented simplifications."
     },
     tabIntros: {
       learn: {
