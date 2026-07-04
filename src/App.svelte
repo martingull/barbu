@@ -963,7 +963,7 @@
       title: "Can you lead a heart?",
       beforeResult: "You are on lead. Hearts have not been broken, and you still have non-hearts.",
       afterResult: "A non-heart lead keeps the hand legal until a heart has been played.",
-      emptyExplanation: "Choose a legal opening lead. In MVP Hearts, hearts cannot be led before they are broken unless you only have hearts.",
+      emptyExplanation: "Choose a legal opening lead. In this Hearts variant, hearts cannot be led before they are broken unless you only have hearts.",
       legalCardIds: ["9C", "QD", "AS"],
       hand: [
         { id: "2H", rank: "2", suit: "H", label: "2H" },
@@ -1291,7 +1291,7 @@
     trick: {
       title: "Find the 13-point card",
       beforeResult: "This trick contains several cards, but one card explains most of the score.",
-      afterResult: "The queen of spades is worth 13 penalty points in the Hearts MVP.",
+      afterResult: "The queen of spades is worth 13 penalty points in the current Hearts variant.",
       emptyExplanation: "Choose the card that makes this trick much more expensive than an ordinary heart trick.",
       legalCardIds: ["QS", "7H", "9D", "KC"],
       hand: [

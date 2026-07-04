@@ -653,7 +653,7 @@ test("Hearts reference explains the current rule boundary", async ({ page }, tes
   await expect(page.getByLabel("Contract roadmap")).toContainText("Hearts v1");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Hearts v2");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Playable");
-  await expect(page.getByLabel("Variants and varieties")).toContainText("MVP Boundary");
+  await expect(page.getByLabel("Variants and varieties")).toContainText("Current Rule Boundary");
   await page.screenshot({ path: testInfo.outputPath("hearts-reference.png"), fullPage: true });
 
   await page.getByRole("button", { name: "Back to Hearts table" }).click();

@@ -248,7 +248,7 @@ export const referenceCatalog: GameReference[] = [
     id: "hearts",
     title: "Hearts",
     family: "Hearts",
-    baseline: "David Parlett structure, Wikipedia-style MVP opening convention",
+    baseline: "David Parlett structure, Wikipedia-style 2C opening convention",
     overview:
       "Hearts is presented here in the Black Lady style; the main danger card is the queen of spades. The reference structure follows the Parlett-style object, play, and scoring format, while the current opening convention follows the common Wikipedia-described rule that 2C opens the first trick. The app currently plays repeated hands to 100 points with rotating pass directions and shooting the moon enabled.",
     sections: [
@@ -303,7 +303,7 @@ export const referenceCatalog: GameReference[] = [
     ],
     contracts: [
       {
-        id: "mvp-hand",
+        id: "black-lady-match",
         title: "Hearts Match",
         objective: "Rotate the pass, then avoid hearts and the queen of spades across repeated hands.",
         scoring: "Hearts are 1 penalty point each; the queen of spades is 13; shooting the moon scores 0 for the shooter and 26 for the others.",
@@ -312,9 +312,9 @@ export const referenceCatalog: GameReference[] = [
     ],
     contractRoadmap: [
       {
-        id: "mvp-hand",
+        id: "black-lady-match",
         title: "Focused local match",
-        coreStatus: "MVP",
+        coreStatus: "Current variant",
         appStatus: "Playable",
         note: "The shared trick-taking table supports rotating pass directions, 2C opening, follow-suit legality, first-trick penalty restrictions, hearts-broken lead restrictions, trick winners, hearts, queen-of-spades scoring, shoot-the-moon scoring, and a 100-point local match."
       },
@@ -352,11 +352,11 @@ export const referenceCatalog: GameReference[] = [
         id: "black-lady",
         title: "Black Lady / Queen of Spades",
         note:
-          "Black Lady is the named style the MVP starts from: hearts are penalties, and the queen of spades is the large penalty card."
+          "Black Lady is the named Hearts style the app currently plays: hearts are penalties, and the queen of spades is the large penalty card."
       },
       {
-        id: "mvp-simplification",
-        title: "MVP Boundary",
+        id: "current-boundary",
+        title: "Current Rule Boundary",
         note:
           "The app currently teaches rotating passes, the core trick loop, Hearts opening restrictions, penalty scoring, shooting the moon, and a 100-point local match before adding richer Hearts varieties such as locked danger spades or bonus-jack rules."
       }
