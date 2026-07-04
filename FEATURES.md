@@ -94,9 +94,9 @@ The intended monetization model is free starter tables first, then paid packs wi
 - Playwright smoke tests for catalog, Barbu table, lesson flow, generated fallback, and course-complete behavior.
 - Focused active-table stability checks cover iPhone no-scroll, safe-area controls, pinned bottom actions, thumb-card spacing, and feedback/card collision checks across Quick Drill, Play Barbu, Hearts, Domino, and Perfect table games.
 
-## MVP Feature List
+## Launch Feature List
 
-The MVP is an iPhone-first local card tutor and practice app. It should prove that the player can learn, practice, and play real card decisions on a phone without accounts, servers, multiplayer, or monetization plumbing.
+The launch target is an iPhone-first local card tutor and practice app. It should prove that the player can learn, practice, and play real card decisions on a phone without accounts, servers, multiplayer, or monetization plumbing.
 
 Must ship:
 
@@ -112,9 +112,9 @@ Must ship:
    - Full-hand contract practice for No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino.
    - Reference page documenting the core game, contracts, current simplifications, and varieties.
 
-3. Hearts
-   - Hearts must be a real free starter game, not only a placeholder.
-   - Hearts starts with rotating pass directions, then a local multi-hand match on the shared trick-taking table.
+3. Hearts / Black Lady-style starter
+   - Hearts is a real free starter game, not only a placeholder.
+   - The current playable rules are a Black Lady-style Hearts variety: rotating pass directions, then a local multi-hand match on the shared trick-taking table.
    - Current scoring: hearts are penalty cards and the queen of spades is the main danger card.
    - Current Hearts rules should include the Wikipedia-style Hearts 2C opening convention where the holder of 2C leads it to the first trick, no first-trick penalty dump when avoidable, no heart leads until hearts are broken, and shoot-the-moon match scoring. Source note: https://en.wikipedia.org/wiki/Hearts_(card_game)#Minor_rule_variants.
    - The current match target is 100 points. The queen of spades is passable by default; locked danger spades and bonus-jack scoring remain later named variants unless added deliberately.
@@ -132,19 +132,26 @@ Must ship:
    - Thumb cards stay visible.
    - Safe areas are respected after route changes.
 
-Not MVP:
+Not launch scope:
 
 - Accounts, cloud sync, or backend.
 - Multiplayer.
 - Subscription or StoreKit implementation.
-- Full Hearts variants.
+- Additional Hearts variants beyond the current Black Lady-style starter.
 - Full Bridge, Whist, Gin Rummy, Canasta, or Solitaire implementations.
 - Barbu character animation.
 - Advanced AI opponent strategy beyond useful local training behavior.
 
-## MVP Rounding-Off Roadmap
+## Launch Rounding-Off Roadmap
 
 This section is the short list for getting from the current app to something that can be tested seriously on an iPhone. Prefer finishing these items before adding new game families, new monetization surfaces, or larger visual systems.
+
+0. Separate shared mechanics from game policy
+   - Share reusable mechanics: card model, deal, turn order, follow-suit legality, trick winner, played-card memory, scoring primitives, table layout, and common feedback plumbing.
+   - Keep decision policy game-specific. Barbu is a contract game where each contract defines whether seats should win, duck, avoid cards, chase rewards, use trumps, or build Domino. Hearts is a trick-avoidance penalty game where seats normally avoid hearts and the queen of spades unless defending against or attempting a moon.
+   - Do not improve Hearts opponents by copying Barbu "take control" behavior unless the move reduces penalty risk or serves a clear moon-defense purpose.
+   - Do not improve Barbu opponents by assuming every contract is Hearts-style avoidance; Positive Tricks, Hearts Trumps, No Tricks, No Queens, No Last Two, King of Hearts, No Hearts, and Domino need different policy hooks.
+   - Near-term implementation task: identify the shared Rust primitives versus the Barbu contract-policy layer and the Hearts/Black Lady avoidance-policy layer before changing more opponent behavior.
 
 1. Stabilize the active phone table
    - Keep Quick Drill, full-hand practice, Play Barbu, Hearts, Domino, and Perfect mini-games on stable iPhone layouts.
@@ -159,8 +166,9 @@ This section is the short list for getting from the current app to something tha
    - Decide whether v1 Play Barbu stays fixed-order or adds a simple contract-choice step.
    - Defer full historical/Parlett settlement details unless they block a believable local session.
 
-3. Finish Hearts v1 play
+3. Finish Hearts / Black Lady-style play
    - Keep Hearts as the second active free starter game.
+   - Treat the current implementation as a Black Lady-style Hearts variety, not as the final word on every Hearts-family rule set.
    - Maintain the current v1 rules: rotating pass directions, 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, hearts plus queen-of-spades scoring.
    - Add only the Hearts-specific practice needed to support the play mode: passing, queen-of-spades danger, safe heart avoidance, and basic score reading.
    - Defer locked danger spades, bonus-jack scoring, and richer Hearts-family varieties unless the current Hearts loop feels incomplete without them.
@@ -172,14 +180,14 @@ This section is the short list for getting from the current app to something tha
 
 5. Product shell and launch readiness
    - Keep the catalog free-first: Hearts, Barbu, Whist, then paid/future packs.
-   - Whist may remain a polished placeholder for MVP if Barbu and Hearts feel good, but it should be the next game implementation target before Solitaire.
+   - Whist may remain a polished placeholder for launch if Barbu and Hearts feel good, but it should be the next game implementation target before Solitaire.
    - Make app icon, launch screen, iPhone safe areas, and local Tauri/iOS packaging reliable.
    - Add a short manual smoke checklist for physical iPhone testing before each TestFlight-style build.
 
 6. Documentation and verification gate
-   - Keep README, FEATURES, SCREEN_PLAN, and AGENTS aligned with the MVP scope.
+   - Keep README, FEATURES, SCREEN_PLAN, and AGENTS aligned with launch scope.
    - Every completed feature should include a "Try it yourself" path.
-   - Before calling the MVP ready, run core Rust tests, UI tests on phone profiles, Tauri check, and at least one physical-device smoke pass.
+   - Before calling the launch build ready, run core Rust tests, UI tests on phone profiles, Tauri check, and at least one physical-device smoke pass.
 
 ## Barbu Contract Roadmap
 
@@ -207,8 +215,8 @@ Core contract status:
 
 These are the next product increments that keep the app coherent.
 
-1. Hearts v1
-   - Hearts is now an active starter table with rotating passes and a local multi-hand match using the shared trick-taking engine and table surface.
+1. Hearts / Black Lady-style play
+   - Hearts is now an active starter table with a Black Lady-style local multi-hand match using the shared trick-taking engine and table surface.
    - Current scoring covers hearts plus the queen of spades.
    - Current legality covers the Wikipedia-style holder-of-2C opening, first-trick penalty restrictions, and hearts-broken lead restrictions.
    - Shooting the moon is active: if one seat captures all 26 hand points, that seat scores 0 and every other seat scores 26 for that hand.

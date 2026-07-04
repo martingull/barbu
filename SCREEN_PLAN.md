@@ -102,7 +102,7 @@ Current role:
 - Practice starts with shared hearts and queen-of-spades patterns.
 - Play starts with rotating passes, then a focused local Hearts-family match on the shared table surface.
 
-MVP rule boundary:
+Current playable rule boundary:
 
 - Score hearts and the queen of spades as penalties.
 - If one seat captures all 26 points in a hand, score shooting the moon as 0 for that seat and 26 for every other seat.
@@ -115,7 +115,7 @@ MVP rule boundary:
 Should not contain:
 
 - Barbu contracts as Hearts modes.
-- Full Hearts variants before the simplified hand is stable.
+- Additional Hearts variants before the current Black Lady-style hand is stable.
 - Separate table rendering from the shared active-game surface.
 
 ### Barbu Table

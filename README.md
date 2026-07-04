@@ -51,8 +51,8 @@ content/             Structured game and lesson content
 
 ## Current Product Shape
 
-- A catalog/welcome screen that treats Barbu as the first playable core game in a broader card-game curriculum, with Hearts as the second active starter table and placeholders for Solitaire, Whist, Bridge, Gin Rummy, and Canasta.
-- The intended free starter catalog is Barbu, Hearts, and Solitaire; the other catalog entries can become later packs once the first game loop is strong.
+- A catalog/welcome screen that treats Barbu as the first playable core game in a broader card-game curriculum, with Hearts as the second active starter table and placeholders for Whist, Solitaire, Bridge, Gin Rummy, and Canasta.
+- The intended free starter catalog is Hearts, Barbu, and Whist; the other catalog entries can become later packs once the first game loops are strong.
 - The catalog stays focused on core games; varieties and teaching modes stay attached to their parent game screens.
 - A Hearts table with the same Learn, Practice, Play, and Perfect structure; Play rotates pass direction and then moves into a local multi-hand Black Lady-style match to 100 points with 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, queen-of-spades scoring, and shoot-the-moon scoring, while Practice trains hearts and queen-of-spades patterns on the shared trick-taking surface.
 - A Barbu table screen with grouped Learn, Practice, Play, and Reference entry points, a contract-hand practice chooser, and a five-step training path.
@@ -60,6 +60,7 @@ content/             Structured game and lesson content
 - No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps full-hand skeletons with deterministic local deals, legal-card play, contract-aware auto opponents, hand scoring, and short per-trick feedback.
 - Domino playable hand v1 with deterministic local deals, configurable opening-rank state currently defaulted to fixed-seven starts, adjacent suit building, legal pass handling, four-player order-out scoring, and Play Barbu roster support.
 - Generic trick-taking hand engine for full-hand deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps as the first contract adapters.
+- Shared mechanics should not erase game intent: Barbu contract policy and Hearts/Black Lady trick-avoidance policy should stay separate while reusing the same card, trick, scoring, table, and feedback primitives.
 - Shared table-play surface for Quick Drill, Play Barbu, and full-hand contracts so active games use one compact mobile layout instead of contract-specific screens.
 - Play Barbu v1 starts a local sequence through the playable full-hand contracts, tracks four-player scores, and ends with a compact score summary.
 - Play Barbu contract intro before each hand so Barbu sets the next contract, shows the target, and keeps the current run score visible.
@@ -87,9 +88,9 @@ content/             Structured game and lesson content
 - Barbu is the first Hearts-family core game, not the app boundary. The lesson/catalog structure should be able to grow toward related Hearts-family games first, then popular families such as Whist and Bridge after Barbu has a stable learning, practice, and play loop.
 - Frontend game tables should be registered through `src/tableFactory.ts` so new ready games follow the shared `Learn`, `Practice`, `Play`, and `Perfect` structure, declare their reference id, name their key actions, and provide Learn-tab shell copy before custom UI is added.
 
-## MVP Scope
+## Launch Scope
 
-The MVP is a local iPhone-first card tutor with two active starter games:
+The launch target is a local iPhone-first card tutor with two active starter games:
 
 - **Barbu**: the main curriculum and play mode.
 - **Hearts**: the familiar free starter game that proves the shared Hearts-family engine can support more than Barbu.
@@ -98,7 +99,7 @@ Hearts should be real but intentionally focused in the Black Lady style: rotate 
 
 Whist can remain visible as the next free starter placeholder until Barbu and Hearts feel stable. Solitaire, Bridge, Gin Rummy, Canasta, and Card Counting can remain visible as future packs or skill areas, but should not distract from getting Barbu and Hearts playable on the phone.
 
-For launch-focused planning, use the MVP Rounding-Off Roadmap in [FEATURES.md](./FEATURES.md). That list is the current stop-building guide before adding new game families or monetization surfaces.
+For launch-focused planning, use the Launch Rounding-Off Roadmap in [FEATURES.md](./FEATURES.md). That list is the current stop-building guide before adding new game families or monetization surfaces.
 
 ## Long-Term Card Skill Direction
 

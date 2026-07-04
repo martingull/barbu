@@ -8,7 +8,7 @@ Barbu is an iPhone-first card-game app for learning, practicing, and exploring c
 
 The product concept is that the player learns by sitting down against Barbu, a "King of Cards" figure who introduces games, sets contracts, reacts to play, and gradually raises the difficulty. Treat this persona as a teaching and progression device, not as an excuse to hide rules or make the interface theatrical at the cost of clarity.
 
-Treat Barbu as the first game in a broader card-game catalog, not as the permanent product boundary. The MVP should include Hearts as a real second starter game, using shared Hearts-family and trick-taking foundations rather than a cloned implementation. Favor structures that can later support other Hearts variants, then other families such as Whist and Bridge.
+Treat Barbu as the first game in a broader card-game catalog, not as the permanent product boundary. Hearts is the second active starter table, using shared Hearts-family and trick-taking foundations rather than a cloned implementation. Favor structures that can later support other Hearts variants, then other families such as Whist and Bridge.
 
 Hearts is the current Hearts-family starter game, in the Black Lady style: rotate the pass left, right, across, and hold, then play local hands with hearts and the queen of spades as penalties until one seat reaches a 100-point target. The current opening convention is intentionally the Wikipedia-style Hearts rule where the holder of 2C leads 2C to the first trick; treat that as a documented product choice rather than a Parlett-derived assumption. Source note: Wikipedia, "Hearts (card game)", Modern rules, Minor rule variants, https://en.wikipedia.org/wiki/Hearts_(card_game)#Minor_rule_variants. Shooting the moon is active as a match scoring rule: all 26 hand points captured by one seat score 0 for that seat and 26 for every other seat. The queen of spades is passable by default; locked danger spades and bonus-jack rules are later house-rule variants unless explicitly requested. Document simplifications clearly instead of hiding them.
 
@@ -47,6 +47,9 @@ Keep game logic independent of the UI. The frontend may present and explain rule
 ## Architecture
 
 - Put reusable card and rules code in `crates/barbu-core`.
+- Share low-level card-table mechanics across games: deck, deal, turn order, follow-suit legality, trick winner, played-card memory, scoring primitives, and compact table presentation.
+- Keep game policy separate by game or contract. Barbu contract policy, Hearts/Black Lady avoidance policy, Domino layout policy, and future Whist/Bridge policies should call shared primitives but make their own decisions about winning, ducking, dumping danger cards, preserving trumps, or taking control.
+- When improving opponents, first identify the game objective being optimized. Barbu may need contract-specific reward or avoidance behavior; Hearts normally needs penalty avoidance, queen-of-spades danger management, and moon-defense behavior.
 - Put generated practice logic in Rust, not in the Svelte component layer.
 - Model the Barbu/King-of-Cards teaching persona as content or lesson metadata where possible, not as scattered hardcoded strings.
 - Keep guided lessons in catalog-like modules so more games and families can be added without rewriting the interaction surface.
