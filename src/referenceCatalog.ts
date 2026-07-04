@@ -250,7 +250,7 @@ export const referenceCatalog: GameReference[] = [
     family: "Hearts",
     baseline: "David Parlett structure, Wikipedia-style MVP opening convention",
     overview:
-      "Hearts is the Queen of Spades style known in some places as the woman of spades. The reference structure follows the Parlett-style object, play, and scoring format, while the current opening convention follows the common Wikipedia-described rule that 2C opens the first trick. The app currently plays repeated hands to 100 points with rotating pass directions and shooting the moon enabled.",
+      "Hearts is presented here in the Black Lady style; the main danger card is the queen of spades. The reference structure follows the Parlett-style object, play, and scoring format, while the current opening convention follows the common Wikipedia-described rule that 2C opens the first trick. The app currently plays repeated hands to 100 points with rotating pass directions and shooting the moon enabled.",
     sections: [
       {
         id: "object",
@@ -258,7 +258,7 @@ export const referenceCatalog: GameReference[] = [
         body:
           "Avoid winning tricks that contain penalty cards. A clean trick may be legal, but it is still a decision to think about because taking the lead can expose you later.",
         facts: [
-          { label: "Main danger", value: "Queen of spades" },
+          { label: "Main danger", value: "Queen of Spades" },
           { label: "Other danger", value: "Any heart" }
         ]
       },
@@ -294,7 +294,7 @@ export const referenceCatalog: GameReference[] = [
           "Hearts scores each heart as one penalty point and the queen of spades as thirteen penalty points. The trick winner receives all penalty cards in that trick. If one seat captures all 26 points in a hand, that seat shoots the moon and scores 0 while every other seat scores 26. Hands repeat until one seat reaches 100 points; low score wins the match.",
         facts: [
           { label: "Heart", value: "1 penalty point" },
-          { label: "Queen of spades", value: "13 penalty points" },
+          { label: "Queen of Spades", value: "13 penalty points" },
           { label: "Points in play", value: "26 per hand" },
           { label: "Shoot the moon", value: "Shooter 0, others 26" },
           { label: "Match target", value: "100 points" }
@@ -323,7 +323,7 @@ export const referenceCatalog: GameReference[] = [
         title: "Rotating pass",
         coreStatus: "Hearts v1",
         appStatus: "Playable",
-        note: "The current table rotates left, right, across, and hold. Queen of spades is passable by default; locked danger spades can be a later house rule."
+        note: "The current table rotates left, right, across, and hold. The queen of spades is passable by default; locked danger spades can be a later house rule."
       },
       {
         id: "hearts-broken",
@@ -349,10 +349,10 @@ export const referenceCatalog: GameReference[] = [
     ],
     variants: [
       {
-        id: "queen-of-spades",
-        title: "Queen Of Spades / Woman Of Spades",
+        id: "black-lady",
+        title: "Black Lady / Queen of Spades",
         note:
-          "This is the named danger-card style the MVP starts from: hearts are penalties, and the queen of spades is the large penalty card."
+          "Black Lady is the named style the MVP starts from: hearts are penalties, and the queen of spades is the large penalty card."
       },
       {
         id: "mvp-simplification",

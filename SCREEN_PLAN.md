@@ -36,7 +36,7 @@ When a feature is added, it should have one primary home. Cross-links are allowe
 
 Barbu is the first playable game, not the product boundary. The app should grow from shared game families rather than isolated one-off games. The product priority is still to make Barbu feel good first: clear learning, reliable full-hand play, useful practice, and a coherent local game loop.
 
-The product should include Hearts as the second active starter game. Hearts should reuse the shared Hearts-family trick-taking table and engine instead of becoming a separate implementation. Hearts should be a focused local multi-hand game: rotating pass directions, the Wikipedia-style holder-of-2C opening, first-trick penalty restrictions, no heart leads until hearts are broken, hearts plus the queen of spades as penalties, shoot-the-moon scoring, and a 100-point match target. Locked danger spades and bonus-jack rules can wait as named variants.
+The product should include Hearts as the second active starter game. Hearts should reuse the shared Hearts-family trick-taking table and engine instead of becoming a separate implementation. Hearts should be a focused local multi-hand Black Lady-style game: rotating pass directions, the Wikipedia-style holder-of-2C opening, first-trick penalty restrictions, no heart leads until hearts are broken, hearts plus the queen of spades as penalties, shoot-the-moon scoring, and a 100-point match target. Locked danger spades and bonus-jack rules can wait as named variants.
 
 The Hearts family is the first expansion area because many games share:
 
@@ -99,7 +99,7 @@ Purpose: the familiar free starter game and proof that Barbu's Hearts-family fou
 Current role:
 
 - Uses the same Learn, Practice, Play, and Perfect grouping as Barbu.
-- Practice starts with shared hearts and queen-danger patterns.
+- Practice starts with shared hearts and queen-of-spades patterns.
 - Play starts with rotating passes, then a focused local Hearts-family match on the shared table surface.
 
 MVP rule boundary:

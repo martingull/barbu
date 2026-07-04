@@ -338,7 +338,7 @@
   };
   const runContractIntros: Record<FullHandContract, RunContractIntro> = {
     Hearts: {
-      title: "Hearts and QS are dangerous.",
+      title: "Hearts and Queen of Spades are dangerous.",
       role: "Starter Hearts hand",
       surface: "Trick-taking hand",
       target: "Avoid penalty tricks.",
@@ -850,7 +850,7 @@
     trick: {
       title: "Follow clubs first",
       beforeResult: "This is the first trick. Barbu led 2C, and you still have a club.",
-      afterResult: "On the opening trick, follow clubs when you can. Do not dump hearts or QS while a safe club is available.",
+      afterResult: "On the opening trick, follow clubs when you can. Do not dump hearts or the queen of spades while a safe club is available.",
       emptyExplanation: "Choose the legal first-trick play.",
       legalCardIds: ["3C"],
       hand: [
@@ -866,7 +866,7 @@
       pendingBySeat: { Left: "follow clubs" },
       playedExplanations: {
         "3C": "3C is good. You follow clubs on the opening trick.",
-        QS: "QS cannot be dumped here because you still have a club.",
+        QS: "Queen of Spades cannot be dumped here because you still have a club.",
         "5H": "5H cannot be dumped here because you still have a club."
       },
       cardOutcomes: {
@@ -884,7 +884,7 @@
     trick: {
       title: "No clubs on the first trick",
       beforeResult: "This is the first trick. Clubs were led, but you have no clubs.",
-      afterResult: "If you are void on the opening trick, prefer a non-penalty discard before throwing hearts or QS.",
+      afterResult: "If you are void on the opening trick, prefer a non-penalty discard before throwing hearts or the queen of spades.",
       emptyExplanation: "Choose the safest first-trick discard.",
       legalCardIds: ["8D", "5H", "QS"],
       hand: [
@@ -901,7 +901,7 @@
       playedExplanations: {
         "8D": "8D is good. It avoids adding a penalty on the first trick.",
         "5H": "5H is legal because you are void, but it adds a heart point immediately.",
-        QS: "QS is legal because you are void, but dumping 13 points on trick one is dangerous."
+        QS: "Queen of Spades is legal because you are void, but dumping 13 points on trick one is dangerous."
       },
       cardOutcomes: {
         "8D": "good",
@@ -988,14 +988,14 @@
     }
   };
   const heartsQueenDangerDrillStep: DrillStep = {
-    scenarioId: "hearts-queen-of-spades-duck",
+    scenarioId: "hearts-black-lady-duck",
     contract: "Hearts",
-    title: "Queen danger",
+    title: "Queen of Spades danger",
     trick: {
       title: "Duck the Queen of Spades",
-      beforeResult: "Spades were led. Right has put QS into the trick, and you still have spades.",
-      afterResult: "In Hearts, the Queen of Spades is the one queen that matters: it is worth 13 penalty points.",
-      emptyExplanation: "Follow spades without winning the trick that contains QS.",
+      beforeResult: "Spades were led. Right has put the queen of spades into the trick, and you still have spades.",
+      afterResult: "In Hearts, the queen of spades is the danger card: it is worth 13 penalty points.",
+      emptyExplanation: "Follow spades without winning the trick that contains the queen of spades.",
       legalCardIds: ["2S", "AS"],
       hand: [
         { id: "2S", rank: "2", suit: "S", label: "2S" },
@@ -1009,8 +1009,8 @@
       tableAfterChoice: [{ seat: "Left", card: { id: "7S", rank: "7", suit: "S", label: "7S" } }],
       pendingBySeat: { Left: "follow spades" },
       playedExplanations: {
-        "2S": "2S is good. You followed spades without taking the Queen of Spades.",
-        AS: "AS wins the trick and captures QS, which is 13 penalty points.",
+        "2S": "2S is good. You followed spades without taking the queen of spades.",
+        AS: "AS wins the trick and captures the queen of spades, which is 13 penalty points.",
         "4H": "4H is off suit while you still have spades."
       },
       cardOutcomes: {
@@ -1024,13 +1024,13 @@
     }
   };
   const heartsQueenDumpDrillStep: DrillStep = {
-    scenarioId: "hearts-queen-of-spades-dump",
+    scenarioId: "hearts-black-lady-dump",
     contract: "Hearts",
-    title: "Queen danger",
+    title: "Queen of Spades danger",
     trick: {
-      title: "Dump the Queen safely",
+      title: "Dump Queen of Spades safely",
       beforeResult: "Clubs were led. You have no clubs, and Barbu is already winning this trick.",
-      afterResult: "When you are void, dumping QS under someone else's winner moves the 13-point danger away.",
+      afterResult: "When you are void, dumping the queen of spades under someone else's winner moves the 13-point danger away.",
       emptyExplanation: "Choose the safest discard while you are void in clubs.",
       legalCardIds: ["QS", "6H", "9D"],
       hand: [
@@ -1045,9 +1045,9 @@
       tableAfterChoice: [{ seat: "Left", card: { id: "3C", rank: "3", suit: "C", label: "3C" } }],
       pendingBySeat: { Left: "follow clubs" },
       playedExplanations: {
-        QS: "QS is good. You are void, and Barbu is winning, so the danger card leaves your hand.",
-        "6H": "6H gives away one point, but QS remains in your hand.",
-        "9D": "9D is safe now, but it misses the chance to unload QS."
+        QS: "Queen of Spades is good. You are void, and Barbu is winning, so the danger card leaves your hand.",
+        "6H": "6H gives away one point, but the queen of spades remains in your hand.",
+        "9D": "9D is safe now, but it misses the chance to unload the queen of spades."
       },
       cardOutcomes: {
         QS: "good",
@@ -1062,14 +1062,14 @@
     }
   };
   const heartsQueenDangerousDumpDrillStep: DrillStep = {
-    scenarioId: "hearts-queen-of-spades-dangerous-dump",
+    scenarioId: "hearts-black-lady-dangerous-dump",
     contract: "Hearts",
-    title: "Queen danger",
+    title: "Queen of Spades danger",
     trick: {
-      title: "Do not win with QS",
-      beforeResult: "Spades were led. You hold QS, and no higher spade is protecting you.",
-      afterResult: "Dumping QS is only safe when someone else is winning. Here, QS would win the trick.",
-      emptyExplanation: "Follow spades without making QS take the trick.",
+      title: "Do not win Queen of Spades",
+      beforeResult: "Spades were led. You hold the queen of spades, and no higher spade is protecting you.",
+      afterResult: "Dumping the queen of spades is only safe when someone else is winning. Here, it would win the trick.",
+      emptyExplanation: "Follow spades without making the queen of spades take the trick.",
       legalCardIds: ["3S", "QS"],
       hand: [
         { id: "3S", rank: "3", suit: "S", label: "3S" },
@@ -1083,8 +1083,8 @@
       tableAfterChoice: [{ seat: "Left", card: { id: "4S", rank: "4", suit: "S", label: "4S" } }],
       pendingBySeat: { Left: "follow spades" },
       playedExplanations: {
-        "3S": "3S is good. You keep QS out of a trick you might win.",
-        QS: "QS wins this trick and gives you 13 penalty points.",
+        "3S": "3S is good. You keep the queen of spades out of a trick you might win.",
+        QS: "Queen of Spades wins this trick and gives you 13 penalty points.",
         "6H": "6H is off suit while you still have spades."
       },
       cardOutcomes: {
@@ -1138,10 +1138,10 @@
     contract: "Hearts",
     title: "Stop the moon",
     trick: {
-      title: "Take QS away",
-      beforeResult: "Left is trying to collect every point. Left is winning a spade trick that contains QS.",
+      title: "Take Queen of Spades away",
+      beforeResult: "Left is trying to collect every point. Left is winning a spade trick that contains the queen of spades.",
       afterResult: "Taking a painful trick can be correct if it prevents one player from taking all 26 points.",
-      emptyExplanation: "Spades were led. Decide whether to take the Queen of Spades to stop the moon.",
+      emptyExplanation: "Spades were led. Decide whether to take the queen of spades to stop the moon.",
       legalCardIds: ["KS", "3S"],
       hand: [
         { id: "KS", rank: "K", suit: "S", label: "KS" },
@@ -1156,7 +1156,7 @@
       pendingBySeat: { Right: "follow spades" },
       playedExplanations: {
         KS: "KS is risky but correct moon defense if Left is threatening to collect every point.",
-        "3S": "3S ducks QS and lets Left keep the moon threat alive.",
+        "3S": "3S ducks the queen of spades and lets Left keep the moon threat alive.",
         "4D": "4D is off suit while you still have spades."
       },
       cardOutcomes: {
@@ -1229,7 +1229,7 @@
       tableAfterChoice: [],
       pendingBySeat: { You: "identify danger" },
       playedExplanations: {
-        QS: "QS is the 13-point danger card. Hearts add one point each, but QS changes the whole trick.",
+        QS: "Queen of Spades is the 13-point danger card. Hearts add one point each, but that card changes the whole trick.",
         "7H": "7H is a penalty card, but it is worth one point, not thirteen.",
         "9D": "9D is not a penalty card in Hearts.",
         KC: "KC is not a penalty card in Hearts."
@@ -1254,8 +1254,8 @@
     title: "Score a hand",
     trick: {
       title: "Find the one-point card",
-      beforeResult: "This trick has ordinary cards and one heart. There is no Queen of Spades.",
-      afterResult: "Each heart is one penalty point. QS is the 13-point card, but it is not in this trick.",
+      beforeResult: "This trick has ordinary cards and one heart. There is no queen of spades.",
+      afterResult: "Each heart is one penalty point. Queen of Spades is the 13-point card, but it is not in this trick.",
       emptyExplanation: "Choose the card that adds one penalty point to the trick.",
       legalCardIds: ["7H", "QS", "KC"],
       hand: [
@@ -1272,7 +1272,7 @@
       pendingBySeat: { You: "identify point card" },
       playedExplanations: {
         "7H": "7H is good. A heart is one penalty point.",
-        QS: "QS is worth 13, but it is not in this trick.",
+        QS: "Queen of Spades is worth 13, but it is not in this trick.",
         KC: "KC is not a penalty card in Hearts."
       },
       cardOutcomes: {
@@ -4565,11 +4565,11 @@
       if (trick.outcome === "captured_penalty") {
         if (fullHandTrickHasTag(trick, "opponent_loaded_player_trick")) {
           return withHeartsMoonThreat(fullHandTrickHasTag(trick, "queen_spades_moved")
-            ? `You held the trick and the table loaded QS into it. That is 13 danger points plus any hearts.`
+            ? `You held the trick and the table loaded the queen of spades into it. That is 13 danger points plus any hearts.`
             : `You held the trick and the table loaded hearts into it. The lead created pressure; look for a lower exit next time.`);
         }
         if (fullHandTrickHasTag(trick, "queen_spades_moved")) {
-          return withHeartsMoonThreat(`You captured QS and took ${penaltyText}. In Hearts, that one card is the big danger.`);
+          return withHeartsMoonThreat(`You captured the queen of spades and took ${penaltyText}. In Hearts, that one card is the big danger.`);
         }
         if (fullHandTrickHasTag(trick, "hearts_moved")) {
           return withHeartsMoonThreat(`You captured hearts and took ${penaltyText}. Once hearts are broken, every heart can become cargo.`);
@@ -4578,7 +4578,7 @@
       }
       if (trick.outcome === "avoided_penalty") {
         if (fullHandTrickHasTag(trick, "queen_spades_moved")) {
-          return withHeartsMoonThreat(`${trick.winner} took QS. Good: the queen moved, but not into your score.`);
+          return withHeartsMoonThreat(`${trick.winner} took the queen of spades. Good: it moved, but not into your score.`);
         }
         if (fullHandTrickHasTag(trick, "hearts_moved")) {
           return withHeartsMoonThreat(`${trick.winner} took ${penaltyText}. Good: the hearts moved away from you.`);
@@ -4592,7 +4592,7 @@
       }
       return withHeartsMoonThreat(fullHandTrickHasTag(trick, "void_discard")
         ? `${trick.winner} won a clean trick. Good: your void discard could not take the led suit.`
-        : `${trick.winner} won a clean trick. No hearts or QS moved.`);
+        : `${trick.winner} won a clean trick. No hearts or queen of spades moved.`);
     }
 
     if (fullHand?.contract === "Hearts Trumps") {
@@ -5168,7 +5168,7 @@
   }
 
   function startHeartsQueenDangerDrill(pathStepId = "") {
-    startHeartsMicroDrill(heartsQueenDangerDrillStep, "Hearts practice: queen danger", pathStepId);
+    startHeartsMicroDrill(heartsQueenDangerDrillStep, "Hearts practice: Queen of Spades danger", pathStepId);
   }
 
   function startHeartsQuickDrill() {
@@ -7200,7 +7200,7 @@
         <p class="eyebrow">Concept</p>
         <h2>Take as few penalty points as possible.</h2>
         <p>
-          Hearts is a penalty game. Each heart is worth one point, the Queen of Spades is worth thirteen,
+          Hearts is a penalty game in the Black Lady style. Each heart is worth one point, the queen of spades is worth thirteen,
           and the low score wins the match.
         </p>
       </div>
@@ -7208,7 +7208,7 @@
       <div class="course-points" aria-label="Hearts object points">
         <div>
           <span>1</span>
-          <strong>Duck tricks when hearts or QS are likely to land there.</strong>
+          <strong>Duck tricks when hearts or the queen of spades are likely to land there.</strong>
         </div>
         <div>
           <span>2</span>

@@ -14,7 +14,7 @@ pub type NoTricksHandState = TrickTakingHandState;
 pub type PositiveTricksHandState = TrickTakingHandState;
 pub type HeartsHandState = TrickTakingHandState;
 const HEARTS_TRUMP_SUIT: Suit = Suit::Hearts;
-const BLACK_LADY_MOON_LEAD_THRESHOLD: i32 = 8;
+const HEARTS_MOON_LEAD_THRESHOLD: i32 = 8;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TrickTakingHandState {
@@ -965,7 +965,7 @@ fn queen_spades_is_unresolved_for_player(
 
 fn hearts_moon_lead_candidate(state: &TrickTakingHandState, player: PlayerIndex) -> bool {
     hearts_moon_candidate(state) == Some(player)
-        && hearts_player_penalty_so_far(state, player) >= BLACK_LADY_MOON_LEAD_THRESHOLD
+        && hearts_player_penalty_so_far(state, player) >= HEARTS_MOON_LEAD_THRESHOLD
 }
 
 fn hearts_player_penalty_so_far(state: &TrickTakingHandState, player: PlayerIndex) -> i32 {

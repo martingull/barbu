@@ -30,7 +30,7 @@ const rankOrder: Record<Rank, number> = {
 };
 const suitOrder: Record<Suit, number> = { C: 0, D: 1, H: 2, S: 3 };
 const playerNames: Array<Seat> = ["Tutor", "Right", "You", "Left"];
-const blackLadyMoonLeadThreshold = 8;
+const heartsMoonLeadThreshold = 8;
 
 export function startBrowserHeartsHand(seed: number): FullHandState {
   return startBrowserFullHand("Hearts", seed, { startAtTwoOfClubs: true });
@@ -645,7 +645,7 @@ function queenSpadesIsUnresolvedForPlayer(state: FullHandState, playerIndex: num
 }
 
 function heartsMoonLeadCandidate(state: FullHandState, playerIndex: number) {
-  return heartsMoonCandidate(state) === playerIndex && heartsPlayerPenaltySoFar(state, playerIndex) >= blackLadyMoonLeadThreshold;
+  return heartsMoonCandidate(state) === playerIndex && heartsPlayerPenaltySoFar(state, playerIndex) >= heartsMoonLeadThreshold;
 }
 
 function heartsPlayerPenaltySoFar(state: FullHandState, playerIndex: number) {

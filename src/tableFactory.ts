@@ -234,14 +234,14 @@ export const heartsLearnPathSteps: HeartsLearnPathStep[] = [
     id: "hearts-object",
     step: "Concept",
     title: "Object of Hearts",
-    summary: "Avoid penalty points. Hearts are small; QS is large.",
+    summary: "Avoid penalty points. Hearts are small; Queen of Spades is large.",
     action: "object"
   }),
   createLearnPathStep({
     id: "hearts-queen",
     step: "Example",
     title: "Queen of Spades",
-    summary: "Read whether QS is moving into your trick or safely away.",
+    summary: "Read whether Queen of Spades is moving into your trick or safely away.",
     action: "queen"
   }),
   createLearnPathStep({
@@ -276,7 +276,7 @@ export const heartsLearnPathSteps: HeartsLearnPathStep[] = [
     id: "hearts-score",
     step: "Review",
     title: "Score a hand",
-    summary: "Find why QS makes a trick much more expensive.",
+    summary: "Find why Queen of Spades makes a trick much more expensive.",
     action: "score"
   })
 ];
@@ -359,9 +359,9 @@ export const heartsPracticeEntries: HeartsPracticeEntry[] = [
   }),
   createHeartsPracticeEntry({
     id: "queen-danger",
-    label: "Queen",
-    title: "Queen danger",
-    summary: "Practice the Queen of Spades habit: avoid winning when a queen is loaded.",
+    label: "Queen of Spades",
+    title: "Queen of Spades danger",
+    summary: "Practice the Queen of Spades habit: avoid winning when the danger card is loaded.",
     action: "queen",
     group: "fixed-drills"
   }),
@@ -385,7 +385,7 @@ export const heartsPracticeEntries: HeartsPracticeEntry[] = [
     id: "score-a-hand",
     label: "Scorecard",
     title: "Score a hand",
-    summary: "Identify why QS makes a Hearts trick much more expensive.",
+    summary: "Identify why Queen of Spades makes a Hearts trick much more expensive.",
     action: "score",
     group: "fixed-drills"
   })
@@ -488,7 +488,7 @@ export function createCatalogEntries({ barbuLessonCount }: CatalogDefinitionInpu
       status: "Ready",
       access: "Free",
       accessModel: "free-starter",
-      summary: "Queen of Spades style penalty play.",
+      summary: "Black Lady style penalty play.",
       lessonCount: heartsLearnPathSteps.length,
       detailLabel: "MVP hand"
     }),
@@ -605,7 +605,7 @@ export const gameTableDefinitions = {
         eyebrow: "Play",
         title: "Play a Hearts match.",
         summary:
-          "Hearts plays repeated hands to 100 points with rotating passes, 2C opening, QS at 13, and shoot-the-moon scoring."
+          "Hearts plays repeated hands to 100 points with rotating passes, 2C opening, Queen of Spades at 13, and shoot-the-moon scoring."
       },
       perfect: {
         eyebrow: "Perfect",
@@ -617,7 +617,7 @@ export const gameTableDefinitions = {
     actionsByTab: {
       learn: [
         { id: "object", label: "Object", destination: "Hearts object concept" },
-        { id: "queen-danger", label: "Queen danger", destination: "Queen of Spades concept" },
+        { id: "queen-danger", label: "Queen of Spades", destination: "Queen of Spades concept" },
         { id: "passing", label: "Pass three", destination: "Hearts passing concept" },
         { id: "score-reading", label: "Score reading", destination: "Hearts score concept" },
         { id: "reference", label: "Reference", destination: "Hearts reference" }

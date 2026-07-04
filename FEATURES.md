@@ -39,11 +39,11 @@ The intended monetization model is free starter tables first, then paid packs wi
 - Barbu Learn path metadata now comes from the shared table/catalog factory, so the first curriculum uses the same scalable pattern as Hearts.
 - Hearts Practice entry metadata now comes from the shared table/catalog factory, so practice buttons, tab metadata, and action keys stay aligned as more games add practice sets.
 - Barbu Practice entry metadata now comes from the shared table/catalog factory for Quick Drill, fixed drills, and Domino full-hand practice.
-- Hearts table with the shared Learn, Practice, Play, and Perfect structure; Play opens with rotating passes and then a local multi-hand match to 100 points with 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, and shoot-the-moon scoring, while Practice covers avoiding hearts and the queen-danger pattern.
-- Hearts Passing Drill v1 teaches the beginner pass-three habit: identify Queen of Spades, high hearts, and dangerous high spades before hand play begins.
-- Hearts Practice Scenario Pool v1 adds a small authored pool behind Quick Drill, varying first-trick restrictions, avoid-hearts, safe and dangerous Queen-of-Spades play, break-hearts, moon-defense, and score-reading decisions without expanding the Learn path. Pass-three practice now covers both danger-card passing and a long-suit preservation pattern.
-- Hearts opponent policy v1 has started: local opponents avoid Queen of Spades wins when possible, dump Queen of Spades before hearts when void, dump Queen of Spades safely under higher spades, lead from short safe suits to create pressure, and lead hearts once hearts are broken.
-- Hearts opponent policy now pressures the player on clean tricks: opponents can take a cheap non-penalty winner from the player to regain lead control, while still ducking tricks already loaded with hearts or QS unless moon defense requires intervention.
+- Hearts table with the shared Learn, Practice, Play, and Perfect structure; Play opens with rotating passes and then a local multi-hand Black Lady-style match to 100 points with 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, and shoot-the-moon scoring, while Practice covers avoiding hearts and the queen-of-spades pattern.
+- Hearts Passing Drill v1 teaches the beginner pass-three habit: identify the queen of spades, high hearts, and dangerous high spades before hand play begins.
+- Hearts Practice Scenario Pool v1 adds a small authored pool behind Quick Drill, varying first-trick restrictions, avoid-hearts, safe and dangerous queen-of-spades play, break-hearts, moon-defense, and score-reading decisions without expanding the Learn path. Pass-three practice now covers both danger-card passing and a long-suit preservation pattern.
+- Hearts opponent policy v1 has started: local opponents avoid queen-of-spades wins when possible, dump the queen of spades before hearts when void, dump the queen of spades safely under higher spades, lead from short safe suits to create pressure, and lead hearts once hearts are broken.
+- Hearts opponent policy now pressures the player on clean tricks: opponents can take a cheap non-penalty winner from the player to regain lead control, while still ducking tricks already loaded with hearts or the queen of spades unless moon defense requires intervention.
 - Phone play surfaces now suppress double-tap zoom, tap highlights, text selection, and iOS callouts on card/button controls so selecting a card does not break game flow.
 - Hearts trick feedback now calls out queen-of-spades danger, hearts moving, and opponent-loaded tricks so harder hands feel explainable rather than random.
 - Barbu table with grouped Learn, Practice, Play, and Reference entry points, including a contract-hand practice chooser.
@@ -117,7 +117,7 @@ Must ship:
    - Hearts starts with rotating pass directions, then a local multi-hand match on the shared trick-taking table.
    - Current scoring: hearts are penalty cards and the queen of spades is the main danger card.
    - Current Hearts rules should include the Wikipedia-style Hearts 2C opening convention where the holder of 2C leads it to the first trick, no first-trick penalty dump when avoidable, no heart leads until hearts are broken, and shoot-the-moon match scoring. Source note: https://en.wikipedia.org/wiki/Hearts_(card_game)#Minor_rule_variants.
-   - The current match target is 100 points. Queen of spades is passable by default; locked danger spades and bonus-jack scoring remain later named variants unless added deliberately.
+   - The current match target is 100 points. The queen of spades is passable by default; locked danger spades and bonus-jack scoring remain later named variants unless added deliberately.
    - Hearts Practice can reuse Hearts-family avoidance drills while Hearts-specific drills grow.
    - Hearts Learn/Reference should explain the current rule boundary clearly.
 
@@ -162,7 +162,7 @@ This section is the short list for getting from the current app to something tha
 3. Finish Hearts v1 play
    - Keep Hearts as the second active free starter game.
    - Maintain the current v1 rules: rotating pass directions, 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, hearts plus queen-of-spades scoring.
-   - Add only the Hearts-specific practice needed to support the play mode: passing, queen danger, safe heart avoidance, and basic score reading.
+   - Add only the Hearts-specific practice needed to support the play mode: passing, queen-of-spades danger, safe heart avoidance, and basic score reading.
    - Defer locked danger spades, bonus-jack scoring, and richer Hearts-family varieties unless the current Hearts loop feels incomplete without them.
 
 4. Keep Perfect small but useful
@@ -212,12 +212,12 @@ These are the next product increments that keep the app coherent.
    - Current scoring covers hearts plus the queen of spades.
    - Current legality covers the Wikipedia-style holder-of-2C opening, first-trick penalty restrictions, and hearts-broken lead restrictions.
    - Shooting the moon is active: if one seat captures all 26 hand points, that seat scores 0 and every other seat scores 26 for that hand.
-   - Hearts opponent policy now treats Queen of Spades as the main danger card in void discards and spade-following decisions, uses short-suit/heart-broken leads so passive zero-point play is harder, and has moon awareness so seats avoid feeding a moon candidate or deliberately take loaded tricks to stop one. Trick feedback also calls out an active moon threat before the hand ends.
+   - Hearts opponent policy now treats the queen of spades as the main danger card in void discards and spade-following decisions, uses short-suit/heart-broken leads so passive zero-point play is harder, and has moon awareness so seats avoid feeding a moon candidate or deliberately take loaded tricks to stop one. Trick feedback also calls out an active moon threat before the hand ends.
    - Hearts match v1 tracks cumulative table scores until someone reaches 100, then shows the winner, your place, and your best/worst hand.
    - Hearts Passing Drill v1 teaches the first pass-three heuristic.
-   - Hearts Learn now gives a Barbu-like path through object, queen danger, avoiding hearts, passing, score reading, and reference.
-   - Hearts Practice covers pass-three, avoid-hearts, queen-danger, break-hearts, stop-the-moon, and score-a-hand entry points.
-   - Hearts micro-drills now teach early heart lead restrictions, moon defense, and Queen of Spades score reading.
+   - Hearts Learn now gives a Barbu-like path through object, queen-of-spades danger, avoiding hearts, passing, score reading, and reference.
+   - Hearts Practice covers pass-three, avoid-hearts, queen-of-spades danger, break-hearts, stop-the-moon, and score-a-hand entry points.
+   - Hearts micro-drills now teach early heart lead restrictions, moon defense, and queen-of-spades score reading.
    - Next: move the Hearts micro-drills into Rust-backed generated scenario families so they can vary like Barbu practice.
 
 2. Drill Loop v2
