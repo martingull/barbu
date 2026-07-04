@@ -59,6 +59,36 @@ Keep game logic independent of the UI. The frontend may present and explain rule
 - Do not hardcode large rule prose into UI components when it belongs in content or core lesson data.
 - Do not scatter future premium/entitlement checks across components. Keep monetization access decisions centralized when that layer is added.
 
+## Frontend Table Pattern
+
+Use `src/tableFactory.ts` as the first stop when adding or changing a game table. The factory is the source of truth for:
+
+- catalog entries and free/pack access labels
+- the shared `Learn | Practice | Play | Perfect` tab metadata
+- table title, family, reference id, scorecard direction, and default tab
+- learn path step metadata
+- practice entry and practice group metadata
+
+`src/App.svelte` should consume that metadata through the shared table shell before adding game-specific behavior. Barbu and Hearts currently demonstrate the intended split:
+
+- render the topbar and tab rail from `gameTableDefinitions` and `tableTabsFor`
+- render Learn with `LearnPanel`
+- render Practice with `PracticePanel`
+- keep Play bodies in `App.svelte` only when they need game-specific state, saved games, or full-hand actions
+- keep Perfect bodies in `App.svelte` only when they launch specific mini-games or reuse shared snippets such as the Card Counting exercise grid
+
+When starting Whist, do not copy the Barbu or Hearts table markup wholesale. Add Whist metadata to `tableFactory.ts`, then add the smallest route/view glue in `App.svelte`:
+
+1. add the Whist catalog/table id and `gameTableDefinitions.whist`
+2. add `whistLearnPathSteps` and `whistPracticeGroups`
+3. add active tab state and `openWhistTable`
+4. render Whist Learn through `LearnPanel`
+5. render Whist Practice through `PracticePanel`
+6. add only Whist-specific Play actions that cannot live in factory data
+7. add Playwright smoke coverage for catalog navigation, Learn, Practice, Play, and any Perfect entry
+
+If a new table needs a visual layout already used by Barbu or Hearts, extract a shared Svelte component or snippet before adding another large inline branch. If the new behavior is game rules, scoring, generated practice, or opponent policy, prefer `crates/barbu-core` or a browser fallback module rather than embedding it in the table UI.
+
 ## UI Direction
 
 The app is a learning tool, not a marketing site. The first screen should be the usable learning experience.
