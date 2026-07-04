@@ -79,12 +79,6 @@ export type CatalogEntry = {
   access: CatalogAccess;
   accessModel: CatalogAccessModel;
   summary: string;
-  lessonCount: number;
-  detailLabel?: string;
-};
-
-export type CatalogDefinitionInput = {
-  barbuLessonCount: number;
 };
 
 export type LearnPathStep<Action extends string = string> = {
@@ -463,23 +457,11 @@ export function tableTabsFor(table: GameTableDefinition) {
   return tableTabIds.map((tab) => table.tabs[tab]);
 }
 
-export function catalogDetailLabel(entry: CatalogEntry) {
-  if (entry.detailLabel) {
-    return entry.detailLabel;
-  }
-
-  if (entry.lessonCount > 0) {
-    return `${entry.lessonCount} ${entry.lessonCount === 1 ? "lesson" : "lessons"}`;
-  }
-
-  return "No lessons yet";
-}
-
 function createCatalogEntry(entry: CatalogEntry): CatalogEntry {
   return entry;
 }
 
-export function createCatalogEntries({ barbuLessonCount }: CatalogDefinitionInput): CatalogEntry[] {
+export function createCatalogEntries(): CatalogEntry[] {
   return [
     createCatalogEntry({
       id: "hearts",
@@ -488,9 +470,7 @@ export function createCatalogEntries({ barbuLessonCount }: CatalogDefinitionInpu
       status: "Ready",
       access: "Free",
       accessModel: "free-starter",
-      summary: "Black Lady style penalty play.",
-      lessonCount: heartsLearnPathSteps.length,
-      detailLabel: "MVP hand"
+      summary: "Black Lady style penalty play."
     }),
     createCatalogEntry({
       id: "barbu",
@@ -499,8 +479,7 @@ export function createCatalogEntries({ barbuLessonCount }: CatalogDefinitionInpu
       status: "Ready",
       access: "Free",
       accessModel: "free-starter",
-      summary: "Contract trick-taking against the King of Cards.",
-      lessonCount: barbuLessonCount
+      summary: "Contract trick-taking against the King of Cards."
     }),
     createCatalogEntry({
       id: "whist",
@@ -509,8 +488,7 @@ export function createCatalogEntries({ barbuLessonCount }: CatalogDefinitionInpu
       status: "Planned",
       access: "Free",
       accessModel: "free-starter",
-      summary: "Partnership trick play and long-suit development.",
-      lessonCount: 0
+      summary: "Partnership trick play and long-suit development."
     }),
     createCatalogEntry({
       id: "card-counting",
@@ -519,9 +497,7 @@ export function createCatalogEntries({ barbuLessonCount }: CatalogDefinitionInpu
       status: "Ready",
       access: "Pack",
       accessModel: "metered-pack",
-      summary: "Fast minigames for tracking trumps, court cards, and what remains.",
-      lessonCount: 0,
-      detailLabel: "4 minigames"
+      summary: "Fast minigames for tracking trumps, court cards, and what remains."
     }),
     createCatalogEntry({
       id: "solitaire",
@@ -530,8 +506,7 @@ export function createCatalogEntries({ barbuLessonCount }: CatalogDefinitionInpu
       status: "Planned",
       access: "Pack",
       accessModel: "metered-pack",
-      summary: "Solo card play for practicing order, suits, and patience habits.",
-      lessonCount: 0
+      summary: "Solo card play for practicing order, suits, and patience habits."
     }),
     createCatalogEntry({
       id: "bridge",
@@ -540,8 +515,7 @@ export function createCatalogEntries({ barbuLessonCount }: CatalogDefinitionInpu
       status: "Planned",
       access: "Pack",
       accessModel: "metered-pack",
-      summary: "Declarer play, defense, and bidding concepts.",
-      lessonCount: 0
+      summary: "Declarer play, defense, and bidding concepts."
     }),
     createCatalogEntry({
       id: "gin-rummy",
@@ -550,8 +524,7 @@ export function createCatalogEntries({ barbuLessonCount }: CatalogDefinitionInpu
       status: "Planned",
       access: "Pack",
       accessModel: "metered-pack",
-      summary: "Draw, discard, meld, and read what the opponent is collecting.",
-      lessonCount: 0
+      summary: "Draw, discard, meld, and read what the opponent is collecting."
     }),
     createCatalogEntry({
       id: "canasta",
@@ -560,8 +533,7 @@ export function createCatalogEntries({ barbuLessonCount }: CatalogDefinitionInpu
       status: "Planned",
       access: "Pack",
       accessModel: "metered-pack",
-      summary: "Partnership meld-building with wild cards, packs, and bonuses.",
-      lessonCount: 0
+      summary: "Partnership meld-building with wild cards, packs, and bonuses."
     })
   ];
 }

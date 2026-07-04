@@ -34,7 +34,6 @@
   import {
     barbuLearnPathSteps as barbuPathSteps,
     barbuPracticeGroups,
-    catalogDetailLabel,
     createCatalogEntries,
     gameTableDefinitions,
     heartsLearnPathSteps as heartsPathSteps,
@@ -304,7 +303,7 @@
     savedAt: string;
   };
 
-  const catalogEntries = createCatalogEntries({ barbuLessonCount: guidedLessons.length });
+  const catalogEntries = createCatalogEntries();
 
   const progressStorageKey = "barbu.courseProgress.v1";
   const practiceSeedStorageKey = "barbu.practiceSeed.v1";
@@ -5950,9 +5949,6 @@
             <span class="game-summary">{game.summary}</span>
             <span class="game-footer">
               <span>{game.status}</span>
-              {#if game.detailLabel || game.lessonCount > 0}
-                <span>{catalogDetailLabel(game)}</span>
-              {/if}
             </span>
           </button>
         {/each}
