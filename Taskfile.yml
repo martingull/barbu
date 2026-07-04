@@ -57,12 +57,19 @@ tasks:
   ios:dev:
     desc: Run the Tauri iOS development target; pass a simulator/device name with `task ios:dev -- "iPhone 15"`
     cmds:
+      - task: ios:icons
       - npm run tauri -- ios dev {{.CLI_ARGS}}
 
   ios:init:
     desc: Initialize the generated Tauri iOS project when the iOS target is missing
     cmds:
       - npm run tauri -- ios init
+      - task: ios:icons
+
+  ios:icons:
+    desc: Refresh generated Tauri icons from the tracked Barbu app icon
+    cmds:
+      - npm run tauri -- icon src-tauri/icons/icon.png
 
   ios:clean:generated:
     desc: Delete the ignored generated Tauri iOS project so the next init/build starts from tracked config
@@ -74,20 +81,24 @@ tasks:
     cmds:
       - task: ios:clean:generated
       - npm run tauri -- ios init
+      - task: ios:icons
 
   ios:dev:device:
     desc: Run on a physical iPhone with network dev-server support; pass device name with `task ios:dev:device -- "Martin's iPhone"`
     cmds:
+      - task: ios:icons
       - npm run tauri -- ios dev {{.CLI_ARGS}} --host
 
   ios:run:
     desc: Build the frontend and run the production iOS app on a simulator/device; pass device name with `task ios:run -- "Martin's iPhone"`
     cmds:
+      - task: ios:icons
       - npm run tauri -- ios run {{.CLI_ARGS}}
 
   ios:build:
     desc: Build an iOS IPA; pass options such as `task ios:build -- --debug --target aarch64`
     cmds:
+      - task: ios:icons
       - npm run tauri -- ios build {{.CLI_ARGS}}
 
   ios:install:device:
@@ -95,6 +106,7 @@ tasks:
     vars:
       IOS_DEVICE_ID: '{{default "00008140-001814310187001C" .IOS_DEVICE_ID}}'
     cmds:
+      - task: ios:icons
       - npm run tauri -- ios build --debug --target aarch64
       - xcrun devicectl device install app --device {{.IOS_DEVICE_ID}} src-tauri/gen/apple/build/arm64/Barbu.ipa
       - xcrun devicectl device process launch --device {{.IOS_DEVICE_ID}} com.martin.barbu
