@@ -602,6 +602,7 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
   await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
   await expect(page.getByLabel("Drill decision")).toContainText("Queen of Spades");
   await expect(page.getByLabel("Drill decision")).not.toContainText("No Queens");
+  await expect(page.locator(".card-table .cardholder.active.occupied")).toHaveCount(2);
   await completeQuickDrillDecision(page);
   await expect(page.getByLabel("Drill decision")).toContainText("Good");
   await expect(page.getByLabel("Drill decision")).toContainText("Queen of Spades");
@@ -609,10 +610,10 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
 
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Score a hand" }).click();
   await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
-  await expect(page.getByLabel("Drill decision")).toContainText(/Find the 13-point card|Find the one-point card/);
+  await expect(page.getByLabel("Drill decision")).toContainText(/Find the 13-point card|Find the one-point card|Find the clean card/);
   await completeQuickDrillDecision(page);
   await expect(page.getByLabel("Drill decision")).toContainText("Good");
-  await expect(page.getByLabel("Drill decision")).toContainText(/13-point danger card|7H is good/);
+  await expect(page.getByLabel("Drill decision")).toContainText(/13-point danger card|7H is good|clean card/);
 });
 
 test("Hearts practice result returns to the Hearts table", async ({ page }) => {

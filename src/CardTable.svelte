@@ -26,7 +26,7 @@
 
 <section class="card-table" aria-label={ariaLabel}>
   <div class="played-slot tutor-slot">
-    <div class:active={Boolean(pendingBySeat.Tutor)} class:occupied={Boolean(tutorCard)} class="cardholder">
+    <div class:active={Boolean(pendingBySeat.Tutor) || Boolean(tutorCard)} class:occupied={Boolean(tutorCard)} class="cardholder">
       {#if tutorCard}
         <div class:heart={tutorCard.suit === "H"} class="table-card">
           <CardFace card={tutorCard} />
@@ -37,7 +37,7 @@
   </div>
 
   <div class="played-slot left-slot">
-    <div class:active={Boolean(pendingBySeat.Left)} class:occupied={Boolean(leftCard)} class="cardholder">
+    <div class:active={Boolean(pendingBySeat.Left) || Boolean(leftCard)} class:occupied={Boolean(leftCard)} class="cardholder">
       {#if leftCard}
         <div class:heart={leftCard.suit === "H"} class="table-card">
           <CardFace card={leftCard} />
@@ -48,7 +48,7 @@
   </div>
 
   <div class="played-slot right-slot">
-    <div class:active={Boolean(pendingBySeat.Right)} class:occupied={Boolean(rightCard)} class="cardholder">
+    <div class:active={Boolean(pendingBySeat.Right) || Boolean(rightCard)} class:occupied={Boolean(rightCard)} class="cardholder">
       {#if rightCard}
         <div class:heart={rightCard.suit === "H"} class="table-card">
           <CardFace card={rightCard} />
@@ -59,7 +59,7 @@
   </div>
 
   <div class="played-slot you-slot">
-    <div class:active={Boolean(pendingBySeat.You)} class:occupied={Boolean(youCard)} class="cardholder">
+    <div class:active={Boolean(pendingBySeat.You) || Boolean(youCard)} class:occupied={Boolean(youCard)} class="cardholder">
       {#if youCard}
         <div class:heart={youCard.suit === "H"} class="table-card">
           <CardFace card={youCard} />
