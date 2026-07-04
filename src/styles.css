@@ -1053,10 +1053,6 @@ button {
   outline: 2px solid #f5f1cf;
 }
 
-.run-sequence-strip div.layout {
-  border-style: dashed;
-}
-
 .run-sequence-strip span,
 .run-sequence-strip small {
   color: #dbe7d1;

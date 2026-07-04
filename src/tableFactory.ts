@@ -497,7 +497,7 @@ export function createCatalogEntries(): CatalogEntry[] {
       status: "Ready",
       access: "Pack",
       accessModel: "metered-pack",
-      summary: "Fast minigames for tracking trumps, court cards, and what remains."
+      summary: "4 minigames for tracking trumps, court cards, and what remains."
     }),
     createCatalogEntry({
       id: "solitaire",

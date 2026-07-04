@@ -154,6 +154,7 @@ async function openBarbuTab(page: Page, tab: "Learn" | "Practice" | "Play" | "Pe
 }
 
 async function openBarbuContracts(page: Page) {
+  await openBarbuTab(page, "Learn");
   await page.getByRole("button", { name: /Barbu contracts/ }).click();
   await expect(page.getByRole("heading", { name: "Barbu contracts" })).toBeVisible();
 }
@@ -1296,6 +1297,9 @@ test("Play Barbu advances full-hand contracts with a running total", async ({ pa
     await expect(page.getByLabel(`${contract} role`)).toContainText("Surface");
     await expect(page.getByLabel(`${contract} role`)).toContainText(contract === "Domino" ? "Domino layout" : /Trick|Trump/);
     await expect(page.getByLabel("Play Barbu contract sequence")).toContainText(contract);
+    if (contract === "Domino") {
+      await expect(page.getByLabel("Play Barbu contract sequence").locator(".layout")).toHaveCSS("border-style", "solid");
+    }
     await expect(page.getByLabel("Play Barbu session summary")).toContainText("Leader");
     await expect(page.getByLabel("Play Barbu session summary")).toContainText("Your place");
     await expect(page.getByLabel("Play Barbu session summary")).toContainText("Remaining");
@@ -1563,6 +1567,7 @@ test.skip("Domino hand plays through the layout contract", async ({ page }, test
 test("finishing a lesson advances course progress", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
+  await openBarbuTab(page, "Learn");
   await page.getByRole("button", { name: /Continue with Meet the contract/ }).click();
 
   await expect(page.getByRole("heading", { name: "Meet the contract" })).toBeVisible();

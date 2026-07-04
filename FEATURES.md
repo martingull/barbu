@@ -34,6 +34,7 @@ The intended monetization model is free starter tables first, then paid packs wi
 - Game catalog metadata now comes from a shared table/catalog factory, including free starter versus metered pack access metadata, so future game additions do not start as hardcoded home-screen branches.
 - Learn tab shell metadata now comes from the shared table/catalog factory: each active game declares its path title, progress label, continue summary, complete summary, and reference summary before screen-specific content is added.
 - Table tab intro metadata now comes from the shared table/catalog factory: Learn, Practice, Play, and Perfect each declare their heading copy in one place before game-specific controls render underneath.
+- Barbu and Hearts Learn tabs now render through a shared Svelte LearnPanel template backed by the table factory, so future games can reuse the same path/progress/action structure instead of cloning the tab markup.
 - Hearts Learn path metadata now comes from the shared table/catalog factory, so lesson order, progress labels, and continuation behavior have one source of truth before more games add their own paths.
 - Hearts Learn coverage now includes break-hearts legality and moon-defense tactics, reusing the existing practice drills as path steps instead of creating separate implementations.
 - Barbu Learn path metadata now comes from the shared table/catalog factory, so the first curriculum uses the same scalable pattern as Hearts.
@@ -163,6 +164,7 @@ This section is the short list for getting from the current app to something tha
    - Keep the current playable roster: No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino.
    - Tighten full-hand feedback so the player understands why a trick was good, risky, or costly.
    - Improve local opponent policy only where bad table behavior damages the feel of the hand.
+   - Before calling this production ready, unskip or replace the individual full-hand contract smoke tests; the full Play Barbu roster test is active, but each contract should also have its own focused gate.
    - Decide whether v1 Play Barbu stays fixed-order or adds a simple contract-choice step.
    - Defer full historical/Parlett settlement details unless they block a believable local session.
 
