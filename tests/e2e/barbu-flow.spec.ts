@@ -473,9 +473,9 @@ test("Hearts learn start advances through learning stages instead of play loop",
   await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
   await expect(page.getByLabel("Drill decision")).toContainText("Queen of Spades");
   await expect(page.getByLabel("Drill decision")).not.toContainText("No Queens");
+  await expect(page.getByText("Decision 1 of 3")).toBeVisible();
 
-  await completeQuickDrillDecision(page);
-  await page.getByRole("button", { name: "Review session" }).click();
+  await completeVisibleDrillSession(page);
   await expect(page.getByRole("heading", { name: "Session complete" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Continue Hearts path" }).first()).toBeVisible();
 
@@ -564,7 +564,8 @@ test("Hearts pass lesson completes and advances to rule lesson", async ({ page }
 
   await page.getByRole("button", { name: "Continue Hearts path" }).click();
   await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
-  await expect(page.getByLabel("Drill decision")).toContainText("Can you lead a heart?");
+  await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
+  await expect(page.getByLabel("Drill decision")).toContainText(/Can you lead a heart\?|Only hearts remain|Hearts are open/);
 });
 
 test("Hearts micro drills teach broken hearts moon defense and score reading", async ({ page }) => {
@@ -582,7 +583,7 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Break hearts" }).click();
   await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
   await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
-  await expect(page.getByLabel("Drill decision")).toContainText(/Can you lead a heart\?|Only hearts remain/);
+  await expect(page.getByLabel("Drill decision")).toContainText(/Can you lead a heart\?|Only hearts remain|Hearts are open/);
   await completeQuickDrillDecision(page);
   await expect(page.getByLabel("Drill decision")).toContainText(/Good|Illegal/);
   await page.getByRole("button", { name: "Table" }).first().click();

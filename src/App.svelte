@@ -5445,12 +5445,7 @@
     const candidates = await loadGeneratedHeartsPracticeSteps(seed, focus);
     const orderedCandidates = orderPracticePool(candidates, seed);
 
-    if (pathStepId) {
-      startHeartsMicroDrill(selectGeneratedDrillCandidate(candidates, seed, []), title, pathStepId);
-      return;
-    }
-
-    startHeartsMicroDrillSession(orderedCandidates, title);
+    startHeartsMicroDrillSession(orderedCandidates, title, pathStepId);
   }
 
   async function startHeartsAvoidHeartsDrill(pathStepId = "") {
@@ -5493,10 +5488,6 @@
     activeDrillSteps = [...steps.slice(offset), ...steps.slice(0, offset)];
     resetDrillDecision();
     appView = "drill";
-  }
-
-  function startHeartsMicroDrill(step: DrillStep, title: string, pathStepId = "") {
-    startHeartsMicroDrillSession([step], title, pathStepId);
   }
 
   function startHeartsMicroDrillSession(steps: DrillStep[], title: string, pathStepId = "") {
