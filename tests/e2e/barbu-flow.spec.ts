@@ -365,10 +365,21 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
 
   await page.getByRole("button", { name: "Games" }).click();
   await page.getByRole("button", { name: "Open Card Counting" }).click();
-  await expect(page.getByRole("heading", { name: "Barbu's table" })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Perfect" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("heading", { name: "Card Counting" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByLabel("Card Counting exercises")).toContainText("Count trumps");
+  await expect(page.getByLabel("Card Counting exercises")).toContainText("Trump memory hand");
+  await expect(page.getByLabel("Card Counting exercises")).toContainText("Track court cards");
+  await expect(page.getByLabel("Card Counting exercises")).toContainText("Danger cards");
+  await page.getByRole("tab", { name: "Learn" }).click();
+  await expect(page.getByLabel("Card Counting learning path")).toContainText("Count a suit");
+  await page.getByRole("tab", { name: "Play" }).click();
+  await page.getByLabel("Card Counting exercises").getByRole("button", { name: "Count trumps" }).click();
+  await expect(page.getByRole("heading", { name: "Count trumps" })).toBeVisible();
+  await page.getByLabel("Count trumps", { exact: true }).getByRole("button", { name: "Table" }).click();
+  await expect(page.getByRole("heading", { name: "Card Counting" })).toBeVisible();
 
-  await page.screenshot({ path: testInfo.outputPath("barbu-table.png"), fullPage: true });
+  await page.screenshot({ path: testInfo.outputPath("card-counting-table.png"), fullPage: true });
 });
 
 test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testInfo) => {

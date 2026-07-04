@@ -70,6 +70,7 @@
     | "catalog"
     | "barbuTable"
     | "heartsTable"
+    | "cardCountingTable"
     | "barbuContracts"
     | "practiceChooser"
     | "reference"
@@ -88,6 +89,9 @@
     | "courtCount"
     | "dangerCount"
     | "pathReview";
+
+  type CardCountingTabId = "learn" | "play";
+  type CardCountingReturnTarget = ActiveGameTable | "card-counting";
 
   type CourseStage = "concept" | "example" | "review";
 
@@ -1338,6 +1342,8 @@
   let activeCourseStage: CourseStage = "concept";
   let activeBarbuTableTab: TableTabId = gameTableDefinitions.barbu.defaultTab;
   let activeHeartsTableTab: TableTabId = gameTableDefinitions.hearts.defaultTab;
+  let activeCardCountingTab: CardCountingTabId = "play";
+  let cardCountingReturnTarget: CardCountingReturnTarget = "barbu";
   let activeGameTable: ActiveGameTable = "barbu";
   let completedPathSteps: Record<string, boolean> = loadCourseProgress();
   let playBarbuHistory: PlayBarbuAttempt[] = loadPlayBarbuHistory();
@@ -2473,6 +2479,26 @@
     appView = "heartsTable";
   }
 
+  function openCardCountingTable(tab: CardCountingTabId = activeCardCountingTab) {
+    activeCardCountingTab = tab;
+    cardCountingReturnTarget = "card-counting";
+    appView = "cardCountingTable";
+  }
+
+  function rememberCardCountingReturnTarget() {
+    cardCountingReturnTarget = appView === "cardCountingTable" ? "card-counting" : activeGameTable;
+  }
+
+  function openCardCountingReturnTarget() {
+    if (cardCountingReturnTarget === "card-counting") {
+      openCardCountingTable(activeCardCountingTab);
+      return;
+    }
+
+    activeGameTable = cardCountingReturnTarget;
+    openActiveGameTable();
+  }
+
   function openActiveGameTable() {
     if (activeGameTable === "hearts") {
       openHeartsTable();
@@ -2483,6 +2509,7 @@
   }
 
   function openTrumpCountTrainer() {
+    rememberCardCountingReturnTarget();
     trumpCountRound = buildTrumpCountRound(usePracticeSeed());
     trumpCountRevealIndex = 0;
     trumpCountQuestionIndex = 0;
@@ -2493,6 +2520,7 @@
   }
 
   function openTrumpMemoryTrainer() {
+    rememberCardCountingReturnTarget();
     realisticTrumpRound = buildRealisticTrumpRound(usePracticeSeed());
     realisticTrumpSelectedCardId = "";
     realisticTrumpAnswer = null;
@@ -2501,6 +2529,7 @@
   }
 
   function openCourtCountTrainer() {
+    rememberCardCountingReturnTarget();
     realisticCourtRound = buildRealisticCourtRound(usePracticeSeed());
     realisticCourtSelectedCardId = "";
     courtCountSelected = null;
@@ -2509,6 +2538,7 @@
   }
 
   function openDangerCountTrainer() {
+    rememberCardCountingReturnTarget();
     realisticDangerRound = buildRealisticDangerRound(usePracticeSeed());
     realisticDangerSelectedCardId = "";
     dangerCountSelected = null;
@@ -3498,8 +3528,7 @@
     }
 
     if (gameId === "card-counting") {
-      activeBarbuTableTab = "perfect";
-      openBarbuTable();
+      openCardCountingTable("play");
       return;
     }
 
@@ -5940,6 +5969,31 @@
   </div>
 {/snippet}
 
+{#snippet cardCountingExerciseGrid(label = "Card counting exercises")}
+  <div class="fixed-contract-grid" aria-label={label}>
+    <button class="contract-card compact" onclick={openTrumpCountTrainer} type="button">
+      <span>Card counting</span>
+      <strong>Count trumps</strong>
+      <small>Watch all thirteen tricks and answer trump-memory checks between segments.</small>
+    </button>
+    <button class="contract-card compact" onclick={openTrumpMemoryTrainer} type="button">
+      <span>Table memory</span>
+      <strong>Trump memory hand</strong>
+      <small>Play a full hand and answer trump-memory checks after real tricks.</small>
+    </button>
+    <button class="contract-card compact" onclick={openCourtCountTrainer} type="button">
+      <span>High-card memory</span>
+      <strong>Track court cards</strong>
+      <small>Remember kings, queens, and jacks as tricks move around the table.</small>
+    </button>
+    <button class="contract-card compact" onclick={openDangerCountTrainer} type="button">
+      <span>Contract memory</span>
+      <strong>Danger cards</strong>
+      <small>Track Barbu danger cards: queens and the king of hearts.</small>
+    </button>
+  </div>
+{/snippet}
+
 {#snippet runSequenceStrip(label = "Play Barbu sequence")}
   <div class="run-sequence-strip" aria-label={label}>
     {#each fullHandContracts as contract, index}
@@ -6023,6 +6077,92 @@
           </button>
         {/each}
       </div>
+    </section>
+  {:else if appView === "cardCountingTable"}
+    <header class="topbar table-topbar" aria-label="Card Counting table">
+      <button class="back-button" onclick={openCatalog} type="button">Games</button>
+      <div class="table-title">
+        <p class="eyebrow">Skill pack</p>
+        <h1>Card Counting</h1>
+      </div>
+      <div class="contract-status">
+        <span>Current mode</span>
+        <strong>{activeCardCountingTab === "learn" ? "Learn" : "Play"}</strong>
+      </div>
+    </header>
+
+    <section class="table-room" aria-label="Card Counting modes">
+      <div class="barbu-table-rail">
+        <div class="barbu-mode-box">
+          <p class="eyebrow">Table mode</p>
+          <div class="barbu-table-tabs compact" aria-label="Card Counting sections" role="tablist">
+            <button
+              aria-controls="card-counting-learn-panel"
+              aria-selected={activeCardCountingTab === "learn"}
+              class:active={activeCardCountingTab === "learn"}
+              onclick={() => {
+                activeCardCountingTab = "learn";
+              }}
+              role="tab"
+              type="button"
+            >
+              Learn
+            </button>
+            <button
+              aria-controls="card-counting-play-panel"
+              aria-selected={activeCardCountingTab === "play"}
+              class:active={activeCardCountingTab === "play"}
+              onclick={() => {
+                activeCardCountingTab = "play";
+              }}
+              role="tab"
+              type="button"
+            >
+              Play
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {#if activeCardCountingTab === "learn"}
+        <div aria-label="Learn" class="barbu-tab-panel learn-panel" id="card-counting-learn-panel" role="tabpanel">
+          <div class="barbu-mode-copy">
+            <p class="eyebrow">Learn</p>
+            <h2>Train what is still out.</h2>
+            <p>Card counting here means table memory: notice trumps, court cards, and danger cards as play moves.</p>
+          </div>
+
+          <div class="learn-action-grid" aria-label="Card Counting learning path">
+            <div class="learn-action-card">
+              <p class="eyebrow">1 Concept</p>
+              <strong>Count a suit</strong>
+              <small>Start by tracking how many trumps have appeared instead of trying to remember every card.</small>
+            </div>
+            <div class="learn-action-card">
+              <p class="eyebrow">2 Memory</p>
+              <strong>Track high cards</strong>
+              <small>Queens, kings, and jacks decide many tricks, so court-card memory is the next habit.</small>
+            </div>
+            <div class="learn-action-card">
+              <p class="eyebrow">3 Transfer</p>
+              <strong>Read danger</strong>
+              <small>Use the same memory habit in Barbu, Hearts, Whist, and later Bridge.</small>
+            </div>
+          </div>
+        </div>
+      {:else}
+        <div aria-label="Play" class="barbu-tab-panel perfect-panel" id="card-counting-play-panel" role="tabpanel">
+          <div class="barbu-mode-copy">
+            <p class="eyebrow">Play</p>
+            <h2>Card memory mini-games.</h2>
+            <p>Play the current card-sense exercises we have built so far.</p>
+          </div>
+
+          <section class="fixed-contract-practice" aria-label="Card Counting pack">
+            {@render cardCountingExerciseGrid("Card Counting exercises")}
+          </section>
+        </div>
+      {/if}
     </section>
   {:else if appView === "barbuTable"}
     <header class="topbar table-topbar" aria-label="Barbu table">
@@ -6125,28 +6265,7 @@
               <p>Build the memory habits behind trick-taking: count trumps, then track the high court cards.</p>
             </div>
 
-            <div class="fixed-contract-grid" aria-label="Perfect mode skills">
-              <button class="contract-card compact" onclick={openTrumpCountTrainer} type="button">
-                <span>Card counting</span>
-                <strong>Count trumps</strong>
-                <small>Watch all thirteen tricks and answer trump-memory checks between segments.</small>
-              </button>
-              <button class="contract-card compact" onclick={openTrumpMemoryTrainer} type="button">
-                <span>Table memory</span>
-                <strong>Trump memory hand</strong>
-                <small>Play a full hand and answer trump-memory checks after real tricks.</small>
-              </button>
-              <button class="contract-card compact" onclick={openCourtCountTrainer} type="button">
-                <span>High-card memory</span>
-                <strong>Track court cards</strong>
-                <small>Remember kings, queens, and jacks as tricks move around the table.</small>
-              </button>
-              <button class="contract-card compact" onclick={openDangerCountTrainer} type="button">
-                <span>Contract memory</span>
-                <strong>Danger cards</strong>
-                <small>Track Barbu danger cards: queens and the king of hearts.</small>
-              </button>
-            </div>
+            {@render cardCountingExerciseGrid("Perfect mode skills")}
           </section>
         </div>
       {/if}
@@ -6257,7 +6376,7 @@
         pendingBySeat={realisticTrumpPendingBySeat}
         tableCards={realisticTrumpTableCards}
         panelAriaLabel="Realistic trump decision"
-        onBack={openActiveGameTable}
+        onBack={openCardCountingReturnTarget}
         onSurfaceClick={realisticTrumpRound.status === "review" ? continueRealisticTrumpRound : undefined}
       >
         {#snippet panel()}
@@ -6404,7 +6523,7 @@
       tableCards={[]}
       panelAriaLabel="Count trumps decision"
       showTable={false}
-      onBack={openActiveGameTable}
+      onBack={openCardCountingReturnTarget}
     >
       {#snippet panel()}
         <div class="trump-count-stage">
@@ -6539,7 +6658,7 @@
       pendingBySeat={realisticCourtPendingBySeat}
       tableCards={realisticCourtTableCards}
       panelAriaLabel="Court card memory decision"
-      onBack={openActiveGameTable}
+      onBack={openCardCountingReturnTarget}
       onSurfaceClick={realisticCourtRound.status === "review" ? continueRealisticCourtRound : undefined}
     >
       {#snippet summary()}
@@ -6696,7 +6815,7 @@
       pendingBySeat={realisticDangerPendingBySeat}
       tableCards={realisticDangerTableCards}
       panelAriaLabel="Danger card memory decision"
-      onBack={openActiveGameTable}
+      onBack={openCardCountingReturnTarget}
       onSurfaceClick={realisticDangerRound.status === "review" ? continueRealisticDangerRound : undefined}
     >
       {#snippet summary()}

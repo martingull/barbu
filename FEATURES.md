@@ -71,7 +71,7 @@ The intended monetization model is free starter tables first, then paid packs wi
 - Full-hand tactical feedback v1 with structured trick tags for followed suit, void discards, moved danger cards, No Last Two setup/final tricks, trump wins, and overtrumps.
 - Training path practice step connected to Quick Drill completion.
 - Review step with latest Quick Drill score, weakest-contract advice, recent attempts, and replay actions.
-- Perfect mode Card Counting pack started with Count Trumps, Trump Memory Hand, Track Court Cards, and Danger Cards minigames.
+- Card Counting pack started with its own Learn/Play table plus Count Trumps, Trump Memory Hand, Track Court Cards, and Danger Cards minigames. Barbu Perfect reuses the same exercise grid.
 - Reason-based review advice that turns recent practice tags into one short next-step correction.
 - Local Quick Drill result history with contract-level summaries and focused replay for the weakest contract.
 - Local course progress for the playable Barbu path.
