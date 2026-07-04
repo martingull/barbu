@@ -16,6 +16,11 @@ tasks:
     cmds:
       - npm run build
 
+  cards:process:
+    desc: Downscale card artwork and add rounded transparent corners; defaults to public/cards/cards, override with CARD_SOURCE_DIR=...
+    cmds:
+      - npm run cards:process
+
   ui:test:
     desc: Run browser interaction smoke tests
     cmds:
