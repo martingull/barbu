@@ -123,34 +123,14 @@ button {
 
 .mini-card {
   position: absolute;
-  display: grid;
-  grid-template-rows: 1fr auto;
-  width: 86px;
+  display: block;
+  width: 92px;
   aspect-ratio: 5 / 7;
-  border: 1px solid #d7dccf;
-  border-radius: 8px;
-  background: #fbfcf8;
-  box-shadow: 0 14px 28px rgba(9, 32, 22, 0.3);
-}
-
-.mini-card b {
-  padding: 10px 9px 0;
-  color: #18211b;
-  font-size: 1.55rem;
-  line-height: 1;
-}
-
-.mini-card small {
-  justify-self: end;
-  padding: 0 9px 9px;
-  color: #a83232;
-  font-size: 1rem;
-  font-weight: 900;
-}
-
-.mini-card-two small,
-.mini-card-three small {
-  color: #18211b;
+  overflow: hidden;
+  border: 1px solid rgba(245, 241, 207, 0.42);
+  border-radius: 10px;
+  background: transparent;
+  filter: drop-shadow(0 14px 20px rgba(9, 32, 22, 0.34));
 }
 
 .mini-card-one {
@@ -2784,17 +2764,7 @@ h2 {
   }
 
   .mini-card {
-    width: 62px;
-  }
-
-  .mini-card b {
-    padding: 8px 7px 0;
-    font-size: 1.18rem;
-  }
-
-  .mini-card small {
-    padding: 0 7px 7px;
-    font-size: 0.82rem;
+    width: 68px;
   }
 
   .mini-card-one {

@@ -1320,6 +1320,11 @@
     heartsStopMoonDrillPool,
     heartsScoreHandDrillPool
   ];
+  const catalogTableCards: Card[] = [
+    { id: "catalog-queen-spades", rank: "Q", suit: "S", label: "QS" },
+    { id: "catalog-king-hearts", rank: "K", suit: "H", label: "KH" },
+    { id: "catalog-ace-spades", rank: "A", suit: "S", label: "AS" }
+  ];
 
   let appView: AppView = "catalog";
   let trickIndex = 0;
@@ -6043,9 +6048,9 @@
       </div>
 
       <div class="welcome-table" aria-hidden="true">
-        <div class="mini-card mini-card-one"><b>Q</b><small>H</small></div>
-        <div class="mini-card mini-card-two"><b>K</b><small>C</small></div>
-        <div class="mini-card mini-card-three"><b>A</b><small>S</small></div>
+        <div class="mini-card mini-card-one"><CardFace card={catalogTableCards[0]} decorative /></div>
+        <div class="mini-card mini-card-two"><CardFace card={catalogTableCards[1]} decorative /></div>
+        <div class="mini-card mini-card-three"><CardFace card={catalogTableCards[2]} decorative /></div>
       </div>
     </section>
 
