@@ -418,6 +418,13 @@ test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testI
   await page.getByLabel("Drill decision").getByRole("button", { name: "Table" }).click();
   await expect(page.getByRole("heading", { name: "Hearts table" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
+
+  await page.getByRole("tab", { name: "Perfect" }).click();
+  await expect(page.getByRole("tab", { name: "Perfect" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByLabel("Hearts Perfect skills").getByRole("button")).toHaveCount(1);
+  await expect(page.getByLabel("Hearts Perfect skills")).toContainText("Track court cards");
+  await page.getByLabel("Hearts Perfect skills").getByRole("button", { name: "Track court cards" }).click();
+  await expect(page.getByRole("heading", { name: "Track court cards" })).toBeVisible();
 });
 
 test("Hearts learn start advances through learning stages instead of play loop", async ({ page }) => {

@@ -581,8 +581,8 @@ export const gameTableDefinitions = {
       },
       perfect: {
         eyebrow: "Perfect",
-        title: "Card sense will connect here later.",
-        summary: "Trump and court-card memory should eventually feed Hearts, Whist, Bridge, and Barbu practice."
+        title: "Train Hearts card sense.",
+        summary: "Start with one high-card memory exercise that supports Queen of Spades and safe-ducking decisions."
       }
     },
     defaultTab: "play",

@@ -6232,6 +6232,16 @@
               <h2>{gameTableDefinitions.hearts.tabs.perfect.intro.title}</h2>
               <p>{gameTableDefinitions.hearts.tabs.perfect.intro.summary}</p>
             </div>
+
+            <section class="fixed-contract-practice" aria-label="Hearts Perfect exercise">
+              <div class="fixed-contract-grid single" aria-label="Hearts Perfect skills">
+                <button class="contract-card compact" onclick={openCourtCountTrainer} type="button">
+                  <span>High-card memory</span>
+                  <strong>Track court cards</strong>
+                  <small>Remember kings, queens, and jacks so Queen of Spades danger is easier to read.</small>
+                </button>
+              </div>
+            </section>
           </div>
       {/if}
     </section>
