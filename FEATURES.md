@@ -47,11 +47,11 @@ The intended monetization model is free starter tables first, then paid packs wi
 - Hearts opponent policy now pressures the player on clean tricks: opponents can take a cheap non-penalty winner from the player to regain lead control, while still ducking tricks already loaded with hearts or the queen of spades unless moon defense requires intervention.
 - Phone play surfaces now suppress double-tap zoom, tap highlights, text selection, and iOS callouts on card/button controls so selecting a card does not break game flow.
 - Hearts trick feedback now calls out queen-of-spades danger, hearts moving, and opponent-loaded tricks so harder hands feel explainable rather than random.
-- Barbu table with grouped Learn, Practice, Play, and Reference entry points, including a contract-hand practice chooser.
-- Five-step training path: concept, example, guided trick, practice, review.
+- Barbu table with grouped Learn, Practice, Play, and Perfect entry points; Reference and contract map actions live inside Learn.
+- Nine-step Barbu training path that moves through concept, example, guided trick, contract concepts, Domino layout, practice, and review.
 - Quick Drill mode as a generated practice loop: one decision at a time, immediate feedback, optional next decision, and a compact session result.
 - Quick Drill result loop with next-repetition guidance, focused replay, recent rhythm, and local attempt history after the learner finishes a generated session.
-- No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps full-hand skeletons with deterministic local deals, legal-card play, contract-aware auto opponents, hand scoring, and short per-trick feedback.
+- No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps playable full hands with deterministic local deals, legal-card play, contract-aware auto opponents, hand scoring, and short per-trick feedback.
 - Generic trick-taking hand engine for deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps as the first contract adapters.
 - Opponent policy v2 baseline for avoidance contracts: auto seats now duck clean tricks with the highest safe card instead of winning avoidable tricks without a reason.
 - Domino playable hand v1 with deterministic local deals, configurable opening-rank state currently defaulted to fixed-seven starts, adjacent suit building, legal pass handling, four-player order-out scoring, Practice full-hand entry instead of a one-card fixed drill, and Play Barbu roster support.
@@ -92,7 +92,7 @@ The intended monetization model is free starter tables first, then paid packs wi
 - Quick Drill has short-term pattern memory, so recent scenario shapes are avoided before falling back to the full pool.
 - Practice Template Model v1 has started with a Rust-side template roster that maps playable contracts to generator functions before a broader scenario-template DSL is justified.
 - Browser generated fallback for Quick Drill when Tauri is unavailable.
-- Playwright smoke tests for catalog, Barbu table, lesson flow, generated fallback, and course-complete behavior.
+- Playwright smoke tests for catalog, Barbu table, lesson flow, generated fallback, course-complete behavior, and current Hearts/Barbu table navigation.
 - Individual Playwright full-hand smoke tests now cover every playable Barbu contract from the Play Barbu hand path: No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino.
 - Focused active-table stability checks cover iPhone no-scroll, safe-area controls, pinned bottom actions, thumb-card spacing, and feedback/card collision checks across Quick Drill, Play Barbu, Hearts, Domino, and Perfect table games.
 
@@ -111,7 +111,7 @@ Must ship:
    - Learn path for the core contracts.
    - Quick Drill mixed practice.
    - Play Barbu local run with save/resume, current playable contract roster, four-player scoring, contract intros, and end summary.
-   - Full-hand contract practice for No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino.
+   - Full-hand contract coverage for No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino through Play Barbu, focused replay, and active full-hand smoke tests. Standalone Practice currently exposes Domino full-hand practice; trick-taking full hands are reached through Play Barbu.
    - Reference page documenting the core game, contracts, current simplifications, and varieties.
 
 3. Hearts / Black Lady-style starter
@@ -261,7 +261,7 @@ These are the next product increments that keep the app coherent.
    - Let varieties link to their parent core game instead of becoming separate top-level products.
 
 6. Full-Hand Play v2
-   - Continue adding Barbu contracts on top of the generic hand engine.
+   - Keep the current Barbu contract roster stable on top of the generic hand engine before adding more contracts.
    - Improve Domino from configurable-start-rank fixed-seven v1 to the baseline Barbu chooser/declarer shape once contract selection is modeled.
    - Add full Barbu settlement scoring across contracts once the playable contracts are broader.
    - Continue expanding opponent policy beyond the first v2 baseline with endgame timing, trump preservation, and clearer table-strength decisions.

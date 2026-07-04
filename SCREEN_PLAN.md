@@ -230,7 +230,7 @@ Applies to:
 
 - Quick Drill.
 - Fixed contract drills.
-- Full-hand contract practice.
+- Full-hand contract screens reached through Play Barbu or focused replay.
 - Play Barbu.
 - Hearts play and passing.
 - Domino full-hand practice.
