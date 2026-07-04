@@ -1,6 +1,7 @@
 use crate::cards::{standard_deck, Card, Rank, Suit};
 use crate::contract_policy::{
-    choose_no_queens_opponent_card as choose_no_queens_policy_card, TrickPolicyContext,
+    choose_no_queens_opponent_card as choose_no_queens_policy_card, BarbuContractPolicy,
+    HandPolicy, TrickPolicyContext,
 };
 use crate::trick::{legal_cards, trick_winner, PlayedCard, PlayerIndex};
 
@@ -72,6 +73,7 @@ pub fn completed_trick_tactical_tags(
     trick: &CompletedTrick,
 ) -> Vec<&'static str> {
     let mut tags = Vec::new();
+    let policy = HandPolicy::from_contract_name(contract);
 
     if let (Some(led), Some(player_card)) = (
         trick.cards.first().map(|played| played.card.suit),
@@ -88,15 +90,15 @@ pub fn completed_trick_tactical_tags(
         }
     }
 
-    match contract {
-        "No Last Two" => {
+    match policy {
+        Some(HandPolicy::BarbuContract(BarbuContractPolicy::NoLastTwo)) => {
             if trick_number >= 12 {
                 tags.push("final_two_trick");
             } else {
                 tags.push("setup_trick");
             }
         }
-        "Hearts Trumps" => {
+        Some(HandPolicy::BarbuContract(BarbuContractPolicy::HeartsTrumps)) => {
             let trump_cards = trick
                 .cards
                 .iter()
@@ -115,11 +117,14 @@ pub fn completed_trick_tactical_tags(
                 tags.push("overtrumped");
             }
         }
-        "Hearts" | "No Hearts" | "No Queens" | "King of Hearts" => {
+        Some(HandPolicy::HeartsBlackLady)
+        | Some(HandPolicy::BarbuContract(BarbuContractPolicy::NoHearts))
+        | Some(HandPolicy::BarbuContract(BarbuContractPolicy::NoQueens))
+        | Some(HandPolicy::BarbuContract(BarbuContractPolicy::KingOfHearts)) => {
             if trick.penalty > 0 {
                 tags.push("danger_card_moved");
             }
-            if contract == "Hearts" {
+            if policy == Some(HandPolicy::HeartsBlackLady) {
                 if trick.cards.iter().any(|played| {
                     played.card.rank == Rank::Queen && played.card.suit == Suit::Spades
                 }) {
@@ -179,6 +184,10 @@ impl HandStatus {
 }
 
 impl TrickTakingHandState {
+    fn policy(&self) -> Option<HandPolicy> {
+        HandPolicy::from_hand_id(&self.id)
+    }
+
     pub fn legal_cards_for_player(&self, player: PlayerIndex) -> Vec<Card> {
         if self.status == HandStatus::Complete || self.current_player != player {
             return Vec::new();
@@ -622,11 +631,14 @@ fn trump_trick_winner(played_cards: &[PlayedCard], trump_suit: Suit) -> Option<P
 }
 
 fn is_hearts_trumps_state(state: &TrickTakingHandState) -> bool {
-    state.id.starts_with("hearts-trumps-hand-")
+    matches!(
+        state.policy(),
+        Some(HandPolicy::BarbuContract(BarbuContractPolicy::HeartsTrumps))
+    )
 }
 
 fn is_hearts_state(state: &TrickTakingHandState) -> bool {
-    state.id.starts_with("hearts-hand-")
+    matches!(state.policy(), Some(HandPolicy::HeartsBlackLady))
 }
 
 fn legal_hearts_cards(state: &TrickTakingHandState, player: PlayerIndex) -> Vec<Card> {

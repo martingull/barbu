@@ -2,6 +2,76 @@ use crate::cards::{Card, Rank, Suit};
 use crate::trick::{legal_cards, trick_winner, PlayedCard, PlayerIndex};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum HandPolicy {
+    BarbuContract(BarbuContractPolicy),
+    HeartsBlackLady,
+    HeartsBlackLadyPassing,
+}
+
+impl HandPolicy {
+    pub fn from_hand_id(id: &str) -> Option<Self> {
+        if id.starts_with("hearts-hand-") {
+            return Some(Self::HeartsBlackLady);
+        }
+        if id.starts_with("hearts-passing-hand-") {
+            return Some(Self::HeartsBlackLadyPassing);
+        }
+
+        BarbuContractPolicy::from_hand_id(id).map(Self::BarbuContract)
+    }
+
+    pub fn from_contract_name(contract: &str) -> Option<Self> {
+        if contract == "Hearts" {
+            return Some(Self::HeartsBlackLady);
+        }
+
+        BarbuContractPolicy::from_contract_name(contract).map(Self::BarbuContract)
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BarbuContractPolicy {
+    NoHearts,
+    NoQueens,
+    KingOfHearts,
+    NoLastTwo,
+    NoTricks,
+    HeartsTrumps,
+}
+
+impl BarbuContractPolicy {
+    pub fn from_hand_id(id: &str) -> Option<Self> {
+        if id.starts_with("no-hearts-hand-") {
+            Some(Self::NoHearts)
+        } else if id.starts_with("no-queens-hand-") {
+            Some(Self::NoQueens)
+        } else if id.starts_with("king-of-hearts-hand-") {
+            Some(Self::KingOfHearts)
+        } else if id.starts_with("no-last-two-hand-") {
+            Some(Self::NoLastTwo)
+        } else if id.starts_with("no-tricks-hand-") {
+            Some(Self::NoTricks)
+        } else if id.starts_with("hearts-trumps-hand-") {
+            Some(Self::HeartsTrumps)
+        } else {
+            None
+        }
+    }
+
+    pub fn from_contract_name(contract: &str) -> Option<Self> {
+        match contract {
+            "No Hearts" => Some(Self::NoHearts),
+            "No Queens" => Some(Self::NoQueens),
+            "King of Hearts" => Some(Self::KingOfHearts),
+            "No Last Two" => Some(Self::NoLastTwo),
+            "No Tricks" => Some(Self::NoTricks),
+            "Hearts Trumps" => Some(Self::HeartsTrumps),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct TrickPolicyContext<'a> {
     pub hand: &'a [Card],
     pub led_suit: Option<Suit>,
@@ -159,6 +229,38 @@ mod tests {
                 current_player: 3,
             }),
             Some(card(Rank::King, Suit::Clubs))
+        );
+    }
+
+    #[test]
+    fn hand_policy_distinguishes_hearts_from_hearts_trumps() {
+        assert_eq!(
+            HandPolicy::from_contract_name("Hearts"),
+            Some(HandPolicy::HeartsBlackLady)
+        );
+        assert_eq!(
+            HandPolicy::from_contract_name("Hearts Trumps"),
+            Some(HandPolicy::BarbuContract(BarbuContractPolicy::HeartsTrumps))
+        );
+    }
+
+    #[test]
+    fn hand_policy_maps_known_barbu_hand_ids() {
+        assert_eq!(
+            HandPolicy::from_hand_id("no-queens-hand-7"),
+            Some(HandPolicy::BarbuContract(BarbuContractPolicy::NoQueens))
+        );
+        assert_eq!(
+            HandPolicy::from_hand_id("hearts-hand-7"),
+            Some(HandPolicy::HeartsBlackLady)
+        );
+        assert_eq!(
+            HandPolicy::from_hand_id("hearts-passing-hand-7"),
+            Some(HandPolicy::HeartsBlackLadyPassing)
+        );
+        assert_eq!(
+            HandPolicy::from_hand_id("hearts-trumps-hand-7"),
+            Some(HandPolicy::BarbuContract(BarbuContractPolicy::HeartsTrumps))
         );
     }
 }
