@@ -589,7 +589,7 @@ export function createCatalogEntries(): CatalogEntry[] {
       status: "Ready",
       access: "Free",
       accessModel: "free-starter",
-      summary: "Contract trick-taking against the King of Cards."
+      summary: "Seven-contract table play with changing objectives."
     }),
     createCatalogEntry({
       id: "whist",
