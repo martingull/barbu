@@ -127,6 +127,15 @@ async function expectFeedbackAboveHand(page: Page, handSelector: string) {
   );
 }
 
+async function expectFeedbackClearOfHand(page: Page, handSelector: string) {
+  await expectNoVerticalCollision(
+    page,
+    ".table-play-surface.compact-play .table-play-panel .result, .table-play-surface.compact-play .table-play-panel .outcome, .table-play-surface.compact-play .table-play-panel .explanation",
+    handSelector,
+    24
+  );
+}
+
 async function gotoWithPracticeSeed(page: Page, seed: number) {
   await page.goto("/");
   await page.evaluate((nextSeed) => {
@@ -286,6 +295,7 @@ async function playDominoDecision(page: Page) {
 
   if (await placeCard.isEnabled()) {
     await legalCard.click();
+    await expectFeedbackClearOfHand(page, ".domino-cards");
     await placeCard.click();
     await expect.poll(async () => (await handRegion.innerText()) !== previousState).toBe(true);
     return;
@@ -293,6 +303,7 @@ async function playDominoDecision(page: Page) {
 
   if ((await legalCard.count()) > 0) {
     await legalCard.click();
+    await expectFeedbackClearOfHand(page, ".domino-cards");
     await placeCard.click();
     await expect.poll(async () => (await handRegion.innerText()) !== previousState).toBe(true);
     return;
@@ -1656,6 +1667,9 @@ test("Domino full-hand contract smoke", async ({ page }, testInfo) => {
   const stateBeforeDoubleTap = await dominoRegion.innerText();
   const firstLegalDominoCard = page.locator(".domino-cards .full-hand-card.legal").first();
   await firstLegalDominoCard.tap();
+  await expect(page.locator(".domino-cards .full-hand-card.selected")).toHaveCount(1);
+  await expectFeedbackAboveHand(page, ".domino-cards");
+  await page.screenshot({ path: testInfo.outputPath("domino-hand-selected.png"), fullPage: true });
   await firstLegalDominoCard.tap();
   await expect.poll(async () => (await dominoRegion.innerText()) !== stateBeforeDoubleTap).toBe(true);
 
@@ -1663,6 +1677,8 @@ test("Domino full-hand contract smoke", async ({ page }, testInfo) => {
 
   await expect(page.getByRole("heading", { name: /You went out first|You finished|Domino complete/ })).toBeVisible();
   await expect(page.getByLabel("Domino result summary")).toContainText("You");
+  await expect(page.getByLabel("Domino result details")).toBeVisible();
+  await expect(page.getByLabel("Domino layout")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Replay" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Next contract" })).toBeVisible();
   await expectNoPageScroll(page);

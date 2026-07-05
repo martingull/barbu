@@ -9033,7 +9033,7 @@
         onBack={openBarbuTable}
       >
         {#snippet summary()}
-          {#if !fullHandRunIsComplete}
+          {#if !fullHandRunIsComplete && dominoHand.status !== "complete"}
             <div class="full-hand-summary grouped-play-summary" aria-label="Domino hand score">
               <div class="full-hand-summary-row current-hand" aria-label="Current hand">
                 <span class="summary-row-label">Current hand</span>
@@ -9077,7 +9077,7 @@
             </div>
           {/if}
 
-          {#if !fullHandRunIsComplete}
+          {#if !fullHandRunIsComplete && dominoHand.status !== "complete"}
             <div class="domino-layout hand-domino-layout" aria-label="Domino layout">
               {#each dominoHand.layout as lane, index}
                 <div>
@@ -9112,12 +9112,29 @@
 
               {@render runScorecard("Play Barbu results")}
             {:else}
-              <div class="lesson-heading">
-                <p class="eyebrow">Result</p>
-                <h2>{dominoResultTitle}</h2>
-              </div>
+              <div class="domino-result-card">
+                <div class="lesson-heading">
+                  <p class="eyebrow">Result</p>
+                  <h2>{dominoResultTitle}</h2>
+                </div>
 
-              <p class="result" aria-label="Domino result summary">{dominoResultSummary}</p>
+                <p class="result" aria-label="Domino result summary">{dominoResultSummary}</p>
+
+                <div class="domino-result-grid" aria-label="Domino result details">
+                  <div>
+                    <span>Your score</span>
+                    <strong>{formatSignedScore(dominoScoreMap.You)}</strong>
+                  </div>
+                  <div>
+                    <span>Winner</span>
+                    <strong>{dominoOutOrderText(dominoHand).split(" ")[0] ?? "Table"}</strong>
+                  </div>
+                  <div>
+                    <span>Order</span>
+                    <strong>{dominoOutOrderText(dominoHand)}</strong>
+                  </div>
+                </div>
+              </div>
             {/if}
           {:else}
             <ExerciseFeedback

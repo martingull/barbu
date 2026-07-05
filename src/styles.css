@@ -3036,7 +3036,7 @@ h2 {
   }
 
   .domino-layout div {
-    min-height: 44px;
+    min-height: 34px;
     padding: 7px 8px;
   }
 
@@ -3529,6 +3529,79 @@ h2 {
     padding-bottom: 72px;
   }
 
+  .fixed-play-screen .table-play-surface.compact-result.table-hidden .table-play-panel:has(.domino-result-card) {
+    padding: 0 4px 72px;
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .domino-result-card {
+    display: grid;
+    gap: 10px;
+    padding: 16px;
+    border: 1px solid rgba(239, 228, 194, 0.5);
+    border-radius: 12px;
+    background: linear-gradient(160deg, rgba(24, 64, 45, 0.94), rgba(10, 35, 24, 0.96));
+    box-shadow: 0 16px 36px rgba(4, 18, 11, 0.22);
+  }
+
+  .domino-result-card .lesson-heading {
+    display: grid;
+    gap: 2px;
+  }
+
+  .domino-result-card .lesson-heading .eyebrow {
+    display: block;
+    color: #d7c891;
+  }
+
+  .domino-result-card .lesson-heading h2 {
+    font-size: 1.28rem;
+  }
+
+  .domino-result-card .result {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-size: 0.88rem;
+    line-height: 1.28;
+  }
+
+  .domino-result-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .domino-result-grid div {
+    display: grid;
+    gap: 4px;
+    min-height: 58px;
+    padding: 8px;
+    border: 1px solid rgba(245, 241, 207, 0.2);
+    border-radius: 10px;
+    background: rgba(7, 32, 22, 0.62);
+  }
+
+  .domino-result-grid div:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .domino-result-grid span {
+    color: rgba(245, 241, 207, 0.72);
+    font-size: 0.58rem;
+    font-weight: 900;
+    line-height: 1.1;
+    text-transform: uppercase;
+  }
+
+  .domino-result-grid strong {
+    overflow-wrap: anywhere;
+    color: #f7faf3;
+    font-size: 0.92rem;
+    line-height: 1.05;
+  }
+
   .fixed-play-screen .table-play-surface.compact-play .table-play-panel {
     align-content: start;
     grid-template-rows: auto auto auto;
@@ -3752,6 +3825,22 @@ h2 {
     width: auto;
     z-index: 24;
     padding-top: 0;
+  }
+
+  .fixed-play-screen .table-play-surface.compact-play .domino-cards {
+    bottom: calc(max(8px, var(--app-safe-area-bottom)) + 72px);
+  }
+
+  .fixed-play-screen .table-play-surface.compact-play .table-play-panel:has(.domino-cards) {
+    gap: 5px;
+  }
+
+  .fixed-play-screen .table-play-surface.compact-play .table-play-panel:has(.domino-cards) .result,
+  .fixed-play-screen .table-play-surface.compact-play .table-play-panel:has(.domino-cards) .explanation,
+  .fixed-play-screen .table-play-surface.compact-play .table-play-panel:has(.domino-cards) .outcome {
+    padding: 6px 8px;
+    font-size: 0.74rem;
+    line-height: 1.2;
   }
 
   .table-play-surface.compact-play .hand-card.selected {
