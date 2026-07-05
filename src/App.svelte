@@ -2347,6 +2347,8 @@
   $: completedPracticeTableSession =
     !activeDrillFocusContract && activeDrillSteps.length >= fullHandContracts.length && drillResults.length >= activeDrillSteps.length;
   $: canMarkPracticeTableComplete = completedPracticeTableSession && !completedPathSteps["generated-drill"];
+  $: drillResultIsBarbuPractice = activeGameTable === "barbu";
+  $: drillResultIsBarbuPathPractice = drillResultIsBarbuPractice && activePathStepId === "generated-drill";
   $: drillResultIsHeartsPractice = activeGameTable === "hearts";
   $: drillResultIsWhistPractice = activeGameTable === "whist";
   $: drillResultIsTablePractice = drillResultIsHeartsPractice || drillResultIsWhistPractice;
@@ -6260,6 +6262,8 @@
   }
 
   async function startContractReplay(replayContract: string) {
+    activeGameTable = "barbu";
+    activePathStepId = "";
     activeDrillFocusContract = replayContract;
     drillIndex = 0;
     drillResults = [];
@@ -9546,6 +9550,8 @@
           {#if !activePathStepId.startsWith("whist-")}
             <button class="primary-action" onclick={openActiveGameTable} type="button">Back to Whist practice</button>
           {/if}
+        {:else if drillResultIsBarbuPractice && !drillResultIsBarbuPathPractice}
+          <button class="primary-action" onclick={openActiveGameTable} type="button">Back to Barbu practice</button>
         {:else}
           <button class="primary-action" onclick={continueCourse} type="button">Continue path</button>
         {/if}

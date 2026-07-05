@@ -1389,9 +1389,18 @@ test("Quick drill runs as a generated learning loop", async ({ page }, testInfo)
     name: /Replay (No Hearts|No Queens|King of Hearts|No Last Two|No Tricks|Hearts Trumps|Domino)/
   });
   await expect(replayButton).toBeVisible();
-  await expect(page.getByRole("button", { name: "Continue path" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Back to Barbu practice" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue path" })).toHaveCount(0);
 
   await page.screenshot({ path: testInfo.outputPath("play-barbu-result.png"), fullPage: true });
+
+  await page.getByRole("button", { name: "Back to Barbu practice" }).click();
+  await expect(page.getByRole("heading", { name: "Barbu's table" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
+
+  await page.getByRole("button", { name: "Quick drill" }).click();
+  await completeVisibleDrillSession(page);
+  await expect(page.getByRole("heading", { name: "Session complete" })).toBeVisible();
 
   await replayButton.click();
   await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
