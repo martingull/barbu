@@ -621,7 +621,7 @@ test("Hearts learn start advances through learning stages instead of play loop",
   await page.getByRole("button", { name: "Open Hearts" }).click();
   await page.getByRole("tab", { name: "Learn" }).click();
 
-  await page.getByLabel("Hearts learn actions").getByRole("button", { name: /Continue with Object of Hearts/ }).click();
+  await page.getByLabel("Hearts lesson path").getByRole("button", { name: /Object of Hearts/ }).click();
   await expect(page.getByRole("heading", { name: "Object of Hearts" })).toBeVisible();
   await expect(page.getByLabel("Hearts object lesson content")).toContainText("low score wins");
   await expect(page.getByRole("heading", { name: "Pass cards" })).toHaveCount(0);

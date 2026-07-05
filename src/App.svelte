@@ -2262,71 +2262,22 @@
   $: nextWhistPathStep = whistPathSteps.find((step) => !completedPathSteps[step.id]);
   $: isWhistCourseComplete = whistCompletedCount === whistPathSteps.length;
   $: barbuLearnPanelActions = [
-    ...(isCourseComplete
-      ? [
-          {
-            id: "review-results",
-            eyebrow: "Review",
-            title: "Review results",
-            summary: gameTableDefinitions.barbu.learn.completeSummary,
-            primary: true,
-            onClick: openPathReview
-          },
-          {
-            id: "reset-path",
-            eyebrow: "Reset",
-            title: "Reset path",
-            summary: "Clear lesson progress and start the table again.",
-            onClick: resetCourseProgress
-          }
-        ]
-      : nextPathStep
-        ? [
-            {
-              id: "continue-path",
-              eyebrow: "Next lesson",
-              title: `Continue with ${nextPathStep.title}`,
-              summary: gameTableDefinitions.barbu.learn.nextSummary,
-              primary: true,
-              onClick: continueCourse
-            }
-          ]
-        : []),
     {
       id: "reference",
       eyebrow: "Rules",
       title: "Reference",
       summary: gameTableDefinitions.barbu.learn.referenceSummary,
+      primary: true,
       onClick: () => openReference(gameTableDefinitions.barbu.referenceId)
     }
   ];
-  $: barbuLearnExtraActions = [
-    {
-      id: "contracts",
-      eyebrow: "Core game",
-      title: "Barbu contracts",
-      summary: "Open the contract map.",
-      onClick: openBarbuContracts
-    }
-  ];
   $: heartsLearnPanelActions = [
-    {
-      id: "continue-path",
-      eyebrow: isHeartsCourseComplete ? "Review" : "Next lesson",
-      title: isHeartsCourseComplete
-        ? "Hearts path complete"
-        : `Continue with ${nextHeartsPathStep?.title ?? "Hearts"}`,
-      summary: isHeartsCourseComplete
-        ? gameTableDefinitions.hearts.learn.completeSummary
-        : gameTableDefinitions.hearts.learn.nextSummary,
-      primary: true,
-      onClick: () => continueHeartsPath("")
-    },
     {
       id: "reference",
       eyebrow: "Rules",
       title: "Reference",
       summary: gameTableDefinitions.hearts.learn.referenceSummary,
+      primary: true,
       onClick: () => openReference(gameTableDefinitions.hearts.referenceId)
     }
   ];
@@ -6618,10 +6569,6 @@
     openBarbuTable();
   }
 
-  function resetCourseProgress() {
-    saveCourseProgress({});
-  }
-
   function finishPathReview() {
     saveCourseProgress({ ...completedPathSteps, review: true });
     openBarbuLearnTable();
@@ -7364,7 +7311,6 @@
           completedCount={completedCount}
           nextStep={nextPathStep}
           actions={barbuLearnPanelActions}
-          extraActions={barbuLearnExtraActions}
           onStepSelect={startPathStep}
         />
       {:else if activeBarbuTableTab === "practice"}
