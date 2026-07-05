@@ -459,6 +459,30 @@ test("Whist practice starts playable partnership drills", async ({ page }) => {
   await expect(page.getByLabel("Drill decision")).toContainText(/Win the first odd trick|Protect the next odd trick/);
 });
 
+test("Whist play starts a partnership trump hand", async ({ page }, testInfo) => {
+  await gotoWithPracticeSeed(page, 8);
+  await page.getByRole("button", { name: /Open Whist/ }).click();
+  await page.getByRole("tab", { name: "Play" }).click();
+
+  await expect(page.getByRole("tabpanel", { name: "Play" })).toContainText("odd-trick scoring");
+  await page.getByRole("button", { name: "Play Whist" }).click();
+
+  await expect(page.getByRole("heading", { name: "Whist hand" })).toBeVisible();
+  await expect(page.getByLabel("Whist full hand")).toContainText("trumps");
+  await expect(page.getByLabel("Whist hand score")).toContainText("Your side");
+  await expect(page.getByLabel("Whist hand score")).toContainText("Opponents");
+  await expect(page.getByLabel("Whist hand table")).toBeVisible();
+  await expect(page.getByLabel("Your Whist hand")).toBeVisible();
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
+  await expectHandNearActionRow(page, ".full-hand-cards");
+  await expectFeedbackAboveHand(page, ".full-hand-cards");
+  await page.screenshot({ path: testInfo.outputPath("whist-hand.png"), fullPage: true });
+
+  await playFullHandDecision(page);
+  await expect(page.getByRole("heading", { name: /Whist hand|Read the table/ })).toBeVisible();
+});
+
 test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Open Hearts" }).click();

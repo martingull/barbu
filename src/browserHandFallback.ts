@@ -36,6 +36,10 @@ export function startBrowserHeartsHand(seed: number): FullHandState {
   return startBrowserFullHand("Hearts", seed, { startAtTwoOfClubs: true });
 }
 
+export function startBrowserWhistHand(seed: number): FullHandState {
+  return startBrowserFullHand("Whist", seed, { startingPlayerIndex: 1 });
+}
+
 export function generateBrowserHeartsPassPractice(seed: number): HeartsPassScenario {
   if (seed % 2 === 1) {
     const playerHand = [
@@ -205,7 +209,7 @@ export function startBrowserPositiveTricksHand(seed: number): FullHandState {
 function startBrowserFullHand(
   contract: FullHandContract,
   seed: number,
-  options: { startAtTwoOfClubs?: boolean } = {}
+  options: { startAtTwoOfClubs?: boolean; startingPlayerIndex?: number } = {}
 ): FullHandState {
   const deck = standardDeck();
   const rng = new DeterministicRng(seed);
@@ -219,11 +223,15 @@ function startBrowserFullHand(
   deck.forEach((card, index) => hands[index % 4].push(card));
   hands.forEach((hand) => hand.sort(compareCards));
 
-  const currentPlayerIndex = options.startAtTwoOfClubs ? playerWithCard(hands, "2C") ?? 0 : 0;
+  const currentPlayerIndex = options.startAtTwoOfClubs ? playerWithCard(hands, "2C") ?? 0 : options.startingPlayerIndex ?? 0;
+  const id =
+    contract === "Whist"
+      ? `browser-whist-hand-${seed}-${whistTrumpSuit(seed)}`
+      : `browser-${contract.toLowerCase().replace(/\s+/g, "-")}-hand-${seed}`;
 
   return advanceToPlayerTurn(
     hydrateFullHandState({
-      id: `browser-${contract.toLowerCase().replace(/\s+/g, "-")}-hand-${seed}`,
+      id,
       contract,
       hands,
       currentPlayerIndex,
@@ -247,6 +255,10 @@ export function playBrowserNoHeartsCard(state: FullHandState, cardId: string): F
 }
 
 export function playBrowserHeartsCard(state: FullHandState, cardId: string): FullHandState {
+  return playBrowserFullHandCard(state, cardId);
+}
+
+export function playBrowserWhistCard(state: FullHandState, cardId: string): FullHandState {
   return playBrowserFullHandCard(state, cardId);
 }
 
@@ -324,7 +336,7 @@ function playCardForCurrentPlayer(state: FullHandState, card: Card) {
 }
 
 function completeTrick(state: FullHandState) {
-  const winnerIndex = trickWinner(state.contract, state.currentTrick);
+  const winnerIndex = trickWinnerForState(state, state.currentTrick);
   const penalty = scoreTrick(state, state.currentTrick);
 
   state.completedTricks.push({
@@ -445,6 +457,9 @@ function chooseOpponentCard(state: FullHandState) {
   }
 
   if (!led) {
+    if (state.contract === "Whist") {
+      return chooseWhistLeadCard(state, legal);
+    }
     if (state.contract === "Hearts Trumps") {
       return highestCard(legal);
     }
@@ -460,6 +475,9 @@ function chooseOpponentCard(state: FullHandState) {
   const followsSuit = legal.every((card) => card.suit === led);
 
   if (!followsSuit) {
+    if (state.contract === "Whist") {
+      return chooseWhistVoidCard(state, legal);
+    }
     if (state.contract === "Hearts Trumps") {
       return lowestCard(legal.filter((card) => cardWouldWinTrick(state, card))) ?? lowestCard(legal);
     }
@@ -471,7 +489,7 @@ function chooseOpponentCard(state: FullHandState) {
     }
     if (state.contract === "Hearts") {
       const moonCandidate = heartsMoonCandidate(state);
-      const currentWinner = state.currentTrick.length ? trickWinner(state.contract, state.currentTrick) : undefined;
+      const currentWinner = state.currentTrick.length ? trickWinnerForState(state, state.currentTrick) : undefined;
 
       if (moonCandidate !== undefined && state.currentPlayerIndex !== moonCandidate && currentWinner === moonCandidate) {
         return lowestCard(legal.filter((card) => !isPenaltyCard("Hearts", card))) ?? lowestCard(legal);
@@ -480,6 +498,10 @@ function chooseOpponentCard(state: FullHandState) {
       return chooseHeartsVoidDiscard(legal, currentWinner, heartsTrickPenalty(state.currentTrick) > 0);
     }
     return highestCard(legal.filter((card) => isPenaltyCard(state.contract, card))) ?? highestCard(legal);
+  }
+
+  if (state.contract === "Whist") {
+    return chooseWhistFollowCard(state, legal);
   }
 
   if (state.contract === "Hearts Trumps") {
@@ -496,7 +518,7 @@ function chooseOpponentCard(state: FullHandState) {
 
   if (state.contract === "Hearts") {
     const moonCandidate = heartsMoonCandidate(state);
-    const currentWinner = state.currentTrick.length ? trickWinner(state.contract, state.currentTrick) : undefined;
+    const currentWinner = state.currentTrick.length ? trickWinnerForState(state, state.currentTrick) : undefined;
     const currentTrickIsLoaded = heartsTrickPenalty(state.currentTrick) > 0;
 
     if (moonCandidate !== undefined && currentTrickIsLoaded) {
@@ -544,15 +566,54 @@ function chooseOpponentCard(state: FullHandState) {
   return lowestCard(legal);
 }
 
+function chooseWhistLeadCard(state: FullHandState, legal: Card[]) {
+  const trump = whistTrumpSuitFromState(state);
+  return highestCardFromLongestSuit(legal.filter((card) => card.suit !== trump), legal) ?? highestCard(legal);
+}
+
+function chooseWhistFollowCard(state: FullHandState, legal: Card[]) {
+  if (whistPartnerIsWinning(state)) {
+    return lowestCard(legal);
+  }
+
+  return lowestWinningCard(state, legal) ?? lowestCard(legal);
+}
+
+function chooseWhistVoidCard(state: FullHandState, legal: Card[]) {
+  const trump = whistTrumpSuitFromState(state);
+
+  if (whistPartnerIsWinning(state)) {
+    return lowestCard(legal.filter((card) => card.suit !== trump)) ?? lowestCard(legal);
+  }
+
+  return (
+    lowestCard(legal.filter((card) => card.suit === trump && cardWouldWinTrick(state, card))) ??
+    highestCard(legal.filter((card) => card.suit !== trump)) ??
+    lowestCard(legal)
+  );
+}
+
+function whistPartnerIsWinning(state: FullHandState) {
+  if (!state.currentTrick.length) {
+    return false;
+  }
+
+  return sameWhistPartnership(trickWinnerForState(state, state.currentTrick), state.currentPlayerIndex);
+}
+
+function sameWhistPartnership(left: number, right: number) {
+  return left % 2 === right % 2;
+}
+
 function cardWouldWinTrick(state: FullHandState, card: Card) {
   const led = ledSuit(state);
 
   if (!led) {
     return true;
   }
-  if (state.contract === "Hearts Trumps") {
+  if (state.contract === "Hearts Trumps" || state.contract === "Whist") {
     const simulated = [...state.currentTrick, { seat: playerNames[state.currentPlayerIndex], card }];
-    return trickWinner(state.contract, simulated) === state.currentPlayerIndex;
+    return trickWinnerForState(state, simulated) === state.currentPlayerIndex;
   }
   if (card.suit !== led) {
     return false;
@@ -662,6 +723,14 @@ function highestCardFromShortestSuit(candidates: Card[], fullHand: Card[]) {
   })[0];
 }
 
+function highestCardFromLongestSuit(candidates: Card[], fullHand: Card[]) {
+  return candidates.slice().sort((left, right) => {
+    const suitPressure = suitCount(fullHand, right.suit) - suitCount(fullHand, left.suit);
+
+    return suitPressure || rankOrder[right.rank as Rank] - rankOrder[left.rank as Rank] || suitOrder[left.suit] - suitOrder[right.suit];
+  })[0];
+}
+
 function suitCount(cards: Card[], suit: Suit) {
   return cards.filter((card) => card.suit === suit).length;
 }
@@ -754,6 +823,9 @@ function compareByRankThenSuit(left: Card, right: Card) {
 }
 
 function scoreTrick(state: FullHandState, cards: TableCard[]) {
+  if (state.contract === "Whist") {
+    return 1;
+  }
   if (state.contract === "No Tricks") {
     return 2;
   }
@@ -793,7 +865,7 @@ function scoreTrick(state: FullHandState, cards: TableCard[]) {
 }
 
 function isPenaltyCard(contract: FullHandContract, card: Card) {
-  if (contract === "No Tricks" || contract === "Hearts Trumps") {
+  if (contract === "No Tricks" || contract === "Hearts Trumps" || contract === "Whist") {
     return false;
   }
   if (contract === "No Last Two") {
@@ -868,10 +940,11 @@ function ledSuit(state: FullHandState): Suit | undefined {
   return state.currentTrick[0]?.card.suit;
 }
 
-function trickWinner(contract: FullHandContract, cards: TableCard[]) {
-  if (contract === "Hearts Trumps") {
+function trickWinnerForState(state: FullHandState, cards: TableCard[]) {
+  if (state.contract === "Hearts Trumps" || state.contract === "Whist") {
+    const trumpSuit = state.contract === "Whist" ? whistTrumpSuitFromState(state) : "H";
     const trumpWinner = cards
-      .filter((played) => played.card.suit === "H")
+      .filter((played) => played.card.suit === trumpSuit)
       .reduce<TableCard | undefined>(
         (winner, played) =>
           !winner || rankOrder[played.card.rank as Rank] > rankOrder[winner.card.rank as Rank] ? played : winner,
@@ -895,6 +968,10 @@ function trickWinner(contract: FullHandContract, cards: TableCard[]) {
 
 function promptForState(state: FullHandState, playerPenalty: number) {
   if (state.status === "complete") {
+    if (state.contract === "Whist") {
+      return `Whist hand complete. ${suitName(whistTrumpSuitFromState(state))} were trumps.`;
+    }
+
     return `Hand complete. You took ${playerPenalty} ${playerPenalty === 1 ? "point" : "points"}.`;
   }
 
@@ -904,6 +981,17 @@ function promptForState(state: FullHandState, playerPenalty: number) {
 
   if (state.contract === "Hearts" && !state.completedTricks.length && !state.currentTrick.length) {
     return "You hold 2C, so you must open the first trick with 2C.";
+  }
+
+  if (state.contract === "Whist") {
+    const trump = suitName(whistTrumpSuitFromState(state)).toLowerCase();
+    const led = ledSuit(state);
+
+    if (!led) {
+      return `Lead for partner or draw trump. ${trump} are trumps.`;
+    }
+
+    return `${suitName(led)} were led. Follow suit if you can. ${trump} are trumps.`;
   }
 
   const led = ledSuit(state);
@@ -930,6 +1018,19 @@ function compareCards(left: Card, right: Card) {
 
 function suitName(suit: Suit) {
   return { C: "Clubs", D: "Diamonds", H: "Hearts", S: "Spades" }[suit];
+}
+
+function whistTrumpSuit(seed: number): Suit {
+  return suits[seed % suits.length];
+}
+
+function whistTrumpSuitFromState(state: FullHandState): Suit {
+  return whistTrumpSuitFromId(state.id);
+}
+
+function whistTrumpSuitFromId(id: string): Suit {
+  const suffix = id.split("-").pop();
+  return suffix === "C" || suffix === "D" || suffix === "H" || suffix === "S" ? suffix : "S";
 }
 
 function cloneState(state: FullHandState): FullHandState {

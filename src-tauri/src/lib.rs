@@ -88,6 +88,21 @@ fn play_hearts_hand_card(state: FullHandDto, card_id: String) -> Result<FullHand
 }
 
 #[tauri::command]
+fn start_whist_hand(seed: u64) -> FullHandDto {
+    let state = barbu_core::start_whist_hand(seed);
+    FullHandDto::from_core(&state, "Whist", "trick")
+}
+
+#[tauri::command]
+fn play_whist_hand_card(state: FullHandDto, card_id: String) -> Result<FullHandDto, String> {
+    let state = state.to_core()?;
+    let card = card_from_label(&card_id)?;
+    let next_state = barbu_core::play_whist_card(state, card)?;
+
+    Ok(FullHandDto::from_core(&next_state, "Whist", "trick"))
+}
+
+#[tauri::command]
 fn start_no_queens_hand(seed: u64) -> FullHandDto {
     let state = barbu_core::start_no_queens_hand(seed);
     FullHandDto::from_core(&state, "No Queens", "point")
@@ -729,6 +744,38 @@ fn hand_prompt(state: &barbu_core::TrickTakingHandState, penalty_name: &str) -> 
         return "You hold 2C, so you must open the first trick with 2C.".to_string();
     }
 
+    if state.id.starts_with("whist-hand-") {
+        let trump = state
+            .id
+            .rsplit('-')
+            .next()
+            .and_then(|label| label.chars().next())
+            .and_then(|label| match label {
+                'C' => Some("clubs"),
+                'D' => Some("diamonds"),
+                'H' => Some("hearts"),
+                'S' => Some("spades"),
+                _ => None,
+            })
+            .unwrap_or("the trump suit");
+
+        if state.status == barbu_core::HandStatus::Complete {
+            return format!("Whist hand complete. {trump} were trumps.");
+        }
+
+        if state.current_trick.is_empty() {
+            return format!("Lead for partner or draw trump. {trump} are trumps.");
+        }
+
+        let led_suit = state
+            .current_trick
+            .first()
+            .map(|played| suit_name(played.card.suit))
+            .unwrap_or("the led suit");
+
+        return format!("{led_suit} were led. Follow suit if you can. {trump} are trumps.");
+    }
+
     if state.current_trick.is_empty() {
         return "You won the last trick. Lead any card to the next trick.".to_string();
     }
@@ -809,6 +856,7 @@ pub fn run() {
             play_no_queens_hand_card,
             play_no_tricks_hand_card,
             play_positive_tricks_hand_card,
+            play_whist_hand_card,
             start_domino_hand,
             start_hearts_hand,
             start_hearts_passing_hand,
@@ -817,7 +865,8 @@ pub fn run() {
             start_no_last_two_hand,
             start_no_queens_hand,
             start_no_tricks_hand,
-            start_positive_tricks_hand
+            start_positive_tricks_hand,
+            start_whist_hand
         ])
         .run(tauri::generate_context!())
         .expect("error while running Tauri application");

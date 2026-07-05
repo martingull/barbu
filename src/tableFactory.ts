@@ -825,9 +825,9 @@ export const gameTableDefinitions = {
       },
       play: {
         eyebrow: "Play",
-        title: "Whist play is planned.",
+        title: "Play a partnership hand.",
         summary:
-          "The first playable version should use fixed partnerships, dealer's last card as trump, thirteen tricks, and odd-trick scoring."
+          "Play You and Barbu against Left and Right with a visible trump suit, follow-suit play, and odd-trick scoring."
       },
       perfect: {
         eyebrow: "Pro",
@@ -849,7 +849,7 @@ export const gameTableDefinitions = {
         label: entry.title,
         destination: `Whist practice: ${entry.title}`
       })),
-      play: [{ id: "play-whist", label: "Play Whist", destination: "Planned Whist partnership hand" }]
+      play: [{ id: "play-whist", label: "Play Whist", destination: "Whist partnership hand" }]
     }
   })
 } satisfies Record<ActiveGameTable, GameTableDefinition>;

@@ -10,6 +10,7 @@
     playBrowserNoQueensCard,
     playBrowserNoTricksCard,
     playBrowserPositiveTricksCard,
+    playBrowserWhistCard,
     startBrowserHeartsHand,
     startBrowserHeartsPassingHand,
     startBrowserKingOfHeartsHand,
@@ -17,7 +18,8 @@
     startBrowserNoLastTwoHand,
     startBrowserNoQueensHand,
     startBrowserNoTricksHand,
-    startBrowserPositiveTricksHand
+    startBrowserPositiveTricksHand,
+    startBrowserWhistHand
   } from "./browserHandFallback";
   import { passBrowserDominoTurn, playBrowserDominoCard, startBrowserDominoHand } from "./browserDominoFallback";
   import { generateBrowserPlayBarbuDrillSteps } from "./browserDrillFallback";
@@ -1962,6 +1964,25 @@
     return { C: 0, D: 1, H: 2, S: 3 }[suit];
   }
 
+  function suitNameFromId(suit: Suit) {
+    return { C: "Clubs", D: "Diamonds", H: "Hearts", S: "Spades" }[suit];
+  }
+
+  function whistTrumpSuitFromHandId(id: string): Suit {
+    const suffix = id.split("-").at(-1);
+    return suffix === "C" || suffix === "D" || suffix === "H" || suffix === "S" ? suffix : "S";
+  }
+
+  function whistPartnershipTrickCounts(tricks: CompletedHandTrick[]) {
+    return tricks.reduce(
+      (totals, trick) => ({
+        playerSide: totals.playerSide + (trick.winnerIndex === 0 || trick.winnerIndex === 2 ? 1 : 0),
+        opponentSide: totals.opponentSide + (trick.winnerIndex === 1 || trick.winnerIndex === 3 ? 1 : 0)
+      }),
+      { playerSide: 0, opponentSide: 0 }
+    );
+  }
+
   function rankValue(rank: string) {
     const values: Record<string, number> = {
       "2": 2,
@@ -2196,6 +2217,11 @@
   $: fullHandBestTrick = fullHand ? fullHandBestTrickLabel(fullHand) : "";
   $: fullHandWorstTrick = fullHand ? fullHandWorstTrickLabel(fullHand) : "";
   $: fullHandIsHeartsGame = activeGameTable === "hearts" && fullHand?.contract === "Hearts" && !fullHandRunActive;
+  $: fullHandIsWhistGame = activeGameTable === "whist" && fullHand?.contract === "Whist" && !fullHandRunActive;
+  $: whistTrumpSuitLabel = fullHandIsWhistGame && fullHand ? suitNameFromId(whistTrumpSuitFromHandId(fullHand.id)) : "";
+  $: whistPartnershipTricks = fullHand ? whistPartnershipTrickCounts(fullHand.completedTricks) : { playerSide: 0, opponentSide: 0 };
+  $: whistPlayerSideOddTricks = Math.max(whistPartnershipTricks.playerSide - 6, 0);
+  $: whistOpponentSideOddTricks = Math.max(whistPartnershipTricks.opponentSide - 6, 0);
   $: heartsCurrentMoonShooter = fullHandIsHeartsGame ? heartsMoonShooter(fullHandSeatPenalties) : undefined;
   $: heartsCurrentMoonThreatSeat = fullHandIsHeartsGame ? heartsMoonThreatSeat(fullHandSeatPenalties) : undefined;
   $: heartsCurrentScoredSeatPenalties = fullHandIsHeartsGame
@@ -2279,6 +2305,10 @@
       ? "Game complete"
       : fullHandRunActive && fullHandRunCurrentIndex >= 0
       ? `Contract ${fullHandRunCurrentIndex + 1} of ${fullHandContracts.length}`
+      : fullHandIsWhistGame
+        ? whistTrumpSuitLabel
+          ? `Trump ${whistTrumpSuitLabel}`
+          : "Whist"
       : fullHand?.status === "complete" || dominoHand?.status === "complete"
         ? "Complete"
         : fullHand
@@ -2290,6 +2320,8 @@
     ? heartsMatchIsComplete
       ? "New match"
       : "Next hand"
+    : fullHandIsWhistGame
+    ? "New hand"
     : fullHandRunActive
     ? fullHandRunIsComplete
       ? "New game"
@@ -4101,6 +4133,9 @@
     if (contract === "Hearts") {
       return startBrowserHeartsHand(seed);
     }
+    if (contract === "Whist") {
+      return startBrowserWhistHand(seed);
+    }
     if (contract === "No Queens") {
       return startBrowserNoQueensHand(seed);
     }
@@ -4140,6 +4175,9 @@
   function playBrowserFullHand(state: FullHandState, cardId: string) {
     if (state.contract === "Hearts") {
       return playBrowserHeartsCard(state, cardId);
+    }
+    if (state.contract === "Whist") {
+      return playBrowserWhistCard(state, cardId);
     }
     if (state.contract === "No Queens") {
       return playBrowserNoQueensCard(state, cardId);
@@ -4442,6 +4480,12 @@
   function startHeartsHand() {
     activeGameTable = "hearts";
     void startHeartsPassingPhase();
+  }
+
+  function startWhistHand() {
+    activeGameTable = "whist";
+    activeWhistTableTab = "play";
+    void startFullHand("Whist");
   }
 
   function startHeartsObjectLesson() {
@@ -5216,6 +5260,20 @@
   function fullHandTrickFeedback(trick: CompletedHandTrick) {
     const penaltyText = `${trick.penalty} ${trick.penalty === 1 ? fullHandPenaltyName : fullHandPenaltyPlural}`;
 
+    if (fullHandIsWhistGame) {
+      const winnerIsPlayerSide = trick.winnerIndex === 0 || trick.winnerIndex === 2;
+
+      if (fullHandTrickHasTag(trick, "trump_won")) {
+        return winnerIsPlayerSide
+          ? `${trick.winner} won with trump. Good: your partnership cut the led suit and took the trick.`
+          : `${trick.winner} won with trump. The opponents cut the led suit, so count that trump as gone.`;
+      }
+
+      return winnerIsPlayerSide
+        ? `${trick.winner} won the trick for You + Barbu. Keep building odd tricks above six.`
+        : `${trick.winner} won the trick for Left + Right. Look for a chance to regain lead or return partner's suit.`;
+    }
+
     if (fullHandIsHeartsGame) {
       if (trick.outcome === "captured_penalty") {
         if (fullHandTrickHasTag(trick, "opponent_loaded_player_trick")) {
@@ -5324,6 +5382,17 @@
   }
 
   function fullHandResultHeading(hand: FullHandState) {
+    if (fullHandIsWhistGame) {
+      if (whistPlayerSideOddTricks > whistOpponentSideOddTricks) {
+        return "Your partnership won";
+      }
+      if (whistPlayerSideOddTricks === whistOpponentSideOddTricks) {
+        return "Whist hand tied";
+      }
+
+      return "Opponents won the hand";
+    }
+
     if (activeGameTable === "hearts" && hand.contract === "Hearts") {
       if (heartsMatchIsComplete) {
         return heartsMatchResultHeading();
@@ -5360,6 +5429,14 @@
   }
 
   function fullHandResultText(hand: FullHandState) {
+    if (fullHandIsWhistGame) {
+      return `Trump was ${whistTrumpSuitLabel}. You + Barbu won ${whistPartnershipTricks.playerSide} tricks for ${whistPlayerSideOddTricks} odd ${
+        whistPlayerSideOddTricks === 1 ? "trick" : "tricks"
+      }; Left + Right won ${whistPartnershipTricks.opponentSide} tricks for ${whistOpponentSideOddTricks} odd ${
+        whistOpponentSideOddTricks === 1 ? "trick" : "tricks"
+      }.`;
+    }
+
     if (activeGameTable === "hearts" && hand.contract === "Hearts") {
       if (heartsMatchIsComplete) {
         return heartsCurrentMoonShooter ? `${heartsMoonResultText(heartsCurrentMoonShooter)} ${heartsMatchSummary}` : heartsMatchSummary;
@@ -7126,6 +7203,27 @@
           groups={whistPracticeGroups}
           actions={whistPracticeActions}
         />
+      {:else if activeWhistTableTab === "play"}
+        <div
+          aria-label={gameTableDefinitions.whist.tabs.play.label}
+          class="barbu-tab-panel practice-panel"
+          id={gameTableDefinitions.whist.tabs.play.panelId}
+          role="tabpanel"
+        >
+          <div class="barbu-mode-copy">
+            <p class="eyebrow">{gameTableDefinitions.whist.tabs.play.intro.eyebrow}</p>
+            <h2>{gameTableDefinitions.whist.tabs.play.intro.title}</h2>
+            <p>{gameTableDefinitions.whist.tabs.play.intro.summary}</p>
+          </div>
+
+          <div class="table-action-groups" aria-label="Whist play actions">
+            <section class="table-action-group" aria-label="Whist partnership hand">
+              <p class="eyebrow">Partnership hand</p>
+              <button class="drill-action" onclick={startWhistHand} type="button">Play Whist</button>
+              <small class="saved-run-note">You and Barbu play as partners against Left and Right.</small>
+            </section>
+          </div>
+        </div>
       {:else}
         <div
           aria-label={gameTableDefinitions.whist.tabs[activeWhistTableTab].label}
@@ -8337,15 +8435,15 @@
         mode={fullHand.status === "complete" ? "result" : "play"}
         ariaLabel={`${fullHand.contract} full hand`}
         title={`${fullHand.contract} hand`}
-        eyebrow={fullHandRunActive ? "Play Barbu" : "Contract hand"}
+        eyebrow={fullHandIsWhistGame ? "Play Whist" : fullHandRunActive ? "Play Barbu" : "Contract hand"}
         statusLabel={fullHandRunStatusLabel}
-        statusValue={`${fullHand.playerPenalty} ${fullHandPlayerPenaltyLabel}`}
+        statusValue={fullHandIsWhistGame ? `${whistPartnershipTricks.playerSide} - ${whistPartnershipTricks.opponentSide}` : `${fullHand.playerPenalty} ${fullHandPlayerPenaltyLabel}`}
         tableAriaLabel={`${fullHand.contract} hand table`}
         pendingBySeat={fullHandPendingBySeat}
         showTable={!fullHandRunIsComplete && !(fullHandIsHeartsGame && fullHand.status === "complete")}
         tableCards={fullHandVisibleTableCards}
         panelAriaLabel={`${fullHand.contract} hand decision`}
-        onBack={openBarbuTable}
+        onBack={openActiveGameTable}
         onSurfaceClick={fullHandIsReviewingTrick ? continueFullHandAfterTrick : undefined}
       >
         {#snippet summary()}
@@ -8358,17 +8456,23 @@
               >
                 <span class="summary-row-label">Current hand</span>
                 <div>
-                  <span>{fullHandContractMeta.playerValueLabel}</span>
-                  <strong>{fullHand.playerPenalty}</strong>
+                  <span>{fullHandIsWhistGame ? "Your side" : fullHandContractMeta.playerValueLabel}</span>
+                  <strong>{fullHandIsWhistGame ? whistPartnershipTricks.playerSide : fullHand.playerPenalty}</strong>
                 </div>
                 <div>
-                  <span>{fullHandPenaltyPlayedLabel}</span>
-                  <strong>{fullHand.totalPenalty} / {fullHandPenaltyTotal}</strong>
+                  <span>{fullHandIsWhistGame ? "Opponents" : fullHandPenaltyPlayedLabel}</span>
+                  <strong>{fullHandIsWhistGame ? whistPartnershipTricks.opponentSide : `${fullHand.totalPenalty} / ${fullHandPenaltyTotal}`}</strong>
                 </div>
                 <div>
                   <span>Tricks</span>
                   <strong>{fullHand.completedTricks.length} / 13</strong>
                 </div>
+                {#if fullHandIsWhistGame}
+                  <div>
+                    <span>Odd tricks</span>
+                    <strong>{whistPlayerSideOddTricks} - {whistOpponentSideOddTricks}</strong>
+                  </div>
+                {/if}
                 {#if fullHand.contract === "No Last Two"}
                   <div>
                     <span>{fullHandNoLastTwoPhaseLabel}</span>
@@ -8479,6 +8583,26 @@
                     </div>
                   </div>
                 {/if}
+              {:else if fullHandIsWhistGame}
+                <div class="hearts-result-stack" aria-label="Whist hand score">
+                  <div class="hearts-hand-breakdown" aria-label="Whist partnership breakdown">
+                    <div class="hearts-hand-breakdown-row header">
+                      <span>Partnership</span>
+                      <span>Tricks</span>
+                      <span>Odd</span>
+                    </div>
+                    <div class:active={true} class="hearts-hand-breakdown-row">
+                      <span>You + Barbu</span>
+                      <strong>{whistPartnershipTricks.playerSide}</strong>
+                      <strong>{whistPlayerSideOddTricks}</strong>
+                    </div>
+                    <div class="hearts-hand-breakdown-row">
+                      <span>Left + Right</span>
+                      <strong>{whistPartnershipTricks.opponentSide}</strong>
+                      <strong>{whistOpponentSideOddTricks}</strong>
+                    </div>
+                  </div>
+                </div>
               {:else}
                 <div class="full-hand-result-tricks" aria-label={`${fullHand.contract} key tricks`}>
                   <div>
@@ -8502,7 +8626,9 @@
               {fullHandReviewFeedback}
             </p>
             <p class="explanation">
-              {fullHand.contract === "No Last Two"
+              {fullHandIsWhistGame
+                ? "Check whether the trick stayed with your partnership, whether trump changed the winner, and who leads next."
+                : fullHand.contract === "No Last Two"
                 ? "Check the trick number first. Tap the table or press Next trick when you are ready."
                 : "Left's card is on the table. Tap the table or press Next trick when you are ready."}
             </p>

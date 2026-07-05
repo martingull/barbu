@@ -14,6 +14,7 @@ pub type NoLastTwoHandState = TrickTakingHandState;
 pub type NoTricksHandState = TrickTakingHandState;
 pub type PositiveTricksHandState = TrickTakingHandState;
 pub type HeartsHandState = TrickTakingHandState;
+pub type WhistHandState = TrickTakingHandState;
 const HEARTS_TRUMP_SUIT: Suit = Suit::Hearts;
 const HEARTS_MOON_LEAD_THRESHOLD: i32 = 8;
 
@@ -99,11 +100,7 @@ pub fn completed_trick_tactical_tags(
             }
         }
         Some(HandPolicy::BarbuContract(BarbuContractPolicy::HeartsTrumps)) => {
-            let trump_cards = trick
-                .cards
-                .iter()
-                .filter(|played| played.card.suit == HEARTS_TRUMP_SUIT)
-                .count();
+            let trump_cards = trick.cards.iter().filter(|played| played.card.suit == HEARTS_TRUMP_SUIT).count();
             let winner_used_trump = trick
                 .cards
                 .iter()
@@ -115,6 +112,23 @@ pub fn completed_trick_tactical_tags(
             }
             if winner_used_trump && trump_cards > 1 {
                 tags.push("overtrumped");
+            }
+        }
+        Some(HandPolicy::Whist) => {
+            if let Some(winner_card) = trick
+                .cards
+                .iter()
+                .find(|played| played.player == trick.winner)
+                .map(|played| played.card)
+            {
+                if winner_card.suit != led_suit(trick) {
+                    tags.push("trump_won");
+                }
+            }
+            if trick.winner == 0 || trick.winner == 2 {
+                tags.push("partner_trick");
+            } else {
+                tags.push("opponent_trick");
             }
         }
         Some(HandPolicy::HeartsBlackLady)
@@ -441,6 +455,26 @@ pub fn play_hearts_card(
     )
 }
 
+pub fn start_whist_hand(seed: u64) -> WhistHandState {
+    let trump_suit = whist_trump_suit_for_seed(seed);
+    let state = start_trick_taking_hand(
+        format!("whist-hand-{seed}-{}", trump_suit.short_name()),
+        seed,
+        1,
+    );
+    advance_to_player_turn(state, 2, score_whist_trick, choose_whist_opponent_card)
+}
+
+pub fn play_whist_card(state: WhistHandState, player_card: Card) -> Result<WhistHandState, String> {
+    play_trick_taking_card(
+        state,
+        player_card,
+        2,
+        score_whist_trick,
+        choose_whist_opponent_card,
+    )
+}
+
 fn apply_hearts_pass_with_direction(
     mut state: HeartsHandState,
     player_cards: Vec<Card>,
@@ -608,6 +642,9 @@ fn trick_winner_for_state(
     if is_hearts_trumps_state(state) {
         return trump_trick_winner(played_cards, HEARTS_TRUMP_SUIT);
     }
+    if is_whist_state(state) {
+        return trump_trick_winner(played_cards, whist_trump_suit(state));
+    }
 
     trick_winner(played_cards)
 }
@@ -639,6 +676,28 @@ fn is_hearts_trumps_state(state: &TrickTakingHandState) -> bool {
 
 fn is_hearts_state(state: &TrickTakingHandState) -> bool {
     matches!(state.policy(), Some(HandPolicy::HeartsBlackLady))
+}
+
+fn is_whist_state(state: &TrickTakingHandState) -> bool {
+    matches!(state.policy(), Some(HandPolicy::Whist))
+}
+
+fn whist_trump_suit(state: &TrickTakingHandState) -> Suit {
+    whist_trump_suit_from_id(&state.id).unwrap_or(Suit::Spades)
+}
+
+fn whist_trump_suit_from_id(id: &str) -> Option<Suit> {
+    match id.rsplit('-').next()? {
+        "C" => Some(Suit::Clubs),
+        "D" => Some(Suit::Diamonds),
+        "H" => Some(Suit::Hearts),
+        "S" => Some(Suit::Spades),
+        _ => None,
+    }
+}
+
+fn whist_trump_suit_for_seed(seed: u64) -> Suit {
+    Suit::ALL[(seed as usize) % Suit::ALL.len()]
 }
 
 fn legal_hearts_cards(state: &TrickTakingHandState, player: PlayerIndex) -> Vec<Card> {
@@ -1133,6 +1192,10 @@ fn score_positive_tricks_trick(_state: &TrickTakingHandState, _cards: &[PlayedCa
     5
 }
 
+fn score_whist_trick(_state: &TrickTakingHandState, _cards: &[PlayedCard]) -> i32 {
+    1
+}
+
 fn choose_positive_tricks_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
     let hand = &state.hands[state.current_player];
     let legal = legal_cards(hand, state.led_suit());
@@ -1148,6 +1211,58 @@ fn choose_positive_tricks_opponent_card(state: &TrickTakingHandState) -> Option<
 
     lowest_card_matching(&legal, |card| card_would_win_trick(state, card))
         .or_else(|| lowest_card(&legal))
+}
+
+fn choose_whist_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
+    let legal = state.legal_cards_for_player(state.current_player);
+    let led_suit = state.led_suit();
+    let trump_suit = whist_trump_suit(state);
+
+    if legal.is_empty() {
+        return None;
+    }
+
+    if led_suit.is_none() {
+        return whist_lead_card(state, &legal, trump_suit);
+    }
+
+    let current_winner = trick_winner_for_state(state, &state.current_trick);
+    let partner_is_winning = current_winner.is_some_and(|winner| whist_same_partnership(winner, state.current_player));
+    let follows_suit = legal.iter().all(|card| Some(card.suit) == led_suit);
+
+    if follows_suit {
+        if partner_is_winning {
+            return lowest_card(&legal);
+        }
+
+        return lowest_card_matching(&legal, |card| card_would_win_whist_trick(state, card))
+            .or_else(|| lowest_card(&legal));
+    }
+
+    if partner_is_winning {
+        return lowest_card_matching(&legal, |card| card.suit != trump_suit).or_else(|| lowest_card(&legal));
+    }
+
+    lowest_card_matching(&legal, |card| {
+        card.suit == trump_suit && card_would_win_whist_trick(state, card)
+    })
+    .or_else(|| highest_card_matching(&legal, |card| card.suit != trump_suit))
+    .or_else(|| lowest_card(&legal))
+}
+
+fn whist_lead_card(state: &TrickTakingHandState, legal: &[Card], trump_suit: Suit) -> Option<Card> {
+    if state.current_player == 0 {
+        return highest_card_from_longest_suit(legal, |card| card.suit != trump_suit)
+            .or_else(|| highest_card(legal));
+    }
+
+    highest_card_from_longest_suit(legal, |card| card.suit != trump_suit)
+        .or_else(|| lowest_card_matching(legal, |card| card.suit == trump_suit))
+        .or_else(|| lowest_card(legal))
+}
+
+fn whist_same_partnership(left: PlayerIndex, right: PlayerIndex) -> bool {
+    left % 2 == right % 2
 }
 
 fn is_king_of_hearts(card: Card) -> bool {
@@ -1180,6 +1295,9 @@ fn card_would_win_trick(state: &TrickTakingHandState, card: Card) -> bool {
     if is_hearts_trumps_state(state) {
         return card_would_win_trump_trick(state, card, HEARTS_TRUMP_SUIT);
     }
+    if is_whist_state(state) {
+        return card_would_win_whist_trick(state, card);
+    }
 
     let Some(led_suit) = state.led_suit() else {
         return true;
@@ -1199,6 +1317,10 @@ fn card_would_win_trick(state: &TrickTakingHandState, card: Card) -> bool {
     };
 
     card.rank > current_winner.card.rank
+}
+
+fn card_would_win_whist_trick(state: &TrickTakingHandState, card: Card) -> bool {
+    card_would_win_trump_trick(state, card, whist_trump_suit(state))
 }
 
 fn card_would_win_trump_trick(state: &TrickTakingHandState, card: Card, trump_suit: Suit) -> bool {
@@ -1240,6 +1362,22 @@ fn highest_card_matching(cards: &[Card], predicate: impl Fn(Card) -> bool) -> Op
         .copied()
         .filter(|card| predicate(*card))
         .max_by_key(card_sort_key)
+}
+
+fn highest_card_from_longest_suit(
+    cards: &[Card],
+    predicate: impl Fn(Card) -> bool,
+) -> Option<Card> {
+    cards
+        .iter()
+        .copied()
+        .filter(|card| predicate(*card))
+        .max_by(|left, right| {
+            suit_count(cards, left.suit)
+                .cmp(&suit_count(cards, right.suit))
+                .then_with(|| left.rank.cmp(&right.rank))
+                .then_with(|| left.suit.short_name().cmp(right.suit.short_name()))
+        })
 }
 
 fn card_sort_key(card: &Card) -> (u8, &'static str) {
@@ -1309,6 +1447,66 @@ mod tests {
         assert_eq!(state.current_player, 1);
         assert_eq!(state.current_trick.len(), 0);
         assert_eq!(state.completed_tricks.len(), 0);
+    }
+
+    #[test]
+    fn whist_hand_deals_with_trump_and_advances_to_player() {
+        let state = start_whist_hand(8);
+
+        assert!(state.id.starts_with("whist-hand-8-"));
+        assert_eq!(state.hands.iter().map(Vec::len).sum::<usize>(), 51);
+        assert_eq!(state.current_player, 2);
+        assert_eq!(state.current_trick.len(), 1);
+        assert_eq!(state.status, HandStatus::InProgress);
+    }
+
+    #[test]
+    fn whist_player_must_follow_suit() {
+        let state = WhistHandState {
+            id: "whist-hand-test-S".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Two, Suit::Clubs),
+                    Card::new(Rank::Ace, Suit::Hearts),
+                    Card::new(Rank::King, Suit::Clubs),
+                ],
+                Vec::new(),
+            ],
+            current_player: 2,
+            current_trick: vec![PlayedCard::new(1, Card::new(Rank::Nine, Suit::Clubs))],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            state.legal_player_cards(),
+            vec![
+                Card::new(Rank::Two, Suit::Clubs),
+                Card::new(Rank::King, Suit::Clubs)
+            ]
+        );
+    }
+
+    #[test]
+    fn whist_trump_can_win_against_led_suit() {
+        let state = WhistHandState {
+            id: "whist-hand-test-S".to_string(),
+            hands: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
+            current_player: 2,
+            current_trick: Vec::new(),
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+        let trick = vec![
+            PlayedCard::new(1, Card::new(Rank::Ace, Suit::Hearts)),
+            PlayedCard::new(2, Card::new(Rank::Two, Suit::Spades)),
+            PlayedCard::new(3, Card::new(Rank::King, Suit::Hearts)),
+            PlayedCard::new(0, Card::new(Rank::Three, Suit::Hearts)),
+        ];
+
+        assert_eq!(trick_winner_for_state(&state, &trick), Some(2));
     }
 
     #[test]

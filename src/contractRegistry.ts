@@ -20,6 +20,10 @@ export const fullHandContractCommands: Record<FullHandContract, FullHandContract
     startCommand: "start_hearts_hand",
     playCommand: "play_hearts_hand_card"
   },
+  Whist: {
+    startCommand: "start_whist_hand",
+    playCommand: "play_whist_hand_card"
+  },
   "No Hearts": {
     startCommand: "start_no_hearts_hand",
     playCommand: "play_no_hearts_hand_card"

@@ -118,6 +118,7 @@ export type FullHandContract =
   | "No Last Two"
   | "No Tricks"
   | "Hearts Trumps"
+  | "Whist"
   | "Domino";
 
 export type FullHandState = {
