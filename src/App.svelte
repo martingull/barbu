@@ -24,6 +24,7 @@
   import CardChoiceHand from "./CardChoiceHand.svelte";
   import CardFace from "./CardFace.svelte";
   import CardTable from "./CardTable.svelte";
+  import { formatCardLabel, formatCardList } from "./cardDisplay";
   import ExerciseFeedback from "./ExerciseFeedback.svelte";
   import LearnPanel from "./LearnPanel.svelte";
   import PracticePanel from "./PracticePanel.svelte";
@@ -40,6 +41,7 @@
     heartsLearnPathSteps as heartsPathSteps,
     heartsPracticeGroups,
     tableTabsFor,
+    whistLearnPathSteps as whistPathSteps,
     type ActiveGameTable,
     type BarbuLearnPathStep,
     type BarbuPracticeAction,
@@ -70,6 +72,7 @@
     | "catalog"
     | "barbuTable"
     | "heartsTable"
+    | "whistTable"
     | "cardCountingTable"
     | "barbuContracts"
     | "practiceChooser"
@@ -1470,6 +1473,7 @@
   let activeCourseStage: CourseStage = "concept";
   let activeBarbuTableTab: TableTabId = gameTableDefinitions.barbu.defaultTab;
   let activeHeartsTableTab: TableTabId = gameTableDefinitions.hearts.defaultTab;
+  let activeWhistTableTab: TableTabId = gameTableDefinitions.whist.defaultTab;
   let activeCardCountingTab: CardCountingTabId = "play";
   let cardCountingReturnTarget: CardCountingReturnTarget = "barbu";
   let activeGameTable: ActiveGameTable = "barbu";
@@ -1617,6 +1621,7 @@
   $: heartsCompletedCount = heartsPathSteps.filter((step) => completedPathSteps[step.id]).length;
   $: nextHeartsPathStep = heartsPathSteps.find((step) => !completedPathSteps[step.id]);
   $: isHeartsCourseComplete = heartsCompletedCount === heartsPathSteps.length;
+  $: whistCompletedCount = whistPathSteps.filter((step) => completedPathSteps[step.id]).length;
   $: barbuLearnPanelActions = [
     ...(isCourseComplete
       ? [
@@ -1686,12 +1691,23 @@
       onClick: () => openReference(gameTableDefinitions.hearts.referenceId)
     }
   ];
+  $: whistLearnPanelActions = [
+    {
+      id: "reference",
+      eyebrow: "Rules",
+      title: "Reference",
+      summary: gameTableDefinitions.whist.learn.referenceSummary,
+      primary: true,
+      onClick: () => openReference(gameTableDefinitions.whist.referenceId)
+    }
+  ];
   $: lessonOutcome = selectedCard && (playedCard || !isSelectedLegal) ? buildLessonOutcome(selectedCard, playedCard) : "";
   $: activeCourse = courseCatalog.find((course) => course.id === activeCourseId) ?? courseCatalog[0];
   $: activeReference = referenceCatalog.find((reference) => reference.id === activeReferenceId) ?? referenceCatalog[0];
   $: activeReferenceIsBarbu = activeReference.id === "barbu";
   $: activeBarbuTableTabLabel = gameTableDefinitions.barbu.tabs[activeBarbuTableTab].label;
   $: activeHeartsTableTabLabel = gameTableDefinitions.hearts.tabs[activeHeartsTableTab].label;
+  $: activeWhistTableTabLabel = gameTableDefinitions.whist.tabs[activeWhistTableTab].label;
   $: currentDrill = activeDrillSteps[drillIndex] ?? activeDrillSteps[0] ?? drillSteps[0];
   $: currentDrillTrick = currentDrill.trick;
   $: drillLegalCardIds = new Set(currentDrillTrick.legalCardIds);
@@ -2607,6 +2623,11 @@
     appView = "heartsTable";
   }
 
+  function openWhistTable() {
+    activeGameTable = "whist";
+    appView = "whistTable";
+  }
+
   function openCardCountingTable(tab: CardCountingTabId = activeCardCountingTab) {
     activeCardCountingTab = tab;
     cardCountingReturnTarget = "card-counting";
@@ -2630,6 +2651,11 @@
   function openActiveGameTable() {
     if (activeGameTable === "hearts") {
       openHeartsTable();
+      return;
+    }
+
+    if (activeGameTable === "whist") {
+      openWhistTable();
       return;
     }
 
@@ -3185,7 +3211,9 @@
       return `${question.answer} hearts have been played so far.`;
     }
 
-    return question.answer ? `Yes. ${question.targetCard.label} was played.` : `No. ${question.targetCard.label} was not played.`;
+    return question.answer
+      ? `Yes. ${formatCardLabel(question.targetCard)} was played.`
+      : `No. ${formatCardLabel(question.targetCard)} was not played.`;
   }
 
   function beginRealisticCourtTrick(round: RealisticCourtRound): RealisticCourtRound {
@@ -3418,7 +3446,9 @@
       return `The answer was ${question.answer}.`;
     }
 
-    return question.answer ? `Yes. ${question.targetCard.label} was played.` : `No. ${question.targetCard.label} was not played.`;
+    return question.answer
+      ? `Yes. ${formatCardLabel(question.targetCard)} was played.`
+      : `No. ${formatCardLabel(question.targetCard)} was not played.`;
   }
 
   function beginRealisticDangerTrick(round: RealisticDangerRound): RealisticDangerRound {
@@ -3621,7 +3651,9 @@
       return `The answer was ${question.answer}.`;
     }
 
-    return question.answer ? `Yes. ${question.targetCard.label} was played.` : `No. ${question.targetCard.label} was not played.`;
+    return question.answer
+      ? `Yes. ${formatCardLabel(question.targetCard)} was played.`
+      : `No. ${formatCardLabel(question.targetCard)} was not played.`;
   }
 
   function openBarbuContracts() {
@@ -3652,6 +3684,11 @@
   function openGame(gameId: CatalogGameId) {
     if (gameId === "hearts") {
       openHeartsTable();
+      return;
+    }
+
+    if (gameId === "whist") {
+      openWhistTable();
       return;
     }
 
@@ -5045,7 +5082,7 @@
   }
 
   function dominoLaneText(lane: Card[], startRank = "7") {
-    return lane.length ? lane.map((card) => card.label).join(" ") : `Open with ${startRank}`;
+    return lane.length ? lane.map(formatCardLabel).join(" ") : `Open with ${startRank}`;
   }
 
   function dominoOutOrderText(state: DominoHandState) {
@@ -5071,24 +5108,24 @@
       state.playerHand.length === 1
         ? ` Out for ${formatSignedScore(dominoNextOutScore)}.`
         : "";
-    const unlockText = unlockedCards.length ? ` Opens ${unlockedCards.map((unlocked) => unlocked.label).join(" or ")} later.` : "";
+    const unlockText = unlockedCards.length ? ` Opens ${unlockedCards.map(formatCardLabel).join(" or ")} later.` : "";
 
     if (lane.length === 0) {
-      return `${card.label} opens ${suitNames[card.suit]} from ${dominoStartRank(state)}.${unlockText}${finishText}`;
+      return `${formatCardLabel(card)} opens ${suitNames[card.suit]} from ${dominoStartRank(state)}.${unlockText}${finishText}`;
     }
 
     const direction = dominoExtensionDirection(lane, card);
-    return `${card.label} extends ${suitNames[card.suit]} ${direction}.${unlockText}${finishText}`;
+    return `${formatCardLabel(card)} extends ${suitNames[card.suit]} ${direction}.${unlockText}${finishText}`;
   }
 
   function dominoIllegalMoveExplanation(state: DominoHandState, card: Card) {
     const lane = state.layout[suitIndex(card.suit)];
 
     if (lane.length === 0) {
-      return `${card.label} is blocked. Closed suits start with ${dominoStartRank(state)}.`;
+      return `${formatCardLabel(card)} is blocked. Closed suits start with ${dominoStartRank(state)}.`;
     }
 
-    return `${card.label} is blocked. ${suitNames[card.suit]} needs the next lower or higher card.`;
+    return `${formatCardLabel(card)} is blocked. ${suitNames[card.suit]} needs the next lower or higher card.`;
   }
 
   function dominoCardsUnlockedByPlacement(state: DominoHandState, card: Card) {
@@ -5825,7 +5862,10 @@
 
   function buildDrillFeedback(card: Card) {
     if (!drillLegalCardIds.has(card.id)) {
-      return firstSentence(currentDrillTrick.playedExplanations[card.id] ?? `${card.label} is not legal while you still have a legal card.`);
+      return firstSentence(
+        currentDrillTrick.playedExplanations[card.id] ??
+          `${formatCardLabel(card)} is not legal while you still have a legal card.`
+      );
     }
 
     return firstSentence(currentDrillTrick.playedExplanations[card.id] ?? "That legal play completes the trick.");
@@ -6578,6 +6618,76 @@
           </div>
       {/if}
     </section>
+  {:else if appView === "whistTable"}
+    <header class="topbar table-topbar" aria-label="Whist table">
+      <button class="back-button" onclick={openCatalog} type="button">Games</button>
+      <div class="table-title">
+        <p class="eyebrow">{gameTableDefinitions.whist.family} family</p>
+        <h1>{gameTableDefinitions.whist.title}</h1>
+      </div>
+      <div class="contract-status">
+        <span>Current mode</span>
+        <strong>{activeWhistTableTabLabel}</strong>
+      </div>
+    </header>
+
+    <section class="table-room" aria-label="Whist table modes">
+      <div class="barbu-table-rail">
+        <div class="barbu-mode-box">
+          <p class="eyebrow">Table mode</p>
+          <div class="barbu-table-tabs" aria-label="Whist table sections" role="tablist">
+            {#each tableTabsFor(gameTableDefinitions.whist) as tab}
+              <button
+                aria-controls={tab.panelId}
+                aria-selected={activeWhistTableTab === tab.id}
+                class:active={activeWhistTableTab === tab.id}
+                onclick={() => {
+                  activeWhistTableTab = tab.id;
+                }}
+                role="tab"
+                type="button"
+              >
+                {tab.label}
+              </button>
+            {/each}
+          </div>
+        </div>
+      </div>
+
+      {#if activeWhistTableTab === "learn"}
+        <LearnPanel
+          table={gameTableDefinitions.whist}
+          steps={whistPathSteps}
+          completedSteps={completedPathSteps}
+          completedCount={whistCompletedCount}
+          actions={whistLearnPanelActions}
+          onStepSelect={() => {
+            openReference(gameTableDefinitions.whist.referenceId);
+          }}
+        />
+      {:else}
+        <div
+          aria-label={gameTableDefinitions.whist.tabs[activeWhistTableTab].label}
+          class="barbu-tab-panel practice-panel"
+          id={gameTableDefinitions.whist.tabs[activeWhistTableTab].panelId}
+          role="tabpanel"
+        >
+          <div class="barbu-mode-copy">
+            <p class="eyebrow">{gameTableDefinitions.whist.tabs[activeWhistTableTab].intro.eyebrow}</p>
+            <h2>{gameTableDefinitions.whist.tabs[activeWhistTableTab].intro.title}</h2>
+            <p>{gameTableDefinitions.whist.tabs[activeWhistTableTab].intro.summary}</p>
+          </div>
+
+          <div class="table-action-groups" aria-label="Whist planned work">
+            <section class="table-action-group" aria-label="Whist next implementation">
+              <p class="eyebrow">Planned</p>
+              <button class="drill-action" disabled type="button">Whist engine not built yet</button>
+              <small class="saved-run-note">Start with the Learn tab and reference baseline.</small>
+            </section>
+          </div>
+        </div>
+      {/if}
+    </section>
   {:else if appView === "trumpMemory"}
       <TablePlaySurface
         mode="play"
@@ -6636,7 +6746,7 @@
               </div>
             {:else}
               <div class="trump-specific-check">
-                <div class="trump-target-card" aria-label={`Target trump card ${realisticTrumpRound.question.targetCard.label}`}>
+                <div class="trump-target-card" aria-label={`Target trump card ${formatCardLabel(realisticTrumpRound.question.targetCard)}`}>
                   <span>Target</span>
                   <div class="trump-target-card-face">
                     <CardFace card={realisticTrumpRound.question.targetCard} decorative />
@@ -6772,7 +6882,7 @@
             <strong>{trumpCountSeenCount} hearts appeared</strong>
             <small>
               {#if trumpCountQuestion?.kind === "specific"}
-                {trumpCountQuestion.targetCard.label} {trumpCountQuestion.answer ? "was" : "was not"} in {trumpCountSegmentLabel}.
+                {formatCardLabel(trumpCountQuestion.targetCard)} {trumpCountQuestion.answer ? "was" : "was not"} in {trumpCountSegmentLabel}.
               {:else}
                 The answer for {trumpCountSegmentLabel} was {trumpCountQuestion?.answer}.
               {/if}
@@ -6805,7 +6915,7 @@
             </div>
           {:else if trumpCountQuestion?.kind === "specific"}
             <div class="trump-specific-check">
-              <div class="trump-target-card" aria-label={`Target trump card ${trumpCountQuestion.targetCard.label}`}>
+              <div class="trump-target-card" aria-label={`Target trump card ${formatCardLabel(trumpCountQuestion.targetCard)}`}>
                 <span>Target</span>
                 <div class="trump-target-card-face">
                   <CardFace card={trumpCountQuestion.targetCard} decorative />
@@ -6943,7 +7053,7 @@
             </div>
           {:else}
             <div class="trump-specific-check">
-              <div class="trump-target-card" aria-label={`Target court card ${realisticCourtRound.question.targetCard.label}`}>
+              <div class="trump-target-card" aria-label={`Target court card ${formatCardLabel(realisticCourtRound.question.targetCard)}`}>
                 <span>Target</span>
                 <div class="trump-target-card-face">
                   <CardFace card={realisticCourtRound.question.targetCard} decorative />
@@ -7098,7 +7208,7 @@
             </div>
           {:else}
             <div class="trump-specific-check">
-              <div class="trump-target-card" aria-label={`Target danger card ${realisticDangerRound.question.targetCard.label}`}>
+              <div class="trump-target-card" aria-label={`Target danger card ${formatCardLabel(realisticDangerRound.question.targetCard)}`}>
                 <span>Target</span>
                 <div class="trump-target-card-face">
                   <CardFace card={realisticDangerRound.question.targetCard} decorative />
@@ -7629,12 +7739,12 @@
                 : `${heartsPassPracticeMatchCount} of 3 matched. Compare your pass with the recommendation.`}
             </p>
             <p class="explanation pass-recommendation">
-              Recommended: {heartsPassPractice.recommendedPass.map((card) => card.label).join(", ")}.
+              Recommended: {formatCardList(heartsPassPractice.recommendedPass)}.
               Move the obvious danger cards before play starts.
             </p>
           {:else if heartsPassPracticeSelectedCards.length}
             <p class="explanation">
-              Passing: {heartsPassPracticeSelectedCards.map((card) => card.label).join(", ")}
+              Passing: {formatCardList(heartsPassPracticeSelectedCards)}
             </p>
           {/if}
 
@@ -7730,7 +7840,7 @@
           </p>
           {#if heartsPassSelectedCards.length}
             <p class="explanation">
-              Passing: {heartsPassSelectedCards.map((card) => card.label).join(", ")}
+              Passing: {formatCardList(heartsPassSelectedCards)}
             </p>
           {/if}
           {#if heartsPassError}

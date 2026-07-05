@@ -320,11 +320,11 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByRole("button", { name: "Card Counting II planned" })).toContainText("Pack");
   await expect(page.getByRole("button", { name: "Card Counting II planned" })).toContainText("Bridge-oriented");
   await expect(page.getByRole("button", { name: "Solitaire planned" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Whist planned" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Open Whist/ })).toBeVisible();
   await expect(page.getByRole("button", { name: "Bridge planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Gin Rummy planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Canasta planned" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Whist planned" })).toContainText("Free");
+  await expect(page.getByRole("button", { name: /Open Whist/ })).toContainText("Free");
   await expect(page.getByRole("button", { name: "Solitaire planned" })).toContainText("Pack");
   await expect(page.getByRole("heading", { name: "Varieties of play" })).toHaveCount(0);
   await expect(page.getByText("Barbu Learning Table")).toHaveCount(0);
@@ -335,6 +335,15 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
     .toEqual(["Hearts", "Barbu", "Whist", "Card Counting I", "Card Counting II"]);
 
   await page.screenshot({ path: testInfo.outputPath("catalog.png"), fullPage: true });
+
+  await page.getByRole("button", { name: /Open Whist/ }).click();
+  await expect(page.getByRole("heading", { name: "Whist table", exact: true })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Learn" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByLabel("Whist lesson path")).toContainText("Win tricks together");
+  await expect(page.getByLabel("Whist lesson path")).toContainText("Invite a suit");
+  await expect(page.getByLabel("Whist lesson path")).toContainText("Count odd tricks");
+  await expect(page.getByLabel("Whist learn actions").getByRole("button", { name: "Rules Reference" })).toBeVisible();
+  await page.getByRole("button", { name: "Games" }).click();
 
   await page.getByRole("button", { name: "Open Barbu" }).click();
 
@@ -507,7 +516,7 @@ test("Hearts passing drill teaches the danger-card pass", async ({ page }, testI
   await page.getByRole("button", { name: "Check pass" }).click();
 
   await expect(page.getByLabel("Hearts pass practice cards")).toContainText("Good pass");
-  await expect(page.getByLabel("Hearts pass practice cards")).toContainText("Recommended: QS, AH, KH");
+  await expect(page.getByLabel("Hearts pass practice cards")).toContainText("Recommended: Q♠, A♥, K♥");
   await expect(page.getByRole("button", { name: "Next pass" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Try another" })).toHaveCount(0);
   await expectFeedbackAboveHand(page, ".hearts-pass-cards");
@@ -539,7 +548,7 @@ test("Hearts passing drill can preserve a long suit", async ({ page }) => {
   await page.getByRole("button", { name: "Check pass" }).click();
 
   await expect(page.getByLabel("Hearts pass practice cards")).toContainText("Good pass");
-  await expect(page.getByLabel("Hearts pass practice cards")).toContainText("Recommended: QS, AH, KH");
+  await expect(page.getByLabel("Hearts pass practice cards")).toContainText("Recommended: Q♠, A♥, K♥");
   await expect(page.getByRole("button", { name: "Next pass" })).toBeVisible();
 });
 
@@ -616,7 +625,7 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
   await expect(page.getByLabel("Drill decision")).toContainText(/Find the 13-point card|Find the one-point card|Find the clean card/);
   await completeQuickDrillDecision(page);
   await expect(page.getByLabel("Drill decision")).toContainText("Good");
-  await expect(page.getByLabel("Drill decision")).toContainText(/13-point danger card|7H is good|clean card/);
+  await expect(page.getByLabel("Drill decision")).toContainText(/13-point danger card|7♥ is good|clean card/);
 });
 
 test("Hearts practice result returns to the Hearts table", async ({ page }) => {
@@ -1097,7 +1106,7 @@ test("guided lesson accepts a legal card play", async ({ page }) => {
   await page.getByRole("button", { name: "Play selected" }).click();
 
   await expect(page.getByText("Good")).toBeVisible();
-  await expect(page.getByText("Left wins with AC and takes 1 heart penalty from Right's 4H.")).toBeVisible();
+  await expect(page.getByText("Left wins with A♣ and takes 1 heart penalty from Right's 4♥.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Next trick" })).toBeVisible();
 });
 

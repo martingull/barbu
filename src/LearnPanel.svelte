@@ -33,8 +33,10 @@
     onStepSelect
   }: Props = $props();
 
-  let tableActionLabel = $derived(table.id === "barbu" ? "Barbu table actions" : "Hearts table actions");
-  let learnActionLabel = $derived(table.id === "hearts" ? "Hearts learn actions" : "Learn actions");
+  let tableActionLabel = $derived(table.id === "barbu" ? "Barbu table actions" : `${table.title} actions`);
+  let learnActionLabel = $derived(
+    table.id === "hearts" ? "Hearts learn actions" : table.id === "whist" ? "Whist learn actions" : "Learn actions"
+  );
 </script>
 
 <div aria-label="Learn" class="barbu-tab-panel learn-panel" id={table.tabs.learn.panelId} role="tabpanel">

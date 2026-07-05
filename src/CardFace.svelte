@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { formatCardLabel } from "./cardDisplay";
   import type { Card, Suit } from "./lessonTypes";
 
   type Props = {
@@ -43,7 +44,7 @@
 </script>
 
 <img
-  alt={decorative ? "" : card.label}
+  alt={decorative ? "" : formatCardLabel(card)}
   aria-hidden={decorative}
   class="card-face"
   draggable="false"

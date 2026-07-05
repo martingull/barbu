@@ -1,13 +1,12 @@
 export const tableTabIds = ["learn", "practice", "play", "perfect"] as const;
 
 export type TableTabId = (typeof tableTabIds)[number];
-export type ActiveGameTable = "barbu" | "hearts";
+export type ActiveGameTable = "barbu" | "hearts" | "whist";
 export type CatalogGameId =
   | ActiveGameTable
   | "solitaire"
   | "card-counting"
   | "card-counting-ii"
-  | "whist"
   | "bridge"
   | "gin-rummy"
   | "canasta";
@@ -16,6 +15,7 @@ export type CatalogAccess = "Free" | "Pack";
 export type CatalogAccessModel = "free-starter" | "metered-pack";
 export type BarbuLearnPathAction = "lesson" | "generated" | "review" | "planned";
 export type HeartsLearnPathAction = "object" | "queen" | "avoid" | "pass" | "break" | "moon" | "score";
+export type WhistLearnPathAction = "planned";
 export type BarbuPracticeAction = "quick" | "fixed" | "domino";
 export type HeartsPracticeAction = "quick" | "pass" | "first" | "avoid" | "queen" | "break" | "moon" | "score";
 
@@ -95,6 +95,7 @@ export type BarbuLearnPathStep = LearnPathStep<BarbuLearnPathAction> & {
 };
 
 export type HeartsLearnPathStep = LearnPathStep<HeartsLearnPathAction>;
+export type WhistLearnPathStep = LearnPathStep<WhistLearnPathAction>;
 
 export type PracticeEntry<Action extends string = string> = {
   id: string;
@@ -273,6 +274,51 @@ export const heartsLearnPathSteps: HeartsLearnPathStep[] = [
     title: "Score a hand",
     summary: "Find why Queen of Spades makes a trick much more expensive.",
     action: "score"
+  })
+];
+
+export const whistLearnPathSteps: WhistLearnPathStep[] = [
+  createLearnPathStep({
+    id: "whist-object",
+    step: "Concept",
+    title: "Win tricks together",
+    summary: "Whist is partnership trick-taking: you and the player opposite you score as a side.",
+    action: "planned"
+  }),
+  createLearnPathStep({
+    id: "whist-follow-suit",
+    step: "Rule",
+    title: "Follow suit",
+    summary: "The led suit controls the trick unless someone who is void plays a trump.",
+    action: "planned"
+  }),
+  createLearnPathStep({
+    id: "whist-trumps",
+    step: "Example",
+    title: "Trump wins",
+    summary: "The dealer's last card sets trump; a low trump can beat a high plain-suit card.",
+    action: "planned"
+  }),
+  createLearnPathStep({
+    id: "whist-partner",
+    step: "Partnership",
+    title: "Read your partner",
+    summary: "Return partner's suit, support their lead, and avoid fighting your own side.",
+    action: "planned"
+  }),
+  createLearnPathStep({
+    id: "whist-suit-invite",
+    step: "Table talk",
+    title: "Invite a suit",
+    summary: "Lead a strong or long suit to show partner where your hand wants help.",
+    action: "planned"
+  }),
+  createLearnPathStep({
+    id: "whist-odd-tricks",
+    step: "Scoring",
+    title: "Count odd tricks",
+    summary: "Only tricks above six score, so seven tricks is one point for your partnership.",
+    action: "planned"
   })
 ];
 
@@ -486,10 +532,10 @@ export function createCatalogEntries(): CatalogEntry[] {
       id: "whist",
       family: "Whist",
       title: "Whist",
-      status: "Planned",
+      status: "Ready",
       access: "Free",
       accessModel: "free-starter",
-      summary: "Partnership trick play and long-suit development."
+      summary: "Partnership trick play and silent suit signals."
     }),
     createCatalogEntry({
       id: "card-counting",
@@ -679,6 +725,62 @@ export const gameTableDefinitions = {
         { id: "trump-memory", label: "Trump memory hand", destination: "Trump memory hand" },
         { id: "court-cards", label: "Track court cards", destination: "Court-card memory minigame" },
         { id: "danger-cards", label: "Danger cards", destination: "Danger-card memory minigame" }
+      ]
+    }
+  }),
+  whist: createGameTableDefinition({
+    id: "whist",
+    title: "Whist table",
+    family: "Whist",
+    referenceId: "whist",
+    scorecard: {
+      label: "Whist scorecard",
+      unitLabel: "Odd tricks",
+      objective: "Partnership score leads",
+      leaderRule: "high-score"
+    },
+    learn: {
+      pathAriaLabel: "Whist lesson path",
+      pathEyebrow: "Training path",
+      pathTitle: "Learn the Whist table",
+      progressAriaLabel: "Whist course progress",
+      nextSummary: "Whist lessons are planned after the reference and table shell are in place.",
+      completeSummary: "Whist lessons are planned after the first reference pass.",
+      referenceSummary: "Check the Whist baseline: partnerships, trumps, odd tricks, and silent table signals."
+    },
+    tabIntros: {
+      learn: {
+        eyebrow: "Learn",
+        title: "Learn partnership trick play.",
+        summary:
+          "Whist teaches the partnership habits behind many later games: follow suit, manage trumps, lead strength, and read partner."
+      },
+      practice: {
+        eyebrow: "Practice",
+        title: "Whist practice is planned.",
+        summary:
+          "Practice will start with follow-suit, trump-or-discard, third-hand-high, return partner's suit, and odd-trick counting."
+      },
+      play: {
+        eyebrow: "Play",
+        title: "Whist play is planned.",
+        summary:
+          "The first playable version should use fixed partnerships, dealer's last card as trump, thirteen tricks, and odd-trick scoring."
+      },
+      perfect: {
+        eyebrow: "Pro",
+        title: "Whist card sense is planned.",
+        summary:
+          "Later Pro exercises should track trumps, honours, partner signals, and suit preference during real partnership play."
+      }
+    },
+    defaultTab: "learn",
+    actionsByTab: {
+      learn: [
+        { id: "reference", label: "Reference", destination: "Whist reference" },
+        { id: "follow-suit", label: "Follow suit", destination: "Whist follow-suit concept" },
+        { id: "trumps", label: "Trump wins", destination: "Whist trump concept" },
+        { id: "partner-suits", label: "Partner signals", destination: "Whist partnership concept" }
       ]
     }
   })

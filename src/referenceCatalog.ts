@@ -361,5 +361,136 @@ export const referenceCatalog: GameReference[] = [
           "The app currently teaches rotating passes, the core trick loop, Hearts opening restrictions, penalty scoring, shooting the moon, and a 100-point local match before adding richer Hearts varieties such as locked danger spades or bonus-jack rules."
       }
     ]
+  },
+  {
+    id: "whist",
+    title: "Whist",
+    family: "Whist",
+    baseline: "David Parlett structure, classic Whist baseline with Wikipedia cross-check",
+    overview:
+      "Whist is the app's next partnership trick-taking target. The v1 definition is classic four-player Whist: fixed partners sit opposite each other, the dealer's last card sets trump, players follow suit when able, and each partnership scores odd tricks above six.",
+    sections: [
+      {
+        id: "object",
+        title: "Object",
+        body:
+          "Win tricks with your partner. Unlike Hearts, Whist is not normally a trick-avoidance game; unlike Barbu, the object does not change by contract. Your side tries to build enough tricks that the tricks above six become points.",
+        facts: [
+          { label: "Game type", value: "Partnership trick-taking" },
+          { label: "Scoring unit", value: "Odd tricks above six" }
+        ]
+      },
+      {
+        id: "players",
+        title: "Players And Partnerships",
+        body:
+          "Whist is played by four players in two partnerships. Partners sit opposite each other, so the player across the table is on your side and the side seats are your opponents.",
+        facts: [
+          { label: "Players", value: "Four" },
+          { label: "Teams", value: "Two partnerships" },
+          { label: "Table idea", value: "Partner opposite you" }
+        ]
+      },
+      {
+        id: "cards",
+        title: "Cards",
+        body:
+          "Whist uses a standard fifty-two card pack. Aces are high, then kings, queens, jacks, tens, and down to twos.",
+        facts: [
+          { label: "Pack", value: "52 cards" },
+          { label: "Rank", value: "A K Q J 10 9 8 7 6 5 4 3 2" }
+        ]
+      },
+      {
+        id: "deal",
+        title: "Deal And Trump",
+        body:
+          "Each player receives thirteen cards. The dealer's last card is turned face up and its suit becomes trump for the hand. The app should keep this as the first Whist rule before adding bidding or other varieties.",
+        facts: [
+          { label: "Cards per player", value: "13" },
+          { label: "Trump", value: "Dealer's last card" },
+          { label: "Deferred", value: "Bidding and other Whist varieties" }
+        ]
+      },
+      {
+        id: "play",
+        title: "Play",
+        body:
+          "The player to dealer's left leads first. Play moves clockwise. A player who can follow the led suit must do so. A player who is void may discard or play a trump. The highest trump wins if any trump is played; otherwise the highest card of the led suit wins. The trick winner leads next.",
+        facts: [
+          { label: "Opening lead", value: "Player left of dealer" },
+          { label: "Legal play", value: "Follow suit when possible" },
+          { label: "Trick winner", value: "Highest trump, otherwise highest led-suit card" }
+        ]
+      },
+      {
+        id: "scoring",
+        title: "Scoring",
+        body:
+          "A partnership scores one point for each trick above six. Seven tricks scores one point, eight tricks scores two, and so on. Whist v1 should use this simple odd-trick scoring before honours or rubber scoring.",
+        facts: [
+          { label: "Six tricks", value: "Book, no points yet" },
+          { label: "Seven tricks", value: "1 point" },
+          { label: "App target", value: "First partnership to 5 points, proposed v1" }
+        ]
+      },
+      {
+        id: "signals",
+        title: "Silent Partnership Signals",
+        body:
+          "Whist communication happens through legal card play. Lead a strong or long suit to invite partner's help. Return partner's suit when it makes sense. Support partner's lead by playing high in third hand, and avoid spending strength too early in second hand.",
+        facts: [
+          { label: "Lead", value: "Show a strong or long suit" },
+          { label: "Partner return", value: "Lead partner's suit back when useful" },
+          { label: "Basic habits", value: "Second hand low, third hand high" }
+        ]
+      }
+    ],
+    contracts: [
+      {
+        id: "classic-whist",
+        title: "Classic Whist",
+        objective: "Win tricks with your partner and score the tricks your side wins above six.",
+        scoring: "Each odd trick above six is one point for the partnership.",
+        lesson: "Start by learning follow-suit, trumping, partner support, and odd-trick counting."
+      }
+    ],
+    contractRoadmap: [
+      {
+        id: "whist-reference",
+        title: "Reference baseline",
+        coreStatus: "Core",
+        appStatus: "Defined",
+        note: "Classic four-player partnership Whist is defined for object, players, cards, deal, trump, play, scoring, and table signals."
+      },
+      {
+        id: "whist-learn",
+        title: "Learning path",
+        coreStatus: "Core",
+        appStatus: "Planned",
+        note: "The v1 path should teach object, follow-suit, trumps, partner reading, suit invitation, and odd-trick scoring."
+      },
+      {
+        id: "whist-play",
+        title: "Playable hand",
+        coreStatus: "Core",
+        appStatus: "Later",
+        note: "Playable Whist needs partnership seating, trump selection from dealer's last card, thirteen-trick play, and partnership scoring."
+      }
+    ],
+    variants: [
+      {
+        id: "classic-baseline",
+        title: "Classic Baseline",
+        note:
+          "Whist v1 should stay with fixed partnerships, dealer-last-card trump, and odd-trick scoring before adding other Whist-family varieties."
+      },
+      {
+        id: "deferred-varieties",
+        title: "Deferred Varieties",
+        note:
+          "Bid Whist, Knock-out Whist, honours, rubber scoring, and richer table customs are later varieties, not the first app definition."
+      }
+    ]
   }
 ];

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { formatCardText } from "./cardDisplay";
+
   type Props = {
     eyebrow: string;
     title: string;
@@ -28,7 +30,7 @@
 </div>
 
 {#if result}
-  <p class="result" aria-label={resultAriaLabel || undefined}>{result}</p>
+  <p class="result" aria-label={resultAriaLabel || undefined}>{formatCardText(result)}</p>
 {/if}
 
 {#if error}
@@ -36,7 +38,7 @@
 {/if}
 
 {#if explanation}
-  <p class="explanation">{explanation}</p>
+  <p class="explanation">{formatCardText(explanation)}</p>
 {/if}
 
 {#if outcome}
