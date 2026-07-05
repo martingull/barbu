@@ -15,7 +15,7 @@ export type CatalogAccess = "Free" | "Pack";
 export type CatalogAccessModel = "free-starter" | "metered-pack";
 export type BarbuLearnPathAction = "lesson" | "generated" | "review" | "planned";
 export type HeartsLearnPathAction = "object" | "queen" | "avoid" | "pass" | "break" | "moon" | "score";
-export type WhistLearnPathAction = "reference" | WhistPracticeAction;
+export type WhistLearnPathAction = "object" | WhistPracticeAction;
 export type BarbuPracticeAction = "quick" | "fixed" | "domino";
 export type HeartsPracticeAction = "quick" | "pass" | "first" | "avoid" | "queen" | "break" | "moon" | "score";
 export type WhistPracticeAction = "follow" | "trump" | "third" | "return" | "odd";
@@ -288,7 +288,7 @@ export const whistLearnPathSteps: WhistLearnPathStep[] = [
     step: "Concept",
     title: "Win tricks together",
     summary: "Whist is partnership trick-taking: you and the player opposite you score as a side.",
-    action: "reference"
+    action: "object"
   }),
   createLearnPathStep({
     id: "whist-follow-suit",

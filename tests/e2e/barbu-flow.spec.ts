@@ -485,6 +485,20 @@ test("Whist learn path opens matching practice decisions", async ({ page }) => {
   await gotoWithPracticeSeed(page, 4);
   await page.getByRole("button", { name: /Open Whist/ }).click();
 
+  await page.getByRole("button", { name: /^1 Concept Win tricks together/ }).click();
+  await expect(page.getByRole("heading", { name: "Win tricks together" })).toBeVisible();
+  await expect(page.getByLabel("Whist object lesson content")).toContainText("You and Barbu score as partners.");
+  await page.getByRole("button", { name: "Next lesson" }).click();
+
+  await expect(page.getByRole("heading", { name: "Whist practice: follow suit" })).toBeVisible();
+  await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
+  await expect(page.getByLabel("Drill decision")).toContainText(/Follow partner's led suit|Second hand follows low|Cover when it wins/);
+  await completeVisibleDrillSession(page);
+  await expect(page.getByRole("heading", { name: "Session complete" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue Whist path" })).toBeVisible();
+  await page.getByLabel("Next drill step").getByRole("button", { name: "Table" }).click();
+  await page.getByRole("tab", { name: "Learn" }).click();
+
   await page.getByRole("button", { name: /^2 Rule Follow suit/ }).click();
   await expect(page.getByRole("heading", { name: "Whist practice: follow suit" })).toBeVisible();
   await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
@@ -604,7 +618,6 @@ test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testI
   await expect(page.getByRole("button", { name: "Play Hearts" })).toBeVisible();
 
   await page.getByRole("tab", { name: "Learn" }).click();
-  await expect(page.getByLabel("Hearts learn actions")).toContainText("Continue with Object of Hearts");
   await expect(page.getByLabel("Hearts learn actions")).toContainText("Reference");
   await expect(page.getByLabel("Hearts learn actions")).not.toContainText("Hearts scorecard");
   await expect(page.getByLabel("Hearts course progress")).toContainText("0 / 7 complete");

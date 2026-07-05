@@ -85,6 +85,7 @@
     | "reference"
     | "courseContent"
     | "heartsLearnObject"
+    | "whistLearnObject"
     | "lesson"
     | "drill"
     | "drillResult"
@@ -4952,11 +4953,20 @@
     saveCourseProgress({ ...completedPathSteps, [stepId]: true });
   }
 
+  function startWhistObjectLesson() {
+    activeGameTable = "whist";
+    activePathStepId = "whist-object";
+    appView = "whistLearnObject";
+  }
+
+  function continueWhistObjectLesson() {
+    completeWhistPathStep("whist-object");
+    startWhistFollowSuitDrill("whist-follow-suit");
+  }
+
   function startWhistPathStep(step: WhistLearnPathStep) {
-    if (step.action === "reference") {
-      activePathStepId = step.id;
-      openReference(gameTableDefinitions.whist.referenceId);
-      saveCourseProgress({ ...completedPathSteps, [step.id]: true });
+    if (step.action === "object") {
+      startWhistObjectLesson();
       return;
     }
 
@@ -8657,6 +8667,49 @@
       <div class="course-actions">
         <button class="secondary-action" onclick={openHeartsTable} type="button">Table</button>
         <button class="primary-action" onclick={continueHeartsObjectLesson} type="button">Next lesson</button>
+      </div>
+    </section>
+  {:else if appView === "whistLearnObject"}
+    <header class="topbar" aria-label="Whist object lesson">
+      <button class="back-button" onclick={openWhistTable} type="button">Table</button>
+      <div>
+        <p class="eyebrow">Whist</p>
+        <h1>Win tricks together</h1>
+      </div>
+      <div class="contract-status">
+        <span>Lesson</span>
+        <strong>Concept</strong>
+      </div>
+    </header>
+
+    <section class="course-screen" aria-label="Whist object lesson content">
+      <div class="course-copy">
+        <p class="eyebrow">Concept</p>
+        <h2>You and Barbu score as partners.</h2>
+        <p>
+          Whist is partnership trick-taking. You sit opposite Barbu, follow suit when you can, use trumps when they matter,
+          and count only the tricks your side wins above six.
+        </p>
+      </div>
+
+      <div class="course-points" aria-label="Whist object points">
+        <div>
+          <span>1</span>
+          <strong>Read the table as two sides: You + Barbu against Left + Right.</strong>
+        </div>
+        <div>
+          <span>2</span>
+          <strong>Follow suit first; trump changes the winner only when a player is void.</strong>
+        </div>
+        <div>
+          <span>3</span>
+          <strong>Seven tricks is the first point. Every trick after six is an odd trick.</strong>
+        </div>
+      </div>
+
+      <div class="course-actions">
+        <button class="secondary-action" onclick={openWhistTable} type="button">Table</button>
+        <button class="primary-action" onclick={continueWhistObjectLesson} type="button">Next lesson</button>
       </div>
     </section>
   {:else if appView === "runContractIntro"}
