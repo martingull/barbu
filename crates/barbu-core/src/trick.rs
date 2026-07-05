@@ -1,4 +1,4 @@
-use crate::cards::{Card, Suit};
+use crate::cards::{Card, Rank, Suit};
 
 pub type PlayerIndex = usize;
 
@@ -47,7 +47,14 @@ pub fn score_no_hearts_trick(played_cards: &[PlayedCard]) -> i32 {
     played_cards
         .iter()
         .filter(|played| played.card.suit == Suit::Hearts)
-        .count() as i32
+        .map(|played| {
+            if played.card.rank == Rank::Ace {
+                6
+            } else {
+                2
+            }
+        })
+        .sum()
 }
 
 #[cfg(test)]
@@ -96,7 +103,7 @@ mod tests {
     }
 
     #[test]
-    fn no_hearts_contract_scores_one_point_per_heart() {
+    fn no_hearts_contract_scores_two_points_per_heart_and_six_for_ace() {
         let trick = [
             PlayedCard::new(0, card(Rank::Nine, Suit::Diamonds)),
             PlayedCard::new(1, card(Rank::Ace, Suit::Hearts)),
@@ -104,6 +111,6 @@ mod tests {
             PlayedCard::new(3, card(Rank::King, Suit::Hearts)),
         ];
 
-        assert_eq!(score_no_hearts_trick(&trick), 2);
+        assert_eq!(score_no_hearts_trick(&trick), 8);
     }
 }

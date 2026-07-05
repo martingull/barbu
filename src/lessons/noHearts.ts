@@ -4,7 +4,7 @@ export const noHeartsGuidedTricks: GuidedTrick[] = [
   {
     title: "Follow clubs without taking the heart",
     beforeResult: "Barbu led 9C. Right could not follow clubs and discarded 4H.",
-    afterResult: "Left wins with AC and takes 1 heart penalty from Right's 4H.",
+    afterResult: "Left wins with AC and takes 2 heart penalty points from Right's 4H.",
     emptyExplanation:
       "The led suit is clubs. You hold clubs, so only 2C and KC are legal. The heart belongs to Right, not Barbu.",
     legalCardIds: ["2C", "KC"],

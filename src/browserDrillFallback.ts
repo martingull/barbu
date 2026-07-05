@@ -88,7 +88,7 @@ function generatedNoHeartsFollowSuitStep(seed: number): BrowserDrillStep {
     trick: {
       title: "Follow suit with a heart at risk",
       beforeResult: `Barbu led ${leadCard.label}. Right is void in ${ledSuitName} and discarded ${heartCard.label}.`,
-      afterResult: `Left wins with ${leftWinner.label} and takes 1 heart penalty from Right's ${heartCard.label}.`,
+      afterResult: `Left wins with ${leftWinner.label} and takes 2 heart penalty points from Right's ${heartCard.label}.`,
       emptyExplanation: `${capitalize(ledSuitName)} were led. Choose a ${ledSuitName} card.`,
       legalCardIds: [lowPlayerCard.id, highPlayerCard.id],
       hand: playerHand,

@@ -225,6 +225,34 @@ Core contract status:
 | Hearts Trumps | Core | Playable | Hearts are fixed as trumps for v1; guided course, generated practice, full-hand, and run support exist. |
 | Domino | Core | Playable | Opening-rank state exists but the app currently defaults to fixed-seven layout v1; chooser/declarer-selected starting rank is later. |
 
+### Barbu Rules Audit
+
+Last audited against the current implementation: Play Barbu, full-hand contracts, generated practice, reference copy, and Playwright full-hand smoke tests. The latest scoring pass aligned Barbu generated-practice point values with full-hand scoring for No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps.
+
+Implemented and internally consistent:
+
+| Area | Current rule | Implementation status |
+| --- | --- | --- |
+| Players and pack | Four players, standard 52-card pack. | Implemented in full-hand trick-taking and Domino engines. |
+| Trick play | Leader opens, play proceeds around the table, players must follow suit when able. | Implemented in shared trick-taking legality. |
+| No Hearts | Ordinary hearts score 2 penalty points; AH scores 6. | Full hand, reference, run score model, guided lesson, and generated practice align. |
+| No Queens | Each queen captured by the trick winner scores 6 penalty points. | Full hand, reference, run score model, and generated practice align. |
+| King of Hearts | Capturing KH scores 20 penalty points. | Full hand, reference, run score model, and generated practice align. |
+| No Last Two | Trick 12 scores 10 penalty points; trick 13 scores 20. | Full hand, reference, run score model, and generated practice align. |
+| No Tricks | Each trick scores 2 penalty points for the trick winner. | Full hand, reference, run score model, and generated practice align. |
+| Hearts Trumps | Hearts are fixed trumps for v1; each trick won scores 5 positive points. | Full hand, reference, run score model, and generated practice align. |
+| Domino | Open suits from sevens, build adjacent ranks, pass only when blocked, score order out as +45, +20, +5, -5. | Playable in full hand and practice; fixed-seven v1 is documented as a simplification. |
+
+Production readiness gaps:
+
+| Gap | Current state | Production action |
+| --- | --- | --- |
+| Full Barbu settlement | Play Barbu runs the playable contract roster and totals signed contract values, but does not yet claim exact historical/Parlett full-game settlement. | Either document this as "training table scoring" for v1 or implement full settlement before claiming canonical Barbu. |
+| Contract selection/declarer custom | Play Barbu currently uses a fixed contract sequence. | Accept as v1 training flow, or add explicit contract choice later as a named variety. |
+| Domino start rank | Engine supports configurable start rank, but app defaults to sevens. | Keep fixed-seven v1 documented, or add chooser/declarer-selected start rank later. |
+| Source verification | Reference says Parlett baseline, but implementation-level constants need a final source check before store copy claims exactness. | Before launch text says "canonical Barbu", verify contract roster, point values, order, and settlement directly against the chosen source. |
+| Opponent policy | Opponents are legal and contract-aware, but not yet strong Barbu players. | Audit per-contract opponent behavior next. |
+
 ## Near-Term Roadmap
 
 These are the next product increments that keep the app coherent.

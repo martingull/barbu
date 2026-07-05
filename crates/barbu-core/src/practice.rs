@@ -199,7 +199,7 @@ impl PracticeScenario {
             .expect("legal card should complete the trick");
         let winner = practice_trick_winner(self.contract_kind, &completed_trick)
             .expect("completed trick should have a winner");
-        let penalty = score_practice_trick(self.contract_kind, &completed_trick);
+        let penalty = score_practice_trick(self, &completed_trick);
         let winner_name = player_name(winner);
 
         PracticeOutcome {
@@ -2003,8 +2003,8 @@ fn join_cards(cards: &[Card]) -> String {
         .join(" or ")
 }
 
-fn score_practice_trick(contract_kind: PracticeContractKind, played_cards: &[PlayedCard]) -> i32 {
-    match contract_kind {
+fn score_practice_trick(scenario: &PracticeScenario, played_cards: &[PlayedCard]) -> i32 {
+    match scenario.contract_kind {
         PracticeContractKind::Hearts
         | PracticeContractKind::HeartsFirstTrick
         | PracticeContractKind::HeartsAvoidHearts
@@ -2026,19 +2026,27 @@ fn score_practice_trick(contract_kind: PracticeContractKind, played_cards: &[Pla
         PracticeContractKind::NoQueens => played_cards
             .iter()
             .filter(|played| played.card.rank == Rank::Queen)
-            .count() as i32,
+            .map(|_| 6)
+            .sum(),
         PracticeContractKind::KingOfHearts => {
             if played_cards
                 .iter()
                 .any(|played| played.card == Card::new(Rank::King, Suit::Hearts))
             {
-                1
+                20
             } else {
                 0
             }
         }
-        PracticeContractKind::NoLastTwo | PracticeContractKind::NoTricks => 1,
-        PracticeContractKind::HeartsTrumps => 1,
+        PracticeContractKind::NoLastTwo => {
+            if scenario.id.contains("forced-win") {
+                20
+            } else {
+                10
+            }
+        }
+        PracticeContractKind::NoTricks => 2,
+        PracticeContractKind::HeartsTrumps => 5,
         PracticeContractKind::Domino => 0,
     }
 }
@@ -2052,12 +2060,12 @@ fn penalty_label(contract_kind: PracticeContractKind, penalty: i32) -> String {
         | PracticeContractKind::HeartsBreakLead
         | PracticeContractKind::HeartsMoonDefense
         | PracticeContractKind::HeartsScoreReading => format!("{penalty} Hearts penalty"),
-        PracticeContractKind::NoHearts => format!("{penalty} heart penalty"),
-        PracticeContractKind::NoQueens => format!("{penalty} queen penalty"),
-        PracticeContractKind::KingOfHearts => "the king of hearts penalty".to_string(),
-        PracticeContractKind::NoLastTwo => "the last-trick penalty".to_string(),
-        PracticeContractKind::NoTricks => "1 trick penalty".to_string(),
-        PracticeContractKind::HeartsTrumps => format!("{penalty} trick point"),
+        PracticeContractKind::NoHearts => format!("{penalty} heart penalty points"),
+        PracticeContractKind::NoQueens => format!("{penalty} queen penalty points"),
+        PracticeContractKind::KingOfHearts => "20 king of hearts penalty points".to_string(),
+        PracticeContractKind::NoLastTwo => format!("{penalty} late-trick penalty points"),
+        PracticeContractKind::NoTricks => "2 trick penalty points".to_string(),
+        PracticeContractKind::HeartsTrumps => format!("{penalty} trick points"),
         PracticeContractKind::Domino => "0 points".to_string(),
     }
 }
@@ -2930,7 +2938,7 @@ mod tests {
         assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Good);
         assert_eq!(outcome.reason, PracticeOutcomeReason::AvoidedPenalty);
         assert_eq!(outcome.winner, Some(3));
-        assert_eq!(outcome.penalty, Some(1));
+        assert_eq!(outcome.penalty, Some(2));
         assert!(outcome.explanation.contains("heart penalty"));
     }
 
@@ -2958,8 +2966,8 @@ mod tests {
         let heart = scenario
             .legal_player_cards()
             .into_iter()
-            .find(|card| card.suit == Suit::Hearts)
-            .expect("dump scenario should include a heart");
+            .find(|card| *card == Card::new(Rank::Ace, Suit::Hearts))
+            .expect("dump scenario should include the ace of hearts");
         let outcome = scenario.outcome_for(heart);
 
         assert_eq!(scenario.legal_player_cards(), scenario.player_hand);
@@ -2967,7 +2975,7 @@ mod tests {
         assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Good);
         assert_eq!(outcome.reason, PracticeOutcomeReason::AvoidedPenalty);
         assert_eq!(outcome.winner, Some(1));
-        assert_eq!(outcome.penalty, Some(1));
+        assert_eq!(outcome.penalty, Some(6));
     }
 
     #[test]
@@ -3039,7 +3047,7 @@ mod tests {
         assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Penalty);
         assert_eq!(outcome.reason, PracticeOutcomeReason::CapturedPenalty);
         assert_eq!(outcome.winner, Some(2));
-        assert_eq!(outcome.penalty, Some(1));
+        assert_eq!(outcome.penalty, Some(6));
         assert!(outcome.explanation.contains("queen penalty"));
     }
 
@@ -3053,7 +3061,7 @@ mod tests {
         assert!(outcome.is_legal);
         assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Good);
         assert_ne!(outcome.winner, Some(2));
-        assert_eq!(outcome.penalty, Some(1));
+        assert_eq!(outcome.penalty, Some(6));
     }
 
     #[test]
@@ -3071,7 +3079,7 @@ mod tests {
         assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Good);
         assert_eq!(outcome.reason, PracticeOutcomeReason::AvoidedPenalty);
         assert_eq!(outcome.winner, Some(1));
-        assert_eq!(outcome.penalty, Some(1));
+        assert_eq!(outcome.penalty, Some(6));
     }
 
     #[test]
@@ -3083,14 +3091,18 @@ mod tests {
         assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Penalty);
         assert_eq!(outcome.reason, PracticeOutcomeReason::CapturedPenalty);
         assert_eq!(outcome.winner, Some(2));
-        assert_eq!(outcome.penalty, Some(1));
+        assert_eq!(outcome.penalty, Some(20));
         assert!(outcome.explanation.contains("king of hearts penalty"));
     }
 
     #[test]
-    fn generated_king_of_hearts_void_drill_allows_any_discard() {
+    fn generated_king_of_hearts_void_drill_lets_player_discard_under_king_trick() {
         let scenario = generate_king_of_hearts_void_discard(35);
-        let discard = scenario.legal_player_cards()[0];
+        let discard = scenario
+            .legal_player_cards()
+            .into_iter()
+            .find(|card| *card != Card::new(Rank::King, Suit::Hearts))
+            .expect("void scenario should include a non-king discard");
         let outcome = scenario.outcome_for(discard);
 
         assert_eq!(scenario.legal_player_cards(), scenario.player_hand);
@@ -3098,7 +3110,7 @@ mod tests {
         assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Good);
         assert_eq!(outcome.reason, PracticeOutcomeReason::AvoidedPenalty);
         assert_eq!(outcome.winner, Some(3));
-        assert_eq!(outcome.penalty, Some(1));
+        assert_eq!(outcome.penalty, Some(20));
     }
 
     #[test]
@@ -3112,7 +3124,7 @@ mod tests {
         assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Good);
         assert_eq!(outcome.reason, PracticeOutcomeReason::AvoidedPenalty);
         assert_eq!(outcome.winner, Some(1));
-        assert_eq!(outcome.penalty, Some(1));
+        assert_eq!(outcome.penalty, Some(20));
     }
 
     #[test]
@@ -3129,7 +3141,7 @@ mod tests {
         assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Good);
         assert_eq!(outcome.reason, PracticeOutcomeReason::AvoidedPenalty);
         assert_ne!(outcome.winner, Some(2));
-        assert_eq!(outcome.penalty, Some(1));
+        assert_eq!(outcome.penalty, Some(10));
         assert!(outcome.explanation.contains("loses the late trick"));
         assert!(outcome.explanation.contains("good in No Last Two"));
     }
@@ -3148,7 +3160,7 @@ mod tests {
         assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Penalty);
         assert_eq!(outcome.reason, PracticeOutcomeReason::CapturedPenalty);
         assert_eq!(outcome.winner, Some(2));
-        assert_eq!(outcome.penalty, Some(1));
+        assert_eq!(outcome.penalty, Some(10));
         assert!(outcome.explanation.contains("win the late trick"));
     }
 
@@ -3182,7 +3194,7 @@ mod tests {
         assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Penalty);
         assert_eq!(outcome.reason, PracticeOutcomeReason::CapturedPenalty);
         assert_eq!(outcome.winner, Some(2));
-        assert_eq!(outcome.penalty, Some(1));
+        assert_eq!(outcome.penalty, Some(2));
     }
 
     #[test]
@@ -3196,6 +3208,6 @@ mod tests {
         assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Good);
         assert_eq!(outcome.reason, PracticeOutcomeReason::AvoidedPenalty);
         assert_eq!(outcome.winner, Some(1));
-        assert_eq!(outcome.penalty, Some(1));
+        assert_eq!(outcome.penalty, Some(2));
     }
 }

@@ -3,7 +3,7 @@ use crate::contract_policy::{
     choose_no_queens_opponent_card as choose_no_queens_policy_card, BarbuContractPolicy,
     HandPolicy, TrickPolicyContext,
 };
-use crate::trick::{legal_cards, trick_winner, PlayedCard, PlayerIndex};
+use crate::trick::{legal_cards, score_no_hearts_trick, trick_winner, PlayedCard, PlayerIndex};
 
 pub type TrickScoreFn = fn(&TrickTakingHandState, &[PlayedCard]) -> i32;
 pub type OpponentPolicyFn = fn(&TrickTakingHandState) -> Option<Card>;
@@ -963,11 +963,7 @@ fn highest_non_winning_card(state: &TrickTakingHandState, cards: &[Card]) -> Opt
 }
 
 fn score_no_hearts_hand_trick(_state: &TrickTakingHandState, cards: &[PlayedCard]) -> i32 {
-    cards
-        .iter()
-        .filter(|played| played.card.suit == Suit::Hearts)
-        .map(|played| if played.card.rank == Rank::Ace { 6 } else { 2 })
-        .sum()
+    score_no_hearts_trick(cards)
 }
 
 fn score_hearts_trick(_state: &TrickTakingHandState, cards: &[PlayedCard]) -> i32 {

@@ -1249,7 +1249,7 @@ test("guided lesson accepts a legal card play", async ({ page }) => {
   await page.getByRole("button", { name: "Play selected" }).click();
 
   await expect(page.getByText("Good")).toBeVisible();
-  await expect(page.getByText("Left wins with A♣ and takes 1 heart penalty from Right's 4♥.")).toBeVisible();
+  await expect(page.getByText("Left wins with A♣ and takes 2 heart penalty points from Right's 4♥.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Next trick" })).toBeVisible();
 });
 

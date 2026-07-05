@@ -126,7 +126,7 @@ mod tests {
             .expect("king of clubs is a legal play");
 
         assert_eq!(result.winner, 3);
-        assert_eq!(result.penalty, 1);
+        assert_eq!(result.penalty, 2);
     }
 
     #[test]
