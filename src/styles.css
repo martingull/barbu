@@ -1843,6 +1843,10 @@ h2 {
   border-radius: 6px;
 }
 
+.hearts-hand-breakdown-row.whist-score-row {
+  grid-template-columns: minmax(84px, 1.2fr) repeat(3, minmax(36px, 0.55fr));
+}
+
 .hearts-hand-breakdown-row.header {
   background: rgba(245, 241, 207, 0.14);
 }
@@ -3517,6 +3521,7 @@ h2 {
   .fixed-play-screen .table-play-surface.compact-result.table-hidden .table-play-panel {
     grid-row: 2;
     align-content: start;
+    grid-template-rows: auto auto auto;
     gap: 7px;
     min-height: 0;
     overflow: hidden;

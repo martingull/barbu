@@ -257,6 +257,18 @@ async function playFullHandDecision(page: Page) {
   }
 }
 
+async function completeFullHand(page: Page, finalActionName: string) {
+  for (let decision = 0; decision < 14; decision += 1) {
+    if (await page.getByRole("button", { name: finalActionName }).isVisible()) {
+      return;
+    }
+
+    await playFullHandDecision(page);
+  }
+
+  throw new Error(`Full hand did not finish with ${finalActionName}`);
+}
+
 async function passThreeHeartsCards(page: Page) {
   const passingHand = page.getByLabel("Your Hearts passing hand");
   await passingHand.locator("button").nth(0).click();
@@ -471,6 +483,9 @@ test("Whist play starts a partnership trump hand", async ({ page }, testInfo) =>
   await expect(page.getByLabel("Whist hand score")).toContainText("Your side");
   await expect(page.getByLabel("Whist hand score")).toContainText("Opponents");
   await expect(page.getByLabel("Whist hand score")).toContainText("To odd");
+  await expect(page.getByLabel("Whist match score")).toContainText("Match to 5");
+  await expect(page.getByLabel("Whist match score")).toContainText("You + Barbu");
+  await expect(page.getByLabel("Whist match score")).toContainText("Left + Right");
   await expect(page.getByLabel("Whist hand table")).toBeVisible();
   await expect(page.getByLabel("Your Whist hand")).toBeVisible();
   await expectNoPageScroll(page);
@@ -481,6 +496,24 @@ test("Whist play starts a partnership trump hand", async ({ page }, testInfo) =>
 
   await playFullHandDecision(page);
   await expect(page.getByRole("heading", { name: /Whist hand|Read the table/ })).toBeVisible();
+});
+
+test("Whist completed hand score fits the phone screen", async ({ page }, testInfo) => {
+  await gotoWithPracticeSeed(page, 8);
+  await page.getByRole("button", { name: /Open Whist/ }).click();
+  await page.getByRole("tab", { name: "Play" }).click();
+  await page.getByRole("button", { name: "Play Whist" }).click();
+
+  await completeFullHand(page, "Next hand");
+
+  await expect(page.getByRole("heading", { name: /Your partnership won|Opponents won the hand|Whist hand tied/ })).toBeVisible();
+  const resultPanel = page.getByRole("region", { name: "Whist hand decision" });
+  await expect(resultPanel.getByLabel("Whist hand score")).toContainText("Match");
+  await expect(resultPanel.getByLabel("Whist partnership breakdown")).toContainText("You + Barbu");
+  await expect(resultPanel.getByLabel("Whist partnership breakdown")).toContainText("Left + Right");
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
+  await page.screenshot({ path: testInfo.outputPath("whist-hand-result.png"), fullPage: true });
 });
 
 test("Whist odd score starts on the seventh partnership trick", () => {

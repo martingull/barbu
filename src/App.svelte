@@ -316,6 +316,13 @@
     savedAt: string;
   };
 
+  type WhistHandResult = {
+    handNumber: number;
+    trumpSuit: Suit;
+    playerSideOddTricks: number;
+    opponentSideOddTricks: number;
+  };
+
   const catalogEntries = createCatalogEntries();
 
   const progressStorageKey = "barbu.courseProgress.v1";
@@ -336,6 +343,7 @@
   const dominoOrderScores = [45, 20, 5, -5];
   const heartsHandPenaltyTotal = 26;
   const heartsMatchTarget = 100;
+  const whistMatchTarget = 5;
   const seatByPlayerIndex: Record<number, Seat> = {
     0: "Tutor",
     1: "Right",
@@ -1872,6 +1880,8 @@
   let savedHeartsRun: SavedHeartsRun | null = loadSavedHeartsRun();
   let heartsSessionScores: Record<Seat, number> = emptySeatPenalties();
   let heartsHandResults: HeartsHandResult[] = [];
+  let whistMatchScores = { playerSide: 0, opponentSide: 0 };
+  let whistHandResults: WhistHandResult[] = [];
   let usingGeneratedPractice = false;
   let generatedPracticeError = "";
   let fullHand: FullHandState | null = null;
@@ -1982,6 +1992,30 @@
       }),
       { playerSide: 0, opponentSide: 0 }
     );
+  }
+
+  function addWhistMatchResult(scores: { playerSide: number; opponentSide: number }, result: WhistHandResult) {
+    return {
+      playerSide: scores.playerSide + result.playerSideOddTricks,
+      opponentSide: scores.opponentSide + result.opponentSideOddTricks
+    };
+  }
+
+  function whistMatchResultHeading() {
+    if (whistVisibleMatchScores.playerSide === whistVisibleMatchScores.opponentSide) {
+      return "Whist match tied";
+    }
+
+    return whistVisibleMatchScores.playerSide > whistVisibleMatchScores.opponentSide
+      ? "Your partnership won"
+      : "Opponents won the match";
+  }
+
+  function whistMatchResultSummary() {
+    return `${whistMatchLeaderLabel} reached ${Math.max(
+      whistVisibleMatchScores.playerSide,
+      whistVisibleMatchScores.opponentSide
+    )} points. Final match score: ${whistMatchScoreLabel}.`;
   }
 
   function rankValue(rank: string) {
@@ -2214,7 +2248,7 @@
   $: fullHandSeatPenalties = fullHand ? seatPenaltiesForTricks(fullHand.completedTricks) : emptySeatPenalties();
   $: fullHandSeatTrickCounts = fullHand ? seatTricksWonForTricks(fullHand.completedTricks) : emptySeatPenalties();
   $: fullHandResultTitle = fullHand ? fullHandResultHeading(fullHand) : "";
-  $: fullHandResultSummary = fullHand ? fullHandResultText(fullHand) : "";
+  $: fullHandResultSummary = fullHand ? fullHandResultText(fullHand, whistMatchScoreLabel) : "";
   $: fullHandBestTrick = fullHand ? fullHandBestTrickLabel(fullHand) : "";
   $: fullHandWorstTrick = fullHand ? fullHandWorstTrickLabel(fullHand) : "";
   $: fullHandIsHeartsGame = activeGameTable === "hearts" && fullHand?.contract === "Hearts" && !fullHandRunActive;
@@ -2226,6 +2260,26 @@
   $: whistOpponentSideOddTricks = whistOddScore.opponentSideOddTricks;
   $: whistOddProgressLabel = whistOddScore.label;
   $: whistOddProgressValue = whistOddScore.value;
+  $: currentWhistHandResult =
+    fullHandIsWhistGame && fullHand?.status === "complete"
+      ? ({
+          handNumber: whistHandResults.length + 1,
+          trumpSuit: whistTrumpSuitFromHandId(fullHand.id),
+          playerSideOddTricks: whistPlayerSideOddTricks,
+          opponentSideOddTricks: whistOpponentSideOddTricks
+        } satisfies WhistHandResult)
+      : null;
+  $: whistVisibleMatchScores = currentWhistHandResult
+    ? addWhistMatchResult(whistMatchScores, currentWhistHandResult)
+    : whistMatchScores;
+  $: whistVisibleHandCount = whistHandResults.length + (currentWhistHandResult ? 1 : 0);
+  $: whistMatchIsComplete =
+    fullHandIsWhistGame &&
+    fullHand?.status === "complete" &&
+    Math.max(whistVisibleMatchScores.playerSide, whistVisibleMatchScores.opponentSide) >= whistMatchTarget;
+  $: whistMatchLeaderLabel =
+    whistVisibleMatchScores.playerSide >= whistVisibleMatchScores.opponentSide ? "You + Barbu" : "Left + Right";
+  $: whistMatchScoreLabel = `${whistVisibleMatchScores.playerSide} - ${whistVisibleMatchScores.opponentSide}`;
   $: heartsCurrentMoonShooter = fullHandIsHeartsGame ? heartsMoonShooter(fullHandSeatPenalties) : undefined;
   $: heartsCurrentMoonThreatSeat = fullHandIsHeartsGame ? heartsMoonThreatSeat(fullHandSeatPenalties) : undefined;
   $: heartsCurrentScoredSeatPenalties = fullHandIsHeartsGame
@@ -2325,7 +2379,9 @@
       ? "New match"
       : "Next hand"
     : fullHandIsWhistGame
-    ? "New hand"
+    ? whistMatchIsComplete
+      ? "New match"
+      : "Next hand"
     : fullHandRunActive
     ? fullHandRunIsComplete
       ? "New game"
@@ -4486,9 +4542,13 @@
     void startHeartsPassingPhase();
   }
 
-  function startWhistHand() {
+  function startWhistHand(options: { keepSession?: boolean } = {}) {
     activeGameTable = "whist";
     activeWhistTableTab = "play";
+    if (!options.keepSession) {
+      whistMatchScores = { playerSide: 0, opponentSide: 0 };
+      whistHandResults = [];
+    }
     void startFullHand("Whist");
   }
 
@@ -4809,6 +4869,20 @@
       return;
     }
 
+    if (fullHandIsWhistGame) {
+      if (whistMatchIsComplete) {
+        startWhistHand();
+        return;
+      }
+
+      if (currentWhistHandResult) {
+        whistHandResults = [...whistHandResults, currentWhistHandResult];
+        whistMatchScores = addWhistMatchResult(whistMatchScores, currentWhistHandResult);
+      }
+      startWhistHand({ keepSession: true });
+      return;
+    }
+
     if (fullHandRunActive) {
       recordCompletedFullHandRunResult(fullHand);
 
@@ -4840,6 +4914,11 @@
 
     if (fullHandIsHeartsGame) {
       void startHeartsPassingPhase({ keepSession: true });
+      return;
+    }
+
+    if (fullHandIsWhistGame) {
+      startWhistHand({ keepSession: true });
       return;
     }
 
@@ -5399,6 +5478,9 @@
 
   function fullHandResultHeading(hand: FullHandState) {
     if (fullHandIsWhistGame) {
+      if (whistMatchIsComplete) {
+        return whistMatchResultHeading();
+      }
       if (whistPlayerSideOddTricks > whistOpponentSideOddTricks) {
         return "Your partnership won";
       }
@@ -5444,13 +5526,17 @@
     return "Damage limited";
   }
 
-  function fullHandResultText(hand: FullHandState) {
+  function fullHandResultText(hand: FullHandState, currentWhistMatchScoreLabel = whistMatchScoreLabel) {
     if (fullHandIsWhistGame) {
+      if (whistMatchIsComplete) {
+        return whistMatchResultSummary();
+      }
+
       return `Trump was ${whistTrumpSuitLabel}. You + Barbu won ${whistPartnershipTricks.playerSide} tricks for ${whistPlayerSideOddTricks} odd ${
         whistPlayerSideOddTricks === 1 ? "trick" : "tricks"
       }; Left + Right won ${whistPartnershipTricks.opponentSide} tricks for ${whistOpponentSideOddTricks} odd ${
         whistOpponentSideOddTricks === 1 ? "trick" : "tricks"
-      }.`;
+      }. Match score: ${currentWhistMatchScoreLabel}.`;
     }
 
     if (activeGameTable === "hearts" && hand.contract === "Hearts") {
@@ -7250,8 +7336,8 @@
           <div class="table-action-groups" aria-label="Whist play actions">
             <section class="table-action-group" aria-label="Whist partnership hand">
               <p class="eyebrow">Partnership hand</p>
-              <button class="drill-action" onclick={startWhistHand} type="button">Play Whist</button>
-              <small class="saved-run-note">You and Barbu play as partners against Left and Right.</small>
+              <button class="drill-action" onclick={() => startWhistHand()} type="button">Play Whist</button>
+              <small class="saved-run-note">You and Barbu play to {whistMatchTarget} points against Left and Right.</small>
             </section>
           </div>
         </div>
@@ -8473,14 +8559,18 @@
         statusValue={fullHandIsWhistGame ? whistTrumpSuitLabel : `${fullHand.playerPenalty} ${fullHandPlayerPenaltyLabel}`}
         tableAriaLabel={`${fullHand.contract} hand table`}
         pendingBySeat={fullHandPendingBySeat}
-        showTable={!fullHandRunIsComplete && !(fullHandIsHeartsGame && fullHand.status === "complete")}
+        showTable={
+          !fullHandRunIsComplete &&
+          !(fullHandIsHeartsGame && fullHand.status === "complete") &&
+          !(fullHandIsWhistGame && fullHand.status === "complete")
+        }
         tableCards={fullHandVisibleTableCards}
         panelAriaLabel={`${fullHand.contract} hand decision`}
         onBack={openActiveGameTable}
         onSurfaceClick={fullHandIsReviewingTrick ? continueFullHandAfterTrick : undefined}
       >
         {#snippet summary()}
-          {#if !fullHandRunIsComplete}
+          {#if !fullHandRunIsComplete && !(fullHandIsWhistGame && fullHand.status === "complete")}
             <div class="full-hand-summary grouped-play-summary" aria-label={`${fullHand.contract} hand score`}>
               <div
                 class:no-last-two={fullHand.contract === "No Last Two"}
@@ -8525,6 +8615,23 @@
                   {/each}
                 </div>
               {/if}
+              {#if fullHandIsWhistGame}
+                <div class="full-hand-summary-row table-score" aria-label="Whist match score">
+                  <span class="summary-row-label">Match to {whistMatchTarget}</span>
+                  <div>
+                    <span>You + Barbu</span>
+                    <strong>{whistVisibleMatchScores.playerSide}</strong>
+                  </div>
+                  <div>
+                    <span>Left + Right</span>
+                    <strong>{whistVisibleMatchScores.opponentSide}</strong>
+                  </div>
+                  <div>
+                    <span>Hands</span>
+                    <strong>{whistVisibleHandCount}</strong>
+                  </div>
+                </div>
+              {/if}
               {#if fullHandRunActive}
                 <div class="full-hand-summary-row table-score" aria-label="Table scores">
                   <span class="summary-row-label">Table scores</span>
@@ -8537,7 +8644,7 @@
                 </div>
               {/if}
             </div>
-          {:else}
+          {:else if fullHandRunIsComplete}
             <div class="full-hand-summary compact-run-complete" aria-label={`${fullHand.contract} hand score`}>
               {#each scoreSeats as seat}
                 <div>
@@ -8620,18 +8727,21 @@
               {:else if fullHandIsWhistGame}
                 <div class="hearts-result-stack" aria-label="Whist hand score">
                   <div class="hearts-hand-breakdown" aria-label="Whist partnership breakdown">
-                    <div class="hearts-hand-breakdown-row header">
+                    <div class="hearts-hand-breakdown-row whist-score-row header">
                       <span>Partnership</span>
+                      <span>Match</span>
                       <span>Tricks</span>
                       <span>Odd</span>
                     </div>
-                    <div class:active={true} class="hearts-hand-breakdown-row">
+                    <div class:active={true} class="hearts-hand-breakdown-row whist-score-row">
                       <span>You + Barbu</span>
+                      <strong>{whistVisibleMatchScores.playerSide}</strong>
                       <strong>{whistPartnershipTricks.playerSide}</strong>
                       <strong>{whistPlayerSideOddTricks}</strong>
                     </div>
-                    <div class="hearts-hand-breakdown-row">
+                    <div class="hearts-hand-breakdown-row whist-score-row">
                       <span>Left + Right</span>
+                      <strong>{whistVisibleMatchScores.opponentSide}</strong>
                       <strong>{whistPartnershipTricks.opponentSide}</strong>
                       <strong>{whistOpponentSideOddTricks}</strong>
                     </div>

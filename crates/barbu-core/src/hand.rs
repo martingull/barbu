@@ -289,14 +289,7 @@ pub fn start_trick_taking_hand(
     seed: u64,
     starting_player: PlayerIndex,
 ) -> TrickTakingHandState {
-    let mut deck = standard_deck();
-    let mut rng = DeterministicRng::new(seed);
-
-    for index in (1..deck.len()).rev() {
-        let swap_index = rng.next_usize(index + 1);
-        deck.swap(index, swap_index);
-    }
-
+    let deck = shuffled_standard_deck(seed);
     let mut hands = [Vec::new(), Vec::new(), Vec::new(), Vec::new()];
 
     for (index, card) in deck.into_iter().enumerate() {
@@ -315,6 +308,18 @@ pub fn start_trick_taking_hand(
         completed_tricks: Vec::new(),
         status: HandStatus::InProgress,
     }
+}
+
+fn shuffled_standard_deck(seed: u64) -> Vec<Card> {
+    let mut deck = standard_deck();
+    let mut rng = DeterministicRng::new(seed);
+
+    for index in (1..deck.len()).rev() {
+        let swap_index = rng.next_usize(index + 1);
+        deck.swap(index, swap_index);
+    }
+
+    deck
 }
 
 pub fn start_no_hearts_hand(seed: u64) -> NoHeartsHandState {
@@ -494,12 +499,31 @@ pub fn play_hearts_card(
 }
 
 pub fn start_whist_hand(seed: u64) -> WhistHandState {
-    let trump_suit = whist_trump_suit_for_seed(seed);
-    let state = start_trick_taking_hand(
-        format!("whist-hand-{seed}-{}", trump_suit.short_name()),
-        seed,
-        1,
-    );
+    let deck = shuffled_standard_deck(seed);
+    let dealer = whist_dealer_for_seed(seed);
+    let leader = (dealer + 1) % 4;
+    let trump_card = deck[dealer + 48];
+    let mut hands = [Vec::new(), Vec::new(), Vec::new(), Vec::new()];
+
+    for (index, card) in deck.into_iter().enumerate() {
+        hands[index % 4].push(card);
+    }
+
+    for hand in &mut hands {
+        sort_hand(hand);
+    }
+
+    let state = WhistHandState {
+        id: format!(
+            "whist-hand-{seed}-dealer-{dealer}-{}",
+            trump_card.suit.short_name()
+        ),
+        hands,
+        current_player: leader,
+        current_trick: Vec::new(),
+        completed_tricks: Vec::new(),
+        status: HandStatus::InProgress,
+    };
     advance_to_player_turn(state, 2, score_whist_trick, choose_whist_opponent_card)
 }
 
@@ -734,8 +758,8 @@ fn whist_trump_suit_from_id(id: &str) -> Option<Suit> {
     }
 }
 
-fn whist_trump_suit_for_seed(seed: u64) -> Suit {
-    Suit::ALL[(seed as usize) % Suit::ALL.len()]
+fn whist_dealer_for_seed(seed: u64) -> PlayerIndex {
+    (seed as usize) % 4
 }
 
 fn legal_hearts_cards(state: &TrickTakingHandState, player: PlayerIndex) -> Vec<Card> {
@@ -1513,12 +1537,43 @@ mod tests {
     #[test]
     fn whist_hand_deals_with_trump_and_advances_to_player() {
         let state = start_whist_hand(8);
+        let dealer = whist_dealer_for_seed(8);
+        let leader = (dealer + 1) % 4;
+        let trump_card = shuffled_standard_deck(8)[dealer + 48];
 
-        assert!(state.id.starts_with("whist-hand-8-"));
+        assert_eq!(
+            state.id,
+            format!(
+                "whist-hand-8-dealer-{dealer}-{}",
+                trump_card.suit.short_name()
+            )
+        );
         assert_eq!(state.hands.iter().map(Vec::len).sum::<usize>(), 51);
         assert_eq!(state.current_player, 2);
         assert_eq!(state.current_trick.len(), 1);
+        assert_eq!(state.current_trick[0].player, leader);
         assert_eq!(state.status, HandStatus::InProgress);
+    }
+
+    #[test]
+    fn whist_dealer_left_leads_when_player_is_left_of_dealer() {
+        let state = start_whist_hand(9);
+        let dealer = whist_dealer_for_seed(9);
+        let leader = (dealer + 1) % 4;
+        let trump_card = shuffled_standard_deck(9)[dealer + 48];
+
+        assert_eq!(dealer, 1);
+        assert_eq!(leader, 2);
+        assert_eq!(
+            state.id,
+            format!(
+                "whist-hand-9-dealer-{dealer}-{}",
+                trump_card.suit.short_name()
+            )
+        );
+        assert_eq!(state.current_player, 2);
+        assert!(state.current_trick.is_empty());
+        assert_eq!(state.hands.iter().map(Vec::len).sum::<usize>(), 52);
     }
 
     #[test]

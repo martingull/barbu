@@ -37,7 +37,34 @@ export function startBrowserHeartsHand(seed: number): FullHandState {
 }
 
 export function startBrowserWhistHand(seed: number): FullHandState {
-  return startBrowserFullHand("Whist", seed, { startingPlayerIndex: 1 });
+  const deck = shuffledDeck(seed);
+  const dealer = whistDealerForSeed(seed);
+  const leader = (dealer + 1) % 4;
+  const trumpCard = deck[dealer + 48];
+  const hands: Card[][] = [[], [], [], []];
+
+  deck.forEach((card, index) => hands[index % 4].push(card));
+  hands.forEach((hand) => hand.sort(compareCards));
+
+  return advanceToPlayerTurn(
+    hydrateFullHandState({
+      id: `browser-whist-hand-${seed}-dealer-${dealer}-${trumpCard.suit}`,
+      contract: "Whist",
+      hands,
+      currentPlayerIndex: leader,
+      currentPlayer: playerNames[leader],
+      currentTrick: [],
+      completedTricks: [],
+      playerHand: hands[2],
+      legalCardIds: [],
+      playerPenalty: 0,
+      totalPenalty: 0,
+      cardsRemaining: 52,
+      trickNumber: 1,
+      status: "in_progress",
+      prompt: ""
+    })
+  );
 }
 
 export function generateBrowserHeartsPassPractice(seed: number): HeartsPassScenario {
@@ -101,14 +128,7 @@ export function generateBrowserHeartsPassPractice(seed: number): HeartsPassScena
 }
 
 export function startBrowserHeartsPassingHand(seed: number): FullHandState {
-  const deck = standardDeck();
-  const rng = new DeterministicRng(seed);
-
-  for (let index = deck.length - 1; index > 0; index -= 1) {
-    const swapIndex = rng.nextInt(index + 1);
-    [deck[index], deck[swapIndex]] = [deck[swapIndex], deck[index]];
-  }
-
+  const deck = shuffledDeck(seed);
   const hands: Card[][] = [[], [], [], []];
   deck.forEach((card, index) => hands[index % 4].push(card));
   hands.forEach((hand) => hand.sort(compareCards));
@@ -211,23 +231,13 @@ function startBrowserFullHand(
   seed: number,
   options: { startAtTwoOfClubs?: boolean; startingPlayerIndex?: number } = {}
 ): FullHandState {
-  const deck = standardDeck();
-  const rng = new DeterministicRng(seed);
-
-  for (let index = deck.length - 1; index > 0; index -= 1) {
-    const swapIndex = rng.nextInt(index + 1);
-    [deck[index], deck[swapIndex]] = [deck[swapIndex], deck[index]];
-  }
-
+  const deck = shuffledDeck(seed);
   const hands: Card[][] = [[], [], [], []];
   deck.forEach((card, index) => hands[index % 4].push(card));
   hands.forEach((hand) => hand.sort(compareCards));
 
   const currentPlayerIndex = options.startAtTwoOfClubs ? playerWithCard(hands, "2C") ?? 0 : options.startingPlayerIndex ?? 0;
-  const id =
-    contract === "Whist"
-      ? `browser-whist-hand-${seed}-${whistTrumpSuit(seed)}`
-      : `browser-${contract.toLowerCase().replace(/\s+/g, "-")}-hand-${seed}`;
+  const id = `browser-${contract.toLowerCase().replace(/\s+/g, "-")}-hand-${seed}`;
 
   return advanceToPlayerTurn(
     hydrateFullHandState({
@@ -1041,6 +1051,9 @@ function promptForState(state: FullHandState, playerPenalty: number) {
     }
 
     if (!led) {
+      if (!state.completedTricks.length) {
+        return `You are left of the dealer, so you lead first. Choose a suit that helps your side. ${trump} are trumps.`;
+      }
       return `You lead. Choose a suit that helps your side. ${trump} are trumps.`;
     }
 
@@ -1060,6 +1073,18 @@ function standardDeck() {
   return suits.flatMap((suit) => ranks.map((rank) => card(rank, suit)));
 }
 
+function shuffledDeck(seed: number) {
+  const deck = standardDeck();
+  const rng = new DeterministicRng(seed);
+
+  for (let index = deck.length - 1; index > 0; index -= 1) {
+    const swapIndex = rng.nextInt(index + 1);
+    [deck[index], deck[swapIndex]] = [deck[swapIndex], deck[index]];
+  }
+
+  return deck;
+}
+
 function card(rank: Rank, suit: Suit): Card {
   const label = `${rank}${suit}`;
   return { id: label, rank, suit, label };
@@ -1073,8 +1098,8 @@ function suitName(suit: Suit) {
   return { C: "Clubs", D: "Diamonds", H: "Hearts", S: "Spades" }[suit];
 }
 
-function whistTrumpSuit(seed: number): Suit {
-  return suits[seed % suits.length];
+function whistDealerForSeed(seed: number) {
+  return seed % 4;
 }
 
 function whistTrumpSuitFromState(state: FullHandState): Suit {

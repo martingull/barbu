@@ -135,7 +135,8 @@ Must ship:
    - Play Surface v1 starts a local partnership hand with You + Barbu against Left + Right, visible trump, follow-suit validation, trump trick resolution, and odd-trick score display.
    - Treat silent partnership communication as part of the learning goal: lead a strong or long suit, return partner's suit when useful, second hand low, and third hand high.
    - Partnership Policy v1 has started: automated seats can return partner's suit, avoid overtaking partner, preserve trump when partner is winning, and cut when the other side controls the trick.
-   - Broader generated Whist practice and partnership match scoring remain planned.
+   - Match v1A has a cumulative local match shell: odd tricks carry into a You + Barbu vs Left + Right score to 5, with Next hand / New match flow.
+   - Deal v1B derives trump from the dealer's last card and starts the hand from dealer-left; fuller dealer rotation controls remain planned.
 
 6. Mobile quality
    - Active table screens should be stable on the physical iPhone.

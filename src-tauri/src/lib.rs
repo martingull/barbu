@@ -764,6 +764,12 @@ fn hand_prompt(state: &barbu_core::TrickTakingHandState, penalty_name: &str) -> 
         }
 
         if state.current_trick.is_empty() {
+            if state.completed_tricks.is_empty() {
+                return format!(
+                    "You are left of the dealer, so you lead first. Choose a suit that helps your side. {trump} are trumps."
+                );
+            }
+
             return format!("You lead. Choose a suit that helps your side. {trump} are trumps.");
         }
 
