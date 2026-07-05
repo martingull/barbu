@@ -527,6 +527,33 @@ test("Whist play starts a partnership trump hand", async ({ page }, testInfo) =>
   await expect(page.getByRole("heading", { name: /Whist hand|Read the table/ })).toBeVisible();
 });
 
+test("Whist play can resume a saved local match", async ({ page }) => {
+  await gotoWithPracticeSeed(page, 8);
+  await page.getByRole("button", { name: /Open Whist/ }).click();
+  await page.getByRole("tab", { name: "Play" }).click();
+  await page.getByRole("button", { name: "Play Whist" }).click();
+
+  await expect(page.getByRole("heading", { name: "Whist hand" })).toBeVisible();
+  await expect(page.locator(".full-hand-cards .full-hand-card")).toHaveCount(13);
+  await expect.poll(async () => page.evaluate(() => localStorage.getItem("barbu.savedWhistRun.v1"))).not.toBeNull();
+
+  await page.getByLabel("Whist full hand").getByRole("button", { name: "Table" }).click();
+  await expect(page.getByRole("heading", { name: "Whist table", exact: true })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("button", { name: "Continue Whist" })).toBeVisible();
+  await expect(page.getByText("Hand 1, trick 1, match 0 - 0")).toBeVisible();
+
+  await page.reload();
+  await page.getByRole("button", { name: /Open Whist/ }).click();
+  await page.getByRole("tab", { name: "Play" }).click();
+  await expect(page.getByRole("button", { name: "Continue Whist" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Continue Whist" }).click();
+  await expect(page.getByRole("heading", { name: "Whist hand" })).toBeVisible();
+  await expect(page.locator(".full-hand-cards .full-hand-card")).toHaveCount(13);
+  await expectNoPageScroll(page);
+});
+
 test("Whist completed hand score fits the phone screen", async ({ page }, testInfo) => {
   await gotoWithPracticeSeed(page, 8);
   await page.getByRole("button", { name: /Open Whist/ }).click();

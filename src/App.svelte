@@ -324,6 +324,16 @@
     opponentSideOddTricks: number;
   };
 
+  type SavedWhistRun = {
+    version: 1;
+    scores: { playerSide: number; opponentSide: number };
+    results: WhistHandResult[];
+    fullHand: FullHandState;
+    fullHandReviewTrickCount: number;
+    usingBrowserFullHand: boolean;
+    savedAt: string;
+  };
+
   const catalogEntries = createCatalogEntries();
 
   const progressStorageKey = "barbu.courseProgress.v1";
@@ -332,6 +342,7 @@
   const playBarbuHistoryStorageKey = "barbu.playHistory.v1";
   const savedPlayBarbuRunStorageKey = "barbu.savedPlayRun.v1";
   const savedHeartsRunStorageKey = "barbu.savedHeartsRun.v1";
+  const savedWhistRunStorageKey = "barbu.savedWhistRun.v1";
   const maxStoredDrillPatterns = 6;
   const maxStoredPlayBarbuAttempts = 8;
   const scoreSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
@@ -2073,6 +2084,7 @@
   let playBarbuHistory: PlayBarbuAttempt[] = loadPlayBarbuHistory();
   let savedPlayBarbuRun: SavedPlayBarbuRun | null = loadSavedPlayBarbuRun();
   let savedHeartsRun: SavedHeartsRun | null = loadSavedHeartsRun();
+  let savedWhistRun: SavedWhistRun | null = loadSavedWhistRun();
   let heartsSessionScores: Record<Seat, number> = emptySeatPenalties();
   let heartsHandResults: HeartsHandResult[] = [];
   let whistMatchScores = { playerSide: 0, opponentSide: 0 };
@@ -2193,6 +2205,18 @@
     return {
       playerSide: scores.playerSide + result.playerSideOddTricks,
       opponentSide: scores.opponentSide + result.opponentSideOddTricks
+    };
+  }
+
+  function whistHandResultFor(hand: FullHandState, handNumber = whistHandResults.length + 1): WhistHandResult {
+    const partnershipTricks = whistPartnershipTrickCounts(hand.completedTricks);
+    const oddScore = whistOddProgress(partnershipTricks);
+
+    return {
+      handNumber,
+      trumpSuit: whistTrumpSuitFromHandId(hand.id),
+      playerSideOddTricks: oddScore.playerSideOddTricks,
+      opponentSideOddTricks: oddScore.opponentSideOddTricks
     };
   }
 
@@ -2409,15 +2433,7 @@
   $: whistOpponentSideOddTricks = whistOddScore.opponentSideOddTricks;
   $: whistOddProgressLabel = whistOddScore.label;
   $: whistOddProgressValue = whistOddScore.value;
-  $: currentWhistHandResult =
-    fullHandIsWhistGame && fullHand?.status === "complete"
-      ? ({
-          handNumber: whistHandResults.length + 1,
-          trumpSuit: whistTrumpSuitFromHandId(fullHand.id),
-          playerSideOddTricks: whistPlayerSideOddTricks,
-          opponentSideOddTricks: whistOpponentSideOddTricks
-        } satisfies WhistHandResult)
-      : null;
+  $: currentWhistHandResult = fullHandIsWhistGame && fullHand?.status === "complete" ? whistHandResultFor(fullHand) : null;
   $: whistVisibleMatchScores = currentWhistHandResult
     ? addWhistMatchResult(whistMatchScores, currentWhistHandResult)
     : whistMatchScores;
@@ -3145,6 +3161,146 @@
     lastFullHandTapAt = 0;
     appView = savedRun.view;
     savedHeartsRun = savedRun;
+  }
+
+  function loadSavedWhistRun(): SavedWhistRun | null {
+    if (typeof localStorage === "undefined") {
+      return null;
+    }
+
+    try {
+      return normalizeSavedWhistRun(JSON.parse(localStorage.getItem(savedWhistRunStorageKey) ?? "null"));
+    } catch {
+      return null;
+    }
+  }
+
+  function normalizeSavedWhistRun(savedRun: unknown): SavedWhistRun | null {
+    if (!savedRun || typeof savedRun !== "object") {
+      return null;
+    }
+
+    const candidate = savedRun as Partial<SavedWhistRun>;
+    const savedFullHand = candidate.fullHand?.contract === "Whist" ? candidate.fullHand : null;
+
+    if (candidate.version !== 1 || !savedFullHand) {
+      return null;
+    }
+
+    return {
+      version: 1,
+      scores: normalizeWhistScoreMap(candidate.scores),
+      results: Array.isArray(candidate.results) ? candidate.results.filter(isWhistHandResult) : [],
+      fullHand: savedFullHand,
+      fullHandReviewTrickCount:
+        Number.isInteger(candidate.fullHandReviewTrickCount) && candidate.fullHandReviewTrickCount >= 0
+          ? candidate.fullHandReviewTrickCount
+          : 0,
+      usingBrowserFullHand: Boolean(candidate.usingBrowserFullHand),
+      savedAt: typeof candidate.savedAt === "string" ? candidate.savedAt : new Date().toISOString()
+    };
+  }
+
+  function normalizeWhistScoreMap(scores: unknown) {
+    if (!scores || typeof scores !== "object") {
+      return { playerSide: 0, opponentSide: 0 };
+    }
+
+    const candidate = scores as Partial<{ playerSide: number; opponentSide: number }>;
+    return {
+      playerSide: Number.isFinite(candidate.playerSide) ? Number(candidate.playerSide) : 0,
+      opponentSide: Number.isFinite(candidate.opponentSide) ? Number(candidate.opponentSide) : 0
+    };
+  }
+
+  function isWhistHandResult(result: unknown): result is WhistHandResult {
+    if (!result || typeof result !== "object") {
+      return false;
+    }
+
+    const candidate = result as Partial<WhistHandResult>;
+    return (
+      Number.isInteger(candidate.handNumber) &&
+      (candidate.trumpSuit === "C" || candidate.trumpSuit === "D" || candidate.trumpSuit === "H" || candidate.trumpSuit === "S") &&
+      Number.isInteger(candidate.playerSideOddTricks) &&
+      Number.isInteger(candidate.opponentSideOddTricks)
+    );
+  }
+
+  function persistSavedWhistRun() {
+    const isWhistFullHand = activeGameTable === "whist" && fullHand?.contract === "Whist" && !fullHandRunActive;
+
+    if (!isWhistFullHand || !fullHand) {
+      return;
+    }
+
+    const currentResult = fullHand.status === "complete" ? whistHandResultFor(fullHand) : null;
+    const visibleScores = currentResult ? addWhistMatchResult(whistMatchScores, currentResult) : whistMatchScores;
+    const matchIsComplete = fullHand.status === "complete" && Math.max(visibleScores.playerSide, visibleScores.opponentSide) >= whistMatchTarget;
+
+    if (matchIsComplete) {
+      clearSavedWhistRun();
+      return;
+    }
+
+    const nextSavedRun: SavedWhistRun = {
+      version: 1,
+      scores: whistMatchScores,
+      results: whistHandResults,
+      fullHand,
+      fullHandReviewTrickCount,
+      usingBrowserFullHand,
+      savedAt: new Date().toISOString()
+    };
+
+    savedWhistRun = nextSavedRun;
+
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(savedWhistRunStorageKey, JSON.stringify(nextSavedRun));
+    }
+  }
+
+  function clearSavedWhistRun() {
+    savedWhistRun = null;
+
+    if (typeof localStorage !== "undefined") {
+      localStorage.removeItem(savedWhistRunStorageKey);
+    }
+  }
+
+  function savedWhistRunSummary(savedRun: SavedWhistRun) {
+    const handNumber = savedRun.results.length + 1;
+    const matchScore = `${savedRun.scores.playerSide} - ${savedRun.scores.opponentSide}`;
+
+    return savedRun.fullHand.status === "complete"
+      ? `Hand ${handNumber} complete, match ${matchScore}`
+      : `Hand ${handNumber}, trick ${savedRun.fullHand.trickNumber}, match ${matchScore}`;
+  }
+
+  function continueSavedWhistRun() {
+    const savedRun = savedWhistRun ?? loadSavedWhistRun();
+
+    if (!savedRun) {
+      return;
+    }
+
+    activeGameTable = "whist";
+    activeWhistTableTab = "play";
+    fullHandRunActive = false;
+    fullHandRunResults = [];
+    dominoHand = null;
+    heartsPassingHand = null;
+    whistMatchScores = savedRun.scores;
+    whistHandResults = savedRun.results;
+    fullHand = savedRun.fullHand;
+    fullHandReviewTrickCount = savedRun.fullHandReviewTrickCount;
+    usingBrowserFullHand = savedRun.usingBrowserFullHand || !hasTauriRuntime();
+    fullHandSelectedCardId = "";
+    fullHandError = "";
+    lastFullHandTapCardId = "";
+    lastFullHandTapAt = 0;
+    appView = "fullHand";
+    savedWhistRun = savedRun;
   }
 
   function loadPracticeSeed() {
@@ -4641,6 +4797,7 @@
       lastFullHandTapAt = 0;
       persistSavedPlayBarbuRun("fullHand");
       persistSavedHeartsRun("fullHand");
+      persistSavedWhistRun();
       return;
     }
 
@@ -4656,6 +4813,7 @@
       lastFullHandTapAt = 0;
       persistSavedPlayBarbuRun("fullHand");
       persistSavedHeartsRun("fullHand");
+      persistSavedWhistRun();
     } catch (error) {
       fullHandError = typeof error === "string" ? error : "That card could not be played.";
     }
@@ -4680,6 +4838,7 @@
     lastFullHandTapAt = 0;
     persistSavedPlayBarbuRun("fullHand");
     persistSavedHeartsRun("fullHand");
+    persistSavedWhistRun();
   }
 
   function startNoHeartsHand() {
@@ -4691,14 +4850,16 @@
     void startHeartsPassingPhase();
   }
 
-  function startWhistHand(options: { keepSession?: boolean } = {}) {
+  async function startWhistHand(options: { keepSession?: boolean } = {}) {
     activeGameTable = "whist";
     activeWhistTableTab = "play";
     if (!options.keepSession) {
       whistMatchScores = { playerSide: 0, opponentSide: 0 };
       whistHandResults = [];
+      clearSavedWhistRun();
     }
-    void startFullHand("Whist");
+    await startFullHand("Whist");
+    persistSavedWhistRun();
   }
 
   function startHeartsObjectLesson() {
@@ -7535,7 +7696,13 @@
           <div class="table-action-groups" aria-label="Whist play actions">
             <section class="table-action-group" aria-label="Whist partnership hand">
               <p class="eyebrow">Partnership hand</p>
-              <button class="drill-action" onclick={() => startWhistHand()} type="button">Play Whist</button>
+              {#if savedWhistRun}
+                <button class="drill-action" onclick={continueSavedWhistRun} type="button">Continue Whist</button>
+                <small class="saved-run-note">{savedWhistRunSummary(savedWhistRun)}</small>
+              {/if}
+              <button class:resume-secondary={Boolean(savedWhistRun)} class="drill-action" onclick={() => void startWhistHand()} type="button">
+                Play Whist
+              </button>
               <small class="saved-run-note">You and Barbu play to {whistMatchTarget} points against Left and Right.</small>
             </section>
           </div>
