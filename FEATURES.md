@@ -131,7 +131,7 @@ Must ship:
 5. Whist starter table
    - Define classic Whist before variants: four players, fixed partnerships, 52 cards, dealer's last card as trump, follow-suit play, highest trump or led suit wins, and odd-trick scoring above six.
    - Learning Path v1 covers winning tricks together, follow suit, trump wins, reading partner, inviting a suit, and counting odd tricks.
-   - Practice v1A has playable follow-suit and trump-or-discard drills. Third hand high, return partner's suit, and odd-trick counting still route to the Whist reference until generated Whist scenarios exist.
+   - Practice v1B has playable starter drills for follow suit, trump or discard, third hand high, return partner's suit, and odd-trick counting.
    - Treat silent partnership communication as part of the learning goal: lead a strong or long suit, return partner's suit when useful, second hand low, and third hand high.
    - Broader generated Whist practice and Play remain planned until the shared trick-taking engine has partnership seating, trump setting, partner-aware policy, and partnership scoring.
 

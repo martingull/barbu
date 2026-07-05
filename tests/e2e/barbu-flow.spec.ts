@@ -418,7 +418,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await page.screenshot({ path: testInfo.outputPath("card-counting-table.png"), fullPage: true });
 });
 
-test("Whist practice starts follow-suit and trump drills", async ({ page }) => {
+test("Whist practice starts playable partnership drills", async ({ page }) => {
   await gotoWithPracticeSeed(page, 4);
   await page.getByRole("button", { name: /Open Whist/ }).click();
   await page.getByRole("tab", { name: "Practice" }).click();
@@ -441,6 +441,22 @@ test("Whist practice starts follow-suit and trump drills", async ({ page }) => {
   await expect(page.getByLabel("Drill decision")).toContainText("Whist");
   await expect(page.getByLabel("Drill progress")).toContainText("0 / 2 played");
   await expect(page.getByLabel("Drill decision")).toContainText(/Cut with trump|Discard when partner is winning/);
+  await page.getByLabel("Drill decision").getByRole("button", { name: "Table" }).click();
+  await expect(page.getByRole("heading", { name: "Whist table", exact: true })).toBeVisible();
+
+  await page.getByLabel("Whist practice drills").getByRole("button", { name: "Third hand high" }).click();
+  await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
+  await expect(page.getByLabel("Drill decision")).toContainText(/Support partner's lead|Do not overpay/);
+  await page.getByLabel("Drill decision").getByRole("button", { name: "Table" }).click();
+
+  await page.getByLabel("Whist practice drills").getByRole("button", { name: "Return partner's suit" }).click();
+  await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
+  await expect(page.getByLabel("Drill decision")).toContainText(/Lead partner's suit back|Return without overcommitting/);
+  await page.getByLabel("Drill decision").getByRole("button", { name: "Table" }).click();
+
+  await page.getByLabel("Whist practice drills").getByRole("button", { name: "Count odd tricks" }).click();
+  await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
+  await expect(page.getByLabel("Drill decision")).toContainText(/Win the first odd trick|Protect the next odd trick/);
 });
 
 test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testInfo) => {

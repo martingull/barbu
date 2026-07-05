@@ -1598,8 +1598,239 @@
       }
     }
   };
+  const whistThirdHandHighDrillStep: DrillStep = {
+    scenarioId: "whist-third-hand-high-over-queen",
+    contract: "Whist",
+    title: "Third hand high",
+    trick: {
+      title: "Support partner's lead",
+      beforeResult: "Barbu is your partner and led 10H. Right covered with QH. You are third hand.",
+      afterResult: "Third hand high means spending strength when it helps partner's side win the trick.",
+      emptyExplanation: "Hearts were led. If you can beat Right, do it for the partnership.",
+      legalCardIds: ["AH", "4H"],
+      hand: [
+        { id: "AH", rank: "A", suit: "H", label: "AH" },
+        { id: "4H", rank: "4", suit: "H", label: "4H" },
+        { id: "7S", rank: "7", suit: "S", label: "7S" }
+      ],
+      tableBeforeChoice: [
+        { seat: "Tutor", card: { id: "10H", rank: "10", suit: "H", label: "10H" } },
+        { seat: "Right", card: { id: "QH", rank: "Q", suit: "H", label: "QH" } }
+      ],
+      tableAfterChoice: [{ seat: "Left", card: { id: "6H", rank: "6", suit: "H", label: "6H" } }],
+      pendingBySeat: { Left: "last to play", You: "third hand" },
+      playedExplanations: {
+        AH: "AH follows suit and beats Right's queen, so your side can take the trick.",
+        "4H": "4H follows suit, but it lets Right's queen hold the trick.",
+        "7S": "7S is illegal while you still have hearts."
+      },
+      cardOutcomes: {
+        AH: "good",
+        "4H": "risky"
+      },
+      cardReasons: {
+        AH: "won_clean_trick",
+        "4H": "followed_suit"
+      }
+    }
+  };
+  const whistThirdHandSaveStrengthDrillStep: DrillStep = {
+    scenarioId: "whist-third-hand-high-save-strength",
+    contract: "Whist",
+    title: "Third hand high",
+    trick: {
+      title: "Do not overpay",
+      beforeResult: "Barbu led KC as your partner. Right followed with 4C. You are third hand.",
+      afterResult: "Third hand high is a habit, not a command to waste the ace when partner is already ahead.",
+      emptyExplanation: "Clubs were led. Partner's king is currently winning.",
+      legalCardIds: ["2C", "AC"],
+      hand: [
+        { id: "2C", rank: "2", suit: "C", label: "2C" },
+        { id: "AC", rank: "A", suit: "C", label: "AC" },
+        { id: "8D", rank: "8", suit: "D", label: "8D" }
+      ],
+      tableBeforeChoice: [
+        { seat: "Tutor", card: { id: "KC", rank: "K", suit: "C", label: "KC" } },
+        { seat: "Right", card: { id: "4C", rank: "4", suit: "C", label: "4C" } }
+      ],
+      tableAfterChoice: [{ seat: "Left", card: { id: "9C", rank: "9", suit: "C", label: "9C" } }],
+      pendingBySeat: { Left: "last to play", You: "third hand" },
+      playedExplanations: {
+        "2C": "2C follows suit and lets partner's king keep winning.",
+        AC: "AC follows suit, but it overtakes partner and spends your ace too early.",
+        "8D": "8D is illegal while you still have clubs."
+      },
+      cardOutcomes: {
+        "2C": "good",
+        AC: "risky"
+      },
+      cardReasons: {
+        "2C": "followed_suit",
+        AC: "won_clean_trick"
+      }
+    }
+  };
+  const whistReturnPartnerSuitDrillStep: DrillStep = {
+    scenarioId: "whist-return-partner-spades",
+    contract: "Whist",
+    title: "Return partner's suit",
+    trick: {
+      title: "Lead partner's suit back",
+      beforeResult: "You won the last trick. Earlier, Barbu led spades strongly. You are now on lead.",
+      afterResult: "Returning partner's suit is a simple way to invite the partnership to keep developing that suit.",
+      emptyExplanation: "You can lead any suit. Look for partner's earlier invitation.",
+      legalCardIds: ["8S", "KD", "5H"],
+      hand: [
+        { id: "8S", rank: "8", suit: "S", label: "8S" },
+        { id: "KD", rank: "K", suit: "D", label: "KD" },
+        { id: "5H", rank: "5", suit: "H", label: "5H" }
+      ],
+      tableBeforeChoice: [],
+      tableAfterChoice: [
+        { seat: "Left", card: { id: "QS", rank: "Q", suit: "S", label: "QS" } },
+        { seat: "Tutor", card: { id: "AS", rank: "A", suit: "S", label: "AS" } },
+        { seat: "Right", card: { id: "3S", rank: "3", suit: "S", label: "3S" } }
+      ],
+      pendingBySeat: { Left: "follows lead", Tutor: "partner", Right: "opponent", You: "on lead" },
+      playedExplanations: {
+        "8S": "8S returns partner's spade suit and lets Barbu's strength work.",
+        KD: "KD may be strong, but it ignores partner's spade invitation.",
+        "5H": "5H is legal, but it does not build the partnership's known suit."
+      },
+      cardOutcomes: {
+        "8S": "good",
+        KD: "risky",
+        "5H": "risky"
+      },
+      cardReasons: {
+        "8S": "won_clean_trick",
+        KD: "off_suit",
+        "5H": "off_suit"
+      }
+    }
+  };
+  const whistReturnPartnerSuitLowDrillStep: DrillStep = {
+    scenarioId: "whist-return-partner-clubs",
+    contract: "Whist",
+    title: "Return partner's suit",
+    trick: {
+      title: "Return without overcommitting",
+      beforeResult: "Barbu showed interest in clubs. You are on lead and can return clubs cheaply.",
+      afterResult: "A small return can keep partner's suit moving without spending your side cards.",
+      emptyExplanation: "Lead partner's suit when the hand gives you a clean return.",
+      legalCardIds: ["4C", "QH", "JD"],
+      hand: [
+        { id: "4C", rank: "4", suit: "C", label: "4C" },
+        { id: "QH", rank: "Q", suit: "H", label: "QH" },
+        { id: "JD", rank: "J", suit: "D", label: "JD" }
+      ],
+      tableBeforeChoice: [],
+      tableAfterChoice: [
+        { seat: "Left", card: { id: "9C", rank: "9", suit: "C", label: "9C" } },
+        { seat: "Tutor", card: { id: "KC", rank: "K", suit: "C", label: "KC" } },
+        { seat: "Right", card: { id: "6C", rank: "6", suit: "C", label: "6C" } }
+      ],
+      pendingBySeat: { Left: "follows lead", Tutor: "partner", Right: "opponent", You: "on lead" },
+      playedExplanations: {
+        "4C": "4C returns partner's club suit and keeps the table simple.",
+        QH: "QH starts a new suit instead of returning partner's invitation.",
+        JD: "JD is legal, but it abandons the partnership signal."
+      },
+      cardOutcomes: {
+        "4C": "good",
+        QH: "risky",
+        JD: "risky"
+      },
+      cardReasons: {
+        "4C": "won_clean_trick",
+        QH: "off_suit",
+        JD: "off_suit"
+      }
+    }
+  };
+  const whistOddTrickWinSeventhDrillStep: DrillStep = {
+    scenarioId: "whist-odd-trick-seventh",
+    contract: "Whist",
+    title: "Count odd tricks",
+    trick: {
+      title: "Win the first odd trick",
+      beforeResult: "Your side has six tricks. The next trick is the first scoring trick in Whist.",
+      afterResult: "Whist scores tricks above six, so taking the seventh trick matters.",
+      emptyExplanation: "Spades are trumps. You are void in hearts and can cut the trick.",
+      legalCardIds: ["5S", "QS", "7D"],
+      hand: [
+        { id: "5S", rank: "5", suit: "S", label: "5S" },
+        { id: "QS", rank: "Q", suit: "S", label: "QS" },
+        { id: "7D", rank: "7", suit: "D", label: "7D" }
+      ],
+      tableBeforeChoice: [
+        { seat: "Left", card: { id: "KH", rank: "K", suit: "H", label: "KH" } },
+        { seat: "Tutor", card: { id: "3H", rank: "3", suit: "H", label: "3H" } },
+        { seat: "Right", card: { id: "AH", rank: "A", suit: "H", label: "AH" } }
+      ],
+      tableAfterChoice: [],
+      pendingBySeat: { You: "void: first odd trick" },
+      playedExplanations: {
+        "5S": "5S is enough trump to win the seventh trick for your side.",
+        QS: "QS wins, but it spends a larger trump than this scoring trick needs.",
+        "7D": "7D is legal because you are void, but it gives away the first odd trick."
+      },
+      cardOutcomes: {
+        "5S": "good",
+        QS: "risky",
+        "7D": "risky"
+      },
+      cardReasons: {
+        "5S": "won_clean_trick",
+        QS: "won_clean_trick",
+        "7D": "void_discard"
+      }
+    }
+  };
+  const whistOddTrickPreserveWinnerDrillStep: DrillStep = {
+    scenarioId: "whist-odd-trick-preserve",
+    contract: "Whist",
+    title: "Count odd tricks",
+    trick: {
+      title: "Protect the next odd trick",
+      beforeResult: "Your side already has seven tricks. Partner Barbu is winning this one with AD.",
+      afterResult: "Once partner has a trick under control, keep resources for the next odd trick.",
+      emptyExplanation: "Clubs are trumps. You are void in diamonds, but partner is already ahead.",
+      legalCardIds: ["6C", "KC", "8H"],
+      hand: [
+        { id: "6C", rank: "6", suit: "C", label: "6C" },
+        { id: "KC", rank: "K", suit: "C", label: "KC" },
+        { id: "8H", rank: "8", suit: "H", label: "8H" }
+      ],
+      tableBeforeChoice: [
+        { seat: "Left", card: { id: "10D", rank: "10", suit: "D", label: "10D" } },
+        { seat: "Tutor", card: { id: "AD", rank: "A", suit: "D", label: "AD" } },
+        { seat: "Right", card: { id: "4D", rank: "4", suit: "D", label: "4D" } }
+      ],
+      tableAfterChoice: [],
+      pendingBySeat: { You: "void: partner winning" },
+      playedExplanations: {
+        "6C": "6C is legal trump, but it is not needed while partner is winning.",
+        KC: "KC wastes a high trump on a trick partner already controls.",
+        "8H": "8H preserves trumps for the next odd trick."
+      },
+      cardOutcomes: {
+        "6C": "risky",
+        KC: "risky",
+        "8H": "good"
+      },
+      cardReasons: {
+        "6C": "won_clean_trick",
+        KC: "won_clean_trick",
+        "8H": "void_discard"
+      }
+    }
+  };
   const whistFollowSuitDrillPool = [whistFollowSuitDrillStep, whistFollowSuitLowDrillStep];
   const whistTrumpOrDiscardDrillPool = [whistTrumpToWinDrillStep, whistPreserveTrumpDrillStep];
+  const whistThirdHandHighDrillPool = [whistThirdHandHighDrillStep, whistThirdHandSaveStrengthDrillStep];
+  const whistReturnPartnerSuitDrillPool = [whistReturnPartnerSuitDrillStep, whistReturnPartnerSuitLowDrillStep];
+  const whistOddTrickDrillPool = [whistOddTrickWinSeventhDrillStep, whistOddTrickPreserveWinnerDrillStep];
   const catalogTableCards: Card[] = [
     { id: "catalog-queen-spades", rank: "Q", suit: "S", label: "QS" },
     { id: "catalog-king-hearts", rank: "K", suit: "H", label: "KH" },
@@ -5752,13 +5983,36 @@
     startWhistPracticeSession("trump", whistTrumpOrDiscardDrillPool, "Whist practice: trump or discard");
   }
 
-  function replayWhistPracticeDrill() {
-    if (activeWhistPracticeFocus === "trump") {
-      startWhistTrumpOrDiscardDrill();
-      return;
-    }
+  function startWhistThirdHandHighDrill() {
+    startWhistPracticeSession("third", whistThirdHandHighDrillPool, "Whist practice: third hand high");
+  }
 
-    startWhistFollowSuitDrill();
+  function startWhistReturnPartnerSuitDrill() {
+    startWhistPracticeSession("return", whistReturnPartnerSuitDrillPool, "Whist practice: return partner's suit");
+  }
+
+  function startWhistOddTrickDrill() {
+    startWhistPracticeSession("odd", whistOddTrickDrillPool, "Whist practice: count odd tricks");
+  }
+
+  function replayWhistPracticeDrill() {
+    switch (activeWhistPracticeFocus) {
+      case "trump":
+        startWhistTrumpOrDiscardDrill();
+        return;
+      case "third":
+        startWhistThirdHandHighDrill();
+        return;
+      case "return":
+        startWhistReturnPartnerSuitDrill();
+        return;
+      case "odd":
+        startWhistOddTrickDrill();
+        return;
+      case "follow":
+      default:
+        startWhistFollowSuitDrill();
+    }
   }
 
   async function startHeartsPassPractice(pathStepId = "") {
@@ -5845,9 +6099,9 @@
   const whistPracticeActions: Record<WhistPracticeAction, () => void> = {
     follow: startWhistFollowSuitDrill,
     trump: startWhistTrumpOrDiscardDrill,
-    third: () => openReference(gameTableDefinitions.whist.referenceId),
-    return: () => openReference(gameTableDefinitions.whist.referenceId),
-    odd: () => openReference(gameTableDefinitions.whist.referenceId)
+    third: startWhistThirdHandHighDrill,
+    return: startWhistReturnPartnerSuitDrill,
+    odd: startWhistOddTrickDrill
   };
 
   function continueCourse() {
