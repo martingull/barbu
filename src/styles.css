@@ -468,6 +468,10 @@ button {
     #182f25;
 }
 
+.pro-feature-card {
+  border-style: dashed;
+}
+
 .learn-action-grid {
   display: grid;
   gap: 8px;

@@ -6784,6 +6784,21 @@
   </div>
 {/snippet}
 
+{#snippet proFeatureGrid()}
+  <div class="fixed-contract-grid">
+    <div class="contract-card compact pro-feature-card">
+      <span>Subscriber feature</span>
+      <strong>Play against AI</strong>
+      <small>Challenge stronger local or remote opponents that adjust to the game, contract, and your recent decisions.</small>
+    </div>
+    <div class="contract-card compact pro-feature-card">
+      <span>Subscriber feature</span>
+      <strong>Competitive Play</strong>
+      <small>Play ranked or table-style matches against other players when multiplayer and accounts are ready.</small>
+    </div>
+  </div>
+{/snippet}
+
 {#snippet runSequenceStrip(label = "Play Barbu sequence")}
   <div class="run-sequence-strip" aria-label={label}>
     {#each fullHandContracts as contract, index}
@@ -7048,14 +7063,14 @@
             <p>{gameTableDefinitions.barbu.tabs.perfect.intro.summary}</p>
           </div>
 
-          <section class="fixed-contract-practice" aria-label="Card Counting I pack">
+          <section class="fixed-contract-practice" aria-label="Barbu Pro features">
             <div class="section-heading">
-              <p class="eyebrow">Card Counting I</p>
-              <h2>Know what is still out.</h2>
-              <p>Build the memory habits behind trick-taking: count trumps, then track the high court cards.</p>
+              <p class="eyebrow">Subscriber layer</p>
+              <h2>Play stronger tables.</h2>
+              <p>Pro is for deeper competition after the local learning and play loops feel natural.</p>
             </div>
 
-            {@render cardCountingExerciseGrid("Pro mode skills")}
+            {@render proFeatureGrid()}
           </section>
         </div>
       {/if}
@@ -7142,14 +7157,14 @@
               <p>{gameTableDefinitions.hearts.tabs.perfect.intro.summary}</p>
             </div>
 
-            <section class="fixed-contract-practice" aria-label="Hearts Pro exercise">
-              <div class="fixed-contract-grid single" aria-label="Hearts Pro skills">
-                <button class="contract-card compact" onclick={openCourtCountTrainer} type="button">
-                  <span>High-card memory</span>
-                  <strong>Track court cards</strong>
-                  <small>Remember kings, queens, and jacks so Queen of Spades danger is easier to read.</small>
-                </button>
+            <section class="fixed-contract-practice" aria-label="Hearts Pro features">
+              <div class="section-heading">
+                <p class="eyebrow">Subscriber layer</p>
+                <h2>Harder Hearts tables.</h2>
+                <p>Pro should add stronger opponents and competitive matches after the basic Black Lady loop works.</p>
               </div>
+
+              {@render proFeatureGrid()}
             </section>
           </div>
       {/if}
@@ -7232,7 +7247,7 @@
       {:else}
         <div
           aria-label={gameTableDefinitions.whist.tabs[activeWhistTableTab].label}
-          class="barbu-tab-panel practice-panel"
+          class="barbu-tab-panel perfect-panel"
           id={gameTableDefinitions.whist.tabs[activeWhistTableTab].panelId}
           role="tabpanel"
         >
@@ -7242,13 +7257,15 @@
             <p>{gameTableDefinitions.whist.tabs[activeWhistTableTab].intro.summary}</p>
           </div>
 
-          <div class="table-action-groups" aria-label="Whist planned work">
-            <section class="table-action-group" aria-label="Whist next implementation">
-              <p class="eyebrow">Planned</p>
-              <button class="drill-action" disabled type="button">Whist engine not built yet</button>
-              <small class="saved-run-note">Start with the Learn tab and reference baseline.</small>
-            </section>
-          </div>
+          <section class="fixed-contract-practice" aria-label="Whist Pro features">
+            <div class="section-heading">
+              <p class="eyebrow">Subscriber layer</p>
+              <h2>Partnership tables with pressure.</h2>
+              <p>Pro should add stronger AI partnerships and competitive Whist once local play is polished.</p>
+            </div>
+
+            {@render proFeatureGrid()}
+          </section>
         </div>
       {/if}
     </section>

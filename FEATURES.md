@@ -72,7 +72,7 @@ The intended monetization model is free starter tables first, then paid packs wi
 - Full-hand tactical feedback v1 with structured trick tags for followed suit, void discards, moved danger cards, No Last Two setup/final tricks, trump wins, and overtrumps.
 - Training path practice step connected to Quick Drill completion.
 - Review step with latest Quick Drill score, weakest-contract advice, recent attempts, and replay actions.
-- Card Counting I pack started with its own Learn/Play table plus Count Trumps, Trump Memory Hand, Track Court Cards, and Danger Cards. Card Counting II is visible as a planned subscriber pack for Bridge-oriented counting. Barbu Pro reuses the Card Counting I exercise grid.
+- Card Counting I pack started with its own Learn/Play table plus Count Trumps, Trump Memory Hand, Track Court Cards, and Danger Cards. Card Counting II is visible as a planned subscriber pack for Bridge-oriented counting. Pro tabs now point to paid AI play and Competitive Play instead of embedding card-counting exercises.
 - Reason-based review advice that turns recent practice tags into one short next-step correction.
 - Local Quick Drill result history with contract-level summaries and focused replay for the weakest contract.
 - Local course progress for the playable Barbu path.
@@ -186,8 +186,8 @@ This section is the short list for getting from the current app to something tha
    - Defer locked danger spades, bonus-jack scoring, and richer Hearts-family varieties unless the current Hearts loop feels incomplete without them.
 
 4. Keep Pro small but useful
-   - Treat Pro as card-sense training plus planned subscriber AI/opponent play, not a second game catalog.
-   - Keep Count Trumps, Trump Memory Hand, Track Court Cards, and Danger Cards if they remain tied to real table play.
+   - Treat Pro as paid AI play and Competitive Play, not a second game catalog.
+   - Keep Card Counting I and Card Counting II as separate game packs.
    - Stop adding mini-games until each active one has clear feedback and a reason to return.
 
 5. Product shell and launch readiness
@@ -296,7 +296,7 @@ These are the next product increments that keep the app coherent.
    - Keep it local until the app needs sync or accounts.
 
 10. Card Sense Training v1
-   - Started in the catalog and Pro mode with the Card Counting I pack.
+   - Started as the separate Card Counting I catalog pack.
    - Count Trumps reveals all thirteen tricks in segments, hides the segment, then asks either how many hearts appeared or whether a specific heart appeared.
    - Trump Memory Hand is a separate realistic table exercise: deal a hand, make the player play tricks, then ask either how many trumps were played or whether a specific trump card appeared.
    - Track Court Cards is the third active exercise and uses the realistic table surface for high-card memory.

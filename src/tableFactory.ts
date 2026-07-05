@@ -700,9 +700,8 @@ export const gameTableDefinitions = {
       },
       perfect: {
         eyebrow: "Pro",
-        title: "Train Hearts card sense.",
-        summary:
-          "Subscriber skill training starts with high-card memory, with AI play and opponent play planned for the Pro layer."
+        title: "Paid Hearts tables.",
+        summary: "Pro is for subscriber AI opponents and competitive play. Card counting lives in its own game pack."
       }
     },
     defaultTab: "play",
@@ -760,9 +759,8 @@ export const gameTableDefinitions = {
       },
       perfect: {
         eyebrow: "Pro",
-        title: "Train the skills behind strong card play.",
-        summary:
-          "Short card-sense games now, with subscriber AI play, opponent play, and advanced Bridge-style counting planned."
+        title: "Paid table play.",
+        summary: "Pro is for subscriber AI play and competitive tables. Card counting lives in its own game packs."
       }
     },
     defaultTab: "learn",
@@ -784,10 +782,8 @@ export const gameTableDefinitions = {
         { id: "play-barbu", label: "Play Barbu", destination: "New Play Barbu run" }
       ],
       perfect: [
-        { id: "count-trumps", label: "Count trumps", destination: "Count trumps minigame" },
-        { id: "trump-memory", label: "Trump memory hand", destination: "Trump memory hand" },
-        { id: "court-cards", label: "Track court cards", destination: "Court-card memory minigame" },
-        { id: "danger-cards", label: "Danger cards", destination: "Danger-card memory minigame" }
+        { id: "ai-play", label: "Play against AI", destination: "Subscriber AI table" },
+        { id: "competitive-play", label: "Competitive Play", destination: "Subscriber competitive table" }
       ]
     }
   }),
@@ -831,9 +827,8 @@ export const gameTableDefinitions = {
       },
       perfect: {
         eyebrow: "Pro",
-        title: "Whist card sense is planned.",
-        summary:
-          "Later Pro exercises should track trumps, honours, partner signals, and suit preference during real partnership play."
+        title: "Paid partnership tables.",
+        summary: "Pro is for subscriber AI partnerships and competitive play. Card counting lives in its own game packs."
       }
     },
     defaultTab: "learn",

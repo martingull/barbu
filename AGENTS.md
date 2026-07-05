@@ -75,7 +75,7 @@ Use `src/tableFactory.ts` as the first stop when adding or changing a game table
 - render Learn with `LearnPanel`
 - render Practice with `PracticePanel`
 - keep Play bodies in `App.svelte` only when they need game-specific state, saved games, or full-hand actions
-- keep Pro bodies in `App.svelte` only when they launch specific mini-games, AI/opponent-play affordances, or reuse shared snippets such as the Card Counting I exercise grid
+- keep Pro bodies in `App.svelte` only when they launch paid AI/opponent-play or competitive-play affordances
 
 When starting Whist, do not copy the Barbu or Hearts table markup wholesale. Add Whist metadata to `tableFactory.ts`, then add the smallest route/view glue in `App.svelte`:
 
