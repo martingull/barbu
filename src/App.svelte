@@ -2222,6 +2222,17 @@
   $: whistPartnershipTricks = fullHand ? whistPartnershipTrickCounts(fullHand.completedTricks) : { playerSide: 0, opponentSide: 0 };
   $: whistPlayerSideOddTricks = Math.max(whistPartnershipTricks.playerSide - 6, 0);
   $: whistOpponentSideOddTricks = Math.max(whistPartnershipTricks.opponentSide - 6, 0);
+  $: whistOddScoreHasStarted = whistPlayerSideOddTricks > 0 || whistOpponentSideOddTricks > 0;
+  $: whistPlayerSideTricksToOdd = Math.max(7 - whistPartnershipTricks.playerSide, 0);
+  $: whistOpponentSideTricksToOdd = Math.max(7 - whistPartnershipTricks.opponentSide, 0);
+  $: whistOddProgressLabel = whistOddScoreHasStarted ? "Odd score" : "To odd";
+  $: whistOddProgressValue = whistOddScoreHasStarted
+    ? `${whistPlayerSideOddTricks} - ${whistOpponentSideOddTricks}`
+    : whistPlayerSideTricksToOdd === whistOpponentSideTricksToOdd
+      ? `${whistPlayerSideTricksToOdd} each`
+      : whistPlayerSideTricksToOdd < whistOpponentSideTricksToOdd
+        ? `You +${whistPlayerSideTricksToOdd}`
+        : `Them +${whistOpponentSideTricksToOdd}`;
   $: heartsCurrentMoonShooter = fullHandIsHeartsGame ? heartsMoonShooter(fullHandSeatPenalties) : undefined;
   $: heartsCurrentMoonThreatSeat = fullHandIsHeartsGame ? heartsMoonThreatSeat(fullHandSeatPenalties) : undefined;
   $: heartsCurrentScoredSeatPenalties = fullHandIsHeartsGame
@@ -5262,16 +5273,17 @@
 
     if (fullHandIsWhistGame) {
       const winnerIsPlayerSide = trick.winnerIndex === 0 || trick.winnerIndex === 2;
+      const partnershipLabel = winnerIsPlayerSide ? "You + Barbu" : "Left + Right";
 
       if (fullHandTrickHasTag(trick, "trump_won")) {
         return winnerIsPlayerSide
-          ? `${trick.winner} won with trump. Good: your partnership cut the led suit and took the trick.`
-          : `${trick.winner} won with trump. The opponents cut the led suit, so count that trump as gone.`;
+          ? `${trick.winner} won with trump for ${partnershipLabel}. Good cut: your side took control.`
+          : `${trick.winner} won with trump for ${partnershipLabel}. Count that trump as gone.`;
       }
 
       return winnerIsPlayerSide
-        ? `${trick.winner} won the trick for You + Barbu. Keep building odd tricks above six.`
-        : `${trick.winner} won the trick for Left + Right. Look for a chance to regain lead or return partner's suit.`;
+        ? `${trick.winner} won the trick for ${partnershipLabel}. Build toward odd tricks above six.`
+        : `${trick.winner} won the trick for ${partnershipLabel}. Regain lead or return Barbu's suit.`;
     }
 
     if (fullHandIsHeartsGame) {
@@ -8436,8 +8448,8 @@
         ariaLabel={`${fullHand.contract} full hand`}
         title={`${fullHand.contract} hand`}
         eyebrow={fullHandIsWhistGame ? "Play Whist" : fullHandRunActive ? "Play Barbu" : "Contract hand"}
-        statusLabel={fullHandRunStatusLabel}
-        statusValue={fullHandIsWhistGame ? `${whistPartnershipTricks.playerSide} - ${whistPartnershipTricks.opponentSide}` : `${fullHand.playerPenalty} ${fullHandPlayerPenaltyLabel}`}
+        statusLabel={fullHandIsWhistGame ? "Trump" : fullHandRunStatusLabel}
+        statusValue={fullHandIsWhistGame ? whistTrumpSuitLabel : `${fullHand.playerPenalty} ${fullHandPlayerPenaltyLabel}`}
         tableAriaLabel={`${fullHand.contract} hand table`}
         pendingBySeat={fullHandPendingBySeat}
         showTable={!fullHandRunIsComplete && !(fullHandIsHeartsGame && fullHand.status === "complete")}
@@ -8451,6 +8463,7 @@
             <div class="full-hand-summary grouped-play-summary" aria-label={`${fullHand.contract} hand score`}>
               <div
                 class:no-last-two={fullHand.contract === "No Last Two"}
+                class:whist-hand-summary={fullHandIsWhistGame}
                 class="full-hand-summary-row current-hand"
                 aria-label="Current hand"
               >
@@ -8469,8 +8482,8 @@
                 </div>
                 {#if fullHandIsWhistGame}
                   <div>
-                    <span>Odd tricks</span>
-                    <strong>{whistPlayerSideOddTricks} - {whistOpponentSideOddTricks}</strong>
+                    <span>{whistOddProgressLabel}</span>
+                    <strong>{whistOddProgressValue}</strong>
                   </div>
                 {/if}
                 {#if fullHand.contract === "No Last Two"}

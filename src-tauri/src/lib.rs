@@ -764,7 +764,7 @@ fn hand_prompt(state: &barbu_core::TrickTakingHandState, penalty_name: &str) -> 
         }
 
         if state.current_trick.is_empty() {
-            return format!("Lead for partner or draw trump. {trump} are trumps.");
+            return format!("You lead. Choose a suit that helps your side. {trump} are trumps.");
         }
 
         let led_suit = state
@@ -773,7 +773,7 @@ fn hand_prompt(state: &barbu_core::TrickTakingHandState, penalty_name: &str) -> 
             .map(|played| suit_name(played.card.suit))
             .unwrap_or("the led suit");
 
-        return format!("{led_suit} were led. Follow suit if you can. {trump} are trumps.");
+        return format!("{led_suit} were led. Follow suit if you can. Trump: {trump}.");
     }
 
     if state.current_trick.is_empty() {

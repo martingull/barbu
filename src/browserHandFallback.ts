@@ -400,6 +400,13 @@ function completedTrickTacticalTags(
     if (winnerCard?.suit === "H" && trumpCards.length > 1) {
       tags.push("overtrumped");
     }
+  } else if (contract === "Whist") {
+    const winnerCard = trick.cards.find((played) => played.seat === trick.winner)?.card;
+
+    if (winnerCard && led && winnerCard.suit !== led) {
+      tags.push("trump_won");
+    }
+    tags.push(trick.winnerIndex === 0 || trick.winnerIndex === 2 ? "partner_trick" : "opponent_trick");
   } else if (
     (contract === "Hearts" || contract === "No Hearts" || contract === "No Queens" || contract === "King of Hearts") &&
     trick.penalty > 0
@@ -987,11 +994,15 @@ function promptForState(state: FullHandState, playerPenalty: number) {
     const trump = suitName(whistTrumpSuitFromState(state)).toLowerCase();
     const led = ledSuit(state);
 
-    if (!led) {
-      return `Lead for partner or draw trump. ${trump} are trumps.`;
+    if (state.status === "complete") {
+      return `Whist hand complete. ${trump} were trumps.`;
     }
 
-    return `${suitName(led)} were led. Follow suit if you can. ${trump} are trumps.`;
+    if (!led) {
+      return `You lead. Choose a suit that helps your side. ${trump} are trumps.`;
+    }
+
+    return `${suitName(led)} were led. Follow suit if you can. Trump: ${trump}.`;
   }
 
   const led = ledSuit(state);

@@ -1636,7 +1636,8 @@ h2 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.full-hand-summary-row.current-hand.no-last-two {
+.full-hand-summary-row.current-hand.no-last-two,
+.full-hand-summary-row.current-hand.whist-hand-summary {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
@@ -3420,6 +3421,7 @@ h2 {
   }
 
   .table-play-surface .full-hand-summary-row.current-hand.no-last-two,
+  .table-play-surface .full-hand-summary-row.current-hand.whist-hand-summary,
   .table-play-surface .full-hand-summary-row.table-score {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }

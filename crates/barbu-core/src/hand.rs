@@ -1510,6 +1510,155 @@ mod tests {
     }
 
     #[test]
+    fn whist_opponent_preserves_trump_when_partner_is_winning() {
+        let state = WhistHandState {
+            id: "whist-hand-test-S".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Two, Suit::Spades),
+                    Card::new(Rank::Nine, Suit::Diamonds),
+                ],
+            ],
+            current_player: 3,
+            current_trick: vec![
+                PlayedCard::new(1, Card::new(Rank::Ace, Suit::Clubs)),
+                PlayedCard::new(2, Card::new(Rank::King, Suit::Clubs)),
+                PlayedCard::new(0, Card::new(Rank::Queen, Suit::Clubs)),
+            ],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_whist_opponent_card(&state),
+            Some(Card::new(Rank::Nine, Suit::Diamonds))
+        );
+    }
+
+    #[test]
+    fn whist_opponent_cuts_with_low_trump_when_opponents_are_winning() {
+        let state = WhistHandState {
+            id: "whist-hand-test-S".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Two, Suit::Spades),
+                    Card::new(Rank::Nine, Suit::Spades),
+                    Card::new(Rank::Queen, Suit::Diamonds),
+                ],
+            ],
+            current_player: 3,
+            current_trick: vec![
+                PlayedCard::new(1, Card::new(Rank::King, Suit::Clubs)),
+                PlayedCard::new(2, Card::new(Rank::Ace, Suit::Clubs)),
+                PlayedCard::new(0, Card::new(Rank::Queen, Suit::Clubs)),
+            ],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_whist_opponent_card(&state),
+            Some(Card::new(Rank::Two, Suit::Spades))
+        );
+    }
+
+    #[test]
+    fn whist_opponent_follows_low_when_partner_is_winning() {
+        let state = WhistHandState {
+            id: "whist-hand-test-S".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Two, Suit::Clubs),
+                    Card::new(Rank::Queen, Suit::Clubs),
+                ],
+            ],
+            current_player: 3,
+            current_trick: vec![
+                PlayedCard::new(1, Card::new(Rank::Ace, Suit::Clubs)),
+                PlayedCard::new(2, Card::new(Rank::King, Suit::Clubs)),
+                PlayedCard::new(0, Card::new(Rank::Nine, Suit::Clubs)),
+            ],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_whist_opponent_card(&state),
+            Some(Card::new(Rank::Two, Suit::Clubs))
+        );
+    }
+
+    #[test]
+    fn whist_opponent_follows_high_enough_when_opponents_are_winning() {
+        let state = WhistHandState {
+            id: "whist-hand-test-S".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Two, Suit::Clubs),
+                    Card::new(Rank::King, Suit::Clubs),
+                ],
+            ],
+            current_player: 3,
+            current_trick: vec![
+                PlayedCard::new(1, Card::new(Rank::Nine, Suit::Clubs)),
+                PlayedCard::new(2, Card::new(Rank::Queen, Suit::Clubs)),
+                PlayedCard::new(0, Card::new(Rank::Ten, Suit::Clubs)),
+            ],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_whist_opponent_card(&state),
+            Some(Card::new(Rank::King, Suit::Clubs))
+        );
+    }
+
+    #[test]
+    fn whist_completed_hand_has_odd_tricks_for_one_partnership() {
+        let mut state = start_whist_hand(8);
+
+        while state.status != HandStatus::Complete {
+            let card = state
+                .legal_player_cards()
+                .first()
+                .copied()
+                .expect("player should have a legal Whist card while the hand is in progress");
+            state = play_whist_card(state, card).expect("legal Whist card should play");
+        }
+
+        let player_side_tricks = state
+            .completed_tricks
+            .iter()
+            .filter(|trick| trick.winner == 0 || trick.winner == 2)
+            .count();
+        let opponent_side_tricks = state
+            .completed_tricks
+            .iter()
+            .filter(|trick| trick.winner == 1 || trick.winner == 3)
+            .count();
+
+        assert_eq!(state.completed_tricks.len(), 13);
+        assert_eq!(player_side_tricks + opponent_side_tricks, 13);
+        assert!(
+            player_side_tricks > 6 || opponent_side_tricks > 6,
+            "one Whist partnership should always score odd tricks in a completed 13-trick hand"
+        );
+    }
+
+    #[test]
     fn hearts_first_trick_must_open_with_two_of_clubs() {
         let state = HeartsHandState {
             id: "hearts-hand-test".to_string(),

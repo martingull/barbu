@@ -821,7 +821,7 @@ export const gameTableDefinitions = {
       practice: {
         eyebrow: "Practice",
         title: "Repeat one Whist habit.",
-        summary: "Start with compact partnership trick-taking topics before full Whist hands exist."
+        summary: "Repeat compact partnership trick-taking topics, then test the same habits in a full Whist hand."
       },
       play: {
         eyebrow: "Play",

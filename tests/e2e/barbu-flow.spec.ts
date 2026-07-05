@@ -468,9 +468,10 @@ test("Whist play starts a partnership trump hand", async ({ page }, testInfo) =>
   await page.getByRole("button", { name: "Play Whist" }).click();
 
   await expect(page.getByRole("heading", { name: "Whist hand" })).toBeVisible();
-  await expect(page.getByLabel("Whist full hand")).toContainText("trumps");
+  await expect(page.getByLabel("Whist full hand")).toContainText("Trump:");
   await expect(page.getByLabel("Whist hand score")).toContainText("Your side");
   await expect(page.getByLabel("Whist hand score")).toContainText("Opponents");
+  await expect(page.getByLabel("Whist hand score")).toContainText("To odd");
   await expect(page.getByLabel("Whist hand table")).toBeVisible();
   await expect(page.getByLabel("Your Whist hand")).toBeVisible();
   await expectNoPageScroll(page);

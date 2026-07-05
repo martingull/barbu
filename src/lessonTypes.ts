@@ -99,7 +99,9 @@ export type FullHandTacticalTag =
   | "queen_spades_moved"
   | "hearts_moved"
   | "opponent_loaded_player_trick"
-  | "pressure_lead";
+  | "pressure_lead"
+  | "partner_trick"
+  | "opponent_trick";
 
 export type CompletedHandTrick = {
   cards: TableCard[];
