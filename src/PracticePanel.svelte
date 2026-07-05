@@ -32,7 +32,7 @@
         {#each group.entries ?? [] as entry}
           <section class="table-action-group" aria-label="Practice actions">
             <p class="eyebrow">{entry.label}</p>
-            <button class="drill-action" onclick={actions[entry.action]} type="button">
+            <button class="drill-action" onclick={() => actions[entry.action]?.()} type="button">
               {entry.title}
             </button>
           </section>
@@ -62,7 +62,7 @@
         </div>
         <div class="fixed-contract-grid">
           {#each group.entries ?? [] as entry}
-            <button class="contract-card compact" onclick={actions[entry.action]} type="button">
+            <button class="contract-card compact" onclick={() => actions[entry.action]?.()} type="button">
               <span>{entry.label}</span>
               <strong>{entry.title}</strong>
               <small>{entry.summary}</small>

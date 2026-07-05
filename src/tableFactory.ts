@@ -15,7 +15,7 @@ export type CatalogAccess = "Free" | "Pack";
 export type CatalogAccessModel = "free-starter" | "metered-pack";
 export type BarbuLearnPathAction = "lesson" | "generated" | "review" | "planned";
 export type HeartsLearnPathAction = "object" | "queen" | "avoid" | "pass" | "break" | "moon" | "score";
-export type WhistLearnPathAction = "planned";
+export type WhistLearnPathAction = "reference" | WhistPracticeAction;
 export type BarbuPracticeAction = "quick" | "fixed" | "domino";
 export type HeartsPracticeAction = "quick" | "pass" | "first" | "avoid" | "queen" | "break" | "moon" | "score";
 export type WhistPracticeAction = "follow" | "trump" | "third" | "return" | "odd";
@@ -288,42 +288,42 @@ export const whistLearnPathSteps: WhistLearnPathStep[] = [
     step: "Concept",
     title: "Win tricks together",
     summary: "Whist is partnership trick-taking: you and the player opposite you score as a side.",
-    action: "planned"
+    action: "reference"
   }),
   createLearnPathStep({
     id: "whist-follow-suit",
     step: "Rule",
     title: "Follow suit",
     summary: "The led suit controls the trick unless someone who is void plays a trump.",
-    action: "planned"
+    action: "follow"
   }),
   createLearnPathStep({
     id: "whist-trumps",
     step: "Example",
     title: "Trump wins",
     summary: "The dealer's last card sets trump; a low trump can beat a high plain-suit card.",
-    action: "planned"
+    action: "trump"
   }),
   createLearnPathStep({
     id: "whist-partner",
     step: "Partnership",
     title: "Read your partner",
     summary: "Return partner's suit, support their lead, and avoid fighting your own side.",
-    action: "planned"
+    action: "third"
   }),
   createLearnPathStep({
     id: "whist-suit-invite",
     step: "Table talk",
     title: "Invite a suit",
     summary: "Lead a strong or long suit to show partner where your hand wants help.",
-    action: "planned"
+    action: "return"
   }),
   createLearnPathStep({
     id: "whist-odd-tricks",
     step: "Scoring",
     title: "Count odd tricks",
     summary: "Only tricks above six score, so seven tricks is one point for your partnership.",
-    action: "planned"
+    action: "odd"
   })
 ];
 
@@ -803,8 +803,8 @@ export const gameTableDefinitions = {
       pathEyebrow: "Training path",
       pathTitle: "Learn the Whist table",
       progressAriaLabel: "Whist course progress",
-      nextSummary: "Whist lessons are planned after the reference and table shell are in place.",
-      completeSummary: "Whist lessons are planned after the first reference pass.",
+      nextSummary: "Open a compact Whist decision, then repeat the same habit in practice.",
+      completeSummary: "You have tried the first Whist habits: partnerships, trumps, suit invites, and odd tricks.",
       referenceSummary: "Check the Whist baseline: partnerships, trumps, odd tricks, and silent table signals."
     },
     tabIntros: {

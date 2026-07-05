@@ -435,10 +435,10 @@ test("Whist practice starts playable partnership drills", async ({ page }) => {
   await page.getByRole("tab", { name: "Practice" }).click();
 
   await page.getByLabel("Whist practice drills").getByRole("button", { name: "Follow suit" }).click();
-  await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Whist practice: follow suit" })).toBeVisible();
   await expect(page.getByLabel("Drill decision")).toContainText("Whist");
-  await expect(page.getByLabel("Drill progress")).toContainText("0 / 2 played");
-  await expect(page.getByLabel("Drill decision")).toContainText(/Follow partner's led suit|Second hand follows low/);
+  await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
+  await expect(page.getByLabel("Drill decision")).toContainText(/Follow partner's led suit|Second hand follows low|Cover when it wins/);
 
   await completeVisibleDrillSession(page);
   await expect(page.getByRole("heading", { name: "Session complete" })).toBeVisible();
@@ -448,26 +448,44 @@ test("Whist practice starts playable partnership drills", async ({ page }) => {
   await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
 
   await page.getByLabel("Whist practice drills").getByRole("button", { name: "Trump or discard" }).click();
-  await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Whist practice: trump or discard" })).toBeVisible();
   await expect(page.getByLabel("Drill decision")).toContainText("Whist");
-  await expect(page.getByLabel("Drill progress")).toContainText("0 / 2 played");
-  await expect(page.getByLabel("Drill decision")).toContainText(/Cut with trump|Discard when partner is winning/);
+  await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
+  await expect(page.getByLabel("Drill decision")).toContainText(/Cut with trump|Discard when partner is winning|Overtrump the opponent/);
   await page.getByLabel("Drill decision").getByRole("button", { name: "Table" }).click();
   await expect(page.getByRole("heading", { name: "Whist table", exact: true })).toBeVisible();
 
   await page.getByLabel("Whist practice drills").getByRole("button", { name: "Third hand high" }).click();
-  await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
-  await expect(page.getByLabel("Drill decision")).toContainText(/Support partner's lead|Do not overpay/);
+  await expect(page.getByRole("heading", { name: "Whist practice: third hand high" })).toBeVisible();
+  await expect(page.getByLabel("Drill decision")).toContainText(/Support partner's lead|Do not overpay|Spend enough, not everything/);
   await page.getByLabel("Drill decision").getByRole("button", { name: "Table" }).click();
 
   await page.getByLabel("Whist practice drills").getByRole("button", { name: "Return partner's suit" }).click();
-  await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
-  await expect(page.getByLabel("Drill decision")).toContainText(/Lead partner's suit back|Return without overcommitting/);
+  await expect(page.getByRole("heading", { name: "Whist practice: return partner's suit" })).toBeVisible();
+  await expect(page.getByLabel("Drill decision")).toContainText(/Lead partner's suit back|Return without overcommitting|Return the plain suit/);
   await page.getByLabel("Drill decision").getByRole("button", { name: "Table" }).click();
 
   await page.getByLabel("Whist practice drills").getByRole("button", { name: "Count odd tricks" }).click();
-  await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
-  await expect(page.getByLabel("Drill decision")).toContainText(/Win the first odd trick|Protect the next odd trick/);
+  await expect(page.getByRole("heading", { name: "Whist practice: count odd tricks" })).toBeVisible();
+  await expect(page.getByLabel("Drill decision")).toContainText(/Win the first odd trick|Protect the next odd trick|Add another odd trick/);
+});
+
+test("Whist learn path opens matching practice decisions", async ({ page }) => {
+  await gotoWithPracticeSeed(page, 4);
+  await page.getByRole("button", { name: /Open Whist/ }).click();
+
+  await page.getByRole("button", { name: /^2 Rule Follow suit/ }).click();
+  await expect(page.getByRole("heading", { name: "Whist practice: follow suit" })).toBeVisible();
+  await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
+  await expect(page.getByLabel("Drill decision")).toContainText(/Follow partner's led suit|Second hand follows low|Cover when it wins/);
+
+  await completeVisibleDrillSession(page);
+  await expect(page.getByRole("heading", { name: "Session complete" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue Whist path" })).toBeVisible();
+  await page.getByRole("button", { name: "Continue Whist path" }).click();
+
+  await expect(page.getByRole("heading", { name: "Whist practice: trump or discard" })).toBeVisible();
+  await expect(page.getByLabel("Drill decision")).toContainText(/Cut with trump|Discard when partner is winning|Overtrump the opponent/);
 });
 
 test("Whist play starts a partnership trump hand", async ({ page }, testInfo) => {
