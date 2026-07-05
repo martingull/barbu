@@ -33,7 +33,7 @@ const rankOrder: Record<Rank, number> = {
   A: 14
 };
 
-const dailyDrillPoolRounds = 3;
+const dailyDrillPoolRounds = 4;
 
 export function generateBrowserPlayBarbuDrillSteps(seed: number): BrowserDrillStep[] {
   const steps: BrowserDrillStep[] = [];
@@ -61,13 +61,58 @@ function drillPoolSeed(seed: number, contractIndex: number, round: number) {
 }
 
 function generatedNoHeartsStep(seed: number): BrowserDrillStep {
-  if (seed % 3 === 0) {
-    return generatedNoHeartsFollowSuitStep(seed);
+  switch (seed % 4) {
+    case 0:
+      return generatedNoHeartsFollowSuitStep(seed);
+    case 1:
+      return generatedNoHeartsVoidDiscardStep(seed);
+    case 2:
+      return generatedNoHeartsVoidDumpDangerStep(seed);
+    default:
+      return generatedNoHeartsAceDuckStep(seed);
   }
-  if (seed % 3 === 1) {
-    return generatedNoHeartsVoidDiscardStep(seed);
-  }
-  return generatedNoHeartsVoidDumpDangerStep(seed);
+}
+
+function generatedNoHeartsAceDuckStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const leadCard = card(choose(rng, ["8", "9"]), "H");
+  const tutorCard = card(choose(rng, ["10", "J"]), "H");
+  const rightCard = card(choose(rng, ["3", "4", "5"]), "H");
+  const lowPlayerCard = card("2", "H");
+  const aceHeart = card("A", "H");
+  const playerHand = [lowPlayerCard, aceHeart, card("Q", "S"), card("7", "C")].sort(compareCards);
+
+  return {
+    contract: "No Hearts",
+    title: "Duck the ace of hearts",
+    trick: {
+      title: "Duck the ace of hearts",
+      beforeResult: `Left led ${leadCard.label}. Barbu followed ${tutorCard.label}. Right followed ${rightCard.label}.`,
+      afterResult: `The heart trick is loaded. AH wins it; 2H lets Barbu keep the points.`,
+      emptyExplanation: "Hearts were led. Avoid taking the heart trick with AH.",
+      legalCardIds: [lowPlayerCard.id, aceHeart.id],
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Left", card: leadCard },
+        { seat: "Tutor", card: tutorCard },
+        { seat: "Right", card: rightCard }
+      ],
+      tableAfterChoice: [],
+      pendingBySeat: { You: "You" },
+      playedExplanations: {
+        [lowPlayerCard.id]: `${lowPlayerCard.label} follows hearts and stays under the current winner.`,
+        [aceHeart.id]: `${aceHeart.label} follows hearts but captures the whole heart trick.`
+      },
+      cardOutcomes: {
+        [lowPlayerCard.id]: "good",
+        [aceHeart.id]: "penalty"
+      },
+      cardReasons: {
+        [lowPlayerCard.id]: "avoided_penalty",
+        [aceHeart.id]: "captured_penalty"
+      }
+    }
+  };
 }
 
 function generatedNoHeartsFollowSuitStep(seed: number): BrowserDrillStep {
@@ -209,13 +254,61 @@ function generatedNoHeartsVoidDumpDangerStep(seed: number): BrowserDrillStep {
 }
 
 function generatedNoQueensStep(seed: number): BrowserDrillStep {
-  if (seed % 3 === 0) {
-    return generatedNoQueensCaptureStep(seed);
+  switch (seed % 4) {
+    case 0:
+      return generatedNoQueensCaptureStep(seed);
+    case 1:
+      return generatedNoQueensVoidDiscardStep(seed);
+    case 2:
+      return generatedNoQueensVoidDumpQueenStep(seed);
+    default:
+      return generatedNoQueensFollowUnderAceStep(seed);
   }
-  if (seed % 3 === 1) {
-    return generatedNoQueensVoidDiscardStep(seed);
-  }
-  return generatedNoQueensVoidDumpQueenStep(seed);
+}
+
+function generatedNoQueensFollowUnderAceStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const ledSuit = choose(rng, nonHeartSuits);
+  const offSuit = firstNonMatchingSuit(ledSuit, "H");
+  const leadCard = card(choose(rng, ["6", "7", "8"]), ledSuit);
+  const tutorWinner = card("A", ledSuit);
+  const rightCard = card(choose(rng, ["3", "4", "5"]), ledSuit);
+  const lowPlayerCard = card("2", ledSuit);
+  const queenCard = card("Q", ledSuit);
+  const playerHand = [lowPlayerCard, queenCard, card("9", "H"), card("K", offSuit)].sort(compareCards);
+  const ledSuitName = suitNames[ledSuit];
+
+  return {
+    contract: "No Queens",
+    title: "Shed a queen under the ace",
+    trick: {
+      title: "Follow with a safe queen",
+      beforeResult: `Left led ${leadCard.label}. Barbu is already winning with ${tutorWinner.label}. Right followed ${rightCard.label}.`,
+      afterResult: `Barbu keeps the trick with ${tutorWinner.label}. A queen played below it goes to Barbu, not you.`,
+      emptyExplanation: `${capitalize(ledSuitName)} were led. A queen can be safe when the ace is already locked above it.`,
+      legalCardIds: [lowPlayerCard.id, queenCard.id],
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Left", card: leadCard },
+        { seat: "Tutor", card: tutorWinner },
+        { seat: "Right", card: rightCard }
+      ],
+      tableAfterChoice: [],
+      pendingBySeat: { You: "You" },
+      playedExplanations: {
+        [lowPlayerCard.id]: `${lowPlayerCard.label} follows ${ledSuitName} and leaves the trick with Barbu.`,
+        [queenCard.id]: `${queenCard.label} follows ${ledSuitName} and safely sheds a queen under ${tutorWinner.label}.`
+      },
+      cardOutcomes: {
+        [lowPlayerCard.id]: "good",
+        [queenCard.id]: "good"
+      },
+      cardReasons: {
+        [lowPlayerCard.id]: "followed_suit",
+        [queenCard.id]: "avoided_penalty"
+      }
+    }
+  };
 }
 
 function generatedNoQueensCaptureStep(seed: number): BrowserDrillStep {
@@ -358,13 +451,58 @@ function generatedNoQueensVoidDumpQueenStep(seed: number): BrowserDrillStep {
 }
 
 function generatedKingOfHeartsStep(seed: number): BrowserDrillStep {
-  if (seed % 3 === 0) {
-    return generatedKingOfHeartsCaptureStep(seed);
+  switch (seed % 4) {
+    case 0:
+      return generatedKingOfHeartsCaptureStep(seed);
+    case 1:
+      return generatedKingOfHeartsVoidDiscardStep(seed);
+    case 2:
+      return generatedKingOfHeartsVoidDumpKingStep(seed);
+    default:
+      return generatedKingOfHeartsFollowUnderAceStep(seed);
   }
-  if (seed % 3 === 1) {
-    return generatedKingOfHeartsVoidDiscardStep(seed);
-  }
-  return generatedKingOfHeartsVoidDumpKingStep(seed);
+}
+
+function generatedKingOfHeartsFollowUnderAceStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const leadCard = card(choose(rng, ["8", "9"]), "H");
+  const tutorWinner = card("A", "H");
+  const rightCard = card(choose(rng, ["3", "4", "5"]), "H");
+  const lowPlayerCard = card("2", "H");
+  const kingHeart = card("K", "H");
+  const playerHand = [lowPlayerCard, kingHeart, card("Q", "S"), card("7", "C")].sort(compareCards);
+
+  return {
+    contract: "King of Hearts",
+    title: "Shed KH under the ace",
+    trick: {
+      title: "Follow with KH safely",
+      beforeResult: `Left led ${leadCard.label}. Barbu is already winning with ${tutorWinner.label}. Right followed ${rightCard.label}.`,
+      afterResult: `Barbu keeps the trick with ${tutorWinner.label}. KH can leave your hand without coming home to you.`,
+      emptyExplanation: "Hearts were led. KH is safe when AH is already locked above it.",
+      legalCardIds: [lowPlayerCard.id, kingHeart.id],
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Left", card: leadCard },
+        { seat: "Tutor", card: tutorWinner },
+        { seat: "Right", card: rightCard }
+      ],
+      tableAfterChoice: [],
+      pendingBySeat: { You: "You" },
+      playedExplanations: {
+        [lowPlayerCard.id]: `${lowPlayerCard.label} follows hearts and leaves the trick with Barbu.`,
+        [kingHeart.id]: `${kingHeart.label} follows hearts and safely sheds Barbu under ${tutorWinner.label}.`
+      },
+      cardOutcomes: {
+        [lowPlayerCard.id]: "good",
+        [kingHeart.id]: "good"
+      },
+      cardReasons: {
+        [lowPlayerCard.id]: "followed_suit",
+        [kingHeart.id]: "avoided_penalty"
+      }
+    }
+  };
 }
 
 function generatedKingOfHeartsCaptureStep(seed: number): BrowserDrillStep {
@@ -498,13 +636,61 @@ function generatedKingOfHeartsVoidDumpKingStep(seed: number): BrowserDrillStep {
 }
 
 function generatedNoLastTwoStep(seed: number): BrowserDrillStep {
-  if (seed % 3 === 0) {
-    return generatedNoLastTwoDuckStep(seed);
+  switch (seed % 4) {
+    case 0:
+      return generatedNoLastTwoDuckStep(seed);
+    case 1:
+      return generatedNoLastTwoForcedWinStep(seed);
+    case 2:
+      return generatedNoLastTwoSetupStep(seed);
+    default:
+      return generatedNoLastTwoEarlySetupStep(seed);
   }
-  if (seed % 3 === 1) {
-    return generatedNoLastTwoForcedWinStep(seed);
-  }
-  return generatedNoLastTwoSetupStep(seed);
+}
+
+function generatedNoLastTwoEarlySetupStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const ledSuit = choose(rng, nonHeartSuits);
+  const leadCard = card(choose(rng, ["5", "6", "7"]), ledSuit);
+  const tutorCard = card(choose(rng, ["8", "9"]), ledSuit);
+  const rightWinner = card("J", ledSuit);
+  const lowPlayerCard = card("2", ledSuit);
+  const highPlayerCard = card("K", ledSuit);
+  const offSuitCard = card("4", firstNonMatchingSuit(ledSuit, "H"));
+  const playerHand = [lowPlayerCard, highPlayerCard, offSuitCard].sort(compareCards);
+  const ledSuitName = suitNames[ledSuit];
+
+  return {
+    contract: "No Last Two",
+    title: "Keep an exit before the finish",
+    trick: {
+      title: "Prepare before the last two",
+      beforeResult: `This is trick 10. Left led ${leadCard.label}. Barbu played ${tutorCard.label}. Right is winning with ${rightWinner.label}.`,
+      afterResult: `The trick is still clean, but taking the lead now can force awkward final tricks.`,
+      emptyExplanation: `${capitalize(ledSuitName)} were led. Stay out of lead before the dangerous finish.`,
+      legalCardIds: [lowPlayerCard.id, highPlayerCard.id],
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Left", card: leadCard },
+        { seat: "Tutor", card: tutorCard },
+        { seat: "Right", card: rightWinner }
+      ],
+      tableAfterChoice: [],
+      pendingBySeat: { You: "You" },
+      playedExplanations: {
+        [lowPlayerCard.id]: `${lowPlayerCard.label} follows ${ledSuitName} and keeps you out of lead before the finish.`,
+        [highPlayerCard.id]: `${highPlayerCard.label} wins a clean trick, but leading next can be risky.`
+      },
+      cardOutcomes: {
+        [lowPlayerCard.id]: "good",
+        [highPlayerCard.id]: "risky"
+      },
+      cardReasons: {
+        [lowPlayerCard.id]: "avoided_penalty",
+        [highPlayerCard.id]: "won_clean_trick"
+      }
+    }
+  };
 }
 
 function generatedNoLastTwoDuckStep(seed: number): BrowserDrillStep {
@@ -639,13 +825,16 @@ function generatedNoLastTwoSetupStep(seed: number): BrowserDrillStep {
 }
 
 function generatedNoTricksStep(seed: number): BrowserDrillStep {
-  if (seed % 3 === 0) {
-    return generatedNoTricksDuckStep(seed);
+  switch (seed % 4) {
+    case 0:
+      return generatedNoTricksDuckStep(seed);
+    case 1:
+      return generatedNoTricksForcedWinStep(seed);
+    case 2:
+      return generatedNoTricksVoidDiscardStep(seed);
+    default:
+      return generatedNoTricksLastSeatDuckStep(seed);
   }
-  if (seed % 3 === 1) {
-    return generatedNoTricksForcedWinStep(seed);
-  }
-  return generatedNoTricksVoidDiscardStep(seed);
 }
 
 function generatedNoTricksDuckStep(seed: number): BrowserDrillStep {
@@ -780,14 +969,63 @@ function generatedNoTricksVoidDiscardStep(seed: number): BrowserDrillStep {
   };
 }
 
+function generatedNoTricksLastSeatDuckStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const ledSuit = choose(rng, nonHeartSuits);
+  const offSuit = firstNonMatchingSuit(ledSuit, "H");
+  const leadCard = card(choose(rng, ["6", "7", "8"]), ledSuit);
+  const tutorWinner = card("Q", ledSuit);
+  const rightCard = card(choose(rng, ["3", "4", "5"]), ledSuit);
+  const lowPlayerCard = card("2", ledSuit);
+  const highPlayerCard = card("A", ledSuit);
+  const offSuitCard = card("9", offSuit);
+  const playerHand = [lowPlayerCard, highPlayerCard, offSuitCard].sort(compareCards);
+  const ledSuitName = suitNames[ledSuit];
+
+  return {
+    contract: "No Tricks",
+    title: "Duck from last seat",
+    trick: {
+      title: "Use last-seat information",
+      beforeResult: `Left led ${leadCard.label}. Barbu is winning with ${tutorWinner.label}. Right followed ${rightCard.label}.`,
+      afterResult: `You can see the whole trick. Ducking keeps Barbu on the trick; overtaking scores against you.`,
+      emptyExplanation: `${capitalize(ledSuitName)} were led. Choose the card that stays below ${tutorWinner.label}.`,
+      legalCardIds: [lowPlayerCard.id, highPlayerCard.id],
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Left", card: leadCard },
+        { seat: "Tutor", card: tutorWinner },
+        { seat: "Right", card: rightCard }
+      ],
+      tableAfterChoice: [],
+      pendingBySeat: { You: "You" },
+      playedExplanations: {
+        [lowPlayerCard.id]: `${lowPlayerCard.label} follows ${ledSuitName} and stays below ${tutorWinner.label}.`,
+        [highPlayerCard.id]: `${highPlayerCard.label} follows ${ledSuitName} but overtakes the trick.`
+      },
+      cardOutcomes: {
+        [lowPlayerCard.id]: "good",
+        [highPlayerCard.id]: "penalty"
+      },
+      cardReasons: {
+        [lowPlayerCard.id]: "avoided_penalty",
+        [highPlayerCard.id]: "captured_penalty"
+      }
+    }
+  };
+}
+
 function generatedHeartsTrumpsStep(seed: number): BrowserDrillStep {
-  if (seed % 3 === 0) {
-    return generatedHeartsTrumpsCutStep(seed);
+  switch (seed % 4) {
+    case 0:
+      return generatedHeartsTrumpsCutStep(seed);
+    case 1:
+      return generatedHeartsTrumpsFollowStep(seed);
+    case 2:
+      return generatedHeartsTrumpsOvertrumpStep(seed);
+    default:
+      return generatedHeartsTrumpsFollowBeforeTrumpStep(seed);
   }
-  if (seed % 3 === 1) {
-    return generatedHeartsTrumpsFollowStep(seed);
-  }
-  return generatedHeartsTrumpsOvertrumpStep(seed);
 }
 
 function generatedHeartsTrumpsCutStep(seed: number): BrowserDrillStep {
@@ -941,14 +1179,63 @@ function generatedHeartsTrumpsOvertrumpStep(seed: number): BrowserDrillStep {
   };
 }
 
+function generatedHeartsTrumpsFollowBeforeTrumpStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const ledSuit = choose(rng, nonHeartSuits);
+  const offSuit = firstNonMatchingSuit(ledSuit, "H");
+  const leadCard = card(choose(rng, ["7", "8", "9"]), ledSuit);
+  const rightCard = card(choose(rng, ["J", "Q"]), ledSuit);
+  const leftCard = card(choose(rng, ["3", "4", "5"]), ledSuit);
+  const lowPlayerCard = card("2", ledSuit);
+  const aceCard = card("A", ledSuit);
+  const heartCard = card("6", "H");
+  const discardCard = card("K", offSuit);
+  const playerHand = [lowPlayerCard, aceCard, heartCard, discardCard].sort(compareCards);
+  const ledSuitName = suitNames[ledSuit];
+
+  return {
+    contract: "Hearts Trumps",
+    title: "Follow before trumping",
+    trick: {
+      title: "Respect the led suit",
+      beforeResult: `Barbu led ${leadCard.label}. Right followed ${rightCard.label}. Hearts are trumps, but you still hold ${ledSuitName}.`,
+      afterResult: `You must follow ${ledSuitName} before you are allowed to trump with a heart.`,
+      emptyExplanation: `${capitalize(ledSuitName)} were led. Do not play a trump while you can still follow suit.`,
+      legalCardIds: [lowPlayerCard.id, aceCard.id],
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Tutor", card: leadCard },
+        { seat: "Right", card: rightCard }
+      ],
+      tableAfterChoice: [{ seat: "Left", card: leftCard }],
+      pendingBySeat: { Left: leftCard.label, You: "You" },
+      playedExplanations: {
+        [lowPlayerCard.id]: `${lowPlayerCard.label} follows ${ledSuitName}; it is legal but does not chase the trick.`,
+        [aceCard.id]: `${aceCard.label} follows ${ledSuitName} and wins the trick.`
+      },
+      cardOutcomes: {
+        [lowPlayerCard.id]: "risky",
+        [aceCard.id]: "good"
+      },
+      cardReasons: {
+        [lowPlayerCard.id]: "followed_suit",
+        [aceCard.id]: "won_clean_trick"
+      }
+    }
+  };
+}
+
 function generatedDominoStep(seed: number): BrowserDrillStep {
-  if (seed % 3 === 0) {
-    return generatedDominoOpenOrExtendStep(seed);
+  switch (seed % 4) {
+    case 0:
+      return generatedDominoOpenOrExtendStep(seed);
+    case 1:
+      return generatedDominoTwoLaneChoiceStep(seed);
+    case 2:
+      return generatedDominoOpenNewSuitStep(seed);
+    default:
+      return generatedDominoAvoidGapStep(seed);
   }
-  if (seed % 3 === 1) {
-    return generatedDominoTwoLaneChoiceStep(seed);
-  }
-  return generatedDominoOpenNewSuitStep(seed);
 }
 
 function generatedDominoOpenOrExtendStep(seed: number): BrowserDrillStep {
@@ -1100,6 +1387,58 @@ function generatedDominoOpenNewSuitStep(seed: number): BrowserDrillStep {
         [spadeExtension.id]: "followed_suit",
         [gapCard.id]: "off_suit",
         [highGap.id]: "off_suit"
+      }
+    }
+  };
+}
+
+function generatedDominoAvoidGapStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const openSuit = choose(rng, ["C", "D", "H"] as Suit[]);
+  const gapSuit = firstNonMatchingSuit(openSuit, "S");
+  const sevenOpen = card("7", openSuit);
+  const eightOpen = card("8", openSuit);
+  const legalOpenExtension = card("9", openSuit);
+  const openGap = card("10", openSuit);
+  const spadeExtension = card("6", "S");
+  const gapSuitCard = card("Q", gapSuit);
+  const sevenSpades = card("7", "S");
+  const playerHand = [legalOpenExtension, openGap, spadeExtension, gapSuitCard].sort(compareCards);
+
+  return {
+    contract: "Domino",
+    title: "Avoid jumping a lane",
+    trick: {
+      title: "Stay adjacent to the layout",
+      beforeResult: `${sevenOpen.label} and ${eightOpen.label} are already in one lane. Spades are open with ${sevenSpades.label}.`,
+      afterResult: `Domino only allows adjacent placements. You cannot jump from ${eightOpen.label} straight to ${openGap.label}.`,
+      emptyExplanation: "Choose a card that touches an open lane by one rank.",
+      legalCardIds: [legalOpenExtension.id, spadeExtension.id],
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Tutor", card: sevenOpen },
+        { seat: "Right", card: eightOpen },
+        { seat: "Left", card: sevenSpades }
+      ],
+      tableAfterChoice: [],
+      pendingBySeat: { You: "You" },
+      playedExplanations: {
+        [legalOpenExtension.id]: `${legalOpenExtension.label} extends the open lane upward by one rank.`,
+        [spadeExtension.id]: `${spadeExtension.label} extends spades downward from 7S.`,
+        [openGap.id]: `${openGap.label} jumps over the missing 9 and is not legal yet.`,
+        [gapSuitCard.id]: `${gapSuitCard.label} cannot open a new suit because unopened suits start with a seven.`
+      },
+      cardOutcomes: {
+        [legalOpenExtension.id]: "good",
+        [spadeExtension.id]: "good",
+        [openGap.id]: "penalty",
+        [gapSuitCard.id]: "penalty"
+      },
+      cardReasons: {
+        [legalOpenExtension.id]: "followed_suit",
+        [spadeExtension.id]: "followed_suit",
+        [openGap.id]: "off_suit",
+        [gapSuitCard.id]: "off_suit"
       }
     }
   };

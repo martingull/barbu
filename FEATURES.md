@@ -87,7 +87,7 @@ The intended monetization model is free starter tables first, then paid packs wi
 - Authored lessons for No Hearts, No Queens, and King of Hearts.
 - Structured outcome metadata for authored guided card choices.
 - Compact outcome labels for guided decisions.
-- Generated No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino Quick Drill set via Rust/Tauri, with multiple local scenario patterns for avoidance, trumps, and Domino layout decisions. Practice Scenario Coverage v2 gives No Last Two a third setup pattern and makes focused Barbu replays run through the generated contract pool instead of a single repeated trick.
+- Generated No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino Quick Drill set via Rust/Tauri, with multiple local scenario patterns for avoidance, trumps, and Domino layout decisions. Practice Scenario Coverage v2B gives every Barbu practice contract four generated scenario families and makes focused Barbu replays run through the generated contract pool instead of a single repeated trick.
 - Generated practice quality pass started with safe-dump scenarios for No Hearts, No Queens, King of Hearts, and No Tricks that teach when a void player can unload danger under a locked winner.
 - Practice Scenario Pool v1 expands Quick Drill from a fixed generated roster into a larger deterministic pool, so mixed practice and weak-contract replays can draw from several scenario shapes.
 - Quick Drill has short-term pattern memory, so recent scenario shapes are avoided before falling back to the full pool.
@@ -311,7 +311,7 @@ These are the next product increments that keep the app coherent.
    - Quick Drill now samples from a larger deterministic scenario pool and avoids immediate repeats when possible.
    - Short-term practice memory now avoids recently seen scenario patterns when the filtered pool has alternatives.
    - Practice Template Model v1 should continue gradually by extracting repeated table/hand construction patterns only after two or three more scenario families prove the shape.
-   - Add more scenario families for each supported contract as testing reveals repetition. No Last Two now covers ducking late, forced final-trick winners, and trick-11 setup.
+   - Add more scenario families for each supported contract as testing reveals repetition. Barbu practice currently has four scenario families per playable contract, including late ducking, safe danger-card shedding, follow-before-trump, and Domino gap decisions.
    - Keep commands thin and deterministic.
    - Add Rust tests for every drill generator.
    - Current generated baseline covers the playable roster; remaining work is breadth and balancing rather than first coverage.

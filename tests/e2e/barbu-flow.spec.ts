@@ -1176,11 +1176,11 @@ test("practice tab starts a fixed contract drill pool", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
   await expect(page.locator("header").getByText("No Last Two", { exact: true })).toBeVisible();
 
-  for (let decision = 1; decision <= 3; decision += 1) {
-    await expect(page.getByText(`Decision ${decision} of 3`)).toBeVisible();
+  for (let decision = 1; decision <= 4; decision += 1) {
+    await expect(page.getByText(`Decision ${decision} of 4`)).toBeVisible();
     await completeQuickDrillDecision(page);
 
-    if (decision < 3) {
+    if (decision < 4) {
       await continueDrillFromCheckedAnswer(page, "Next decision");
     } else {
       await expect(page.getByRole("button", { name: "Review session" })).toBeVisible();
