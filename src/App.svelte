@@ -6071,17 +6071,11 @@
     };
   }
 
-  async function loadGeneratedDrillStep(focusContract = "") {
-    const { candidates, seed } = await loadGeneratedDrillCandidates(focusContract);
-
-    return selectGeneratedDrillCandidate(candidates, seed);
-  }
-
   async function loadGeneratedDrillSessionSteps(focusContract = "") {
     const { candidates, seed } = await loadGeneratedDrillCandidates(focusContract);
 
     if (focusContract) {
-      return [selectGeneratedDrillCandidate(candidates, seed)];
+      return orderPracticePool(candidates, seed);
     }
 
     const selectedSteps: DrillStep[] = [];
@@ -6160,7 +6154,7 @@
     drillSetTitle = `Replay ${replayContract}`;
     resetDrillDecision();
 
-    activeDrillSteps = [await loadGeneratedDrillStep(replayContract)];
+    activeDrillSteps = await loadGeneratedDrillSessionSteps(replayContract);
     resetDrillDecision();
     appView = "drill";
   }
@@ -6220,11 +6214,11 @@
     await startDailyDrill("generated-drill");
   }
 
-  function startFixedContractDrill(lessonId: string) {
+  async function startFixedContractDrill(lessonId: string) {
     const lesson = guidedLessons.find((item) => item.id === lessonId);
     const step = lesson ? drillSteps.find((item) => item.contract === lesson.contract) : undefined;
 
-    if (!lesson || !step) {
+    if (!lesson) {
       return;
     }
 
@@ -6233,7 +6227,10 @@
     drillIndex = 0;
     drillResults = [];
     drillSetTitle = `Fixed drill: ${lesson.contract}`;
-    activeDrillSteps = [step];
+    activeDrillSteps = await loadGeneratedDrillSessionSteps(lesson.contract);
+    if (activeDrillSteps.length === 0 && step) {
+      activeDrillSteps = [step];
+    }
     resetDrillDecision();
     appView = "drill";
   }

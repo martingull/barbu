@@ -238,6 +238,21 @@ impl PracticeScenario {
                 }
             } else if is_hearts_practice_kind(self.contract_kind) {
                 hearts_practice_explanation_for_scenario(self, player_card, winner, penalty)
+            } else if self.contract_kind == PracticeContractKind::NoLastTwo
+                && penalty == 0
+                && winner != 2
+            {
+                format!(
+                    "{} follows {} and stays out of the lead before the final two tricks. That setup matters in No Last Two.",
+                    player_card,
+                    suit_name(self.led_suit)
+                )
+            } else if self.contract_kind == PracticeContractKind::NoLastTwo && penalty == 0 {
+                format!(
+                    "{} follows {} and wins a clean trick. That is risky here because you may lead into the final two tricks.",
+                    player_card,
+                    suit_name(self.led_suit)
+                )
             } else if self.contract_kind == PracticeContractKind::NoLastTwo && winner != 2 {
                 format!(
                     "{} follows {} and loses the late trick. That is good in No Last Two because {} takes {} instead.",
@@ -1162,11 +1177,55 @@ pub fn generate_no_last_two_forced_win(seed: u64) -> PracticeScenario {
     }
 }
 
+pub fn generate_no_last_two_setup(seed: u64) -> PracticeScenario {
+    let mut rng = DeterministicRng::new(seed);
+    let led_suit = choose_suit(&mut rng, &[Suit::Clubs, Suit::Diamonds, Suit::Spades]);
+    let off_suit = first_non_matching_suit(led_suit, Suit::Hearts);
+
+    let lead_card = Card::new(
+        choose(&mut rng, &[Rank::Six, Rank::Seven, Rank::Eight]),
+        led_suit,
+    );
+    let tutor_card = Card::new(Rank::Ten, led_suit);
+    let right_card = Card::new(
+        choose(&mut rng, &[Rank::Three, Rank::Four, Rank::Five]),
+        led_suit,
+    );
+
+    let mut player_hand = vec![
+        Card::new(Rank::Two, led_suit),
+        Card::new(Rank::Queen, led_suit),
+        Card::new(
+            choose(&mut rng, &[Rank::Five, Rank::Six, Rank::Seven]),
+            off_suit,
+        ),
+    ];
+    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+
+    PracticeScenario {
+        id: format!("no-last-two-setup-{seed}"),
+        title: "Prepare for the final tricks".to_string(),
+        contract: "No Last Two".to_string(),
+        contract_kind: PracticeContractKind::NoLastTwo,
+        led_suit,
+        prompt: format!(
+            "This is trick 11. Left led {lead_card}. Tutor played {tutor_card}. Right followed {right_card}. Avoid taking the lead into the final two tricks."
+        ),
+        table_before_choice: vec![
+            PlayedCard::new(3, lead_card),
+            PlayedCard::new(0, tutor_card),
+            PlayedCard::new(1, right_card),
+        ],
+        player_hand,
+        table_after_choice: vec![],
+    }
+}
+
 pub fn generate_no_last_two_practice(seed: u64) -> PracticeScenario {
-    if seed % 2 == 0 {
-        generate_no_last_two_duck(seed)
-    } else {
-        generate_no_last_two_forced_win(seed)
+    match seed % 3 {
+        0 => generate_no_last_two_duck(seed),
+        1 => generate_no_last_two_forced_win(seed),
+        _ => generate_no_last_two_setup(seed),
     }
 }
 
@@ -2039,6 +2098,9 @@ fn score_practice_trick(scenario: &PracticeScenario, played_cards: &[PlayedCard]
             }
         }
         PracticeContractKind::NoLastTwo => {
+            if scenario.id.contains("setup") {
+                return 0;
+            }
             if scenario.id.contains("forced-win") {
                 20
             } else {
@@ -2731,7 +2793,7 @@ mod tests {
             .collect::<std::collections::BTreeSet<_>>();
 
         assert_eq!(no_hearts_patterns.len(), 3);
-        assert_eq!(no_last_two_patterns.len(), 2);
+        assert_eq!(no_last_two_patterns.len(), 3);
         assert_eq!(domino_patterns.len(), 3);
     }
 
@@ -3178,6 +3240,34 @@ mod tests {
         assert!(!outcome.is_legal);
         assert_eq!(outcome.outcome_kind, PracticeOutcomeKind::Illegal);
         assert_eq!(outcome.reason, PracticeOutcomeReason::OffSuit);
+    }
+
+    #[test]
+    fn generated_no_last_two_setup_warns_against_winning_trick_eleven() {
+        let scenario = generate_no_last_two_setup(43);
+        let low_card = scenario
+            .legal_player_cards()
+            .into_iter()
+            .find(|card| card.rank == Rank::Two)
+            .expect("setup scenario should include a low legal card");
+        let high_card = scenario
+            .legal_player_cards()
+            .into_iter()
+            .find(|card| card.rank == Rank::Queen)
+            .expect("setup scenario should include a winning legal card");
+
+        let low_outcome = scenario.outcome_for(low_card);
+        let high_outcome = scenario.outcome_for(high_card);
+
+        assert_eq!(low_outcome.outcome_kind, PracticeOutcomeKind::Good);
+        assert_eq!(low_outcome.penalty, Some(0));
+        assert_ne!(low_outcome.winner, Some(2));
+        assert!(low_outcome.explanation.contains("setup matters"));
+
+        assert_eq!(high_outcome.outcome_kind, PracticeOutcomeKind::Risky);
+        assert_eq!(high_outcome.penalty, Some(0));
+        assert_eq!(high_outcome.winner, Some(2));
+        assert!(high_outcome.explanation.contains("lead into the final two"));
     }
 
     #[test]

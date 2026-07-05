@@ -1167,17 +1167,25 @@ test("quick drill is a fixed iPhone screen without page scroll", async ({ page }
   await page.screenshot({ path: testInfo.outputPath("quick-drill-fixed-screen.png"), fullPage: true });
 });
 
-test("practice tab starts a fixed contract drill", async ({ page }) => {
+test("practice tab starts a fixed contract drill pool", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Barbu/ }).click();
   await openBarbuTab(page, "Practice");
-  await page.getByLabel("Fixed contract drills").getByRole("button", { name: /^No Hearts\b/ }).click();
+  await page.getByLabel("Fixed contract drills").getByRole("button", { name: /^No Last Two\b/ }).click();
 
   await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
-  await expect(page.locator("header").getByText("No Hearts", { exact: true })).toBeVisible();
-  await expect(page.getByText("Decision 1 of 1")).toBeVisible();
-  await completeQuickDrillDecision(page);
-  await expect(page.getByRole("button", { name: "Review session" })).toBeVisible();
+  await expect(page.locator("header").getByText("No Last Two", { exact: true })).toBeVisible();
+
+  for (let decision = 1; decision <= 3; decision += 1) {
+    await expect(page.getByText(`Decision ${decision} of 3`)).toBeVisible();
+    await completeQuickDrillDecision(page);
+
+    if (decision < 3) {
+      await continueDrillFromCheckedAnswer(page, "Next decision");
+    } else {
+      await expect(page.getByRole("button", { name: "Review session" })).toBeVisible();
+    }
+  }
 });
 
 test("quick drill finishes after one decision per Barbu contract", async ({ page }) => {

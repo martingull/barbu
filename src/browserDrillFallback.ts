@@ -498,7 +498,13 @@ function generatedKingOfHeartsVoidDumpKingStep(seed: number): BrowserDrillStep {
 }
 
 function generatedNoLastTwoStep(seed: number): BrowserDrillStep {
-  return seed % 2 === 0 ? generatedNoLastTwoDuckStep(seed) : generatedNoLastTwoForcedWinStep(seed);
+  if (seed % 3 === 0) {
+    return generatedNoLastTwoDuckStep(seed);
+  }
+  if (seed % 3 === 1) {
+    return generatedNoLastTwoForcedWinStep(seed);
+  }
+  return generatedNoLastTwoSetupStep(seed);
 }
 
 function generatedNoLastTwoDuckStep(seed: number): BrowserDrillStep {
@@ -582,6 +588,51 @@ function generatedNoLastTwoForcedWinStep(seed: number): BrowserDrillStep {
       },
       cardReasons: {
         [forcedWinner.id]: "captured_penalty"
+      }
+    }
+  };
+}
+
+function generatedNoLastTwoSetupStep(seed: number): BrowserDrillStep {
+  const rng = new DeterministicRng(seed);
+  const ledSuit = choose(rng, nonHeartSuits);
+  const leadCard = card(choose(rng, ["6", "7", "8"]), ledSuit);
+  const tutorWinner = card("10", ledSuit);
+  const rightCard = card(choose(rng, ["3", "4", "5"]), ledSuit);
+  const lowPlayerCard = card("2", ledSuit);
+  const highPlayerCard = card("Q", ledSuit);
+  const offSuitCard = card(choose(rng, ["5", "6", "7"]), firstNonMatchingSuit(ledSuit, "H"));
+  const playerHand = [lowPlayerCard, highPlayerCard, offSuitCard].sort(compareCards);
+  const ledSuitName = suitNames[ledSuit];
+
+  return {
+    contract: "No Last Two",
+    title: "Prepare for the final tricks",
+    trick: {
+      title: "Prepare for the final tricks",
+      beforeResult: `This is trick 11. Left led ${leadCard.label}. Barbu played ${tutorWinner.label}. Right followed ${rightCard.label}.`,
+      afterResult: `This trick is still clean, but winning it can put you on lead for the final two tricks.`,
+      emptyExplanation: `${capitalize(ledSuitName)} were led. Stay out of the lead before the last two if you can.`,
+      legalCardIds: [lowPlayerCard.id, highPlayerCard.id],
+      hand: playerHand,
+      tableBeforeChoice: [
+        { seat: "Left", card: leadCard },
+        { seat: "Tutor", card: tutorWinner },
+        { seat: "Right", card: rightCard }
+      ],
+      tableAfterChoice: [],
+      pendingBySeat: { You: "You" },
+      playedExplanations: {
+        [lowPlayerCard.id]: `${lowPlayerCard.label} follows ${ledSuitName} and stays out of the lead before the final two tricks.`,
+        [highPlayerCard.id]: `${highPlayerCard.label} wins a clean trick, but that is risky because you may lead into the final two.`
+      },
+      cardOutcomes: {
+        [lowPlayerCard.id]: "good",
+        [highPlayerCard.id]: "risky"
+      },
+      cardReasons: {
+        [lowPlayerCard.id]: "avoided_penalty",
+        [highPlayerCard.id]: "won_clean_trick"
       }
     }
   };

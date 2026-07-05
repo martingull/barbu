@@ -87,23 +87,32 @@ tasks:
       - task: ios:clean:generated
       - npm run tauri -- ios init
       - task: ios:icons
+      - task: ios:disable:script:sandbox
+
+  ios:disable:script:sandbox:
+    desc: Disable Xcode user script sandboxing in the ignored generated iOS project so Tauri's Rust build script can read project files
+    cmds:
+      - perl -0pi -e 's/ENABLE_USER_SCRIPT_SANDBOXING = YES;/ENABLE_USER_SCRIPT_SANDBOXING = NO;/g' src-tauri/gen/apple/barbu-app.xcodeproj/project.pbxproj
 
   ios:dev:device:
     desc: Run on a physical iPhone with network dev-server support; pass device name with `task ios:dev:device -- "Martin's iPhone"`
     cmds:
       - task: ios:icons
+      - task: ios:disable:script:sandbox
       - npm run tauri -- ios dev {{.CLI_ARGS}} --host
 
   ios:run:
     desc: Build the frontend and run the production iOS app on a simulator/device; pass device name with `task ios:run -- "Martin's iPhone"`
     cmds:
       - task: ios:icons
+      - task: ios:disable:script:sandbox
       - npm run tauri -- ios run {{.CLI_ARGS}}
 
   ios:build:
     desc: Build an iOS IPA; pass options such as `task ios:build -- --debug --target aarch64`
     cmds:
       - task: ios:icons
+      - task: ios:disable:script:sandbox
       - npm run tauri -- ios build {{.CLI_ARGS}}
 
   ios:install:device:
@@ -112,6 +121,7 @@ tasks:
       IOS_DEVICE_ID: '{{default "00008140-001814310187001C" .IOS_DEVICE_ID}}'
     cmds:
       - task: ios:icons
+      - task: ios:disable:script:sandbox
       - npm run tauri -- ios build --debug --target aarch64
       - xcrun devicectl device install app --device {{.IOS_DEVICE_ID}} src-tauri/gen/apple/build/arm64/Barbu.ipa
       - xcrun devicectl device process launch --device {{.IOS_DEVICE_ID}} com.martin.barbu
