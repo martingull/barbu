@@ -35,6 +35,7 @@
   import { contractRunScore, contractScoreMeta, formatContractValue } from "./contractScoring";
   import { guidedLessons } from "./lessons/catalog";
   import { referenceCatalog } from "./referenceCatalog";
+  import { whistOddProgress } from "./whistScoring";
   import {
     barbuLearnPathSteps as barbuPathSteps,
     barbuPracticeGroups,
@@ -2220,19 +2221,11 @@
   $: fullHandIsWhistGame = activeGameTable === "whist" && fullHand?.contract === "Whist" && !fullHandRunActive;
   $: whistTrumpSuitLabel = fullHandIsWhistGame && fullHand ? suitNameFromId(whistTrumpSuitFromHandId(fullHand.id)) : "";
   $: whistPartnershipTricks = fullHand ? whistPartnershipTrickCounts(fullHand.completedTricks) : { playerSide: 0, opponentSide: 0 };
-  $: whistPlayerSideOddTricks = Math.max(whistPartnershipTricks.playerSide - 6, 0);
-  $: whistOpponentSideOddTricks = Math.max(whistPartnershipTricks.opponentSide - 6, 0);
-  $: whistOddScoreHasStarted = whistPlayerSideOddTricks > 0 || whistOpponentSideOddTricks > 0;
-  $: whistPlayerSideTricksToOdd = Math.max(7 - whistPartnershipTricks.playerSide, 0);
-  $: whistOpponentSideTricksToOdd = Math.max(7 - whistPartnershipTricks.opponentSide, 0);
-  $: whistOddProgressLabel = whistOddScoreHasStarted ? "Odd score" : "To odd";
-  $: whistOddProgressValue = whistOddScoreHasStarted
-    ? `${whistPlayerSideOddTricks} - ${whistOpponentSideOddTricks}`
-    : whistPlayerSideTricksToOdd === whistOpponentSideTricksToOdd
-      ? `${whistPlayerSideTricksToOdd} each`
-      : whistPlayerSideTricksToOdd < whistOpponentSideTricksToOdd
-        ? `You +${whistPlayerSideTricksToOdd}`
-        : `Them +${whistOpponentSideTricksToOdd}`;
+  $: whistOddScore = whistOddProgress(whistPartnershipTricks);
+  $: whistPlayerSideOddTricks = whistOddScore.playerSideOddTricks;
+  $: whistOpponentSideOddTricks = whistOddScore.opponentSideOddTricks;
+  $: whistOddProgressLabel = whistOddScore.label;
+  $: whistOddProgressValue = whistOddScore.value;
   $: heartsCurrentMoonShooter = fullHandIsHeartsGame ? heartsMoonShooter(fullHandSeatPenalties) : undefined;
   $: heartsCurrentMoonThreatSeat = fullHandIsHeartsGame ? heartsMoonThreatSeat(fullHandSeatPenalties) : undefined;
   $: heartsCurrentScoredSeatPenalties = fullHandIsHeartsGame

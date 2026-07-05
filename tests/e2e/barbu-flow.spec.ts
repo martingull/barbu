@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import { whistOddProgress } from "../../src/whistScoring";
 
 test.beforeEach(async ({ page }, testInfo) => {
   if (testInfo.project.name !== "iphone-16") {
@@ -482,6 +483,29 @@ test("Whist play starts a partnership trump hand", async ({ page }, testInfo) =>
 
   await playFullHandDecision(page);
   await expect(page.getByRole("heading", { name: /Whist hand|Read the table/ })).toBeVisible();
+});
+
+test("Whist odd score starts on the seventh partnership trick", () => {
+  expect(whistOddProgress({ playerSide: 6, opponentSide: 6 })).toMatchObject({
+    label: "To odd",
+    value: "1 each",
+    playerSideOddTricks: 0,
+    opponentSideOddTricks: 0
+  });
+
+  expect(whistOddProgress({ playerSide: 7, opponentSide: 6 })).toMatchObject({
+    label: "Odd score",
+    value: "1 - 0",
+    playerSideOddTricks: 1,
+    opponentSideOddTricks: 0
+  });
+
+  expect(whistOddProgress({ playerSide: 5, opponentSide: 8 })).toMatchObject({
+    label: "Odd score",
+    value: "0 - 2",
+    playerSideOddTricks: 0,
+    opponentSideOddTricks: 2
+  });
 });
 
 test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testInfo) => {
