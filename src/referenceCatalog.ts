@@ -368,13 +368,13 @@ export const referenceCatalog: GameReference[] = [
     family: "Whist",
     baseline: "David Parlett structure, classic Whist baseline with Wikipedia cross-check",
     overview:
-      "Whist is the app's next partnership trick-taking target. The v1 definition is classic four-player Whist: fixed partners sit opposite each other, the dealer's last card sets trump, players follow suit when able, and each partnership scores odd tricks above six.",
+      "Whist is the app's partnership trick-taking starter. The current definition is classic four-player Whist: fixed partners sit opposite each other, the dealer's last card sets trump, players follow suit when able, and each partnership scores odd tricks above six.",
     sections: [
       {
         id: "object",
         title: "Object",
         body:
-          "Win tricks with your partner. Unlike Hearts, Whist is not normally a trick-avoidance game; unlike Barbu, the object does not change by contract. Your side tries to build enough tricks that the tricks above six become points.",
+          "Win tricks with your partner. Unlike Hearts, Whist is not a trick-avoidance game; unlike Barbu, the object does not change by contract. Your side tries to build enough tricks that the tricks above six become points.",
         facts: [
           { label: "Game type", value: "Partnership trick-taking" },
           { label: "Scoring unit", value: "Odd tricks above six" }
@@ -405,11 +405,11 @@ export const referenceCatalog: GameReference[] = [
         id: "deal",
         title: "Deal And Trump",
         body:
-          "Each player receives thirteen cards. The dealer's last card is turned face up and its suit becomes trump for the hand. The app should keep this as the first Whist rule before adding bidding or other varieties.",
+          "Each player receives thirteen cards. The dealer's last card sets trump for the hand. The app keeps this as the first Whist rule before adding bidding, honours, rubber scoring, or other varieties.",
         facts: [
           { label: "Cards per player", value: "13" },
           { label: "Trump", value: "Dealer's last card" },
-          { label: "Deferred", value: "Bidding and other Whist varieties" }
+          { label: "Deferred", value: "Bidding, honours, rubber scoring" }
         ]
       },
       {
@@ -427,11 +427,11 @@ export const referenceCatalog: GameReference[] = [
         id: "scoring",
         title: "Scoring",
         body:
-          "A partnership scores one point for each trick above six. Seven tricks scores one point, eight tricks scores two, and so on. Whist v1 should use this simple odd-trick scoring before honours or rubber scoring.",
+          "A partnership scores one point for each trick above six. Seven tricks scores one point, eight tricks scores two, and so on. The current app match plays to 5 points so testing stays short on a phone.",
         facts: [
           { label: "Six tricks", value: "Book, no points yet" },
           { label: "Seven tricks", value: "1 point" },
-          { label: "App target", value: "First partnership to 5 points, proposed v1" }
+          { label: "App target", value: "First partnership to 5 points" }
         ]
       },
       {
@@ -443,6 +443,17 @@ export const referenceCatalog: GameReference[] = [
           { label: "Lead", value: "Show a strong or long suit" },
           { label: "Partner return", value: "Lead partner's suit back when useful" },
           { label: "Basic habits", value: "Second hand low, third hand high" }
+        ]
+      },
+      {
+        id: "app-learning",
+        title: "App Learning Path",
+        body:
+          "The Whist table now uses the same teaching shape as Hearts: a short object lesson first, then compact practice decisions. The first habits are partnership object, follow suit, trump or discard, third hand high, returning partner's suit, and odd-trick scoring.",
+        facts: [
+          { label: "First step", value: "Concept: win tricks together" },
+          { label: "Practice", value: "Five compact Whist habits" },
+          { label: "Play", value: "Playable local match with resume" }
         ]
       }
     ],
@@ -467,15 +478,22 @@ export const referenceCatalog: GameReference[] = [
         id: "whist-learn",
         title: "Learning path",
         coreStatus: "Core",
-        appStatus: "Planned",
-        note: "The v1 path should teach object, follow-suit, trumps, partner reading, suit invitation, and odd-trick scoring."
+        appStatus: "Playable",
+        note: "The current path teaches object, follow-suit, trumps, partner reading, suit invitation, and odd-trick scoring."
       },
       {
         id: "whist-play",
         title: "Playable hand",
         coreStatus: "Core",
-        appStatus: "Later",
-        note: "Playable Whist needs partnership seating, trump selection from dealer's last card, thirteen-trick play, and partnership scoring."
+        appStatus: "Playable",
+        note: "Playable Whist has partnership seating, trump selection from dealer's last card, thirteen-trick play, partnership scoring, and local resume state."
+      },
+      {
+        id: "whist-polish",
+        title: "Production polish",
+        coreStatus: "Core",
+        appStatus: "Next",
+        note: "The next production work is opponent policy, more practice variety, and phone-layout polishing before adding Whist-family variants."
       }
     ],
     variants: [
