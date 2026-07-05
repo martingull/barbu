@@ -155,7 +155,7 @@ fn advance_to_player_turn(mut state: DominoHandState) -> DominoHandState {
     while state.status == DominoStatus::InProgress && state.current_player != 2 {
         let legal = state.legal_cards_for_player(state.current_player);
 
-        if let Some(card) = legal.first().copied() {
+        if let Some(card) = choose_domino_opponent_card(&state, &legal) {
             if play_card_for_current_player(&mut state, card).is_err() {
                 state.status = DominoStatus::Complete;
             }
@@ -165,6 +165,81 @@ fn advance_to_player_turn(mut state: DominoHandState) -> DominoHandState {
     }
 
     state
+}
+
+fn choose_domino_opponent_card(state: &DominoHandState, legal: &[Card]) -> Option<Card> {
+    legal.iter().copied().max_by_key(|card| {
+        let own_support = domino_future_support(state, state.current_player, *card);
+        let own_suit_count = state.hands[state.current_player]
+            .iter()
+            .filter(|held| held.suit == card.suit)
+            .count();
+        let next_player_unlocks = domino_unlocks_for_next_player(state, *card);
+
+        (
+            own_support,
+            own_suit_count,
+            std::cmp::Reverse(next_player_unlocks),
+            std::cmp::Reverse(card.rank as u8),
+            std::cmp::Reverse(suit_index(card.suit)),
+        )
+    })
+}
+
+fn domino_future_support(state: &DominoHandState, player: PlayerIndex, card: Card) -> usize {
+    let mut layout = state.layout.clone();
+    layout[suit_index(card.suit)].push(card);
+    sort_hand(&mut layout[suit_index(card.suit)]);
+
+    state.hands[player]
+        .iter()
+        .copied()
+        .filter(|held| *held != card)
+        .filter(|held| domino_is_legal_for_layout(&layout, state.start_rank, *held))
+        .count()
+}
+
+fn domino_unlocks_for_next_player(state: &DominoHandState, card: Card) -> usize {
+    let next_player = (state.current_player + 1) % 4;
+    let before = state.hands[next_player]
+        .iter()
+        .copied()
+        .filter(|held| state.is_legal_card(*held))
+        .count();
+
+    let mut layout = state.layout.clone();
+    layout[suit_index(card.suit)].push(card);
+    sort_hand(&mut layout[suit_index(card.suit)]);
+
+    let after = state.hands[next_player]
+        .iter()
+        .copied()
+        .filter(|held| domino_is_legal_for_layout(&layout, state.start_rank, *held))
+        .count();
+
+    after.saturating_sub(before)
+}
+
+fn domino_is_legal_for_layout(layout: &[Vec<Card>; 4], start_rank: Rank, card: Card) -> bool {
+    let lane = &layout[suit_index(card.suit)];
+
+    if lane.is_empty() {
+        return card.rank == start_rank;
+    }
+
+    let low = lane
+        .iter()
+        .map(|played| played.rank as i32)
+        .min()
+        .unwrap_or(start_rank as i32);
+    let high = lane
+        .iter()
+        .map(|played| played.rank as i32)
+        .max()
+        .unwrap_or(start_rank as i32);
+    let rank = card.rank as i32;
+
+    rank == low - 1 || rank == high + 1
 }
 
 fn play_card_for_current_player(state: &mut DominoHandState, card: Card) -> Result<(), String> {
@@ -355,6 +430,35 @@ mod tests {
         assert_eq!(
             state.legal_cards_for_player(2),
             vec![Card::new(Rank::Eight, Suit::Clubs)]
+        );
+    }
+
+    #[test]
+    fn domino_opponent_prefers_lane_it_can_extend_again() {
+        let state = DominoHandState {
+            id: "domino-opponent-policy-test".to_string(),
+            hands: [
+                vec![
+                    Card::new(Rank::Seven, Suit::Clubs),
+                    Card::new(Rank::Eight, Suit::Clubs),
+                    Card::new(Rank::Seven, Suit::Diamonds),
+                ],
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+            ],
+            current_player: 0,
+            start_rank: DOMINO_START_RANK,
+            layout: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
+            passed_players: Vec::new(),
+            out_order: Vec::new(),
+            status: DominoStatus::InProgress,
+        };
+        let legal = state.legal_cards_for_player(0);
+
+        assert_eq!(
+            choose_domino_opponent_card(&state, &legal),
+            Some(Card::new(Rank::Seven, Suit::Clubs))
         );
     }
 }

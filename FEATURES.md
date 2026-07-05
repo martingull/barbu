@@ -251,7 +251,34 @@ Production readiness gaps:
 | Contract selection/declarer custom | Play Barbu currently uses a fixed contract sequence. | Accept as v1 training flow, or add explicit contract choice later as a named variety. |
 | Domino start rank | Engine supports configurable start rank, but app defaults to sevens. | Keep fixed-seven v1 documented, or add chooser/declarer-selected start rank later. |
 | Source verification | Reference says Parlett baseline, but implementation-level constants need a final source check before store copy claims exactness. | Before launch text says "canonical Barbu", verify contract roster, point values, order, and settlement directly against the chosen source. |
-| Opponent policy | Opponents are legal and contract-aware, but not yet strong Barbu players. | Audit per-contract opponent behavior next. |
+| Opponent policy | Opponents are legal and contract-aware. A first per-contract audit exists, but several policies are still v1 heuristics rather than polished table play. | Improve No Last Two, Hearts Trumps, and Domino policy first; keep No Queens as the model for reusable policy extraction. |
+
+### Barbu Opponent Policy Audit
+
+Last audited against the current Rust implementation: full-hand trick-taking opponent selection in `crates/barbu-core/src/hand.rs`, the extracted No Queens policy in `crates/barbu-core/src/contract_policy.rs`, and Domino auto-play in `crates/barbu-core/src/domino.rs`. The first remediation pass improved No Last Two setup play, Hearts Trumps trump preservation, and Domino lane selection.
+
+Shared baseline:
+
+- Trick-taking contracts enforce follow-suit legality through shared hand state before opponent choice.
+- Opponents auto-play until the user's turn, so policy mistakes are visible immediately in phone play.
+- Current policies are contract-aware heuristics, not full inference engines. They do not yet remember inferred voids, count all remaining danger cards, or plan several tricks ahead.
+- Browser fallback logic should stay aligned, but the Rust core is the source of truth for production behavior.
+
+| Contract | Current opponent behavior | Production readiness | Next action |
+| --- | --- | --- | --- |
+| No Hearts | Leads lowest non-heart when possible, discards highest heart when void, and ducks with the highest non-winning card when following suit. | Acceptable v1. It behaves like a basic avoidance player. | Add tests around void dumping so opponents do not appear to feed penalties blindly in edge cases. |
+| No Queens | Extracted policy leads lowest non-queen, dumps queens when void, and ducks queen-loaded tricks with the highest safe queen or safe loser. | Strongest current policy and best template for future Barbu contract policy extraction. | Use this `TrickPolicyContext` pattern when extracting the other avoidance contracts. |
+| King of Hearts | Leads away from KH, discards KH when void, and ducks when KH appears in the trick. | Acceptable v1, but narrow because it only reasons about the single danger card. | Add pressure tests for high-heart leads before KH is played and preserving low-heart exits. |
+| No Last Two | Before the final two tricks it sheds high cards; on trick 11 and the final two penalty tricks it leads low and ducks when possible. | Better v1 setup behavior, but still not a full endgame planner. | Add broader endgame tests over the last 3-5 tricks before tuning again. |
+| No Tricks | Leads low, discards high when void, and ducks with the highest non-winning card when following suit. | Acceptable v1. | Add forced-win recovery behavior: after being forced to win, lead low and avoid taking control again. |
+| Hearts Trumps | Leads high hearts when possible, plays the lowest winning card, and preserves hearts when it cannot overtrump. | Functional v1 positive trick-taking policy. | Improve trump strategy later: draw trumps deliberately and conserve high trumps across multiple tricks. |
+| Domino | Auto seats choose among legal placements by preferring lanes they can keep extending and avoiding easy unlocks for the next player. Pass remains forced-only. | Better v1 layout policy, still local rather than table-inference based. | Add stronger tests around blocking, suit-lane choice, and endgame pass/block behavior. |
+
+Policy extraction direction:
+
+- Keep Barbu contract policy separate from Hearts/Black Lady trick-avoidance policy. They share trick mechanics, but their objectives differ enough that a single "avoidance" brain creates confusing play.
+- Extract one contract at a time into policy-context functions, starting with No Hearts or No Last Two. Do not create a large generic opponent engine until at least Barbu, Hearts, and Whist have exposed the repeated shape.
+- Add focused Rust tests for each extracted policy before changing table feel. Manual phone play should validate flow, not be the only guardrail.
 
 ## Near-Term Roadmap
 

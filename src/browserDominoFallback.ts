@@ -90,7 +90,7 @@ function advanceToPlayerTurn(state: DominoHandState): DominoHandState {
     const legal = legalDominoCards(nextState, nextState.currentPlayerIndex);
 
     if (legal.length) {
-      playCardForCurrentPlayer(nextState, legal[0]);
+      playCardForCurrentPlayer(nextState, chooseDominoOpponentCard(nextState, legal) ?? legal[0]);
     } else {
       passCurrentPlayer(nextState);
     }
@@ -165,9 +165,49 @@ function legalDominoCards(state: DominoHandState, playerIndex: number) {
   return state.hands[playerIndex].filter((card) => isLegalDominoCard(state, card));
 }
 
+function chooseDominoOpponentCard(state: DominoHandState, legal: Card[]) {
+  return legal.slice().sort((left, right) => dominoOpponentScore(state, right) - dominoOpponentScore(state, left))[0];
+}
+
+function dominoOpponentScore(state: DominoHandState, card: Card) {
+  const ownSupport = dominoFutureSupport(state, state.currentPlayerIndex, card);
+  const ownSuitCount = state.hands[state.currentPlayerIndex].filter((held) => held.suit === card.suit).length;
+  const nextPlayerUnlocks = dominoUnlocksForNextPlayer(state, card);
+
+  return ownSupport * 100 + ownSuitCount * 10 - nextPlayerUnlocks * 20 - rankOrder[card.rank as Rank] / 100 - suitOrder[card.suit] / 1000;
+}
+
+function dominoFutureSupport(state: DominoHandState, playerIndex: number, card: Card) {
+  const layout = layoutAfterDominoPlacement(state, card);
+  return state.hands[playerIndex].filter(
+    (held) => held.id !== card.id && isLegalDominoCardOnLayout(layout, (state.startRank ?? defaultDominoStartRank) as Rank, held)
+  ).length;
+}
+
+function dominoUnlocksForNextPlayer(state: DominoHandState, card: Card) {
+  const nextPlayerIndex = (state.currentPlayerIndex + 1) % 4;
+  const before = state.hands[nextPlayerIndex].filter((held) => isLegalDominoCard(state, held)).length;
+  const layout = layoutAfterDominoPlacement(state, card);
+  const after = state.hands[nextPlayerIndex].filter((held) =>
+    isLegalDominoCardOnLayout(layout, (state.startRank ?? defaultDominoStartRank) as Rank, held)
+  ).length;
+
+  return Math.max(0, after - before);
+}
+
+function layoutAfterDominoPlacement(state: DominoHandState, card: Card) {
+  const layout = state.layout.map((lane) => lane.slice());
+  layout[suitOrder[card.suit]].push(card);
+  layout[suitOrder[card.suit]].sort(compareCards);
+  return layout;
+}
+
 function isLegalDominoCard(state: DominoHandState, card: Card) {
-  const lane = state.layout[suitOrder[card.suit]];
-  const startRank = (state.startRank ?? defaultDominoStartRank) as Rank;
+  return isLegalDominoCardOnLayout(state.layout, (state.startRank ?? defaultDominoStartRank) as Rank, card);
+}
+
+function isLegalDominoCardOnLayout(layout: Card[][], startRank: Rank, card: Card) {
+  const lane = layout[suitOrder[card.suit]];
 
   if (!lane.length) {
     return card.rank === startRank;
