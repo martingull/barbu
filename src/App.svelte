@@ -1448,6 +1448,158 @@
     heartsStopMoonDrillPool,
     heartsScoreHandDrillPool
   ];
+  const whistFollowSuitDrillStep: DrillStep = {
+    scenarioId: "whist-follow-suit-third-hand",
+    contract: "Whist",
+    title: "Follow suit",
+    trick: {
+      title: "Follow partner's led suit",
+      beforeResult: "Barbu is your partner and led 8C. Right played QC. You still have clubs.",
+      afterResult: "In Whist you must follow the led suit when you can.",
+      emptyExplanation: "Clubs were led. Choose a club before thinking about any other suit.",
+      legalCardIds: ["3C", "AC"],
+      hand: [
+        { id: "3C", rank: "3", suit: "C", label: "3C" },
+        { id: "AC", rank: "A", suit: "C", label: "AC" },
+        { id: "7H", rank: "7", suit: "H", label: "7H" }
+      ],
+      tableBeforeChoice: [
+        { seat: "Tutor", card: { id: "8C", rank: "8", suit: "C", label: "8C" } },
+        { seat: "Right", card: { id: "QC", rank: "Q", suit: "C", label: "QC" } }
+      ],
+      tableAfterChoice: [{ seat: "Left", card: { id: "5C", rank: "5", suit: "C", label: "5C" } }],
+      pendingBySeat: { Left: "follow clubs", You: "third hand" },
+      playedExplanations: {
+        "3C": "3C follows suit, but it leaves Right's QC winning.",
+        AC: "AC follows suit and helps your partnership take the trick.",
+        "7H": "7H is illegal while you still have clubs."
+      },
+      cardOutcomes: {
+        "3C": "risky",
+        AC: "good"
+      },
+      cardReasons: {
+        "3C": "followed_suit",
+        AC: "won_clean_trick"
+      }
+    }
+  };
+  const whistFollowSuitLowDrillStep: DrillStep = {
+    scenarioId: "whist-follow-suit-second-hand",
+    contract: "Whist",
+    title: "Follow suit",
+    trick: {
+      title: "Second hand follows low",
+      beforeResult: "Left led diamonds. You are second to play and still have diamonds.",
+      afterResult: "Second hand often stays low unless spending strength clearly helps.",
+      emptyExplanation: "Diamonds were led. Follow diamonds.",
+      legalCardIds: ["4D", "KD"],
+      hand: [
+        { id: "4D", rank: "4", suit: "D", label: "4D" },
+        { id: "KD", rank: "K", suit: "D", label: "KD" },
+        { id: "AS", rank: "A", suit: "S", label: "AS" }
+      ],
+      tableBeforeChoice: [{ seat: "Left", card: { id: "9D", rank: "9", suit: "D", label: "9D" } }],
+      tableAfterChoice: [
+        { seat: "Tutor", card: { id: "QD", rank: "Q", suit: "D", label: "QD" } },
+        { seat: "Right", card: { id: "AD", rank: "A", suit: "D", label: "AD" } }
+      ],
+      pendingBySeat: { Tutor: "partner follows", Right: "opponent follows", You: "second hand" },
+      playedExplanations: {
+        "4D": "4D follows suit and keeps your king for a later trick.",
+        KD: "KD follows suit, but second hand high spends strength before partner has acted.",
+        AS: "AS is illegal while you still have diamonds."
+      },
+      cardOutcomes: {
+        "4D": "good",
+        KD: "risky"
+      },
+      cardReasons: {
+        "4D": "followed_suit",
+        KD: "followed_suit"
+      }
+    }
+  };
+  const whistTrumpToWinDrillStep: DrillStep = {
+    scenarioId: "whist-trump-to-win",
+    contract: "Whist",
+    title: "Trump or discard",
+    trick: {
+      title: "Cut with trump",
+      beforeResult: "Spades are trumps. Hearts were led, and you have no hearts.",
+      afterResult: "When you are void, a trump can cut the led suit and win the trick.",
+      emptyExplanation: "You are void in hearts. Decide whether to trump or discard.",
+      legalCardIds: ["4S", "JS", "6D"],
+      hand: [
+        { id: "4S", rank: "4", suit: "S", label: "4S" },
+        { id: "JS", rank: "J", suit: "S", label: "JS" },
+        { id: "6D", rank: "6", suit: "D", label: "6D" }
+      ],
+      tableBeforeChoice: [
+        { seat: "Left", card: { id: "QH", rank: "Q", suit: "H", label: "QH" } },
+        { seat: "Tutor", card: { id: "3H", rank: "3", suit: "H", label: "3H" } },
+        { seat: "Right", card: { id: "AH", rank: "A", suit: "H", label: "AH" } }
+      ],
+      tableAfterChoice: [],
+      pendingBySeat: { You: "void: trump or discard" },
+      playedExplanations: {
+        "4S": "4S is trump. Even a low trump beats the heart lead.",
+        JS: "JS wins too, but it spends a stronger trump than needed.",
+        "6D": "6D is legal because you are void, but it gives up the chance to win with trump."
+      },
+      cardOutcomes: {
+        "4S": "good",
+        JS: "risky",
+        "6D": "risky"
+      },
+      cardReasons: {
+        "4S": "won_clean_trick",
+        JS: "won_clean_trick",
+        "6D": "void_discard"
+      }
+    }
+  };
+  const whistPreserveTrumpDrillStep: DrillStep = {
+    scenarioId: "whist-preserve-trump",
+    contract: "Whist",
+    title: "Trump or discard",
+    trick: {
+      title: "Discard when partner is winning",
+      beforeResult: "Clubs are trumps. Diamonds were led, and partner Barbu is already winning with AD.",
+      afterResult: "If partner is already winning, discarding can preserve your trump for a later trick.",
+      emptyExplanation: "You are void in diamonds. Choose whether this is worth a trump.",
+      legalCardIds: ["3C", "9C", "5H"],
+      hand: [
+        { id: "3C", rank: "3", suit: "C", label: "3C" },
+        { id: "9C", rank: "9", suit: "C", label: "9C" },
+        { id: "5H", rank: "5", suit: "H", label: "5H" }
+      ],
+      tableBeforeChoice: [
+        { seat: "Left", card: { id: "8D", rank: "8", suit: "D", label: "8D" } },
+        { seat: "Tutor", card: { id: "AD", rank: "A", suit: "D", label: "AD" } },
+        { seat: "Right", card: { id: "JD", rank: "J", suit: "D", label: "JD" } }
+      ],
+      tableAfterChoice: [],
+      pendingBySeat: { You: "void: partner winning" },
+      playedExplanations: {
+        "3C": "3C is legal trump, but partner was already winning this trick.",
+        "9C": "9C wastes an even stronger trump while partner is already winning.",
+        "5H": "5H is good. You discard and preserve trumps because partner has the trick."
+      },
+      cardOutcomes: {
+        "3C": "risky",
+        "9C": "risky",
+        "5H": "good"
+      },
+      cardReasons: {
+        "3C": "won_clean_trick",
+        "9C": "won_clean_trick",
+        "5H": "void_discard"
+      }
+    }
+  };
+  const whistFollowSuitDrillPool = [whistFollowSuitDrillStep, whistFollowSuitLowDrillStep];
+  const whistTrumpOrDiscardDrillPool = [whistTrumpToWinDrillStep, whistPreserveTrumpDrillStep];
   const catalogTableCards: Card[] = [
     { id: "catalog-queen-spades", rank: "Q", suit: "S", label: "QS" },
     { id: "catalog-king-hearts", rank: "K", suit: "H", label: "KH" },
@@ -1476,6 +1628,7 @@
   let activeBarbuTableTab: TableTabId = gameTableDefinitions.barbu.defaultTab;
   let activeHeartsTableTab: TableTabId = gameTableDefinitions.hearts.defaultTab;
   let activeWhistTableTab: TableTabId = gameTableDefinitions.whist.defaultTab;
+  let activeWhistPracticeFocus: WhistPracticeAction = "follow";
   let activeCardCountingTab: CardCountingTabId = "play";
   let cardCountingReturnTarget: CardCountingReturnTarget = "barbu";
   let activeGameTable: ActiveGameTable = "barbu";
@@ -1735,13 +1888,19 @@
     !activeDrillFocusContract && activeDrillSteps.length >= fullHandContracts.length && drillResults.length >= activeDrillSteps.length;
   $: canMarkPracticeTableComplete = completedPracticeTableSession && !completedPathSteps["generated-drill"];
   $: drillResultIsHeartsPractice = activeGameTable === "hearts";
+  $: drillResultIsWhistPractice = activeGameTable === "whist";
+  $: drillResultIsTablePractice = drillResultIsHeartsPractice || drillResultIsWhistPractice;
   $: drillResultMessage =
     drillResults.length > 0 && cleanDrillCount === drillResults.length
       ? drillResultIsHeartsPractice
         ? "Clean Hearts practice. Keep avoiding penalty tricks until the danger cards feel automatic."
+        : drillResultIsWhistPractice
+          ? "Clean Whist practice. Keep reading partner, led suit, and trump before full hands arrive."
         : "Clean session. Barbu is ready to raise the pressure."
       : drillResultIsHeartsPractice
         ? "Repeat the Hearts pattern until following suit and avoiding penalties feels automatic."
+        : drillResultIsWhistPractice
+          ? "Repeat the Whist pattern until follow-suit and trump decisions feel automatic."
         : "Use the next repetition to make the weak decision automatic.";
   $: currentContractResults = summarizeContractResults(drillResults);
   $: weakContract = weakestContractFromResults(currentContractResults);
@@ -5571,6 +5730,37 @@
     void startHeartsAvoidHeartsDrill();
   }
 
+  function startWhistPracticeSession(focus: WhistPracticeAction, steps: DrillStep[], title: string) {
+    activeGameTable = "whist";
+    activeWhistTableTab = "practice";
+    activeWhistPracticeFocus = focus;
+    activePathStepId = "";
+    activeDrillFocusContract = "Whist";
+    drillIndex = 0;
+    drillResults = [];
+    drillSetTitle = title;
+    activeDrillSteps = orderPracticePool(steps, usePracticeSeed());
+    resetDrillDecision();
+    appView = "drill";
+  }
+
+  function startWhistFollowSuitDrill() {
+    startWhistPracticeSession("follow", whistFollowSuitDrillPool, "Whist practice: follow suit");
+  }
+
+  function startWhistTrumpOrDiscardDrill() {
+    startWhistPracticeSession("trump", whistTrumpOrDiscardDrillPool, "Whist practice: trump or discard");
+  }
+
+  function replayWhistPracticeDrill() {
+    if (activeWhistPracticeFocus === "trump") {
+      startWhistTrumpOrDiscardDrill();
+      return;
+    }
+
+    startWhistFollowSuitDrill();
+  }
+
   async function startHeartsPassPractice(pathStepId = "") {
     activeGameTable = "hearts";
     activePathStepId = pathStepId;
@@ -5653,8 +5843,8 @@
   };
 
   const whistPracticeActions: Record<WhistPracticeAction, () => void> = {
-    follow: () => openReference(gameTableDefinitions.whist.referenceId),
-    trump: () => openReference(gameTableDefinitions.whist.referenceId),
+    follow: startWhistFollowSuitDrill,
+    trump: startWhistTrumpOrDiscardDrill,
     third: () => openReference(gameTableDefinitions.whist.referenceId),
     return: () => openReference(gameTableDefinitions.whist.referenceId),
     odd: () => openReference(gameTableDefinitions.whist.referenceId)
@@ -8375,6 +8565,9 @@
               <button class="primary-action" onclick={replayHeartsPracticeDrill} type="button">Practice Hearts again</button>
               <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
             {/if}
+          {:else if drillResultIsWhistPractice}
+            <button class="primary-action" onclick={replayWhistPracticeDrill} type="button">Practice Whist again</button>
+            <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
           {:else}
             <button class="primary-action" onclick={() => void replayWeakContract()} type="button">
               Replay {drillLoopFocus}
@@ -8424,13 +8617,15 @@
       {/if}
 
       <div class="course-actions drill-result-actions">
-        {#if canMarkPracticeTableComplete && !drillResultIsHeartsPractice}
+        {#if canMarkPracticeTableComplete && !drillResultIsTablePractice}
           <button class="primary-action" onclick={markPracticeTableComplete} type="button">Mark Practice table complete</button>
         {/if}
         {#if drillResultIsHeartsPractice}
           {#if !activePathStepId.startsWith("hearts-")}
             <button class="primary-action" onclick={openActiveGameTable} type="button">Back to Hearts practice</button>
           {/if}
+        {:else if drillResultIsWhistPractice}
+          <button class="primary-action" onclick={openActiveGameTable} type="button">Back to Whist practice</button>
         {:else}
           <button class="primary-action" onclick={continueCourse} type="button">Continue path</button>
         {/if}

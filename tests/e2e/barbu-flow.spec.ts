@@ -418,6 +418,31 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await page.screenshot({ path: testInfo.outputPath("card-counting-table.png"), fullPage: true });
 });
 
+test("Whist practice starts follow-suit and trump drills", async ({ page }) => {
+  await gotoWithPracticeSeed(page, 4);
+  await page.getByRole("button", { name: /Open Whist/ }).click();
+  await page.getByRole("tab", { name: "Practice" }).click();
+
+  await page.getByLabel("Whist practice drills").getByRole("button", { name: "Follow suit" }).click();
+  await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
+  await expect(page.getByLabel("Drill decision")).toContainText("Whist");
+  await expect(page.getByLabel("Drill progress")).toContainText("0 / 2 played");
+  await expect(page.getByLabel("Drill decision")).toContainText(/Follow partner's led suit|Second hand follows low/);
+
+  await completeVisibleDrillSession(page);
+  await expect(page.getByRole("heading", { name: "Session complete" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Practice Whist again" })).toBeVisible();
+  await page.getByRole("button", { name: "Back to Whist practice" }).click();
+  await expect(page.getByRole("heading", { name: "Whist table", exact: true })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
+
+  await page.getByLabel("Whist practice drills").getByRole("button", { name: "Trump or discard" }).click();
+  await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
+  await expect(page.getByLabel("Drill decision")).toContainText("Whist");
+  await expect(page.getByLabel("Drill progress")).toContainText("0 / 2 played");
+  await expect(page.getByLabel("Drill decision")).toContainText(/Cut with trump|Discard when partner is winning/);
+});
+
 test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Open Hearts" }).click();

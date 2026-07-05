@@ -105,7 +105,7 @@ Must ship:
 
 1. Free starter catalog
    - Hearts, Barbu, and Whist visible first.
-   - Barbu and Hearts are active playable tables. Whist is an active starter table shell with a Parlett-style reference baseline and Learning Path v1, but its practice/play engine is still planned.
+   - Barbu and Hearts are active playable tables. Whist is an active starter table with a Parlett-style reference baseline, Learning Path v1, and first playable practice drills for follow-suit and trump decisions.
    - Paid/future packs such as Card Counting II, Solitaire, Bridge, Gin Rummy, and Canasta can stay visible as roadmap signals only.
 
 2. Barbu
@@ -131,9 +131,9 @@ Must ship:
 5. Whist starter table
    - Define classic Whist before variants: four players, fixed partnerships, 52 cards, dealer's last card as trump, follow-suit play, highest trump or led suit wins, and odd-trick scoring above six.
    - Learning Path v1 covers winning tricks together, follow suit, trump wins, reading partner, inviting a suit, and counting odd tricks.
-   - Practice v1 exposes starter drill topics for follow suit, trump or discard, third hand high, return partner's suit, and odd-trick counting. These currently route to the Whist reference until generated Whist scenarios exist.
+   - Practice v1A has playable follow-suit and trump-or-discard drills. Third hand high, return partner's suit, and odd-trick counting still route to the Whist reference until generated Whist scenarios exist.
    - Treat silent partnership communication as part of the learning goal: lead a strong or long suit, return partner's suit when useful, second hand low, and third hand high.
-   - Generated Whist practice and Play remain planned until the shared trick-taking engine has partnership seating, trump setting, partner-aware policy, and partnership scoring.
+   - Broader generated Whist practice and Play remain planned until the shared trick-taking engine has partnership seating, trump setting, partner-aware policy, and partnership scoring.
 
 6. Mobile quality
    - Active table screens should be stable on the physical iPhone.
@@ -191,7 +191,7 @@ This section is the short list for getting from the current app to something tha
 
 5. Product shell and launch readiness
    - Keep the catalog free-first: Hearts, Barbu, Whist, then paid/future packs.
-   - Whist can remain reference/learning-path only for launch if Barbu and Hearts feel good, but it should be the next game implementation target before Solitaire.
+   - Whist can remain lighter than Barbu and Hearts for launch if those games feel good, but it should keep receiving practice coverage before Solitaire.
    - Make app icon, launch screen, iPhone safe areas, and local Tauri/iOS packaging reliable.
    - Add a short manual smoke checklist for physical iPhone testing before each TestFlight-style build.
 
