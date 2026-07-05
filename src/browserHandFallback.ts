@@ -402,11 +402,31 @@ function completedTrickTacticalTags(
     }
   } else if (contract === "Whist") {
     const winnerCard = trick.cards.find((played) => played.seat === trick.winner)?.card;
+    const playerCard = trick.cards.find((played) => played.seat === "You")?.card;
+    const partnerCard = trick.cards.find((played) => played.seat === "Tutor")?.card;
 
     if (winnerCard && led && winnerCard.suit !== led) {
       tags.push("trump_won");
     }
     tags.push(trick.winnerIndex === 0 || trick.winnerIndex === 2 ? "partner_trick" : "opponent_trick");
+    if (trick.winnerIndex === 0) {
+      tags.push("partner_held");
+    }
+    if (trick.cards[0]?.seat === "Tutor" && (trick.winnerIndex === 0 || trick.winnerIndex === 2)) {
+      tags.push("partner_supported");
+    }
+    if (trick.cards[2]?.seat === "You" && trick.cards[0]?.seat === "Tutor") {
+      tags.push("third_hand_high");
+    }
+    if (
+      trick.winnerIndex === 0 &&
+      playerCard &&
+      partnerCard &&
+      playerCard.suit === partnerCard.suit &&
+      rankOrder[playerCard.rank as Rank] < rankOrder[partnerCard.rank as Rank]
+    ) {
+      tags.push("avoided_overtake");
+    }
   } else if (
     (contract === "Hearts" || contract === "No Hearts" || contract === "No Queens" || contract === "King of Hearts") &&
     trick.penalty > 0
@@ -575,6 +595,15 @@ function chooseOpponentCard(state: FullHandState) {
 
 function chooseWhistLeadCard(state: FullHandState, legal: Card[]) {
   const trump = whistTrumpSuitFromState(state);
+
+  const partnerSuit = whistPartnerSignalSuit(state);
+  if (partnerSuit && partnerSuit !== trump) {
+    const returnCard = highestCard(legal.filter((card) => card.suit === partnerSuit));
+    if (returnCard) {
+      return returnCard;
+    }
+  }
+
   return highestCardFromLongestSuit(legal.filter((card) => card.suit !== trump), legal) ?? highestCard(legal);
 }
 
@@ -610,6 +639,19 @@ function whistPartnerIsWinning(state: FullHandState) {
 
 function sameWhistPartnership(left: number, right: number) {
   return left % 2 === right % 2;
+}
+
+function whistPartnerSignalSuit(state: FullHandState): Suit | undefined {
+  const partner = (state.currentPlayerIndex + 2) % 4;
+
+  for (const trick of [...state.completedTricks].reverse()) {
+    const led = trick.cards[0];
+    if (led && playerNames.indexOf(led.seat) === partner && sameWhistPartnership(trick.winnerIndex, state.currentPlayerIndex)) {
+      return led.card.suit;
+    }
+  }
+
+  return undefined;
 }
 
 function cardWouldWinTrick(state: FullHandState, card: Card) {

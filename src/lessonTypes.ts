@@ -101,7 +101,11 @@ export type FullHandTacticalTag =
   | "opponent_loaded_player_trick"
   | "pressure_lead"
   | "partner_trick"
-  | "opponent_trick";
+  | "opponent_trick"
+  | "partner_held"
+  | "partner_supported"
+  | "avoided_overtake"
+  | "third_hand_high";
 
 export type CompletedHandTrick = {
   cards: TableCard[];

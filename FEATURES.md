@@ -134,7 +134,8 @@ Must ship:
    - Practice v1B has playable starter drills for follow suit, trump or discard, third hand high, return partner's suit, and odd-trick counting.
    - Play Surface v1 starts a local partnership hand with You + Barbu against Left + Right, visible trump, follow-suit validation, trump trick resolution, and odd-trick score display.
    - Treat silent partnership communication as part of the learning goal: lead a strong or long suit, return partner's suit when useful, second hand low, and third hand high.
-   - Broader generated Whist practice and Play polish remain planned until the shared trick-taking engine has stronger partner-aware policy and partnership match scoring.
+   - Partnership Policy v1 has started: automated seats can return partner's suit, avoid overtaking partner, preserve trump when partner is winning, and cut when the other side controls the trick.
+   - Broader generated Whist practice and partnership match scoring remain planned.
 
 6. Mobile quality
    - Active table screens should be stable on the physical iPhone.

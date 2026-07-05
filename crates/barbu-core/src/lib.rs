@@ -23,10 +23,9 @@ pub use hand::{
     play_whist_card, start_hearts_hand, start_hearts_passing_hand, start_king_of_hearts_hand,
     start_no_hearts_hand, start_no_last_two_hand, start_no_queens_hand, start_no_tricks_hand,
     start_positive_tricks_hand, start_trick_taking_hand, start_whist_hand, CompletedTrick,
-    HandStatus, HandTrickOutcome, HeartsHandState,
-    KingOfHeartsHandState, NoHeartsHandState, NoLastTwoHandState, NoQueensHandState,
-    NoTricksHandState, OpponentPolicyFn, PositiveTricksHandState, TrickScoreFn,
-    TrickTakingHandState, WhistHandState,
+    HandStatus, HandTrickOutcome, HeartsHandState, KingOfHeartsHandState, NoHeartsHandState,
+    NoLastTwoHandState, NoQueensHandState, NoTricksHandState, OpponentPolicyFn,
+    PositiveTricksHandState, TrickScoreFn, TrickTakingHandState, WhistHandState,
 };
 pub use learning::{barbu_learning_path, ContractLesson, GameLesson, LessonStep};
 pub use practice::{

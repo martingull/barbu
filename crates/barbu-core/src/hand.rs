@@ -100,7 +100,11 @@ pub fn completed_trick_tactical_tags(
             }
         }
         Some(HandPolicy::BarbuContract(BarbuContractPolicy::HeartsTrumps)) => {
-            let trump_cards = trick.cards.iter().filter(|played| played.card.suit == HEARTS_TRUMP_SUIT).count();
+            let trump_cards = trick
+                .cards
+                .iter()
+                .filter(|played| played.card.suit == HEARTS_TRUMP_SUIT)
+                .count();
             let winner_used_trump = trick
                 .cards
                 .iter()
@@ -115,6 +119,17 @@ pub fn completed_trick_tactical_tags(
             }
         }
         Some(HandPolicy::Whist) => {
+            let player_card = trick
+                .cards
+                .iter()
+                .find(|played| played.player == 2)
+                .map(|played| played.card);
+            let partner_card = trick
+                .cards
+                .iter()
+                .find(|played| played.player == 0)
+                .map(|played| played.card);
+
             if let Some(winner_card) = trick
                 .cards
                 .iter()
@@ -129,6 +144,29 @@ pub fn completed_trick_tactical_tags(
                 tags.push("partner_trick");
             } else {
                 tags.push("opponent_trick");
+            }
+            if trick.winner == 0 {
+                tags.push("partner_held");
+            }
+            if trick.cards.first().is_some_and(|played| played.player == 0)
+                && (trick.winner == 0 || trick.winner == 2)
+            {
+                tags.push("partner_supported");
+            }
+            if trick.cards.get(2).is_some_and(|played| played.player == 2)
+                && trick.cards.first().is_some_and(|played| played.player == 0)
+            {
+                tags.push("third_hand_high");
+            }
+            if trick.winner == 0
+                && player_card
+                    .zip(partner_card)
+                    .is_some_and(|(player_card, partner_card)| {
+                        player_card.suit == partner_card.suit
+                            && player_card.rank < partner_card.rank
+                    })
+            {
+                tags.push("avoided_overtake");
             }
         }
         Some(HandPolicy::HeartsBlackLady)
@@ -1227,7 +1265,8 @@ fn choose_whist_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
     }
 
     let current_winner = trick_winner_for_state(state, &state.current_trick);
-    let partner_is_winning = current_winner.is_some_and(|winner| whist_same_partnership(winner, state.current_player));
+    let partner_is_winning =
+        current_winner.is_some_and(|winner| whist_same_partnership(winner, state.current_player));
     let follows_suit = legal.iter().all(|card| Some(card.suit) == led_suit);
 
     if follows_suit {
@@ -1240,7 +1279,8 @@ fn choose_whist_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
     }
 
     if partner_is_winning {
-        return lowest_card_matching(&legal, |card| card.suit != trump_suit).or_else(|| lowest_card(&legal));
+        return lowest_card_matching(&legal, |card| card.suit != trump_suit)
+            .or_else(|| lowest_card(&legal));
     }
 
     lowest_card_matching(&legal, |card| {
@@ -1251,6 +1291,14 @@ fn choose_whist_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
 }
 
 fn whist_lead_card(state: &TrickTakingHandState, legal: &[Card], trump_suit: Suit) -> Option<Card> {
+    if let Some(partner_suit) = whist_partner_signal_suit(state) {
+        if partner_suit != trump_suit {
+            if let Some(card) = highest_card_matching(legal, |card| card.suit == partner_suit) {
+                return Some(card);
+            }
+        }
+    }
+
     if state.current_player == 0 {
         return highest_card_from_longest_suit(legal, |card| card.suit != trump_suit)
             .or_else(|| highest_card(legal));
@@ -1259,6 +1307,19 @@ fn whist_lead_card(state: &TrickTakingHandState, legal: &[Card], trump_suit: Sui
     highest_card_from_longest_suit(legal, |card| card.suit != trump_suit)
         .or_else(|| lowest_card_matching(legal, |card| card.suit == trump_suit))
         .or_else(|| lowest_card(legal))
+}
+
+fn whist_partner_signal_suit(state: &TrickTakingHandState) -> Option<Suit> {
+    let partner = (state.current_player + 2) % 4;
+
+    state.completed_tricks.iter().rev().find_map(|trick| {
+        let led = trick.cards.first()?;
+        if led.player == partner && whist_same_partnership(trick.winner, state.current_player) {
+            Some(led.card.suit)
+        } else {
+            None
+        }
+    })
 }
 
 fn whist_same_partnership(left: PlayerIndex, right: PlayerIndex) -> bool {
@@ -1624,6 +1685,98 @@ mod tests {
             choose_whist_opponent_card(&state),
             Some(Card::new(Rank::King, Suit::Clubs))
         );
+    }
+
+    #[test]
+    fn whist_partner_returns_player_suit_when_leading() {
+        let state = WhistHandState {
+            id: "whist-hand-test-S".to_string(),
+            hands: [
+                vec![
+                    Card::new(Rank::Ace, Suit::Clubs),
+                    Card::new(Rank::Three, Suit::Diamonds),
+                    Card::new(Rank::Two, Suit::Spades),
+                ],
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+            ],
+            current_player: 0,
+            current_trick: Vec::new(),
+            completed_tricks: vec![CompletedTrick {
+                cards: vec![
+                    PlayedCard::new(2, Card::new(Rank::King, Suit::Clubs)),
+                    PlayedCard::new(3, Card::new(Rank::Two, Suit::Clubs)),
+                    PlayedCard::new(0, Card::new(Rank::Ten, Suit::Clubs)),
+                    PlayedCard::new(1, Card::new(Rank::Four, Suit::Clubs)),
+                ],
+                winner: 2,
+                penalty: 1,
+            }],
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_whist_opponent_card(&state),
+            Some(Card::new(Rank::Ace, Suit::Clubs))
+        );
+    }
+
+    #[test]
+    fn whist_partner_signal_does_not_return_trump_on_lead() {
+        let state = WhistHandState {
+            id: "whist-hand-test-S".to_string(),
+            hands: [
+                vec![
+                    Card::new(Rank::Ace, Suit::Clubs),
+                    Card::new(Rank::Three, Suit::Diamonds),
+                    Card::new(Rank::Two, Suit::Spades),
+                ],
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+            ],
+            current_player: 0,
+            current_trick: Vec::new(),
+            completed_tricks: vec![CompletedTrick {
+                cards: vec![
+                    PlayedCard::new(2, Card::new(Rank::King, Suit::Spades)),
+                    PlayedCard::new(3, Card::new(Rank::Two, Suit::Spades)),
+                    PlayedCard::new(0, Card::new(Rank::Ten, Suit::Spades)),
+                    PlayedCard::new(1, Card::new(Rank::Four, Suit::Spades)),
+                ],
+                winner: 2,
+                penalty: 1,
+            }],
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_whist_opponent_card(&state),
+            Some(Card::new(Rank::Ace, Suit::Clubs))
+        );
+    }
+
+    #[test]
+    fn whist_completed_trick_tags_partner_support_and_overtake_avoidance() {
+        let trick = CompletedTrick {
+            cards: vec![
+                PlayedCard::new(0, Card::new(Rank::Ace, Suit::Clubs)),
+                PlayedCard::new(1, Card::new(Rank::Two, Suit::Clubs)),
+                PlayedCard::new(2, Card::new(Rank::King, Suit::Clubs)),
+                PlayedCard::new(3, Card::new(Rank::Three, Suit::Clubs)),
+            ],
+            winner: 0,
+            penalty: 1,
+        };
+
+        let tags = completed_trick_tactical_tags("Whist", 1, &trick);
+
+        assert!(tags.contains(&"partner_trick"));
+        assert!(tags.contains(&"partner_held"));
+        assert!(tags.contains(&"partner_supported"));
+        assert!(tags.contains(&"third_hand_high"));
+        assert!(tags.contains(&"avoided_overtake"));
     }
 
     #[test]

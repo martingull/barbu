@@ -5273,6 +5273,17 @@
           ? `${trick.winner} won with trump for ${partnershipLabel}. Good cut: your side took control.`
           : `${trick.winner} won with trump for ${partnershipLabel}. Count that trump as gone.`;
       }
+      if (fullHandTrickHasTag(trick, "avoided_overtake")) {
+        return "Barbu held the trick and you stayed under him. Good Whist: do not fight your own partner.";
+      }
+      if (fullHandTrickHasTag(trick, "partner_supported")) {
+        return trick.winner === "You"
+          ? "Barbu led the suit and you carried it home. Good third-hand support."
+          : "Barbu's lead held for your side. Good: the partnership kept control.";
+      }
+      if (fullHandTrickHasTag(trick, "partner_held")) {
+        return "Barbu held the trick for your partnership. Save strength and watch what suit he led.";
+      }
 
       return winnerIsPlayerSide
         ? `${trick.winner} won the trick for ${partnershipLabel}. Build toward odd tricks above six.`
