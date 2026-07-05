@@ -343,6 +343,13 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByLabel("Whist lesson path")).toContainText("Invite a suit");
   await expect(page.getByLabel("Whist lesson path")).toContainText("Count odd tricks");
   await expect(page.getByLabel("Whist learn actions").getByRole("button", { name: "Rules Reference" })).toBeVisible();
+  await page.getByRole("tab", { name: "Practice" }).click();
+  await expect(page.getByRole("heading", { name: "Repeat one Whist habit." })).toBeVisible();
+  await expect(page.getByLabel("Whist practice drills")).toContainText("Follow suit");
+  await expect(page.getByLabel("Whist practice drills")).toContainText("Trump or discard");
+  await expect(page.getByLabel("Whist practice drills")).toContainText("Third hand high");
+  await expect(page.getByLabel("Whist practice drills")).toContainText("Return partner's suit");
+  await expect(page.getByLabel("Whist practice drills")).toContainText("Count odd tricks");
   await page.getByRole("button", { name: "Games" }).click();
 
   await page.getByRole("button", { name: "Open Barbu" }).click();

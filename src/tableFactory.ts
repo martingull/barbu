@@ -18,6 +18,7 @@ export type HeartsLearnPathAction = "object" | "queen" | "avoid" | "pass" | "bre
 export type WhistLearnPathAction = "planned";
 export type BarbuPracticeAction = "quick" | "fixed" | "domino";
 export type HeartsPracticeAction = "quick" | "pass" | "first" | "avoid" | "queen" | "break" | "moon" | "score";
+export type WhistPracticeAction = "follow" | "trump" | "third" | "return" | "odd";
 
 export type TableActionDefinition = {
   id: string;
@@ -111,6 +112,9 @@ export type BarbuPracticeEntry = PracticeEntry<BarbuPracticeAction> & {
 export type HeartsPracticeEntry = PracticeEntry<HeartsPracticeAction> & {
   group: "practice-actions" | "fixed-drills";
 };
+export type WhistPracticeEntry = PracticeEntry<WhistPracticeAction> & {
+  group: "fixed-drills";
+};
 
 export type PracticeGroupLayout = "action-list" | "entry-grid" | "lesson-grid";
 
@@ -126,6 +130,7 @@ export type PracticeGroup<Action extends string = string> = {
 
 export type BarbuPracticeGroup = PracticeGroup<BarbuPracticeAction>;
 export type HeartsPracticeGroup = PracticeGroup<HeartsPracticeAction>;
+export type WhistPracticeGroup = PracticeGroup<WhistPracticeAction>;
 
 export const monetizationPolicy = {
   model: "free-usage-then-unlock",
@@ -334,6 +339,10 @@ function createHeartsPracticeEntry(entry: HeartsPracticeEntry): HeartsPracticeEn
   return entry;
 }
 
+function createWhistPracticeEntry(entry: WhistPracticeEntry): WhistPracticeEntry {
+  return entry;
+}
+
 function createPracticeGroup<Action extends string>(group: PracticeGroup<Action>): PracticeGroup<Action> {
   return group;
 }
@@ -432,6 +441,49 @@ export const heartsPracticeEntries: HeartsPracticeEntry[] = [
   })
 ];
 
+export const whistPracticeEntries: WhistPracticeEntry[] = [
+  createWhistPracticeEntry({
+    id: "follow-suit",
+    label: "Rule",
+    title: "Follow suit",
+    summary: "Find the legal card when the led suit controls the trick.",
+    action: "follow",
+    group: "fixed-drills"
+  }),
+  createWhistPracticeEntry({
+    id: "trump-or-discard",
+    label: "Trump",
+    title: "Trump or discard",
+    summary: "Decide when a void hand should cut with trump or throw away.",
+    action: "trump",
+    group: "fixed-drills"
+  }),
+  createWhistPracticeEntry({
+    id: "third-hand-high",
+    label: "Partnership",
+    title: "Third hand high",
+    summary: "Support partner's lead by spending strength at the right seat.",
+    action: "third",
+    group: "fixed-drills"
+  }),
+  createWhistPracticeEntry({
+    id: "return-partner-suit",
+    label: "Signal",
+    title: "Return partner's suit",
+    summary: "Notice a suit invitation and lead it back when you get control.",
+    action: "return",
+    group: "fixed-drills"
+  }),
+  createWhistPracticeEntry({
+    id: "odd-tricks",
+    label: "Scoring",
+    title: "Count odd tricks",
+    summary: "Translate tricks above six into partnership points.",
+    action: "odd",
+    group: "fixed-drills"
+  })
+];
+
 export const barbuPracticeGroups: BarbuPracticeGroup[] = [
   createPracticeGroup({
     id: "practice-actions",
@@ -475,6 +527,17 @@ export const heartsPracticeGroups: HeartsPracticeGroup[] = [
     title: "Practice one Hearts pattern.",
     layout: "entry-grid",
     entries: heartsPracticeEntries.filter((entry) => entry.group === "fixed-drills")
+  })
+];
+
+export const whistPracticeGroups: WhistPracticeGroup[] = [
+  createPracticeGroup({
+    id: "fixed-drills",
+    ariaLabel: "Whist practice drills",
+    eyebrow: "Practice set",
+    title: "Practice one Whist habit.",
+    layout: "entry-grid",
+    entries: whistPracticeEntries
   })
 ];
 
@@ -757,9 +820,8 @@ export const gameTableDefinitions = {
       },
       practice: {
         eyebrow: "Practice",
-        title: "Whist practice is planned.",
-        summary:
-          "Practice will start with follow-suit, trump-or-discard, third-hand-high, return partner's suit, and odd-trick counting."
+        title: "Repeat one Whist habit.",
+        summary: "Start with compact partnership trick-taking topics before full Whist hands exist."
       },
       play: {
         eyebrow: "Play",
@@ -781,7 +843,13 @@ export const gameTableDefinitions = {
         { id: "follow-suit", label: "Follow suit", destination: "Whist follow-suit concept" },
         { id: "trumps", label: "Trump wins", destination: "Whist trump concept" },
         { id: "partner-suits", label: "Partner signals", destination: "Whist partnership concept" }
-      ]
+      ],
+      practice: whistPracticeEntries.map((entry) => ({
+        id: entry.id,
+        label: entry.title,
+        destination: `Whist practice: ${entry.title}`
+      })),
+      play: [{ id: "play-whist", label: "Play Whist", destination: "Planned Whist partnership hand" }]
     }
   })
 } satisfies Record<ActiveGameTable, GameTableDefinition>;

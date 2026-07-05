@@ -42,12 +42,14 @@
     heartsPracticeGroups,
     tableTabsFor,
     whistLearnPathSteps as whistPathSteps,
+    whistPracticeGroups,
     type ActiveGameTable,
     type BarbuLearnPathStep,
     type BarbuPracticeAction,
     type CatalogGameId,
     type HeartsLearnPathStep,
     type HeartsPracticeAction,
+    type WhistPracticeAction,
     type TableTabId
   } from "./tableFactory";
   import type {
@@ -5650,6 +5652,14 @@
     score: () => void startHeartsScoreHandDrill()
   };
 
+  const whistPracticeActions: Record<WhistPracticeAction, () => void> = {
+    follow: () => openReference(gameTableDefinitions.whist.referenceId),
+    trump: () => openReference(gameTableDefinitions.whist.referenceId),
+    third: () => openReference(gameTableDefinitions.whist.referenceId),
+    return: () => openReference(gameTableDefinitions.whist.referenceId),
+    odd: () => openReference(gameTableDefinitions.whist.referenceId)
+  };
+
   function continueCourse() {
     if (isCourseComplete || !nextPathStep) {
       openBarbuLearnTable();
@@ -6664,6 +6674,13 @@
           onStepSelect={() => {
             openReference(gameTableDefinitions.whist.referenceId);
           }}
+        />
+      {:else if activeWhistTableTab === "practice"}
+        <PracticePanel
+          id={gameTableDefinitions.whist.tabs.practice.panelId}
+          intro={gameTableDefinitions.whist.tabs.practice.intro}
+          groups={whistPracticeGroups}
+          actions={whistPracticeActions}
         />
       {:else}
         <div
