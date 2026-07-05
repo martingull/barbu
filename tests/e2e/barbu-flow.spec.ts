@@ -369,6 +369,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByLabel("Whist learn actions").getByRole("button", { name: "Rules Reference" })).toBeVisible();
   await page.getByRole("tab", { name: "Practice" }).click();
   await expect(page.getByRole("heading", { name: "Repeat one Whist habit." })).toBeVisible();
+  await expect(page.getByLabel("Whist practice drills")).toContainText("Opening lead");
   await expect(page.getByLabel("Whist practice drills")).toContainText("Follow suit");
   await expect(page.getByLabel("Whist practice drills")).toContainText("Trump or discard");
   await expect(page.getByLabel("Whist practice drills")).toContainText("Third hand high");
@@ -386,7 +387,6 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByRole("tab", { name: "Pro" })).toBeVisible();
 
   await openBarbuTab(page, "Learn");
-  await expect(page.getByRole("button", { name: /Continue with Meet the contract/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /^1 Concept Meet the contract/ })).toBeVisible();
   await expect(page.getByLabel("Barbu course progress")).toContainText("0 / 9 complete");
   await expect(page.getByLabel("Barbu lesson path")).toContainText("Meet the contract");
@@ -444,6 +444,15 @@ test("Whist practice starts playable partnership drills", async ({ page }) => {
   await gotoWithPracticeSeed(page, 4);
   await page.getByRole("button", { name: /Open Whist/ }).click();
   await page.getByRole("tab", { name: "Practice" }).click();
+
+  await page.getByLabel("Whist practice drills").getByRole("button", { name: "Opening lead" }).click();
+  await expect(page.getByRole("heading", { name: "Whist hand" })).toBeVisible();
+  await expect(page.getByLabel("Whist full hand")).toContainText("Trump:");
+  await expect(page.locator(".full-hand-cards .full-hand-card")).toHaveCount(13);
+  await expect.poll(async () => page.evaluate(() => localStorage.getItem("barbu.savedWhistRun.v1"))).toBeNull();
+  await page.getByLabel("Whist full hand").getByRole("button", { name: "Table" }).click();
+  await expect(page.getByRole("heading", { name: "Whist table", exact: true })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
 
   await page.getByLabel("Whist practice drills").getByRole("button", { name: "Follow suit" }).click();
   await expect(page.getByRole("heading", { name: "Whist practice: follow suit" })).toBeVisible();

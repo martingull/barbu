@@ -18,7 +18,7 @@ export type HeartsLearnPathAction = "object" | "queen" | "avoid" | "pass" | "bre
 export type WhistLearnPathAction = "object" | WhistPracticeAction;
 export type BarbuPracticeAction = "quick" | "fixed" | "domino";
 export type HeartsPracticeAction = "quick" | "pass" | "first" | "avoid" | "queen" | "break" | "moon" | "score";
-export type WhistPracticeAction = "follow" | "trump" | "third" | "return" | "odd";
+export type WhistPracticeAction = "lead" | "follow" | "trump" | "third" | "return" | "odd";
 
 export type TableActionDefinition = {
   id: string;
@@ -442,6 +442,14 @@ export const heartsPracticeEntries: HeartsPracticeEntry[] = [
 ];
 
 export const whistPracticeEntries: WhistPracticeEntry[] = [
+  createWhistPracticeEntry({
+    id: "opening-lead",
+    label: "Lead",
+    title: "Opening lead",
+    summary: "Play a full Whist hand and feel how the first lead shapes the partnership.",
+    action: "lead",
+    group: "fixed-drills"
+  }),
   createWhistPracticeEntry({
     id: "follow-suit",
     label: "Rule",

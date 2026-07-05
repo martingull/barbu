@@ -2078,6 +2078,7 @@
   let activeHeartsTableTab: TableTabId = gameTableDefinitions.hearts.defaultTab;
   let activeWhistTableTab: TableTabId = gameTableDefinitions.whist.defaultTab;
   let activeWhistPracticeFocus: WhistPracticeAction = "follow";
+  let whistFullHandSource: "play" | "practice" = "play";
   let activeCardCountingTab: CardCountingTabId = "play";
   let cardCountingReturnTarget: CardCountingReturnTarget = "barbu";
   let activeGameTable: ActiveGameTable = "barbu";
@@ -2294,6 +2295,13 @@
       summary: gameTableDefinitions.barbu.learn.referenceSummary,
       primary: true,
       onClick: () => openReference(gameTableDefinitions.barbu.referenceId)
+    },
+    {
+      id: "contracts",
+      eyebrow: "Core game",
+      title: "Barbu contracts",
+      summary: "See the contract roster and what each table asks you to notice.",
+      onClick: openBarbuContracts
     }
   ];
   $: heartsLearnPanelActions = [
@@ -2547,7 +2555,9 @@
       ? "New match"
       : "Next hand"
     : fullHandIsWhistGame
-    ? whistMatchIsComplete
+    ? whistFullHandSource === "practice"
+      ? "Try another"
+      : whistMatchIsComplete
       ? "New match"
       : "Next hand"
     : fullHandRunActive
@@ -3233,7 +3243,7 @@
   function persistSavedWhistRun() {
     const isWhistFullHand = activeGameTable === "whist" && fullHand?.contract === "Whist" && !fullHandRunActive;
 
-    if (!isWhistFullHand || !fullHand) {
+    if (whistFullHandSource !== "play" || !isWhistFullHand || !fullHand) {
       return;
     }
 
@@ -3289,6 +3299,7 @@
 
     activeGameTable = "whist";
     activeWhistTableTab = "play";
+    whistFullHandSource = "play";
     fullHandRunActive = false;
     fullHandRunResults = [];
     dominoHand = null;
@@ -4856,6 +4867,7 @@
   async function startWhistHand(options: { keepSession?: boolean } = {}) {
     activeGameTable = "whist";
     activeWhistTableTab = "play";
+    whistFullHandSource = "play";
     if (!options.keepSession) {
       whistMatchScores = { playerSide: 0, opponentSide: 0 };
       whistHandResults = [];
@@ -4863,6 +4875,17 @@
     }
     await startFullHand("Whist");
     persistSavedWhistRun();
+  }
+
+  async function startWhistPracticeHand(pathStepId = "") {
+    activeGameTable = "whist";
+    activeWhistTableTab = "practice";
+    whistFullHandSource = "practice";
+    activeWhistPracticeFocus = "lead";
+    activePathStepId = pathStepId;
+    whistMatchScores = { playerSide: 0, opponentSide: 0 };
+    whistHandResults = [];
+    await startFullHand("Whist");
   }
 
   function startHeartsObjectLesson() {
@@ -5239,6 +5262,11 @@
     }
 
     if (fullHandIsWhistGame) {
+      if (whistFullHandSource === "practice") {
+        void startWhistPracticeHand(activePathStepId);
+        return;
+      }
+
       if (whistMatchIsComplete) {
         startWhistHand();
         return;
@@ -5287,6 +5315,11 @@
     }
 
     if (fullHandIsWhistGame) {
+      if (whistFullHandSource === "practice") {
+        void startWhistPracticeHand(activePathStepId);
+        return;
+      }
+
       startWhistHand({ keepSession: true });
       return;
     }
@@ -6522,6 +6555,10 @@
     appView = "drill";
   }
 
+  function startWhistOpeningLeadDrill(pathStepId = "") {
+    void startWhistPracticeHand(pathStepId);
+  }
+
   function startWhistFollowSuitDrill(pathStepId = "") {
     startWhistPracticeSession("follow", whistFollowSuitDrillPool, "Whist practice: follow suit", pathStepId);
   }
@@ -6544,6 +6581,9 @@
 
   function replayWhistPracticeDrill() {
     switch (activeWhistPracticeFocus) {
+      case "lead":
+        startWhistOpeningLeadDrill();
+        return;
       case "trump":
         startWhistTrumpOrDiscardDrill();
         return;
@@ -6644,6 +6684,7 @@
   };
 
   const whistPracticeActions: Record<WhistPracticeAction, (pathStepId?: string) => void> = {
+    lead: startWhistOpeningLeadDrill,
     follow: startWhistFollowSuitDrill,
     trump: startWhistTrumpOrDiscardDrill,
     third: startWhistThirdHandHighDrill,
@@ -8977,7 +9018,7 @@
         mode={fullHand.status === "complete" ? "result" : "play"}
         ariaLabel={`${fullHand.contract} full hand`}
         title={`${fullHand.contract} hand`}
-        eyebrow={fullHandIsWhistGame ? "Play Whist" : fullHandRunActive ? "Play Barbu" : "Contract hand"}
+        eyebrow={fullHandIsWhistGame ? (whistFullHandSource === "practice" ? "Whist practice" : "Play Whist") : fullHandRunActive ? "Play Barbu" : "Contract hand"}
         statusLabel={fullHandIsWhistGame ? "Trump" : fullHandRunStatusLabel}
         statusValue={fullHandIsWhistGame ? whistTrumpSuitLabel : `${fullHand.playerPenalty} ${fullHandPlayerPenaltyLabel}`}
         tableAriaLabel={`${fullHand.contract} hand table`}
