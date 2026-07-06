@@ -215,6 +215,8 @@ Product layers:
 - **App teaching modes**: guided lessons, quick drills, contract-hand practice, and Play Barbu.
 - **Varieties of play**: documented changes to contract order, scoring, deal customs, or beginner simplifications.
 
+Current Play Barbu boundary: v1 is a fixed-order local training-table session through the playable contract roster. It is meant to feel like sitting at Barbu's table and experiencing each contract, but it does not yet claim canonical full Barbu settlement or dealer-driven contract choice. Keep product copy and tests honest about that boundary until full settlement is implemented.
+
 Core contract status:
 
 | Contract | Core status | App status | Notes |
@@ -249,7 +251,7 @@ Production readiness gaps:
 
 | Gap | Current state | Production action |
 | --- | --- | --- |
-| Full Barbu settlement | Play Barbu runs the playable contract roster and totals signed contract values, but does not yet claim exact historical/Parlett full-game settlement. | Either document this as "training table scoring" for v1 or implement full settlement before claiming canonical Barbu. |
+| Full Barbu settlement | Play Barbu runs the playable contract roster and totals signed contract values as a fixed-order training-table session. It does not claim exact historical/Parlett full-game settlement. | Keep this boundary explicit in product copy, or implement full settlement before claiming canonical Barbu. |
 | Contract selection/declarer custom | Play Barbu currently uses a fixed contract sequence. | Accept as v1 training flow, or add explicit contract choice later as a named variety. |
 | Domino start rank | Engine supports configurable start rank, but app defaults to sevens. | Keep fixed-seven v1 documented, or add chooser/declarer-selected start rank later. |
 | Source verification | Reference says Parlett baseline, but implementation-level constants need a final source check before store copy claims exactness. | Before launch text says "canonical Barbu", verify contract roster, point values, order, and settlement directly against the chosen source. |
@@ -257,7 +259,7 @@ Production readiness gaps:
 
 ### Barbu Opponent Policy Audit
 
-Last audited against the current Rust implementation: full-hand trick-taking opponent selection in `crates/barbu-core/src/hand.rs`, the extracted No Queens policy in `crates/barbu-core/src/contract_policy.rs`, and Domino auto-play in `crates/barbu-core/src/domino.rs`. The first remediation pass improved No Last Two setup play, Hearts Trumps trump preservation, and Domino lane selection.
+Last audited against the current Rust implementation: full-hand trick-taking opponent selection in `crates/barbu-core/src/hand.rs`, the extracted No Queens policy in `crates/barbu-core/src/contract_policy.rs`, and Domino auto-play in `crates/barbu-core/src/domino.rs`. The first remediation pass improved No Last Two setup play, Hearts Trumps trump preservation, Domino lane selection, and browser-fallback alignment for Barbu contract behavior.
 
 Shared baseline:
 

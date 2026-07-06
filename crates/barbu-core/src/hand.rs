@@ -3110,6 +3110,32 @@ mod tests {
     }
 
     #[test]
+    fn king_of_hearts_opponent_sheds_king_under_locked_ace() {
+        let state = KingOfHeartsHandState {
+            id: "opponent-shed-king-under-ace".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::King, Suit::Hearts),
+                    Card::new(Rank::Queen, Suit::Hearts),
+                    Card::new(Rank::Two, Suit::Diamonds),
+                ],
+            ],
+            current_player: 3,
+            current_trick: vec![PlayedCard::new(0, Card::new(Rank::Ace, Suit::Hearts))],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_king_of_hearts_opponent_card(&state),
+            Some(Card::new(Rank::King, Suit::Hearts))
+        );
+    }
+
+    #[test]
     fn king_of_hearts_hand_can_be_completed_by_playing_first_legal_card() {
         let mut state = start_king_of_hearts_hand(23);
 
@@ -3260,6 +3286,31 @@ mod tests {
                 PlayedCard::new(0, Card::new(Rank::Seven, Suit::Clubs)),
                 PlayedCard::new(1, Card::new(Rank::Eight, Suit::Clubs)),
             ],
+            completed_tricks: repeat_clean_tricks(10),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_no_last_two_opponent_card(&state),
+            Some(Card::new(Rank::Two, Suit::Clubs))
+        );
+    }
+
+    #[test]
+    fn no_last_two_opponent_leads_low_on_setup_trick() {
+        let state = NoLastTwoHandState {
+            id: "opponent-lead-low-setup-no-last-two".to_string(),
+            hands: [
+                vec![
+                    Card::new(Rank::Two, Suit::Clubs),
+                    Card::new(Rank::King, Suit::Spades),
+                ],
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+            ],
+            current_player: 0,
+            current_trick: Vec::new(),
             completed_tricks: repeat_clean_tricks(10),
             status: HandStatus::InProgress,
         };
@@ -3460,6 +3511,32 @@ mod tests {
         assert_eq!(
             choose_positive_tricks_opponent_card(&state),
             Some(Card::new(Rank::Three, Suit::Diamonds))
+        );
+    }
+
+    #[test]
+    fn hearts_trumps_opponent_uses_lowest_winning_led_suit_card() {
+        let state = PositiveTricksHandState {
+            id: "hearts-trumps-hand-opponent-led-suit-winner".to_string(),
+            hands: [
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Nine, Suit::Clubs),
+                    Card::new(Rank::King, Suit::Clubs),
+                    Card::new(Rank::Two, Suit::Hearts),
+                ],
+                Vec::new(),
+                Vec::new(),
+            ],
+            current_player: 1,
+            current_trick: vec![PlayedCard::new(0, Card::new(Rank::Seven, Suit::Clubs))],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_positive_tricks_opponent_card(&state),
+            Some(Card::new(Rank::Nine, Suit::Clubs))
         );
     }
 

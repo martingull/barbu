@@ -14,6 +14,8 @@ Hearts is the current Hearts-family starter game, in the Black Lady style: rotat
 
 Keep the game-object distinction explicit when changing rules or opponent policy. Barbu is a contract trick-taking game: each deal is governed by the selected contract, and contracts may reward taking tricks, avoiding tricks, avoiding specific cards, using trumps, or building the Domino layout. Hearts is a trick-avoidance penalty game: the normal objective is to avoid winning hearts and the queen of spades unless a deliberate shoot-the-moon plan is in progress. Use Black Lady for the game/style label and queen of spades for the card. Do not copy a "win the trick" or "take control" policy from Barbu into Hearts without checking whether it makes sense for a penalty-avoidance game.
 
+Play Barbu v1 is a fixed-order local training-table session through the playable contracts, not yet a canonical full Barbu settlement with dealer-driven contract choice. Keep copy, tests, and roadmap language honest about that boundary until the full settlement layer is implemented.
+
 This is intended as a real App Store product, not a throwaway learning project. Code changes should keep maintainability, automated verification, product polish, and eventual monetization in mind.
 
 Use David Parlett's *The Penguin Book of Card Games* as the starting rules and description reference for supported games. When the app models a game, its rules, terminology, deal, play direction, scoring, and variants should start from Parlett unless a deliberate product variant is documented.

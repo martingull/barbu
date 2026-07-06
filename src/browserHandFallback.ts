@@ -498,7 +498,7 @@ function chooseOpponentCard(state: FullHandState) {
       return chooseWhistLeadCard(state, legal);
     }
     if (state.contract === "Hearts Trumps") {
-      return highestCard(legal);
+      return highestCard(legal.filter((card) => card.suit === "H")) ?? highestCard(legal);
     }
     if (state.contract === "No Last Two") {
       return state.completedTricks.length >= 10 ? lowestCard(legal) : highestCard(legal);
@@ -592,6 +592,10 @@ function chooseOpponentCard(state: FullHandState) {
 
   if (state.contract === "No Last Two" && state.completedTricks.length >= 10) {
     return highestNonWinningCard(state, legal) ?? lowestCard(legal);
+  }
+
+  if (state.contract === "No Last Two") {
+    return highestCard(legal);
   }
 
   if (state.currentTrick.some((played) => isPenaltyCard(state.contract, played.card))) {
