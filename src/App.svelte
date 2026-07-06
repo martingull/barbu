@@ -26,6 +26,7 @@
   import CardChoiceHand from "./CardChoiceHand.svelte";
   import CardFace from "./CardFace.svelte";
   import CardTable from "./CardTable.svelte";
+  import { compareCardsForDisplay } from "./cardOrdering";
   import { formatCardLabel, formatCardList } from "./cardDisplay";
   import ExerciseFeedback from "./ExerciseFeedback.svelte";
   import LearnPanel from "./LearnPanel.svelte";
@@ -324,6 +325,16 @@
     playerSideOddTricks: number;
     opponentSideOddTricks: number;
   };
+
+  type WhistOpeningLeadPracticeDeal = {
+    id: string;
+    trumpSuit: Suit;
+    focusSuit: Suit;
+    prompt: string;
+    hands: Card[][];
+  };
+
+  const whistOpeningLeadPracticeMaxRounds = 3;
 
   type SavedWhistRun = {
     version: 1;
@@ -1923,6 +1934,163 @@
       }
     }
   };
+  const whistOpeningLongSuitLessonStep: DrillStep = {
+    scenarioId: "whist-opening-long-suit",
+    contract: "Whist",
+    title: "Opening leads",
+    trick: {
+      title: "Lead your long suit",
+      beforeResult:
+        "You lead first. Hearts are trumps. Spades are your strongest plain suit, and QS is your highest spade.",
+      afterResult:
+        "QS tells Barbu: spades are my strongest suit, and this is my highest card in that suit. If Barbu gains lead, spades are the natural return.",
+      emptyExplanation: "Choose the lead that shows Barbu your strongest suit and your highest card in it.",
+      legalCardIds: ["8S", "QS", "5S", "AD", "KC", "10H"],
+      hand: [
+        { id: "8S", rank: "8", suit: "S", label: "8S" },
+        { id: "AD", rank: "A", suit: "D", label: "AD" },
+        { id: "QS", rank: "Q", suit: "S", label: "QS" },
+        { id: "10H", rank: "10", suit: "H", label: "10H" },
+        { id: "5S", rank: "5", suit: "S", label: "5S" },
+        { id: "KC", rank: "K", suit: "C", label: "KC" }
+      ],
+      tableBeforeChoice: [],
+      tableAfterChoice: [
+        { seat: "Left", card: { id: "7S", rank: "7", suit: "S", label: "7S" } },
+        { seat: "Tutor", card: { id: "AS", rank: "A", suit: "S", label: "AS" } },
+        { seat: "Right", card: { id: "4S", rank: "4", suit: "S", label: "4S" } }
+      ],
+      pendingBySeat: { Left: "follows lead", Tutor: "partner", Right: "opponent", You: "opening lead" },
+      playedExplanations: {
+        "8S": "8S points to spades, but it hides that QS is your highest spade.",
+        QS: "QS tells Barbu that spades are your strongest suit and that QS is your highest spade.",
+        "5S": "5S points to spades, but it hides that QS is your highest spade.",
+        AD: "AD is powerful, but it says diamonds are the suit you want back instead of showing your spades.",
+        KC: "KC shows club strength, but it hides that spades are your best suit here.",
+        "10H": "10H leads trump. That can be right later, but it spends control before partner knows your shape."
+      },
+      cardOutcomes: {
+        "8S": "risky",
+        QS: "good",
+        "5S": "risky",
+        AD: "risky",
+        KC: "risky",
+        "10H": "risky"
+      },
+      cardReasons: {
+        "8S": "won_clean_trick",
+        QS: "won_clean_trick",
+        "5S": "won_clean_trick",
+        AD: "off_suit",
+        KC: "off_suit",
+        "10H": "off_suit"
+      }
+    }
+  };
+  const whistOpeningTopSequenceLessonStep: DrillStep = {
+    scenarioId: "whist-opening-top-sequence",
+    contract: "Whist",
+    title: "Opening leads",
+    trick: {
+      title: "Lead from strength",
+      beforeResult: "You lead first. Diamonds are trumps. Clubs are your strongest plain suit, and KC is your highest club.",
+      afterResult:
+        "KC tells Barbu: clubs are my strongest suit, and this is my highest card in that suit. If Barbu gains lead, clubs are the natural return.",
+      emptyExplanation: "Choose the lead that shows Barbu your strongest suit and your highest card in it.",
+      legalCardIds: ["KC", "QC", "JC", "AS", "7D", "9H"],
+      hand: [
+        { id: "KC", rank: "K", suit: "C", label: "KC" },
+        { id: "7D", rank: "7", suit: "D", label: "7D" },
+        { id: "QC", rank: "Q", suit: "C", label: "QC" },
+        { id: "9H", rank: "9", suit: "H", label: "9H" },
+        { id: "JC", rank: "J", suit: "C", label: "JC" },
+        { id: "AS", rank: "A", suit: "S", label: "AS" }
+      ],
+      tableBeforeChoice: [],
+      tableAfterChoice: [
+        { seat: "Left", card: { id: "4C", rank: "4", suit: "C", label: "4C" } },
+        { seat: "Tutor", card: { id: "AC", rank: "A", suit: "C", label: "AC" } },
+        { seat: "Right", card: { id: "8C", rank: "8", suit: "C", label: "8C" } }
+      ],
+      pendingBySeat: { Left: "follows lead", Tutor: "partner", Right: "opponent", You: "opening lead" },
+      playedExplanations: {
+        KC: "KC tells Barbu that clubs are your strongest suit and that KC is your highest club.",
+        QC: "QC shows clubs too, but it hides that KC is your highest club.",
+        JC: "JC starts clubs, but it hides both the king and queen above it.",
+        AS: "AS is high, but it invites spades instead of the stronger club plan.",
+        "7D": "7D leads trump. That spends control instead of showing partner your club strength.",
+        "9H": "9H starts another plain suit, but clubs send the stronger partnership message."
+      },
+      cardOutcomes: {
+        KC: "good",
+        QC: "risky",
+        JC: "risky",
+        AS: "risky",
+        "7D": "risky",
+        "9H": "risky"
+      },
+      cardReasons: {
+        KC: "won_clean_trick",
+        QC: "won_clean_trick",
+        JC: "won_clean_trick",
+        AS: "off_suit",
+        "7D": "off_suit",
+        "9H": "off_suit"
+      }
+    }
+  };
+  const whistOpeningAvoidTrumpLessonStep: DrillStep = {
+    scenarioId: "whist-opening-avoid-trump",
+    contract: "Whist",
+    title: "Opening leads",
+    trick: {
+      title: "Do not open trump casually",
+      beforeResult: "Spades are trumps. Clubs are your strongest plain suit, and AC is your highest club.",
+      afterResult:
+        "AC tells Barbu that clubs are your strongest suit and that AC is your highest club. You keep trump control for later.",
+      emptyExplanation: "Choose the lead that shows Barbu your strongest suit without spending trump control.",
+      legalCardIds: ["9D", "8D", "AS", "KS", "AC", "5C"],
+      hand: [
+        { id: "9D", rank: "9", suit: "D", label: "9D" },
+        { id: "AS", rank: "A", suit: "S", label: "AS" },
+        { id: "8D", rank: "8", suit: "D", label: "8D" },
+        { id: "KS", rank: "K", suit: "S", label: "KS" },
+        { id: "AC", rank: "A", suit: "C", label: "AC" },
+        { id: "5C", rank: "5", suit: "C", label: "5C" }
+      ],
+      tableBeforeChoice: [],
+      tableAfterChoice: [
+        { seat: "Left", card: { id: "JD", rank: "J", suit: "D", label: "JD" } },
+        { seat: "Tutor", card: { id: "KD", rank: "K", suit: "D", label: "KD" } },
+        { seat: "Right", card: { id: "3D", rank: "3", suit: "D", label: "3D" } }
+      ],
+      pendingBySeat: { Left: "follows lead", Tutor: "partner", Right: "opponent", You: "opening lead" },
+      playedExplanations: {
+        "9D": "9D says diamonds, but clubs are your strongest plain suit here.",
+        "8D": "8D also says diamonds, but clubs are the stronger partnership message.",
+        AS: "AS draws trump immediately. That can be a plan, but here it burns control before partner has spoken.",
+        KS: "KS also spends trump early. Save it until you know drawing trump helps your side.",
+        AC: "AC tells Barbu that clubs are your strongest suit and that AC is your highest club.",
+        "5C": "5C points to clubs, but it hides that AC is your highest club."
+      },
+      cardOutcomes: {
+        "9D": "risky",
+        "8D": "risky",
+        AS: "risky",
+        KS: "risky",
+        AC: "good",
+        "5C": "risky"
+      },
+      cardReasons: {
+        "9D": "won_clean_trick",
+        "8D": "won_clean_trick",
+        AS: "off_suit",
+        KS: "off_suit",
+        AC: "won_clean_trick",
+        "5C": "off_suit"
+      }
+    }
+  };
   const whistOddTrickWinSeventhDrillStep: DrillStep = {
     scenarioId: "whist-odd-trick-seventh",
     contract: "Whist",
@@ -2048,6 +2216,11 @@
     whistReturnPartnerSuitLowDrillStep,
     whistReturnAvoidTrumpDrillStep
   ];
+  const whistOpeningLeadLessonPool = [
+    whistOpeningLongSuitLessonStep,
+    whistOpeningTopSequenceLessonStep,
+    whistOpeningAvoidTrumpLessonStep
+  ];
   const whistOddTrickDrillPool = [whistOddTrickWinSeventhDrillStep, whistOddTrickPreserveWinnerDrillStep, whistOddTrickNinthDrillStep];
   const catalogTableCards: Card[] = [
     { id: "catalog-queen-spades", rank: "Q", suit: "S", label: "QS" },
@@ -2079,6 +2252,7 @@
   let activeWhistTableTab: TableTabId = gameTableDefinitions.whist.defaultTab;
   let activeWhistPracticeFocus: WhistPracticeAction = "follow";
   let whistFullHandSource: "play" | "practice" = "play";
+  let whistOpeningLeadPracticeRound = 0;
   let activeCardCountingTab: CardCountingTabId = "play";
   let cardCountingReturnTarget: CardCountingReturnTarget = "barbu";
   let activeGameTable: ActiveGameTable = "barbu";
@@ -2186,6 +2360,88 @@
 
   function suitNameFromId(suit: Suit) {
     return { C: "Clubs", D: "Diamonds", H: "Hearts", S: "Spades" }[suit];
+  }
+
+  function appCard(rank: string, suit: Suit): Card {
+    const label = `${rank}${suit}`;
+    return { id: label, rank, suit, label };
+  }
+
+  function whistOpeningLeadPracticeDeals(): WhistOpeningLeadPracticeDeal[] {
+    return [
+      {
+        id: "long-spades",
+        trumpSuit: "H",
+        focusSuit: "S",
+        prompt:
+          "Lead 1 of 3. Hearts are trumps. Show Barbu spades: your strongest suit and highest spade.",
+        hands: [
+          ["AS", "KS", "9S", "4S", "2D", "QD", "5D", "AC", "9C", "6C", "AH", "10H", "4H"].map(cardFromId),
+          ["JS", "7S", "3S", "KD", "10D", "8D", "3D", "QC", "8C", "5C", "KH", "9H", "2H"].map(cardFromId),
+          ["8S", "AD", "QS", "9D", "10S", "6D", "5S", "JH", "2S", "7H", "KC", "3H", "4C"].map(cardFromId),
+          ["6S", "JD", "7D", "4D", "JC", "10C", "7C", "3C", "2C", "QH", "8H", "6H", "5H"].map(cardFromId)
+        ]
+      },
+      {
+        id: "strong-clubs",
+        trumpSuit: "D",
+        focusSuit: "C",
+        prompt:
+          "Lead 2 of 3. Diamonds are trumps. Show Barbu clubs: your strongest suit and highest club.",
+        hands: [
+          ["KS", "10S", "7S", "2S", "AC", "10C", "3C", "AH", "QH", "8H", "4H", "AD", "KD"].map(cardFromId),
+          ["QS", "JS", "9S", "5S", "8C", "7C", "5C", "KH", "9H", "5H", "2H", "QD", "JD"].map(cardFromId),
+          ["KC", "7D", "QC", "10H", "JC", "6H", "9C", "3H", "6C", "2C", "AS", "8S", "4S"].map(cardFromId),
+          ["6S", "3S", "4C", "JH", "7H", "10D", "9D", "8D", "6D", "5D", "4D", "3D", "2D"].map(cardFromId)
+        ]
+      },
+      {
+        id: "strong-clubs-save-trump",
+        trumpSuit: "S",
+        focusSuit: "C",
+        prompt:
+          "Lead 3 of 3. Spades are trumps. Show Barbu clubs with your highest club; save trump control.",
+        hands: [
+          ["QS", "JS", "7S", "4S", "AD", "KD", "10D", "AH", "KH", "QH", "5H", "KC", "JC"].map(cardFromId),
+          ["10S", "9S", "6S", "3S", "QD", "JD", "5D", "JH", "9H", "6H", "3H", "10C", "9C"].map(cardFromId),
+          ["9D", "AS", "8D", "KS", "6D", "AC", "4D", "QC", "2D", "5C", "10H", "3C", "7H"].map(cardFromId),
+          ["8S", "5S", "2S", "7D", "3D", "8H", "4H", "2H", "8C", "7C", "6C", "4C", "2C"].map(cardFromId)
+        ]
+      }
+    ];
+  }
+
+  function cardFromId(cardId: string): Card {
+    const suit = cardId.at(-1) as Suit;
+    return appCard(cardId.slice(0, -1), suit);
+  }
+
+  function whistOpeningLeadPracticeDealFor(round: number) {
+    const deals = whistOpeningLeadPracticeDeals();
+    return deals[round % deals.length];
+  }
+
+  function buildWhistOpeningLeadPracticeHand(round: number): FullHandState {
+    const deal = whistOpeningLeadPracticeDealFor(round);
+    const playerHand = deal.hands[2];
+
+    return {
+      id: `whist-opening-lead-practice-${deal.id}-${deal.trumpSuit}`,
+      contract: "Whist",
+      hands: deal.hands,
+      currentPlayerIndex: 2,
+      currentPlayer: "You",
+      currentTrick: [],
+      completedTricks: [],
+      playerHand,
+      legalCardIds: playerHand.map((card) => card.id),
+      playerPenalty: 0,
+      totalPenalty: 0,
+      cardsRemaining: 52,
+      trickNumber: 1,
+      status: "in_progress",
+      prompt: deal.prompt
+    };
   }
 
   function whistTrumpSuitFromHandId(id: string): Suit {
@@ -2437,6 +2693,11 @@
   $: fullHandWorstTrick = fullHand ? fullHandWorstTrickLabel(fullHand) : "";
   $: fullHandIsHeartsGame = activeGameTable === "hearts" && fullHand?.contract === "Hearts" && !fullHandRunActive;
   $: fullHandIsWhistGame = activeGameTable === "whist" && fullHand?.contract === "Whist" && !fullHandRunActive;
+  $: whistOpeningLeadPracticeActive = fullHandIsWhistGame && whistFullHandSource === "practice" && activeWhistPracticeFocus === "lead";
+  $: whistOpeningLeadPracticeReview =
+    whistOpeningLeadPracticeActive &&
+    fullHandIsReviewingTrick &&
+    Boolean(fullHandReviewTrick && fullHandCompletedTrickNumber(fullHandReviewTrick) === 1);
   $: whistTrumpSuitLabel = fullHandIsWhistGame && fullHand ? suitNameFromId(whistTrumpSuitFromHandId(fullHand.id)) : "";
   $: whistPartnershipTricks = fullHand ? whistPartnershipTrickCounts(fullHand.completedTricks) : { playerSide: 0, opponentSide: 0 };
   $: whistOddScore = whistOddProgress(whistPartnershipTricks);
@@ -3754,7 +4015,7 @@
   }
 
   function compareCountingCards(left: Card, right: Card) {
-    return suitIndex(left.suit) - suitIndex(right.suit) || rankValue(left.rank) - rankValue(right.rank);
+    return compareCardsForDisplay(left, right);
   }
 
   function removeCountingCard(hands: Record<Seat, Card[]>, seat: Seat, cardId: string) {
@@ -4855,6 +5116,28 @@
     persistSavedWhistRun();
   }
 
+  function continueWhistOpeningLeadPractice() {
+    if (!whistOpeningLeadPracticeReview) {
+      continueFullHandAfterTrick();
+      return;
+    }
+
+    fullHandSelectedCardId = "";
+    fullHandError = "";
+    fullHandReviewTrickCount = 0;
+    lastFullHandTapCardId = "";
+    lastFullHandTapAt = 0;
+
+    if (whistOpeningLeadPracticeRound >= whistOpeningLeadPracticeMaxRounds - 1) {
+      fullHand = null;
+      activeWhistTableTab = "practice";
+      appView = "whistTable";
+      return;
+    }
+
+    void startWhistPracticeHand(activePathStepId, whistOpeningLeadPracticeRound + 1);
+  }
+
   function startNoHeartsHand() {
     void startFullHand("No Hearts");
   }
@@ -4877,15 +5160,27 @@
     persistSavedWhistRun();
   }
 
-  async function startWhistPracticeHand(pathStepId = "") {
+  async function startWhistPracticeHand(pathStepId = "", round = 0) {
     activeGameTable = "whist";
     activeWhistTableTab = "practice";
     whistFullHandSource = "practice";
     activeWhistPracticeFocus = "lead";
+    whistOpeningLeadPracticeRound = round;
     activePathStepId = pathStepId;
     whistMatchScores = { playerSide: 0, opponentSide: 0 };
     whistHandResults = [];
-    await startFullHand("Whist");
+    fullHandRunActive = false;
+    fullHandRunResults = [];
+    dominoHand = null;
+    heartsPassingHand = null;
+    fullHandSelectedCardId = "";
+    fullHandError = "";
+    fullHandReviewTrickCount = 0;
+    lastFullHandTapCardId = "";
+    lastFullHandTapAt = 0;
+    fullHand = buildWhistOpeningLeadPracticeHand(round);
+    usingBrowserFullHand = true;
+    appView = "fullHand";
   }
 
   function startHeartsObjectLesson() {
@@ -4990,6 +5285,11 @@
   function startWhistPathStep(step: WhistLearnPathStep) {
     if (step.action === "object") {
       startWhistObjectLesson();
+      return;
+    }
+
+    if (step.action === "lead") {
+      startWhistOpeningLeadLesson(step.id);
       return;
     }
 
@@ -5742,10 +6042,65 @@
     return (trick.tacticalTags ?? []).includes(tag);
   }
 
+  function whistOpeningLeadPracticeFeedback(trick: CompletedHandTrick) {
+    if (whistFullHandSource !== "practice" || activeWhistPracticeFocus !== "lead" || fullHandCompletedTrickNumber(trick) !== 1 || !fullHand) {
+      return "";
+    }
+
+    const lead = trick.cards[0];
+    if (!lead) {
+      return "";
+    }
+
+    const leadCard = lead.card;
+    const leadLabel = formatCardLabel(leadCard);
+    const leadSuit = suitNameFromId(leadCard.suit).toLowerCase();
+    const trumpSuit = whistTrumpSuitFromHandId(fullHand.id);
+    const deal = whistOpeningLeadPracticeDealFor(whistOpeningLeadPracticeRound);
+    const focusSuit = deal.focusSuit;
+    const focusSuitLabel = suitNameFromId(focusSuit).toLowerCase();
+    const highestFocusCard = [...deal.hands[2].filter((card) => card.suit === focusSuit)].sort(
+      (left, right) => rankValue(right.rank) - rankValue(left.rank)
+    )[0];
+    const highestFocusLabel = highestFocusCard ? formatCardLabel(highestFocusCard) : "";
+    const winnerIsPlayerSide = trick.winnerIndex === 0 || trick.winnerIndex === 2;
+
+    if (lead.seat !== "You") {
+      return `${scoreSeatLabel(lead.seat)} opened ${leadLabel}. Follow suit, support Barbu, and count trump.`;
+    }
+
+    if (leadCard.suit === trumpSuit) {
+      return `${leadLabel} opened trump. Here it spends control before inviting ${focusSuitLabel}.`;
+    }
+
+    if (leadCard.suit === focusSuit) {
+      if (highestFocusCard && leadCard.id !== highestFocusCard.id) {
+        return `${leadLabel} shows ${focusSuitLabel}, but ${highestFocusLabel} is your highest card in that suit.`;
+      }
+
+      return `${leadLabel} tells Barbu this is your strongest suit and your highest card in ${focusSuitLabel}.`;
+    }
+
+    if (rankValue(leadCard.rank) >= rankValue("J")) {
+      return winnerIsPlayerSide
+        ? `${leadLabel} opened strong ${leadSuit}, but the target invite was ${focusSuitLabel}.`
+        : `${leadLabel} opened strong ${leadSuit}, hiding the ${focusSuitLabel} plan.`;
+    }
+
+    return winnerIsPlayerSide
+      ? `${leadLabel} opened ${leadSuit}. Cleaner message: invite ${focusSuitLabel}.`
+      : `${leadLabel} opened ${leadSuit}. Legal, but it does not invite ${focusSuitLabel}.`;
+  }
+
   function fullHandTrickFeedback(trick: CompletedHandTrick) {
     const penaltyText = `${trick.penalty} ${trick.penalty === 1 ? fullHandPenaltyName : fullHandPenaltyPlural}`;
 
     if (fullHandIsWhistGame) {
+      const openingLeadFeedback = whistOpeningLeadPracticeFeedback(trick);
+      if (openingLeadFeedback) {
+        return openingLeadFeedback;
+      }
+
       const winnerIsPlayerSide = trick.winnerIndex === 0 || trick.winnerIndex === 2;
       const partnershipLabel = winnerIsPlayerSide ? "You + Barbu" : "Left + Right";
 
@@ -6557,6 +6912,10 @@
 
   function startWhistOpeningLeadDrill(pathStepId = "") {
     void startWhistPracticeHand(pathStepId);
+  }
+
+  function startWhistOpeningLeadLesson(pathStepId = "") {
+    startWhistPracticeSession("lead", whistOpeningLeadLessonPool, "Whist lesson: opening leads", pathStepId);
   }
 
   function startWhistFollowSuitDrill(pathStepId = "") {
@@ -9031,7 +9390,7 @@
         tableCards={fullHandVisibleTableCards}
         panelAriaLabel={`${fullHand.contract} hand decision`}
         onBack={openActiveGameTable}
-        onSurfaceClick={fullHandIsReviewingTrick ? continueFullHandAfterTrick : undefined}
+        onSurfaceClick={fullHandIsReviewingTrick ? (whistOpeningLeadPracticeReview ? continueWhistOpeningLeadPractice : continueFullHandAfterTrick) : undefined}
       >
         {#snippet summary()}
           {#if !fullHandRunIsComplete && !(fullHandIsWhistGame && fullHand.status === "complete")}
@@ -9052,13 +9411,13 @@
                   <strong>{fullHandIsWhistGame ? whistPartnershipTricks.opponentSide : `${fullHand.totalPenalty} / ${fullHandPenaltyTotal}`}</strong>
                 </div>
                 <div>
-                  <span>Tricks</span>
-                  <strong>{fullHand.completedTricks.length} / 13</strong>
+                  <span>{whistOpeningLeadPracticeActive ? "Lead" : "Tricks"}</span>
+                  <strong>{whistOpeningLeadPracticeActive ? `${whistOpeningLeadPracticeRound + 1} / ${whistOpeningLeadPracticeMaxRounds}` : `${fullHand.completedTricks.length} / 13`}</strong>
                 </div>
                 {#if fullHandIsWhistGame}
                   <div>
-                    <span>{whistOddProgressLabel}</span>
-                    <strong>{whistOddProgressValue}</strong>
+                    <span>{whistOpeningLeadPracticeActive ? "Focus" : whistOddProgressLabel}</span>
+                    <strong>{whistOpeningLeadPracticeActive ? "Opening" : whistOddProgressValue}</strong>
                   </div>
                 {/if}
                 {#if fullHand.contract === "No Last Two"}
@@ -9266,7 +9625,17 @@
               {/if}
             {:else if fullHandIsReviewingTrick}
               <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
-              <button class="primary-action" onclick={continueFullHandAfterTrick} type="button">Next trick</button>
+              <button
+                class="primary-action"
+                onclick={whistOpeningLeadPracticeReview ? continueWhistOpeningLeadPractice : continueFullHandAfterTrick}
+                type="button"
+              >
+                {whistOpeningLeadPracticeReview
+                  ? whistOpeningLeadPracticeRound >= whistOpeningLeadPracticeMaxRounds - 1
+                    ? "Finish session"
+                    : "Next lead"
+                  : "Next trick"}
+              </button>
             {:else}
               <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
               <button

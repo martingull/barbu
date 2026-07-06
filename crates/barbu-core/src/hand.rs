@@ -1477,7 +1477,7 @@ fn card_sort_key(card: &Card) -> (u8, &'static str) {
 }
 
 fn sort_hand(hand: &mut [Card]) {
-    hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 }
 
 fn join_cards(cards: &[Card]) -> String {

@@ -312,6 +312,13 @@ export const whistLearnPathSteps: WhistLearnPathStep[] = [
     action: "third"
   }),
   createLearnPathStep({
+    id: "whist-opening-lead",
+    step: "Lead",
+    title: "Opening leads",
+    summary: "Show Barbu your strongest plain suit by leading your highest card in that suit.",
+    action: "lead"
+  }),
+  createLearnPathStep({
     id: "whist-suit-invite",
     step: "Table talk",
     title: "Invite a suit",

@@ -28,7 +28,7 @@ const rankOrder: Record<Rank, number> = {
   K: 13,
   A: 14
 };
-const suitOrder: Record<Suit, number> = { C: 0, D: 1, H: 2, S: 3 };
+const suitOrder: Record<Suit, number> = { C: 0, D: 1, S: 2, H: 3 };
 const playerNames: Array<Seat> = ["Tutor", "Right", "You", "Left"];
 const heartsMoonLeadThreshold = 8;
 

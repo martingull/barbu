@@ -3809,6 +3809,11 @@ h2 {
     gap: 6px;
   }
 
+  .table-play-surface.compact-play .drill-hand:has(> :nth-child(5)) {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 5px;
+  }
+
   .fixed-play-screen .table-play-surface.compact-play .hand {
     align-self: end;
     width: 100%;

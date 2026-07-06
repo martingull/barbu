@@ -373,7 +373,7 @@ pub fn generate_no_hearts_follow_suit(seed: u64) -> PracticeScenario {
         Card::new(Rank::Eight, Suit::Hearts),
         Card::new(off_rank, off_suit),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("no-hearts-follow-suit-{seed}"),
@@ -408,7 +408,7 @@ pub fn generate_hearts_pass_practice(seed: u64) -> HeartsPassScenario {
             Card::new(Rank::Four, Suit::Diamonds),
             Card::new(Rank::Nine, Suit::Spades),
         ];
-        player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+        player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
         return HeartsPassScenario {
             id: format!("hearts-pass-long-clubs-{seed}"),
@@ -451,7 +451,7 @@ pub fn generate_hearts_pass_practice(seed: u64) -> HeartsPassScenario {
         Card::new(Rank::Five, side_suit),
         Card::new(Rank::Seven, side_suit),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
     let recommended_pass = recommend_hearts_pass_cards(&player_hand);
 
     HeartsPassScenario {
@@ -482,7 +482,7 @@ pub fn generate_hearts_first_trick_follow_clubs(seed: u64) -> PracticeScenario {
         Card::new(Rank::Queen, Suit::Spades),
         Card::new(Rank::Five, Suit::Hearts),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     return PracticeScenario {
             id: format!("hearts-first-trick-follow-clubs-{seed}"),
@@ -508,7 +508,7 @@ pub fn generate_hearts_first_trick_duck_clubs(seed: u64) -> PracticeScenario {
         Card::new(Rank::Ace, Suit::Clubs),
         Card::new(Rank::Six, Suit::Diamonds),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("hearts-first-trick-duck-clubs-{seed}"),
@@ -534,7 +534,7 @@ pub fn generate_hearts_first_trick_void_safe_discard(seed: u64) -> PracticeScena
         Card::new(Rank::Five, Suit::Hearts),
         Card::new(Rank::Queen, Suit::Spades),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("hearts-first-trick-void-safe-discard-{seed}"),
@@ -568,7 +568,7 @@ pub fn generate_hearts_avoid_heart_duck(seed: u64) -> PracticeScenario {
         Card::new(Rank::Ace, Suit::Clubs),
         Card::new(Rank::Seven, Suit::Diamonds),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("hearts-avoid-heart-duck-{seed}"),
@@ -594,7 +594,7 @@ pub fn generate_hearts_void_discard(seed: u64) -> PracticeScenario {
         Card::new(Rank::Queen, Suit::Hearts),
         Card::new(Rank::Eight, Suit::Spades),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("hearts-void-discard-{seed}"),
@@ -619,7 +619,7 @@ pub fn generate_hearts_follow_low_heart(seed: u64) -> PracticeScenario {
         Card::new(Rank::Ace, Suit::Hearts),
         Card::new(Rank::Six, Suit::Clubs),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("hearts-follow-low-heart-{seed}"),
@@ -653,7 +653,7 @@ pub fn generate_hearts_queen_duck(seed: u64) -> PracticeScenario {
         Card::new(Rank::Ace, Suit::Spades),
         Card::new(Rank::Four, Suit::Hearts),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("hearts-queen-duck-{seed}"),
@@ -679,7 +679,7 @@ pub fn generate_hearts_queen_safe_dump(seed: u64) -> PracticeScenario {
         Card::new(Rank::Six, Suit::Hearts),
         Card::new(Rank::Nine, Suit::Diamonds),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("hearts-queen-safe-dump-{seed}"),
@@ -705,7 +705,7 @@ pub fn generate_hearts_queen_dangerous_dump(seed: u64) -> PracticeScenario {
         Card::new(Rank::Queen, Suit::Spades),
         Card::new(Rank::Six, Suit::Hearts),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("hearts-queen-dangerous-dump-{seed}"),
@@ -749,7 +749,7 @@ pub fn generate_no_hearts_ace_duck(seed: u64) -> PracticeScenario {
         Card::new(Rank::Queen, Suit::Spades),
         Card::new(Rank::Seven, Suit::Clubs),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("no-hearts-ace-duck-{seed}"),
@@ -791,7 +791,7 @@ pub fn generate_no_hearts_void_dump_danger(seed: u64) -> PracticeScenario {
         Card::new(Rank::Two, discard_suit),
         Card::new(Rank::King, discard_suit),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("no-hearts-void-dump-danger-{seed}"),
@@ -842,7 +842,7 @@ pub fn generate_no_hearts_void_discard(seed: u64) -> PracticeScenario {
         heart_card,
         Card::new(Rank::Eight, Suit::Hearts),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("no-hearts-void-discard-{seed}"),
@@ -885,7 +885,7 @@ pub fn generate_no_queens_capture(seed: u64) -> PracticeScenario {
         Card::new(Rank::Nine, Suit::Hearts),
         Card::new(off_rank, off_suit),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("no-queens-capture-{seed}"),
@@ -936,7 +936,7 @@ pub fn generate_no_queens_follow_under_ace(seed: u64) -> PracticeScenario {
         Card::new(Rank::Nine, Suit::Hearts),
         Card::new(Rank::King, off_suit),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("no-queens-follow-under-ace-{seed}"),
@@ -978,7 +978,7 @@ pub fn generate_no_queens_void_dump_queen(seed: u64) -> PracticeScenario {
         Card::new(Rank::Two, discard_suit),
         Card::new(Rank::King, discard_suit),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("no-queens-void-dump-queen-{seed}"),
@@ -1022,7 +1022,7 @@ pub fn generate_no_queens_void_discard(seed: u64) -> PracticeScenario {
         Card::new(Rank::Queen, Suit::Hearts),
         Card::new(Rank::Eight, Suit::Hearts),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("no-queens-void-discard-{seed}"),
@@ -1058,7 +1058,7 @@ pub fn generate_king_of_hearts_capture(seed: u64) -> PracticeScenario {
         Card::new(Rank::Queen, Suit::Spades),
         Card::new(off_rank, off_suit),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("king-of-hearts-capture-{seed}"),
@@ -1102,7 +1102,7 @@ pub fn generate_king_of_hearts_follow_under_ace(seed: u64) -> PracticeScenario {
         Card::new(Rank::Queen, Suit::Spades),
         Card::new(Rank::Seven, Suit::Clubs),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("king-of-hearts-follow-under-ace-{seed}"),
@@ -1144,7 +1144,7 @@ pub fn generate_king_of_hearts_void_dump_king(seed: u64) -> PracticeScenario {
         Card::new(Rank::Two, discard_suit),
         Card::new(Rank::King, discard_suit),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("king-of-hearts-void-dump-king-{seed}"),
@@ -1190,7 +1190,7 @@ pub fn generate_king_of_hearts_void_discard(seed: u64) -> PracticeScenario {
         Card::new(Rank::Queen, Suit::Spades),
         Card::new(Rank::Ace, Suit::Clubs),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("king-of-hearts-void-discard-{seed}"),
@@ -1233,7 +1233,7 @@ pub fn generate_no_last_two_duck(seed: u64) -> PracticeScenario {
             off_suit,
         ),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("no-last-two-duck-{seed}"),
@@ -1273,7 +1273,7 @@ pub fn generate_no_last_two_forced_win(seed: u64) -> PracticeScenario {
         Card::new(Rank::King, led_suit),
         Card::new(Rank::Three, off_suit),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("no-last-two-forced-win-{seed}"),
@@ -1317,7 +1317,7 @@ pub fn generate_no_last_two_setup(seed: u64) -> PracticeScenario {
             off_suit,
         ),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("no-last-two-setup-{seed}"),
@@ -1364,7 +1364,7 @@ pub fn generate_no_last_two_early_setup(seed: u64) -> PracticeScenario {
         Card::new(Rank::King, led_suit),
         Card::new(Rank::Four, off_suit),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("no-last-two-early-setup-{seed}"),
@@ -1408,7 +1408,7 @@ pub fn generate_no_tricks_duck(seed: u64) -> PracticeScenario {
             off_suit,
         ),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("no-tricks-duck-{seed}"),
@@ -1441,7 +1441,7 @@ pub fn generate_no_tricks_forced_win(seed: u64) -> PracticeScenario {
         Card::new(Rank::King, led_suit),
         Card::new(Rank::Three, off_suit),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("no-tricks-forced-win-{seed}"),
@@ -1491,7 +1491,7 @@ pub fn generate_no_tricks_last_seat_duck(seed: u64) -> PracticeScenario {
         Card::new(Rank::Ace, led_suit),
         Card::new(Rank::Nine, off_suit),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("no-tricks-last-seat-duck-{seed}"),
@@ -1537,7 +1537,7 @@ pub fn generate_no_tricks_void_discard(seed: u64) -> PracticeScenario {
         Card::new(Rank::Four, second_discard_suit),
         Card::new(Rank::Queen, second_discard_suit),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("no-tricks-void-discard-{seed}"),
@@ -1590,7 +1590,7 @@ pub fn generate_hearts_trumps_cut(seed: u64) -> PracticeScenario {
         low_discard,
         high_discard,
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("hearts-trumps-cut-{seed}"),
@@ -1629,7 +1629,7 @@ pub fn generate_hearts_trumps_follow_to_win(seed: u64) -> PracticeScenario {
         Card::new(Rank::Seven, Suit::Hearts),
         Card::new(Rank::King, off_suit),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("hearts-trumps-follow-win-{seed}"),
@@ -1665,7 +1665,7 @@ pub fn generate_hearts_trumps_overtrump(seed: u64) -> PracticeScenario {
         Card::new(Rank::Four, discard_suit),
         Card::new(Rank::King, discard_suit),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("hearts-trumps-overtrump-{seed}"),
@@ -1713,7 +1713,7 @@ pub fn generate_hearts_trumps_follow_before_trump(seed: u64) -> PracticeScenario
         Card::new(Rank::Six, Suit::Hearts),
         Card::new(Rank::King, off_suit),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("hearts-trumps-follow-before-trump-{seed}"),
@@ -1751,7 +1751,7 @@ pub fn generate_domino_open_or_extend(seed: u64) -> PracticeScenario {
         Card::new(Rank::Ten, Suit::Clubs),
         Card::new(Rank::Queen, Suit::Diamonds),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("domino-placement-{seed}"),
@@ -1792,7 +1792,7 @@ pub fn generate_domino_two_lane_choice(seed: u64) -> PracticeScenario {
         Card::new(Rank::Eight, Suit::Hearts),
         Card::new(Rank::Queen, Suit::Diamonds),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("domino-two-lane-choice-{seed}"),
@@ -1825,7 +1825,7 @@ pub fn generate_domino_open_new_suit(seed: u64) -> PracticeScenario {
         Card::new(Rank::Ten, gap_suit),
         Card::new(Rank::Queen, gap_suit),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("domino-open-new-suit-{seed}"),
@@ -1862,7 +1862,7 @@ pub fn generate_domino_avoid_gap(seed: u64) -> PracticeScenario {
         Card::new(Rank::Six, Suit::Spades),
         Card::new(Rank::Queen, gap_suit),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("domino-avoid-gap-{seed}"),
@@ -2002,7 +2002,7 @@ pub fn generate_hearts_break_hearts_blocked(seed: u64) -> PracticeScenario {
         Card::new(Rank::Queen, Suit::Diamonds),
         Card::new(Rank::Ace, Suit::Spades),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("hearts-break-hearts-blocked-{seed}"),
@@ -2025,7 +2025,7 @@ pub fn generate_hearts_break_hearts_only_hearts(seed: u64) -> PracticeScenario {
         Card::new(Rank::Eight, Suit::Hearts),
         Card::new(Rank::King, Suit::Hearts),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("hearts-break-hearts-only-hearts-{seed}"),
@@ -2049,7 +2049,7 @@ pub fn generate_hearts_break_hearts_already_broken(seed: u64) -> PracticeScenari
         Card::new(Rank::Six, Suit::Diamonds),
         Card::new(Rank::Ten, Suit::Spades),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("hearts-break-hearts-already-broken-{seed}"),
@@ -2080,7 +2080,7 @@ pub fn generate_hearts_stop_moon_loaded_club(seed: u64) -> PracticeScenario {
         Card::new(Rank::Two, Suit::Clubs),
         Card::new(Rank::Five, Suit::Diamonds),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("hearts-stop-moon-loaded-club-{seed}"),
@@ -2106,7 +2106,7 @@ pub fn generate_hearts_stop_moon_queen_spades(seed: u64) -> PracticeScenario {
         Card::new(Rank::Three, Suit::Spades),
         Card::new(Rank::Four, Suit::Diamonds),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("hearts-stop-moon-queen-spades-{seed}"),
@@ -2132,7 +2132,7 @@ pub fn generate_hearts_stop_moon_small_heart(seed: u64) -> PracticeScenario {
         Card::new(Rank::Two, Suit::Hearts),
         Card::new(Rank::Eight, Suit::Diamonds),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("hearts-stop-moon-small-heart-{seed}"),
@@ -2167,7 +2167,7 @@ pub fn generate_hearts_score_queen_spades(seed: u64) -> PracticeScenario {
         Card::new(Rank::Nine, Suit::Diamonds),
         Card::new(Rank::King, Suit::Clubs),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("hearts-score-hand-queen-spades-{seed}"),
@@ -2192,7 +2192,7 @@ pub fn generate_hearts_score_heart_point(seed: u64) -> PracticeScenario {
         Card::new(Rank::Queen, Suit::Spades),
         Card::new(Rank::King, Suit::Clubs),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("hearts-score-hand-heart-point-{seed}"),
@@ -2218,7 +2218,7 @@ pub fn generate_hearts_score_clean_card(seed: u64) -> PracticeScenario {
         Card::new(Rank::Nine, Suit::Hearts),
         Card::new(Rank::Queen, Suit::Spades),
     ];
-    player_hand.sort_by_key(|card| (card.suit.short_name(), card.rank as u8));
+    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
 
     PracticeScenario {
         id: format!("hearts-score-hand-clean-card-{seed}"),

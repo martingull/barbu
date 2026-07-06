@@ -16,7 +16,7 @@ const suitNames: Record<Suit, string> = {
   H: "hearts",
   S: "spades"
 };
-const suitOrder: Record<Suit, number> = { C: 0, D: 1, H: 2, S: 3 };
+const suitOrder: Record<Suit, number> = { C: 0, D: 1, S: 2, H: 3 };
 const rankOrder: Record<Rank, number> = {
   "2": 2,
   "3": 3,

@@ -19,6 +19,15 @@ impl Suit {
             Suit::Spades => "S",
         }
     }
+
+    pub fn sort_order(self) -> u8 {
+        match self {
+            Suit::Clubs => 0,
+            Suit::Diamonds => 1,
+            Suit::Spades => 2,
+            Suit::Hearts => 3,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]

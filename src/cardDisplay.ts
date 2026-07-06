@@ -1,4 +1,5 @@
 import type { Card, Suit } from "./lessonTypes";
+import { sortCardsForDisplay } from "./cardOrdering";
 
 const suitSymbols: Record<Suit, string> = {
   C: "♣",
@@ -18,7 +19,7 @@ export function formatCardLabel(card: Pick<Card, "rank" | "suit">) {
 }
 
 export function formatCardList(cards: Pick<Card, "rank" | "suit">[]) {
-  return cards.map(formatCardLabel).join(", ");
+  return sortCardsForDisplay(cards).map(formatCardLabel).join(", ");
 }
 
 export function formatCardText(text: string) {

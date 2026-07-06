@@ -1,5 +1,6 @@
 <script lang="ts">
   import CardFace from "./CardFace.svelte";
+  import { sortCardsForDisplay } from "./cardOrdering";
   import type { Card } from "./lessonTypes";
 
   type CardClassFlags = Record<string, boolean | undefined>;
@@ -37,7 +38,7 @@
 </script>
 
 <div class={className} aria-label={ariaLabel}>
-  {#each cards as card}
+  {#each sortCardsForDisplay(cards) as card}
     <button
       aria-label={`${card.rank} ${card.suit}`}
       aria-pressed={isPressed(card)}
