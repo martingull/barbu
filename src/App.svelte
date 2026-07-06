@@ -29,8 +29,12 @@
   import { compareCardsForDisplay } from "./cardOrdering";
   import { formatCardLabel, formatCardList } from "./cardDisplay";
   import ExerciseFeedback from "./ExerciseFeedback.svelte";
+  import { gameUiRegistry } from "./gameUiRegistry";
+  import GameTableShell from "./GameTableShell.svelte";
   import LearnPanel from "./LearnPanel.svelte";
+  import PlayTabPanel from "./PlayTabPanel.svelte";
   import PracticePanel from "./PracticePanel.svelte";
+  import ProTabPanel from "./ProTabPanel.svelte";
   import TablePlaySurface from "./TablePlaySurface.svelte";
   import { fullHandContractCommands, fullHandContracts } from "./contractRegistry";
   import { contractRunScore, contractScoreMeta, formatContractValue } from "./contractScoring";
@@ -38,15 +42,7 @@
   import { referenceCatalog } from "./referenceCatalog";
   import { whistOddProgress } from "./whistScoring";
   import {
-    barbuLearnPathSteps as barbuPathSteps,
-    barbuPracticeGroups,
     createCatalogEntries,
-    gameTableDefinitions,
-    heartsLearnPathSteps as heartsPathSteps,
-    heartsPracticeGroups,
-    tableTabsFor,
-    whistLearnPathSteps as whistPathSteps,
-    whistPracticeGroups,
     type ActiveGameTable,
     type BarbuLearnPathStep,
     type BarbuPracticeAction,
@@ -347,6 +343,9 @@
   };
 
   const catalogEntries = createCatalogEntries();
+  const barbuUi = gameUiRegistry.barbu;
+  const heartsUi = gameUiRegistry.hearts;
+  const whistUi = gameUiRegistry.whist;
 
   const progressStorageKey = "barbu.courseProgress.v1";
   const practiceSeedStorageKey = "barbu.practiceSeed.v1";
@@ -2247,9 +2246,9 @@
   let activeCourseId = courseCatalog[0].id;
   let activeReferenceId = referenceCatalog[0].id;
   let activeCourseStage: CourseStage = "concept";
-  let activeBarbuTableTab: TableTabId = gameTableDefinitions.barbu.defaultTab;
-  let activeHeartsTableTab: TableTabId = gameTableDefinitions.hearts.defaultTab;
-  let activeWhistTableTab: TableTabId = gameTableDefinitions.whist.defaultTab;
+  let activeBarbuTableTab: TableTabId = barbuUi.table.defaultTab;
+  let activeHeartsTableTab: TableTabId = heartsUi.table.defaultTab;
+  let activeWhistTableTab: TableTabId = whistUi.table.defaultTab;
   let activeWhistPracticeFocus: WhistPracticeAction = "follow";
   let whistFullHandSource: "play" | "practice" = "play";
   let whistOpeningLeadPracticeRound = 0;
@@ -2533,24 +2532,24 @@
   $: explanation = generatedPracticeError || buildExplanation(selectedCard, playedCard);
   $: resultText = playedCard ? currentTrick.afterResult : currentTrick.beforeResult;
   $: isLastTrick = trickIndex === activeTricks.length - 1;
-  $: playablePathSteps = barbuPathSteps.filter((step) => step.action !== "planned");
+  $: playablePathSteps = barbuUi.learnSteps.filter((step) => step.action !== "planned");
   $: completedCount = playablePathSteps.filter((step) => completedPathSteps[step.id]).length;
   $: nextPathStep = playablePathSteps.find((step) => !completedPathSteps[step.id]);
   $: isCourseComplete = completedCount === playablePathSteps.length;
-  $: heartsCompletedCount = heartsPathSteps.filter((step) => completedPathSteps[step.id]).length;
-  $: nextHeartsPathStep = heartsPathSteps.find((step) => !completedPathSteps[step.id]);
-  $: isHeartsCourseComplete = heartsCompletedCount === heartsPathSteps.length;
-  $: whistCompletedCount = whistPathSteps.filter((step) => completedPathSteps[step.id]).length;
-  $: nextWhistPathStep = whistPathSteps.find((step) => !completedPathSteps[step.id]);
-  $: isWhistCourseComplete = whistCompletedCount === whistPathSteps.length;
+  $: heartsCompletedCount = heartsUi.learnSteps.filter((step) => completedPathSteps[step.id]).length;
+  $: nextHeartsPathStep = heartsUi.learnSteps.find((step) => !completedPathSteps[step.id]);
+  $: isHeartsCourseComplete = heartsCompletedCount === heartsUi.learnSteps.length;
+  $: whistCompletedCount = whistUi.learnSteps.filter((step) => completedPathSteps[step.id]).length;
+  $: nextWhistPathStep = whistUi.learnSteps.find((step) => !completedPathSteps[step.id]);
+  $: isWhistCourseComplete = whistCompletedCount === whistUi.learnSteps.length;
   $: barbuLearnPanelActions = [
     {
       id: "reference",
       eyebrow: "Rules",
       title: "Reference",
-      summary: gameTableDefinitions.barbu.learn.referenceSummary,
+      summary: barbuUi.table.learn.referenceSummary,
       primary: true,
-      onClick: () => openReference(gameTableDefinitions.barbu.referenceId)
+      onClick: () => openReference(barbuUi.table.referenceId)
     },
     {
       id: "contracts",
@@ -2565,9 +2564,9 @@
       id: "reference",
       eyebrow: "Rules",
       title: "Reference",
-      summary: gameTableDefinitions.hearts.learn.referenceSummary,
+      summary: heartsUi.table.learn.referenceSummary,
       primary: true,
-      onClick: () => openReference(gameTableDefinitions.hearts.referenceId)
+      onClick: () => openReference(heartsUi.table.referenceId)
     }
   ];
   $: whistLearnPanelActions = [
@@ -2575,18 +2574,15 @@
       id: "reference",
       eyebrow: "Rules",
       title: "Reference",
-      summary: gameTableDefinitions.whist.learn.referenceSummary,
+      summary: whistUi.table.learn.referenceSummary,
       primary: true,
-      onClick: () => openReference(gameTableDefinitions.whist.referenceId)
+      onClick: () => openReference(whistUi.table.referenceId)
     }
   ];
   $: lessonOutcome = selectedCard && (playedCard || !isSelectedLegal) ? buildLessonOutcome(selectedCard, playedCard) : "";
   $: activeCourse = courseCatalog.find((course) => course.id === activeCourseId) ?? courseCatalog[0];
   $: activeReference = referenceCatalog.find((reference) => reference.id === activeReferenceId) ?? referenceCatalog[0];
   $: activeReferenceIsBarbu = activeReference.id === "barbu";
-  $: activeBarbuTableTabLabel = gameTableDefinitions.barbu.tabs[activeBarbuTableTab].label;
-  $: activeHeartsTableTabLabel = gameTableDefinitions.hearts.tabs[activeHeartsTableTab].label;
-  $: activeWhistTableTabLabel = gameTableDefinitions.whist.tabs[activeWhistTableTab].label;
   $: currentDrill = activeDrillSteps[drillIndex] ?? activeDrillSteps[0] ?? drillSteps[0];
   $: currentDrillTrick = currentDrill.trick;
   $: drillLegalCardIds = new Set(currentDrillTrick.legalCardIds);
@@ -2734,7 +2730,7 @@
     ? [...heartsHandResults, currentHeartsHandResult]
     : heartsHandResults;
   $: heartsVisibleHandCount = heartsVisibleHandResults.length;
-  $: heartsScorecardMeta = gameTableDefinitions.hearts.scorecard;
+  $: heartsScorecardMeta = heartsUi.table.scorecard;
   $: heartsVisibleScores = fullHandIsHeartsGame
     ? addSeatPenalties(heartsSessionScores, heartsCurrentScoredSeatPenalties)
     : heartsSessionScores;
@@ -4721,7 +4717,7 @@
   }
 
   function openBarbuContracts() {
-    activeBarbuTableTab = gameTableDefinitions.barbu.defaultTab;
+    activeBarbuTableTab = barbuUi.table.defaultTab;
     appView = "barbuContracts";
   }
 
@@ -4729,7 +4725,7 @@
     appView = "practiceChooser";
   }
 
-  function openReference(referenceId = gameTableDefinitions.barbu.referenceId) {
+  function openReference(referenceId = barbuUi.table.referenceId) {
     const reference = referenceCatalog.find((item) => item.id === referenceId);
 
     if (!reference) {
@@ -5237,9 +5233,9 @@
   }
 
   function findNextHeartsPathStep(fromStepId = "") {
-    const currentStepIndex = heartsPathSteps.findIndex((step) => step.id === fromStepId);
+    const currentStepIndex = heartsUi.learnSteps.findIndex((step) => step.id === fromStepId);
     if (currentStepIndex >= 0 && completedPathSteps[fromStepId]) {
-      const nextSequentialStep = heartsPathSteps
+      const nextSequentialStep = heartsUi.learnSteps
         .slice(currentStepIndex + 1)
         .find((step) => !completedPathSteps[step.id]);
 
@@ -5248,7 +5244,7 @@
       }
     }
 
-    return heartsPathSteps.find((step) => !completedPathSteps[step.id]);
+    return heartsUi.learnSteps.find((step) => !completedPathSteps[step.id]);
   }
 
   function continueHeartsPath(fromStepId = activePathStepId) {
@@ -5298,9 +5294,9 @@
   }
 
   function findNextWhistPathStep(fromStepId = "") {
-    const currentStepIndex = whistPathSteps.findIndex((step) => step.id === fromStepId);
+    const currentStepIndex = whistUi.learnSteps.findIndex((step) => step.id === fromStepId);
     if (currentStepIndex >= 0 && completedPathSteps[fromStepId]) {
-      const nextSequentialStep = whistPathSteps
+      const nextSequentialStep = whistUi.learnSteps
         .slice(currentStepIndex + 1)
         .find((step) => !completedPathSteps[step.id]);
 
@@ -5309,7 +5305,7 @@
       }
     }
 
-    return whistPathSteps.find((step) => !completedPathSteps[step.id]);
+    return whistUi.learnSteps.find((step) => !completedPathSteps[step.id]);
   }
 
   function continueWhistPath(fromStepId = activePathStepId) {
@@ -6675,7 +6671,7 @@
 
   function startLesson(lessonId: string, pathStepId = "") {
     selectLesson(lessonId);
-    activePathStepId = pathStepId || (barbuPathSteps.find((step) => step.lessonId === lessonId)?.id ?? "");
+    activePathStepId = pathStepId || (barbuUi.learnSteps.find((step) => step.lessonId === lessonId)?.id ?? "");
     appView = "lesson";
   }
 
@@ -7229,7 +7225,7 @@
 
   function markPracticeTableComplete() {
     saveCourseProgress({ ...completedPathSteps, "generated-drill": true });
-    activeBarbuTableTab = gameTableDefinitions.barbu.defaultTab;
+    activeBarbuTableTab = barbuUi.table.defaultTab;
 
     if (completedPathSteps.review) {
       openBarbuTable();
@@ -7843,45 +7839,18 @@
       {/if}
     </section>
   {:else if appView === "barbuTable"}
-    <header class="topbar table-topbar" aria-label="Barbu table">
-      <button class="back-button" onclick={openCatalog} type="button">Games</button>
-      <div class="table-title">
-        <p class="eyebrow">{gameTableDefinitions.barbu.family} family</p>
-        <h1>{gameTableDefinitions.barbu.title}</h1>
-      </div>
-      <div class="contract-status">
-        <span>Current mode</span>
-        <strong>{activeBarbuTableTabLabel}</strong>
-      </div>
-    </header>
-
-    <section class="table-room" aria-label="Barbu table modes">
-      <div class="barbu-table-rail">
-        <div class="barbu-mode-box">
-          <p class="eyebrow">Table mode</p>
-          <div class="barbu-table-tabs" aria-label="Barbu table sections" role="tablist">
-            {#each tableTabsFor(gameTableDefinitions.barbu) as tab}
-              <button
-                aria-controls={tab.panelId}
-                aria-selected={activeBarbuTableTab === tab.id}
-                class:active={activeBarbuTableTab === tab.id}
-                onclick={() => {
-                  activeBarbuTableTab = tab.id;
-                }}
-                role="tab"
-                type="button"
-              >
-                {tab.label}
-              </button>
-            {/each}
-          </div>
-        </div>
-      </div>
-
+    <GameTableShell
+      table={barbuUi.table}
+      activeTab={activeBarbuTableTab}
+      onBack={openCatalog}
+      onTabSelect={(tab) => {
+        activeBarbuTableTab = tab;
+      }}
+    >
       {#if activeBarbuTableTab === "learn"}
         <LearnPanel
-          table={gameTableDefinitions.barbu}
-          steps={barbuPathSteps}
+          table={barbuUi.table}
+          steps={barbuUi.learnSteps}
           completedSteps={completedPathSteps}
           completedCount={completedCount}
           nextStep={nextPathStep}
@@ -7890,103 +7859,49 @@
         />
       {:else if activeBarbuTableTab === "practice"}
         <PracticePanel
-          id={gameTableDefinitions.barbu.tabs.practice.panelId}
-          intro={gameTableDefinitions.barbu.tabs.practice.intro}
-          groups={barbuPracticeGroups}
+          id={barbuUi.table.tabs.practice.panelId}
+          intro={barbuUi.table.tabs.practice.intro}
+          groups={barbuUi.practiceGroups}
           actions={barbuPracticeActions}
           lessonEntries={fixedDrillLessons}
           onLessonSelect={startFixedContractDrill}
         />
       {:else if activeBarbuTableTab === "play"}
-        <div
-          aria-label="Play"
-          class="barbu-tab-panel play-panel"
-          id={gameTableDefinitions.barbu.tabs.play.panelId}
-          role="tabpanel"
-        >
-          <div class="barbu-mode-copy">
-            <p class="eyebrow">{gameTableDefinitions.barbu.tabs.play.intro.eyebrow}</p>
-            <h2>{gameTableDefinitions.barbu.tabs.play.intro.title}</h2>
-            <p>{gameTableDefinitions.barbu.tabs.play.intro.summary}</p>
-          </div>
-          <div class="table-action-groups" aria-label="Barbu table actions">
-            <section class="table-action-group" aria-label="Play actions">
-              <p class="eyebrow">Play</p>
-              {#if savedPlayBarbuRun}
-                <button class="drill-action" onclick={continueSavedPlayBarbuRun} type="button">Continue Play Barbu</button>
-                <small class="saved-run-note">{savedPlayBarbuRunLabel}</small>
-              {/if}
-              <button class:resume-secondary={Boolean(savedPlayBarbuRun)} class="drill-action" onclick={startBarbuRun} type="button">
-                Play Barbu
-              </button>
-            </section>
-          </div>
-        </div>
+        <PlayTabPanel
+          table={barbuUi.table}
+          actionAriaLabel="Barbu table actions"
+          groupAriaLabel="Play actions"
+          groupEyebrow="Play"
+          primaryLabel="Play Barbu"
+          onPrimary={startBarbuRun}
+          resumeLabel={savedPlayBarbuRun ? "Continue Play Barbu" : undefined}
+          resumeNote={savedPlayBarbuRun ? savedPlayBarbuRunLabel : undefined}
+          onResume={savedPlayBarbuRun ? continueSavedPlayBarbuRun : undefined}
+        />
       {:else}
-        <div
-          aria-label="Pro"
-          class="barbu-tab-panel perfect-panel"
-          id={gameTableDefinitions.barbu.tabs.perfect.panelId}
-          role="tabpanel"
+        <ProTabPanel
+          table={barbuUi.table}
+          featuresAriaLabel="Barbu Pro features"
+          headingTitle="Play stronger tables."
+          headingSummary="Pro is for deeper competition after the local learning and play loops feel natural."
         >
-          <div class="barbu-mode-copy">
-            <p class="eyebrow">{gameTableDefinitions.barbu.tabs.perfect.intro.eyebrow}</p>
-            <h2>{gameTableDefinitions.barbu.tabs.perfect.intro.title}</h2>
-            <p>{gameTableDefinitions.barbu.tabs.perfect.intro.summary}</p>
-          </div>
-
-          <section class="fixed-contract-practice" aria-label="Barbu Pro features">
-            <div class="section-heading">
-              <p class="eyebrow">Subscriber layer</p>
-              <h2>Play stronger tables.</h2>
-              <p>Pro is for deeper competition after the local learning and play loops feel natural.</p>
-            </div>
-
-            {@render proFeatureGrid()}
-          </section>
-        </div>
+          {@render proFeatureGrid()}
+        </ProTabPanel>
       {/if}
-    </section>
+    </GameTableShell>
   {:else if appView === "heartsTable"}
-    <header class="topbar table-topbar" aria-label="Hearts table">
-      <button class="back-button" onclick={openCatalog} type="button">Games</button>
-      <div class="table-title">
-        <p class="eyebrow">{gameTableDefinitions.hearts.family} family</p>
-        <h1>{gameTableDefinitions.hearts.title}</h1>
-      </div>
-      <div class="contract-status">
-        <span>Current mode</span>
-        <strong>{activeHeartsTableTabLabel}</strong>
-      </div>
-    </header>
-
-    <section class="table-room" aria-label="Hearts table modes">
-      <div class="barbu-table-rail">
-        <div class="barbu-mode-box">
-          <p class="eyebrow">Table mode</p>
-          <div class="barbu-table-tabs" aria-label="Hearts table sections" role="tablist">
-            {#each tableTabsFor(gameTableDefinitions.hearts) as tab}
-              <button
-                aria-controls={tab.panelId}
-                aria-selected={activeHeartsTableTab === tab.id}
-                class:active={activeHeartsTableTab === tab.id}
-                onclick={() => {
-                  activeHeartsTableTab = tab.id;
-                }}
-                role="tab"
-                type="button"
-              >
-                {tab.label}
-              </button>
-            {/each}
-          </div>
-        </div>
-      </div>
-
+    <GameTableShell
+      table={heartsUi.table}
+      activeTab={activeHeartsTableTab}
+      onBack={openCatalog}
+      onTabSelect={(tab) => {
+        activeHeartsTableTab = tab;
+      }}
+    >
       {#if activeHeartsTableTab === "learn"}
         <LearnPanel
-          table={gameTableDefinitions.hearts}
-          steps={heartsPathSteps}
+          table={heartsUi.table}
+          steps={heartsUi.learnSteps}
           completedSteps={completedPathSteps}
           completedCount={heartsCompletedCount}
           nextStep={nextHeartsPathStep}
@@ -7995,92 +7910,48 @@
         />
       {:else if activeHeartsTableTab === "practice"}
         <PracticePanel
-          id={gameTableDefinitions.hearts.tabs.practice.panelId}
-          intro={gameTableDefinitions.hearts.tabs.practice.intro}
-          groups={heartsPracticeGroups}
+          id={heartsUi.table.tabs.practice.panelId}
+          intro={heartsUi.table.tabs.practice.intro}
+          groups={heartsUi.practiceGroups}
           actions={heartsPracticeActions}
         />
       {:else if activeHeartsTableTab === "play"}
-        <div aria-label="Play" class="barbu-tab-panel play-panel" id={gameTableDefinitions.hearts.tabs.play.panelId} role="tabpanel">
-            <div class="barbu-mode-copy">
-              <p class="eyebrow">{gameTableDefinitions.hearts.tabs.play.intro.eyebrow}</p>
-              <h2>{gameTableDefinitions.hearts.tabs.play.intro.title}</h2>
-              <p>{gameTableDefinitions.hearts.tabs.play.intro.summary}</p>
-            </div>
-            <div class="table-action-groups" aria-label="Hearts table actions">
-              <section class="table-action-group" aria-label="Play Hearts actions">
-                <p class="eyebrow">Play</p>
-                {#if savedHeartsRun}
-                  <button class="drill-action" onclick={continueSavedHeartsRun} type="button">Continue Hearts</button>
-                  <small class="saved-run-note">{savedHeartsRunSummary(savedHeartsRun)}</small>
-                {/if}
-                <button class:resume-secondary={Boolean(savedHeartsRun)} class="drill-action" onclick={startHeartsHand} type="button">
-                  Play Hearts
-                </button>
-              </section>
-              <p class="supporting-copy">Play repeated rotating-pass hands to 100 penalty points. Low score wins; shooting the moon is active.</p>
-            </div>
-          </div>
+        <PlayTabPanel
+          table={heartsUi.table}
+          actionAriaLabel="Hearts table actions"
+          groupAriaLabel="Play Hearts actions"
+          groupEyebrow="Play"
+          primaryLabel="Play Hearts"
+          onPrimary={startHeartsHand}
+          resumeLabel={savedHeartsRun ? "Continue Hearts" : undefined}
+          resumeNote={savedHeartsRun ? savedHeartsRunSummary(savedHeartsRun) : undefined}
+          onResume={savedHeartsRun ? continueSavedHeartsRun : undefined}
+          supportingCopy="Play repeated rotating-pass hands to 100 penalty points. Low score wins; shooting the moon is active."
+        />
       {:else}
-        <div aria-label="Pro" class="barbu-tab-panel perfect-panel" id={gameTableDefinitions.hearts.tabs.perfect.panelId} role="tabpanel">
-            <div class="barbu-mode-copy">
-              <p class="eyebrow">{gameTableDefinitions.hearts.tabs.perfect.intro.eyebrow}</p>
-              <h2>{gameTableDefinitions.hearts.tabs.perfect.intro.title}</h2>
-              <p>{gameTableDefinitions.hearts.tabs.perfect.intro.summary}</p>
-            </div>
-
-            <section class="fixed-contract-practice" aria-label="Hearts Pro features">
-              <div class="section-heading">
-                <p class="eyebrow">Subscriber layer</p>
-                <h2>Harder Hearts tables.</h2>
-                <p>Pro should add stronger opponents and competitive matches after the basic Black Lady loop works.</p>
-              </div>
-
-              {@render proFeatureGrid()}
-            </section>
-          </div>
+        <ProTabPanel
+          table={heartsUi.table}
+          featuresAriaLabel="Hearts Pro features"
+          headingTitle="Harder Hearts tables."
+          headingSummary="Pro should add stronger opponents and competitive matches after the basic Black Lady loop works."
+        >
+          {@render proFeatureGrid()}
+        </ProTabPanel>
       {/if}
-    </section>
+    </GameTableShell>
   {:else if appView === "whistTable"}
-    <header class="topbar table-topbar" aria-label="Whist table">
-      <button class="back-button" onclick={openCatalog} type="button">Games</button>
-      <div class="table-title">
-        <p class="eyebrow">{gameTableDefinitions.whist.family} family</p>
-        <h1>{gameTableDefinitions.whist.title}</h1>
-      </div>
-      <div class="contract-status">
-        <span>Current mode</span>
-        <strong>{activeWhistTableTabLabel}</strong>
-      </div>
-    </header>
-
-    <section class="table-room" aria-label="Whist table modes">
-      <div class="barbu-table-rail">
-        <div class="barbu-mode-box">
-          <p class="eyebrow">Table mode</p>
-          <div class="barbu-table-tabs" aria-label="Whist table sections" role="tablist">
-            {#each tableTabsFor(gameTableDefinitions.whist) as tab}
-              <button
-                aria-controls={tab.panelId}
-                aria-selected={activeWhistTableTab === tab.id}
-                class:active={activeWhistTableTab === tab.id}
-                onclick={() => {
-                  activeWhistTableTab = tab.id;
-                }}
-                role="tab"
-                type="button"
-              >
-                {tab.label}
-              </button>
-            {/each}
-          </div>
-        </div>
-      </div>
-
+    <GameTableShell
+      table={whistUi.table}
+      activeTab={activeWhistTableTab}
+      onBack={openCatalog}
+      onTabSelect={(tab) => {
+        activeWhistTableTab = tab;
+      }}
+    >
       {#if activeWhistTableTab === "learn"}
         <LearnPanel
-          table={gameTableDefinitions.whist}
-          steps={whistPathSteps}
+          table={whistUi.table}
+          steps={whistUi.learnSteps}
           completedSteps={completedPathSteps}
           completedCount={whistCompletedCount}
           nextStep={nextWhistPathStep}
@@ -8089,63 +7960,36 @@
         />
       {:else if activeWhistTableTab === "practice"}
         <PracticePanel
-          id={gameTableDefinitions.whist.tabs.practice.panelId}
-          intro={gameTableDefinitions.whist.tabs.practice.intro}
-          groups={whistPracticeGroups}
+          id={whistUi.table.tabs.practice.panelId}
+          intro={whistUi.table.tabs.practice.intro}
+          groups={whistUi.practiceGroups}
           actions={whistPracticeActions}
         />
       {:else if activeWhistTableTab === "play"}
-        <div
-          aria-label={gameTableDefinitions.whist.tabs.play.label}
-          class="barbu-tab-panel practice-panel"
-          id={gameTableDefinitions.whist.tabs.play.panelId}
-          role="tabpanel"
-        >
-          <div class="barbu-mode-copy">
-            <p class="eyebrow">{gameTableDefinitions.whist.tabs.play.intro.eyebrow}</p>
-            <h2>{gameTableDefinitions.whist.tabs.play.intro.title}</h2>
-            <p>{gameTableDefinitions.whist.tabs.play.intro.summary}</p>
-          </div>
-
-          <div class="table-action-groups" aria-label="Whist play actions">
-            <section class="table-action-group" aria-label="Whist partnership hand">
-              <p class="eyebrow">Partnership hand</p>
-              {#if savedWhistRun}
-                <button class="drill-action" onclick={continueSavedWhistRun} type="button">Continue Whist</button>
-                <small class="saved-run-note">{savedWhistRunSummary(savedWhistRun)}</small>
-              {/if}
-              <button class:resume-secondary={Boolean(savedWhistRun)} class="drill-action" onclick={() => void startWhistHand()} type="button">
-                Play Whist
-              </button>
-              <small class="saved-run-note">You and Barbu play to {whistMatchTarget} points against Left and Right.</small>
-            </section>
-          </div>
-        </div>
+        <PlayTabPanel
+          table={whistUi.table}
+          className="practice-panel"
+          actionAriaLabel="Whist play actions"
+          groupAriaLabel="Whist partnership hand"
+          groupEyebrow="Partnership hand"
+          primaryLabel="Play Whist"
+          onPrimary={() => void startWhistHand()}
+          resumeLabel={savedWhistRun ? "Continue Whist" : undefined}
+          resumeNote={savedWhistRun ? savedWhistRunSummary(savedWhistRun) : undefined}
+          onResume={savedWhistRun ? continueSavedWhistRun : undefined}
+          footerNote={`You and Barbu play to ${whistMatchTarget} points against Left and Right.`}
+        />
       {:else}
-        <div
-          aria-label={gameTableDefinitions.whist.tabs[activeWhistTableTab].label}
-          class="barbu-tab-panel perfect-panel"
-          id={gameTableDefinitions.whist.tabs[activeWhistTableTab].panelId}
-          role="tabpanel"
+        <ProTabPanel
+          table={whistUi.table}
+          featuresAriaLabel="Whist Pro features"
+          headingTitle="Partnership tables with pressure."
+          headingSummary="Pro should add stronger AI partnerships and competitive Whist once local play is polished."
         >
-          <div class="barbu-mode-copy">
-            <p class="eyebrow">{gameTableDefinitions.whist.tabs[activeWhistTableTab].intro.eyebrow}</p>
-            <h2>{gameTableDefinitions.whist.tabs[activeWhistTableTab].intro.title}</h2>
-            <p>{gameTableDefinitions.whist.tabs[activeWhistTableTab].intro.summary}</p>
-          </div>
-
-          <section class="fixed-contract-practice" aria-label="Whist Pro features">
-            <div class="section-heading">
-              <p class="eyebrow">Subscriber layer</p>
-              <h2>Partnership tables with pressure.</h2>
-              <p>Pro should add stronger AI partnerships and competitive Whist once local play is polished.</p>
-            </div>
-
-            {@render proFeatureGrid()}
-          </section>
-        </div>
+          {@render proFeatureGrid()}
+        </ProTabPanel>
       {/if}
-    </section>
+    </GameTableShell>
   {:else if appView === "trumpMemory"}
       <TablePlaySurface
         mode="play"
