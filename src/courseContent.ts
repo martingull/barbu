@@ -1,4 +1,5 @@
 import type { Seat, TableCard } from "./lessonTypes";
+import type { WhistPracticeAction } from "./tableFactory";
 
 export type CourseStage = "concept" | "example" | "review";
 
@@ -19,8 +20,10 @@ type CourseSequenceStep = {
 
 export type CourseContent = {
   id: string;
+  game: "barbu" | "whist";
   pathStepId: string;
-  lessonId: string;
+  lessonId?: string;
+  practiceAction?: WhistPracticeAction;
   contract: string;
   title: string;
   concept: CoursePanel & { points: CoursePoint[] };
@@ -36,6 +39,7 @@ export type CourseContent = {
 export const courseCatalog: CourseContent[] = [
   {
     id: "no-hearts",
+    game: "barbu",
     pathStepId: "meet-contract",
     lessonId: "barbu-no-hearts",
     contract: "No Hearts",
@@ -80,6 +84,7 @@ export const courseCatalog: CourseContent[] = [
   },
   {
     id: "no-queens",
+    game: "barbu",
     pathStepId: "spot-danger",
     lessonId: "barbu-no-queens",
     contract: "No Queens",
@@ -124,6 +129,7 @@ export const courseCatalog: CourseContent[] = [
   },
   {
     id: "king-of-hearts",
+    game: "barbu",
     pathStepId: "play-trick",
     lessonId: "barbu-king-of-hearts",
     contract: "King of Hearts",
@@ -168,6 +174,7 @@ export const courseCatalog: CourseContent[] = [
   },
   {
     id: "no-last-two",
+    game: "barbu",
     pathStepId: "contract-no-last-two",
     lessonId: "barbu-no-last-two",
     contract: "No Last Two",
@@ -212,6 +219,7 @@ export const courseCatalog: CourseContent[] = [
   },
   {
     id: "no-tricks",
+    game: "barbu",
     pathStepId: "contract-no-tricks",
     lessonId: "barbu-no-tricks",
     contract: "No Tricks",
@@ -256,6 +264,7 @@ export const courseCatalog: CourseContent[] = [
   },
   {
     id: "hearts-trumps",
+    game: "barbu",
     pathStepId: "contract-hearts-trumps",
     lessonId: "barbu-hearts-trumps",
     contract: "Hearts Trumps",
@@ -300,6 +309,7 @@ export const courseCatalog: CourseContent[] = [
   },
   {
     id: "domino",
+    game: "barbu",
     pathStepId: "contract-domino",
     lessonId: "barbu-domino",
     contract: "Domino",
@@ -339,6 +349,321 @@ export const courseCatalog: CourseContent[] = [
         { marker: "OK", text: "Empty suits start with sevens." },
         { marker: "OK", text: "Open suits grow one rank at a time." },
         { marker: "OK", text: "Passing is only correct when nothing fits." }
+      ]
+    }
+  },
+  {
+    id: "whist-object",
+    game: "whist",
+    pathStepId: "whist-object",
+    practiceAction: "follow",
+    contract: "Whist",
+    title: "Win tricks together",
+    concept: {
+      heading: "Whist is partnership trick-taking.",
+      body:
+        "You and Barbu sit opposite each other. Your side scores only after winning more than six tricks, so every early decision should help the partnership win control later.",
+      points: [
+        { marker: "1", text: "Read the table as two sides: You + Barbu against Left + Right." },
+        { marker: "2", text: "Follow suit first; trump matters only when someone is void." },
+        { marker: "3", text: "Seven tricks is the first point. The rest are extra odd tricks." }
+      ]
+    },
+    example: {
+      heading: "Left leads clubs. Barbu is your partner across the table.",
+      body:
+        "Before choosing a card, ask which side is winning. If Barbu already controls the trick, you usually avoid wasting a higher card.",
+      sequence: [
+        { label: "Lead", text: "Left plays 9C, so clubs are the led suit." },
+        { label: "Partner", text: "Barbu plays KC and is winning for your side." },
+        { label: "Your turn", text: "Follow clubs without overtaking your partner." }
+      ],
+      ariaLabel: "Whist partnership example table",
+      tableCards: [
+        { seat: "Left", card: { id: "9C", rank: "9", suit: "C", label: "9C" } },
+        { seat: "Tutor", card: { id: "KC", rank: "K", suit: "C", label: "KC" } },
+        { seat: "Right", card: { id: "4C", rank: "4", suit: "C", label: "4C" } }
+      ],
+      pendingBySeat: { You: "support partner" }
+    },
+    review: {
+      heading: "Whist starts with partnership awareness.",
+      body:
+        "You practiced reading the current winner as a partnership result, not just as an individual trick. That is the table habit behind the rest of Whist.",
+      points: [
+        { marker: "OK", text: "You and Barbu score together." },
+        { marker: "OK", text: "Partner winning can make a low card correct." },
+        { marker: "OK", text: "Odd tricks are tricks above six." }
+      ]
+    }
+  },
+  {
+    id: "whist-follow-suit",
+    game: "whist",
+    pathStepId: "whist-follow-suit",
+    practiceAction: "follow",
+    contract: "Whist",
+    title: "Follow suit",
+    concept: {
+      heading: "The led suit controls the trick until trump appears.",
+      body:
+        "Whist begins like most trick-taking games: if you have the led suit, you must follow it. You can only trump or discard after you are void in that suit.",
+      points: [
+        { marker: "1", text: "Identify the first card led." },
+        { marker: "2", text: "Check whether your hand contains that suit." },
+        { marker: "3", text: "Only consider trump or discard when you cannot follow." }
+      ]
+    },
+    example: {
+      heading: "Barbu leads diamonds and you still have diamonds.",
+      body:
+        "Even if you hold trump, diamonds were led and you can follow. The legal Whist decision starts with the led suit.",
+      sequence: [
+        { label: "Lead", text: "Barbu plays JD, so diamonds are led." },
+        { label: "Then", text: "Right follows with 6D." },
+        { label: "Your turn", text: "You have diamonds, so you must follow diamonds." }
+      ],
+      ariaLabel: "Whist follow suit example table",
+      tableCards: [
+        { seat: "Tutor", card: { id: "JD", rank: "J", suit: "D", label: "JD" } },
+        { seat: "Right", card: { id: "6D", rank: "6", suit: "D", label: "6D" } },
+        { seat: "Left", card: { id: "4D", rank: "4", suit: "D", label: "4D" } }
+      ],
+      pendingBySeat: { You: "follow diamonds" }
+    },
+    review: {
+      heading: "Following suit keeps the table readable.",
+      body:
+        "You practiced finding the legal suit first. That discipline makes later trump and partnership decisions much clearer.",
+      points: [
+        { marker: "OK", text: "The first card sets the led suit." },
+        { marker: "OK", text: "Trump is not a shortcut when you can follow." },
+        { marker: "OK", text: "Legal play comes before tactics." }
+      ]
+    }
+  },
+  {
+    id: "whist-trumps",
+    game: "whist",
+    pathStepId: "whist-trumps",
+    practiceAction: "trump",
+    contract: "Whist",
+    title: "Trump wins",
+    concept: {
+      heading: "A small trump can beat a high plain-suit card.",
+      body:
+        "The dealer's last card sets trump. When you are void in the led suit, a trump can cut the trick and beat every non-trump card on the table.",
+      points: [
+        { marker: "1", text: "Check the trump suit before play begins." },
+        { marker: "2", text: "Trump only matters when a player cannot follow." },
+        { marker: "3", text: "Spend trump when winning the trick helps your side." }
+      ]
+    },
+    example: {
+      heading: "Spades are trump and hearts were led.",
+      body:
+        "Right is winning with AH, but you are void in hearts. A small spade can take the whole trick because spades are trump.",
+      sequence: [
+        { label: "Trump", text: "Spades are trump this hand." },
+        { label: "Lead", text: "Left leads 8H and Right plays AH." },
+        { label: "Your turn", text: "Void in hearts, you may cut with a spade." }
+      ],
+      ariaLabel: "Whist trump example table",
+      tableCards: [
+        { seat: "Left", card: { id: "8H", rank: "8", suit: "H", label: "8H" } },
+        { seat: "Tutor", card: { id: "4H", rank: "4", suit: "H", label: "4H" } },
+        { seat: "Right", card: { id: "AH", rank: "A", suit: "H", label: "AH" } }
+      ],
+      pendingBySeat: { You: "cut or discard" }
+    },
+    review: {
+      heading: "Trump is control, not decoration.",
+      body:
+        "You practiced using trump when it changes the winner. The next step is deciding whether that control is worth spending now.",
+      points: [
+        { marker: "OK", text: "A trump beats plain suits." },
+        { marker: "OK", text: "You must be void before trumping off-suit." },
+        { marker: "OK", text: "Partner winning may mean you save trump." }
+      ]
+    }
+  },
+  {
+    id: "whist-partner",
+    game: "whist",
+    pathStepId: "whist-partner",
+    practiceAction: "third",
+    contract: "Whist",
+    title: "Read your partner",
+    concept: {
+      heading: "Third hand often supports the lead.",
+      body:
+        "When Barbu leads and you play third, your job is often to help the partnership win the trick without wasting more strength than needed.",
+      points: [
+        { marker: "1", text: "Notice whether Barbu is your partner in the trick." },
+        { marker: "2", text: "Play high enough when opponents are winning." },
+        { marker: "3", text: "Avoid overtaking partner without a reason." }
+      ]
+    },
+    example: {
+      heading: "Barbu leads clubs and Right overtakes.",
+      body:
+        "Your partner started the suit, but the opponent is now winning. Third hand high means spending enough strength to bring the trick back to your side.",
+      sequence: [
+        { label: "Partner", text: "Barbu leads JC." },
+        { label: "Opponent", text: "Right plays QC and is winning." },
+        { label: "Your turn", text: "Play high enough if you can win for the partnership." }
+      ],
+      ariaLabel: "Whist third hand example table",
+      tableCards: [
+        { seat: "Tutor", card: { id: "JC", rank: "J", suit: "C", label: "JC" } },
+        { seat: "Right", card: { id: "QC", rank: "Q", suit: "C", label: "QC" } },
+        { seat: "Left", card: { id: "5C", rank: "5", suit: "C", label: "5C" } }
+      ],
+      pendingBySeat: { You: "support" }
+    },
+    review: {
+      heading: "Partnership play asks who your card helps.",
+      body:
+        "You practiced spending strength when it wins for your side and preserving it when Barbu is already safe.",
+      points: [
+        { marker: "OK", text: "Third hand high is about partnership control." },
+        { marker: "OK", text: "Do not fight Barbu for the same trick." },
+        { marker: "OK", text: "Win when opponents are currently ahead." }
+      ]
+    }
+  },
+  {
+    id: "whist-opening-lead",
+    game: "whist",
+    pathStepId: "whist-opening-lead",
+    practiceAction: "lead",
+    contract: "Whist",
+    title: "Opening leads",
+    concept: {
+      heading: "Use the opening lead to invite your strongest suit.",
+      body:
+        "When you open, you can tell Barbu what suit you want back. Lead your strongest plain suit, and usually lead the highest card in that suit to make the message clear.",
+      points: [
+        { marker: "1", text: "Choose your strongest plain suit." },
+        { marker: "2", text: "Lead your highest card in that suit." },
+        { marker: "3", text: "Avoid spending trump before partner knows your plan." }
+      ]
+    },
+    example: {
+      heading: "Hearts are trump and spades are your best plain suit.",
+      body:
+        "Leading QS tells Barbu that spades are your strongest suit and that QS is your highest spade. If Barbu gets lead, spades are the natural return.",
+      sequence: [
+        { label: "Trump", text: "Hearts are trump, so avoid opening trump casually." },
+        { label: "Shape", text: "Your best plain suit is spades." },
+        { label: "Invite", text: "Lead QS to show your highest spade." }
+      ],
+      ariaLabel: "Whist opening lead example table",
+      tableCards: [
+        { seat: "You", card: { id: "QS", rank: "Q", suit: "S", label: "QS" } },
+        { seat: "Left", card: { id: "7S", rank: "7", suit: "S", label: "7S" } },
+        { seat: "Tutor", card: { id: "AS", rank: "A", suit: "S", label: "AS" } }
+      ],
+      pendingBySeat: { Right: "follows" }
+    },
+    review: {
+      heading: "A good opening lead gives partner useful information.",
+      body:
+        "You practiced showing Barbu both the suit you want developed and the highest card you hold in that suit.",
+      points: [
+        { marker: "OK", text: "The lead can be a partnership invitation." },
+        { marker: "OK", text: "Highest card in your strongest suit is clear." },
+        { marker: "OK", text: "Trump control can wait until it has a purpose." }
+      ]
+    }
+  },
+  {
+    id: "whist-suit-invite",
+    game: "whist",
+    pathStepId: "whist-suit-invite",
+    practiceAction: "return",
+    contract: "Whist",
+    title: "Invite a suit",
+    concept: {
+      heading: "Return the suit your partner invited.",
+      body:
+        "When Barbu leads a strong plain suit, treat it as information. If you later gain the lead, returning that suit often lets partner's remaining strength work.",
+      points: [
+        { marker: "1", text: "Remember the suit Barbu led from strength." },
+        { marker: "2", text: "When you gain lead, consider returning that suit." },
+        { marker: "3", text: "Do not switch suits without a stronger reason." }
+      ]
+    },
+    example: {
+      heading: "Barbu invited diamonds earlier.",
+      body:
+        "You are now on lead. Returning diamonds gives Barbu a chance to use the strength they already showed.",
+      sequence: [
+        { label: "Earlier", text: "Barbu led KD, showing diamond strength." },
+        { label: "Now", text: "You win a trick and lead next." },
+        { label: "Return", text: "Lead diamonds back unless another plan is clearly better." }
+      ],
+      ariaLabel: "Whist suit return example table",
+      tableCards: [
+        { seat: "You", card: { id: "7D", rank: "7", suit: "D", label: "7D" } },
+        { seat: "Tutor", card: { id: "KD", rank: "K", suit: "D", label: "KD" } },
+        { seat: "Right", card: { id: "4D", rank: "4", suit: "D", label: "4D" } }
+      ],
+      pendingBySeat: { Left: "follows" }
+    },
+    review: {
+      heading: "Suit invitations make Whist feel like a partnership game.",
+      body:
+        "You practiced using partner's earlier lead as a signal, then returning the suit when you had the chance.",
+      points: [
+        { marker: "OK", text: "A lead can name the suit partner wants back." },
+        { marker: "OK", text: "Returning partner's suit develops shared winners." },
+        { marker: "OK", text: "Ignoring the signal should be a deliberate choice." }
+      ]
+    }
+  },
+  {
+    id: "whist-odd-tricks",
+    game: "whist",
+    pathStepId: "whist-odd-tricks",
+    practiceAction: "odd",
+    contract: "Whist",
+    title: "Count odd tricks",
+    concept: {
+      heading: "Only tricks above six score.",
+      body:
+        "A Whist side needs seven tricks before it scores anything. The seventh trick is one point, the eighth is two, and so on.",
+      points: [
+        { marker: "1", text: "Count your partnership's tricks." },
+        { marker: "2", text: "Subtract six from the winning side's trick count." },
+        { marker: "3", text: "The result is the number of odd tricks scored." }
+      ]
+    },
+    example: {
+      heading: "Your side has six tricks and this trick is live.",
+      body:
+        "Winning this trick would create the first odd trick for You + Barbu. Losing it keeps your side at zero points for now.",
+      sequence: [
+        { label: "Score", text: "Your side has six tricks." },
+        { label: "Target", text: "The seventh trick is the first point." },
+        { label: "Decision", text: "Spend enough strength if it wins the odd trick." }
+      ],
+      ariaLabel: "Whist odd trick example table",
+      tableCards: [
+        { seat: "Left", card: { id: "9S", rank: "9", suit: "S", label: "9S" } },
+        { seat: "Tutor", card: { id: "JS", rank: "J", suit: "S", label: "JS" } },
+        { seat: "Right", card: { id: "QS", rank: "Q", suit: "S", label: "QS" } }
+      ],
+      pendingBySeat: { You: "win odd trick" }
+    },
+    review: {
+      heading: "Odd tricks explain why one trick can matter.",
+      body:
+        "You practiced seeing the scoring threshold, not just the current trick. A seventh trick changes the score; a sixth trick does not.",
+      points: [
+        { marker: "OK", text: "Six tricks is the baseline." },
+        { marker: "OK", text: "Seven tricks scores one." },
+        { marker: "OK", text: "More tricks above six add more points." }
       ]
     }
   }

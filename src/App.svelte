@@ -2239,6 +2239,7 @@
   ];
   $: lessonOutcome = selectedCard && (playedCard || !isSelectedLegal) ? buildLessonOutcome(selectedCard, playedCard) : "";
   $: activeCourse = courseCatalog.find((course) => course.id === activeCourseId) ?? courseCatalog[0];
+  $: activeCourseTableLabel = activeCourse.game === "whist" ? "Whist" : "Barbu";
   $: activeReference = referenceCatalog.find((reference) => reference.id === activeReferenceId) ?? referenceCatalog[0];
   $: activeReferenceIsBarbu = activeReference.id === "barbu";
   $: currentDrill = activeDrillSteps[drillIndex] ?? activeDrillSteps[0] ?? drillSteps[0];
@@ -4937,8 +4938,10 @@
   }
 
   function startWhistPathStep(step: WhistLearnPathStep) {
-    if (step.action === "object") {
-      startWhistObjectLesson();
+    const course = courseCatalog.find((item) => item.pathStepId === step.id && item.game === "whist");
+
+    if (course) {
+      startCourse(course.id);
       return;
     }
 
@@ -6368,14 +6371,46 @@
     }
 
     if (activeCourseStage === "example") {
-      startLesson(activeCourse.lessonId, activeCourse.pathStepId);
+      if (activeCourse.game === "whist") {
+        startWhistCoursePractice(activeCourse.pathStepId);
+        return;
+      }
+
+      if (activeCourse.lessonId) {
+        startLesson(activeCourse.lessonId, activeCourse.pathStepId);
+      }
       return;
     }
 
     if (activeCourseStage === "review") {
       saveCourseProgress({ ...completedPathSteps, [activePathStepId]: true });
-      openBarbuTable();
+      openActiveCourseTable();
     }
+  }
+
+  function openActiveCourseTable() {
+    if (activeCourse.game === "whist") {
+      activeWhistTableTab = "learn";
+      openWhistTable();
+      return;
+    }
+
+    openBarbuTable();
+  }
+
+  function startWhistCoursePractice(pathStepId: string) {
+    const course = courseCatalog.find((item) => item.pathStepId === pathStepId && item.game === "whist");
+
+    if (!course?.practiceAction) {
+      return;
+    }
+
+    if (course.practiceAction === "lead") {
+      startWhistOpeningLeadLesson(course.pathStepId);
+      return;
+    }
+
+    whistPracticeActions[course.practiceAction](course.pathStepId);
   }
 
   async function startGeneratedDrill() {
@@ -6850,6 +6885,7 @@
     const completedPathPracticeTable = activePathStepId === "generated-drill" && completedPracticeTableSession;
     const completedHeartsPathStepId = activePathStepId.startsWith("hearts-") ? activePathStepId : "";
     const completedWhistPathStepId = activePathStepId.startsWith("whist-") ? activePathStepId : "";
+    const completedWhistCourse = courseCatalog.find((course) => course.game === "whist" && course.pathStepId === completedWhistPathStepId);
 
     try {
       saveCompletedDrillSession();
@@ -6857,11 +6893,19 @@
         saveCourseProgress({ ...completedPathSteps, "generated-drill": true });
       } else if (completedHeartsPathStepId) {
         completeHeartsPathStep(completedHeartsPathStepId);
-      } else if (completedWhistPathStepId) {
+      } else if (completedWhistPathStepId && !completedWhistCourse) {
         completeWhistPathStep(completedWhistPathStepId);
       }
     } catch {
       // The result screen should still open if local storage is unavailable.
+    }
+
+    if (completedWhistCourse) {
+      activeCourseId = completedWhistCourse.id;
+      activePathStepId = completedWhistCourse.pathStepId;
+      activeCourseStage = "review";
+      appView = "courseContent";
+      return;
     }
 
     if (completedPathPracticeTable) {
@@ -8427,7 +8471,7 @@
     </section>
   {:else if appView === "courseContent"}
     <header class="topbar" aria-label={`${activeCourse.contract} course`}>
-      <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
+      <button class="back-button" onclick={openActiveCourseTable} type="button">Table</button>
       <div>
         <p class="eyebrow">{activeCourse.contract}</p>
         <h1>{activeCourseStage === "review" ? "Review" : activeCourse.title}</h1>
@@ -8516,12 +8560,12 @@
       {/if}
 
       <div class="course-actions">
-        <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
+        <button class="secondary-action" onclick={openActiveCourseTable} type="button">{activeCourseTableLabel} table</button>
         <button class="primary-action" onclick={continueCourseContent} type="button">
           {#if activeCourseStage === "concept"}
             See example
           {:else if activeCourseStage === "example"}
-            Play guided trick
+            {activeCourse.game === "whist" ? "Practice decision" : "Play guided trick"}
           {:else}
             Finish {activeCourse.contract}
           {/if}
