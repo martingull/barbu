@@ -4,6 +4,7 @@ export type TableTabId = (typeof tableTabIds)[number];
 export type ActiveGameTable = "barbu" | "hearts" | "whist";
 export type CatalogGameId =
   | ActiveGameTable
+  | "amerikaner"
   | "solitaire"
   | "card-counting"
   | "card-counting-ii"
@@ -614,6 +615,15 @@ export function createCatalogEntries(): CatalogEntry[] {
       access: "Free",
       accessModel: "free-starter",
       summary: "Partnership trick play and silent suit signals."
+    }),
+    createCatalogEntry({
+      id: "amerikaner",
+      family: "Whist",
+      title: "Amerikaner",
+      status: "Planned",
+      access: "Pack",
+      accessModel: "metered-pack",
+      summary: "Scandinavian auction-whist play with bidding before the hand."
     }),
     createCatalogEntry({
       id: "card-counting",

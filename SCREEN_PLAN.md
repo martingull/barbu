@@ -59,7 +59,8 @@ Design implication:
 - Shared Hearts-family concepts should not be hardcoded as Barbu-only UI or copy.
 - Variants should remain attached to their parent core game.
 - New games should be added through family-aware data and reusable rules where practical, not by cloning the whole Barbu interface.
-- Whist, Bridge, Gin Rummy, Canasta, and Solitaire should stay visible as future product direction, but only Whist should be treated as the next free starter implementation target after Barbu and Hearts. Hearts, Barbu, and Whist are intended as the free starter catalog.
+- Amerikaner, Bridge, Gin Rummy, Canasta, and Solitaire should stay visible as future product direction, but only Whist should be treated as the next free starter implementation target after Barbu and Hearts. Hearts, Barbu, and Whist are intended as the free starter catalog.
+- Amerikaner should be treated as a Whist-family future pack: Scandinavian auction-whist play where a bidding round adds trump/contract decisions before the trick-taking hand.
 - Catalog order should show free starter tables first: Hearts, Barbu, and Whist. Paid packs and paid future games should follow.
 - Monetization should support limited free usage for paid packs, individual pack purchases, and one subscription that unlocks the full catalog. UI can label packs before entitlement plumbing exists, but access and usage-meter decisions should later be centralized.
 
@@ -73,6 +74,7 @@ Current role:
 
 - Shows free starter tables first: Hearts, Barbu, and Whist.
 - Hearts opens to a starter table with the shared Learn, Practice, Play, and Pro structure. Play is active with rotating passes and a focused local hand.
+- Shows Amerikaner after Whist as a planned Whist-family paid pack.
 - Shows Card Counting I after the free starters as the first ready paid skill pack and Card Counting II as a planned subscriber pack.
 - Shows future paid games such as Solitaire, Bridge, Gin Rummy, and Canasta.
 - Keeps varieties under their parent game instead of showing them as separate first-screen tables.

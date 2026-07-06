@@ -51,8 +51,8 @@ content/             Structured game and lesson content
 
 ## Current Product Shape
 
-- A catalog/welcome screen that treats Barbu as the first playable core game in a broader card-game curriculum, with Hearts as the second active starter table and placeholders for Whist, Solitaire, Bridge, Gin Rummy, and Canasta.
-- The intended free starter catalog is Hearts, Barbu, and Whist; the other catalog entries can become later packs once the first game loops are strong.
+- A catalog/welcome screen that treats Barbu as the first playable core game in a broader card-game curriculum, with Hearts as the second active starter table and placeholders for Whist-family bidding games such as Amerikaner, plus Solitaire, Bridge, Gin Rummy, and Canasta.
+- The intended free starter catalog is Hearts, Barbu, and Whist; the other catalog entries can become later packs once the first game loops are strong. Amerikaner is planned as a Whist-family pack with a bidding round before play.
 - The catalog stays focused on core games; varieties and teaching modes stay attached to their parent game screens.
 - A Hearts table with the same Learn, Practice, Play, and Perfect structure; Play rotates pass direction and then moves into a local multi-hand Black Lady-style match to 100 points with 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, queen-of-spades scoring, and shoot-the-moon scoring, while Practice trains hearts and queen-of-spades patterns on the shared trick-taking surface.
 - A Barbu table screen with grouped Learn, Practice, Play, and Reference entry points, a contract-hand practice chooser, and a five-step training path.

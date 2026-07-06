@@ -30,7 +30,7 @@ The intended monetization model is free starter tables first, then paid packs wi
 
 ## Current Feature Set
 
-- Game catalog ordered with free starter tables first: Hearts, Barbu, and Whist, followed by paid packs/future paid games such as Card Counting I, Card Counting II, Solitaire, Bridge, Gin Rummy, and Canasta.
+- Game catalog ordered with free starter tables first: Hearts, Barbu, and Whist, followed by paid packs/future paid games such as Amerikaner, Card Counting I, Card Counting II, Solitaire, Bridge, Gin Rummy, and Canasta.
 - Game catalog metadata now comes from a shared table/catalog factory, including free starter versus metered pack access metadata, so future game additions do not start as hardcoded home-screen branches.
 - Learn tab shell metadata now comes from the shared table/catalog factory: each active game declares its path title, progress label, continue summary, complete summary, and reference summary before screen-specific content is added.
 - Table tab intro metadata now comes from the shared table/catalog factory: Learn, Practice, Play, and Pro each declare their heading copy in one place before game-specific controls render underneath.
@@ -106,7 +106,7 @@ Must ship:
 1. Free starter catalog
    - Hearts, Barbu, and Whist visible first.
    - Barbu and Hearts are active playable tables. Whist is an active starter table with a Parlett-style reference baseline, Learning Path v1, and first playable practice drills for follow-suit and trump decisions.
-   - Paid/future packs such as Card Counting II, Solitaire, Bridge, Gin Rummy, and Canasta can stay visible as roadmap signals only.
+   - Paid/future packs such as Amerikaner, Card Counting II, Solitaire, Bridge, Gin Rummy, and Canasta can stay visible as roadmap signals only.
 
 2. Barbu
    - Learn path for the core contracts.
@@ -137,6 +137,7 @@ Must ship:
    - Partnership Policy v1 has started: automated seats can return partner's suit, avoid overtaking partner, preserve trump when partner is winning, and cut when the other side controls the trick.
    - Match v1A has a cumulative local match shell: odd tricks carry into a You + Barbu vs Left + Right score to 5, with Next hand / New match flow.
    - Deal v1B derives trump from the dealer's last card and starts the hand from dealer-left; fuller dealer rotation controls remain planned.
+   - Amerikaner is parked as the later Whist-family bidding game: build it after Whist feels good, using the same partnership table plus an auction/contract layer.
 
 6. Mobile quality
    - Active table screens should be stable on the physical iPhone.
@@ -152,6 +153,7 @@ Not launch scope:
 - Subscription or StoreKit implementation.
 - Additional Hearts variants beyond the current Black Lady-style starter.
 - Full Bridge, Whist, Gin Rummy, Canasta, or Solitaire implementations.
+- Full Amerikaner implementation.
 - Barbu character animation.
 - Advanced AI opponent strategy beyond useful local training behavior.
 
