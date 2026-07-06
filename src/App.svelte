@@ -2239,7 +2239,8 @@
   ];
   $: lessonOutcome = selectedCard && (playedCard || !isSelectedLegal) ? buildLessonOutcome(selectedCard, playedCard) : "";
   $: activeCourse = courseCatalog.find((course) => course.id === activeCourseId) ?? courseCatalog[0];
-  $: activeCourseTableLabel = activeCourse.game === "whist" ? "Whist" : "Barbu";
+  $: activeCourseTableLabel =
+    activeCourse.game === "whist" ? "Whist" : activeCourse.game === "hearts" ? "Hearts" : "Barbu";
   $: activeReference = referenceCatalog.find((reference) => reference.id === activeReferenceId) ?? referenceCatalog[0];
   $: activeReferenceIsBarbu = activeReference.id === "barbu";
   $: currentDrill = activeDrillSteps[drillIndex] ?? activeDrillSteps[0] ?? drillSteps[0];
@@ -4858,6 +4859,13 @@
   }
 
   function startHeartsPathStep(step: HeartsLearnPathStep) {
+    const course = courseCatalog.find((item) => item.pathStepId === step.id && item.game === "hearts");
+
+    if (course) {
+      startCourse(course.id);
+      return;
+    }
+
     if (step.action === "object") {
       startHeartsObjectLesson();
       return;
@@ -6376,6 +6384,11 @@
         return;
       }
 
+      if (activeCourse.game === "hearts") {
+        startHeartsCoursePractice(activeCourse.pathStepId);
+        return;
+      }
+
       if (activeCourse.lessonId) {
         startLesson(activeCourse.lessonId, activeCourse.pathStepId);
       }
@@ -6395,7 +6408,23 @@
       return;
     }
 
+    if (activeCourse.game === "hearts") {
+      activeHeartsTableTab = "learn";
+      openHeartsTable();
+      return;
+    }
+
     openBarbuTable();
+  }
+
+  function startHeartsCoursePractice(pathStepId: string) {
+    const course = courseCatalog.find((item) => item.pathStepId === pathStepId && item.game === "hearts");
+
+    if (!course?.practiceAction) {
+      return;
+    }
+
+    heartsPracticeActions[course.practiceAction as HeartsPracticeAction](course.pathStepId);
   }
 
   function startWhistCoursePractice(pathStepId: string) {
@@ -6677,7 +6706,15 @@
   async function nextHeartsPassPracticeStep() {
     if (heartsPassPracticeIsLastStep) {
       if (activePathStepId === "hearts-pass") {
-        continueHeartsPath();
+        const course = courseCatalog.find((item) => item.pathStepId === activePathStepId && item.game === "hearts");
+
+        if (course) {
+          activeCourseId = course.id;
+          activeCourseStage = "review";
+          appView = "courseContent";
+        } else {
+          continueHeartsPath();
+        }
       } else {
         openHeartsTable();
       }
@@ -6715,20 +6752,20 @@
     heartsPassPracticeError = "";
     heartsPassPracticeChecked = true;
 
-    if (activePathStepId === "hearts-pass") {
+    if (activePathStepId === "hearts-pass" && !courseCatalog.some((course) => course.pathStepId === activePathStepId)) {
       completeHeartsPathStep("hearts-pass");
     }
   }
 
-  const heartsPracticeActions: Record<HeartsPracticeAction, () => void> = {
+  const heartsPracticeActions: Record<HeartsPracticeAction, (pathStepId?: string) => void> = {
     quick: () => void startHeartsQuickDrill(),
-    pass: () => void startHeartsPassPractice(),
-    first: () => void startHeartsFirstTrickDrill(),
-    avoid: () => void startHeartsAvoidHeartsDrill(),
-    queen: () => void startHeartsQueenDangerDrill(),
-    break: () => void startHeartsBreakHeartsDrill(),
-    moon: () => void startHeartsStopMoonDrill(),
-    score: () => void startHeartsScoreHandDrill()
+    pass: startHeartsPassPractice,
+    first: startHeartsFirstTrickDrill,
+    avoid: startHeartsAvoidHeartsDrill,
+    queen: startHeartsQueenDangerDrill,
+    break: startHeartsBreakHeartsDrill,
+    moon: startHeartsStopMoonDrill,
+    score: startHeartsScoreHandDrill
   };
 
   const whistPracticeActions: Record<WhistPracticeAction, (pathStepId?: string) => void> = {
@@ -6885,19 +6922,30 @@
     const completedPathPracticeTable = activePathStepId === "generated-drill" && completedPracticeTableSession;
     const completedHeartsPathStepId = activePathStepId.startsWith("hearts-") ? activePathStepId : "";
     const completedWhistPathStepId = activePathStepId.startsWith("whist-") ? activePathStepId : "";
+    const completedHeartsCourse = courseCatalog.find(
+      (course) => course.game === "hearts" && course.pathStepId === completedHeartsPathStepId
+    );
     const completedWhistCourse = courseCatalog.find((course) => course.game === "whist" && course.pathStepId === completedWhistPathStepId);
 
     try {
       saveCompletedDrillSession();
       if (completedPathPracticeTable) {
         saveCourseProgress({ ...completedPathSteps, "generated-drill": true });
-      } else if (completedHeartsPathStepId) {
+      } else if (completedHeartsPathStepId && !completedHeartsCourse) {
         completeHeartsPathStep(completedHeartsPathStepId);
       } else if (completedWhistPathStepId && !completedWhistCourse) {
         completeWhistPathStep(completedWhistPathStepId);
       }
     } catch {
       // The result screen should still open if local storage is unavailable.
+    }
+
+    if (completedHeartsCourse) {
+      activeCourseId = completedHeartsCourse.id;
+      activePathStepId = completedHeartsCourse.pathStepId;
+      activeCourseStage = "review";
+      appView = "courseContent";
+      return;
     }
 
     if (completedWhistCourse) {
@@ -8565,7 +8613,7 @@
           {#if activeCourseStage === "concept"}
             See example
           {:else if activeCourseStage === "example"}
-            {activeCourse.game === "whist" ? "Practice decision" : "Play guided trick"}
+            {activeCourse.game === "barbu" ? "Play guided trick" : "Practice decision"}
           {:else}
             Finish {activeCourse.contract}
           {/if}

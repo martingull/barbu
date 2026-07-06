@@ -1,5 +1,5 @@
 import type { Seat, TableCard } from "./lessonTypes";
-import type { WhistPracticeAction } from "./tableFactory";
+import type { HeartsPracticeAction, WhistPracticeAction } from "./tableFactory";
 
 export type CourseStage = "concept" | "example" | "review";
 
@@ -20,10 +20,10 @@ type CourseSequenceStep = {
 
 export type CourseContent = {
   id: string;
-  game: "barbu" | "whist";
+  game: "barbu" | "hearts" | "whist";
   pathStepId: string;
   lessonId?: string;
-  practiceAction?: WhistPracticeAction;
+  practiceAction?: HeartsPracticeAction | WhistPracticeAction;
   contract: string;
   title: string;
   concept: CoursePanel & { points: CoursePoint[] };
@@ -349,6 +349,321 @@ export const courseCatalog: CourseContent[] = [
         { marker: "OK", text: "Empty suits start with sevens." },
         { marker: "OK", text: "Open suits grow one rank at a time." },
         { marker: "OK", text: "Passing is only correct when nothing fits." }
+      ]
+    }
+  },
+  {
+    id: "hearts-object",
+    game: "hearts",
+    pathStepId: "hearts-object",
+    practiceAction: "avoid",
+    contract: "Hearts",
+    title: "Object of Hearts",
+    concept: {
+      heading: "Take as few penalty points as possible.",
+      body:
+        "Hearts is a trick-avoidance game in the Black Lady style. Each heart is one penalty point, the queen of spades is thirteen, and the low score wins.",
+      points: [
+        { marker: "1", text: "Duck tricks when hearts or the queen of spades are likely to land there." },
+        { marker: "2", text: "Follow suit when you can; danger cards matter when someone is void." },
+        { marker: "3", text: "Sometimes taking a small penalty stops one player from taking all of them." }
+      ]
+    },
+    example: {
+      heading: "Right leads clubs and a heart lands off-suit.",
+      body:
+        "The heart is a penalty point, but it only hurts the player who wins the trick. First find the current winner, then choose a card that keeps the point away from you.",
+      sequence: [
+        { label: "Lead", text: "Right plays 9C, so clubs are led." },
+        { label: "Danger", text: "Left is void and discards 7H into the trick." },
+        { label: "Your turn", text: "Follow clubs low if it keeps you under the winner." }
+      ],
+      ariaLabel: "Hearts object example table",
+      tableCards: [
+        { seat: "Right", card: { id: "9C", rank: "9", suit: "C", label: "9C" } },
+        { seat: "Left", card: { id: "7H", rank: "7", suit: "H", label: "7H" } },
+        { seat: "Tutor", card: { id: "KC", rank: "K", suit: "C", label: "KC" } }
+      ],
+      pendingBySeat: { You: "duck" }
+    },
+    review: {
+      heading: "Hearts starts with locating the penalty and the winner.",
+      body:
+        "You practiced seeing that penalty points attach to the trick winner, not to the player who discarded them.",
+      points: [
+        { marker: "OK", text: "Low score is good." },
+        { marker: "OK", text: "Hearts and queen of spades are penalties." },
+        { marker: "OK", text: "The trick winner collects the danger cards." }
+      ]
+    }
+  },
+  {
+    id: "hearts-queen",
+    game: "hearts",
+    pathStepId: "hearts-queen",
+    practiceAction: "queen",
+    contract: "Hearts",
+    title: "Queen of Spades",
+    concept: {
+      heading: "The Black Lady is the expensive card.",
+      body:
+        "The queen of spades is thirteen penalty points. In many hands, the main question is whether that card can be forced into a trick you win.",
+      points: [
+        { marker: "1", text: "Notice when spades are led and high spades are still live." },
+        { marker: "2", text: "Avoid winning a spade trick that may contain the queen." },
+        { marker: "3", text: "Dump the queen only when someone else is clearly winning." }
+      ]
+    },
+    example: {
+      heading: "Spades are led and the queen can move.",
+      body:
+        "If you win this trick, you may collect the queen of spades. The safe card is often the one that follows suit without becoming the winner.",
+      sequence: [
+        { label: "Lead", text: "Left plays JS, so spades are led." },
+        { label: "Danger", text: "Right can still place QS if void or forced." },
+        { label: "Your turn", text: "Stay below the current winner when you can." }
+      ],
+      ariaLabel: "Queen of Spades example table",
+      tableCards: [
+        { seat: "Left", card: { id: "JS", rank: "J", suit: "S", label: "JS" } },
+        { seat: "Tutor", card: { id: "AS", rank: "A", suit: "S", label: "AS" } },
+        { seat: "Right", card: { id: "5S", rank: "5", suit: "S", label: "5S" } }
+      ],
+      pendingBySeat: { You: "avoid queen" }
+    },
+    review: {
+      heading: "The queen changes the value of a trick.",
+      body:
+        "You practiced treating the queen of spades as a separate danger from ordinary hearts.",
+      points: [
+        { marker: "OK", text: "Queen of spades is thirteen points." },
+        { marker: "OK", text: "Winning a clean trick is different from winning the queen." },
+        { marker: "OK", text: "Dumping the queen is good only when someone else wins." }
+      ]
+    }
+  },
+  {
+    id: "hearts-avoid",
+    game: "hearts",
+    pathStepId: "hearts-avoid",
+    practiceAction: "avoid",
+    contract: "Hearts",
+    title: "Avoid hearts",
+    concept: {
+      heading: "A heart is small, but every point matters.",
+      body:
+        "When hearts are in the trick, your goal is usually to avoid winning. Follow suit legally, then choose the card that keeps the penalty moving away from you.",
+      points: [
+        { marker: "1", text: "Find the led suit." },
+        { marker: "2", text: "Find who is currently winning." },
+        { marker: "3", text: "Play below that winner if the rules allow it." }
+      ]
+    },
+    example: {
+      heading: "A heart has been discarded into a club trick.",
+      body:
+        "Clubs were led, so a higher club wins the trick. If you have a low club, duck under the current winner and let that player take the heart.",
+      sequence: [
+        { label: "Lead", text: "Barbu leads 10C." },
+        { label: "Penalty", text: "Right discards 4H." },
+        { label: "Your turn", text: "Follow clubs without overtaking if possible." }
+      ],
+      ariaLabel: "Avoid hearts example table",
+      tableCards: [
+        { seat: "Tutor", card: { id: "10C", rank: "10", suit: "C", label: "10C" } },
+        { seat: "Right", card: { id: "4H", rank: "4", suit: "H", label: "4H" } },
+        { seat: "Left", card: { id: "7C", rank: "7", suit: "C", label: "7C" } }
+      ],
+      pendingBySeat: { You: "duck" }
+    },
+    review: {
+      heading: "Avoiding hearts is a repeated table habit.",
+      body:
+        "You practiced checking the winner before reacting to the penalty card.",
+      points: [
+        { marker: "OK", text: "Hearts score against the trick winner." },
+        { marker: "OK", text: "Following suit low can be the best defense." },
+        { marker: "OK", text: "The right move is often quiet, not flashy." }
+      ]
+    }
+  },
+  {
+    id: "hearts-pass",
+    game: "hearts",
+    pathStepId: "hearts-pass",
+    practiceAction: "pass",
+    contract: "Hearts",
+    title: "Pass three",
+    concept: {
+      heading: "Before play, move three cards out of your hand.",
+      body:
+        "Passing is your first defensive decision. Move obvious danger cards, or shape your hand so one suit becomes easier to run out of.",
+      points: [
+        { marker: "1", text: "Queen of spades and high hearts are common pass candidates." },
+        { marker: "2", text: "A long suit can be useful, so do not break it casually." },
+        { marker: "3", text: "Passing should make the first tricks easier to survive." }
+      ]
+    },
+    example: {
+      heading: "You hold the queen of spades and high hearts.",
+      body:
+        "That hand carries obvious danger. Passing Q S, A H, and K H removes cards that can trap you in expensive tricks.",
+      sequence: [
+        { label: "Danger", text: "QS can cost thirteen points." },
+        { label: "Hearts", text: "AH and KH can win heart tricks later." },
+        { label: "Pass", text: "Move the danger before play starts." }
+      ],
+      ariaLabel: "Pass three example table",
+      tableCards: [
+        { seat: "You", card: { id: "QS", rank: "Q", suit: "S", label: "QS" } },
+        { seat: "You", card: { id: "AH", rank: "A", suit: "H", label: "AH" } },
+        { seat: "You", card: { id: "KH", rank: "K", suit: "H", label: "KH" } }
+      ],
+      pendingBySeat: { You: "pass three" }
+    },
+    review: {
+      heading: "Passing shapes the hand before the first trick.",
+      body:
+        "You practiced choosing three cards for a defensive plan, not just removing random high cards.",
+      points: [
+        { marker: "OK", text: "Move obvious danger when the hand asks for it." },
+        { marker: "OK", text: "Preserving a long suit can be part of the plan." },
+        { marker: "OK", text: "The pass should make later choices easier." }
+      ]
+    }
+  },
+  {
+    id: "hearts-break",
+    game: "hearts",
+    pathStepId: "hearts-break",
+    practiceAction: "break",
+    contract: "Hearts",
+    title: "Break hearts",
+    concept: {
+      heading: "Hearts cannot be led until they are broken.",
+      body:
+        "In this Hearts table, hearts become open after a heart has been discarded into a trick. Until then, you do not lead hearts unless your hand leaves no alternative.",
+      points: [
+        { marker: "1", text: "Track whether any heart has appeared off-suit." },
+        { marker: "2", text: "Before hearts are broken, lead a non-heart if you can." },
+        { marker: "3", text: "When only hearts remain, leading hearts is legal." }
+      ]
+    },
+    example: {
+      heading: "Hearts are not broken yet.",
+      body:
+        "If you are on lead and still hold clubs, diamonds, or spades, choose one of those suits before leading a heart.",
+      sequence: [
+        { label: "State", text: "No heart has been discarded yet." },
+        { label: "Hand", text: "You still have a club." },
+        { label: "Lead", text: "Lead the club, not a heart." }
+      ],
+      ariaLabel: "Break hearts example table",
+      tableCards: [
+        { seat: "You", card: { id: "8C", rank: "8", suit: "C", label: "8C" } },
+        { seat: "You", card: { id: "9H", rank: "9", suit: "H", label: "9H" } },
+        { seat: "You", card: { id: "3H", rank: "3", suit: "H", label: "3H" } }
+      ],
+      pendingBySeat: { You: "lead legal suit" }
+    },
+    review: {
+      heading: "The broken-hearts rule controls early leads.",
+      body:
+        "You practiced checking the table state before leading a heart.",
+      points: [
+        { marker: "OK", text: "Hearts open after a heart is discarded." },
+        { marker: "OK", text: "Lead another suit while you can." },
+        { marker: "OK", text: "All-hearts hands are the exception." }
+      ]
+    }
+  },
+  {
+    id: "hearts-moon",
+    game: "hearts",
+    pathStepId: "hearts-moon",
+    practiceAction: "moon",
+    contract: "Hearts",
+    title: "Stop the moon",
+    concept: {
+      heading: "Sometimes you take points to stop a bigger swing.",
+      body:
+        "If one player is collecting every penalty, they may shoot the moon: they score zero and everyone else scores twenty-six. Taking one penalty yourself can stop that.",
+      points: [
+        { marker: "1", text: "Notice when one player has taken all penalties so far." },
+        { marker: "2", text: "If they may take the rest, stop the moon." },
+        { marker: "3", text: "A small penalty can save the table twenty-six points." }
+      ]
+    },
+    example: {
+      heading: "Left has every penalty so far.",
+      body:
+        "If Left keeps collecting, the moon may succeed. Winning one heart yourself can be the defensive move.",
+      sequence: [
+        { label: "Threat", text: "Left has all current hearts and QS." },
+        { label: "Decision", text: "You can win a small heart." },
+        { label: "Defense", text: "Take the point to break the moon." }
+      ],
+      ariaLabel: "Stop the moon example table",
+      tableCards: [
+        { seat: "Left", card: { id: "QS", rank: "Q", suit: "S", label: "QS" } },
+        { seat: "Tutor", card: { id: "7H", rank: "7", suit: "H", label: "7H" } },
+        { seat: "Right", card: { id: "4H", rank: "4", suit: "H", label: "4H" } }
+      ],
+      pendingBySeat: { You: "stop moon" }
+    },
+    review: {
+      heading: "Moon defense is the exception to pure avoidance.",
+      body:
+        "You practiced taking a controlled penalty when avoiding everything would help one opponent score zero.",
+      points: [
+        { marker: "OK", text: "Shooting the moon changes all scores." },
+        { marker: "OK", text: "One captured penalty blocks the moon." },
+        { marker: "OK", text: "Avoidance still matters when no moon threat exists." }
+      ]
+    }
+  },
+  {
+    id: "hearts-score",
+    game: "hearts",
+    pathStepId: "hearts-score",
+    practiceAction: "score",
+    contract: "Hearts",
+    title: "Score a hand",
+    concept: {
+      heading: "Count penalties, not tricks.",
+      body:
+        "Hearts scoring ignores clean tricks. Count one point for each heart, thirteen for the queen of spades, and then add the hand to the match score.",
+      points: [
+        { marker: "1", text: "Find the hearts captured by each seat." },
+        { marker: "2", text: "Add thirteen if that seat captured queen of spades." },
+        { marker: "3", text: "Low total is the current leader." }
+      ]
+    },
+    example: {
+      heading: "One trick can be worth thirteen or more.",
+      body:
+        "A trick with queen of spades and a heart is fourteen points. A clean trick is zero. That difference is why card danger matters more than trick count.",
+      sequence: [
+        { label: "Clean", text: "No hearts and no QS means zero." },
+        { label: "Heart", text: "Each heart adds one." },
+        { label: "Queen", text: "QS adds thirteen." }
+      ],
+      ariaLabel: "Hearts scoring example table",
+      tableCards: [
+        { seat: "Left", card: { id: "QS", rank: "Q", suit: "S", label: "QS" } },
+        { seat: "Right", card: { id: "7H", rank: "7", suit: "H", label: "7H" } },
+        { seat: "Tutor", card: { id: "4C", rank: "4", suit: "C", label: "4C" } }
+      ],
+      pendingBySeat: { You: "count points" }
+    },
+    review: {
+      heading: "The scorecard explains why a safe-looking trick may be bad.",
+      body:
+        "You practiced valuing the captured cards, not just counting how many tricks someone won.",
+      points: [
+        { marker: "OK", text: "Each heart is one point." },
+        { marker: "OK", text: "Queen of spades is thirteen." },
+        { marker: "OK", text: "Lowest match score leads." }
       ]
     }
   },
