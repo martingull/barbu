@@ -8,6 +8,12 @@ The long-term goal is broader than teaching rules. Barbu should help people beco
 
 This is intended as a real mobile app-store product, not a throwaway experiment. The first distribution barrier is Apple App Store and Google Play readiness, so product decisions should prioritize mobile usability, automated verification, and future monetization from the start.
 
+## License
+
+This repository is proprietary and all rights are reserved. See [LICENSE](./LICENSE).
+
+Third-party dependencies and bundled assets remain under their own licenses. Track release-critical attribution and asset checks in [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
+
 ## Learning Model
 
 Barbu combines two complementary teaching layers:
