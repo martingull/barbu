@@ -38,7 +38,7 @@
   import TablePlaySurface from "./TablePlaySurface.svelte";
   import { fullHandContractCommands, fullHandContracts } from "./contractRegistry";
   import { contractRunScore, contractScoreMeta, formatContractValue } from "./contractScoring";
-  import { courseCatalog, type CourseStage } from "./courseContent";
+  import { courseCatalog, courseTargetsGuidedLesson, type CourseContent, type CourseStage } from "./courseContent";
   import { guidedLessons } from "./lessons/catalog";
   import { referenceCatalog } from "./referenceCatalog";
   import { whistOddProgress } from "./whistScoring";
@@ -137,6 +137,19 @@
   type DrillLoopInsight = ReviewInsight & {
     heading: string;
     streakText: string;
+  };
+
+  type PracticeLaunchContext = {
+    pathStepId?: string;
+    source?: "course" | "practice";
+  };
+
+  type PracticeActionLauncher = (context?: PracticeLaunchContext) => void;
+
+  type PracticeActionRegistry = {
+    barbu: Record<BarbuPracticeAction, PracticeActionLauncher>;
+    hearts: Record<HeartsPracticeAction, PracticeActionLauncher>;
+    whist: Record<WhistPracticeAction, PracticeActionLauncher>;
   };
 
   type FullHandRunResult = {
@@ -4953,13 +4966,7 @@
       return;
     }
 
-    if (step.action === "lead") {
-      startWhistOpeningLeadLesson(step.id);
-      return;
-    }
-
-    const startPractice = whistPracticeActions[step.action];
-    startPractice(step.id);
+    practiceActionRegistry.whist[step.action]({ pathStepId: step.id, source: "course" });
   }
 
   function findNextWhistPathStep(fromStepId = "") {
@@ -5013,13 +5020,18 @@
     void startFullHand("Domino");
   }
 
-  const barbuPracticeActions: Record<BarbuPracticeAction, () => void> = {
-    quick: () => void startDailyDrill(),
-    fixed: () => {
-      activeBarbuTableTab = "practice";
-    },
-    domino: () => void startDominoPracticeHand()
-  };
+  function createPracticePanelActions<Action extends string>(
+    actions: Record<Action, PracticeActionLauncher>
+  ): Record<Action, () => void> {
+    return Object.fromEntries(
+      Object.entries(actions).map(([action, launch]) => [
+        action,
+        () => {
+          launch({ source: "practice" });
+        }
+      ])
+    ) as Record<Action, () => void>;
+  }
 
   function startBarbuRun() {
     fullHandRunActive = true;
@@ -6358,7 +6370,7 @@
   }
 
   function startCourseForLesson(lessonId: string) {
-    const course = courseCatalog.find((item) => item.lessonId === lessonId);
+    const course = courseCatalog.find((item) => courseTargetsGuidedLesson(item, lessonId));
 
     if (course) {
       startCourse(course.id);
@@ -6369,7 +6381,7 @@
   }
 
   function courseForLesson(lessonId: string) {
-    return courseCatalog.find((item) => item.lessonId === lessonId);
+    return courseCatalog.find((item) => courseTargetsGuidedLesson(item, lessonId));
   }
 
   function continueCourseContent() {
@@ -6379,19 +6391,7 @@
     }
 
     if (activeCourseStage === "example") {
-      if (activeCourse.game === "whist") {
-        startWhistCoursePractice(activeCourse.pathStepId);
-        return;
-      }
-
-      if (activeCourse.game === "hearts") {
-        startHeartsCoursePractice(activeCourse.pathStepId);
-        return;
-      }
-
-      if (activeCourse.lessonId) {
-        startLesson(activeCourse.lessonId, activeCourse.pathStepId);
-      }
+      startCoursePractice(activeCourse);
       return;
     }
 
@@ -6417,29 +6417,20 @@
     openBarbuTable();
   }
 
-  function startHeartsCoursePractice(pathStepId: string) {
-    const course = courseCatalog.find((item) => item.pathStepId === pathStepId && item.game === "hearts");
+  function startCoursePractice(course: CourseContent) {
+    const target = course.practiceTarget;
 
-    if (!course?.practiceAction) {
+    if (target.kind === "guided-lesson") {
+      startLesson(target.lessonId, course.pathStepId);
       return;
     }
 
-    heartsPracticeActions[course.practiceAction as HeartsPracticeAction](course.pathStepId);
-  }
-
-  function startWhistCoursePractice(pathStepId: string) {
-    const course = courseCatalog.find((item) => item.pathStepId === pathStepId && item.game === "whist");
-
-    if (!course?.practiceAction) {
+    if (target.game === "hearts") {
+      practiceActionRegistry.hearts[target.action]({ pathStepId: course.pathStepId, source: "course" });
       return;
     }
 
-    if (course.practiceAction === "lead") {
-      startWhistOpeningLeadLesson(course.pathStepId);
-      return;
-    }
-
-    whistPracticeActions[course.practiceAction](course.pathStepId);
+    practiceActionRegistry.whist[target.action]({ pathStepId: course.pathStepId, source: "course" });
   }
 
   async function startGeneratedDrill() {
@@ -6757,25 +6748,44 @@
     }
   }
 
-  const heartsPracticeActions: Record<HeartsPracticeAction, (pathStepId?: string) => void> = {
-    quick: () => void startHeartsQuickDrill(),
-    pass: startHeartsPassPractice,
-    first: startHeartsFirstTrickDrill,
-    avoid: startHeartsAvoidHeartsDrill,
-    queen: startHeartsQueenDangerDrill,
-    break: startHeartsBreakHeartsDrill,
-    moon: startHeartsStopMoonDrill,
-    score: startHeartsScoreHandDrill
+  const practiceActionRegistry: PracticeActionRegistry = {
+    barbu: {
+      quick: () => void startDailyDrill(),
+      fixed: () => {
+        activeBarbuTableTab = "practice";
+      },
+      domino: () => void startDominoPracticeHand()
+    },
+    hearts: {
+      quick: () => void startHeartsQuickDrill(),
+      pass: ({ pathStepId } = {}) => void startHeartsPassPractice(pathStepId),
+      first: ({ pathStepId } = {}) => void startHeartsFirstTrickDrill(pathStepId),
+      avoid: ({ pathStepId } = {}) => void startHeartsAvoidHeartsDrill(pathStepId),
+      queen: ({ pathStepId } = {}) => void startHeartsQueenDangerDrill(pathStepId),
+      break: ({ pathStepId } = {}) => void startHeartsBreakHeartsDrill(pathStepId),
+      moon: ({ pathStepId } = {}) => void startHeartsStopMoonDrill(pathStepId),
+      score: ({ pathStepId } = {}) => void startHeartsScoreHandDrill(pathStepId)
+    },
+    whist: {
+      lead: ({ pathStepId, source } = {}) => {
+        if (source === "course") {
+          startWhistOpeningLeadLesson(pathStepId);
+          return;
+        }
+
+        startWhistOpeningLeadDrill(pathStepId);
+      },
+      follow: ({ pathStepId } = {}) => startWhistFollowSuitDrill(pathStepId),
+      trump: ({ pathStepId } = {}) => startWhistTrumpOrDiscardDrill(pathStepId),
+      third: ({ pathStepId } = {}) => startWhistThirdHandHighDrill(pathStepId),
+      return: ({ pathStepId } = {}) => startWhistReturnPartnerSuitDrill(pathStepId),
+      odd: ({ pathStepId } = {}) => startWhistOddTrickDrill(pathStepId)
+    }
   };
 
-  const whistPracticeActions: Record<WhistPracticeAction, (pathStepId?: string) => void> = {
-    lead: startWhistOpeningLeadDrill,
-    follow: startWhistFollowSuitDrill,
-    trump: startWhistTrumpOrDiscardDrill,
-    third: startWhistThirdHandHighDrill,
-    return: startWhistReturnPartnerSuitDrill,
-    odd: startWhistOddTrickDrill
-  };
+  const barbuPracticeActions = createPracticePanelActions(practiceActionRegistry.barbu);
+  const heartsPracticeActions = createPracticePanelActions(practiceActionRegistry.hearts);
+  const whistPracticeActions = createPracticePanelActions(practiceActionRegistry.whist);
 
   function continueCourse() {
     if (isCourseComplete || !nextPathStep) {
@@ -6787,7 +6797,7 @@
   }
 
   function startPathStep(step: BarbuLearnPathStep) {
-    const course = courseCatalog.find((item) => item.pathStepId === step.id);
+    const course = courseCatalog.find((item) => item.game === "barbu" && item.pathStepId === step.id);
 
     if (course) {
       startCourse(course.id);

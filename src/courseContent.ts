@@ -18,12 +18,16 @@ type CourseSequenceStep = {
   text: string;
 };
 
+export type CoursePracticeTarget =
+  | { kind: "guided-lesson"; game: "barbu"; lessonId: string }
+  | { kind: "practice"; game: "hearts"; action: HeartsPracticeAction }
+  | { kind: "practice"; game: "whist"; action: WhistPracticeAction };
+
 export type CourseContent = {
   id: string;
   game: "barbu" | "hearts" | "whist";
   pathStepId: string;
-  lessonId?: string;
-  practiceAction?: HeartsPracticeAction | WhistPracticeAction;
+  practiceTarget: CoursePracticeTarget;
   contract: string;
   title: string;
   concept: CoursePanel & { points: CoursePoint[] };
@@ -36,12 +40,16 @@ export type CourseContent = {
   review: CoursePanel & { points: CoursePoint[] };
 };
 
+export function courseTargetsGuidedLesson(course: CourseContent, lessonId: string) {
+  return course.practiceTarget.kind === "guided-lesson" && course.practiceTarget.lessonId === lessonId;
+}
+
 export const courseCatalog: CourseContent[] = [
   {
     id: "no-hearts",
     game: "barbu",
     pathStepId: "meet-contract",
-    lessonId: "barbu-no-hearts",
+    practiceTarget: { kind: "guided-lesson", game: "barbu", lessonId: "barbu-no-hearts" },
     contract: "No Hearts",
     title: "Meet the contract",
     concept: {
@@ -86,7 +94,7 @@ export const courseCatalog: CourseContent[] = [
     id: "no-queens",
     game: "barbu",
     pathStepId: "spot-danger",
-    lessonId: "barbu-no-queens",
+    practiceTarget: { kind: "guided-lesson", game: "barbu", lessonId: "barbu-no-queens" },
     contract: "No Queens",
     title: "Spot the danger",
     concept: {
@@ -131,7 +139,7 @@ export const courseCatalog: CourseContent[] = [
     id: "king-of-hearts",
     game: "barbu",
     pathStepId: "play-trick",
-    lessonId: "barbu-king-of-hearts",
+    practiceTarget: { kind: "guided-lesson", game: "barbu", lessonId: "barbu-king-of-hearts" },
     contract: "King of Hearts",
     title: "Avoid the king",
     concept: {
@@ -176,7 +184,7 @@ export const courseCatalog: CourseContent[] = [
     id: "no-last-two",
     game: "barbu",
     pathStepId: "contract-no-last-two",
-    lessonId: "barbu-no-last-two",
+    practiceTarget: { kind: "guided-lesson", game: "barbu", lessonId: "barbu-no-last-two" },
     contract: "No Last Two",
     title: "Avoid the final tricks",
     concept: {
@@ -221,7 +229,7 @@ export const courseCatalog: CourseContent[] = [
     id: "no-tricks",
     game: "barbu",
     pathStepId: "contract-no-tricks",
-    lessonId: "barbu-no-tricks",
+    practiceTarget: { kind: "guided-lesson", game: "barbu", lessonId: "barbu-no-tricks" },
     contract: "No Tricks",
     title: "Avoid every trick",
     concept: {
@@ -266,7 +274,7 @@ export const courseCatalog: CourseContent[] = [
     id: "hearts-trumps",
     game: "barbu",
     pathStepId: "contract-hearts-trumps",
-    lessonId: "barbu-hearts-trumps",
+    practiceTarget: { kind: "guided-lesson", game: "barbu", lessonId: "barbu-hearts-trumps" },
     contract: "Hearts Trumps",
     title: "Use trumps",
     concept: {
@@ -311,7 +319,7 @@ export const courseCatalog: CourseContent[] = [
     id: "domino",
     game: "barbu",
     pathStepId: "contract-domino",
-    lessonId: "barbu-domino",
+    practiceTarget: { kind: "guided-lesson", game: "barbu", lessonId: "barbu-domino" },
     contract: "Domino",
     title: "Build Domino",
     concept: {
@@ -356,7 +364,7 @@ export const courseCatalog: CourseContent[] = [
     id: "hearts-object",
     game: "hearts",
     pathStepId: "hearts-object",
-    practiceAction: "avoid",
+    practiceTarget: { kind: "practice", game: "hearts", action: "avoid" },
     contract: "Hearts",
     title: "Object of Hearts",
     concept: {
@@ -401,7 +409,7 @@ export const courseCatalog: CourseContent[] = [
     id: "hearts-queen",
     game: "hearts",
     pathStepId: "hearts-queen",
-    practiceAction: "queen",
+    practiceTarget: { kind: "practice", game: "hearts", action: "queen" },
     contract: "Hearts",
     title: "Queen of Spades",
     concept: {
@@ -446,7 +454,7 @@ export const courseCatalog: CourseContent[] = [
     id: "hearts-avoid",
     game: "hearts",
     pathStepId: "hearts-avoid",
-    practiceAction: "avoid",
+    practiceTarget: { kind: "practice", game: "hearts", action: "avoid" },
     contract: "Hearts",
     title: "Avoid hearts",
     concept: {
@@ -491,7 +499,7 @@ export const courseCatalog: CourseContent[] = [
     id: "hearts-pass",
     game: "hearts",
     pathStepId: "hearts-pass",
-    practiceAction: "pass",
+    practiceTarget: { kind: "practice", game: "hearts", action: "pass" },
     contract: "Hearts",
     title: "Pass three",
     concept: {
@@ -536,7 +544,7 @@ export const courseCatalog: CourseContent[] = [
     id: "hearts-break",
     game: "hearts",
     pathStepId: "hearts-break",
-    practiceAction: "break",
+    practiceTarget: { kind: "practice", game: "hearts", action: "break" },
     contract: "Hearts",
     title: "Break hearts",
     concept: {
@@ -581,7 +589,7 @@ export const courseCatalog: CourseContent[] = [
     id: "hearts-moon",
     game: "hearts",
     pathStepId: "hearts-moon",
-    practiceAction: "moon",
+    practiceTarget: { kind: "practice", game: "hearts", action: "moon" },
     contract: "Hearts",
     title: "Stop the moon",
     concept: {
@@ -626,7 +634,7 @@ export const courseCatalog: CourseContent[] = [
     id: "hearts-score",
     game: "hearts",
     pathStepId: "hearts-score",
-    practiceAction: "score",
+    practiceTarget: { kind: "practice", game: "hearts", action: "score" },
     contract: "Hearts",
     title: "Score a hand",
     concept: {
@@ -671,7 +679,7 @@ export const courseCatalog: CourseContent[] = [
     id: "whist-object",
     game: "whist",
     pathStepId: "whist-object",
-    practiceAction: "follow",
+    practiceTarget: { kind: "practice", game: "whist", action: "follow" },
     contract: "Whist",
     title: "Win tricks together",
     concept: {
@@ -716,7 +724,7 @@ export const courseCatalog: CourseContent[] = [
     id: "whist-follow-suit",
     game: "whist",
     pathStepId: "whist-follow-suit",
-    practiceAction: "follow",
+    practiceTarget: { kind: "practice", game: "whist", action: "follow" },
     contract: "Whist",
     title: "Follow suit",
     concept: {
@@ -761,7 +769,7 @@ export const courseCatalog: CourseContent[] = [
     id: "whist-trumps",
     game: "whist",
     pathStepId: "whist-trumps",
-    practiceAction: "trump",
+    practiceTarget: { kind: "practice", game: "whist", action: "trump" },
     contract: "Whist",
     title: "Trump wins",
     concept: {
@@ -806,7 +814,7 @@ export const courseCatalog: CourseContent[] = [
     id: "whist-partner",
     game: "whist",
     pathStepId: "whist-partner",
-    practiceAction: "third",
+    practiceTarget: { kind: "practice", game: "whist", action: "third" },
     contract: "Whist",
     title: "Read your partner",
     concept: {
@@ -851,7 +859,7 @@ export const courseCatalog: CourseContent[] = [
     id: "whist-opening-lead",
     game: "whist",
     pathStepId: "whist-opening-lead",
-    practiceAction: "lead",
+    practiceTarget: { kind: "practice", game: "whist", action: "lead" },
     contract: "Whist",
     title: "Opening leads",
     concept: {
@@ -896,7 +904,7 @@ export const courseCatalog: CourseContent[] = [
     id: "whist-suit-invite",
     game: "whist",
     pathStepId: "whist-suit-invite",
-    practiceAction: "return",
+    practiceTarget: { kind: "practice", game: "whist", action: "return" },
     contract: "Whist",
     title: "Invite a suit",
     concept: {
@@ -941,7 +949,7 @@ export const courseCatalog: CourseContent[] = [
     id: "whist-odd-tricks",
     game: "whist",
     pathStepId: "whist-odd-tricks",
-    practiceAction: "odd",
+    practiceTarget: { kind: "practice", game: "whist", action: "odd" },
     contract: "Whist",
     title: "Count odd tricks",
     concept: {
