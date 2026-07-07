@@ -1205,9 +1205,10 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
   await page.getByLabel("Card Counting I exercises").getByRole("button", { name: "Danger cards" }).click();
 
   await expect(page.getByRole("heading", { name: "Danger cards" })).toBeVisible();
-  await expect(page.getByLabel("Danger cards trainer")).toContainText("Queens and KH");
+  await expect(page.getByLabel("Danger cards trainer")).toContainText("Four queens plus KH");
   await expect(page.getByLabel("Danger card memory table")).toBeVisible();
-  await expect(page.getByLabel("Danger card memory status")).toContainText("Memory run");
+  await expect(page.getByLabel("Danger cards scores")).toContainText("Barbu score");
+  await expect(page.getByLabel("Danger card memory status")).toContainText("Memory");
   await expect(page.getByLabel("Danger card memory status")).not.toContainText("Danger cards seen");
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
@@ -1221,18 +1222,18 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
     await page.getByRole("button", { name: trick === 3 ? "Answer memory" : "Next trick", exact: true }).click();
   }
 
-  await expect(page.getByLabel("Danger card memory challenge")).toContainText("Answer from memory");
+  await expect(page.getByLabel("Danger card memory challenge")).toContainText(/target card|five target cards/);
   const dangerCountAnswers = page.getByLabel("Danger card count answers").getByRole("button");
   if ((await dangerCountAnswers.count()) > 0) {
     await dangerCountAnswers.first().click();
   } else {
-    await expect(page.getByLabel(/Target danger card/)).toBeVisible();
+    await expect(page.getByLabel(/Target queen or king of hearts/)).toBeVisible();
     await page.getByLabel("Danger card specific answers").getByRole("button").first().click();
   }
   await expect(page.getByRole("button", { name: "Check memory" })).toBeEnabled();
   await page.getByRole("button", { name: "Check memory" }).click();
 
-  await expect(page.getByLabel("Danger card memory review")).toContainText("danger cards appeared");
+  await expect(page.getByLabel("Danger card memory review")).toContainText("target cards appeared");
   await expect(page.getByRole("button", { name: "Continue hand" })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath("perfect-danger-cards.png"), fullPage: true });
   await page.getByLabel("Danger cards", { exact: true }).getByRole("button", { name: "Table" }).click();

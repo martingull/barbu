@@ -2775,6 +2775,32 @@
         : {};
   $: realisticDangerSeenCards = realisticDangerRound.completedTricks.flatMap((trick) => trick.map((play) => play.card));
   $: realisticDangerSeenCount = realisticDangerSeenCards.filter(dangerCardMemoryConfig.isTrackedCard).length;
+  $: realisticDangerCapturedBySeat = dangerCardsCapturedBySeat(realisticDangerRound.completedTricks);
+  $: realisticDangerPlayerCapturedCount = realisticDangerCapturedBySeat.You;
+  $: realisticDangerPlayerAvoidedCount = realisticDangerSeenCount - realisticDangerPlayerCapturedCount;
+  $: realisticDangerGameScoreText =
+    realisticDangerPlayerCapturedCount === 1
+      ? "1 target card taken"
+      : `${realisticDangerPlayerCapturedCount} target cards taken`;
+  $: realisticDangerAvoidanceText =
+    realisticDangerSeenCount === 0
+      ? "Avoid queens and KH while you answer the memory checks."
+      : `${realisticDangerPlayerAvoidedCount} avoided, ${realisticDangerPlayerCapturedCount} taken.`;
+  $: realisticDangerMemoryPerfect = dangerCountAttempts > 0 && dangerCountClean === dangerCountAttempts;
+  $: realisticDangerBreakTitle =
+    realisticDangerPlayerCapturedCount === 0 && realisticDangerMemoryPerfect
+      ? "Clean table, sharp memory"
+      : realisticDangerPlayerCapturedCount === 0
+        ? "Clean Barbu hand"
+        : realisticDangerMemoryPerfect
+          ? "Sharp memory run"
+          : "Hand complete";
+  $: realisticDangerBreakSummary =
+    realisticDangerPlayerCapturedCount === 0 && realisticDangerSeenCount > 0
+      ? "You let the danger cards pass to other players and still kept the memory game alive."
+      : realisticDangerPlayerCapturedCount === 0
+        ? "No target cards reached you. Quiet hands still count as good discipline."
+        : "You saw the danger, but some target cards landed in your tricks. Next hand, watch the current winner before playing high.";
   $: realisticDangerPromptTitle =
     realisticDangerRound.status === "playing"
       ? "Play the trick"
@@ -4442,6 +4468,23 @@
       answer: seenCards.some((card) => card.id === targetCard.id),
       targetCard
     };
+  }
+
+  function dangerCardsCapturedBySeat(tricks: TableCard[][]): Record<Seat, number> {
+    return tricks.reduce<Record<Seat, number>>(
+      (captured, trick) => {
+        const winner = countingPlainTrickWinner(trick);
+
+        if (!winner) {
+          return captured;
+        }
+
+        captured[winner] += trick.filter((play) => dangerCardMemoryConfig.isTrackedCard(play.card)).length;
+
+        return captured;
+      },
+      { Tutor: 0, Left: 0, You: 0, Right: 0 }
+    );
   }
 
   function selectRealisticDangerCard(card: Card) {
@@ -8380,11 +8423,12 @@
     </TablePlaySurface>
   {:else if appView === "dangerCount"}
     <TablePlaySurface
-      mode="play"
+      mode={realisticDangerRound.status === "complete" ? "result" : "play"}
+      showTable={realisticDangerRound.status !== "complete"}
       ariaLabel="Danger cards trainer"
       title={dangerCardMemoryConfig.title}
       eyebrow="Card Counting I"
-      statusLabel="Score"
+      statusLabel="Memory"
       statusValue={`${dangerCountClean} of ${dangerCountAttempts}`}
       tableAriaLabel="Danger card memory table"
       pendingBySeat={realisticDangerPendingBySeat}
@@ -8394,24 +8438,56 @@
       onSurfaceClick={realisticDangerRound.status === "review" ? continueRealisticDangerRound : undefined}
     >
       {#snippet summary()}
-        <div class="trump-count-review" aria-label="Danger card memory status">
-          <span>Memory run</span>
-          <strong>{realisticDangerRound.completedTricks.length} tricks complete</strong>
-          <small>{dangerCardMemoryConfig.statusText}</small>
-        </div>
+        {#if realisticDangerRound.status !== "complete"}
+          <div class="counting-score-stack" aria-label="Danger cards scores">
+            <div class="trump-count-review" aria-label="Danger card memory status">
+              <span>Memory</span>
+              <strong>{realisticDangerRound.completedTricks.length} tricks</strong>
+              <small>{dangerCountClean} of {dangerCountAttempts} checks clean.</small>
+            </div>
+            <div class="trump-count-review" aria-label="Danger cards Barbu score">
+              <span>Barbu score</span>
+              <strong>{realisticDangerGameScoreText}</strong>
+              <small>{realisticDangerAvoidanceText}</small>
+            </div>
+          </div>
+        {/if}
       {/snippet}
 
       {#snippet panel()}
-        <div class="lesson-heading">
-          <p class="eyebrow">{dangerCardMemoryConfig.eyebrow}</p>
-          <h2>{realisticDangerPromptTitle}</h2>
-        </div>
+        {#if realisticDangerRound.status === "complete"}
+          <div class="counting-break-card" aria-label="Danger cards intermission">
+            <div class="lesson-heading">
+              <p class="eyebrow">Two games at once</p>
+              <h2>{realisticDangerBreakTitle}</h2>
+            </div>
 
-        {#if dangerCountChecked}
+            <p class="result">{realisticDangerBreakSummary}</p>
+
+            <div class="counting-break-grid">
+              <div>
+                <span>Core game</span>
+                <strong>{realisticDangerGameScoreText}</strong>
+                <small>{realisticDangerAvoidanceText}</small>
+              </div>
+              <div>
+                <span>Card counting</span>
+                <strong>{dangerCountClean} of {dangerCountAttempts}</strong>
+                <small>{realisticDangerMemoryPerfect ? "Perfect memory checks." : "Keep naming the target cards as tricks pass."}</small>
+              </div>
+            </div>
+          </div>
+        {:else}
+          <div class="lesson-heading">
+            <p class="eyebrow">{dangerCardMemoryConfig.eyebrow}</p>
+            <h2>{realisticDangerPromptTitle}</h2>
+          </div>
+
+          {#if dangerCountChecked}
           <div class="trump-count-review" aria-label="Danger card memory review">
             <span>Queens and KH seen</span>
             <strong>{realisticDangerSeenCount} of 5 target cards appeared</strong>
-            <small>{realisticDangerQuestionAnswerText(realisticDangerRound.question)}</small>
+            <small>{realisticDangerQuestionAnswerText(realisticDangerRound.question)} {realisticDangerAvoidanceText}</small>
             <div class="trump-review-cards">
               {#each realisticDangerSeenCards.filter(dangerCardMemoryConfig.isTrackedCard) as card}
                 <div class="trump-seen-card court">
@@ -8420,13 +8496,13 @@
               {/each}
             </div>
           </div>
-        {/if}
+          {/if}
 
-        <p class="result" aria-label="Danger card memory challenge">
-          {dangerCountChecked ? "Review which queens and whether the king of hearts had already left the table." : realisticDangerPromptBody}
-        </p>
+          <p class="result" aria-label="Danger card memory challenge">
+            {dangerCountChecked ? "Review which queens and whether the king of hearts had already left the table." : realisticDangerPromptBody}
+          </p>
 
-        {#if realisticDangerRound.status === "playing"}
+          {#if realisticDangerRound.status === "playing"}
           <CardChoiceHand
             cards={realisticDangerRound.hands.You}
             ariaLabel="Your danger card memory hand"
@@ -8441,9 +8517,9 @@
             isPressed={(card) => realisticDangerSelectedCardId === card.id}
             onSelect={selectRealisticDangerCard}
           />
-        {/if}
+          {/if}
 
-        {#if realisticDangerRound.status === "question" && !dangerCountChecked}
+          {#if realisticDangerRound.status === "question" && !dangerCountChecked}
           {#if realisticDangerRound.question.kind === "count"}
             <div class="trump-count-options" aria-label="Danger card count answers">
               {#each realisticDangerRound.question.options as option}
@@ -8487,12 +8563,13 @@
               </div>
             </div>
           {/if}
-        {/if}
+          {/if}
 
-        {#if dangerCountChecked}
+          {#if dangerCountChecked}
           <p class:warning={dangerCountSelected !== realisticDangerRound.question.answer} class="trump-count-feedback">
             {dangerCountFeedback}
           </p>
+          {/if}
         {/if}
 
         <div class="action-row">
