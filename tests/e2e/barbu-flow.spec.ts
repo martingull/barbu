@@ -362,7 +362,8 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
 
   await page.getByRole("button", { name: /Open Whist/ }).click();
   await expect(page.getByRole("heading", { name: "Whist table", exact: true })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Learn" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
+  await page.getByRole("tab", { name: "Learn" }).click();
   await expect(page.getByLabel("Whist lesson path")).toContainText("Win tricks together");
   await expect(page.getByLabel("Whist lesson path")).toContainText("Opening leads");
   await expect(page.getByLabel("Whist lesson path")).toContainText("Invite a suit");
@@ -528,6 +529,7 @@ test("Whist practice starts playable partnership drills", async ({ page }) => {
 test("Whist learn path opens matching practice decisions", async ({ page }, testInfo) => {
   await gotoWithPracticeSeed(page, 4);
   await page.getByRole("button", { name: /Open Whist/ }).click();
+  await page.getByRole("tab", { name: "Learn" }).click();
 
   await page.getByRole("button", { name: /^1 Concept Win tricks together/ }).click();
   await expect(page.getByRole("heading", { name: "Win tricks together" })).toBeVisible();
@@ -790,7 +792,7 @@ test("Hearts passing drill teaches the danger-card pass", async ({ page }, testI
   await page.getByRole("button", { name: "Check pass" }).click();
 
   await expect(page.getByLabel("Hearts pass practice cards")).toContainText("Good pass");
-  await expect(page.getByLabel("Hearts pass practice cards")).toContainText("Recommended: Q♠, A♥, K♥");
+  await expect(page.getByLabel("Hearts pass practice cards")).toContainText("Recommended: Q♠, K♥, A♥");
   await expect(page.getByRole("button", { name: "Next pass" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Try another" })).toHaveCount(0);
   await expectFeedbackAboveHand(page, ".hearts-pass-cards");
@@ -822,7 +824,7 @@ test("Hearts passing drill can preserve a long suit", async ({ page }) => {
   await page.getByRole("button", { name: "Check pass" }).click();
 
   await expect(page.getByLabel("Hearts pass practice cards")).toContainText("Good pass");
-  await expect(page.getByLabel("Hearts pass practice cards")).toContainText("Recommended: Q♠, A♥, K♥");
+  await expect(page.getByLabel("Hearts pass practice cards")).toContainText("Recommended: Q♠, K♥, A♥");
   await expect(page.getByRole("button", { name: "Next pass" })).toBeVisible();
 });
 
@@ -884,7 +886,9 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
   await expect(page.getByLabel("Drill decision")).toContainText(
     /Break the moon threat|Take Queen of Spades away|Take one point now/
   );
-  await completeQuickDrillDecision(page);
+  // Click the highest club to take the trick
+  await page.locator(".drill-hand .hand-card.legal").last().tap();
+  await checkDrillAnswer(page);
   await expect(page.getByLabel("Drill decision")).toContainText("Good");
   await expect(page.getByLabel("Drill decision")).toContainText("moon defense");
   await page.getByRole("button", { name: "Table" }).first().click();
@@ -894,7 +898,13 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
   await expect(page.getByLabel("Drill decision")).toContainText("Queen of Spades");
   await expect(page.getByLabel("Drill decision")).not.toContainText("No Queens");
   await expect(page.locator(".card-table .cardholder.active.occupied")).toHaveCount(2);
-  await completeQuickDrillDecision(page);
+  const qsBtn = page.getByRole("button", { name: "Q S" });
+  if (await qsBtn.count() > 0) {
+    await qsBtn.click();
+    await checkDrillAnswer(page);
+  } else {
+    await completeQuickDrillDecision(page);
+  }
   await expect(page.getByLabel("Drill decision")).toContainText("Good");
   await expect(page.getByLabel("Drill decision")).toContainText("Queen of Spades");
   await page.getByRole("button", { name: "Table" }).first().click();
@@ -1086,7 +1096,7 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
     await expect(page.getByRole("button", { name: "Check memory" })).toBeEnabled();
     await page.getByRole("button", { name: "Check memory" }).click();
     await expect(page.getByLabel("Trump count review")).toContainText("hearts appeared");
-    await expect(page.getByRole("button", { name: isFinal ? "Next round" : "Continue" })).toBeVisible();
+    await expect(page.getByRole("button", { name: isFinal ? "Review round" : "Continue" })).toBeVisible();
     await expectNoPageScroll(page);
     await expectGameplayActionRowPinned(page);
   };
@@ -1115,6 +1125,11 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
   }
 
   expect(countCheckpointIndex).toBe(3);
+  await page.getByRole("button", { name: "Review round" }).click();
+  await expect(page.getByLabel("Count trumps intermission")).toContainText(/Warm-up complete|Clean warm-up/);
+  await expect(page.getByRole("button", { name: "Next round" })).toBeVisible();
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
 
   await page.getByLabel("Count trumps", { exact: true }).getByRole("button", { name: "Table" }).click();
   await page.getByLabel("Card Counting I exercises").getByRole("button", { name: "Heart memory hand" }).click();
@@ -1134,6 +1149,7 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
       await realisticCountAnswers.first().click();
     } else {
       await expect(page.getByLabel(/Target heart card/)).toBeVisible();
+      await expectNoVerticalCollision(page, ".trump-specific-check", ".table-play-surface .action-row", 24);
       await page.getByLabel("Heart card answer options").getByRole("button").first().click();
     }
     await expect(page.getByRole("button", { name: "Check memory" })).toBeEnabled();
@@ -1161,8 +1177,15 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
   }
 
   expect(memoryChecks).toBe(3);
-  await expect(page.getByRole("heading", { name: /Damage limited|Clean hand|Barbu caught you/ })).toBeVisible();
+  if ((await page.getByRole("button", { name: "Finish hand" }).count()) > 0) {
+    await page.getByRole("button", { name: "Finish hand" }).click();
+  }
+  await expect(page.getByLabel("Heart memory intermission")).toContainText(/Heart memory hand complete|Sharp heart memory/);
+  await expect(page.getByLabel("Heart memory intermission")).toContainText("Hearts score");
+  await expect(page.getByLabel("Heart memory intermission")).toContainText(/\d+ points|1 point/);
   await expect(page.getByRole("button", { name: "Back to Card Counting" })).toBeVisible();
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
 
   await page.getByRole("button", { name: "Back to Card Counting" }).click();
   await page.getByLabel("Card Counting I exercises").getByRole("button", { name: "Track court cards" }).click();
@@ -1201,6 +1224,32 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
   await expect(page.getByRole("button", { name: "Continue hand" })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath("perfect-track-court-cards.png"), fullPage: true });
 
+  await page.getByRole("button", { name: "Continue hand" }).click();
+  for (let trick = 4; trick <= 13; trick += 1) {
+    await page.locator(".realistic-trump-hand .full-hand-card.legal").first().click();
+    await expect(page.getByRole("button", { name: "Play card" })).toBeEnabled();
+    await page.getByRole("button", { name: "Play card" }).click();
+    const isCheckpoint = [7, 11].includes(trick);
+    await page.getByRole("button", { name: trick === 13 ? "Finish hand" : isCheckpoint ? "Answer memory" : "Next trick", exact: true }).click();
+
+    if (isCheckpoint) {
+      const checkpointCountAnswers = page.getByLabel("Court card count answers").getByRole("button");
+      if ((await checkpointCountAnswers.count()) > 0) {
+        await checkpointCountAnswers.first().click();
+      } else {
+        await expect(page.getByLabel(/Target court card/)).toBeVisible();
+        await page.getByLabel("Court card specific answers").getByRole("button").first().click();
+      }
+      await page.getByRole("button", { name: "Check memory" }).click();
+      await page.getByRole("button", { name: "Continue hand" }).click();
+    }
+  }
+
+  await expect(page.getByLabel("Court cards intermission")).toContainText(/Court hand complete|Court cards remembered/);
+  await expect(page.getByRole("button", { name: "Next hand" })).toBeVisible();
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
+
   await page.getByLabel("Track court cards", { exact: true }).getByRole("button", { name: "Table" }).click();
   await page.getByLabel("Card Counting I exercises").getByRole("button", { name: "Danger cards" }).click();
 
@@ -1236,6 +1285,33 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
   await expect(page.getByLabel("Danger card memory review")).toContainText("target cards appeared");
   await expect(page.getByRole("button", { name: "Continue hand" })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath("perfect-danger-cards.png"), fullPage: true });
+
+  await page.getByRole("button", { name: "Continue hand" }).click();
+  for (let trick = 4; trick <= 13; trick += 1) {
+    await page.locator(".card-memory-hand .full-hand-card.legal").first().click();
+    await expect(page.getByRole("button", { name: "Play card" })).toBeEnabled();
+    await page.getByRole("button", { name: "Play card" }).click();
+    const isCheckpoint = [7, 11].includes(trick);
+    await page.getByRole("button", { name: trick === 13 ? "Finish hand" : isCheckpoint ? "Answer memory" : "Next trick", exact: true }).click();
+
+    if (isCheckpoint) {
+      const checkpointDangerAnswers = page.getByLabel("Danger card count answers").getByRole("button");
+      if ((await checkpointDangerAnswers.count()) > 0) {
+        await checkpointDangerAnswers.first().click();
+      } else {
+        await expect(page.getByLabel(/Target queen or king of hearts/)).toBeVisible();
+        await page.getByLabel("Danger card specific answers").getByRole("button").first().click();
+      }
+      await page.getByRole("button", { name: "Check memory" }).click();
+      await page.getByRole("button", { name: "Continue hand" }).click();
+    }
+  }
+
+  await expect(page.getByLabel("Danger cards intermission")).toContainText(/Clean table, sharp memory|Clean Barbu hand|Sharp memory run|Hand complete/);
+  await expect(page.getByRole("button", { name: "Next hand" })).toBeVisible();
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
+
   await page.getByLabel("Danger cards", { exact: true }).getByRole("button", { name: "Table" }).click();
   await expect(page.getByRole("heading", { name: "Card Counting I" })).toBeVisible();
 });
@@ -1393,6 +1469,7 @@ test("completed standalone quick drill can repair an out-of-order practice table
   await page.getByRole("button", { name: "Mark Practice table complete" }).click();
 
   await expect(page.getByRole("heading", { name: "Barbu's table" })).toBeVisible();
+  await page.getByRole("tab", { name: "Learn" }).click();
   await expect(page.getByText("9 / 9 complete")).toBeVisible();
 });
 

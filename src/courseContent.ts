@@ -1,5 +1,5 @@
 import type { Seat, TableCard } from "./lessonTypes";
-import type { HeartsPracticeAction, WhistPracticeAction } from "./tableFactory";
+
 
 export type CourseStage = "concept" | "example" | "review";
 
@@ -20,8 +20,8 @@ type CourseSequenceStep = {
 
 export type CoursePracticeTarget =
   | { kind: "guided-lesson"; game: "barbu"; lessonId: string }
-  | { kind: "practice"; game: "hearts"; action: HeartsPracticeAction }
-  | { kind: "practice"; game: "whist"; action: WhistPracticeAction };
+  | { kind: "practice"; game: "hearts"; action: string }
+  | { kind: "practice"; game: "whist"; action: string };
 
 export type CourseContent = {
   id: string;
