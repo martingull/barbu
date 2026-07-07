@@ -95,7 +95,7 @@
 
   type CardCountingTabId = "learn" | "play";
   type CardCountingReturnTarget = ActiveGameTable | "card-counting";
-  type CardCountingExerciseAction = "heart-memory" | "trump-count" | "court-count" | "danger-count";
+  type CardCountingExerciseAction = "heart-memory" | "trump-count" | "court-count" | "danger-count" | "whist-memory";
 
   type CardCountingLearnStep = {
     eyebrow: string;
@@ -304,6 +304,12 @@
     questionsAsked: number;
   };
 
+  type WhistMemoryQuestion =
+    | { kind: "trump_count"; prompt: string; answer: number; options: number[]; trumpSuit: Suit }
+    | { kind: "trump_specific"; prompt: string; answer: boolean; targetCard: Card }
+    | { kind: "boss_card"; prompt: string; answer: boolean; targetCard: Card }
+    | { kind: "void_spotter"; prompt: string; answer: Seat; targetSuit: Suit };
+
   type SavedPlayBarbuRun = {
     version: 1;
     seed: number;
@@ -421,6 +427,12 @@
       title: "Danger cards",
       summary: "Play a Barbu-style hand and remember whether any queen or KH has appeared.",
       action: "danger-count"
+    },
+    {
+      eyebrow: "Whist mechanics",
+      title: "Whist memory hand",
+      summary: "Play a Whist hand while tracking trumps, boss cards, and suit voids.",
+      action: "whist-memory"
     }
   ];
   const heartsPassPracticeTotalSteps = 2;
@@ -2026,7 +2038,7 @@
   let activeCourseStage: CourseStage = "concept";
   let activeTableTabs: Record<string, TableTabId> = {};
       let activeWhistPracticeFocus: WhistPracticeAction = "follow";
-  let whistFullHandSource: "play" | "practice" = "play";
+  let whistFullHandSource: "play" | "practice" | "card-counting" = "play";
   let whistOpeningLeadPracticeRound = 0;
   let activeCardCountingTab: CardCountingTabId = "play";
   let cardCountingReturnTarget: CardCountingReturnTarget = "barbu";
@@ -2081,7 +2093,7 @@
   let trumpCountClean = 0;
   let fullHandCardCountingMode = false;
   let fullHandCardCountingSeed = 1;
-  let fullHandCardCountingAnswer: number | boolean | null = null;
+  let fullHandCardCountingAnswer: number | boolean | Seat | null = null;
   let fullHandCardCountingChecked = false;
   let fullHandCardCountingQuestionsAsked = 0;
   let fullHandCardCountingClean = 0;
@@ -2446,17 +2458,26 @@
   );
   $: fullHandReviewFeedback = fullHandReviewTrick ? fullHandTrickFeedback(fullHandReviewTrick) : "";
   $: fullHandCardCountingActive =
-    fullHandCardCountingMode && fullHand?.contract === "Hearts" && !fullHandRunActive;
+    fullHandCardCountingMode && (fullHand?.contract === "Hearts" || fullHand?.contract === "Whist") && !fullHandRunActive;
+  $: fullHandCardCountingIsWhist = fullHandCardCountingActive && fullHand?.contract === "Whist";
+  $: fullHandCardCountingIsHearts = fullHandCardCountingActive && fullHand?.contract === "Hearts";
   $: fullHandCardCountingCompletedTricks = fullHandCardCountingActive
     ? fullHand?.completedTricks.map((trick) => trick.cards) ?? []
     : [];
   $: fullHandCardCountingQuestion =
     fullHandCardCountingActive && fullHand
-      ? buildTrumpMemoryQuestion(fullHandCardCountingCompletedTricks, fullHandCardCountingSeed + fullHand.completedTricks.length)
+      ? fullHandCardCountingIsWhist
+        ? buildWhistMemoryQuestion(
+            fullHandCardCountingCompletedTricks,
+            whistTrumpSuitFromHandId(fullHand.id),
+            fullHandCardCountingSeed + fullHand.completedTricks.length
+          )
+        : buildTrumpMemoryQuestion(fullHandCardCountingCompletedTricks, fullHandCardCountingSeed + fullHand.completedTricks.length)
       : undefined;
+  $: fullHandCardCountingCheckpoints = fullHandCardCountingIsWhist ? realisticWhistCheckpoints : realisticTrumpCheckpoints;
   $: fullHandCardCountingCheckpointIndex =
     fullHandCardCountingActive && fullHandReviewTrickCount > 0
-      ? realisticTrumpCheckpoints.indexOf(fullHandReviewTrickCount)
+      ? fullHandCardCountingCheckpoints.indexOf(fullHandReviewTrickCount)
       : -1;
   $: fullHandCardCountingPromptActive = Boolean(
     fullHandCardCountingQuestion &&
@@ -2467,33 +2488,56 @@
   $: fullHandCardCountingSeenCards = fullHandCardCountingCompletedTricks.flatMap((trick) =>
     trick.map((play) => play.card)
   );
-  $: fullHandCardCountingSeenCount = fullHandCardCountingSeenCards.filter((card) => card.suit === "H").length;
+  $: fullHandCardCountingTrackedSuit = fullHandCardCountingIsWhist && fullHand ? whistTrumpSuitFromHandId(fullHand.id) : "H";
+  $: fullHandCardCountingSeenCount = fullHandCardCountingSeenCards.filter((card) => card.suit === fullHandCardCountingTrackedSuit).length;
   $: fullHandCardCountingCoreScore = fullHandCardCountingActive
-    ? heartsScoredSeatPenalties(fullHandSeatPenalties).You
+    ? fullHandCardCountingIsWhist
+      ? whistPartnershipTricks.playerSide
+      : heartsScoredSeatPenalties(fullHandSeatPenalties).You
     : 0;
   $: fullHandCardCountingFeedback =
     fullHandCardCountingChecked && fullHandCardCountingAnswer !== null
       ? fullHandCardCountingAnswer === fullHandCardCountingQuestion?.answer
         ? "Correct. Memory held."
         : fullHandCardCountingQuestion
-          ? realisticTrumpQuestionAnswerText(fullHandCardCountingQuestion)
+          ? fullHandCardCountingAnswerText(fullHandCardCountingQuestion)
           : ""
       : "Answer from memory. Old tricks are hidden.";
+  $: fullHandCardCountingTitle = fullHandCardCountingIsWhist ? "Whist memory hand" : "Heart memory hand";
+  $: fullHandCardCountingStatusLabel = fullHandCardCountingIsWhist ? "Whist" : "Black Lady";
+  $: fullHandCardCountingQuestionTitle = fullHandCardCountingQuestion
+    ? fullHandCardCountingQuestionHeading(fullHandCardCountingQuestion)
+    : "";
+  $: fullHandCardCountingTargetLabel = fullHandCardCountingIsWhist ? "Target whist card" : "Target heart card";
+  $: fullHandCardCountingAnswerOptionsLabel = fullHandCardCountingIsWhist ? "Whist card answer options" : "Heart card answer options";
+  $: fullHandCardCountingSeenLabel = fullHandCardCountingIsWhist ? "Trumps seen so far" : "Hearts seen so far";
   $: fullHandCardCountingBreakSummary = countingBreakSummary({
     title:
-      fullHandCardCountingClean === fullHandCardCountingQuestionsAsked && fullHandCardCountingQuestionsAsked > 0
-        ? "Sharp heart memory"
-        : "Heart memory hand complete",
+      fullHandCardCountingIsWhist
+        ? fullHandCardCountingClean === fullHandCardCountingQuestionsAsked && fullHandCardCountingQuestionsAsked > 0
+          ? "Sharp Whist memory"
+          : "Whist memory hand complete"
+        : fullHandCardCountingClean === fullHandCardCountingQuestionsAsked && fullHandCardCountingQuestionsAsked > 0
+          ? "Sharp heart memory"
+          : "Heart memory hand complete",
     summary:
-      fullHandCardCountingClean === fullHandCardCountingQuestionsAsked && fullHandCardCountingQuestionsAsked > 0
-        ? "You played the Black Lady hand and kept the hearts clean in memory. That is strong table awareness."
-        : "You finished the hand while tracking hearts. Next run, keep naming the hearts as they leave the table.",
+      fullHandCardCountingIsWhist
+        ? fullHandCardCountingClean === fullHandCardCountingQuestionsAsked && fullHandCardCountingQuestionsAsked > 0
+          ? "You played the Whist hand and kept the trump and table state clean in memory. That is strong partnership awareness."
+          : "You finished a real Whist hand while tracking trump, boss cards, and voids. Next run, keep naming the table state after every trick."
+        : fullHandCardCountingClean === fullHandCardCountingQuestionsAsked && fullHandCardCountingQuestionsAsked > 0
+          ? "You played the Black Lady hand and kept the hearts clean in memory. That is strong table awareness."
+          : "You finished the hand while tracking hearts. Next run, keep naming the hearts as they leave the table.",
     firstLabel: "Card counting",
     firstValue: `${fullHandCardCountingClean} of ${fullHandCardCountingQuestionsAsked}`,
     firstDetail: "Memory checks answered cleanly.",
-    secondLabel: "Hearts score",
-    secondValue: formatPointCount(fullHandCardCountingCoreScore),
-    secondDetail: "Penalty points you took in the Black Lady hand."
+    secondLabel: fullHandCardCountingIsWhist ? "Your side" : "Hearts score",
+    secondValue: fullHandCardCountingIsWhist
+      ? `${fullHandCardCountingCoreScore} ${fullHandCardCountingCoreScore === 1 ? "trick" : "tricks"}`
+      : formatPointCount(fullHandCardCountingCoreScore),
+    secondDetail: fullHandCardCountingIsWhist
+      ? "Tricks won by You + Barbu in the Whist hand."
+      : "Penalty points you took in the Black Lady hand."
   });
   $: fullHandVisibleTableCards = fullHandIsReviewingTrick && fullHandReviewTrick
     ? fullHandReviewTrick.cards
@@ -3691,7 +3735,28 @@
       return;
     }
 
-    openDangerCountTrainer();
+    if (action === "danger-count") {
+      openDangerCountTrainer();
+      return;
+    }
+
+    openWhistMemoryTrainer();
+  }
+
+  function openWhistMemoryTrainer() {
+    rememberCardCountingReturnTarget();
+    startWhistMemoryFullHand();
+  }
+
+  function startWhistMemoryFullHand() {
+    activeGameTable = "whist";
+    whistFullHandSource = "card-counting";
+    fullHandCardCountingSeed = practiceSeed + whistMemoryConfig.seedOffset;
+    fullHandCardCountingAnswer = null;
+    fullHandCardCountingChecked = false;
+    fullHandCardCountingQuestionsAsked = 0;
+    fullHandCardCountingClean = 0;
+    void startFullHand("Whist", { cardCounting: true });
   }
 
   function buildTrumpCountRound(seed: number): TrumpCountRound {
@@ -3822,6 +3887,76 @@
       questionsAsked: 0
     });
   }
+
+  function buildWhistMemoryQuestion(tricks: TableCard[][], trumpSuit: Suit, seed: number): WhistMemoryQuestion {
+    const seenCards = tricks.flatMap((trick) => trick.map((play) => play.card));
+    const trumpSeen = seenCards.filter((card) => card.suit === trumpSuit).length;
+
+    // Detect voids
+    const voids: { seat: Seat; suit: Suit }[] = [];
+    tricks.forEach((trick) => {
+      const leadSuit = trick[0].card.suit;
+      trick.forEach((play) => {
+        if (play.card.suit !== leadSuit) {
+          voids.push({ seat: play.seat, suit: leadSuit });
+        }
+      });
+    });
+
+    const voidSpotterValid = voids.filter(v => v.seat !== "You").length > 0;
+    const lastTrick = tricks.length > 0 ? tricks[tricks.length - 1] : null;
+    const ledSuit = lastTrick ? lastTrick[0].card.suit : null;
+    const bossCardValid = ledSuit !== null && ledSuit !== trumpSuit;
+
+    const availableKinds = ["trump_count", "trump_specific"];
+    if (bossCardValid) availableKinds.push("boss_card");
+    if (voidSpotterValid) availableKinds.push("void_spotter");
+
+    const kind = availableKinds[seed % availableKinds.length];
+
+    if (kind === "void_spotter") {
+      const targetVoid = voids.filter(v => v.seat !== "You")[seed % voids.filter(v => v.seat !== "You").length];
+      return {
+        kind: "void_spotter",
+        prompt: `Who is officially out of ${suitNames[targetVoid.suit]}?`,
+        answer: targetVoid.seat,
+        targetSuit: targetVoid.suit
+      };
+    } else if (kind === "boss_card") {
+      // Find the highest unplayed card of ledSuit
+      const allSuitCards = countingRanks.map((rank) => ({ id: `${rank}${ledSuit}`, rank, suit: ledSuit as Suit, label: `${rank}${ledSuit}` }));
+      const unplayed = allSuitCards.filter(c => !seenCards.some(sc => sc.id === c.id));
+      const boss = unplayed.length > 0 ? unplayed.reduce((max, c) => countingRanks.indexOf(c.rank) > countingRanks.indexOf(max.rank) ? c : max) : allSuitCards[allSuitCards.length - 1];
+
+      return {
+        kind: "boss_card",
+        prompt: `Is the ${boss.rank} of ${suitNames[boss.suit]} currently the boss (highest unplayed) card in ${suitNames[boss.suit]}?`,
+        answer: true, // We always ask about the true boss for simplicity in this version, or we can randomise it
+        targetCard: boss
+      };
+    } else if (kind === "trump_count") {
+      return {
+        kind: "trump_count",
+        prompt: `How many ${suitNames[trumpSuit]} (trumps) have been played so far?`,
+        answer: trumpSeen,
+        options: countOptions(trumpSeen, seed, 13),
+        trumpSuit
+      };
+    } else {
+      const allTrumps = countingRanks.map((rank) => ({ id: `${rank}${trumpSuit}`, rank, suit: trumpSuit as Suit, label: `${rank}${trumpSuit}` }));
+      const targetCard = allTrumps[(seed + trumpSeen) % allTrumps.length];
+      return {
+        kind: "trump_specific",
+        prompt: `Has the ${targetCard.rank} of ${suitNames[trumpSuit]} (trump) been played so far?`,
+        answer: seenCards.some((card) => card.id === targetCard.id),
+        targetCard
+      };
+    }
+  }
+
+  const realisticWhistCheckpoints = [3, 7, 10];
+  const whistMemoryConfig = { seedOffset: 51 };
+
 
   function emptyCountingHands(): Record<Seat, Card[]> {
     return {
@@ -4200,7 +4335,7 @@
     realisticTrumpChecked = false;
   }
 
-  function selectFullHandCardCountingAnswer(answer: number | boolean) {
+  function selectFullHandCardCountingAnswer(answer: number | boolean | Seat) {
     if (fullHandCardCountingChecked) {
       return;
     }
@@ -4236,6 +4371,50 @@
   function realisticTrumpQuestionAnswerText(question: TrumpMemoryQuestion) {
     if (question.kind === "count") {
       return `${question.answer} hearts have been played so far.`;
+    }
+
+    return question.answer
+      ? `Yes. ${formatCardLabel(question.targetCard)} was played.`
+      : `No. ${formatCardLabel(question.targetCard)} was not played.`;
+  }
+
+  function fullHandCardCountingQuestionHeading(question: TrumpMemoryQuestion | WhistMemoryQuestion) {
+    if (question.kind === "count") {
+      return "How many hearts appeared?";
+    }
+    if (question.kind === "specific") {
+      return "Did this heart appear?";
+    }
+    if (question.kind === "trump_count") {
+      return "How many trumps appeared?";
+    }
+    if (question.kind === "void_spotter") {
+      return "Who is void?";
+    }
+    if (question.kind === "boss_card") {
+      return "Is this the boss card?";
+    }
+
+    return "Did this trump appear?";
+  }
+
+  function fullHandCardCountingAnswerText(question: TrumpMemoryQuestion | WhistMemoryQuestion) {
+    if (question.kind === "count") {
+      return realisticTrumpQuestionAnswerText(question);
+    }
+    if (question.kind === "specific") {
+      return realisticTrumpQuestionAnswerText(question);
+    }
+    if (question.kind === "trump_count") {
+      return `${question.answer} ${suitNames[question.trumpSuit].toLowerCase()} trumps have been played so far.`;
+    }
+    if (question.kind === "void_spotter") {
+      return `${scoreSeatLabel(question.answer)} is void in ${suitNames[question.targetSuit].toLowerCase()}.`;
+    }
+    if (question.kind === "boss_card") {
+      return question.answer
+        ? `Yes. ${formatCardLabel(question.targetCard)} is the boss card.`
+        : `No. ${formatCardLabel(question.targetCard)} is not the boss card.`;
     }
 
     return question.answer
@@ -9396,9 +9575,9 @@
       <TablePlaySurface
         mode={fullHand.status === "complete" ? "result" : "play"}
         ariaLabel={`${fullHand.contract} full hand`}
-        title={fullHandCardCountingActive ? "Heart memory hand" : `${fullHand.contract} hand`}
+        title={fullHandCardCountingActive ? fullHandCardCountingTitle : `${fullHand.contract} hand`}
         eyebrow={fullHandCardCountingActive ? "Card Counting I" : fullHandIsWhistGame ? (whistFullHandSource === "practice" ? "Whist practice" : "Play Whist") : fullHandRunActive ? "Play Barbu" : "Contract hand"}
-        statusLabel={fullHandCardCountingActive ? "Black Lady" : fullHandIsWhistGame ? "Trump" : fullHandRunStatusLabel}
+        statusLabel={fullHandCardCountingActive ? fullHandCardCountingStatusLabel : fullHandIsWhistGame ? "Trump" : fullHandRunStatusLabel}
         statusValue={fullHandCardCountingActive ? `${fullHand.completedTricks.length} / 13 tricks` : fullHandIsWhistGame ? whistTrumpSuitLabel : `${fullHand.playerPenalty} ${fullHandPlayerPenaltyLabel}`}
         tableAriaLabel={`${fullHand.contract} hand table`}
         pendingBySeat={fullHandPendingBySeat}
@@ -9502,7 +9681,7 @@
         {#snippet panel()}
           {#if fullHand.status === "complete"}
             {#if fullHandCardCountingActive}
-              <div class="counting-break-card" aria-label="Heart memory intermission">
+              <div class="counting-break-card" aria-label={`${fullHandCardCountingTitle} intermission`}>
                 <div class="lesson-heading">
                   <p class="eyebrow">Break</p>
                   <h2>{fullHandCardCountingBreakSummary.title}</h2>
@@ -9628,21 +9807,21 @@
           {:else if fullHandIsReviewingTrick}
             {#if fullHandCardCountingPromptActive && fullHandCardCountingQuestion}
               <div class="lesson-heading">
-                <p class="eyebrow">Memory check {fullHandCardCountingQuestionsAsked + 1} of {realisticTrumpCheckpoints.length}</p>
-                <h2>{fullHandCardCountingQuestion.kind === "specific" ? "Did this heart appear?" : "How many hearts appeared?"}</h2>
+                <p class="eyebrow">Memory check {fullHandCardCountingQuestionsAsked + 1} of {fullHandCardCountingCheckpoints.length}</p>
+                <h2>{fullHandCardCountingQuestionTitle}</h2>
               </div>
 
               <p class="result">{fullHandCardCountingQuestion.prompt}</p>
 
-              {#if fullHandCardCountingQuestion.kind === "specific"}
+              {#if fullHandCardCountingQuestion.kind === "specific" || fullHandCardCountingQuestion.kind === "trump_specific" || fullHandCardCountingQuestion.kind === "boss_card"}
                 <div class="trump-specific-check">
-                  <div class="trump-target-card" aria-label={`Target heart card ${formatCardLabel(fullHandCardCountingQuestion.targetCard)}`}>
+                  <div class="trump-target-card" aria-label={`${fullHandCardCountingTargetLabel} ${formatCardLabel(fullHandCardCountingQuestion.targetCard)}`}>
                     <span>Target</span>
                     <div class="trump-target-card-face">
                       <CardFace card={fullHandCardCountingQuestion.targetCard} decorative />
                     </div>
                   </div>
-                  <div class="trump-count-options trump-specific-options" aria-label="Heart card answer options">
+                  <div class="trump-count-options trump-specific-options" aria-label={fullHandCardCountingAnswerOptionsLabel}>
                     <button
                       aria-pressed={fullHandCardCountingAnswer === true}
                       class:correct={fullHandCardCountingChecked && fullHandCardCountingQuestion.answer === true}
@@ -9667,7 +9846,7 @@
                     </button>
                   </div>
                 </div>
-              {:else}
+              {:else if fullHandCardCountingQuestion.kind === "count" || fullHandCardCountingQuestion.kind === "trump_count"}
                 <div class="trump-count-options" aria-label="Trump count answer options">
                   {#each fullHandCardCountingQuestion.options as option}
                     <button
@@ -9683,14 +9862,30 @@
                     </button>
                   {/each}
                 </div>
+              {:else}
+                <div class="trump-count-options memory-answer-options" aria-label="Void spotter options">
+                  {#each ["Left", "Right", "Tutor"] as seat}
+                    <button
+                      aria-pressed={fullHandCardCountingAnswer === seat}
+                      class:correct={fullHandCardCountingChecked && fullHandCardCountingQuestion.answer === seat}
+                      class:selected={fullHandCardCountingAnswer === seat}
+                      class:wrong={fullHandCardCountingChecked && fullHandCardCountingAnswer === seat && fullHandCardCountingQuestion.answer !== seat}
+                      disabled={fullHandCardCountingChecked}
+                      onclick={() => selectFullHandCardCountingAnswer(seat as Seat)}
+                      type="button"
+                    >
+                      <strong>{seat === "Tutor" ? "Barbu" : seat}</strong>
+                    </button>
+                  {/each}
+                </div>
               {/if}
 
               <p class:warning={fullHandCardCountingChecked && fullHandCardCountingAnswer !== fullHandCardCountingQuestion.answer} class="outcome">
                 {fullHandCardCountingFeedback}
               </p>
               {#if fullHandCardCountingChecked}
-                <div class="trump-review-cards" aria-label="Hearts seen so far">
-                  {#each fullHandCardCountingSeenCards.filter((card) => card.suit === "H") as card}
+                <div class="trump-review-cards" aria-label={fullHandCardCountingSeenLabel}>
+                  {#each fullHandCardCountingSeenCards.filter((card) => card.suit === fullHandCardCountingTrackedSuit) as card}
                     <CardFace {card} />
                   {/each}
                 </div>
@@ -9730,7 +9925,7 @@
             {#if fullHand.status === "complete"}
               <button class="secondary-action" onclick={openFullHandTableTarget} type="button">Table</button>
               {#if fullHandCardCountingActive}
-                <button class="secondary-action" onclick={startTrumpMemoryFullHand} type="button">Replay</button>
+                <button class="secondary-action" onclick={fullHandCardCountingIsWhist ? startWhistMemoryFullHand : startTrumpMemoryFullHand} type="button">Replay</button>
                 <button class="primary-action" onclick={openFullHandTableTarget} type="button">Back to Card Counting</button>
               {:else if fullHandRunIsComplete}
                 <button class="secondary-action" onclick={() => void replayWeakestRunContract()} type="button">Replay weakest</button>

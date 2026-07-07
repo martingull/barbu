@@ -1193,9 +1193,9 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
   if ((await page.getByRole("button", { name: "Finish hand" }).count()) > 0) {
     await page.getByRole("button", { name: "Finish hand" }).click();
   }
-  await expect(page.getByLabel("Heart memory intermission")).toContainText(/Heart memory hand complete|Sharp heart memory/);
-  await expect(page.getByLabel("Heart memory intermission")).toContainText("Hearts score");
-  await expect(page.getByLabel("Heart memory intermission")).toContainText(/\d+ points|1 point/);
+  await expect(page.getByLabel("Heart memory hand intermission")).toContainText(/Heart memory hand complete|Sharp heart memory/);
+  await expect(page.getByLabel("Heart memory hand intermission")).toContainText("Hearts score");
+  await expect(page.getByLabel("Heart memory hand intermission")).toContainText(/\d+ points|1 point/);
   await expect(page.getByRole("button", { name: "Back to Card Counting" })).toBeVisible();
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
@@ -1353,6 +1353,53 @@ test("Heart memory hand starts from Card Counting I as a realistic table game", 
   await expect(page.getByLabel("Hearts hand table").locator(".table-card")).toHaveCount(4);
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
+});
+
+test("Whist memory hand separates trick review from memory questions", async ({ page }, testInfo) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("barbu.practiceSeed.v1", "3");
+  });
+  await page.reload();
+
+  await page.getByRole("button", { name: "Open Card Counting I" }).click();
+  await page.getByLabel("Card Counting I exercises").getByRole("button", { name: "Whist memory hand" }).click();
+
+  await expect(page.getByRole("heading", { name: "Whist memory hand" })).toBeVisible();
+  await expect(page.getByLabel("Whist full hand")).toContainText("Trump");
+  await expect(page.getByLabel("Whist hand decision")).toContainText(/Lead|Follow|void|Choose/);
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
+  await expectHandNearActionRow(page, ".full-hand-cards");
+
+  await page.locator(".full-hand-cards .full-hand-card.legal").first().click();
+  await page.getByRole("button", { name: "Play card" }).click();
+  await expect(page.getByLabel("Whist hand decision")).toContainText(/Check whether|won the trick|held the trick|won with trump/);
+  await expect(page.getByLabel("Whist hand decision")).not.toContainText(/Has the .* been played|How many .* have been played|Who is officially out/);
+  await expect(page.getByRole("button", { name: "Next trick", exact: true })).toBeVisible();
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
+
+  for (let trick = 2; trick <= 3; trick += 1) {
+    await page.getByRole("button", { name: "Next trick", exact: true }).click();
+    await page.locator(".full-hand-cards .full-hand-card.legal").first().click();
+    await page.getByRole("button", { name: "Play card" }).click();
+  }
+
+  await expect(page.getByLabel("Whist hand decision")).toContainText(/How many|Has the|Is the|Who is officially out/);
+  const answerGroups = [
+    page.getByLabel("Trump count answer options").getByRole("button"),
+    page.getByLabel("Void spotter options").getByRole("button"),
+    page.getByLabel("Whist card answer options").getByRole("button")
+  ];
+  const visibleAnswerCounts = await Promise.all(answerGroups.map((group) => group.count()));
+  expect(visibleAnswerCounts.some((count) => count > 0)).toBe(true);
+
+  const visibleGroupIndex = visibleAnswerCounts.findIndex((count) => count > 0);
+  await answerGroups[visibleGroupIndex].first().click();
+  await expect(page.getByRole("button", { name: "Check memory" })).toBeEnabled();
+  await expectNoVerticalCollision(page, ".table-play-panel .trump-count-options, .table-play-panel .trump-specific-check", ".table-play-surface .action-row", 16);
+  await page.screenshot({ path: testInfo.outputPath("perfect-whist-memory-question.png"), fullPage: true });
 });
 
 test("practice tab keeps contract hands hidden while fixed drills are public", async ({ page }, testInfo) => {
