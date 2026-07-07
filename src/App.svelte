@@ -8024,6 +8024,16 @@
         onBack={openCardCountingReturnTarget}
         onSurfaceClick={realisticTrumpRound.status === "review" ? continueRealisticTrumpRound : undefined}
       >
+        {#snippet summary()}
+          {#if realisticTrumpRound.status !== "complete"}
+            <div class="trump-count-review" aria-label="Heart memory status">
+              <span>Memory run</span>
+              <strong>{realisticTrumpRound.completedTricks.length} tricks complete</strong>
+              <small>Track hearts from memory.</small>
+            </div>
+          {/if}
+        {/snippet}
+
         {#snippet panel()}
           {#if realisticTrumpRound.status === "complete"}
             <div class="counting-break-card" aria-label="Heart memory intermission">
@@ -8081,6 +8091,7 @@
                     class:correct={realisticTrumpChecked && option === realisticTrumpRound.question.answer}
                     class:selected={realisticTrumpAnswer === option}
                     class:wrong={realisticTrumpChecked && realisticTrumpAnswer === option && option !== realisticTrumpRound.question.answer}
+                    disabled={realisticTrumpChecked}
                     onclick={() => selectRealisticTrumpAnswer(option)}
                     type="button"
                   >
@@ -8102,6 +8113,7 @@
                     class:correct={realisticTrumpChecked && realisticTrumpRound.question.answer === true}
                     class:selected={realisticTrumpAnswer === true}
                     class:wrong={realisticTrumpChecked && realisticTrumpAnswer === true && realisticTrumpRound.question.answer !== true}
+                    disabled={realisticTrumpChecked}
                     onclick={() => selectRealisticTrumpAnswer(true)}
                     type="button"
                   >
@@ -8112,6 +8124,7 @@
                     class:correct={realisticTrumpChecked && realisticTrumpRound.question.answer === false}
                     class:selected={realisticTrumpAnswer === false}
                     class:wrong={realisticTrumpChecked && realisticTrumpAnswer === false && realisticTrumpRound.question.answer !== false}
+                    disabled={realisticTrumpChecked}
                     onclick={() => selectRealisticTrumpAnswer(false)}
                     type="button"
                   >
@@ -8194,6 +8207,16 @@
       showTable={false}
       onBack={openCardCountingReturnTarget}
     >
+      {#snippet summary()}
+        {#if trumpCountStage !== "complete"}
+          <div class="trump-count-review" aria-label="Count trumps status">
+            <span>Memory run</span>
+            <strong>{trumpCountRevealIndex} tricks revealed</strong>
+            <small>Track hearts from memory.</small>
+          </div>
+        {/if}
+      {/snippet}
+
       {#snippet panel()}
         {#if trumpCountStage === "complete"}
           <div class="counting-break-card" aria-label="Count trumps intermission">
@@ -8273,7 +8296,10 @@
               {#each trumpCountQuestion.options as option}
                 <button
                   aria-pressed={trumpCountSelected === option}
+                  class:correct={trumpCountChecked && option === trumpCountQuestion.answer}
                   class:selected={trumpCountSelected === option}
+                  class:wrong={trumpCountChecked && trumpCountSelected === option && option !== trumpCountQuestion.answer}
+                  disabled={trumpCountChecked}
                   onclick={() => selectTrumpCountAnswer(option)}
                   type="button"
                 >
@@ -8292,7 +8318,10 @@
               <div class="trump-count-options trump-specific-options" aria-label="Trump specific answers">
                 <button
                   aria-pressed={trumpCountSelected === true}
+                  class:correct={trumpCountChecked && trumpCountQuestion.answer === true}
                   class:selected={trumpCountSelected === true}
+                  class:wrong={trumpCountChecked && trumpCountSelected === true && trumpCountQuestion.answer !== true}
+                  disabled={trumpCountChecked}
                   onclick={() => selectTrumpCountAnswer(true)}
                   type="button"
                 >
@@ -8300,7 +8329,10 @@
                 </button>
                 <button
                   aria-pressed={trumpCountSelected === false}
+                  class:correct={trumpCountChecked && trumpCountQuestion.answer === false}
                   class:selected={trumpCountSelected === false}
+                  class:wrong={trumpCountChecked && trumpCountSelected === false && trumpCountQuestion.answer !== false}
+                  disabled={trumpCountChecked}
                   onclick={() => selectTrumpCountAnswer(false)}
                   type="button"
                 >
@@ -8441,6 +8473,7 @@
                   class:correct={courtCountChecked && option === realisticCourtRound.question.answer}
                   class:selected={courtCountSelected === option}
                   class:wrong={courtCountChecked && courtCountSelected === option && option !== realisticCourtRound.question.answer}
+                  disabled={courtCountChecked}
                   onclick={() => selectCourtCountAnswer(option)}
                   type="button"
                 >
@@ -8462,6 +8495,7 @@
                   class:correct={courtCountChecked && realisticCourtRound.question.answer === true}
                   class:selected={courtCountSelected === true}
                   class:wrong={courtCountChecked && courtCountSelected === true && realisticCourtRound.question.answer !== true}
+                  disabled={courtCountChecked}
                   onclick={() => selectCourtCountAnswer(true)}
                   type="button"
                 >
@@ -8472,6 +8506,7 @@
                   class:correct={courtCountChecked && realisticCourtRound.question.answer === false}
                   class:selected={courtCountSelected === false}
                   class:wrong={courtCountChecked && courtCountSelected === false && realisticCourtRound.question.answer !== false}
+                  disabled={courtCountChecked}
                   onclick={() => selectCourtCountAnswer(false)}
                   type="button"
                 >
@@ -8629,7 +8664,10 @@
               {#each realisticDangerRound.question.options as option}
                 <button
                   aria-pressed={dangerCountSelected === option}
+                  class:correct={dangerCountChecked && option === realisticDangerRound.question.answer}
                   class:selected={dangerCountSelected === option}
+                  class:wrong={dangerCountChecked && dangerCountSelected === option && option !== realisticDangerRound.question.answer}
+                  disabled={dangerCountChecked}
                   onclick={() => selectDangerCountAnswer(option)}
                   type="button"
                 >
@@ -8648,21 +8686,27 @@
               <div class="trump-count-options trump-specific-options memory-answer-options" aria-label={dangerCardMemoryConfig.answerAriaLabel}>
                 <button
                   aria-pressed={dangerCountSelected === true}
+                  class:correct={dangerCountChecked && realisticDangerRound.question.answer === true}
                   class:selected={dangerCountSelected === true}
+                  class:wrong={dangerCountChecked && dangerCountSelected === true && realisticDangerRound.question.answer !== true}
+                  disabled={dangerCountChecked}
                   onclick={() => selectDangerCountAnswer(true)}
                   type="button"
                 >
                   <strong>Seen</strong>
-                  <small>Played already</small>
+                  <small>Card is gone</small>
                 </button>
                 <button
                   aria-pressed={dangerCountSelected === false}
+                  class:correct={dangerCountChecked && realisticDangerRound.question.answer === false}
                   class:selected={dangerCountSelected === false}
+                  class:wrong={dangerCountChecked && dangerCountSelected === false && realisticDangerRound.question.answer !== false}
+                  disabled={dangerCountChecked}
                   onclick={() => selectDangerCountAnswer(false)}
                   type="button"
                 >
                   <strong>Not yet</strong>
-                  <small>Still unseen</small>
+                  <small>Still out</small>
                 </button>
               </div>
             </div>
@@ -9601,7 +9645,9 @@
                   <div class="trump-count-options trump-specific-options" aria-label="Heart card answer options">
                     <button
                       aria-pressed={fullHandCardCountingAnswer === true}
+                      class:correct={fullHandCardCountingChecked && fullHandCardCountingQuestion.answer === true}
                       class:selected={fullHandCardCountingAnswer === true}
+                      class:wrong={fullHandCardCountingChecked && fullHandCardCountingAnswer === true && fullHandCardCountingQuestion.answer !== true}
                       disabled={fullHandCardCountingChecked}
                       onclick={() => selectFullHandCardCountingAnswer(true)}
                       type="button"
@@ -9610,7 +9656,9 @@
                     </button>
                     <button
                       aria-pressed={fullHandCardCountingAnswer === false}
+                      class:correct={fullHandCardCountingChecked && fullHandCardCountingQuestion.answer === false}
                       class:selected={fullHandCardCountingAnswer === false}
+                      class:wrong={fullHandCardCountingChecked && fullHandCardCountingAnswer === false && fullHandCardCountingQuestion.answer !== false}
                       disabled={fullHandCardCountingChecked}
                       onclick={() => selectFullHandCardCountingAnswer(false)}
                       type="button"
@@ -9623,7 +9671,10 @@
                 <div class="trump-count-options" aria-label="Trump count answer options">
                   {#each fullHandCardCountingQuestion.options as option}
                     <button
-                      class:active={fullHandCardCountingAnswer === option}
+                      aria-pressed={fullHandCardCountingAnswer === option}
+                      class:correct={fullHandCardCountingChecked && option === fullHandCardCountingQuestion.answer}
+                      class:selected={fullHandCardCountingAnswer === option}
+                      class:wrong={fullHandCardCountingChecked && fullHandCardCountingAnswer === option && option !== fullHandCardCountingQuestion.answer}
                       disabled={fullHandCardCountingChecked}
                       onclick={() => selectFullHandCardCountingAnswer(option)}
                       type="button"
