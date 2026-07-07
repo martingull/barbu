@@ -3647,6 +3647,10 @@ h2 {
     background: transparent;
   }
 
+  .fixed-play-screen .table-play-surface.compact-result.table-hidden .table-play-panel:has(.counting-break-card) .action-row {
+    grid-template-columns: 0.72fr 1fr;
+  }
+
   .domino-result-card {
     display: grid;
     gap: 10px;

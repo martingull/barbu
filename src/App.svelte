@@ -4207,6 +4207,30 @@
     );
   }
 
+  function chooseDangerCardAutoPlainCard(hand: Card[], currentTrick: TableCard[], seat: Seat) {
+    const ledSuit = currentTrick[0]?.card.suit;
+    const legal = countingLegalCards(hand, ledSuit);
+    const winningCards = [...legal]
+      .filter((card) => countingCardWouldWinPlainTrick(currentTrick, card, seat))
+      .sort(compareCountingCards);
+
+    if (winningCards.length > 0) {
+      return winningCards.find((card) => !dangerCardMemoryConfig.isTrackedCard(card)) ?? winningCards[0];
+    }
+
+    return [...legal]
+      .sort((left, right) => {
+        const leftDanger = dangerCardMemoryConfig.isTrackedCard(left) ? 1 : 0;
+        const rightDanger = dangerCardMemoryConfig.isTrackedCard(right) ? 1 : 0;
+
+        if (leftDanger !== rightDanger) {
+          return leftDanger - rightDanger;
+        }
+
+        return compareCountingCards(left, right);
+      })[0];
+  }
+
   function countingPlainTrickWinner(trick: TableCard[]): Seat | undefined {
     const ledSuit = trick[0]?.card.suit;
     const candidates = trick.filter((play) => play.card.suit === ledSuit);
@@ -4419,7 +4443,7 @@
         break;
       }
 
-      const card = chooseCountingAutoPlainCard(hands[seat], currentTrick, seat);
+      const card = chooseDangerCardAutoPlainCard(hands[seat], currentTrick, seat);
       removeCountingCard(hands, seat, card.id);
       currentTrick.push({ seat, card });
     }
@@ -4515,7 +4539,7 @@
     const remainingSeats = playerTurnIndex >= 0 ? playOrder.slice(playerTurnIndex + 1) : [];
 
     for (const seat of remainingSeats) {
-      const card = chooseCountingAutoPlainCard(hands[seat], completedTrick, seat);
+      const card = chooseDangerCardAutoPlainCard(hands[seat], completedTrick, seat);
       removeCountingCard(hands, seat, card.id);
       completedTrick.push({ seat, card });
     }
