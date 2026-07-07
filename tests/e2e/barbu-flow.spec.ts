@@ -1157,7 +1157,7 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
 
   const answerRealisticTrumpCheck = async () => {
     await expect(page.getByLabel("Hearts hand decision")).toContainText(/How many hearts|Did this heart/);
-    const realisticCountAnswers = page.getByLabel("Trump count answer options").getByRole("button");
+    const realisticCountAnswers = page.getByLabel("Heart count answer options").getByRole("button");
     if ((await realisticCountAnswers.count()) > 0) {
       await realisticCountAnswers.first().click();
     } else {
@@ -1267,65 +1267,68 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
   await page.getByLabel("Card Counting I exercises").getByRole("button", { name: "Danger cards" }).click();
 
   await expect(page.getByRole("heading", { name: "Danger cards" })).toBeVisible();
-  await expect(page.getByLabel("Danger cards trainer")).toContainText("Four queens plus KH");
-  await expect(page.getByLabel("Danger card memory table")).toBeVisible();
-  await expect(page.getByLabel("Danger cards scores")).toContainText("Barbu score");
-  await expect(page.getByLabel("Danger card memory status")).toContainText("Memory");
-  await expect(page.getByLabel("Danger card memory status")).not.toContainText("Danger cards seen");
+  await expect(page.getByLabel("No Queens full hand")).toBeVisible();
+  await expect(page.getByLabel("No Queens hand table")).toBeVisible();
+  await expect(page.getByLabel("No Queens hand score")).toContainText("Your penalty");
+  await expect(page.getByLabel("No Queens hand decision")).toContainText(/Lead|Follow|void|Choose/);
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
-  await expectHandNearActionRow(page, ".card-memory-hand");
-  await expectFeedbackAboveHand(page, ".card-memory-hand");
+  await expectHandNearActionRow(page, ".full-hand-cards");
+  await expectFeedbackAboveHand(page, ".full-hand-cards");
 
   for (let trick = 1; trick <= 3; trick += 1) {
-    await page.locator(".card-memory-hand .full-hand-card.legal").first().click();
+    await page.locator(".full-hand-cards .full-hand-card.legal").first().click();
     await expect(page.getByRole("button", { name: "Play card" })).toBeEnabled();
     await page.getByRole("button", { name: "Play card" }).click();
-    await page.getByRole("button", { name: trick === 3 ? "Answer memory" : "Next trick", exact: true }).click();
+    if (trick < 3) {
+      await page.getByRole("button", { name: "Next trick", exact: true }).click();
+    }
   }
 
-  await expect(page.getByLabel("Danger card memory challenge")).toContainText(/target card|five target cards/);
+  await expect(page.getByLabel("No Queens hand decision")).toContainText(/How many queens|Has this queen/);
   const dangerCountAnswers = page.getByLabel("Danger card count answers").getByRole("button");
   if ((await dangerCountAnswers.count()) > 0) {
     await dangerCountAnswers.first().click();
   } else {
-    await expect(page.getByLabel(/Target queen or king of hearts/)).toBeVisible();
+    await expect(page.getByLabel(/Target queen/)).toBeVisible();
     await page.getByLabel("Danger card specific answers").getByRole("button").first().click();
   }
   await expect(page.getByRole("button", { name: "Check memory" })).toBeEnabled();
   await page.getByRole("button", { name: "Check memory" }).click();
 
-  await expect(page.getByLabel("Danger card memory review")).toContainText("target cards appeared");
-  await expect(page.getByRole("button", { name: "Continue hand" })).toBeVisible();
+  await expect(page.getByLabel("No Queens hand decision")).toContainText(/Correct|queens have been played|was played|was not played/);
+  await expect(page.getByRole("button", { name: "Next trick", exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath("perfect-danger-cards.png"), fullPage: true });
 
-  await page.getByRole("button", { name: "Continue hand" }).click();
+  await page.getByRole("button", { name: "Next trick", exact: true }).click();
   for (let trick = 4; trick <= 13; trick += 1) {
-    await page.locator(".card-memory-hand .full-hand-card.legal").first().click();
+    await page.locator(".full-hand-cards .full-hand-card.legal").first().click();
     await expect(page.getByRole("button", { name: "Play card" })).toBeEnabled();
     await page.getByRole("button", { name: "Play card" }).click();
     const isCheckpoint = [7, 11].includes(trick);
-    await page.getByRole("button", { name: trick === 13 ? "Finish hand" : isCheckpoint ? "Answer memory" : "Next trick", exact: true }).click();
 
     if (isCheckpoint) {
       const checkpointDangerAnswers = page.getByLabel("Danger card count answers").getByRole("button");
       if ((await checkpointDangerAnswers.count()) > 0) {
         await checkpointDangerAnswers.first().click();
       } else {
-        await expect(page.getByLabel(/Target queen or king of hearts/)).toBeVisible();
+        await expect(page.getByLabel(/Target queen/)).toBeVisible();
         await page.getByLabel("Danger card specific answers").getByRole("button").first().click();
       }
       await page.getByRole("button", { name: "Check memory" }).click();
-      await page.getByRole("button", { name: "Continue hand" }).click();
+      await page.getByRole("button", { name: "Next trick", exact: true }).click();
+    } else if (trick < 13) {
+      await page.getByRole("button", { name: "Next trick", exact: true }).click();
     }
   }
 
-  await expect(page.getByLabel("Danger cards intermission")).toContainText(/Clean table, sharp memory|Clean Barbu hand|Sharp memory run|Hand complete/);
-  await expect(page.getByRole("button", { name: "Next hand" })).toBeVisible();
+  await expect(page.getByLabel("Danger cards intermission")).toContainText(/Clean queen memory|Danger cards hand complete/);
+  await expect(page.getByRole("button", { name: "Replay" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Back to Card Counting" })).toBeVisible();
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
 
-  await page.getByLabel("Danger cards", { exact: true }).getByRole("button", { name: "Table" }).click();
+  await page.getByRole("button", { name: "Back to Card Counting" }).click();
   await expect(page.getByRole("heading", { name: "Card Counting I" })).toBeVisible();
 });
 

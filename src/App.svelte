@@ -90,7 +90,6 @@
     | "trumpCount"
     | "trumpMemory"
     | "courtCount"
-    | "dangerCount"
     | "pathReview";
 
   type CardCountingTabId = "learn" | "play";
@@ -294,16 +293,6 @@
 
   type DangerMemoryQuestion = CourtMemoryQuestion;
 
-  type RealisticDangerRound = {
-    hands: Record<Seat, Card[]>;
-    currentLeader: Seat;
-    currentTrick: TableCard[];
-    completedTricks: TableCard[][];
-    status: "playing" | "review" | "question" | "complete";
-    question: DangerMemoryQuestion;
-    questionsAsked: number;
-  };
-
   type WhistMemoryQuestion =
     | { kind: "trump_count"; prompt: string; answer: number; options: number[]; trumpSuit: Suit }
     | { kind: "trump_specific"; prompt: string; answer: boolean; targetCard: Card }
@@ -423,9 +412,9 @@
       action: "court-count"
     },
     {
-      eyebrow: "Barbu contracts",
+      eyebrow: "No Queens memory",
       title: "Danger cards",
-      summary: "Play a Barbu-style hand and remember whether any queen or KH has appeared.",
+      summary: "Play a real No Queens hand. Avoid winning queens while remembering which queens are already gone.",
       action: "danger-count"
     },
     {
@@ -440,28 +429,26 @@
   const countingSuits: Suit[] = ["C", "D", "H", "S"];
   const dangerCardMemoryConfig: CardMemoryExerciseConfig = {
     title: "Danger cards",
-    eyebrow: "Four queens plus KH",
-    statusText: "Remember the queens and the king of hearts that have already been played.",
-    trackedCardsLabel: "queens and KH",
-    challengeLabel: "Danger card memory challenge",
-    leadPrompt: "Lead the trick. Count only queens and the king of hearts as danger cards.",
-    followPrompt: "Follow suit and remember whether this trick contains a queen or KH.",
-    voidPrompt: "Play any card. If you see a queen or KH, keep it in memory.",
-    countPrompt: "How many of the five target cards have been played so far?",
-    specificPrompt: "Has this target card been played?",
-    targetAriaLabel: "Target queen or king of hearts",
+    eyebrow: "No Queens",
+    statusText: "Play No Queens and keep the four queens in memory.",
+    trackedCardsLabel: "queens",
+    challengeLabel: "Queen memory challenge",
+    leadPrompt: "Lead safely. In No Queens, every queen you win is a penalty.",
+    followPrompt: "Follow suit and watch whether a queen can fall into this trick.",
+    voidPrompt: "You are void. Shed danger if you can, and remember which queens leave the table.",
+    countPrompt: "How many queens have been played so far?",
+    specificPrompt: "Has this queen been played yet?",
+    targetAriaLabel: "Target queen",
     answerAriaLabel: "Danger card specific answers",
-    countMax: 5,
+    countMax: 4,
     seedOffset: 151,
-    targetCards: countingSuits
-      .map((suit) => ({
-        id: `Q${suit}`,
-        rank: "Q" as const,
-        suit,
-        label: `Q${suit}`
-      }))
-      .concat([{ id: "KH", rank: "K" as const, suit: "H" as const, label: "KH" }]),
-    isTrackedCard: (card) => card.rank === "Q" || card.id === "KH"
+    targetCards: countingSuits.map((suit) => ({
+      id: `Q${suit}`,
+      rank: "Q" as const,
+      suit,
+      label: `Q${suit}`
+    })),
+    isTrackedCard: (card) => card.rank === "Q"
   };
   const dominoOrderScores = [45, 20, 5, -5];
   const heartsHandPenaltyTotal = 26;
@@ -2107,12 +2094,6 @@
   let courtCountChecked = false;
   let courtCountAttempts = 0;
   let courtCountClean = 0;
-  let realisticDangerRound = buildRealisticDangerRound(practiceSeed + 41);
-  let realisticDangerSelectedCardId = "";
-  let dangerCountSelected: number | boolean | null = null;
-  let dangerCountChecked = false;
-  let dangerCountAttempts = 0;
-  let dangerCountClean = 0;
   $: isTablePlayScreen =
     appView === "drill" ||
     appView === "heartsPass" ||
@@ -2121,7 +2102,6 @@
     appView === "dominoHand" ||
     appView === "trumpCount" ||
     appView === "courtCount" ||
-    appView === "dangerCount" ||
     appView === "trumpMemory";
 
   function runSeatScores(results: FullHandRunResult[]) {
@@ -2458,9 +2438,12 @@
   );
   $: fullHandReviewFeedback = fullHandReviewTrick ? fullHandTrickFeedback(fullHandReviewTrick) : "";
   $: fullHandCardCountingActive =
-    fullHandCardCountingMode && (fullHand?.contract === "Hearts" || fullHand?.contract === "Whist") && !fullHandRunActive;
+    fullHandCardCountingMode &&
+    (fullHand?.contract === "Hearts" || fullHand?.contract === "Whist" || fullHand?.contract === "No Queens") &&
+    !fullHandRunActive;
   $: fullHandCardCountingIsWhist = fullHandCardCountingActive && fullHand?.contract === "Whist";
   $: fullHandCardCountingIsHearts = fullHandCardCountingActive && fullHand?.contract === "Hearts";
+  $: fullHandCardCountingIsDanger = fullHandCardCountingActive && fullHand?.contract === "No Queens";
   $: fullHandCardCountingCompletedTricks = fullHandCardCountingActive
     ? fullHand?.completedTricks.map((trick) => trick.cards) ?? []
     : [];
@@ -2472,6 +2455,11 @@
             whistTrumpSuitFromHandId(fullHand.id),
             fullHandCardCountingSeed + fullHand.completedTricks.length
           )
+        : fullHandCardCountingIsDanger
+          ? buildDangerMemoryQuestion(
+              fullHandCardCountingCompletedTricks,
+              fullHandCardCountingSeed + fullHand.completedTricks.length
+            )
         : buildTrumpMemoryQuestion(fullHandCardCountingCompletedTricks, fullHandCardCountingSeed + fullHand.completedTricks.length)
       : undefined;
   $: fullHandCardCountingCheckpoints = fullHandCardCountingIsWhist ? realisticWhistCheckpoints : realisticTrumpCheckpoints;
@@ -2489,34 +2477,68 @@
     trick.map((play) => play.card)
   );
   $: fullHandCardCountingTrackedSuit = fullHandCardCountingIsWhist && fullHand ? whistTrumpSuitFromHandId(fullHand.id) : "H";
-  $: fullHandCardCountingSeenCount = fullHandCardCountingSeenCards.filter((card) => card.suit === fullHandCardCountingTrackedSuit).length;
+  $: fullHandCardCountingReviewCards = fullHandCardCountingIsDanger
+    ? fullHandCardCountingSeenCards.filter(dangerCardMemoryConfig.isTrackedCard)
+    : fullHandCardCountingSeenCards.filter((card) => card.suit === fullHandCardCountingTrackedSuit);
+  $: fullHandCardCountingSeenCount = fullHandCardCountingReviewCards.length;
   $: fullHandCardCountingCoreScore = fullHandCardCountingActive
     ? fullHandCardCountingIsWhist
       ? whistPartnershipTricks.playerSide
-      : heartsScoredSeatPenalties(fullHandSeatPenalties).You
+      : fullHandCardCountingIsDanger
+        ? fullHandSeatPenalties.You
+        : heartsScoredSeatPenalties(fullHandSeatPenalties).You
     : 0;
   $: fullHandCardCountingFeedback =
     fullHandCardCountingChecked && fullHandCardCountingAnswer !== null
       ? fullHandCardCountingAnswer === fullHandCardCountingQuestion?.answer
         ? "Correct. Memory held."
         : fullHandCardCountingQuestion
-          ? fullHandCardCountingAnswerText(fullHandCardCountingQuestion)
+          ? fullHandCardCountingAnswerText(fullHandCardCountingQuestion, fullHandCardCountingIsDanger)
           : ""
       : "Answer from memory. Old tricks are hidden.";
-  $: fullHandCardCountingTitle = fullHandCardCountingIsWhist ? "Whist memory hand" : "Heart memory hand";
-  $: fullHandCardCountingStatusLabel = fullHandCardCountingIsWhist ? "Whist" : "Black Lady";
+  $: fullHandCardCountingTitle = fullHandCardCountingIsWhist
+    ? "Whist memory hand"
+    : fullHandCardCountingIsDanger
+      ? "Danger cards"
+      : "Heart memory hand";
+  $: fullHandCardCountingStatusLabel = fullHandCardCountingIsWhist
+    ? "Whist"
+    : fullHandCardCountingIsDanger
+      ? "No Queens"
+      : "Black Lady";
   $: fullHandCardCountingQuestionTitle = fullHandCardCountingQuestion
-    ? fullHandCardCountingQuestionHeading(fullHandCardCountingQuestion)
+    ? fullHandCardCountingQuestionHeading(fullHandCardCountingQuestion, fullHandCardCountingIsDanger)
     : "";
-  $: fullHandCardCountingTargetLabel = fullHandCardCountingIsWhist ? "Target whist card" : "Target heart card";
-  $: fullHandCardCountingAnswerOptionsLabel = fullHandCardCountingIsWhist ? "Whist card answer options" : "Heart card answer options";
-  $: fullHandCardCountingSeenLabel = fullHandCardCountingIsWhist ? "Trumps seen so far" : "Hearts seen so far";
+  $: fullHandCardCountingTargetLabel = fullHandCardCountingIsWhist
+    ? "Target whist card"
+    : fullHandCardCountingIsDanger
+      ? dangerCardMemoryConfig.targetAriaLabel
+      : "Target heart card";
+  $: fullHandCardCountingAnswerOptionsLabel = fullHandCardCountingIsWhist
+    ? "Whist card answer options"
+    : fullHandCardCountingIsDanger
+      ? dangerCardMemoryConfig.answerAriaLabel
+      : "Heart card answer options";
+  $: fullHandCardCountingCountOptionsLabel = fullHandCardCountingIsDanger
+    ? "Danger card count answers"
+    : fullHandCardCountingIsWhist
+      ? "Whist count answer options"
+      : "Heart count answer options";
+  $: fullHandCardCountingSeenLabel = fullHandCardCountingIsWhist
+    ? "Trumps seen so far"
+    : fullHandCardCountingIsDanger
+      ? "Queens seen so far"
+      : "Hearts seen so far";
   $: fullHandCardCountingBreakSummary = countingBreakSummary({
     title:
       fullHandCardCountingIsWhist
         ? fullHandCardCountingClean === fullHandCardCountingQuestionsAsked && fullHandCardCountingQuestionsAsked > 0
           ? "Sharp Whist memory"
           : "Whist memory hand complete"
+        : fullHandCardCountingIsDanger
+          ? fullHandCardCountingClean === fullHandCardCountingQuestionsAsked && fullHandCardCountingQuestionsAsked > 0
+            ? "Clean queen memory"
+            : "Danger cards hand complete"
         : fullHandCardCountingClean === fullHandCardCountingQuestionsAsked && fullHandCardCountingQuestionsAsked > 0
           ? "Sharp heart memory"
           : "Heart memory hand complete",
@@ -2525,18 +2547,24 @@
         ? fullHandCardCountingClean === fullHandCardCountingQuestionsAsked && fullHandCardCountingQuestionsAsked > 0
           ? "You played the Whist hand and kept the trump and table state clean in memory. That is strong partnership awareness."
           : "You finished a real Whist hand while tracking trump, boss cards, and voids. Next run, keep naming the table state after every trick."
+        : fullHandCardCountingIsDanger
+          ? fullHandCardCountingClean === fullHandCardCountingQuestionsAsked && fullHandCardCountingQuestionsAsked > 0
+            ? "You played No Queens and kept the queen map clean. That is exactly the awareness this contract rewards."
+            : "You finished a real No Queens hand while tracking which queens were already gone. Next run, name every queen as it leaves the table."
         : fullHandCardCountingClean === fullHandCardCountingQuestionsAsked && fullHandCardCountingQuestionsAsked > 0
           ? "You played the Black Lady hand and kept the hearts clean in memory. That is strong table awareness."
           : "You finished the hand while tracking hearts. Next run, keep naming the hearts as they leave the table.",
     firstLabel: "Card counting",
     firstValue: `${fullHandCardCountingClean} of ${fullHandCardCountingQuestionsAsked}`,
     firstDetail: "Memory checks answered cleanly.",
-    secondLabel: fullHandCardCountingIsWhist ? "Your side" : "Hearts score",
+    secondLabel: fullHandCardCountingIsWhist ? "Your side" : fullHandCardCountingIsDanger ? "Queens taken" : "Hearts score",
     secondValue: fullHandCardCountingIsWhist
       ? `${fullHandCardCountingCoreScore} ${fullHandCardCountingCoreScore === 1 ? "trick" : "tricks"}`
       : formatPointCount(fullHandCardCountingCoreScore),
     secondDetail: fullHandCardCountingIsWhist
       ? "Tricks won by You + Barbu in the Whist hand."
+      : fullHandCardCountingIsDanger
+        ? "Queen penalties you captured in the No Queens hand."
       : "Penalty points you took in the Black Lady hand."
   });
   $: fullHandVisibleTableCards = fullHandIsReviewingTrick && fullHandReviewTrick
@@ -2861,70 +2889,6 @@
         : realisticCourtRound.status === "complete"
           ? `You answered ${courtCountClean} of ${courtCountAttempts} court-card checks cleanly.`
           : "The trick is complete. Keep the court cards in memory.";
-  $: dangerCountFeedback =
-    dangerCountChecked && dangerCountSelected !== null
-      ? dangerCountSelected === realisticDangerRound.question.answer
-        ? "Correct."
-        : "Not this time."
-      : `${dangerCardMemoryConfig.statusText}`;
-  $: realisticDangerSelectedCard = realisticDangerRound.hands.You.find((card) => card.id === realisticDangerSelectedCardId);
-  $: realisticDangerLedSuit = realisticDangerRound.currentTrick[0]?.card.suit;
-  $: realisticDangerLegalCards = countingLegalCards(realisticDangerRound.hands.You, realisticDangerLedSuit);
-  $: realisticDangerTableCards =
-    realisticDangerRound.status === "question" || realisticDangerRound.status === "complete"
-      ? []
-      : realisticDangerRound.currentTrick;
-  $: realisticDangerPendingBySeat =
-    realisticDangerRound.status === "question" || realisticDangerRound.status === "complete"
-      ? { Tutor: "Barbu", Right: "Right", You: "You", Left: "Left" }
-      : realisticDangerRound.status === "playing"
-        ? pendingCountingSeats(realisticDangerRound)
-        : {};
-  $: realisticDangerSeenCards = realisticDangerRound.completedTricks.flatMap((trick) => trick.map((play) => play.card));
-  $: realisticDangerSeenCount = realisticDangerSeenCards.filter(dangerCardMemoryConfig.isTrackedCard).length;
-  $: realisticDangerCapturedBySeat = dangerCardsCapturedBySeat(realisticDangerRound.completedTricks);
-  $: realisticDangerPlayerCapturedCount = realisticDangerCapturedBySeat.You;
-  $: realisticDangerPlayerAvoidedCount = realisticDangerSeenCount - realisticDangerPlayerCapturedCount;
-  $: realisticDangerGameScoreText =
-    realisticDangerPlayerCapturedCount === 1
-      ? "1 target card taken"
-      : `${realisticDangerPlayerCapturedCount} target cards taken`;
-  $: realisticDangerAvoidanceText =
-    realisticDangerSeenCount === 0
-      ? "Avoid queens and KH while you answer the memory checks."
-      : `${realisticDangerPlayerAvoidedCount} avoided, ${realisticDangerPlayerCapturedCount} taken.`;
-  $: realisticDangerMemoryPerfect = dangerCountAttempts > 0 && dangerCountClean === dangerCountAttempts;
-  $: realisticDangerBreakTitle =
-    realisticDangerPlayerCapturedCount === 0 && realisticDangerMemoryPerfect
-      ? "Clean table, sharp memory"
-      : realisticDangerPlayerCapturedCount === 0
-        ? "Clean Barbu hand"
-        : realisticDangerMemoryPerfect
-          ? "Sharp memory run"
-          : "Hand complete";
-  $: realisticDangerBreakSummary =
-    realisticDangerPlayerCapturedCount === 0 && realisticDangerSeenCount > 0
-      ? "You let the danger cards pass to other players and still kept the memory game alive."
-      : realisticDangerPlayerCapturedCount === 0
-        ? "No target cards reached you. Quiet hands still count as good discipline."
-        : "You saw the danger, but some target cards landed in your tricks. Next hand, watch the current winner before playing high.";
-  $: realisticDangerPromptTitle =
-    realisticDangerRound.status === "playing"
-      ? "Play the trick"
-      : realisticDangerRound.status === "question"
-        ? realisticDangerRound.question.prompt
-        : realisticDangerRound.status === "complete"
-          ? "Danger memory complete"
-          : "Watch the table";
-  $: realisticDangerPromptBody =
-    realisticDangerRound.status === "playing"
-      ? realisticDangerPlayPrompt(realisticDangerRound)
-      : realisticDangerRound.status === "question"
-        ? realisticDangerRound.question.prompt
-        : realisticDangerRound.status === "complete"
-          ? `You answered ${dangerCountClean} of ${dangerCountAttempts} ${dangerCardMemoryConfig.trackedCardsLabel} checks cleanly.`
-          : `The trick is complete. Keep the ${dangerCardMemoryConfig.trackedCardsLabel} in memory.`;
-
   function loadCourseProgress() {
     if (typeof localStorage === "undefined") {
       return {};
@@ -3712,11 +3676,17 @@
 
   function openDangerCountTrainer() {
     rememberCardCountingReturnTarget();
-    realisticDangerRound = buildRealisticDangerRound(usePracticeSeed());
-    realisticDangerSelectedCardId = "";
-    dangerCountSelected = null;
-    dangerCountChecked = false;
-    appView = "dangerCount";
+    activeGameTable = "barbu";
+    startDangerCardsFullHand();
+  }
+
+  function startDangerCardsFullHand() {
+    fullHandCardCountingSeed = practiceSeed + dangerCardMemoryConfig.seedOffset;
+    fullHandCardCountingAnswer = null;
+    fullHandCardCountingChecked = false;
+    fullHandCardCountingQuestionsAsked = 0;
+    fullHandCardCountingClean = 0;
+    void startFullHand("No Queens", { cardCounting: true });
   }
 
   function openCardCountingExercise(action: CardCountingExerciseAction) {
@@ -3861,29 +3831,6 @@
       completedTricks: [],
       status: "playing",
       question: buildCourtMemoryQuestion([], seed),
-      questionsAsked: 0
-    });
-  }
-
-  function buildRealisticDangerRound(seed: number): RealisticDangerRound {
-    const deck = shuffleCountingDeck(seed + dangerCardMemoryConfig.seedOffset);
-    const hands = emptyCountingHands();
-
-    deck.forEach((card, index) => {
-      hands[countingTrickSeats[index % countingTrickSeats.length]].push(card);
-    });
-
-    for (const seat of countingTrickSeats) {
-      hands[seat] = [...hands[seat]].sort(compareCountingCards);
-    }
-
-    return beginRealisticDangerTrick({
-      hands,
-      currentLeader: countingTrickSeats[seed % countingTrickSeats.length],
-      currentTrick: [],
-      completedTricks: [],
-      status: "playing",
-      question: buildDangerMemoryQuestion([], seed),
       questionsAsked: 0
     });
   }
@@ -4368,6 +4315,20 @@
     continueFullHandAfterTrick();
   }
 
+  function replayFullHandCardCounting() {
+    if (fullHandCardCountingIsWhist) {
+      startWhistMemoryFullHand();
+      return;
+    }
+
+    if (fullHandCardCountingIsDanger) {
+      startDangerCardsFullHand();
+      return;
+    }
+
+    startTrumpMemoryFullHand();
+  }
+
   function realisticTrumpQuestionAnswerText(question: TrumpMemoryQuestion) {
     if (question.kind === "count") {
       return `${question.answer} hearts have been played so far.`;
@@ -4378,12 +4339,12 @@
       : `No. ${formatCardLabel(question.targetCard)} was not played.`;
   }
 
-  function fullHandCardCountingQuestionHeading(question: TrumpMemoryQuestion | WhistMemoryQuestion) {
+  function fullHandCardCountingQuestionHeading(question: TrumpMemoryQuestion | DangerMemoryQuestion | WhistMemoryQuestion, isDanger = false) {
     if (question.kind === "count") {
-      return "How many hearts appeared?";
+      return isDanger ? "How many queens appeared?" : "How many hearts appeared?";
     }
     if (question.kind === "specific") {
-      return "Did this heart appear?";
+      return isDanger ? "Did this queen appear?" : "Did this heart appear?";
     }
     if (question.kind === "trump_count") {
       return "How many trumps appeared?";
@@ -4398,12 +4359,16 @@
     return "Did this trump appear?";
   }
 
-  function fullHandCardCountingAnswerText(question: TrumpMemoryQuestion | WhistMemoryQuestion) {
+  function fullHandCardCountingAnswerText(question: TrumpMemoryQuestion | DangerMemoryQuestion | WhistMemoryQuestion, isDanger = false) {
     if (question.kind === "count") {
-      return realisticTrumpQuestionAnswerText(question);
+      return isDanger ? `${question.answer} queens have been played so far.` : realisticTrumpQuestionAnswerText(question);
     }
     if (question.kind === "specific") {
-      return realisticTrumpQuestionAnswerText(question);
+      return isDanger
+        ? question.answer
+          ? `Yes. ${formatCardLabel(question.targetCard)} was played.`
+          : `No. ${formatCardLabel(question.targetCard)} was not played.`
+        : realisticTrumpQuestionAnswerText(question);
     }
     if (question.kind === "trump_count") {
       return `${question.answer} ${suitNames[question.trumpSuit].toLowerCase()} trumps have been played so far.`;
@@ -4453,30 +4418,6 @@
         .filter((card) => countingCardWouldWinPlainTrick(currentTrick, card, seat))
         .sort(compareCountingCards)[0] ?? [...legal].sort(compareCountingCards)[0]
     );
-  }
-
-  function chooseDangerCardAutoPlainCard(hand: Card[], currentTrick: TableCard[], seat: Seat) {
-    const ledSuit = currentTrick[0]?.card.suit;
-    const legal = countingLegalCards(hand, ledSuit);
-    const winningCards = [...legal]
-      .filter((card) => countingCardWouldWinPlainTrick(currentTrick, card, seat))
-      .sort(compareCountingCards);
-
-    if (winningCards.length > 0) {
-      return winningCards.find((card) => !dangerCardMemoryConfig.isTrackedCard(card)) ?? winningCards[0];
-    }
-
-    return [...legal]
-      .sort((left, right) => {
-        const leftDanger = dangerCardMemoryConfig.isTrackedCard(left) ? 1 : 0;
-        const rightDanger = dangerCardMemoryConfig.isTrackedCard(right) ? 1 : 0;
-
-        if (leftDanger !== rightDanger) {
-          return leftDanger - rightDanger;
-        }
-
-        return compareCountingCards(left, right);
-      })[0];
   }
 
   function countingPlainTrickWinner(trick: TableCard[]): Seat | undefined {
@@ -4681,43 +4622,6 @@
       : `No. ${formatCardLabel(question.targetCard)} was not played.`;
   }
 
-  function beginRealisticDangerTrick(round: RealisticDangerRound): RealisticDangerRound {
-    const currentTrick: TableCard[] = [];
-    const hands = cloneCountingHands(round.hands);
-    const playOrder = countingPlayOrderFrom(round.currentLeader);
-
-    for (const seat of playOrder) {
-      if (seat === "You") {
-        break;
-      }
-
-      const card = chooseDangerCardAutoPlainCard(hands[seat], currentTrick, seat);
-      removeCountingCard(hands, seat, card.id);
-      currentTrick.push({ seat, card });
-    }
-
-    return {
-      ...round,
-      hands,
-      currentTrick,
-      status: "playing"
-    };
-  }
-
-  function realisticDangerPlayPrompt(round: RealisticDangerRound) {
-    const ledSuit = round.currentTrick[0]?.card.suit;
-
-    if (!ledSuit) {
-      return dangerCardMemoryConfig.leadPrompt;
-    }
-
-    if (round.hands.You.some((card) => card.suit === ledSuit)) {
-      return `Follow ${suitNames[ledSuit].toLowerCase()}. ${dangerCardMemoryConfig.followPrompt}`;
-    }
-
-    return `You are void in ${suitNames[ledSuit].toLowerCase()}. ${dangerCardMemoryConfig.voidPrompt}`;
-  }
-
   function buildDangerMemoryQuestion(tricks: TableCard[][], seed: number): DangerMemoryQuestion {
     const seenCards = tricks.flatMap((trick) => trick.map((play) => play.card));
     const dangerSeen = seenCards.filter(dangerCardMemoryConfig.isTrackedCard).length;
@@ -4740,159 +4644,6 @@
       answer: seenCards.some((card) => card.id === targetCard.id),
       targetCard
     };
-  }
-
-  function dangerCardsCapturedBySeat(tricks: TableCard[][]): Record<Seat, number> {
-    return tricks.reduce<Record<Seat, number>>(
-      (captured, trick) => {
-        const winner = countingPlainTrickWinner(trick);
-
-        if (!winner) {
-          return captured;
-        }
-
-        captured[winner] += trick.filter((play) => dangerCardMemoryConfig.isTrackedCard(play.card)).length;
-
-        return captured;
-      },
-      { Tutor: 0, Left: 0, You: 0, Right: 0 }
-    );
-  }
-
-  function selectRealisticDangerCard(card: Card) {
-    if (realisticDangerRound.status !== "playing") {
-      return;
-    }
-
-    realisticDangerSelectedCardId = card.id;
-  }
-
-  function playRealisticDangerCard() {
-    if (!realisticDangerSelectedCard || realisticDangerRound.status !== "playing") {
-      return;
-    }
-
-    if (!realisticDangerLegalCards.some((card) => card.id === realisticDangerSelectedCard.id)) {
-      return;
-    }
-
-    const hands = cloneCountingHands(realisticDangerRound.hands);
-    removeCountingCard(hands, "You", realisticDangerSelectedCard.id);
-    const completedTrick: TableCard[] = [
-      ...realisticDangerRound.currentTrick,
-      { seat: "You" as const, card: realisticDangerSelectedCard }
-    ];
-    const playOrder = countingPlayOrderFrom(realisticDangerRound.currentLeader);
-    const playerTurnIndex = playOrder.indexOf("You");
-    const remainingSeats = playerTurnIndex >= 0 ? playOrder.slice(playerTurnIndex + 1) : [];
-
-    for (const seat of remainingSeats) {
-      const card = chooseDangerCardAutoPlainCard(hands[seat], completedTrick, seat);
-      removeCountingCard(hands, seat, card.id);
-      completedTrick.push({ seat, card });
-    }
-
-    const completedTricks = [...realisticDangerRound.completedTricks, completedTrick];
-    const currentLeader = countingPlainTrickWinner(completedTrick) ?? realisticDangerRound.currentLeader;
-
-    realisticDangerRound = {
-      ...realisticDangerRound,
-      hands,
-      currentLeader,
-      currentTrick: completedTrick,
-      completedTricks,
-      question: buildDangerMemoryQuestion(completedTricks, practiceSeed + completedTricks.length + 31),
-      status: "review"
-    };
-    realisticDangerSelectedCardId = "";
-  }
-
-  function continueRealisticDangerRound() {
-    if (realisticDangerRound.status !== "review") {
-      return;
-    }
-
-    if (realisticDangerRound.completedTricks.length >= realisticTrumpTotalTricks) {
-      realisticDangerRound = {
-        ...realisticDangerRound,
-        status: "complete"
-      };
-      return;
-    }
-
-    const checkpointIndex = realisticTrumpCheckpoints.indexOf(realisticDangerRound.completedTricks.length);
-    if (checkpointIndex >= 0 && realisticDangerRound.questionsAsked <= checkpointIndex) {
-      realisticDangerRound = {
-        ...realisticDangerRound,
-        status: "question"
-      };
-      dangerCountSelected = null;
-      dangerCountChecked = false;
-      return;
-    }
-
-    realisticDangerRound = beginRealisticDangerTrick(realisticDangerRound);
-  }
-
-  function realisticDangerReviewActionLabel(round: RealisticDangerRound) {
-    if (round.completedTricks.length >= realisticTrumpTotalTricks) {
-      return "Finish hand";
-    }
-
-    const checkpointIndex = realisticTrumpCheckpoints.indexOf(round.completedTricks.length);
-    return checkpointIndex >= 0 && round.questionsAsked <= checkpointIndex ? "Answer memory" : "Next trick";
-  }
-
-  function selectDangerCountAnswer(option: number | boolean) {
-    if (dangerCountChecked) {
-      return;
-    }
-
-    dangerCountSelected = option;
-  }
-
-  function checkDangerCountAnswer() {
-    if (dangerCountSelected === null || dangerCountChecked) {
-      return;
-    }
-
-    dangerCountChecked = true;
-    dangerCountAttempts += 1;
-    realisticDangerRound = {
-      ...realisticDangerRound,
-      questionsAsked: realisticDangerRound.questionsAsked + 1
-    };
-
-    if (dangerCountSelected === realisticDangerRound.question.answer) {
-      dangerCountClean += 1;
-    }
-  }
-
-  function continueRealisticDangerAfterQuestion() {
-    if (!dangerCountChecked || realisticDangerRound.status !== "question") {
-      return;
-    }
-
-    dangerCountSelected = null;
-    dangerCountChecked = false;
-    realisticDangerRound = beginRealisticDangerTrick(realisticDangerRound);
-  }
-
-  function nextDangerCountRound() {
-    realisticDangerRound = buildRealisticDangerRound(usePracticeSeed());
-    realisticDangerSelectedCardId = "";
-    dangerCountSelected = null;
-    dangerCountChecked = false;
-  }
-
-  function realisticDangerQuestionAnswerText(question: DangerMemoryQuestion) {
-    if (question.kind === "count") {
-      return `The answer was ${question.answer}.`;
-    }
-
-    return question.answer
-      ? `Yes. ${formatCardLabel(question.targetCard)} was played.`
-      : `No. ${formatCardLabel(question.targetCard)} was not played.`;
   }
 
   function openBarbuContracts() {
@@ -8739,201 +8490,6 @@
         </div>
       {/snippet}
     </TablePlaySurface>
-  {:else if appView === "dangerCount"}
-    <TablePlaySurface
-      mode={realisticDangerRound.status === "complete" ? "result" : "play"}
-      showTable={realisticDangerRound.status !== "complete"}
-      ariaLabel="Danger cards trainer"
-      title={dangerCardMemoryConfig.title}
-      eyebrow="Card Counting I"
-      statusLabel="Memory"
-      statusValue={`${dangerCountClean} of ${dangerCountAttempts}`}
-      tableAriaLabel="Danger card memory table"
-      pendingBySeat={realisticDangerPendingBySeat}
-      tableCards={realisticDangerTableCards}
-      panelAriaLabel="Danger card memory decision"
-      onBack={openCardCountingReturnTarget}
-      onSurfaceClick={realisticDangerRound.status === "review" ? continueRealisticDangerRound : undefined}
-    >
-      {#snippet summary()}
-        {#if realisticDangerRound.status !== "complete"}
-          <div class="counting-score-stack" aria-label="Danger cards scores">
-            <div class="trump-count-review" aria-label="Danger card memory status">
-              <span>Memory</span>
-              <strong>{realisticDangerRound.completedTricks.length} tricks</strong>
-              <small>{dangerCountClean} of {dangerCountAttempts} checks clean.</small>
-            </div>
-            <div class="trump-count-review" aria-label="Danger cards Barbu score">
-              <span>Barbu score</span>
-              <strong>{realisticDangerGameScoreText}</strong>
-              <small>{realisticDangerAvoidanceText}</small>
-            </div>
-          </div>
-        {/if}
-      {/snippet}
-
-      {#snippet panel()}
-        {#if realisticDangerRound.status === "complete"}
-          <div class="counting-break-card" aria-label="Danger cards intermission">
-            <div class="lesson-heading">
-              <p class="eyebrow">Two games at once</p>
-              <h2>{realisticDangerBreakTitle}</h2>
-            </div>
-
-            <p class="result">{realisticDangerBreakSummary}</p>
-
-            <div class="counting-break-grid">
-              <div>
-                <span>Core game</span>
-                <strong>{realisticDangerGameScoreText}</strong>
-                <small>{realisticDangerAvoidanceText}</small>
-              </div>
-              <div>
-                <span>Card counting</span>
-                <strong>{dangerCountClean} of {dangerCountAttempts}</strong>
-                <small>{realisticDangerMemoryPerfect ? "Perfect memory checks." : "Keep naming the target cards as tricks pass."}</small>
-              </div>
-            </div>
-          </div>
-        {:else}
-          <div class="lesson-heading">
-            <p class="eyebrow">{dangerCardMemoryConfig.eyebrow}</p>
-            <h2>{realisticDangerPromptTitle}</h2>
-          </div>
-
-          {#if dangerCountChecked}
-          <div class="trump-count-review" aria-label="Danger card memory review">
-            <span>Queens and KH seen</span>
-            <strong>{realisticDangerSeenCount} of 5 target cards appeared</strong>
-            <small>{realisticDangerQuestionAnswerText(realisticDangerRound.question)} {realisticDangerAvoidanceText}</small>
-            <div class="trump-review-cards">
-              {#each realisticDangerSeenCards.filter(dangerCardMemoryConfig.isTrackedCard) as card}
-                <div class="trump-seen-card court">
-                  <CardFace {card} decorative />
-                </div>
-              {/each}
-            </div>
-          </div>
-          {/if}
-
-          <p class="result" aria-label="Danger card memory challenge">
-            {dangerCountChecked ? "Review which queens and whether the king of hearts had already left the table." : realisticDangerPromptBody}
-          </p>
-
-          {#if realisticDangerRound.status === "playing"}
-          <CardChoiceHand
-            cards={realisticDangerRound.hands.You}
-            ariaLabel="Your danger card memory hand"
-            className="hand full-hand-cards card-memory-hand"
-            cardClassName="card hand-card full-hand-card"
-            getCardClasses={(card) => ({
-              heart: card.suit === "H",
-              illegal: !realisticDangerLegalCards.some((legalCard) => legalCard.id === card.id),
-              legal: realisticDangerLegalCards.some((legalCard) => legalCard.id === card.id),
-              selected: realisticDangerSelectedCardId === card.id
-            })}
-            isPressed={(card) => realisticDangerSelectedCardId === card.id}
-            onSelect={selectRealisticDangerCard}
-          />
-          {/if}
-
-          {#if realisticDangerRound.status === "question" && !dangerCountChecked}
-          {#if realisticDangerRound.question.kind === "count"}
-            <div class="trump-count-options" aria-label="Danger card count answers">
-              {#each realisticDangerRound.question.options as option}
-                <button
-                  aria-pressed={dangerCountSelected === option}
-                  class:correct={dangerCountChecked && option === realisticDangerRound.question.answer}
-                  class:selected={dangerCountSelected === option}
-                  class:wrong={dangerCountChecked && dangerCountSelected === option && option !== realisticDangerRound.question.answer}
-                  disabled={dangerCountChecked}
-                  onclick={() => selectDangerCountAnswer(option)}
-                  type="button"
-                >
-                  {option}
-                </button>
-              {/each}
-            </div>
-          {:else}
-            <div class="trump-specific-check">
-              <div class="trump-target-card" aria-label={`${dangerCardMemoryConfig.targetAriaLabel} ${formatCardLabel(realisticDangerRound.question.targetCard)}`}>
-                <span>Target</span>
-                <div class="trump-target-card-face">
-                  <CardFace card={realisticDangerRound.question.targetCard} decorative />
-                </div>
-              </div>
-              <div class="trump-count-options trump-specific-options memory-answer-options" aria-label={dangerCardMemoryConfig.answerAriaLabel}>
-                <button
-                  aria-pressed={dangerCountSelected === true}
-                  class:correct={dangerCountChecked && realisticDangerRound.question.answer === true}
-                  class:selected={dangerCountSelected === true}
-                  class:wrong={dangerCountChecked && dangerCountSelected === true && realisticDangerRound.question.answer !== true}
-                  disabled={dangerCountChecked}
-                  onclick={() => selectDangerCountAnswer(true)}
-                  type="button"
-                >
-                  <strong>Seen</strong>
-                  <small>Card is gone</small>
-                </button>
-                <button
-                  aria-pressed={dangerCountSelected === false}
-                  class:correct={dangerCountChecked && realisticDangerRound.question.answer === false}
-                  class:selected={dangerCountSelected === false}
-                  class:wrong={dangerCountChecked && dangerCountSelected === false && realisticDangerRound.question.answer !== false}
-                  disabled={dangerCountChecked}
-                  onclick={() => selectDangerCountAnswer(false)}
-                  type="button"
-                >
-                  <strong>Not yet</strong>
-                  <small>Still out</small>
-                </button>
-              </div>
-            </div>
-          {/if}
-          {/if}
-
-          {#if dangerCountChecked}
-          <p class:warning={dangerCountSelected !== realisticDangerRound.question.answer} class="trump-count-feedback">
-            {dangerCountFeedback}
-          </p>
-          {/if}
-        {/if}
-
-        <div class="action-row">
-          <button class="secondary-action" onclick={openCardCountingReturnTarget} type="button">Table</button>
-          {#if realisticDangerRound.status === "playing"}
-            <button
-              class="primary-action"
-              disabled={
-                !realisticDangerSelectedCard ||
-                !realisticDangerLegalCards.some((card) => card.id === realisticDangerSelectedCard.id)
-              }
-              onclick={playRealisticDangerCard}
-              type="button"
-            >
-              Play card
-            </button>
-          {:else if realisticDangerRound.status === "review"}
-            <button class="primary-action" onclick={continueRealisticDangerRound} type="button">
-              {realisticDangerReviewActionLabel(realisticDangerRound)}
-            </button>
-          {:else if realisticDangerRound.status === "question" && dangerCountChecked}
-            <button class="primary-action" onclick={continueRealisticDangerAfterQuestion} type="button">Continue hand</button>
-          {:else if realisticDangerRound.status === "complete"}
-            <button class="primary-action" onclick={nextDangerCountRound} type="button">Next hand</button>
-          {:else}
-            <button
-              class="primary-action"
-              disabled={dangerCountSelected === null}
-              onclick={checkDangerCountAnswer}
-              type="button"
-            >
-              Check memory
-            </button>
-          {/if}
-        </div>
-      {/snippet}
-    </TablePlaySurface>
   {:else if appView === "barbuContracts"}
     <header class="topbar" aria-label="Barbu contracts">
       <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
@@ -9847,7 +9403,7 @@
                   </div>
                 </div>
               {:else if fullHandCardCountingQuestion.kind === "count" || fullHandCardCountingQuestion.kind === "trump_count"}
-                <div class="trump-count-options" aria-label="Trump count answer options">
+                <div class="trump-count-options" aria-label={fullHandCardCountingCountOptionsLabel}>
                   {#each fullHandCardCountingQuestion.options as option}
                     <button
                       aria-pressed={fullHandCardCountingAnswer === option}
@@ -9885,7 +9441,7 @@
               </p>
               {#if fullHandCardCountingChecked}
                 <div class="trump-review-cards" aria-label={fullHandCardCountingSeenLabel}>
-                  {#each fullHandCardCountingSeenCards.filter((card) => card.suit === fullHandCardCountingTrackedSuit) as card}
+                  {#each fullHandCardCountingReviewCards as card}
                     <CardFace {card} />
                   {/each}
                 </div>
@@ -9925,7 +9481,7 @@
             {#if fullHand.status === "complete"}
               <button class="secondary-action" onclick={openFullHandTableTarget} type="button">Table</button>
               {#if fullHandCardCountingActive}
-                <button class="secondary-action" onclick={fullHandCardCountingIsWhist ? startWhistMemoryFullHand : startTrumpMemoryFullHand} type="button">Replay</button>
+                <button class="secondary-action" onclick={replayFullHandCardCounting} type="button">Replay</button>
                 <button class="primary-action" onclick={openFullHandTableTarget} type="button">Back to Card Counting</button>
               {:else if fullHandRunIsComplete}
                 <button class="secondary-action" onclick={() => void replayWeakestRunContract()} type="button">Replay weakest</button>
