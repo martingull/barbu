@@ -2989,6 +2989,32 @@ mod tests {
     }
 
     #[test]
+    fn no_queens_opponent_dumps_queen_under_king() {
+        let state = NoQueensHandState {
+            id: "opponent-dump-queen-under-king".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Queen, Suit::Clubs),
+                    Card::new(Rank::Nine, Suit::Clubs),
+                    Card::new(Rank::Two, Suit::Diamonds),
+                ],
+            ],
+            current_player: 3,
+            current_trick: vec![PlayedCard::new(0, Card::new(Rank::King, Suit::Clubs))],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_no_queens_opponent_card(&state),
+            Some(Card::new(Rank::Queen, Suit::Clubs))
+        );
+    }
+
+    #[test]
     fn no_queens_opponent_uses_lowest_card_when_forced_to_win_loaded_trick() {
         let state = NoQueensHandState {
             id: "opponent-forced-win-loaded-queen".to_string(),
