@@ -7669,6 +7669,24 @@
   function factsForSection(section: GameReference["sections"][number]) {
     return section.facts ?? [];
   }
+  $: gameTableConfigs = {
+    barbu: {
+      learnProps: { steps: barbuUi.learnSteps, completedCount: barbuUi.learnSteps.filter(s => completedPathSteps[s.id]).length, nextStep: barbuUi.learnSteps.find(s => !completedPathSteps[s.id]), actions: barbuLearnPanelActions, onStepSelect: startPathStep },
+      practiceProps: { lessonEntries: fixedDrillLessons, onLessonSelect: startFixedContractDrill, actions: barbuPracticeActions },
+      playProps: { onPrimary: startBarbuRun, resumeLabel: savedPlayBarbuRun ? "Continue Play Barbu" : undefined, resumeNote: savedPlayBarbuRun ? savedPlayBarbuRunLabel : undefined, onResume: savedPlayBarbuRun ? continueSavedPlayBarbuRun : undefined }
+    },
+    hearts: {
+      learnProps: { steps: heartsUi.learnSteps, completedCount: heartsUi.learnSteps.filter(s => completedPathSteps[s.id]).length, nextStep: heartsUi.learnSteps.find(s => !completedPathSteps[s.id]), actions: heartsLearnPanelActions, onStepSelect: startHeartsPathStep },
+      practiceProps: { actions: heartsPracticeActions },
+      playProps: { onPrimary: startHeartsHand, resumeLabel: savedHeartsRun ? "Continue Hearts" : undefined, resumeNote: savedHeartsRun ? savedHeartsRunSummary(savedHeartsRun) : undefined, onResume: savedHeartsRun ? continueSavedHeartsRun : undefined }
+    },
+    whist: {
+      learnProps: { steps: whistUi.learnSteps, completedCount: whistUi.learnSteps.filter(s => completedPathSteps[s.id]).length, nextStep: whistUi.learnSteps.find(s => !completedPathSteps[s.id]), actions: whistLearnPanelActions, onStepSelect: startWhistPathStep },
+      practiceProps: { actions: whistPracticeActions },
+      playProps: { onPrimary: () => void startWhistHand(), resumeLabel: savedWhistRun ? "Continue Whist" : undefined, resumeNote: savedWhistRun ? savedWhistRunSummary(savedWhistRun) : undefined, onResume: savedWhistRun ? continueSavedWhistRun : undefined, footerNote: `You and Barbu play to ${whistMatchTarget} points against Left and Right.` }
+    }
+  } as Record<string, any>;
+
 </script>
 
 {#snippet runScorecard(label = "Barbu scorecard")}
@@ -7936,23 +7954,7 @@
     {@const gameUi = registry.get(activeGameTable)!}
     {@const currentTab = activeTableTabs[activeGameTable] || gameUi.table.defaultTab}
     
-    {@const learnProps = activeGameTable === "barbu" 
-      ? { steps: gameUi.learnSteps, completedCount, nextStep: nextPathStep, actions: barbuLearnPanelActions, onStepSelect: startPathStep } 
-      : activeGameTable === "hearts" 
-      ? { steps: gameUi.learnSteps, completedCount: heartsCompletedCount, nextStep: nextHeartsPathStep, actions: heartsLearnPanelActions, onStepSelect: startHeartsPathStep } 
-      : { steps: gameUi.learnSteps, completedCount: whistCompletedCount, nextStep: nextWhistPathStep, actions: whistLearnPanelActions, onStepSelect: startWhistPathStep }}
-
-    {@const practiceProps = activeGameTable === "barbu" 
-      ? { lessonEntries: fixedDrillLessons, onLessonSelect: startFixedContractDrill, actions: barbuPracticeActions } 
-      : activeGameTable === "hearts" 
-      ? { actions: heartsPracticeActions } 
-      : { actions: whistPracticeActions }}
-
-    {@const playProps = activeGameTable === "barbu" 
-      ? { onPrimary: startBarbuRun, resumeLabel: savedPlayBarbuRun ? "Continue Play Barbu" : undefined, resumeNote: savedPlayBarbuRun ? savedPlayBarbuRunLabel : undefined, onResume: savedPlayBarbuRun ? continueSavedPlayBarbuRun : undefined } 
-      : activeGameTable === "hearts" 
-      ? { onPrimary: startHeartsHand, resumeLabel: savedHeartsRun ? "Continue Hearts" : undefined, resumeNote: savedHeartsRun ? savedHeartsRunSummary(savedHeartsRun) : undefined, onResume: savedHeartsRun ? continueSavedHeartsRun : undefined } 
-      : { onPrimary: () => void startWhistHand(), resumeLabel: savedWhistRun ? "Continue Whist" : undefined, resumeNote: savedWhistRun ? savedWhistRunSummary(savedWhistRun) : undefined, onResume: savedWhistRun ? continueSavedWhistRun : undefined, footerNote: `You and Barbu play to ${whistMatchTarget} points against Left and Right.` }}
+        {@const activeConfig = gameTableConfigs[activeGameTable] || gameTableConfigs["barbu"]}
 
     <GameTableShell
       table={gameUi.table}
@@ -7965,21 +7967,21 @@
       {#if currentTab === "learn"}
         <LearnPanel
           table={gameUi.table}
-          steps={learnProps.steps}
+          steps={activeConfig.learnProps.steps}
           completedSteps={completedPathSteps}
-          completedCount={learnProps.completedCount}
-          nextStep={learnProps.nextStep}
-          actions={learnProps.actions}
-          onStepSelect={learnProps.onStepSelect}
+          completedCount={activeConfig.learnProps.completedCount}
+          nextStep={activeConfig.learnProps.nextStep}
+          actions={activeConfig.learnProps.actions}
+          onStepSelect={activeConfig.learnProps.onStepSelect}
         />
       {:else if currentTab === "practice"}
         <PracticePanel
           id={gameUi.table.tabs.practice.panelId}
           intro={gameUi.table.tabs.practice.intro}
           groups={gameUi.practiceGroups}
-          actions={practiceProps.actions}
-          lessonEntries={practiceProps.lessonEntries}
-          onLessonSelect={practiceProps.onLessonSelect}
+          actions={activeConfig.practiceProps.actions}
+          lessonEntries={activeConfig.practiceProps.lessonEntries}
+          onLessonSelect={activeConfig.practiceProps.onLessonSelect}
         />
       {:else if currentTab === "play"}
         <PlayTabPanel
@@ -7989,11 +7991,11 @@
           groupEyebrow={gameUi.playTabConfig!.groupEyebrow}
           primaryLabel={gameUi.playTabConfig!.primaryLabel}
           supportingCopy={gameUi.playTabConfig!.supportingCopy}
-          footerNote={playProps.footerNote}
-          onPrimary={playProps.onPrimary}
-          resumeLabel={playProps.resumeLabel}
-          resumeNote={playProps.resumeNote}
-          onResume={playProps.onResume}
+          footerNote={activeConfig.playProps.footerNote}
+          onPrimary={activeConfig.playProps.onPrimary}
+          resumeLabel={activeConfig.playProps.resumeLabel}
+          resumeNote={activeConfig.playProps.resumeNote}
+          onResume={activeConfig.playProps.onResume}
         />
       {:else}
         <ProTabPanel
