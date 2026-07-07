@@ -358,8 +358,9 @@ These are the next product increments that keep the app coherent.
 
 10. Card Sense Training v1
    - Started as the separate Card Counting I catalog pack.
+   - Product framing: each exercise should feel like playing a real hand with one extra memory job, not like a detached flash-card drill.
    - Count Trumps reveals all thirteen tricks in segments, hides the segment, then asks either how many hearts appeared or whether a specific heart appeared.
-   - Trump Memory Hand is a separate realistic table exercise: deal a hand, make the player play tricks, then ask either how many trumps were played or whether a specific trump card appeared.
+   - Heart Memory Hand is the lead Card Counting I exercise: play a full Black Lady Hearts hand, make normal avoidance decisions, then answer heart-memory checks during the hand.
    - Track Court Cards is the third active exercise and uses the realistic table surface for high-card memory.
    - Danger Cards is the fourth active exercise and tracks Barbu-specific danger cards: queens and the king of hearts.
    - Add short mini-games for serious 52-card-deck skills and practical card-counting habits: Suit Count, Danger Card Tracker, Trump Count, Void Finder, High Card Memory, and Safe Exit Trainer.

@@ -632,7 +632,7 @@ export function createCatalogEntries(): CatalogEntry[] {
       status: "Ready",
       access: "Pack",
       accessModel: "metered-pack",
-      summary: "4 minigames for tracking trumps, court cards, and what remains."
+      summary: "4 minigames for real-hand memory: trumps, court cards, and danger cards."
     }),
     createCatalogEntry({
       id: "card-counting-ii",

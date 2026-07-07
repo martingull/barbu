@@ -100,6 +100,20 @@
 
   type CardCountingTabId = "learn" | "play";
   type CardCountingReturnTarget = ActiveGameTable | "card-counting";
+  type CardCountingExerciseAction = "heart-memory" | "trump-count" | "court-count" | "danger-count";
+
+  type CardCountingLearnStep = {
+    eyebrow: string;
+    title: string;
+    summary: string;
+  };
+
+  type CardCountingExerciseDefinition = {
+    eyebrow: string;
+    title: string;
+    summary: string;
+    action: CardCountingExerciseAction;
+  };
 
   type DrillStep = {
     scenarioId?: string;
@@ -341,6 +355,49 @@
   const countingTrickSeats: Seat[] = ["Tutor", "Right", "You", "Left"];
   const realisticTrumpTotalTricks = 13;
   const realisticTrumpCheckpoints = [3, 7, 11];
+  const cardCountingLearnSteps: CardCountingLearnStep[] = [
+    {
+      eyebrow: "1 Habit",
+      title: "Count one suit",
+      summary: "Start with Black Lady: play a real hand and keep the hearts count alive between tricks."
+    },
+    {
+      eyebrow: "2 Memory",
+      title: "Track high cards",
+      summary: "Court cards decide many tricks, so the next habit is remembering which high cards have left."
+    },
+    {
+      eyebrow: "3 Transfer",
+      title: "Read danger",
+      summary: "Use the same memory habit in Barbu contracts, Hearts, Whist, and later Bridge."
+    }
+  ];
+  const cardCountingExercises: CardCountingExerciseDefinition[] = [
+    {
+      eyebrow: "Black Lady",
+      title: "Heart memory hand",
+      summary: "Play a full Black Lady hand and answer heart-memory checks as the hand develops.",
+      action: "heart-memory"
+    },
+    {
+      eyebrow: "Warm-up",
+      title: "Count trumps",
+      summary: "Watch all thirteen tricks in segments, then answer how many hearts appeared.",
+      action: "trump-count"
+    },
+    {
+      eyebrow: "High-card memory",
+      title: "Track court cards",
+      summary: "Play a hand while remembering kings, queens, and jacks that have left the table.",
+      action: "court-count"
+    },
+    {
+      eyebrow: "Barbu contracts",
+      title: "Danger cards",
+      summary: "Play a Barbu-style hand while tracking queens and the king of hearts.",
+      action: "danger-count"
+    }
+  ];
   const heartsPassPracticeTotalSteps = 2;
   const countingRanks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
   const countingSuits: Suit[] = ["C", "D", "H", "S"];
@@ -1974,6 +2031,11 @@
   let trumpCountChecked = false;
   let trumpCountAttempts = 0;
   let trumpCountClean = 0;
+  let fullHandCardCountingMode = false;
+  let fullHandCardCountingSeed = 1;
+  let fullHandCardCountingAnswer: number | boolean | null = null;
+  let fullHandCardCountingChecked = false;
+  let fullHandCardCountingQuestionsAsked = 0;
   let realisticTrumpRound = buildRealisticTrumpRound(practiceSeed + 29);
   let realisticTrumpSelectedCardId = "";
   let realisticTrumpAnswer: number | boolean | null = null;
@@ -2334,6 +2396,37 @@
     fullHandReviewTrick && fullHand?.status === "in_progress" && fullHand.completedTricks.length === fullHandReviewTrickCount
   );
   $: fullHandReviewFeedback = fullHandReviewTrick ? fullHandTrickFeedback(fullHandReviewTrick) : "";
+  $: fullHandCardCountingActive =
+    fullHandCardCountingMode && fullHand?.contract === "Hearts" && !fullHandRunActive;
+  $: fullHandCardCountingCompletedTricks = fullHandCardCountingActive
+    ? fullHand?.completedTricks.map((trick) => trick.cards) ?? []
+    : [];
+  $: fullHandCardCountingQuestion =
+    fullHandCardCountingActive && fullHand
+      ? buildTrumpMemoryQuestion(fullHandCardCountingCompletedTricks, fullHandCardCountingSeed + fullHand.completedTricks.length)
+      : undefined;
+  $: fullHandCardCountingCheckpointIndex =
+    fullHandCardCountingActive && fullHandReviewTrickCount > 0
+      ? realisticTrumpCheckpoints.indexOf(fullHandReviewTrickCount)
+      : -1;
+  $: fullHandCardCountingPromptActive = Boolean(
+    fullHandCardCountingQuestion &&
+      fullHandIsReviewingTrick &&
+      fullHandCardCountingCheckpointIndex >= 0 &&
+      (fullHandCardCountingQuestionsAsked <= fullHandCardCountingCheckpointIndex || fullHandCardCountingChecked)
+  );
+  $: fullHandCardCountingSeenCards = fullHandCardCountingCompletedTricks.flatMap((trick) =>
+    trick.map((play) => play.card)
+  );
+  $: fullHandCardCountingSeenCount = fullHandCardCountingSeenCards.filter((card) => card.suit === "H").length;
+  $: fullHandCardCountingFeedback =
+    fullHandCardCountingChecked && fullHandCardCountingAnswer !== null
+      ? fullHandCardCountingAnswer === fullHandCardCountingQuestion?.answer
+        ? "Correct. Memory held."
+        : fullHandCardCountingQuestion
+          ? realisticTrumpQuestionAnswerText(fullHandCardCountingQuestion)
+          : ""
+      : "Answer from memory. Old tricks are hidden.";
   $: fullHandVisibleTableCards = fullHandIsReviewingTrick && fullHandReviewTrick
     ? fullHandReviewTrick.cards
     : fullHand?.currentTrick.length
@@ -3395,6 +3488,16 @@
     openBarbuTable();
   }
 
+  function openFullHandTableTarget() {
+    if (fullHandCardCountingMode) {
+      fullHandCardCountingMode = false;
+      openCardCountingReturnTarget();
+      return;
+    }
+
+    openActiveGameTable();
+  }
+
   function openTrumpCountTrainer() {
     rememberCardCountingReturnTarget();
     trumpCountRound = buildTrumpCountRound(usePracticeSeed());
@@ -3408,11 +3511,16 @@
 
   function openTrumpMemoryTrainer() {
     rememberCardCountingReturnTarget();
-    realisticTrumpRound = buildRealisticTrumpRound(usePracticeSeed());
-    realisticTrumpSelectedCardId = "";
-    realisticTrumpAnswer = null;
-    realisticTrumpChecked = false;
-    appView = "trumpMemory";
+    activeGameTable = "barbu";
+    startTrumpMemoryFullHand();
+  }
+
+  function startTrumpMemoryFullHand() {
+    fullHandCardCountingSeed = practiceSeed + 101;
+    fullHandCardCountingAnswer = null;
+    fullHandCardCountingChecked = false;
+    fullHandCardCountingQuestionsAsked = 0;
+    void startFullHand("Hearts", { cardCounting: true });
   }
 
   function openCourtCountTrainer() {
@@ -3431,6 +3539,25 @@
     dangerCountSelected = null;
     dangerCountChecked = false;
     appView = "dangerCount";
+  }
+
+  function openCardCountingExercise(action: CardCountingExerciseAction) {
+    if (action === "heart-memory") {
+      openTrumpMemoryTrainer();
+      return;
+    }
+
+    if (action === "trump-count") {
+      openTrumpCountTrainer();
+      return;
+    }
+
+    if (action === "court-count") {
+      openCourtCountTrainer();
+      return;
+    }
+
+    openDangerCountTrainer();
   }
 
   function buildTrumpCountRound(seed: number): TrumpCountRound {
@@ -3709,7 +3836,7 @@
 
     return {
       kind: "specific",
-      prompt: "Has this trump card been played so far?",
+      prompt: "Has this heart been played so far?",
       answer: seenCards.some((card) => card.id === targetCard.id),
       targetCard
     };
@@ -3937,6 +4064,38 @@
     realisticTrumpSelectedCardId = "";
     realisticTrumpAnswer = null;
     realisticTrumpChecked = false;
+  }
+
+  function selectFullHandCardCountingAnswer(answer: number | boolean) {
+    if (fullHandCardCountingChecked) {
+      return;
+    }
+
+    fullHandCardCountingAnswer = answer;
+  }
+
+  function checkFullHandCardCountingAnswer() {
+    if (fullHandCardCountingAnswer === null || fullHandCardCountingChecked) {
+      return;
+    }
+
+    fullHandCardCountingChecked = true;
+    fullHandCardCountingQuestionsAsked += 1;
+    trumpCountAttempts += 1;
+
+    if (fullHandCardCountingAnswer === fullHandCardCountingQuestion?.answer) {
+      trumpCountClean += 1;
+    }
+  }
+
+  function continueFullHandCardCountingAfterQuestion() {
+    if (!fullHandCardCountingChecked) {
+      return;
+    }
+
+    fullHandCardCountingAnswer = null;
+    fullHandCardCountingChecked = false;
+    continueFullHandAfterTrick();
   }
 
   function realisticTrumpQuestionAnswerText(question: TrumpMemoryQuestion) {
@@ -4507,11 +4666,16 @@
     return playBrowserNoHeartsCard(state, cardId);
   }
 
-  async function startFullHand(contract: FullHandContract, options: { keepRun?: boolean } = {}) {
+  async function startFullHand(contract: FullHandContract, options: { cardCounting?: boolean; keepRun?: boolean } = {}) {
     if (contract === "Domino") {
       await startDominoHand(options);
       return;
     }
+
+    fullHandCardCountingMode = options.cardCounting === true;
+    fullHandCardCountingAnswer = null;
+    fullHandCardCountingChecked = false;
+    fullHandCardCountingQuestionsAsked = 0;
 
     if (!options.keepRun) {
       fullHandRunActive = false;
@@ -4805,6 +4969,20 @@
     }
 
     void startWhistPracticeHand(activePathStepId, whistOpeningLeadPracticeRound + 1);
+  }
+
+  function continueFullHandReview() {
+    if (whistOpeningLeadPracticeReview) {
+      continueWhistOpeningLeadPractice();
+      return;
+    }
+
+    if (fullHandCardCountingPromptActive) {
+      continueFullHandCardCountingAfterQuestion();
+      return;
+    }
+
+    continueFullHandAfterTrick();
   }
 
   function startNoHeartsHand() {
@@ -7390,26 +7568,13 @@
 
 {#snippet cardCountingExerciseGrid(label = "Card counting exercises")}
   <div class="fixed-contract-grid" aria-label={label}>
-    <button class="contract-card compact" onclick={openTrumpCountTrainer} type="button">
-      <span>Card counting</span>
-      <strong>Count trumps</strong>
-      <small>Watch all thirteen tricks and answer trump-memory checks between segments.</small>
-    </button>
-    <button class="contract-card compact" onclick={openTrumpMemoryTrainer} type="button">
-      <span>Table memory</span>
-      <strong>Trump memory hand</strong>
-      <small>Play a full hand and answer trump-memory checks after real tricks.</small>
-    </button>
-    <button class="contract-card compact" onclick={openCourtCountTrainer} type="button">
-      <span>High-card memory</span>
-      <strong>Track court cards</strong>
-      <small>Remember kings, queens, and jacks as tricks move around the table.</small>
-    </button>
-    <button class="contract-card compact" onclick={openDangerCountTrainer} type="button">
-      <span>Contract memory</span>
-      <strong>Danger cards</strong>
-      <small>Track Barbu danger cards: queens and the king of hearts.</small>
-    </button>
+    {#each cardCountingExercises as exercise}
+      <button class="contract-card compact" onclick={() => openCardCountingExercise(exercise.action)} type="button">
+        <span>{exercise.eyebrow}</span>
+        <strong>{exercise.title}</strong>
+        <small>{exercise.summary}</small>
+      </button>
+    {/each}
   </div>
 {/snippet}
 
@@ -7562,34 +7727,26 @@
         <div aria-label="Learn" class="barbu-tab-panel learn-panel" id="card-counting-learn-panel" role="tabpanel">
           <div class="barbu-mode-copy">
             <p class="eyebrow">Learn</p>
-            <h2>Train what is still out.</h2>
-            <p>Card counting here means table memory: notice trumps, court cards, and danger cards as play moves.</p>
+            <h2>Play a hand with one extra job.</h2>
+            <p>Card Counting I adds memory goals to simple table games. Play the trick normally, then answer what you tracked.</p>
           </div>
 
           <div class="learn-action-grid" aria-label="Card Counting I learning path">
-            <div class="learn-action-card">
-              <p class="eyebrow">1 Concept</p>
-              <strong>Count a suit</strong>
-              <small>Start by tracking how many trumps have appeared instead of trying to remember every card.</small>
-            </div>
-            <div class="learn-action-card">
-              <p class="eyebrow">2 Memory</p>
-              <strong>Track high cards</strong>
-              <small>Queens, kings, and jacks decide many tricks, so court-card memory is the next habit.</small>
-            </div>
-            <div class="learn-action-card">
-              <p class="eyebrow">3 Transfer</p>
-              <strong>Read danger</strong>
-              <small>Use the same memory habit in Barbu, Hearts, Whist, and later Bridge.</small>
-            </div>
+            {#each cardCountingLearnSteps as step}
+              <div class="learn-action-card">
+                <p class="eyebrow">{step.eyebrow}</p>
+                <strong>{step.title}</strong>
+                <small>{step.summary}</small>
+              </div>
+            {/each}
           </div>
         </div>
       {:else}
         <div aria-label="Play" class="barbu-tab-panel perfect-panel" id="card-counting-play-panel" role="tabpanel">
           <div class="barbu-mode-copy">
             <p class="eyebrow">Play</p>
-            <h2>Card memory mini-games.</h2>
-            <p>Play the current card-sense exercises we have built so far.</p>
+            <h2>Real hands with memory checks.</h2>
+            <p>Start with Black Lady, then try trump, court-card, and danger-card tracking.</p>
           </div>
 
           <section class="fixed-contract-practice" aria-label="Card Counting I pack">
@@ -7753,8 +7910,8 @@
   {:else if appView === "trumpMemory"}
       <TablePlaySurface
         mode="play"
-        ariaLabel="Trump memory hand trainer"
-        title="Trump memory hand"
+        ariaLabel="Heart memory hand trainer"
+        title="Heart memory hand"
         eyebrow="Card Counting I"
         statusLabel="Score"
         statusValue={`${trumpCountClean} of ${trumpCountAttempts}`}
@@ -8980,10 +9137,10 @@
       <TablePlaySurface
         mode={fullHand.status === "complete" ? "result" : "play"}
         ariaLabel={`${fullHand.contract} full hand`}
-        title={`${fullHand.contract} hand`}
-        eyebrow={fullHandIsWhistGame ? (whistFullHandSource === "practice" ? "Whist practice" : "Play Whist") : fullHandRunActive ? "Play Barbu" : "Contract hand"}
-        statusLabel={fullHandIsWhistGame ? "Trump" : fullHandRunStatusLabel}
-        statusValue={fullHandIsWhistGame ? whistTrumpSuitLabel : `${fullHand.playerPenalty} ${fullHandPlayerPenaltyLabel}`}
+        title={fullHandCardCountingActive ? "Heart memory hand" : `${fullHand.contract} hand`}
+        eyebrow={fullHandCardCountingActive ? "Card Counting I" : fullHandIsWhistGame ? (whistFullHandSource === "practice" ? "Whist practice" : "Play Whist") : fullHandRunActive ? "Play Barbu" : "Contract hand"}
+        statusLabel={fullHandCardCountingActive ? "Black Lady" : fullHandIsWhistGame ? "Trump" : fullHandRunStatusLabel}
+        statusValue={fullHandCardCountingActive ? `${fullHand.completedTricks.length} / 13 tricks` : fullHandIsWhistGame ? whistTrumpSuitLabel : `${fullHand.playerPenalty} ${fullHandPlayerPenaltyLabel}`}
         tableAriaLabel={`${fullHand.contract} hand table`}
         pendingBySeat={fullHandPendingBySeat}
         showTable={
@@ -8993,8 +9150,8 @@
         }
         tableCards={fullHandVisibleTableCards}
         panelAriaLabel={`${fullHand.contract} hand decision`}
-        onBack={openActiveGameTable}
-        onSurfaceClick={fullHandIsReviewingTrick ? (whistOpeningLeadPracticeReview ? continueWhistOpeningLeadPractice : continueFullHandAfterTrick) : undefined}
+        onBack={openFullHandTableTarget}
+        onSurfaceClick={fullHandIsReviewingTrick ? continueFullHandReview : undefined}
       >
         {#snippet summary()}
           {#if !fullHandRunIsComplete && !(fullHandIsWhistGame && fullHand.status === "complete")}
@@ -9188,21 +9345,78 @@
               {/if}
             {/if}
           {:else if fullHandIsReviewingTrick}
-            <div class="lesson-heading">
-              <p class="eyebrow">Trick complete</p>
-              <h2>Read the table</h2>
-            </div>
+            {#if fullHandCardCountingPromptActive && fullHandCardCountingQuestion}
+              <div class="lesson-heading">
+                <p class="eyebrow">Memory check {fullHandCardCountingQuestionsAsked + 1} of {realisticTrumpCheckpoints.length}</p>
+                <h2>{fullHandCardCountingQuestion.kind === "specific" ? "Did this heart appear?" : "How many hearts appeared?"}</h2>
+              </div>
 
-            <p class:warning={fullHandTrickIsWarning(fullHandReviewTrick)} class="outcome">
-              {fullHandReviewFeedback}
-            </p>
-            <p class="explanation">
-              {fullHandIsWhistGame
-                ? "Check whether the trick stayed with your partnership, whether trump changed the winner, and who leads next."
-                : fullHand.contract === "No Last Two"
-                ? "Check the trick number first. Tap the table or press Next trick when you are ready."
-                : "Left's card is on the table. Tap the table or press Next trick when you are ready."}
-            </p>
+              <p class="result">{fullHandCardCountingQuestion.prompt}</p>
+
+              {#if fullHandCardCountingQuestion.kind === "specific"}
+                <div class="trump-target-card" aria-label={`Target heart card ${formatCardLabel(fullHandCardCountingQuestion.targetCard)}`}>
+                  <CardFace card={fullHandCardCountingQuestion.targetCard} />
+                </div>
+                <div class="trump-count-options trump-specific-options" aria-label="Heart card answer options">
+                  <button
+                    class:active={fullHandCardCountingAnswer === true}
+                    disabled={fullHandCardCountingChecked}
+                    onclick={() => selectFullHandCardCountingAnswer(true)}
+                    type="button"
+                  >
+                    Yes
+                  </button>
+                  <button
+                    class:active={fullHandCardCountingAnswer === false}
+                    disabled={fullHandCardCountingChecked}
+                    onclick={() => selectFullHandCardCountingAnswer(false)}
+                    type="button"
+                  >
+                    No
+                  </button>
+                </div>
+              {:else}
+                <div class="trump-count-options" aria-label="Trump count answer options">
+                  {#each fullHandCardCountingQuestion.options as option}
+                    <button
+                      class:active={fullHandCardCountingAnswer === option}
+                      disabled={fullHandCardCountingChecked}
+                      onclick={() => selectFullHandCardCountingAnswer(option)}
+                      type="button"
+                    >
+                      {option}
+                    </button>
+                  {/each}
+                </div>
+              {/if}
+
+              <p class:warning={fullHandCardCountingChecked && fullHandCardCountingAnswer !== fullHandCardCountingQuestion.answer} class="outcome">
+                {fullHandCardCountingFeedback}
+              </p>
+              {#if fullHandCardCountingChecked}
+                <div class="trump-review-cards" aria-label="Hearts seen so far">
+                  {#each fullHandCardCountingSeenCards.filter((card) => card.suit === "H") as card}
+                    <CardFace {card} />
+                  {/each}
+                </div>
+              {/if}
+            {:else}
+              <div class="lesson-heading">
+                <p class="eyebrow">Trick complete</p>
+                <h2>Read the table</h2>
+              </div>
+
+              <p class:warning={fullHandTrickIsWarning(fullHandReviewTrick)} class="outcome">
+                {fullHandReviewFeedback}
+              </p>
+              <p class="explanation">
+                {fullHandIsWhistGame
+                  ? "Check whether the trick stayed with your partnership, whether trump changed the winner, and who leads next."
+                  : fullHand.contract === "No Last Two"
+                  ? "Check the trick number first. Tap the table or press Next trick when you are ready."
+                  : "Left's card is on the table. Tap the table or press Next trick when you are ready."}
+              </p>
+            {/if}
           {:else}
             <ExerciseFeedback eyebrow="Your turn" title="Choose your card" result={fullHand.prompt} error={fullHandError} />
 
@@ -9219,8 +9433,11 @@
 
           <div class="action-row">
             {#if fullHand.status === "complete"}
-              <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
-              {#if fullHandRunIsComplete}
+              <button class="secondary-action" onclick={openFullHandTableTarget} type="button">Table</button>
+              {#if fullHandCardCountingActive}
+                <button class="secondary-action" onclick={startTrumpMemoryFullHand} type="button">Replay</button>
+                <button class="primary-action" onclick={openFullHandTableTarget} type="button">Back to Card Counting</button>
+              {:else if fullHandRunIsComplete}
                 <button class="secondary-action" onclick={() => void replayWeakestRunContract()} type="button">Replay weakest</button>
                 <button class="primary-action" onclick={startBarbuRun} type="button">New game</button>
               {:else}
@@ -9228,20 +9445,27 @@
                 <button class="primary-action" onclick={() => void startNextFullHand()} type="button">{fullHandNextActionLabel}</button>
               {/if}
             {:else if fullHandIsReviewingTrick}
-              <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
-              <button
-                class="primary-action"
-                onclick={whistOpeningLeadPracticeReview ? continueWhistOpeningLeadPractice : continueFullHandAfterTrick}
-                type="button"
-              >
-                {whistOpeningLeadPracticeReview
-                  ? whistOpeningLeadPracticeRound >= whistOpeningLeadPracticeMaxRounds - 1
-                    ? "Finish session"
-                    : "Next lead"
-                  : "Next trick"}
-              </button>
+              <button class="secondary-action" onclick={openFullHandTableTarget} type="button">Table</button>
+              {#if fullHandCardCountingPromptActive}
+                <button
+                  class="primary-action"
+                  disabled={fullHandCardCountingAnswer === null}
+                  onclick={fullHandCardCountingChecked ? continueFullHandCardCountingAfterQuestion : checkFullHandCardCountingAnswer}
+                  type="button"
+                >
+                  {fullHandCardCountingChecked ? "Next trick" : "Check memory"}
+                </button>
+              {:else}
+                <button class="primary-action" onclick={continueFullHandReview} type="button">
+                  {whistOpeningLeadPracticeReview
+                    ? whistOpeningLeadPracticeRound >= whistOpeningLeadPracticeMaxRounds - 1
+                      ? "Finish session"
+                      : "Next lead"
+                    : "Next trick"}
+                </button>
+              {/if}
             {:else}
-              <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
+              <button class="secondary-action" onclick={openFullHandTableTarget} type="button">Table</button>
               <button
                 class="primary-action"
                 disabled={!fullHandSelectedCard || !fullHandLegalCardIds.has(fullHandSelectedCard.id)}

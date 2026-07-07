@@ -427,11 +427,11 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByRole("heading", { name: "Card Counting I" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByLabel("Card Counting I exercises")).toContainText("Count trumps");
-  await expect(page.getByLabel("Card Counting I exercises")).toContainText("Trump memory hand");
+  await expect(page.getByLabel("Card Counting I exercises")).toContainText("Heart memory hand");
   await expect(page.getByLabel("Card Counting I exercises")).toContainText("Track court cards");
   await expect(page.getByLabel("Card Counting I exercises")).toContainText("Danger cards");
   await page.getByRole("tab", { name: "Learn" }).click();
-  await expect(page.getByLabel("Card Counting I learning path")).toContainText("Count a suit");
+  await expect(page.getByLabel("Card Counting I learning path")).toContainText("Count one suit");
   await page.getByRole("tab", { name: "Play" }).click();
   await page.getByLabel("Card Counting I exercises").getByRole("button", { name: "Count trumps" }).click();
   await expect(page.getByRole("heading", { name: "Count trumps" })).toBeVisible();
@@ -1117,41 +1117,36 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
   expect(countCheckpointIndex).toBe(3);
 
   await page.getByLabel("Count trumps", { exact: true }).getByRole("button", { name: "Table" }).click();
-  await page.getByLabel("Card Counting I exercises").getByRole("button", { name: "Trump memory hand" }).click();
-  await expect(page.getByLabel("Realistic trump table")).toBeVisible();
-  await expect(page.getByLabel("Trump memory hand trainer")).toContainText("Trick 1 of 13");
+  await page.getByLabel("Card Counting I exercises").getByRole("button", { name: "Heart memory hand" }).click();
+  await expect(page.getByLabel("Hearts hand table")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Heart memory hand" })).toBeVisible();
+  await expect(page.getByLabel("Hearts hand decision")).toContainText(/Lead|Follow|void|Choose/);
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
-  await expectHandNearActionRow(page, ".realistic-trump-hand");
-  await expectFeedbackAboveHand(page, ".realistic-trump-hand");
+  await expectHandNearActionRow(page, ".full-hand-cards");
+  await expectFeedbackAboveHand(page, ".full-hand-cards");
   await page.screenshot({ path: testInfo.outputPath("perfect-count-trumps-realistic-play.png"), fullPage: true });
 
   const answerRealisticTrumpCheck = async () => {
-    await expect(page.getByLabel("Realistic trump challenge")).toContainText(/How many hearts|Has this trump card/);
-    const realisticCountAnswers = page.getByLabel("Realistic trump count answers").getByRole("button");
+    await expect(page.getByLabel("Hearts hand decision")).toContainText(/How many hearts|Did this heart/);
+    const realisticCountAnswers = page.getByLabel("Trump count answer options").getByRole("button");
     if ((await realisticCountAnswers.count()) > 0) {
       await realisticCountAnswers.first().click();
     } else {
-      await expect(page.getByLabel(/Target trump card/)).toBeVisible();
-      await page.getByLabel("Realistic trump specific answers").getByRole("button").first().click();
+      await expect(page.getByLabel(/Target heart card/)).toBeVisible();
+      await page.getByLabel("Heart card answer options").getByRole("button").first().click();
     }
     await expect(page.getByRole("button", { name: "Check memory" })).toBeEnabled();
     await page.getByRole("button", { name: "Check memory" }).click();
-    await expect(page.getByLabel("Realistic trump count review")).toContainText("hearts appeared");
+    await expect(page.getByLabel("Hearts hand decision")).toContainText(/hearts have been played|was played|was not played|Correct/);
   };
 
   let memoryChecks = 0;
   for (let trick = 1; trick <= 13; trick += 1) {
-    await page.locator(".realistic-trump-hand .full-hand-card.legal").first().click();
+    await page.locator(".full-hand-cards .full-hand-card.legal").first().click();
     await expect(page.getByRole("button", { name: "Play card" })).toBeEnabled();
     await page.getByRole("button", { name: "Play card" }).click();
     const isCheckpoint = [3, 7, 11].includes(trick);
-    const nextAction = page.getByRole("button", {
-      name: trick === 13 ? "Finish hand" : isCheckpoint ? "Answer memory" : "Next trick",
-      exact: true
-    });
-    await expect(nextAction).toBeVisible();
-    await nextAction.click();
 
     if (isCheckpoint) {
       await answerRealisticTrumpCheck();
@@ -1159,15 +1154,17 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
       if (trick === 3) {
         await page.screenshot({ path: testInfo.outputPath("perfect-count-trumps-realistic.png"), fullPage: true });
       }
-      await page.getByRole("button", { name: "Continue hand" }).click();
+      await page.getByRole("button", { name: "Next trick", exact: true }).click();
+    } else if (trick < 13) {
+      await page.getByRole("button", { name: "Next trick", exact: true }).click();
     }
   }
 
   expect(memoryChecks).toBe(3);
-  await expect(page.getByLabel("Realistic trump challenge")).toContainText("You played the full hand");
-  await expect(page.getByRole("button", { name: "Next hand" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Damage limited|Clean hand|Barbu caught you/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Back to Card Counting" })).toBeVisible();
 
-  await page.getByLabel("Trump memory hand", { exact: true }).getByRole("button", { name: "Table" }).click();
+  await page.getByRole("button", { name: "Back to Card Counting" }).click();
   await page.getByLabel("Card Counting I exercises").getByRole("button", { name: "Track court cards" }).click();
 
   await expect(page.getByRole("heading", { name: "Track court cards" })).toBeVisible();
@@ -1240,7 +1237,7 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
   await page.screenshot({ path: testInfo.outputPath("perfect-danger-cards.png"), fullPage: true });
 });
 
-test("Trump memory hand starts from Card Counting I as a realistic table game", async ({ page }) => {
+test("Heart memory hand starts from Card Counting I as a realistic table game", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
     localStorage.setItem("barbu.practiceSeed.v1", "1");
@@ -1248,20 +1245,20 @@ test("Trump memory hand starts from Card Counting I as a realistic table game", 
   await page.reload();
 
   await page.getByRole("button", { name: "Open Card Counting I" }).click();
-  await page.getByLabel("Card Counting I exercises").getByRole("button", { name: "Trump memory hand" }).click();
+  await page.getByLabel("Card Counting I exercises").getByRole("button", { name: "Heart memory hand" }).click();
 
-  await expect(page.getByRole("heading", { name: "Trump memory hand" })).toBeVisible();
-  await expect(page.getByLabel("Realistic trump table")).toBeVisible();
-  await expect(page.getByLabel("Realistic trump challenge")).toContainText(/Lead the trick|Follow|void/);
+  await expect(page.getByRole("heading", { name: "Heart memory hand" })).toBeVisible();
+  await expect(page.getByLabel("Hearts hand table")).toBeVisible();
+  await expect(page.getByLabel("Hearts hand decision")).toContainText(/Lead|Follow|void|Choose/);
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
-  await expectHandNearActionRow(page, ".realistic-trump-hand");
-  await expectFeedbackAboveHand(page, ".realistic-trump-hand");
+  await expectHandNearActionRow(page, ".full-hand-cards");
+  await expectFeedbackAboveHand(page, ".full-hand-cards");
 
-  await page.locator(".realistic-trump-hand .full-hand-card.legal").first().click();
+  await page.locator(".full-hand-cards .full-hand-card.legal").first().click();
   await page.getByRole("button", { name: "Play card" }).click();
 
-  await expect(page.getByLabel("Realistic trump table").locator(".table-card")).toHaveCount(4);
+  await expect(page.getByLabel("Hearts hand table").locator(".table-card")).toHaveCount(4);
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
 });
