@@ -1140,7 +1140,8 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
   expect(countCheckpointIndex).toBe(3);
   await page.getByRole("button", { name: "Review round" }).click();
   await expect(page.getByLabel("Count trumps intermission")).toContainText(/Warm-up complete|Clean warm-up/);
-  await expect(page.getByRole("button", { name: "Next round" })).toBeVisible();
+  await expect(page.getByLabel("Count trumps trainer").getByRole("button", { name: "Replay" })).toBeVisible();
+  await expect(page.getByLabel("Count trumps trainer").getByRole("button", { name: "Next hand" })).toBeVisible();
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
 
@@ -1196,12 +1197,12 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
   await expect(page.getByLabel("Heart memory hand intermission")).toContainText(/Heart memory hand complete|Sharp heart memory/);
   await expect(page.getByLabel("Heart memory hand intermission")).toContainText("Hearts score");
   await expect(page.getByLabel("Heart memory hand intermission")).toContainText(/\d+ points|1 point/);
-  await expect(page.getByRole("button", { name: "Back", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Replay" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Next hand" })).toBeVisible();
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
 
-  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await page.getByLabel("Hearts full hand").getByRole("button", { name: "Table" }).click();
   await page.getByLabel("Card Counting I exercises").getByRole("button", { name: "Track court cards" }).click();
 
   await expect(page.getByRole("heading", { name: "Track court cards" })).toBeVisible();
@@ -1260,6 +1261,7 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
   }
 
   await expect(page.getByLabel("Court cards intermission")).toContainText(/Court hand complete|Court cards remembered/);
+  await expect(page.getByLabel("Track court cards trainer").getByRole("button", { name: "Replay" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Next hand" })).toBeVisible();
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
@@ -1324,12 +1326,12 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
   }
 
   await expect(page.getByLabel("Danger cards intermission")).toContainText(/Clean queen memory|Danger cards hand complete/);
-  await expect(page.getByRole("button", { name: "Back", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Replay" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Next hand" })).toBeVisible();
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
 
-  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await page.getByLabel("No Queens full hand").getByRole("button", { name: "Table" }).click();
   await expect(page.getByRole("heading", { name: "Card Counting I" })).toBeVisible();
 });
 
@@ -1503,7 +1505,7 @@ test("Whist memory finish screen keeps the next hand action reachable", async ({
 
   await expect(page.getByLabel("Whist memory hand intermission")).toContainText(/Whist memory hand complete|Sharp Whist memory/);
   await expect(page.getByLabel("Whist full hand").getByRole("button", { name: "Table" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Back", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Replay" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Next hand" })).toBeVisible();
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);

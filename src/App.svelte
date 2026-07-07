@@ -2070,7 +2070,8 @@
   let fullHandRunSeed = 0;
   let fullHandRunResults: FullHandRunResult[] = [];
   let pendingRunContract: FullHandContract = fullHandContracts[0];
-  let trumpCountRound = buildTrumpCountRound(practiceSeed);
+  let trumpCountSeed = practiceSeed;
+  let trumpCountRound = buildTrumpCountRound(trumpCountSeed);
   let trumpCountRevealIndex = 0;
   let trumpCountQuestionIndex = 0;
   let trumpCountStage: "reveal" | "answer" | "complete" = "reveal";
@@ -2079,16 +2080,19 @@
   let trumpCountAttempts = 0;
   let trumpCountClean = 0;
   let fullHandCardCountingMode = false;
+  let fullHandCardCountingPlaySeed = practiceSeed;
   let fullHandCardCountingSeed = 1;
   let fullHandCardCountingAnswer: number | boolean | Seat | null = null;
   let fullHandCardCountingChecked = false;
   let fullHandCardCountingQuestionsAsked = 0;
   let fullHandCardCountingClean = 0;
-  let realisticTrumpRound = buildRealisticTrumpRound(practiceSeed + 29);
+  let realisticTrumpSeed = practiceSeed + 29;
+  let realisticTrumpRound = buildRealisticTrumpRound(realisticTrumpSeed);
   let realisticTrumpSelectedCardId = "";
   let realisticTrumpAnswer: number | boolean | null = null;
   let realisticTrumpChecked = false;
-  let realisticCourtRound = buildRealisticCourtRound(practiceSeed + 17);
+  let realisticCourtSeed = practiceSeed + 17;
+  let realisticCourtRound = buildRealisticCourtRound(realisticCourtSeed);
   let realisticCourtSelectedCardId = "";
   let courtCountSelected: number | boolean | null = null;
   let courtCountChecked = false;
@@ -3646,12 +3650,7 @@
 
   function openTrumpCountTrainer() {
     rememberCardCountingReturnTarget();
-    trumpCountRound = buildTrumpCountRound(usePracticeSeed());
-    trumpCountRevealIndex = 0;
-    trumpCountQuestionIndex = 0;
-    trumpCountStage = "reveal";
-    trumpCountSelected = null;
-    trumpCountChecked = false;
+    nextTrumpCountRound();
     appView = "trumpCount";
   }
 
@@ -3661,21 +3660,19 @@
     startTrumpMemoryFullHand();
   }
 
-  function startTrumpMemoryFullHand() {
-    fullHandCardCountingSeed = practiceSeed + 101;
+  function startTrumpMemoryFullHand(seed = usePracticeSeed()) {
+    fullHandCardCountingPlaySeed = seed;
+    fullHandCardCountingSeed = seed + 101;
     fullHandCardCountingAnswer = null;
     fullHandCardCountingChecked = false;
     fullHandCardCountingQuestionsAsked = 0;
     fullHandCardCountingClean = 0;
-    void startFullHand("Hearts", { cardCounting: true });
+    void startFullHand("Hearts", { cardCounting: true, seed });
   }
 
   function openCourtCountTrainer() {
     rememberCardCountingReturnTarget();
-    realisticCourtRound = buildRealisticCourtRound(usePracticeSeed());
-    realisticCourtSelectedCardId = "";
-    courtCountSelected = null;
-    courtCountChecked = false;
+    nextCourtCountRound();
     appView = "courtCount";
   }
 
@@ -3685,13 +3682,14 @@
     startDangerCardsFullHand();
   }
 
-  function startDangerCardsFullHand() {
-    fullHandCardCountingSeed = practiceSeed + dangerCardMemoryConfig.seedOffset;
+  function startDangerCardsFullHand(seed = usePracticeSeed()) {
+    fullHandCardCountingPlaySeed = seed;
+    fullHandCardCountingSeed = seed + dangerCardMemoryConfig.seedOffset;
     fullHandCardCountingAnswer = null;
     fullHandCardCountingChecked = false;
     fullHandCardCountingQuestionsAsked = 0;
     fullHandCardCountingClean = 0;
-    void startFullHand("No Queens", { cardCounting: true });
+    void startFullHand("No Queens", { cardCounting: true, seed });
   }
 
   function openCardCountingExercise(action: CardCountingExerciseAction) {
@@ -3723,15 +3721,16 @@
     startWhistMemoryFullHand();
   }
 
-  function startWhistMemoryFullHand() {
+  function startWhistMemoryFullHand(seed = usePracticeSeed()) {
     activeGameTable = "whist";
     whistFullHandSource = "card-counting";
-    fullHandCardCountingSeed = practiceSeed + whistMemoryConfig.seedOffset;
+    fullHandCardCountingPlaySeed = seed;
+    fullHandCardCountingSeed = seed + whistMemoryConfig.seedOffset;
     fullHandCardCountingAnswer = null;
     fullHandCardCountingChecked = false;
     fullHandCardCountingQuestionsAsked = 0;
     fullHandCardCountingClean = 0;
-    void startFullHand("Whist", { cardCounting: true });
+    void startFullHand("Whist", { cardCounting: true, seed });
   }
 
   function buildTrumpCountRound(seed: number): TrumpCountRound {
@@ -4137,12 +4136,17 @@
   }
 
   function nextTrumpCountRound() {
-    trumpCountRound = buildTrumpCountRound(usePracticeSeed());
+    trumpCountSeed = usePracticeSeed();
+    replayTrumpCountRound();
+  }
+
+  function replayTrumpCountRound() {
     trumpCountRevealIndex = 0;
     trumpCountQuestionIndex = 0;
     trumpCountStage = "reveal";
     trumpCountSelected = null;
     trumpCountChecked = false;
+    trumpCountRound = buildTrumpCountRound(trumpCountSeed);
   }
 
   function continueTrumpCountRound() {
@@ -4281,10 +4285,15 @@
   }
 
   function nextRealisticTrumpRound() {
-    realisticTrumpRound = buildRealisticTrumpRound(usePracticeSeed());
+    realisticTrumpSeed = usePracticeSeed();
+    replayRealisticTrumpRound();
+  }
+
+  function replayRealisticTrumpRound() {
     realisticTrumpSelectedCardId = "";
     realisticTrumpAnswer = null;
     realisticTrumpChecked = false;
+    realisticTrumpRound = buildRealisticTrumpRound(realisticTrumpSeed);
   }
 
   function selectFullHandCardCountingAnswer(answer: number | boolean | Seat) {
@@ -4321,6 +4330,20 @@
   }
 
   function replayFullHandCardCounting() {
+    if (fullHandCardCountingIsWhist) {
+      startWhistMemoryFullHand(fullHandCardCountingPlaySeed);
+      return;
+    }
+
+    if (fullHandCardCountingIsDanger) {
+      startDangerCardsFullHand(fullHandCardCountingPlaySeed);
+      return;
+    }
+
+    startTrumpMemoryFullHand(fullHandCardCountingPlaySeed);
+  }
+
+  function nextFullHandCardCounting() {
     if (fullHandCardCountingIsWhist) {
       startWhistMemoryFullHand();
       return;
@@ -4611,10 +4634,15 @@
   }
 
   function nextCourtCountRound() {
-    realisticCourtRound = buildRealisticCourtRound(usePracticeSeed());
+    realisticCourtSeed = usePracticeSeed();
+    replayCourtCountRound();
+  }
+
+  function replayCourtCountRound() {
     realisticCourtSelectedCardId = "";
     courtCountSelected = null;
     courtCountChecked = false;
+    realisticCourtRound = buildRealisticCourtRound(realisticCourtSeed);
   }
 
   function realisticCourtQuestionAnswerText(question: CourtMemoryQuestion) {
@@ -4769,7 +4797,7 @@
     return playBrowserNoHeartsCard(state, cardId);
   }
 
-  async function startFullHand(contract: FullHandContract, options: { cardCounting?: boolean; keepRun?: boolean } = {}) {
+  async function startFullHand(contract: FullHandContract, options: { cardCounting?: boolean; keepRun?: boolean; seed?: number } = {}) {
     if (contract === "Domino") {
       await startDominoHand(options);
       return;
@@ -4788,7 +4816,7 @@
 
     dominoHand = null;
     heartsPassingHand = null;
-    const seed = options.keepRun && fullHandRunActive ? runSeedForContract(contract) : usePracticeSeed();
+    const seed = options.seed ?? (options.keepRun && fullHandRunActive ? runSeedForContract(contract) : usePracticeSeed());
     fullHandSelectedCardId = "";
     fullHandError = "";
     fullHandReviewTrickCount = 0;
@@ -8114,6 +8142,7 @@
             {:else if realisticTrumpRound.status === "question" && realisticTrumpChecked}
               <button class="primary-action" onclick={continueRealisticTrumpAfterQuestion} type="button">Continue hand</button>
             {:else if realisticTrumpRound.status === "complete"}
+              <button class="secondary-action" onclick={replayRealisticTrumpRound} type="button">Replay</button>
               <button class="primary-action" onclick={nextRealisticTrumpRound} type="button">Next hand</button>
             {:else}
               <button
@@ -8291,7 +8320,8 @@
         <div class="action-row">
           <button class="secondary-action" onclick={openCardCountingReturnTarget} type="button">Table</button>
           {#if trumpCountStage === "complete"}
-            <button class="primary-action" onclick={nextTrumpCountRound} type="button">Next round</button>
+            <button class="secondary-action" onclick={replayTrumpCountRound} type="button">Replay</button>
+            <button class="primary-action" onclick={nextTrumpCountRound} type="button">Next hand</button>
           {:else if trumpCountStage === "reveal"}
             <button class="primary-action" onclick={advanceTrumpCountReveal} type="button">
               {trumpCountQuestion && trumpCountRevealIndex >= trumpCountQuestion.endTrick ? "Answer memory" : "Next trick"}
@@ -8481,6 +8511,7 @@
           {:else if realisticCourtRound.status === "question" && courtCountChecked}
             <button class="primary-action" onclick={continueRealisticCourtAfterQuestion} type="button">Continue hand</button>
           {:else if realisticCourtRound.status === "complete"}
+            <button class="secondary-action" onclick={replayCourtCountRound} type="button">Replay</button>
             <button class="primary-action" onclick={nextCourtCountRound} type="button">Next hand</button>
           {:else}
             <button
@@ -9487,8 +9518,8 @@
             {#if fullHand.status === "complete"}
               <button class="secondary-action" onclick={openFullHandTableTarget} type="button">Table</button>
               {#if fullHandCardCountingActive}
-                <button class="secondary-action" onclick={openFullHandTableTarget} type="button">Back</button>
-                <button class="primary-action" onclick={replayFullHandCardCounting} type="button">Next hand</button>
+                <button class="secondary-action" onclick={replayFullHandCardCounting} type="button">Replay</button>
+                <button class="primary-action" onclick={nextFullHandCardCounting} type="button">Next hand</button>
               {:else if fullHandRunIsComplete}
                 <button class="secondary-action" onclick={() => void replayWeakestRunContract()} type="button">Replay weakest</button>
                 <button class="primary-action" onclick={startBarbuRun} type="button">New game</button>
