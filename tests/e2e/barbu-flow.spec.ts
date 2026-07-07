@@ -1211,11 +1211,11 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
   await expect(page.getByLabel("Danger card memory status")).not.toContainText("Danger cards seen");
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
-  await expectHandNearActionRow(page, ".realistic-trump-hand");
-  await expectFeedbackAboveHand(page, ".realistic-trump-hand");
+  await expectHandNearActionRow(page, ".card-memory-hand");
+  await expectFeedbackAboveHand(page, ".card-memory-hand");
 
   for (let trick = 1; trick <= 3; trick += 1) {
-    await page.locator(".realistic-trump-hand .full-hand-card.legal").first().click();
+    await page.locator(".card-memory-hand .full-hand-card.legal").first().click();
     await expect(page.getByRole("button", { name: "Play card" })).toBeEnabled();
     await page.getByRole("button", { name: "Play card" }).click();
     await page.getByRole("button", { name: trick === 3 ? "Answer memory" : "Next trick", exact: true }).click();
@@ -1235,6 +1235,8 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
   await expect(page.getByLabel("Danger card memory review")).toContainText("danger cards appeared");
   await expect(page.getByRole("button", { name: "Continue hand" })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath("perfect-danger-cards.png"), fullPage: true });
+  await page.getByLabel("Danger cards", { exact: true }).getByRole("button", { name: "Table" }).click();
+  await expect(page.getByRole("heading", { name: "Card Counting I" })).toBeVisible();
 });
 
 test("Heart memory hand starts from Card Counting I as a realistic table game", async ({ page }) => {

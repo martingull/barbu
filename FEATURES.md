@@ -362,7 +362,7 @@ These are the next product increments that keep the app coherent.
    - Count Trumps reveals all thirteen tricks in segments, hides the segment, then asks either how many hearts appeared or whether a specific heart appeared.
    - Heart Memory Hand is the lead Card Counting I exercise: play a full Black Lady Hearts hand, make normal avoidance decisions, then answer heart-memory checks during the hand.
    - Track Court Cards is the third active exercise and uses the realistic table surface for high-card memory.
-   - Danger Cards is the fourth active exercise and tracks Barbu-specific danger cards: queens and the king of hearts.
+   - Danger Cards is the fourth active exercise and tracks Barbu-specific danger cards: queens and the king of hearts. Danger Cards v2 now uses a small memory-exercise config for tracked cards, prompts, targets, and return behavior so later Queen Watch / King Watch variants can reuse the same shape.
    - Add short mini-games for serious 52-card-deck skills and practical card-counting habits: Suit Count, Danger Card Tracker, Trump Count, Void Finder, High Card Memory, and Safe Exit Trainer.
    - Next: connect card-counting exercises back to Play Barbu feedback and focused replay.
    - Trump Memory Hand now starts sharing table-aware trump behavior with the core game: opponents can overtrump a player's low trump when void in the led suit and able to beat it. Continue extending this only where it improves the skill being trained.
