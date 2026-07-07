@@ -2467,6 +2467,10 @@
     fullHandCardCountingActive && fullHandReviewTrickCount > 0
       ? fullHandCardCountingCheckpoints.indexOf(fullHandReviewTrickCount)
       : -1;
+  $: fullHandCardCountingQuestionNumber = Math.min(
+    fullHandCardCountingQuestionsAsked + (fullHandCardCountingChecked ? 0 : 1),
+    fullHandCardCountingCheckpoints.length
+  );
   $: fullHandCardCountingPromptActive = Boolean(
     fullHandCardCountingQuestion &&
       fullHandIsReviewingTrick &&
@@ -2608,6 +2612,7 @@
   $: whistOddProgressLabel = whistOddScore.label;
   $: whistOddProgressValue = whistOddScore.value;
   $: currentWhistHandResult = fullHandIsWhistGame && fullHand?.status === "complete" ? whistHandResultFor(fullHand) : null;
+  $: fullHandShowWhistMatchSummary = fullHandIsWhistGame && !fullHandCardCountingActive;
   $: whistVisibleMatchScores = currentWhistHandResult
     ? addWhistMatchResult(whistMatchScores, currentWhistHandResult)
     : whistMatchScores;
@@ -3877,14 +3882,14 @@
 
       return {
         kind: "boss_card",
-        prompt: `Is the ${boss.rank} of ${suitNames[boss.suit]} currently the boss (highest unplayed) card in ${suitNames[boss.suit]}?`,
+        prompt: `Is this now the boss card in ${suitNames[boss.suit]}?`,
         answer: true, // We always ask about the true boss for simplicity in this version, or we can randomise it
         targetCard: boss
       };
     } else if (kind === "trump_count") {
       return {
         kind: "trump_count",
-        prompt: `How many ${suitNames[trumpSuit]} (trumps) have been played so far?`,
+        prompt: `How many ${suitNames[trumpSuit]} trumps have appeared?`,
         answer: trumpSeen,
         options: countOptions(trumpSeen, seed, 13),
         trumpSuit
@@ -3894,7 +3899,7 @@
       const targetCard = allTrumps[(seed + trumpSeen) % allTrumps.length];
       return {
         kind: "trump_specific",
-        prompt: `Has the ${targetCard.rank} of ${suitNames[trumpSuit]} (trump) been played so far?`,
+        prompt: "Has this trump been played so far?",
         answer: seenCards.some((card) => card.id === targetCard.id),
         targetCard
       };
@@ -9152,7 +9157,7 @@
             <div class="full-hand-summary grouped-play-summary" aria-label={`${fullHand.contract} hand score`}>
               <div
                 class:no-last-two={fullHand.contract === "No Last Two"}
-                class:whist-hand-summary={fullHandIsWhistGame}
+                class:whist-hand-summary={fullHandShowWhistMatchSummary}
                 class="full-hand-summary-row current-hand"
                 aria-label="Current hand"
               >
@@ -9169,7 +9174,7 @@
                   <span>{whistOpeningLeadPracticeActive ? "Lead" : "Tricks"}</span>
                   <strong>{whistOpeningLeadPracticeActive ? `${whistOpeningLeadPracticeRound + 1} / ${whistOpeningLeadPracticeMaxRounds}` : `${fullHand.completedTricks.length} / 13`}</strong>
                 </div>
-                {#if fullHandIsWhistGame}
+                {#if fullHandShowWhistMatchSummary}
                   <div>
                     <span>{whistOpeningLeadPracticeActive ? "Focus" : whistOddProgressLabel}</span>
                     <strong>{whistOpeningLeadPracticeActive ? "Opening" : whistOddProgressValue}</strong>
@@ -9193,7 +9198,7 @@
                   {/each}
                 </div>
               {/if}
-              {#if fullHandIsWhistGame}
+              {#if fullHandShowWhistMatchSummary}
                 <div class="full-hand-summary-row table-score" aria-label="Whist match score">
                   <span class="summary-row-label">Match to {whistMatchTarget}</span>
                   <div>
@@ -9362,90 +9367,91 @@
             {/if}
           {:else if fullHandIsReviewingTrick}
             {#if fullHandCardCountingPromptActive && fullHandCardCountingQuestion}
-              <div class="lesson-heading">
-                <p class="eyebrow">Memory check {fullHandCardCountingQuestionsAsked + 1} of {fullHandCardCountingCheckpoints.length}</p>
-                <h2>{fullHandCardCountingQuestionTitle}</h2>
-              </div>
+              <section class:answered={fullHandCardCountingChecked} class="memory-check-card">
+                <div class="memory-check-prompt">
+                  <span>Memory check {fullHandCardCountingQuestionNumber} of {fullHandCardCountingCheckpoints.length}</span>
+                  <strong>{fullHandCardCountingQuestionTitle}</strong>
+                  <p>{fullHandCardCountingQuestion.prompt}</p>
+                </div>
 
-              <p class="result">{fullHandCardCountingQuestion.prompt}</p>
-
-              {#if fullHandCardCountingQuestion.kind === "specific" || fullHandCardCountingQuestion.kind === "trump_specific" || fullHandCardCountingQuestion.kind === "boss_card"}
-                <div class="trump-specific-check">
-                  <div class="trump-target-card" aria-label={`${fullHandCardCountingTargetLabel} ${formatCardLabel(fullHandCardCountingQuestion.targetCard)}`}>
-                    <span>Target</span>
-                    <div class="trump-target-card-face">
-                      <CardFace card={fullHandCardCountingQuestion.targetCard} decorative />
+                {#if fullHandCardCountingQuestion.kind === "specific" || fullHandCardCountingQuestion.kind === "trump_specific" || fullHandCardCountingQuestion.kind === "boss_card"}
+                  <div class:answered={fullHandCardCountingChecked} class="trump-specific-check">
+                    <div class="trump-target-card" aria-label={`${fullHandCardCountingTargetLabel} ${formatCardLabel(fullHandCardCountingQuestion.targetCard)}`}>
+                      <span>Target</span>
+                      <div class="trump-target-card-face">
+                        <CardFace card={fullHandCardCountingQuestion.targetCard} decorative />
+                      </div>
+                    </div>
+                    <div class="trump-count-options trump-specific-options" aria-label={fullHandCardCountingAnswerOptionsLabel}>
+                      <button
+                        aria-pressed={fullHandCardCountingAnswer === true}
+                        class:correct={fullHandCardCountingChecked && fullHandCardCountingQuestion.answer === true}
+                        class:selected={fullHandCardCountingAnswer === true}
+                        class:wrong={fullHandCardCountingChecked && fullHandCardCountingAnswer === true && fullHandCardCountingQuestion.answer !== true}
+                        disabled={fullHandCardCountingChecked}
+                        onclick={() => selectFullHandCardCountingAnswer(true)}
+                        type="button"
+                      >
+                        Yes
+                      </button>
+                      <button
+                        aria-pressed={fullHandCardCountingAnswer === false}
+                        class:correct={fullHandCardCountingChecked && fullHandCardCountingQuestion.answer === false}
+                        class:selected={fullHandCardCountingAnswer === false}
+                        class:wrong={fullHandCardCountingChecked && fullHandCardCountingAnswer === false && fullHandCardCountingQuestion.answer !== false}
+                        disabled={fullHandCardCountingChecked}
+                        onclick={() => selectFullHandCardCountingAnswer(false)}
+                        type="button"
+                      >
+                        No
+                      </button>
                     </div>
                   </div>
-                  <div class="trump-count-options trump-specific-options" aria-label={fullHandCardCountingAnswerOptionsLabel}>
-                    <button
-                      aria-pressed={fullHandCardCountingAnswer === true}
-                      class:correct={fullHandCardCountingChecked && fullHandCardCountingQuestion.answer === true}
-                      class:selected={fullHandCardCountingAnswer === true}
-                      class:wrong={fullHandCardCountingChecked && fullHandCardCountingAnswer === true && fullHandCardCountingQuestion.answer !== true}
-                      disabled={fullHandCardCountingChecked}
-                      onclick={() => selectFullHandCardCountingAnswer(true)}
-                      type="button"
-                    >
-                      Yes
-                    </button>
-                    <button
-                      aria-pressed={fullHandCardCountingAnswer === false}
-                      class:correct={fullHandCardCountingChecked && fullHandCardCountingQuestion.answer === false}
-                      class:selected={fullHandCardCountingAnswer === false}
-                      class:wrong={fullHandCardCountingChecked && fullHandCardCountingAnswer === false && fullHandCardCountingQuestion.answer !== false}
-                      disabled={fullHandCardCountingChecked}
-                      onclick={() => selectFullHandCardCountingAnswer(false)}
-                      type="button"
-                    >
-                      No
-                    </button>
+                {:else if fullHandCardCountingQuestion.kind === "count" || fullHandCardCountingQuestion.kind === "trump_count"}
+                  <div class="trump-count-options" aria-label={fullHandCardCountingCountOptionsLabel}>
+                    {#each fullHandCardCountingQuestion.options as option}
+                      <button
+                        aria-pressed={fullHandCardCountingAnswer === option}
+                        class:correct={fullHandCardCountingChecked && option === fullHandCardCountingQuestion.answer}
+                        class:selected={fullHandCardCountingAnswer === option}
+                        class:wrong={fullHandCardCountingChecked && fullHandCardCountingAnswer === option && option !== fullHandCardCountingQuestion.answer}
+                        disabled={fullHandCardCountingChecked}
+                        onclick={() => selectFullHandCardCountingAnswer(option)}
+                        type="button"
+                      >
+                        {option}
+                      </button>
+                    {/each}
                   </div>
-                </div>
-              {:else if fullHandCardCountingQuestion.kind === "count" || fullHandCardCountingQuestion.kind === "trump_count"}
-                <div class="trump-count-options" aria-label={fullHandCardCountingCountOptionsLabel}>
-                  {#each fullHandCardCountingQuestion.options as option}
-                    <button
-                      aria-pressed={fullHandCardCountingAnswer === option}
-                      class:correct={fullHandCardCountingChecked && option === fullHandCardCountingQuestion.answer}
-                      class:selected={fullHandCardCountingAnswer === option}
-                      class:wrong={fullHandCardCountingChecked && fullHandCardCountingAnswer === option && option !== fullHandCardCountingQuestion.answer}
-                      disabled={fullHandCardCountingChecked}
-                      onclick={() => selectFullHandCardCountingAnswer(option)}
-                      type="button"
-                    >
-                      {option}
-                    </button>
-                  {/each}
-                </div>
-              {:else}
-                <div class="trump-count-options memory-answer-options" aria-label="Void spotter options">
-                  {#each ["Left", "Right", "Tutor"] as seat}
-                    <button
-                      aria-pressed={fullHandCardCountingAnswer === seat}
-                      class:correct={fullHandCardCountingChecked && fullHandCardCountingQuestion.answer === seat}
-                      class:selected={fullHandCardCountingAnswer === seat}
-                      class:wrong={fullHandCardCountingChecked && fullHandCardCountingAnswer === seat && fullHandCardCountingQuestion.answer !== seat}
-                      disabled={fullHandCardCountingChecked}
-                      onclick={() => selectFullHandCardCountingAnswer(seat as Seat)}
-                      type="button"
-                    >
-                      <strong>{seat === "Tutor" ? "Barbu" : seat}</strong>
-                    </button>
-                  {/each}
-                </div>
-              {/if}
+                {:else}
+                  <div class="trump-count-options memory-answer-options" aria-label="Void spotter options">
+                    {#each ["Left", "Right", "Tutor"] as seat}
+                      <button
+                        aria-pressed={fullHandCardCountingAnswer === seat}
+                        class:correct={fullHandCardCountingChecked && fullHandCardCountingQuestion.answer === seat}
+                        class:selected={fullHandCardCountingAnswer === seat}
+                        class:wrong={fullHandCardCountingChecked && fullHandCardCountingAnswer === seat && fullHandCardCountingQuestion.answer !== seat}
+                        disabled={fullHandCardCountingChecked}
+                        onclick={() => selectFullHandCardCountingAnswer(seat as Seat)}
+                        type="button"
+                      >
+                        <strong>{seat === "Tutor" ? "Barbu" : seat}</strong>
+                      </button>
+                    {/each}
+                  </div>
+                {/if}
 
-              <p class:warning={fullHandCardCountingChecked && fullHandCardCountingAnswer !== fullHandCardCountingQuestion.answer} class="outcome">
-                {fullHandCardCountingFeedback}
-              </p>
-              {#if fullHandCardCountingChecked}
-                <div class="trump-review-cards" aria-label={fullHandCardCountingSeenLabel}>
-                  {#each fullHandCardCountingReviewCards as card}
-                    <CardFace {card} />
-                  {/each}
-                </div>
-              {/if}
+                <p class:warning={fullHandCardCountingChecked && fullHandCardCountingAnswer !== fullHandCardCountingQuestion.answer} class="outcome">
+                  {fullHandCardCountingFeedback}
+                </p>
+                {#if fullHandCardCountingChecked}
+                  <div class="trump-review-cards" aria-label={fullHandCardCountingSeenLabel}>
+                    {#each fullHandCardCountingReviewCards as card}
+                      <CardFace {card} />
+                    {/each}
+                  </div>
+                {/if}
+              </section>
             {:else}
               <div class="lesson-heading">
                 <p class="eyebrow">Trick complete</p>
@@ -9481,8 +9487,8 @@
             {#if fullHand.status === "complete"}
               <button class="secondary-action" onclick={openFullHandTableTarget} type="button">Table</button>
               {#if fullHandCardCountingActive}
-                <button class="secondary-action" onclick={replayFullHandCardCounting} type="button">Replay</button>
-                <button class="primary-action" onclick={openFullHandTableTarget} type="button">Back to Card Counting</button>
+                <button class="secondary-action" onclick={openFullHandTableTarget} type="button">Back</button>
+                <button class="primary-action" onclick={replayFullHandCardCounting} type="button">Next hand</button>
               {:else if fullHandRunIsComplete}
                 <button class="secondary-action" onclick={() => void replayWeakestRunContract()} type="button">Replay weakest</button>
                 <button class="primary-action" onclick={startBarbuRun} type="button">New game</button>

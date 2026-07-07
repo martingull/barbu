@@ -2502,6 +2502,49 @@ h2 {
   gap: 8px;
 }
 
+.memory-check-card {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(245, 241, 207, 0.2);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(245, 241, 207, 0.08), rgba(9, 34, 24, 0.12)),
+    rgba(10, 31, 22, 0.92);
+}
+
+.memory-check-prompt {
+  display: grid;
+  gap: 3px;
+  padding: 8px 10px;
+  border: 1px solid rgba(245, 241, 207, 0.14);
+  border-radius: 10px;
+  background: rgba(4, 18, 11, 0.2);
+}
+
+.memory-check-prompt span {
+  color: #d7c891;
+  font-size: 0.62rem;
+  font-weight: 950;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.memory-check-prompt strong {
+  color: #f7faf3;
+  font-size: 1rem;
+  line-height: 1.08;
+}
+
+.memory-check-prompt p {
+  margin: 0;
+  color: #dbe7d1;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.22;
+}
+
 .counting-break-card {
   display: grid;
   gap: 10px;
@@ -3648,7 +3691,8 @@ h2 {
   }
 
   .fixed-play-screen .table-play-surface.compact-result.table-hidden .table-play-panel:has(.counting-break-card) .action-row {
-    grid-template-columns: 0.72fr 1fr;
+    grid-template-columns: 0.58fr 0.58fr 1fr;
+    gap: 6px;
   }
 
   .domino-result-card {
@@ -3786,6 +3830,33 @@ h2 {
     background: rgba(245, 241, 207, 0.13);
   }
 
+  .fixed-play-screen .table-play-surface.compact-play .memory-check-card {
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .fixed-play-screen .table-play-surface.compact-play .memory-check-prompt {
+    gap: 2px;
+    padding: 7px 9px;
+  }
+
+  .fixed-play-screen .table-play-surface.compact-play .memory-check-prompt span {
+    font-size: 0.56rem;
+  }
+
+  .fixed-play-screen .table-play-surface.compact-play .memory-check-prompt strong {
+    font-size: 0.95rem;
+  }
+
+  .fixed-play-screen .table-play-surface.compact-play .memory-check-prompt p {
+    font-size: 0.73rem;
+    line-height: 1.16;
+  }
+
+  .fixed-play-screen .table-play-surface.compact-play .memory-check-card .outcome {
+    padding: 6px 8px;
+  }
+
   .table-play-surface.compact-result .lesson-heading h2 {
     font-size: 1.12rem;
   }
@@ -3906,6 +3977,58 @@ h2 {
     font-size: 0.95rem;
   }
 
+  .table-play-surface.compact-play .memory-check-card .trump-specific-check {
+    grid-template-columns: minmax(72px, 0.38fr) minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .table-play-surface.compact-play .memory-check-card .trump-target-card {
+    min-height: 78px;
+    gap: 4px;
+    padding: 6px;
+  }
+
+  .table-play-surface.compact-play .memory-check-card .trump-target-card-face {
+    width: 42px;
+  }
+
+  .table-play-surface.compact-play .memory-check-card .trump-count-options.trump-specific-options {
+    gap: 6px;
+  }
+
+  .table-play-surface.compact-play .memory-check-card .trump-count-options.trump-specific-options button {
+    min-height: 36px;
+  }
+
+  .table-play-surface.compact-play .memory-check-card.answered .trump-specific-check {
+    grid-template-columns: minmax(72px, 0.42fr) minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .table-play-surface.compact-play .memory-check-card.answered .trump-target-card {
+    min-height: 72px;
+    gap: 3px;
+    padding: 5px;
+  }
+
+  .table-play-surface.compact-play .memory-check-card.answered .trump-target-card span {
+    font-size: 0.5rem;
+  }
+
+  .table-play-surface.compact-play .memory-check-card.answered .trump-target-card-face {
+    width: 38px;
+  }
+
+  .table-play-surface.compact-play .memory-check-card.answered .trump-count-options.trump-specific-options {
+    gap: 5px;
+  }
+
+  .table-play-surface.compact-play .memory-check-card.answered .trump-count-options.trump-specific-options button {
+    min-height: 34px;
+    padding: 4px 8px;
+    font-size: 0.82rem;
+  }
+
   .table-play-surface.compact-play .trump-count-feedback {
     padding: 8px 10px;
     font-size: 0.78rem;
@@ -3924,6 +4047,25 @@ h2 {
   .table-play-surface.compact-play .trump-count-review > small {
     font-size: 0.76rem;
     line-height: 1.25;
+  }
+
+  .fixed-play-screen .table-play-surface.compact-play .trump-review-cards {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 3px;
+    height: 34px;
+    max-height: 34px;
+    overflow: hidden;
+  }
+
+  .fixed-play-screen .table-play-surface.compact-play .trump-review-cards .card-face {
+    width: 24px !important;
+    height: 34px !important;
+    max-height: 34px;
+    flex: 0 0 auto;
+    border-radius: 4px;
+    box-shadow: 0 4px 10px rgba(4, 18, 11, 0.24);
   }
 
   .table-play-surface.compact-play .counting-score-stack {

@@ -1196,11 +1196,12 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
   await expect(page.getByLabel("Heart memory hand intermission")).toContainText(/Heart memory hand complete|Sharp heart memory/);
   await expect(page.getByLabel("Heart memory hand intermission")).toContainText("Hearts score");
   await expect(page.getByLabel("Heart memory hand intermission")).toContainText(/\d+ points|1 point/);
-  await expect(page.getByRole("button", { name: "Back to Card Counting" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Back", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Next hand" })).toBeVisible();
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
 
-  await page.getByRole("button", { name: "Back to Card Counting" }).click();
+  await page.getByRole("button", { name: "Back", exact: true }).click();
   await page.getByLabel("Card Counting I exercises").getByRole("button", { name: "Track court cards" }).click();
 
   await expect(page.getByRole("heading", { name: "Track court cards" })).toBeVisible();
@@ -1323,12 +1324,12 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
   }
 
   await expect(page.getByLabel("Danger cards intermission")).toContainText(/Clean queen memory|Danger cards hand complete/);
-  await expect(page.getByRole("button", { name: "Replay" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Back to Card Counting" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Back", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Next hand" })).toBeVisible();
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
 
-  await page.getByRole("button", { name: "Back to Card Counting" }).click();
+  await page.getByRole("button", { name: "Back", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Card Counting I" })).toBeVisible();
 });
 
@@ -1389,9 +1390,9 @@ test("Whist memory hand separates trick review from memory questions", async ({ 
     await page.getByRole("button", { name: "Play card" }).click();
   }
 
-  await expect(page.getByLabel("Whist hand decision")).toContainText(/How many|Has the|Is the|Who is officially out/);
+  await expect(page.getByLabel("Whist hand decision")).toContainText(/How many|Did this|Is this|Who is officially out/);
   const answerGroups = [
-    page.getByLabel("Trump count answer options").getByRole("button"),
+    page.getByLabel("Whist count answer options").getByRole("button"),
     page.getByLabel("Void spotter options").getByRole("button"),
     page.getByLabel("Whist card answer options").getByRole("button")
   ];
@@ -1403,6 +1404,110 @@ test("Whist memory hand separates trick review from memory questions", async ({ 
   await expect(page.getByRole("button", { name: "Check memory" })).toBeEnabled();
   await expectNoVerticalCollision(page, ".table-play-panel .trump-count-options, .table-play-panel .trump-specific-check", ".table-play-surface .action-row", 16);
   await page.screenshot({ path: testInfo.outputPath("perfect-whist-memory-question.png"), fullPage: true });
+});
+
+test("Whist memory card review stays inside the fixed phone screen", async ({ page }, testInfo) => {
+  await gotoWithPracticeSeed(page, 1);
+
+  await page.getByRole("button", { name: "Open Card Counting I" }).click();
+  await page.getByLabel("Card Counting I exercises").getByRole("button", { name: "Whist memory hand" }).click();
+
+  let foundCardQuestion = false;
+
+  for (let trick = 1; trick <= 10; trick += 1) {
+    await page.locator(".full-hand-cards .full-hand-card.legal").first().click();
+    await page.getByRole("button", { name: "Play card" }).click();
+
+    if (![3, 7, 10].includes(trick)) {
+      await page.getByRole("button", { name: "Next trick", exact: true }).click();
+      continue;
+    }
+
+    await expect(page.getByLabel("Whist hand decision")).toContainText(/How many|Did this|Is this|Who is officially out/);
+    const whistCardAnswers = page.getByLabel("Whist card answer options").getByRole("button");
+
+    if ((await whistCardAnswers.count()) > 0) {
+      await page.getByLabel("Whist card answer options").getByRole("button", { name: "No" }).click();
+      await page.getByRole("button", { name: "Check memory" }).click();
+      await expect(page.getByLabel("Whist hand decision")).toContainText(/Correct|was played|was not played|boss card/);
+      const reviewedCards = page.locator(".table-play-panel .trump-review-cards .card-face");
+      const reviewedCardCount = await reviewedCards.count();
+
+      if (reviewedCardCount === 0) {
+        await page.getByRole("button", { name: "Next trick", exact: true }).click();
+        continue;
+      }
+
+      foundCardQuestion = true;
+      await expect(page.getByLabel("Whist hand score")).not.toContainText("Match to");
+      await expectNoVerticalCollision(
+        page,
+        ".table-play-panel .trump-specific-check, .table-play-panel .outcome, .table-play-panel .trump-review-cards",
+        ".table-play-surface .action-row",
+        16
+      );
+      await expectNoPageScroll(page);
+      await expectGameplayActionRowPinned(page);
+      await page.screenshot({ path: testInfo.outputPath(`perfect-whist-memory-no-answer-${trick}.png`), fullPage: true });
+      break;
+    }
+
+    const countAnswers = page.getByLabel("Whist count answer options").getByRole("button");
+    if ((await countAnswers.count()) > 0) {
+      await countAnswers.first().click();
+    } else {
+      await page.getByLabel("Void spotter options").getByRole("button").first().click();
+    }
+
+    await page.getByRole("button", { name: "Check memory" }).click();
+    await page.getByRole("button", { name: "Next trick", exact: true }).click();
+  }
+
+  expect(foundCardQuestion).toBe(true);
+});
+
+test("Whist memory finish screen keeps the next hand action reachable", async ({ page }, testInfo) => {
+  await gotoWithPracticeSeed(page, 1);
+
+  await page.getByRole("button", { name: "Open Card Counting I" }).click();
+  await page.getByLabel("Card Counting I exercises").getByRole("button", { name: "Whist memory hand" }).click();
+
+  for (let trick = 1; trick <= 13; trick += 1) {
+    await page.locator(".full-hand-cards .full-hand-card.legal").first().click();
+    await page.getByRole("button", { name: "Play card" }).click();
+
+    if ((await page.getByRole("button", { name: "Check memory" }).count()) > 0) {
+      const countAnswers = page.getByLabel("Whist count answer options").getByRole("button");
+      const cardAnswers = page.getByLabel("Whist card answer options").getByRole("button");
+      const voidAnswers = page.getByLabel("Void spotter options").getByRole("button");
+
+      if ((await countAnswers.count()) > 0) {
+        await countAnswers.first().click();
+      } else if ((await cardAnswers.count()) > 0) {
+        await cardAnswers.first().click();
+      } else {
+        await voidAnswers.first().click();
+      }
+
+      await page.getByRole("button", { name: "Check memory" }).click();
+    }
+
+    if (trick < 13) {
+      await page.getByRole("button", { name: "Next trick", exact: true }).click();
+    }
+  }
+
+  if ((await page.getByRole("button", { name: "Finish hand" }).count()) > 0) {
+    await page.getByRole("button", { name: "Finish hand" }).click();
+  }
+
+  await expect(page.getByLabel("Whist memory hand intermission")).toContainText(/Whist memory hand complete|Sharp Whist memory/);
+  await expect(page.getByLabel("Whist full hand").getByRole("button", { name: "Table" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Back", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Next hand" })).toBeVisible();
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
+  await page.screenshot({ path: testInfo.outputPath("perfect-whist-memory-finish.png"), fullPage: true });
 });
 
 test("practice tab keeps contract hands hidden while fixed drills are public", async ({ page }, testInfo) => {
