@@ -4863,7 +4863,9 @@
 
     try {
       fullHand = await invoke<FullHandState>(metadata.startCommand, {
-        seed
+        seed,
+        gameId: activeGameTable,
+        contract
       });
       usingBrowserFullHand = false;
     } catch {
@@ -5081,7 +5083,9 @@
     try {
       const nextFullHand = await invoke<FullHandState>(fullHandContractCommands[fullHand.contract].playCommand, {
         state: fullHand,
-        cardId
+        cardId,
+        gameId: activeGameTable,
+        contract: fullHand.contract
       });
       updateFullHandAfterPlayerPlay(nextFullHand, completedTrickCount);
       recordCompletedFullHandRunResult(fullHand);

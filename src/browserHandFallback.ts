@@ -1149,3 +1149,31 @@ class DeterministicRng {
     return this.state % upperBound;
   }
 }
+
+export function startBrowserHand(contract: string, seed: number): FullHandState {
+    switch (contract) {
+        case "Hearts": return startBrowserHeartsHand(seed);
+        case "Whist": return startBrowserWhistHand(seed);
+        case "No Hearts": return startBrowserNoHeartsHand(seed);
+        case "No Queens": return startBrowserNoQueensHand(seed);
+        case "King of Hearts": return startBrowserKingOfHeartsHand(seed);
+        case "No Last Two": return startBrowserNoLastTwoHand(seed);
+        case "No Tricks": return startBrowserNoTricksHand(seed);
+        case "Hearts Trumps": return startBrowserPositiveTricksHand(seed);
+        default: throw new Error(`Unknown contract: ${contract}`);
+    }
+}
+
+export function playBrowserHandCard(contract: string, state: FullHandState, cardId: string): FullHandState {
+    switch (contract) {
+        case "Hearts": return playBrowserHeartsCard(state, cardId);
+        case "Whist": return playBrowserWhistCard(state, cardId);
+        case "No Hearts": return playBrowserNoHeartsCard(state, cardId);
+        case "No Queens": return playBrowserNoQueensCard(state, cardId);
+        case "King of Hearts": return playBrowserKingOfHeartsCard(state, cardId);
+        case "No Last Two": return playBrowserNoLastTwoCard(state, cardId);
+        case "No Tricks": return playBrowserNoTricksCard(state, cardId);
+        case "Hearts Trumps": return playBrowserPositiveTricksCard(state, cardId);
+        default: throw new Error(`Unknown contract: ${contract}`);
+    }
+}

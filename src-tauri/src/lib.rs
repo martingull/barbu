@@ -36,24 +36,19 @@ fn generate_hearts_practice_set(seed: u64, focus: Option<String>) -> PracticeDri
 }
 
 #[tauri::command]
-fn start_no_hearts_hand(seed: u64) -> FullHandDto {
-    let state = barbu_core::start_no_hearts_hand(seed);
-    FullHandDto::from_core(&state, "No Hearts", "point")
+fn start_hand(game_id: String, contract: String, seed: u64) -> Result<FullHandDto, String> {
+    let ruleset = barbu_core::get_ruleset(&game_id, &contract);
+    let state = ruleset.start_hand(seed);
+    Ok(FullHandDto::from_core(&state, &contract, ruleset.score_type()))
 }
 
 #[tauri::command]
-fn play_no_hearts_hand_card(state: FullHandDto, card_id: String) -> Result<FullHandDto, String> {
-    let state = state.to_core()?;
+fn play_hand_card(game_id: String, contract: String, state: FullHandDto, card_id: String) -> Result<FullHandDto, String> {
+    let ruleset = barbu_core::get_ruleset(&game_id, &contract);
+    let state_core = state.to_core()?;
     let card = card_from_label(&card_id)?;
-    let next_state = barbu_core::play_no_hearts_card(state, card)?;
-
-    Ok(FullHandDto::from_core(&next_state, "No Hearts", "point"))
-}
-
-#[tauri::command]
-fn start_hearts_hand(seed: u64) -> FullHandDto {
-    let state = barbu_core::start_hearts_hand(seed);
-    FullHandDto::from_core(&state, "Hearts", "point")
+    let next_state = ruleset.play_card(state_core, card)?;
+    Ok(FullHandDto::from_core(&next_state, &contract, ruleset.score_type()))
 }
 
 #[tauri::command]
@@ -76,119 +71,6 @@ fn apply_hearts_pass(
     let next_state = barbu_core::apply_hearts_pass_direction(state, cards, direction.unwrap_or(1))?;
 
     Ok(FullHandDto::from_core(&next_state, "Hearts", "point"))
-}
-
-#[tauri::command]
-fn play_hearts_hand_card(state: FullHandDto, card_id: String) -> Result<FullHandDto, String> {
-    let state = state.to_core()?;
-    let card = card_from_label(&card_id)?;
-    let next_state = barbu_core::play_hearts_card(state, card)?;
-
-    Ok(FullHandDto::from_core(&next_state, "Hearts", "point"))
-}
-
-#[tauri::command]
-fn start_whist_hand(seed: u64) -> FullHandDto {
-    let state = barbu_core::start_whist_hand(seed);
-    FullHandDto::from_core(&state, "Whist", "trick")
-}
-
-#[tauri::command]
-fn play_whist_hand_card(state: FullHandDto, card_id: String) -> Result<FullHandDto, String> {
-    let state = state.to_core()?;
-    let card = card_from_label(&card_id)?;
-    let next_state = barbu_core::play_whist_card(state, card)?;
-
-    Ok(FullHandDto::from_core(&next_state, "Whist", "trick"))
-}
-
-#[tauri::command]
-fn start_no_queens_hand(seed: u64) -> FullHandDto {
-    let state = barbu_core::start_no_queens_hand(seed);
-    FullHandDto::from_core(&state, "No Queens", "point")
-}
-
-#[tauri::command]
-fn play_no_queens_hand_card(state: FullHandDto, card_id: String) -> Result<FullHandDto, String> {
-    let state = state.to_core()?;
-    let card = card_from_label(&card_id)?;
-    let next_state = barbu_core::play_no_queens_card(state, card)?;
-
-    Ok(FullHandDto::from_core(&next_state, "No Queens", "point"))
-}
-
-#[tauri::command]
-fn start_no_last_two_hand(seed: u64) -> FullHandDto {
-    let state = barbu_core::start_no_last_two_hand(seed);
-    FullHandDto::from_core(&state, "No Last Two", "point")
-}
-
-#[tauri::command]
-fn play_no_last_two_hand_card(state: FullHandDto, card_id: String) -> Result<FullHandDto, String> {
-    let state = state.to_core()?;
-    let card = card_from_label(&card_id)?;
-    let next_state = barbu_core::play_no_last_two_card(state, card)?;
-
-    Ok(FullHandDto::from_core(&next_state, "No Last Two", "point"))
-}
-
-#[tauri::command]
-fn start_no_tricks_hand(seed: u64) -> FullHandDto {
-    let state = barbu_core::start_no_tricks_hand(seed);
-    FullHandDto::from_core(&state, "No Tricks", "point")
-}
-
-#[tauri::command]
-fn play_no_tricks_hand_card(state: FullHandDto, card_id: String) -> Result<FullHandDto, String> {
-    let state = state.to_core()?;
-    let card = card_from_label(&card_id)?;
-    let next_state = barbu_core::play_no_tricks_card(state, card)?;
-
-    Ok(FullHandDto::from_core(&next_state, "No Tricks", "point"))
-}
-
-#[tauri::command]
-fn start_positive_tricks_hand(seed: u64) -> FullHandDto {
-    let state = barbu_core::start_positive_tricks_hand(seed);
-    FullHandDto::from_core(&state, "Hearts Trumps", "point")
-}
-
-#[tauri::command]
-fn play_positive_tricks_hand_card(
-    state: FullHandDto,
-    card_id: String,
-) -> Result<FullHandDto, String> {
-    let state = state.to_core()?;
-    let card = card_from_label(&card_id)?;
-    let next_state = barbu_core::play_positive_tricks_card(state, card)?;
-
-    Ok(FullHandDto::from_core(
-        &next_state,
-        "Hearts Trumps",
-        "point",
-    ))
-}
-
-#[tauri::command]
-fn start_king_of_hearts_hand(seed: u64) -> FullHandDto {
-    let state = barbu_core::start_king_of_hearts_hand(seed);
-    FullHandDto::from_core(&state, "King of Hearts", "point")
-}
-
-#[tauri::command]
-fn play_king_of_hearts_hand_card(
-    state: FullHandDto,
-    card_id: String,
-) -> Result<FullHandDto, String> {
-    let state = state.to_core()?;
-    let card = card_from_label(&card_id)?;
-    let next_state = barbu_core::play_king_of_hearts_card(state, card)?;
-
-    Ok(FullHandDto::from_core(
-        &next_state,
-        "King of Hearts",
-        "point",
-    ))
 }
 
 #[tauri::command]
@@ -500,8 +382,8 @@ impl DominoHandDto {
 impl FullHandDto {
     fn from_core(
         state: &barbu_core::TrickTakingHandState,
-        contract: &'static str,
-        penalty_name: &'static str,
+        contract: &str,
+        penalty_name: &str,
     ) -> Self {
         Self {
             id: state.id.clone(),
@@ -854,26 +736,12 @@ pub fn run() {
             generate_hearts_practice_set,
             generate_no_hearts_follow_suit,
             pass_domino_turn,
+            play_hand_card,
+            start_hand,
             play_domino_card,
-            play_hearts_hand_card,
-            play_king_of_hearts_hand_card,
-            play_no_hearts_hand_card,
-            play_no_last_two_hand_card,
-            play_no_queens_hand_card,
-            play_no_tricks_hand_card,
-            play_positive_tricks_hand_card,
-            play_whist_hand_card,
             start_domino_hand,
-            start_hearts_hand,
             start_hearts_passing_hand,
-            start_king_of_hearts_hand,
-            start_no_hearts_hand,
-            start_no_last_two_hand,
-            start_no_queens_hand,
-            start_no_tricks_hand,
-            start_positive_tricks_hand,
-            start_whist_hand
-        ])
+            ])
         .run(tauri::generate_context!())
         .expect("error while running Tauri application");
 }

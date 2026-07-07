@@ -24,7 +24,7 @@ tasks:
   ui:test:
     desc: Run browser interaction smoke tests
     cmds:
-      - npm run test:e2e
+      - npm run test:e2e -- --workers 8
 
   ui:test:tables:
     desc: Run focused iPhone active-table stability checks

@@ -900,8 +900,13 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
   await expect(page.locator(".card-table .cardholder.active.occupied")).toHaveCount(2);
   const qsBtn = page.getByRole("button", { name: "Q S" });
   if (await qsBtn.count() > 0) {
-    await qsBtn.click();
-    await checkDrillAnswer(page);
+    const promptText = await page.getByLabel("Drill decision").textContent();
+    if (promptText && promptText.includes("chance to move")) {
+      await qsBtn.click();
+      await checkDrillAnswer(page);
+    } else {
+      await completeQuickDrillDecision(page);
+    }
   } else {
     await completeQuickDrillDecision(page);
   }
@@ -912,7 +917,15 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Score a hand" }).click();
   await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
   await expect(page.getByLabel("Drill decision")).toContainText(/Find the 13-point card|Find the one-point card|Find the clean card/);
-  await completeQuickDrillDecision(page);
+  const scoreHandText = await page.getByLabel("Drill decision").textContent();
+  if (scoreHandText?.includes("13-point card")) {
+    await page.getByRole("button", { name: "Q S" }).click();
+  } else if (scoreHandText?.includes("one-point card")) {
+    await page.getByRole("button", { name: "7 H" }).click();
+  } else {
+    await page.getByRole("button", { name: "5 D" }).click();
+  }
+  await page.getByRole("button", { name: "Check" }).click();
   await expect(page.getByLabel("Drill decision")).toContainText("Good");
   await expect(page.getByLabel("Drill decision")).toContainText(/13-point danger card|7♥ is good|clean card/);
 });
