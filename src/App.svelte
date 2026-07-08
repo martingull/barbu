@@ -2077,7 +2077,7 @@
   let heartsHandResults: HeartsHandResult[] = [];
   let whistMatchScores = { playerSide: 0, opponentSide: 0 };
   let whistHandResults: WhistHandResult[] = [];
-  let spadesBids: SpadesBidState = { playerSide: 4, opponentSide: 4 };
+  let spadesBids: SpadesBidState = { playerSide: 8, opponentSide: 4 };
   let spadesMatchScores: SpadesScoreState = { playerSide: 0, opponentSide: 0 };
   let spadesBagScores: SpadesScoreState = { playerSide: 0, opponentSide: 0 };
   let spadesHandResults: SpadesHandResult[] = [];
@@ -2299,14 +2299,7 @@
   }
 
   function defaultSpadesBids(handNumber: number): SpadesBidState {
-    const bids: SpadesBidState[] = [
-      { playerSide: 4, opponentSide: 4 },
-      { playerSide: 4, opponentSide: 5 },
-      { playerSide: 5, opponentSide: 4 },
-      { playerSide: 5, opponentSide: 5 }
-    ];
-
-    return bids[(handNumber - 1) % bids.length] ?? bids[0];
+    return { playerSide: 8, opponentSide: 4 };
   }
 
   function spadesScoreForBid(tricks: number, bid: number) {
