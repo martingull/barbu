@@ -152,7 +152,7 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
     groupEyebrow: "Partnership hand",
     primaryLabel: "Play Spades",
     supportingCopy:
-      "Play a partnership hand with spades always trump. The table sets simple side bids, scores made bids, and tracks bags.",
+      "Play a partnership hand with spades always trump. The table estimates hidden bids, you adjust your own, and the hand scores nil, bags, and ten-bag penalties.",
     footerNote: "You and Barbu play against Left and Right."
   },
   proTabConfig: {

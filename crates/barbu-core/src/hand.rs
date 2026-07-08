@@ -250,6 +250,10 @@ impl TrickTakingHandState {
             return legal_hearts_cards(self, player);
         }
 
+        if is_spades_state(self) {
+            return legal_spades_cards(self, player);
+        }
+
         legal_cards(&self.hands[player], self.led_suit())
     }
 
@@ -525,7 +529,7 @@ pub fn start_whist_hand(seed: u64) -> WhistHandState {
         completed_tricks: Vec::new(),
         status: HandStatus::InProgress,
     };
-    advance_to_player_turn(state, 2, score_whist_trick, choose_whist_opponent_card)
+    advance_to_player_turn(state, 2, score_whist_trick, choose_spades_opponent_card)
 }
 
 pub fn play_whist_card(state: WhistHandState, player_card: Card) -> Result<WhistHandState, String> {
@@ -534,7 +538,7 @@ pub fn play_whist_card(state: WhistHandState, player_card: Card) -> Result<Whist
         player_card,
         2,
         score_whist_trick,
-        choose_whist_opponent_card,
+        choose_spades_opponent_card,
     )
 }
 
@@ -783,6 +787,10 @@ fn is_whist_state(state: &TrickTakingHandState) -> bool {
     matches!(state.policy(), Some(HandPolicy::Whist | HandPolicy::Spades))
 }
 
+fn is_spades_state(state: &TrickTakingHandState) -> bool {
+    matches!(state.policy(), Some(HandPolicy::Spades))
+}
+
 fn whist_trump_suit(state: &TrickTakingHandState) -> Suit {
     whist_trump_suit_from_id(&state.id).unwrap_or(Suit::Spades)
 }
@@ -848,6 +856,36 @@ fn legal_hearts_cards(state: &TrickTakingHandState, player: PlayerIndex) -> Vec<
     }
 
     basic_legal
+}
+
+fn legal_spades_cards(state: &TrickTakingHandState, player: PlayerIndex) -> Vec<Card> {
+    let hand = &state.hands[player];
+    let basic_legal = legal_cards(hand, state.led_suit());
+
+    if basic_legal.is_empty() || !state.current_trick.is_empty() || spades_have_been_broken(state) {
+        return basic_legal;
+    }
+
+    let non_spades: Vec<Card> = basic_legal
+        .iter()
+        .copied()
+        .filter(|card| card.suit != Suit::Spades)
+        .collect();
+
+    if non_spades.is_empty() {
+        basic_legal
+    } else {
+        non_spades
+    }
+}
+
+fn spades_have_been_broken(state: &TrickTakingHandState) -> bool {
+    state
+        .completed_tricks
+        .iter()
+        .flat_map(|trick| trick.cards.iter())
+        .chain(state.current_trick.iter())
+        .any(|played| played.card.suit == Suit::Spades)
 }
 
 fn hearts_have_been_broken(state: &TrickTakingHandState) -> bool {
@@ -1360,6 +1398,10 @@ fn choose_whist_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
     .or_else(|| lowest_card(&legal))
 }
 
+fn choose_spades_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
+    choose_whist_opponent_card(state)
+}
+
 fn whist_lead_card(state: &TrickTakingHandState, legal: &[Card], trump_suit: Suit) -> Option<Card> {
     if let Some(partner_suit) = whist_partner_signal_suit(state) {
         if partner_suit != trump_suit {
@@ -1636,6 +1678,97 @@ mod tests {
         ];
 
         assert_eq!(trick_winner_for_state(&state, &trick), Some(2));
+    }
+
+    #[test]
+    fn spades_cannot_be_led_until_broken_with_plain_suit_available() {
+        let state = SpadesHandState {
+            id: "spades-hand-test-S".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Two, Suit::Spades),
+                    Card::new(Rank::Ace, Suit::Spades),
+                    Card::new(Rank::Three, Suit::Clubs),
+                ],
+                Vec::new(),
+            ],
+            current_player: 2,
+            current_trick: Vec::new(),
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            state.legal_player_cards(),
+            vec![Card::new(Rank::Three, Suit::Clubs)]
+        );
+    }
+
+    #[test]
+    fn spades_can_be_led_after_spades_are_broken() {
+        let state = SpadesHandState {
+            id: "spades-hand-test-S".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Two, Suit::Spades),
+                    Card::new(Rank::Three, Suit::Clubs),
+                ],
+                Vec::new(),
+            ],
+            current_player: 2,
+            current_trick: Vec::new(),
+            completed_tricks: vec![CompletedTrick {
+                cards: vec![
+                    PlayedCard::new(0, Card::new(Rank::Two, Suit::Clubs)),
+                    PlayedCard::new(1, Card::new(Rank::Four, Suit::Clubs)),
+                    PlayedCard::new(2, Card::new(Rank::Five, Suit::Spades)),
+                    PlayedCard::new(3, Card::new(Rank::Six, Suit::Clubs)),
+                ],
+                winner: 2,
+                penalty: 1,
+            }],
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            state.legal_player_cards(),
+            vec![
+                Card::new(Rank::Two, Suit::Spades),
+                Card::new(Rank::Three, Suit::Clubs)
+            ]
+        );
+    }
+
+    #[test]
+    fn spades_can_be_led_when_only_spades_remain() {
+        let state = SpadesHandState {
+            id: "spades-hand-test-S".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Two, Suit::Spades),
+                    Card::new(Rank::Ace, Suit::Spades),
+                ],
+                Vec::new(),
+            ],
+            current_player: 2,
+            current_trick: Vec::new(),
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            state.legal_player_cards(),
+            vec![
+                Card::new(Rank::Two, Suit::Spades),
+                Card::new(Rank::Ace, Suit::Spades)
+            ]
+        );
     }
 
     #[test]

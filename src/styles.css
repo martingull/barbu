@@ -465,10 +465,35 @@ button {
   color: #dbe7d1;
 }
 
+.spades-bid-control.auto > span {
+  color: rgba(219, 231, 209, 0.72);
+}
+
 .spades-bid-stepper {
-  display: flex;
+  display: grid;
+  grid-template-columns: 36px minmax(46px, 1fr) 44px;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+}
+
+.spades-bid-stepper.auto {
+  grid-template-columns: 36px minmax(46px, 1fr) 44px;
+}
+
+.spades-bid-stepper.auto small {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  color: rgba(245, 241, 207, 0.72);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.spades-bid-placeholder {
+  width: 36px;
+  height: 36px;
 }
 
 .spades-bid-stepper .spades-bid-button {
@@ -485,13 +510,19 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: calc(100% - 72px);
+  width: 100%;
+  min-width: 0;
   min-height: 36px;
   border-radius: 8px;
   border: 1px solid rgba(245, 241, 207, 0.5);
   background: rgba(13, 45, 31, 0.35);
   color: #f7faf3;
   font-size: 1.02rem;
+}
+
+.spades-bid-value.auto {
+  background: rgba(13, 45, 31, 0.18);
+  color: rgba(247, 250, 243, 0.82);
 }
 
 .play-spades-bids .saved-run-note {
@@ -507,6 +538,7 @@ button {
 
 .spades-bid-summary strong {
   color: #f5f1cf;
+  margin-right: 8px;
 }
 
 .play-action-warning {

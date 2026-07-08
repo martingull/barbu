@@ -554,7 +554,7 @@ export const referenceCatalog: GameReference[] = [
         id: "scoring",
         title: "Scoring",
         body:
-          "A made bid scores ten points per bid book plus one point for each overtrick bag. A failed bid scores minus ten points per bid book. The current table tracks accumulated bags but leaves nil, blind nil, and ten-bag penalties for later variants.",
+          "A made bid scores ten points per bid book plus one point for each overtrick bag. A failed bid scores minus ten points per bid book. A nil bid scores 100 when that player takes no tricks and -100 when they take any trick. Every tenth accumulated bag costs 100 points.",
         facts: [
           { label: "Made bid", value: "10 per bid book + bags" },
           { label: "Failed bid", value: "-10 per bid book" },
@@ -584,14 +584,14 @@ export const referenceCatalog: GameReference[] = [
         title: "Playable scored hand",
         coreStatus: "Core",
         appStatus: "Playable",
-        note: "The first implementation reuses the partnership full-hand table and adds simple side bids plus match scoring."
+        note: "The current implementation reuses the partnership full-hand table, estimates each hidden bid from that hand, lets the player adjust only their own bid, and scores nil, bags, ten-bag penalties, and matches."
       },
       {
         id: "spades-scoring",
         title: "Nil and advanced bags",
         coreStatus: "Variant",
         appStatus: "Planned",
-        note: "Nil, blind nil, and ten-bag penalties remain later Spades variants."
+        note: "Nil and ten-bag penalties are active. Blind nil remains a later Spades variant."
       }
     ],
     variants: [
@@ -599,7 +599,7 @@ export const referenceCatalog: GameReference[] = [
         id: "nil-boundary",
         title: "Nil Boundary",
         note:
-          "The current table teaches ordinary partnership bidding first. Nil and blind nil should be introduced as named variants once the core hand feels settled."
+          "The current table teaches ordinary individual bids, partnership totals, nil, bags, and the ten-bag penalty. The opening bid estimate counts aces, protected kings, high spades, and spade length, then suggests nil only for hands with no clear winners. Blind nil should be introduced as a named variant once the core hand feels settled."
       }
     ]
   }

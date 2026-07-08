@@ -982,6 +982,10 @@ function legalCards(hand: Card[], led: Suit | undefined) {
 function legalCardsForState(state: FullHandState, playerIndex: number) {
   const basicLegal = legalCards(state.hands[playerIndex], ledSuit(state));
 
+  if (state.contract === "Spades") {
+    return legalSpadesCardsForState(state, basicLegal);
+  }
+
   if (state.contract !== "Hearts" || !basicLegal.length) {
     return basicLegal;
   }
@@ -1005,6 +1009,21 @@ function legalCardsForState(state: FullHandState, playerIndex: number) {
   }
 
   return basicLegal;
+}
+
+function legalSpadesCardsForState(state: FullHandState, basicLegal: Card[]) {
+  if (!basicLegal.length || state.currentTrick.length || spadesHaveBeenBroken(state)) {
+    return basicLegal;
+  }
+
+  const nonSpades = basicLegal.filter((card) => card.suit !== "S");
+  return nonSpades.length ? nonSpades : basicLegal;
+}
+
+function spadesHaveBeenBroken(state: FullHandState) {
+  return [...state.completedTricks.flatMap((trick) => trick.cards), ...state.currentTrick].some(
+    (played) => played.card.suit === "S"
+  );
 }
 
 function heartsHaveBeenBroken(state: FullHandState) {
@@ -1074,6 +1093,9 @@ function promptForState(state: FullHandState, playerPenalty: number) {
     }
 
     if (!led) {
+      if (state.contract === "Spades" && !spadesHaveBeenBroken(state)) {
+        return "You lead. Spades are trump, but you cannot lead spades until they are broken unless you only hold spades.";
+      }
       if (!state.completedTricks.length) {
         return `You are left of the dealer, so you lead first. Choose a suit that helps your side. ${trump} are trumps.`;
       }

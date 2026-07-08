@@ -352,8 +352,10 @@
   };
 
   type SpadesBidState = {
-    playerSide: number;
-    opponentSide: number;
+    You: number;
+    Tutor: number;
+    Left: number;
+    Right: number;
   };
 
   type SpadesScoreState = {
@@ -371,6 +373,9 @@
     opponentSideScore: number;
     playerSideBags: number;
     opponentSideBags: number;
+    playerSideBagPenalty: number;
+    opponentSideBagPenalty: number;
+    nilResults: Array<{ seat: Seat; bid: number; tricks: number; score: number }>;
   };
 
   type WhistOpeningLeadPracticeDeal = {
@@ -409,6 +414,9 @@
   const maxStoredDrillPatterns = 6;
   const maxStoredPlayBarbuAttempts = 8;
   const scoreSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
+  const spadesBidSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
+  const spadesPlayerSideSeats: Seat[] = ["You", "Tutor"];
+  const spadesOpponentSideSeats: Seat[] = ["Left", "Right"];
   const countingTrickSeats: Seat[] = ["Tutor", "Right", "You", "Left"];
   const realisticTrumpTotalTricks = 13;
   const realisticTrumpCheckpoints = [3, 7, 11];
@@ -2077,16 +2085,20 @@
   let heartsHandResults: HeartsHandResult[] = [];
   let whistMatchScores = { playerSide: 0, opponentSide: 0 };
   let whistHandResults: WhistHandResult[] = [];
-  const defaultSpadesBidState: SpadesBidState = { playerSide: 7, opponentSide: 6 };
+  const defaultSpadesBidState: SpadesBidState = { You: 4, Tutor: 3, Left: 3, Right: 3 };
   let spadesBids: SpadesBidState = { ...defaultSpadesBidState };
   let spadesPlayStarted = true;
   let spadesOpeningPanel: "table" | "bid" = "table";
   let spadesMatchScores: SpadesScoreState = { playerSide: 0, opponentSide: 0 };
   let spadesBagScores: SpadesScoreState = { playerSide: 0, opponentSide: 0 };
   let spadesHandResults: SpadesHandResult[] = [];
-  $: spadesBidTotal = spadesBids.playerSide + spadesBids.opponentSide;
-  $: spadesBidError = spadesBidTotal === 13 ? "" : `Set bids to 13 total tricks (currently ${spadesBidTotal}).`;
-  $: spadesBidReady = spadesBidTotal === 13;
+  $: spadesPartnershipBids = {
+    playerSide: spadesSideBid(spadesBids, spadesPlayerSideSeats),
+    opponentSide: spadesSideBid(spadesBids, spadesOpponentSideSeats)
+  };
+  $: spadesBidTotal = spadesBidSeats.reduce((total, seat) => total + spadesBids[seat], 0);
+  $: spadesBidError = "";
+  $: spadesBidReady = true;
   $: spadesCurrentBidLabel = spadesBidLabel(spadesBids);
   let usingGeneratedPractice = false;
   let generatedPracticeError = "";
@@ -2309,30 +2321,128 @@
     return { ...defaultSpadesBidState };
   }
 
-  function spadesScoreForBid(tricks: number, bid: number) {
-    if (tricks < bid) {
-      return { score: -10 * bid, bags: 0 };
+  function cardsBySuit(cards: Card[]) {
+    return cards.reduce(
+      (groups, card) => {
+        groups[card.suit] = [...groups[card.suit], card];
+        return groups;
+      },
+      { C: [], D: [], H: [], S: [] } as Record<Suit, Card[]>
+    );
+  }
+
+  function shouldSuggestSpadesNil(cards: Card[]) {
+    const suitGroups = cardsBySuit(cards);
+    const spades = suitGroups.S;
+    const hasAce = cards.some((card) => card.rank === "A");
+    const hasHighSpade = spades.some((card) => rankValue(card.rank) >= rankValue("Q"));
+    const hasProtectedKing = cards.some(
+      (card) => card.suit !== "S" && card.rank === "K" && suitGroups[card.suit].length >= 2
+    );
+    const highCardCount = cards.filter((card) => rankValue(card.rank) >= rankValue("J")).length;
+
+    return !hasAce && !hasHighSpade && !hasProtectedKing && highCardCount <= 2 && spades.length <= 3;
+  }
+
+  function suggestedSpadesBidForCards(cards: Card[]) {
+    if (shouldSuggestSpadesNil(cards)) {
+      return 0;
     }
 
-    const bags = tricks - bid;
-    return { score: bid * 10 + bags, bags };
+    const suitGroups = cardsBySuit(cards);
+    const nonSpadeAces = cards.filter((card) => card.suit !== "S" && card.rank === "A").length;
+    const protectedNonSpadeKings = cards.filter(
+      (card) => card.suit !== "S" && card.rank === "K" && suitGroups[card.suit].length >= 2
+    ).length;
+    const highSpades = suitGroups.S.filter((card) => rankValue(card.rank) >= rankValue("Q")).length;
+    const longSpades = Math.max(0, suitGroups.S.length - 3);
+    const estimate = nonSpadeAces + protectedNonSpadeKings + highSpades + longSpades;
+
+    return spadesClampBid(Math.max(1, estimate));
+  }
+
+  function suggestedSpadesBidsForHand(hand: FullHandState | null): SpadesBidState {
+    if (!hand) {
+      return defaultSpadesBids(1);
+    }
+
+    return {
+      You: suggestedSpadesBidForCards(hand.hands[playerIndexBySeat.You] ?? []),
+      Tutor: suggestedSpadesBidForCards(hand.hands[playerIndexBySeat.Tutor] ?? []),
+      Left: suggestedSpadesBidForCards(hand.hands[playerIndexBySeat.Left] ?? []),
+      Right: suggestedSpadesBidForCards(hand.hands[playerIndexBySeat.Right] ?? [])
+    };
+  }
+
+  function spadesSideBid(bids: SpadesBidState, seats: Seat[]) {
+    return seats.reduce((total, seat) => total + (bids[seat] > 0 ? bids[seat] : 0), 0);
+  }
+
+  function spadesSideTricks(tricks: Record<Seat, number>, seats: Seat[]) {
+    return seats.reduce((total, seat) => total + tricks[seat], 0);
+  }
+
+  function spadesNilResultsForSide(tricks: Record<Seat, number>, bids: SpadesBidState, seats: Seat[]) {
+    return seats
+      .filter((seat) => bids[seat] === 0)
+      .map((seat) => {
+        const seatTricks = tricks[seat];
+        return {
+          seat,
+          bid: bids[seat],
+          tricks: seatTricks,
+          score: seatTricks === 0 ? 100 : -100
+        };
+      });
+  }
+
+  function spadesScoreForSide(
+    tricks: Record<Seat, number>,
+    bids: SpadesBidState,
+    seats: Seat[],
+    currentBags: number
+  ) {
+    const bid = spadesSideBid(bids, seats);
+    const sideTricks = spadesSideTricks(tricks, seats);
+    const nilResults = spadesNilResultsForSide(tricks, bids, seats);
+    const nilScore = nilResults.reduce((total, result) => total + result.score, 0);
+
+    if (sideTricks < bid) {
+      return { score: -10 * bid + nilScore, bags: 0, bagPenalty: 0, nilResults };
+    }
+
+    const handBags = Math.max(0, sideTricks - bid);
+    const totalBags = currentBags + handBags;
+    const bagPenalty = Math.floor(totalBags / 10) * 100;
+    const remainingBags = totalBags % 10;
+
+    return {
+      score: bid * 10 + handBags + nilScore - bagPenalty,
+      bags: remainingBags - currentBags,
+      bagPenalty,
+      nilResults
+    };
   }
 
   function spadesHandResultFor(hand: FullHandState, handNumber = spadesHandResults.length + 1): SpadesHandResult {
     const partnershipTricks = whistPartnershipTrickCounts(hand.completedTricks);
-    const playerSide = spadesScoreForBid(partnershipTricks.playerSide, spadesBids.playerSide);
-    const opponentSide = spadesScoreForBid(partnershipTricks.opponentSide, spadesBids.opponentSide);
+    const seatTricks = seatTricksWonForTricks(hand.completedTricks);
+    const playerSide = spadesScoreForSide(seatTricks, spadesBids, spadesPlayerSideSeats, spadesBagScores.playerSide);
+    const opponentSide = spadesScoreForSide(seatTricks, spadesBids, spadesOpponentSideSeats, spadesBagScores.opponentSide);
 
     return {
       handNumber,
-      playerSideBid: spadesBids.playerSide,
-      opponentSideBid: spadesBids.opponentSide,
+      playerSideBid: spadesPartnershipBids.playerSide,
+      opponentSideBid: spadesPartnershipBids.opponentSide,
       playerSideTricks: partnershipTricks.playerSide,
       opponentSideTricks: partnershipTricks.opponentSide,
       playerSideScore: playerSide.score,
       opponentSideScore: opponentSide.score,
       playerSideBags: playerSide.bags,
-      opponentSideBags: opponentSide.bags
+      opponentSideBags: opponentSide.bags,
+      playerSideBagPenalty: playerSide.bagPenalty,
+      opponentSideBagPenalty: opponentSide.bagPenalty,
+      nilResults: [...playerSide.nilResults, ...opponentSide.nilResults]
     };
   }
 
@@ -2354,7 +2464,7 @@
   }
 
   function spadesBidLabel(bids = spadesBids) {
-    return `${bids.playerSide}-${bids.opponentSide}`;
+    return `${spadesSideBid(bids, spadesPlayerSideSeats)}-${spadesSideBid(bids, spadesOpponentSideSeats)}`;
   }
 
   function spadesClampBid(value: number) {
@@ -2362,30 +2472,31 @@
     return Math.max(0, Math.min(13, asNumber));
   }
 
-  function setSpadesPlayerBid(value: number) {
-    const nextPlayerBid = spadesClampBid(value);
+  function setSpadesSeatBid(seat: Seat, value: number) {
     spadesBids = {
       ...spadesBids,
-      playerSide: nextPlayerBid,
-      opponentSide: 13 - nextPlayerBid
+      [seat]: spadesClampBid(value)
     };
   }
 
-  function setSpadesOpponentBid(value: number) {
-    const nextOpponentBid = spadesClampBid(value);
-    spadesBids = {
-      ...spadesBids,
-      opponentSide: nextOpponentBid,
-      playerSide: 13 - nextOpponentBid
-    };
+  function bumpSpadesSeatBid(seat: Seat, delta: number) {
+    setSpadesSeatBid(seat, spadesBids[seat] + delta);
   }
 
-  function bumpSpadesPlayerBid(delta: number) {
-    setSpadesPlayerBid(spadesBids.playerSide + delta);
+  function spadesBidSeatLabel(seat: Seat) {
+    return seat === "Tutor" ? "Barbu" : scoreSeatLabel(seat);
   }
 
-  function bumpSpadesOpponentBid(delta: number) {
-    setSpadesOpponentBid(spadesBids.opponentSide + delta);
+  function spadesNilSummary(results: SpadesHandResult["nilResults"]) {
+    if (!results.length) {
+      return "";
+    }
+
+    return results
+      .map((result) =>
+        `${spadesBidSeatLabel(result.seat)} ${result.tricks === 0 ? "made nil" : "missed nil"} (${formatSignedScore(result.score)})`
+      )
+      .join("; ");
   }
 
   function whistMatchResultHeading() {
@@ -5456,10 +5567,9 @@
       spadesMatchScores = { playerSide: 0, opponentSide: 0 };
       spadesBagScores = { playerSide: 0, opponentSide: 0 };
       spadesHandResults = [];
-      // Keep user-selected bids in the play panel and use them for the next hand.
-      // If you'd like to reset to the suggested pattern, update this in the UI action.
     }
     await startFullHand("Spades");
+    spadesBids = suggestedSpadesBidsForHand(fullHand);
   }
 
   function startPartnershipHand(options: { keepSession?: boolean } = {}) {
@@ -5478,6 +5588,7 @@
     spadesBagScores = { playerSide: 0, opponentSide: 0 };
     spadesHandResults = [];
     await startFullHand("Spades");
+    spadesBids = suggestedSpadesBidsForHand(fullHand);
   }
 
   async function startWhistPracticeHand(pathStepId = "", round = 0) {
@@ -6705,11 +6816,18 @@
 
       if (fullHandIsSpadesGame && currentSpadesHandResult) {
         const result = currentSpadesHandResult;
+        const nilText = spadesNilSummary(result.nilResults);
+        const penaltyText = [
+          result.playerSideBagPenalty ? `You + Barbu took a ${result.playerSideBagPenalty}-point bag penalty` : "",
+          result.opponentSideBagPenalty ? `Left + Right took a ${result.opponentSideBagPenalty}-point bag penalty` : ""
+        ]
+          .filter(Boolean)
+          .join("; ");
         return `Bid ${result.playerSideBid}-${result.opponentSideBid}. You + Barbu won ${result.playerSideTricks} books for ${formatSignedScore(
           result.playerSideScore
         )}; Left + Right won ${result.opponentSideTricks} books for ${formatSignedScore(
           result.opponentSideScore
-        )}. Match score: ${currentWhistMatchScoreLabel}.`;
+        )}. ${nilText ? `${nilText}. ` : ""}${penaltyText ? `${penaltyText}. ` : ""}Match score: ${currentWhistMatchScoreLabel}.`;
       }
 
       return `Trump was ${whistTrumpSuitLabel}. You + Barbu won ${whistPartnershipTricks.playerSide} tricks for ${whistPlayerSideOddTricks} odd ${
@@ -8088,7 +8206,7 @@
       practiceProps: { actions: spadesPracticeActions },
       playProps: {
         onPrimary: () => void startSpadesHand(),
-        footerNote: `Bids and bags score locally. Play to ${spadesMatchTarget}; nil comes later.`,
+        footerNote: `Individual bids, nil, bags, and ten-bag penalties score locally. Play to ${spadesMatchTarget}.`,
         primaryDisabled: !spadesBidReady,
         primaryWarning: spadesBidError
       }
@@ -8198,62 +8316,57 @@
 
 {#snippet spadesBidSetup(label = "Spades bids", editable = true)}
   <section class="play-spades-bids" aria-label={label}>
-    <p class="eyebrow">Set the partnerships for this hand</p>
+    <p class="eyebrow">Set your bid for this hand</p>
     <div class="spades-bid-grid">
-      <label class="spades-bid-control">
-        <span>You + Barbu</span>
-        <div class="spades-bid-stepper">
-          <button
-            class="drill-action spades-bid-button"
-            aria-label="Decrease your side bid"
-            disabled={!editable || spadesBids.playerSide <= 0}
-            onclick={() => bumpSpadesPlayerBid(-1)}
-            type="button"
-          >
-            -
-          </button>
-          <strong class="spades-bid-value" aria-label={`Your side bid ${spadesBids.playerSide}`}>{spadesBids.playerSide}</strong>
-          <button
-            class="drill-action spades-bid-button"
-            aria-label="Increase your side bid"
-            disabled={!editable || spadesBids.playerSide >= 13}
-            onclick={() => bumpSpadesPlayerBid(1)}
-            type="button"
-          >
-            +
-          </button>
-        </div>
-      </label>
-      <label class="spades-bid-control">
-        <span>Left + Right</span>
-        <div class="spades-bid-stepper">
-          <button
-            class="drill-action spades-bid-button"
-            aria-label="Decrease opponent side bid"
-            disabled={!editable || spadesBids.opponentSide <= 0}
-            onclick={() => bumpSpadesOpponentBid(-1)}
-            type="button"
-          >
-            -
-          </button>
-          <strong class="spades-bid-value" aria-label={`Opponent side bid ${spadesBids.opponentSide}`}>{spadesBids.opponentSide}</strong>
-          <button
-            class="drill-action spades-bid-button"
-            aria-label="Increase opponent side bid"
-            disabled={!editable || spadesBids.opponentSide >= 13}
-            onclick={() => bumpSpadesOpponentBid(1)}
-            type="button"
-          >
-            +
-          </button>
-        </div>
-      </label>
+      {#each spadesBidSeats as seat}
+        <label class="spades-bid-control" class:auto={seat !== "You"}>
+          <span>{spadesBidSeatLabel(seat)}{spadesBids[seat] === 0 ? " nil" : ""}</span>
+          {#if seat === "You"}
+            <div class="spades-bid-stepper">
+              <button
+                class="drill-action spades-bid-button"
+                aria-label="Decrease You bid"
+                disabled={!editable || spadesBids.You <= 0}
+                onclick={() => bumpSpadesSeatBid("You", -1)}
+                type="button"
+              >
+                -
+              </button>
+              <strong class="spades-bid-value" aria-label={`You bid ${spadesBids.You}`}>
+                {spadesBids.You}
+              </strong>
+              <button
+                class="drill-action spades-bid-button"
+                aria-label="Increase You bid"
+                disabled={!editable || spadesBids.You >= 13}
+                onclick={() => bumpSpadesSeatBid("You", 1)}
+                type="button"
+              >
+                +
+              </button>
+            </div>
+          {:else}
+            <div class="spades-bid-stepper auto">
+              <span class="spades-bid-placeholder" aria-hidden="true"></span>
+              <strong class="spades-bid-value auto" aria-label={`${spadesBidSeatLabel(seat)} bid ${spadesBids[seat]}`}>
+                {spadesBids[seat]}
+              </strong>
+              <small>Auto</small>
+            </div>
+          {/if}
+        </label>
+      {/each}
     </div>
     <p class="saved-run-note">
-      {editable ? "You can still edit bids before the first trick." : "Bids are locked for this hand."}
+      {editable
+        ? "Your opening estimate comes from aces, protected kings, high spades, and spade length. Set 0 for nil."
+        : "Bids are locked for this hand."}
     </p>
     <p class="spades-bid-summary">
-      Total: <strong>{spadesBidTotal}</strong> / 13
+      Team bids:
+      <strong>You + Barbu {spadesPartnershipBids.playerSide}</strong>
+      <strong>Left + Right {spadesPartnershipBids.opponentSide}</strong>
+      <span>Table total {spadesBidTotal}</span>
     </p>
   </section>
 {/snippet}
@@ -9882,13 +9995,13 @@
                       <span>You + Barbu</span>
                       <strong>{partnershipVisibleMatchScores.playerSide}</strong>
                       <strong>{whistPartnershipTricks.playerSide}</strong>
-                      <strong>{fullHandIsSpadesGame ? `${spadesBids.playerSide}` : whistPlayerSideOddTricks}</strong>
+                      <strong>{fullHandIsSpadesGame ? `${spadesPartnershipBids.playerSide}` : whistPlayerSideOddTricks}</strong>
                     </div>
                     <div class="hearts-hand-breakdown-row whist-score-row">
                       <span>Left + Right</span>
                       <strong>{partnershipVisibleMatchScores.opponentSide}</strong>
                       <strong>{whistPartnershipTricks.opponentSide}</strong>
-                      <strong>{fullHandIsSpadesGame ? `${spadesBids.opponentSide}` : whistOpponentSideOddTricks}</strong>
+                      <strong>{fullHandIsSpadesGame ? `${spadesPartnershipBids.opponentSide}` : whistOpponentSideOddTricks}</strong>
                     </div>
                   </div>
                 </div>
