@@ -506,7 +506,10 @@ function chooseOpponentCard(state: FullHandState) {
   }
 
   if (!led) {
-    if (state.contract === "Whist" || state.contract === "Spades") {
+    if (state.contract === "Spades") {
+      return chooseSpadesLeadCard(state, legal);
+    }
+    if (state.contract === "Whist") {
       return chooseWhistLeadCard(state, legal);
     }
     if (state.contract === "Hearts Trumps") {
@@ -527,7 +530,10 @@ function chooseOpponentCard(state: FullHandState) {
   const followsSuit = legal.every((card) => card.suit === led);
 
   if (!followsSuit) {
-    if (state.contract === "Whist" || state.contract === "Spades") {
+    if (state.contract === "Spades") {
+      return chooseSpadesVoidCard(state, legal);
+    }
+    if (state.contract === "Whist") {
       return chooseWhistVoidCard(state, legal);
     }
     if (state.contract === "Hearts Trumps") {
@@ -556,7 +562,11 @@ function chooseOpponentCard(state: FullHandState) {
     return highestCard(legal.filter((card) => isPenaltyCard(state.contract, card))) ?? highestCard(legal);
   }
 
-  if (state.contract === "Whist" || state.contract === "Spades") {
+  if (state.contract === "Spades") {
+    return chooseSpadesFollowCard(state, legal);
+  }
+
+  if (state.contract === "Whist") {
     return chooseWhistFollowCard(state, legal);
   }
 
@@ -659,6 +669,185 @@ function chooseWhistVoidCard(state: FullHandState, legal: Card[]) {
     lowestCard(legal.filter((card) => card.suit === trump && cardWouldWinTrick(state, card))) ??
     highestCard(legal.filter((card) => card.suit !== trump)) ??
     lowestCard(legal)
+  );
+}
+
+function chooseSpadesLeadCard(state: FullHandState, legal: Card[]) {
+  const context = spadesPlayContext(state);
+
+  if (context.currentPlayerNil || context.sideHasContract) {
+    return lowestCardFromLongestSuit(legal.filter((card) => card.suit !== "S"), legal) ?? lowestCard(legal);
+  }
+
+  if (context.partnerNil) {
+    return highestCardFromLongestSuit(legal.filter((card) => card.suit !== "S"), legal) ?? highestCard(legal);
+  }
+
+  if (context.opponentNil) {
+    return lowestCardFromLongestSuit(legal.filter((card) => card.suit !== "S"), legal) ?? lowestCard(legal);
+  }
+
+  if (spadesHaveBeenBroken(state)) {
+    const highSpade = highestCard(legal.filter((card) => card.suit === "S"));
+    if (highSpade) {
+      return highSpade;
+    }
+  }
+
+  return highestCardFromLongestSuit(legal.filter((card) => card.suit !== "S"), legal) ?? highestCard(legal);
+}
+
+function chooseSpadesFollowCard(state: FullHandState, legal: Card[]) {
+  const context = spadesPlayContext(state);
+
+  if (context.currentPlayerNil) {
+    return highestCard(legal.filter((card) => !cardWouldWinTrick(state, card))) ?? lowestCard(legal);
+  }
+
+  if (context.partnerNil && context.currentWinner === context.partnerIndex) {
+    return lowestWinningCard(state, legal) ?? lowestCard(legal);
+  }
+
+  if (context.opponentNilWinning) {
+    return highestCard(legal.filter((card) => !cardWouldWinTrick(state, card))) ?? lowestCard(legal);
+  }
+
+  if (context.sideHasContract) {
+    return highestCard(legal.filter((card) => !cardWouldWinTrick(state, card))) ?? lowestCard(legal);
+  }
+
+  if (whistPartnerIsWinning(state)) {
+    return lowestCard(legal);
+  }
+
+  return lowestWinningCard(state, legal) ?? lowestCard(legal);
+}
+
+function chooseSpadesVoidCard(state: FullHandState, legal: Card[]) {
+  const context = spadesPlayContext(state);
+
+  if (context.currentPlayerNil) {
+    return (
+      highestCard(legal.filter((card) => !cardWouldWinTrick(state, card))) ??
+      lowestCard(legal.filter((card) => card.suit !== "S")) ??
+      lowestCard(legal)
+    );
+  }
+
+  if (context.partnerNil && context.currentWinner === context.partnerIndex) {
+    return lowestWinningCard(state, legal.filter((card) => card.suit === "S")) ?? lowestCard(legal);
+  }
+
+  if (context.opponentNilWinning) {
+    return (
+      lowestCard(legal.filter((card) => card.suit !== "S" && !cardWouldWinTrick(state, card))) ??
+      lowestCard(legal.filter((card) => !cardWouldWinTrick(state, card))) ??
+      lowestCard(legal)
+    );
+  }
+
+  if (context.sideHasContract || whistPartnerIsWinning(state)) {
+    return lowestCard(legal.filter((card) => card.suit !== "S")) ?? lowestCard(legal);
+  }
+
+  return (
+    lowestCard(legal.filter((card) => card.suit === "S" && cardWouldWinTrick(state, card))) ??
+    highestCard(legal.filter((card) => card.suit !== "S")) ??
+    lowestCard(legal)
+  );
+}
+
+function spadesPlayContext(state: FullHandState) {
+  const currentPlayer = state.currentPlayerIndex;
+  const partnerIndex = (currentPlayer + 2) % 4;
+  const currentWinner = state.currentTrick.length ? trickWinnerForState(state, state.currentTrick) : undefined;
+  const sideBid = spadesEstimatedBidForPlayer(state, currentPlayer) + spadesEstimatedBidForPlayer(state, partnerIndex);
+  const sideTricks = state.completedTricks.filter((trick) => sameWhistPartnership(trick.winnerIndex, currentPlayer)).length;
+
+  return {
+    currentWinner,
+    partnerIndex,
+    currentPlayerNil: spadesEstimatedBidForPlayer(state, currentPlayer) === 0,
+    partnerNil: spadesEstimatedBidForPlayer(state, partnerIndex) === 0,
+    opponentNil: [0, 1, 2, 3].some(
+      (player) => !sameWhistPartnership(player, currentPlayer) && spadesEstimatedBidForPlayer(state, player) === 0
+    ),
+    opponentNilWinning:
+      currentWinner !== undefined &&
+      !sameWhistPartnership(currentWinner, currentPlayer) &&
+      spadesEstimatedBidForPlayer(state, currentWinner) === 0,
+    sideHasContract: sideBid > 0 && sideTricks >= sideBid
+  };
+}
+
+function spadesEstimatedBidForPlayer(state: FullHandState, playerIndex: number) {
+  const lockedBid = spadesBidFromId(state.id, playerIndex);
+  if (lockedBid !== undefined) {
+    return lockedBid;
+  }
+
+  const cards = spadesReconstructedHand(state, playerIndex);
+
+  if (shouldSuggestSpadesNil(cards)) {
+    return 0;
+  }
+
+  const suitGroups = cardsBySuit(cards);
+  const nonSpadeAces = cards.filter((card) => card.suit !== "S" && card.rank === "A").length;
+  const protectedNonSpadeKings = cards.filter(
+    (card) => card.suit !== "S" && card.rank === "K" && suitGroups[card.suit].length >= 2
+  ).length;
+  const highSpades = suitGroups.S.filter((card) => rankOrder[card.rank as Rank] >= rankOrder.Q).length;
+  const longSpades = Math.max(0, suitGroups.S.length - 3);
+
+  return Math.max(1, Math.min(13, nonSpadeAces + protectedNonSpadeKings + highSpades + longSpades));
+}
+
+function spadesBidFromId(id: string, playerIndex: number) {
+  const encoded = id.split("-bids-")[1]?.split("-")[0];
+  const bidText = encoded?.split(".")[playerIndex];
+  const bid = bidText === undefined ? Number.NaN : Number(bidText);
+
+  return Number.isFinite(bid) ? Math.max(0, Math.min(13, bid)) : undefined;
+}
+
+function shouldSuggestSpadesNil(cards: Card[]) {
+  const suitGroups = cardsBySuit(cards);
+  const spades = suitGroups.S;
+  const hasAce = cards.some((card) => card.rank === "A");
+  const hasHighSpade = spades.some((card) => rankOrder[card.rank as Rank] >= rankOrder.Q);
+  const hasProtectedKing = cards.some((card) => card.suit !== "S" && card.rank === "K" && suitGroups[card.suit].length >= 2);
+  const highCardCount = cards.filter((card) => rankOrder[card.rank as Rank] >= rankOrder.J).length;
+
+  return !hasAce && !hasHighSpade && !hasProtectedKing && highCardCount <= 2 && spades.length <= 3;
+}
+
+function spadesReconstructedHand(state: FullHandState, playerIndex: number) {
+  const cards = [...(state.hands[playerIndex] ?? [])];
+
+  cards.push(
+    ...state.currentTrick
+      .filter((played) => playerNames.indexOf(played.seat) === playerIndex)
+      .map((played) => played.card)
+  );
+  for (const trick of state.completedTricks) {
+    cards.push(
+      ...trick.cards
+        .filter((played) => playerNames.indexOf(played.seat) === playerIndex)
+        .map((played) => played.card)
+    );
+  }
+
+  return cards;
+}
+
+function cardsBySuit(cards: Card[]) {
+  return cards.reduce(
+    (groups, card) => {
+      groups[card.suit] = [...groups[card.suit], card];
+      return groups;
+    },
+    { C: [], D: [], H: [], S: [] } as Record<Suit, Card[]>
   );
 }
 
@@ -810,6 +999,14 @@ function highestCardFromLongestSuit(candidates: Card[], fullHand: Card[]) {
     const suitPressure = suitCount(fullHand, right.suit) - suitCount(fullHand, left.suit);
 
     return suitPressure || rankOrder[right.rank as Rank] - rankOrder[left.rank as Rank] || suitOrder[left.suit] - suitOrder[right.suit];
+  })[0];
+}
+
+function lowestCardFromLongestSuit(candidates: Card[], fullHand: Card[]) {
+  return candidates.slice().sort((left, right) => {
+    const suitPressure = suitCount(fullHand, right.suit) - suitCount(fullHand, left.suit);
+
+    return suitPressure || rankOrder[left.rank as Rank] - rankOrder[right.rank as Rank] || suitOrder[left.suit] - suitOrder[right.suit];
   })[0];
 }
 

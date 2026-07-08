@@ -2467,6 +2467,15 @@
     return `${spadesSideBid(bids, spadesPlayerSideSeats)}-${spadesSideBid(bids, spadesOpponentSideSeats)}`;
   }
 
+  function spadesHandIdWithBids(id: string, bids = spadesBids) {
+    const cleanId = id.replace(/-bids-[0-9.]+(?=-S$)/, "");
+    const playerIndexBids = [bids.Tutor, bids.Right, bids.You, bids.Left].map(spadesClampBid).join(".");
+
+    return cleanId.endsWith("-S")
+      ? cleanId.replace(/-S$/, `-bids-${playerIndexBids}-S`)
+      : `${cleanId}-bids-${playerIndexBids}-S`;
+  }
+
   function spadesClampBid(value: number) {
     const asNumber = Number.isFinite(value) ? value : 0;
     return Math.max(0, Math.min(13, asNumber));
@@ -5519,6 +5528,13 @@
   function startSpadesOpeningPlay() {
     if (!spadesOpeningDecisionActive || !spadesBidReady) {
       return;
+    }
+
+    if (fullHand?.contract === "Spades") {
+      fullHand = {
+        ...fullHand,
+        id: spadesHandIdWithBids(fullHand.id)
+      };
     }
 
     spadesPlayStarted = true;

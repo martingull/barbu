@@ -529,7 +529,7 @@ pub fn start_whist_hand(seed: u64) -> WhistHandState {
         completed_tricks: Vec::new(),
         status: HandStatus::InProgress,
     };
-    advance_to_player_turn(state, 2, score_whist_trick, choose_spades_opponent_card)
+    advance_to_player_turn(state, 2, score_whist_trick, choose_whist_opponent_card)
 }
 
 pub fn play_whist_card(state: WhistHandState, player_card: Card) -> Result<WhistHandState, String> {
@@ -538,7 +538,7 @@ pub fn play_whist_card(state: WhistHandState, player_card: Card) -> Result<Whist
         player_card,
         2,
         score_whist_trick,
-        choose_spades_opponent_card,
+        choose_whist_opponent_card,
     )
 }
 
@@ -564,7 +564,7 @@ pub fn start_spades_hand(seed: u64) -> SpadesHandState {
         completed_tricks: Vec::new(),
         status: HandStatus::InProgress,
     };
-    advance_to_player_turn(state, 2, score_whist_trick, choose_whist_opponent_card)
+    advance_to_player_turn(state, 2, score_whist_trick, choose_spades_opponent_card)
 }
 
 pub fn play_spades_card(
@@ -576,7 +576,7 @@ pub fn play_spades_card(
         player_card,
         2,
         score_whist_trick,
-        choose_whist_opponent_card,
+        choose_spades_opponent_card,
     )
 }
 
@@ -1399,7 +1399,229 @@ fn choose_whist_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
 }
 
 fn choose_spades_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
-    choose_whist_opponent_card(state)
+    let legal = state.legal_cards_for_player(state.current_player);
+    let led_suit = state.led_suit();
+
+    if legal.is_empty() {
+        return None;
+    }
+
+    let context = SpadesPlayContext::from_state(state);
+
+    if led_suit.is_none() {
+        return spades_lead_card(state, &legal, &context);
+    }
+
+    let current_winner = trick_winner_for_state(state, &state.current_trick);
+    let partner = (state.current_player + 2) % 4;
+    let partner_is_winning =
+        current_winner.is_some_and(|winner| whist_same_partnership(winner, state.current_player));
+    let follows_suit = legal.iter().all(|card| Some(card.suit) == led_suit);
+
+    if context.current_player_nil {
+        return highest_card_matching(&legal, |card| !card_would_win_whist_trick(state, card))
+            .or_else(|| lowest_card(&legal));
+    }
+
+    if context.partner_nil && current_winner == Some(partner) {
+        return lowest_card_matching(&legal, |card| card_would_win_whist_trick(state, card))
+            .or_else(|| lowest_card(&legal));
+    }
+
+    if context.opponent_nil_winning {
+        return lowest_card_matching(&legal, |card| !card_would_win_whist_trick(state, card))
+            .or_else(|| lowest_card(&legal));
+    }
+
+    if follows_suit {
+        if context.side_has_contract {
+            return highest_card_matching(&legal, |card| !card_would_win_whist_trick(state, card))
+                .or_else(|| lowest_card(&legal));
+        }
+
+        if partner_is_winning {
+            return lowest_card(&legal);
+        }
+
+        return lowest_card_matching(&legal, |card| card_would_win_whist_trick(state, card))
+            .or_else(|| lowest_card(&legal));
+    }
+
+    if context.side_has_contract {
+        return lowest_card_matching(&legal, |card| card.suit != Suit::Spades)
+            .or_else(|| lowest_card(&legal));
+    }
+
+    if partner_is_winning {
+        return lowest_card_matching(&legal, |card| card.suit != Suit::Spades)
+            .or_else(|| lowest_card(&legal));
+    }
+
+    lowest_card_matching(&legal, |card| {
+        card.suit == Suit::Spades && card_would_win_whist_trick(state, card)
+    })
+    .or_else(|| highest_card_matching(&legal, |card| card.suit != Suit::Spades))
+    .or_else(|| lowest_card(&legal))
+}
+
+#[derive(Debug)]
+struct SpadesPlayContext {
+    current_player_nil: bool,
+    partner_nil: bool,
+    opponent_nil_winning: bool,
+    side_has_contract: bool,
+}
+
+impl SpadesPlayContext {
+    fn from_state(state: &TrickTakingHandState) -> Self {
+        let current_player = state.current_player;
+        let partner = (current_player + 2) % 4;
+        let current_winner = trick_winner_for_state(state, &state.current_trick);
+        let side_bid = spades_estimated_bid_for_player(state, current_player)
+            + spades_estimated_bid_for_player(state, partner);
+        let side_tricks = spades_tricks_won_by_side(state, current_player);
+
+        Self {
+            current_player_nil: spades_estimated_bid_for_player(state, current_player) == 0,
+            partner_nil: spades_estimated_bid_for_player(state, partner) == 0,
+            opponent_nil_winning: current_winner.is_some_and(|winner| {
+                !whist_same_partnership(winner, current_player)
+                    && spades_estimated_bid_for_player(state, winner) == 0
+            }),
+            side_has_contract: side_bid > 0 && side_tricks >= side_bid,
+        }
+    }
+}
+
+fn spades_lead_card(
+    state: &TrickTakingHandState,
+    legal: &[Card],
+    context: &SpadesPlayContext,
+) -> Option<Card> {
+    if context.current_player_nil {
+        return lowest_card_from_longest_suit(legal, |card| card.suit != Suit::Spades)
+            .or_else(|| lowest_card(legal));
+    }
+
+    if context.side_has_contract {
+        return lowest_card_from_longest_suit(legal, |card| card.suit != Suit::Spades)
+            .or_else(|| lowest_card(legal));
+    }
+
+    if context.partner_nil {
+        return highest_card_from_longest_suit(legal, |card| card.suit != Suit::Spades)
+            .or_else(|| highest_card(legal));
+    }
+
+    let opponent_nil = (0..4).any(|player| {
+        !whist_same_partnership(player, state.current_player)
+            && spades_estimated_bid_for_player(state, player) == 0
+    });
+    if opponent_nil {
+        return lowest_card_from_longest_suit(legal, |card| card.suit != Suit::Spades)
+            .or_else(|| lowest_card(legal));
+    }
+
+    if spades_have_been_broken(state) {
+        if let Some(spade) = highest_card_matching(legal, |card| card.suit == Suit::Spades) {
+            return Some(spade);
+        }
+    }
+
+    highest_card_from_longest_suit(legal, |card| card.suit != Suit::Spades)
+        .or_else(|| highest_card(legal))
+}
+
+fn spades_estimated_bid_for_player(state: &TrickTakingHandState, player: PlayerIndex) -> usize {
+    if let Some(bid) = spades_bid_from_id(&state.id, player) {
+        return bid;
+    }
+
+    let cards = spades_reconstructed_hand(state, player);
+
+    if should_suggest_spades_nil(&cards) {
+        return 0;
+    }
+
+    let non_spade_aces = cards
+        .iter()
+        .filter(|card| card.suit != Suit::Spades && card.rank == Rank::Ace)
+        .count();
+    let protected_non_spade_kings = cards
+        .iter()
+        .filter(|card| {
+            card.suit != Suit::Spades
+                && card.rank == Rank::King
+                && cards.iter().filter(|other| other.suit == card.suit).count() >= 2
+        })
+        .count();
+    let spades = cards
+        .iter()
+        .filter(|card| card.suit == Suit::Spades)
+        .copied()
+        .collect::<Vec<_>>();
+    let high_spades = spades
+        .iter()
+        .filter(|card| card.rank >= Rank::Queen)
+        .count();
+    let long_spades = spades.len().saturating_sub(3);
+
+    (non_spade_aces + protected_non_spade_kings + high_spades + long_spades)
+        .clamp(1, 13)
+}
+
+fn spades_bid_from_id(id: &str, player: PlayerIndex) -> Option<usize> {
+    let encoded = id.split("-bids-").nth(1)?.split('-').next()?;
+    let bid = encoded.split('.').nth(player)?.parse::<usize>().ok()?;
+
+    Some(bid.min(13))
+}
+
+fn should_suggest_spades_nil(cards: &[Card]) -> bool {
+    let spades = cards
+        .iter()
+        .filter(|card| card.suit == Suit::Spades)
+        .copied()
+        .collect::<Vec<_>>();
+    let has_ace = cards.iter().any(|card| card.rank == Rank::Ace);
+    let has_high_spade = spades.iter().any(|card| card.rank >= Rank::Queen);
+    let has_protected_king = cards.iter().any(|card| {
+        card.suit != Suit::Spades
+            && card.rank == Rank::King
+            && cards.iter().filter(|other| other.suit == card.suit).count() >= 2
+    });
+    let high_card_count = cards.iter().filter(|card| card.rank >= Rank::Jack).count();
+
+    !has_ace && !has_high_spade && !has_protected_king && high_card_count <= 2 && spades.len() <= 3
+}
+
+fn spades_reconstructed_hand(state: &TrickTakingHandState, player: PlayerIndex) -> Vec<Card> {
+    let mut cards = state.hands[player].clone();
+
+    cards.extend(
+        state
+            .current_trick
+            .iter()
+            .filter(|played| played.player == player)
+            .map(|played| played.card),
+    );
+    cards.extend(state.completed_tricks.iter().flat_map(|trick| {
+        trick
+            .cards
+            .iter()
+            .filter(move |played| played.player == player)
+            .map(|played| played.card)
+    }));
+
+    cards
+}
+
+fn spades_tricks_won_by_side(state: &TrickTakingHandState, player: PlayerIndex) -> usize {
+    state
+        .completed_tricks
+        .iter()
+        .filter(|trick| whist_same_partnership(trick.winner, player))
+        .count()
 }
 
 fn whist_lead_card(state: &TrickTakingHandState, legal: &[Card], trump_suit: Suit) -> Option<Card> {
@@ -1549,6 +1771,22 @@ fn highest_card_from_longest_suit(
             suit_count(cards, left.suit)
                 .cmp(&suit_count(cards, right.suit))
                 .then_with(|| left.rank.cmp(&right.rank))
+                .then_with(|| left.suit.short_name().cmp(right.suit.short_name()))
+        })
+}
+
+fn lowest_card_from_longest_suit(
+    cards: &[Card],
+    predicate: impl Fn(Card) -> bool,
+) -> Option<Card> {
+    cards
+        .iter()
+        .copied()
+        .filter(|card| predicate(*card))
+        .max_by(|left, right| {
+            suit_count(cards, left.suit)
+                .cmp(&suit_count(cards, right.suit))
+                .then_with(|| right.rank.cmp(&left.rank))
                 .then_with(|| left.suit.short_name().cmp(right.suit.short_name()))
         })
 }
@@ -1768,6 +2006,161 @@ mod tests {
                 Card::new(Rank::Two, Suit::Spades),
                 Card::new(Rank::Ace, Suit::Spades)
             ]
+        );
+    }
+
+    #[test]
+    fn spades_nil_bidder_ducks_with_highest_safe_card() {
+        let state = SpadesHandState {
+            id: "spades-hand-test-S".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Two, Suit::Clubs),
+                    Card::new(Rank::Four, Suit::Clubs),
+                ],
+            ],
+            current_player: 3,
+            current_trick: vec![
+                PlayedCard::new(1, Card::new(Rank::King, Suit::Clubs)),
+                PlayedCard::new(2, Card::new(Rank::Queen, Suit::Clubs)),
+                PlayedCard::new(0, Card::new(Rank::Nine, Suit::Clubs)),
+            ],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_spades_opponent_card(&state),
+            Some(Card::new(Rank::Four, Suit::Clubs))
+        );
+    }
+
+    #[test]
+    fn spades_manual_nil_bid_overrides_hand_estimate() {
+        let state = SpadesHandState {
+            id: "spades-hand-test-bids-1.1.1.0-S".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Two, Suit::Clubs),
+                    Card::new(Rank::Ace, Suit::Clubs),
+                ],
+            ],
+            current_player: 3,
+            current_trick: vec![
+                PlayedCard::new(1, Card::new(Rank::King, Suit::Clubs)),
+                PlayedCard::new(2, Card::new(Rank::Queen, Suit::Clubs)),
+                PlayedCard::new(0, Card::new(Rank::Nine, Suit::Clubs)),
+            ],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(spades_bid_from_id(&state.id, 3), Some(0));
+        assert_eq!(
+            choose_spades_opponent_card(&state),
+            Some(Card::new(Rank::Two, Suit::Clubs))
+        );
+    }
+
+    #[test]
+    fn spades_partner_covers_nil_when_partner_is_winning() {
+        let state = SpadesHandState {
+            id: "spades-hand-test-S".to_string(),
+            hands: [
+                vec![
+                    Card::new(Rank::Five, Suit::Clubs),
+                    Card::new(Rank::Ace, Suit::Clubs),
+                ],
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+            ],
+            current_player: 0,
+            current_trick: vec![
+                PlayedCard::new(2, Card::new(Rank::Four, Suit::Clubs)),
+                PlayedCard::new(3, Card::new(Rank::Three, Suit::Clubs)),
+                PlayedCard::new(1, Card::new(Rank::Two, Suit::Clubs)),
+            ],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_spades_opponent_card(&state),
+            Some(Card::new(Rank::Five, Suit::Clubs))
+        );
+    }
+
+    #[test]
+    fn spades_opponent_leaves_nil_bidder_winning_when_possible() {
+        let state = SpadesHandState {
+            id: "spades-hand-test-S".to_string(),
+            hands: [
+                vec![
+                    Card::new(Rank::Two, Suit::Clubs),
+                    Card::new(Rank::Ace, Suit::Clubs),
+                ],
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+            ],
+            current_player: 0,
+            current_trick: vec![
+                PlayedCard::new(1, Card::new(Rank::Five, Suit::Clubs)),
+                PlayedCard::new(2, Card::new(Rank::Four, Suit::Clubs)),
+                PlayedCard::new(3, Card::new(Rank::Three, Suit::Clubs)),
+            ],
+            completed_tricks: Vec::new(),
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_spades_opponent_card(&state),
+            Some(Card::new(Rank::Two, Suit::Clubs))
+        );
+    }
+
+    #[test]
+    fn spades_side_that_has_contract_ducks_to_avoid_bags() {
+        let state = SpadesHandState {
+            id: "spades-hand-test-S".to_string(),
+            hands: [
+                Vec::new(),
+                Vec::new(),
+                Vec::new(),
+                vec![
+                    Card::new(Rank::Two, Suit::Clubs),
+                    Card::new(Rank::Ace, Suit::Clubs),
+                ],
+            ],
+            current_player: 3,
+            current_trick: vec![
+                PlayedCard::new(1, Card::new(Rank::King, Suit::Clubs)),
+                PlayedCard::new(2, Card::new(Rank::Queen, Suit::Clubs)),
+                PlayedCard::new(0, Card::new(Rank::Nine, Suit::Clubs)),
+            ],
+            completed_tricks: vec![CompletedTrick {
+                cards: vec![
+                    PlayedCard::new(1, Card::new(Rank::Ace, Suit::Diamonds)),
+                    PlayedCard::new(2, Card::new(Rank::Two, Suit::Diamonds)),
+                    PlayedCard::new(3, Card::new(Rank::Three, Suit::Diamonds)),
+                    PlayedCard::new(0, Card::new(Rank::Four, Suit::Diamonds)),
+                ],
+                winner: 1,
+                penalty: 1,
+            }],
+            status: HandStatus::InProgress,
+        };
+
+        assert_eq!(
+            choose_spades_opponent_card(&state),
+            Some(Card::new(Rank::Two, Suit::Clubs))
         );
     }
 
