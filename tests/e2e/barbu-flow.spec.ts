@@ -633,6 +633,18 @@ test("Spades play starts a bid-scored partnership hand", async ({ page }, testIn
 
   await expect(page.getByRole("tabpanel", { name: "Play" })).toContainText("spades always trump");
   await expect(page.getByRole("tabpanel", { name: "Play" })).toContainText("simple side bids");
+  await expect(page.getByText("Set the partnerships for this hand")).toBeVisible();
+  await expect(page.getByLabel("Decrease your side bid")).toBeVisible();
+  await expect(page.getByLabel("Increase your side bid")).toBeVisible();
+  await expect(page.getByLabel("Decrease opponent side bid")).toBeVisible();
+  await expect(page.getByLabel("Increase opponent side bid")).toBeVisible();
+
+  await expect(page.getByLabel("Your side bid 4")).toBeVisible();
+  await expect(page.getByLabel("Opponent side bid 4")).toBeVisible();
+  await page.getByRole("button", { name: "Increase your side bid" }).click();
+  await page.getByRole("button", { name: "Increase opponent side bid" }).click();
+  await expect(page.getByLabel("Your side bid 5")).toBeVisible();
+  await expect(page.getByLabel("Opponent side bid 5")).toBeVisible();
   await page.getByRole("button", { name: "Play Spades" }).click();
 
   await expect(page.getByRole("heading", { name: "Spades hand" })).toBeVisible();

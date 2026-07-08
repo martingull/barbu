@@ -434,6 +434,70 @@ button {
   font-weight: 800;
 }
 
+.play-spades-bids {
+  display: grid;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid rgba(245, 241, 207, 0.24);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(245, 241, 207, 0.06), rgba(9, 34, 24, 0.22));
+}
+
+.play-spades-bids .eyebrow {
+  margin: 0;
+  color: #f5f1cf;
+}
+
+.spades-bid-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.spades-bid-control {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.spades-bid-control > span {
+  font-size: 0.82rem;
+  color: #dbe7d1;
+}
+
+.spades-bid-stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spades-bid-stepper .spades-bid-button {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  min-width: 0;
+  border-radius: 8px;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.spades-bid-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(100% - 72px);
+  min-height: 36px;
+  border-radius: 8px;
+  border: 1px solid rgba(245, 241, 207, 0.5);
+  background: rgba(13, 45, 31, 0.35);
+  color: #f7faf3;
+  font-size: 1.02rem;
+}
+
+.play-spades-bids .saved-run-note {
+  margin: 0;
+}
+
 .fixed-contract-practice {
   display: grid;
   gap: 10px;

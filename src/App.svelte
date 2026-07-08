@@ -2357,6 +2357,33 @@
     return `${bids.playerSide}-${bids.opponentSide}`;
   }
 
+  function spadesClampBid(value: number) {
+    const asNumber = Number.isFinite(value) ? value : 0;
+    return Math.max(0, Math.min(13, asNumber));
+  }
+
+  function setSpadesPlayerBid(value: number) {
+    spadesBids = {
+      ...spadesBids,
+      playerSide: spadesClampBid(value)
+    };
+  }
+
+  function setSpadesOpponentBid(value: number) {
+    spadesBids = {
+      ...spadesBids,
+      opponentSide: spadesClampBid(value)
+    };
+  }
+
+  function bumpSpadesPlayerBid(delta: number) {
+    setSpadesPlayerBid(spadesBids.playerSide + delta);
+  }
+
+  function bumpSpadesOpponentBid(delta: number) {
+    setSpadesOpponentBid(spadesBids.opponentSide + delta);
+  }
+
   function whistMatchResultHeading() {
     if (partnershipVisibleMatchScores.playerSide === partnershipVisibleMatchScores.opponentSide) {
       return `${fullHand?.contract ?? "Partnership"} match tied`;
@@ -8112,6 +8139,63 @@
   </div>
 {/snippet}
 
+{#snippet spadesBidSetup(label = "Spades bids")}
+  <section class="play-spades-bids" aria-label={label}>
+    <p class="eyebrow">Set the partnerships for this hand</p>
+    <div class="spades-bid-grid">
+      <label class="spades-bid-control">
+        <span>You + Barbu</span>
+        <div class="spades-bid-stepper">
+          <button
+            class="drill-action spades-bid-button"
+            aria-label="Decrease your side bid"
+            disabled={spadesBids.playerSide <= 0}
+            onclick={() => bumpSpadesPlayerBid(-1)}
+            type="button"
+          >
+            -
+          </button>
+          <strong class="spades-bid-value" aria-label={`Your side bid ${spadesBids.playerSide}`}>{spadesBids.playerSide}</strong>
+          <button
+            class="drill-action spades-bid-button"
+            aria-label="Increase your side bid"
+            disabled={spadesBids.playerSide >= 13}
+            onclick={() => bumpSpadesPlayerBid(1)}
+            type="button"
+          >
+            +
+          </button>
+        </div>
+      </label>
+      <label class="spades-bid-control">
+        <span>Barbu side</span>
+        <div class="spades-bid-stepper">
+          <button
+            class="drill-action spades-bid-button"
+            aria-label="Decrease opponent side bid"
+            disabled={spadesBids.opponentSide <= 0}
+            onclick={() => bumpSpadesOpponentBid(-1)}
+            type="button"
+          >
+            -
+          </button>
+          <strong class="spades-bid-value" aria-label={`Opponent side bid ${spadesBids.opponentSide}`}>{spadesBids.opponentSide}</strong>
+          <button
+            class="drill-action spades-bid-button"
+            aria-label="Increase opponent side bid"
+            disabled={spadesBids.opponentSide >= 13}
+            onclick={() => bumpSpadesOpponentBid(1)}
+            type="button"
+          >
+            +
+          </button>
+        </div>
+      </label>
+    </div>
+    <p class="saved-run-note">Bids are used only for the next Spades hand.</p>
+  </section>
+{/snippet}
+
 {#snippet runSequenceStrip(label = "Play Barbu sequence")}
   <div class="run-sequence-strip" aria-label={label}>
     {#each fullHandContracts as contract, index}
@@ -8320,7 +8404,11 @@
           resumeLabel={activeConfig.playProps.resumeLabel}
           resumeNote={activeConfig.playProps.resumeNote}
           onResume={activeConfig.playProps.onResume}
-        />
+        >
+          {#if activeGameTable === "spades"}
+            {@render spadesBidSetup()}
+          {/if}
+        </PlayTabPanel>
       {:else}
         <ProTabPanel
           table={gameUi.table}

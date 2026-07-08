@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { GameTableDefinition } from "./tableFactory";
+  import type { Snippet } from "svelte";
 
   type Props = {
     table: GameTableDefinition;
@@ -14,6 +15,7 @@
     onResume?: () => void;
     supportingCopy?: string;
     footerNote?: string;
+    children?: Snippet;
   };
 
   let {
@@ -28,7 +30,8 @@
     resumeNote,
     onResume,
     supportingCopy,
-    footerNote
+    footerNote,
+    children
   }: Props = $props();
 
   let hasResume = $derived(Boolean(resumeLabel && onResume));
@@ -44,6 +47,9 @@
   <div class="table-action-groups" aria-label={actionAriaLabel}>
     <section class="table-action-group" aria-label={groupAriaLabel}>
       <p class="eyebrow">{groupEyebrow}</p>
+      {#if children}
+        {@render children()}
+      {/if}
       {#if hasResume}
         <button class="drill-action" onclick={() => onResume?.()} type="button">{resumeLabel}</button>
         {#if resumeNote}
