@@ -2079,12 +2079,15 @@
   let whistHandResults: WhistHandResult[] = [];
   const defaultSpadesBidState: SpadesBidState = { playerSide: 7, opponentSide: 6 };
   let spadesBids: SpadesBidState = { ...defaultSpadesBidState };
+  let spadesPlayStarted = true;
+  let spadesOpeningPanel: "table" | "bid" = "table";
   let spadesMatchScores: SpadesScoreState = { playerSide: 0, opponentSide: 0 };
   let spadesBagScores: SpadesScoreState = { playerSide: 0, opponentSide: 0 };
   let spadesHandResults: SpadesHandResult[] = [];
   $: spadesBidTotal = spadesBids.playerSide + spadesBids.opponentSide;
   $: spadesBidError = spadesBidTotal === 13 ? "" : `Set bids to 13 total tricks (currently ${spadesBidTotal}).`;
   $: spadesBidReady = spadesBidTotal === 13;
+  $: spadesCurrentBidLabel = spadesBidLabel(spadesBids);
   let usingGeneratedPractice = false;
   let generatedPracticeError = "";
   let fullHand: FullHandState | null = null;
@@ -2360,16 +2363,20 @@
   }
 
   function setSpadesPlayerBid(value: number) {
+    const nextPlayerBid = spadesClampBid(value);
     spadesBids = {
       ...spadesBids,
-      playerSide: spadesClampBid(value)
+      playerSide: nextPlayerBid,
+      opponentSide: 13 - nextPlayerBid
     };
   }
 
   function setSpadesOpponentBid(value: number) {
+    const nextOpponentBid = spadesClampBid(value);
     spadesBids = {
       ...spadesBids,
-      opponentSide: spadesClampBid(value)
+      opponentSide: nextOpponentBid,
+      playerSide: 13 - nextOpponentBid
     };
   }
 
@@ -2797,9 +2804,10 @@
   $: spadesBidsAdjustable =
     fullHandIsSpadesGame &&
     whistFullHandSource === "play" &&
+    !spadesPlayStarted &&
     fullHand?.status === "in_progress" &&
-    fullHand?.completedTricks.length === 0 &&
-    fullHand?.currentTrick.length === 0;
+    fullHand?.completedTricks.length === 0;
+  $: spadesOpeningDecisionActive = spadesBidsAdjustable;
   $: whistVisibleMatchScores = currentWhistHandResult
     ? addWhistMatchResult(whistMatchScores, currentWhistHandResult)
     : whistMatchScores;
@@ -5273,7 +5281,7 @@
   }
 
   async function selectFullHandCard(card: Card) {
-    if (!fullHand || fullHand.status === "complete" || fullHandIsReviewingTrick) {
+    if (!fullHand || fullHand.status === "complete" || fullHandIsReviewingTrick || spadesOpeningDecisionActive) {
       return;
     }
 
@@ -5290,7 +5298,7 @@
   }
 
   async function playFullHandCard(cardId = fullHandSelectedCard?.id) {
-    if (!fullHand || fullHandIsReviewingTrick || !cardId || !fullHandLegalCardIds.has(cardId)) {
+    if (!fullHand || fullHandIsReviewingTrick || spadesOpeningDecisionActive || !cardId || !fullHandLegalCardIds.has(cardId)) {
       return;
     }
 
@@ -5387,12 +5395,36 @@
     continueFullHandAfterTrick();
   }
 
+  function toggleSpadesOpeningPanel() {
+    if (!spadesOpeningDecisionActive) {
+      return;
+    }
+
+    spadesOpeningPanel = spadesOpeningPanel === "bid" ? "table" : "bid";
+    fullHandSelectedCardId = "";
+    fullHandError = "";
+  }
+
+  function startSpadesOpeningPlay() {
+    if (!spadesOpeningDecisionActive || !spadesBidReady) {
+      return;
+    }
+
+    spadesPlayStarted = true;
+    spadesOpeningPanel = "table";
+    fullHandSelectedCardId = "";
+    fullHandError = "";
+    lastFullHandTapCardId = "";
+    lastFullHandTapAt = 0;
+  }
+
   function startNoHeartsHand() {
     void startFullHand("No Hearts");
   }
 
   function startHeartsHand() {
     activeGameTable = "hearts";
+    spadesPlayStarted = true;
     void startHeartsPassingPhase();
   }
 
@@ -5400,6 +5432,7 @@
     activeGameTable = "whist";
     activeTableTabs.whist = "play";
     whistFullHandSource = "play";
+    spadesPlayStarted = true;
     if (!options.keepSession) {
       whistMatchScores = { playerSide: 0, opponentSide: 0 };
       whistHandResults = [];
@@ -5417,6 +5450,8 @@
     activeGameTable = "spades";
     activeTableTabs.spades = "play";
     whistFullHandSource = "play";
+    spadesPlayStarted = false;
+    spadesOpeningPanel = "table";
     if (!options.keepSession) {
       spadesMatchScores = { playerSide: 0, opponentSide: 0 };
       spadesBagScores = { playerSide: 0, opponentSide: 0 };
@@ -5436,6 +5471,8 @@
     activeTableTabs.spades = "practice";
     whistFullHandSource = "practice";
     activePathStepId = pathStepId;
+    spadesPlayStarted = true;
+    spadesOpeningPanel = "table";
     spadesBids = defaultSpadesBids(1);
     spadesMatchScores = { playerSide: 0, opponentSide: 0 };
     spadesBagScores = { playerSide: 0, opponentSide: 0 };
@@ -5448,6 +5485,7 @@
     activeTableTabs.whist = "practice";
     whistFullHandSource = "practice";
     activeWhistPracticeFocus = "lead";
+    spadesPlayStarted = true;
     whistOpeningLeadPracticeRound = round;
     activePathStepId = pathStepId;
     whistMatchScores = { playerSide: 0, opponentSide: 0 };
@@ -6365,6 +6403,12 @@
       legal: fullHandLegalCardIds.has(card.id),
       illegal: !fullHandLegalCardIds.has(card.id),
       selected: fullHandSelectedCardId === card.id
+    };
+  }
+
+  function spadesOpeningCardClasses(card: Card) {
+    return {
+      heart: card.suit === "H"
     };
   }
 
@@ -8181,7 +8225,7 @@
         </div>
       </label>
       <label class="spades-bid-control">
-        <span>Barbu side</span>
+        <span>Left + Right</span>
         <div class="spades-bid-stepper">
           <button
             class="drill-action spades-bid-button"
@@ -8424,11 +8468,7 @@
           resumeLabel={activeConfig.playProps.resumeLabel}
           resumeNote={activeConfig.playProps.resumeNote}
           onResume={activeConfig.playProps.onResume}
-        >
-          {#if activeGameTable === "spades"}
-            {@render spadesBidSetup("Spades bids", true)}
-          {/if}
-        </PlayTabPanel>
+        />
       {:else}
         <ProTabPanel
           table={gameUi.table}
@@ -9654,9 +9694,6 @@
       >
         {#snippet summary()}
           {#if !fullHandRunIsComplete && !(fullHandIsPartnershipGame && fullHand.status === "complete")}
-            {#if fullHandIsSpadesGame && spadesBidsAdjustable}
-              {@render spadesBidSetup("Spades bids for this hand", true)}
-            {/if}
             <div class="full-hand-summary grouped-play-summary" aria-label={`${fullHand.contract} hand score`}>
               <div
                 class:no-last-two={fullHand.contract === "No Last Two"}
@@ -9680,7 +9717,7 @@
                 {#if fullHandShowWhistMatchSummary}
                   <div>
                     <span>{fullHandIsSpadesGame ? "Bid" : whistOpeningLeadPracticeActive ? "Focus" : whistOddProgressLabel}</span>
-                    <strong>{fullHandIsSpadesGame ? spadesBidLabel() : whistOpeningLeadPracticeActive ? "Opening" : whistOddProgressValue}</strong>
+                    <strong>{fullHandIsSpadesGame ? spadesCurrentBidLabel : whistOpeningLeadPracticeActive ? "Opening" : whistOddProgressValue}</strong>
                   </div>
                 {/if}
                 {#if fullHand.contract === "No Last Two"}
@@ -9972,6 +10009,32 @@
                   : "Left's card is on the table. Tap the table or press Next trick when you are ready."}
               </p>
             {/if}
+          {:else if spadesOpeningDecisionActive}
+            {#if spadesOpeningPanel === "bid"}
+              <div class="lesson-heading">
+                <p class="eyebrow">Before the first trick</p>
+                <h2>Adjust the bids</h2>
+              </div>
+
+              {@render spadesBidSetup("Spades bids for this hand", true)}
+            {:else}
+              <ExerciseFeedback
+                eyebrow="Before the first trick"
+                title="Read your hand"
+                result="Check your spades, likely winners, and weak suits before setting the table bid."
+                error={fullHandError}
+              />
+
+              <CardChoiceHand
+                cards={fullHand.playerHand}
+                ariaLabel={`Your ${fullHand.contract} hand`}
+                className="hand full-hand-cards"
+                cardClassName="card hand-card full-hand-card"
+                getCardClasses={spadesOpeningCardClasses}
+                isPressed={() => false}
+                onSelect={() => {}}
+              />
+            {/if}
           {:else}
             <ExerciseFeedback eyebrow="Your turn" title="Choose your card" result={fullHand.prompt} error={fullHandError} />
 
@@ -10019,6 +10082,19 @@
                     : "Next trick"}
                 </button>
               {/if}
+            {:else if spadesOpeningDecisionActive}
+              <button class="secondary-action" onclick={openFullHandTableTarget} type="button">Table</button>
+              <button class="secondary-action" onclick={toggleSpadesOpeningPanel} type="button">
+                {spadesOpeningPanel === "bid" ? "Show cards" : "Adjust bid"}
+              </button>
+              <button
+                class="primary-action"
+                disabled={!spadesBidReady}
+                onclick={startSpadesOpeningPlay}
+                type="button"
+              >
+                Start hand
+              </button>
             {:else}
               <button class="secondary-action" onclick={openFullHandTableTarget} type="button">Table</button>
               <button

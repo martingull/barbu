@@ -633,71 +633,14 @@ test("Spades play starts a bid-scored partnership hand", async ({ page }, testIn
 
   await expect(page.getByRole("tabpanel", { name: "Play" })).toContainText("spades always trump");
   await expect(page.getByRole("tabpanel", { name: "Play" })).toContainText("simple side bids");
-  await expect(page.getByText("Set the partnerships for this hand")).toBeVisible();
-  await expect(page.getByLabel("Decrease your side bid")).toBeVisible();
-  await expect(page.getByLabel("Increase your side bid")).toBeVisible();
-  await expect(page.getByLabel("Decrease opponent side bid")).toBeVisible();
-  await expect(page.getByLabel("Increase opponent side bid")).toBeVisible();
   const playSpadesBtn = page.getByRole("button", { name: "Play Spades" });
-  const bidSummary = page.locator(".spades-bid-summary");
-  const yourBidValue = page.locator(".play-spades-bids .spades-bid-value").first();
-  const oppBidValue = page.locator(".play-spades-bids .spades-bid-value").nth(1);
-  const yourBidDown = page.getByRole("button", { name: "Decrease your side bid" });
-  const yourBidUp = page.getByRole("button", { name: "Increase your side bid" });
-  const oppBidDown = page.getByRole("button", { name: "Decrease opponent side bid" });
-  const oppBidUp = page.getByRole("button", { name: "Increase opponent side bid" });
-
-  const readBidSummary = async () => {
-    const summary = (await bidSummary.textContent()) ?? "";
-    const match = summary.match(/Total:\s*(\d+)\s*\/\s*13/);
-    return match ? Number(match[1]) : 0;
-  };
-
-  const readBid = async (seat: "you" | "opp"): Promise<number> => {
-    if (seat === "you") {
-      const text = (await yourBidValue.textContent()) ?? "0";
-      return Number(text.trim());
-    }
-    const text = (await oppBidValue.textContent()) ?? "0";
-    return Number(text.trim());
-  };
-
-  await expect(page.getByLabel(/Your side bid \d+/)).toBeVisible();
-  await expect(page.getByLabel(/Opponent side bid \d+/)).toBeVisible();
-
-  const yourBidBase = await readBid("you");
-  if (yourBidBase > 0) {
-    await yourBidDown.click();
-  } else {
-    await oppBidDown.click();
-  }
-
-  await expect(playSpadesBtn).toBeDisabled();
-  await expect(page.getByRole("status")).toContainText("Set bids to 13 total tricks");
-
-  const currentTotal = await readBidSummary();
-  const needed = 13 - currentTotal;
-  let remaining = needed;
-  while (remaining > 0) {
-    const oppBid = await readBid("opp");
-    if (oppBid < 13) {
-      await oppBidUp.click();
-    } else {
-      await yourBidUp.click();
-    }
-    remaining -= 1;
-  }
-
-  await expect(page.getByText("Total:")).toContainText("Total: 13 / 13");
   await expect(playSpadesBtn).toBeEnabled();
-  const yourBidFinal = await readBid("you");
-  const oppBidFinal = await readBid("opp");
-  expect(yourBidFinal + oppBidFinal).toBe(13);
 
   await playSpadesBtn.click();
 
   await expect(page.getByRole("heading", { name: "Spades hand" })).toBeVisible();
-  await expect(page.getByLabel("Spades full hand")).toContainText("Trump: spades");
+  await expect(page.getByLabel("Spades hand", { exact: true })).toContainText("Trump");
+  await expect(page.getByLabel("Spades hand", { exact: true })).toContainText("Spades");
   await expect(page.getByLabel("Spades hand score")).toContainText("Your side");
   await expect(page.getByLabel("Spades hand score")).toContainText("Opponents");
   await expect(page.getByLabel("Spades hand score")).toContainText("Bid");
@@ -705,22 +648,47 @@ test("Spades play starts a bid-scored partnership hand", async ({ page }, testIn
   await expect(page.getByLabel("Spades match score")).toContainText("Bags");
   await expect(page.getByLabel("Spades hand table")).toBeVisible();
   await expect(page.getByLabel("Your Spades hand")).toBeVisible();
+  const spadesFullHand = page.getByLabel("Spades full hand");
+  await expect(spadesFullHand.getByRole("button", { name: "Table" })).toBeVisible();
+  await expect(spadesFullHand.getByRole("button", { name: "Adjust bid" })).toBeVisible();
+  await expect(spadesFullHand.getByRole("button", { name: "Start hand" })).toBeVisible();
+  await expect(spadesFullHand.getByRole("button", { name: "Play card" })).not.toBeVisible();
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
   await expectHandNearActionRow(page, ".full-hand-cards");
   await expectFeedbackAboveHand(page, ".full-hand-cards");
   await page.screenshot({ path: testInfo.outputPath("spades-hand.png"), fullPage: true });
 
+  await spadesFullHand.getByRole("button", { name: "Adjust bid" }).click();
+  await expect(page.getByText("Set the partnerships for this hand")).toBeVisible();
+  await expect(page.getByLabel("Decrease your side bid")).toBeVisible();
+  await expect(page.getByLabel("Increase your side bid")).toBeVisible();
+  await expect(page.getByLabel("Decrease opponent side bid")).toBeVisible();
+  await expect(page.getByLabel("Increase opponent side bid")).toBeVisible();
+  await expect(page.getByText("Total:")).toContainText("Total: 13 / 13");
+  await expect(spadesFullHand.getByRole("button", { name: "Show cards" })).toBeVisible();
+
+  await spadesFullHand.getByRole("button", { name: "Show cards" }).click();
+  await expect(page.getByLabel("Your Spades hand")).toBeVisible();
+  await expect(spadesFullHand.getByRole("button", { name: "Adjust bid" })).toBeVisible();
+
+  await spadesFullHand.getByRole("button", { name: "Start hand" }).click();
+  await expect(spadesFullHand.getByRole("button", { name: "Play card" })).toBeVisible();
   await playFullHandDecision(page);
   await expect(page.getByRole("heading", { name: /Spades hand|Read the table/ })).toBeVisible();
 });
 
-test("Spades bid controls allow all 13-sum partnerships", async ({ page }) => {
+test("Spades bid controls keep partnerships at 13 after the deal", async ({ page }) => {
   await gotoWithPracticeSeed(page, 8);
   await page.getByRole("button", { name: /Open Spades/ }).click();
   await page.getByRole("tab", { name: "Play" }).click();
 
   const playSpadesBtn = page.getByRole("button", { name: "Play Spades" });
+  await playSpadesBtn.click();
+  await expect(page.getByLabel("Your Spades hand")).toBeVisible();
+  const spadesFullHand = page.getByLabel("Spades full hand");
+  await spadesFullHand.getByRole("button", { name: "Adjust bid" }).click();
+
   const yourBidValue = page.locator(".play-spades-bids .spades-bid-value").first();
   const oppBidValue = page.locator(".play-spades-bids .spades-bid-value").nth(1);
   const yourBidDown = page.getByRole("button", { name: "Decrease your side bid" });
@@ -764,37 +732,50 @@ test("Spades bid controls allow all 13-sum partnerships", async ({ page }) => {
     return Number(match?.[1] ?? 0);
   };
 
+  await page.screenshot({ path: "test-results/spades-bid-controls-initial.png", fullPage: true });
+
   await setYourBid(0);
   await setOppBid(13);
   await expect(page.getByLabel("Your side bid 0")).toBeVisible();
   await expect(page.getByLabel("Opponent side bid 13")).toBeVisible();
   await expect(await readTotal()).toBe(13);
+  await expect(page.getByLabel("Spades hand score")).toContainText("0-13");
   await expect(page.getByRole("status")).not.toBeVisible();
-  await expect(playSpadesBtn).toBeEnabled();
+  await expect(spadesFullHand.getByRole("button", { name: "Start hand" })).toBeEnabled();
+  await page.screenshot({ path: "test-results/spades-bid-controls-0-13-valid.png", fullPage: true });
 
   await expect(yourBidDown).toBeDisabled();
   await expect(oppBidUp).toBeDisabled();
 
   await setYourBid(2);
-  await setOppBid(12);
-  await expect(page.getByLabel("Your side bid 2")).toBeVisible();
-  await expect(page.getByLabel("Opponent side bid 12")).toBeVisible();
-  await expect(await readTotal()).toBe(14);
-  await expect(playSpadesBtn).toBeDisabled();
-  await expect(page.getByRole("status")).toContainText("Set bids to 13 total tricks");
-
   await setOppBid(11);
+  await expect(page.getByLabel("Your side bid 2")).toBeVisible();
+  await expect(page.getByLabel("Opponent side bid 11")).toBeVisible();
   await expect(await readTotal()).toBe(13);
+  await expect(page.getByLabel("Spades hand score")).toContainText("2-11");
   await expect(page.getByRole("status")).not.toBeVisible();
-  await expect(playSpadesBtn).toBeEnabled();
+  await expect(spadesFullHand.getByRole("button", { name: "Start hand" })).toBeEnabled();
+
+  await setYourBid(8);
+  await setOppBid(5);
+  await expect(page.getByLabel("Spades hand score")).toContainText("8-5");
+  await page.screenshot({ path: "test-results/spades-bid-controls-8-5-valid.png", fullPage: true });
+  await expect(spadesFullHand.getByRole("button", { name: "Start hand" })).toBeEnabled();
 
   await setYourBid(7);
   await setOppBid(6);
   await expect(await readTotal()).toBe(13);
-  await expect(playSpadesBtn).toBeEnabled();
+  await expect(page.getByLabel("Spades hand score")).toContainText("7-6");
+  await expect(spadesFullHand.getByRole("button", { name: "Start hand" })).toBeEnabled();
+  await page.screenshot({ path: "test-results/spades-bid-controls-7-6-valid.png", fullPage: true });
 
   await setYourBid(13);
   await expect(yourBidUp).toBeDisabled();
+  await expect(page.getByLabel("Your side bid 13")).toBeVisible();
+
+  await spadesFullHand.getByRole("button", { name: "Show cards" }).click();
+  await expect(page.getByLabel("Your Spades hand")).toBeVisible();
+  await spadesFullHand.getByRole("button", { name: "Adjust bid" }).click();
   await expect(page.getByLabel("Your side bid 13")).toBeVisible();
 });
 
