@@ -2797,6 +2797,12 @@
   $: currentWhistHandResult = fullHandIsWhistGame && fullHand?.status === "complete" ? whistHandResultFor(fullHand) : null;
   $: currentSpadesHandResult = fullHandIsSpadesGame && fullHand?.status === "complete" ? spadesHandResultFor(fullHand) : null;
   $: fullHandShowWhistMatchSummary = fullHandIsPartnershipGame && !fullHandCardCountingActive;
+  $: spadesBidsAdjustable =
+    fullHandIsSpadesGame &&
+    whistFullHandSource === "play" &&
+    fullHand?.status === "in_progress" &&
+    fullHand?.completedTricks.length === 0 &&
+    fullHand?.currentTrick.length === 0;
   $: whistVisibleMatchScores = currentWhistHandResult
     ? addWhistMatchResult(whistMatchScores, currentWhistHandResult)
     : whistMatchScores;
@@ -8140,7 +8146,7 @@
   </div>
 {/snippet}
 
-{#snippet spadesBidSetup(label = "Spades bids")}
+{#snippet spadesBidSetup(label = "Spades bids", editable = true)}
   <section class="play-spades-bids" aria-label={label}>
     <p class="eyebrow">Set the partnerships for this hand</p>
     <div class="spades-bid-grid">
@@ -8150,7 +8156,7 @@
           <button
             class="drill-action spades-bid-button"
             aria-label="Decrease your side bid"
-            disabled={spadesBids.playerSide <= 0}
+            disabled={!editable || spadesBids.playerSide <= 0}
             onclick={() => bumpSpadesPlayerBid(-1)}
             type="button"
           >
@@ -8160,7 +8166,7 @@
           <button
             class="drill-action spades-bid-button"
             aria-label="Increase your side bid"
-            disabled={spadesBids.playerSide >= 13}
+            disabled={!editable || spadesBids.playerSide >= 13}
             onclick={() => bumpSpadesPlayerBid(1)}
             type="button"
           >
@@ -8174,7 +8180,7 @@
           <button
             class="drill-action spades-bid-button"
             aria-label="Decrease opponent side bid"
-            disabled={spadesBids.opponentSide <= 0}
+            disabled={!editable || spadesBids.opponentSide <= 0}
             onclick={() => bumpSpadesOpponentBid(-1)}
             type="button"
           >
@@ -8184,7 +8190,7 @@
           <button
             class="drill-action spades-bid-button"
             aria-label="Increase opponent side bid"
-            disabled={spadesBids.opponentSide >= 13}
+            disabled={!editable || spadesBids.opponentSide >= 13}
             onclick={() => bumpSpadesOpponentBid(1)}
             type="button"
           >
@@ -8193,7 +8199,9 @@
         </div>
       </label>
     </div>
-    <p class="saved-run-note">Bids are used only for the next Spades hand.</p>
+    <p class="saved-run-note">
+      {editable ? "You can still edit bids before the first trick." : "Bids are locked for this hand."}
+    </p>
   </section>
 {/snippet}
 
@@ -8407,7 +8415,7 @@
           onResume={activeConfig.playProps.onResume}
         >
           {#if activeGameTable === "spades"}
-            {@render spadesBidSetup()}
+            {@render spadesBidSetup("Spades bids", true)}
           {/if}
         </PlayTabPanel>
       {:else}
@@ -9635,6 +9643,9 @@
       >
         {#snippet summary()}
           {#if !fullHandRunIsComplete && !(fullHandIsPartnershipGame && fullHand.status === "complete")}
+            {#if fullHandIsSpadesGame && spadesBidsAdjustable}
+              {@render spadesBidSetup("Spades bids for this hand", true)}
+            {/if}
             <div class="full-hand-summary grouped-play-summary" aria-label={`${fullHand.contract} hand score`}>
               <div
                 class:no-last-two={fullHand.contract === "No Last Two"}
