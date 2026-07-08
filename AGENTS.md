@@ -106,6 +106,8 @@ Prefer clear, compact, touch-friendly layouts:
 
 Borrow learning patterns from successful chess tutor apps at the pattern level only: named opponent/coach, level-like progression, puzzle-sized decisions, fast correction, and practice loops. Do not copy proprietary visual design, wording, characters, or lesson content.
 
+Prefer UTF-8 suit symbols in learner-facing UI copy and compact labels when they improve readability: clubs `♣`, spades `♠`, diamonds `♦`, and hearts `♥`. Keep plain text suit names where accessibility, searchability, or rule explanation is clearer.
+
 Avoid purely decorative UI and avoid copying book text.
 
 ## Verification
