@@ -5414,8 +5414,9 @@
       spadesMatchScores = { playerSide: 0, opponentSide: 0 };
       spadesBagScores = { playerSide: 0, opponentSide: 0 };
       spadesHandResults = [];
+      // Keep user-selected bids in the play panel and use them for the next hand.
+      // If you'd like to reset to the suggested pattern, update this in the UI action.
     }
-    spadesBids = defaultSpadesBids(spadesHandResults.length + 1);
     await startFullHand("Spades");
   }
 
