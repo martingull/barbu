@@ -21,9 +21,9 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
       pathEyebrow: "Training path",
       pathTitle: "Learn the Spades table",
       progressAriaLabel: "Spades course progress",
-      nextSummary: "Start with fixed-trump partnership play, then add bidding once the hand feels good.",
-      completeSummary: "You have tried the first Spades habits: follow suit, count spades, and think in books.",
-      referenceSummary: "Check the Spades baseline: partnership play, spades as trump, bidding, bags, and nil."
+      nextSummary: "Start with fixed-trump partnership play, bids, and book targets.",
+      completeSummary: "You have tried the first Spades habits: follow suit, count spades, bid books, and watch bags.",
+      referenceSummary: "Check the Spades baseline: partnership play, spades as trump, bidding, bags, and later nil."
     },
     tabIntros: {
       learn: {
@@ -35,13 +35,13 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
       practice: {
         eyebrow: "Practice",
         title: "Practice one Spades habit.",
-        summary: "Start with follow-suit and trump decisions. Bidding, bags, and nil are next-stage practice."
+        summary: "Practice follow-suit, trump decisions, book targets, and avoiding unnecessary bags."
       },
       play: {
         eyebrow: "Play",
-        title: "Play a starter Spades hand.",
+        title: "Play a Spades hand.",
         summary:
-          "Play You and Barbu against Left and Right with spades fixed as trump. Bidding and full Spades scoring are planned next."
+          "Play You and Barbu against Left and Right with spades fixed as trump, visible bids, bags, and match scoring."
       },
       perfect: {
         eyebrow: "Pro",
@@ -63,7 +63,7 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
         { id: "bid-books", label: "Bid books", destination: "Spades practice: Bid books" },
         { id: "bags", label: "Avoid bags", destination: "Spades practice: Avoid bags" }
       ],
-      play: [{ id: "play-spades", label: "Play Spades", destination: "Spades starter hand" }]
+      play: [{ id: "play-spades", label: "Play Spades", destination: "Spades scored hand" }]
     }
   }),
   learnSteps: [
@@ -92,14 +92,14 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
       id: "spades-books",
       step: "Scoring",
       title: "Count books",
-      summary: "Each trick is a book. Later, the bid tells you how many your partnership needs.",
+      summary: "Each trick is a book. The bid tells you how many your partnership needs.",
       action: "bid"
     },
     {
       id: "spades-bags",
       step: "Tactic",
       title: "Avoid extra bags",
-      summary: "Taking too many tricks can become costly once full Spades scoring is active.",
+      summary: "Extra tricks still score, but they become bags you should track.",
       action: "bags"
     }
   ],
@@ -131,7 +131,7 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
           id: "bid-books",
           label: "Bidding",
           title: "Bid books",
-          summary: "Planned: estimate how many tricks your hand can help win.",
+          summary: "Estimate how many tricks your side can take before the hand begins.",
           action: "bid",
           group: "fixed-drills"
         },
@@ -139,7 +139,7 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
           id: "bags",
           label: "Scoring",
           title: "Avoid bags",
-          summary: "Planned: learn when extra tricks help and when they hurt.",
+          summary: "Make the bid without taking more tricks than the scorecard needs.",
           action: "bags",
           group: "fixed-drills"
         }
@@ -148,11 +148,11 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
   ],
   playTabConfig: {
     actionAriaLabel: "Spades play actions",
-    groupAriaLabel: "Spades starter hand",
-    groupEyebrow: "Starter hand",
+    groupAriaLabel: "Spades hand",
+    groupEyebrow: "Partnership hand",
     primaryLabel: "Play Spades",
     supportingCopy:
-      "First version: play a partnership hand with spades always trump. Bidding, nil, and bags are next.",
+      "Play a partnership hand with spades always trump. The table sets simple side bids, scores made bids, and tracks bags.",
     footerNote: "You and Barbu play against Left and Right."
   },
   proTabConfig: {

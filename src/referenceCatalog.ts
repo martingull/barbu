@@ -515,18 +515,18 @@ export const referenceCatalog: GameReference[] = [
     id: "spades",
     title: "Spades",
     family: "Whist",
-    baseline: "Whist-family starter, Spades fixed-trump baseline",
+    baseline: "Whist-family partnership game, Spades fixed-trump baseline",
     overview:
-      "Spades is the app's next Whist-family partnership table. The starter version shares the Whist hand surface: You and Barbu play against Left and Right, players follow suit when able, and spades are always trump.",
+      "Spades is a Whist-family partnership table. You and Barbu play against Left and Right, players follow suit when able, spades are always trump, and each side tries to meet its bid.",
     sections: [
       {
         id: "object",
         title: "Object",
         body:
-          "Win tricks with your partner while treating spades as the permanent trump suit. The full game adds bidding so each side tries to make the number of tricks it promised.",
+          "Win tricks with your partner while treating spades as the permanent trump suit. Each side has a bid, so the goal is to take at least that many books without drifting into unnecessary bags.",
         facts: [
           { label: "Game type", value: "Partnership trick-taking" },
-          { label: "Current focus", value: "Fixed spades trump" }
+          { label: "Current focus", value: "Bids, books, and bags" }
         ]
       },
       {
@@ -552,53 +552,54 @@ export const referenceCatalog: GameReference[] = [
       },
       {
         id: "scoring",
-        title: "Scoring Boundary",
+        title: "Scoring",
         body:
-          "The first app version plays a starter hand and counts partnership tricks. Bids, nil bids, bags, and match settlement are planned next before this table is considered a complete Spades game.",
+          "A made bid scores ten points per bid book plus one point for each overtrick bag. A failed bid scores minus ten points per bid book. The current table tracks accumulated bags but leaves nil, blind nil, and ten-bag penalties for later variants.",
         facts: [
-          { label: "Now", value: "Playable fixed-trump hand" },
-          { label: "Next", value: "Bidding, nil, bags, match score" }
+          { label: "Made bid", value: "10 per bid book + bags" },
+          { label: "Failed bid", value: "-10 per bid book" },
+          { label: "Match target", value: "500 points" }
         ]
       }
     ],
     contracts: [
       {
         id: "starter-spades",
-        title: "Starter Spades",
-        objective: "Win partnership tricks with spades fixed as trump.",
-        scoring: "The starter table counts tricks and odd-trick style match points until bidding is added.",
-        lesson: "Start by recognizing when you must follow suit and when a spade can cut the trick."
+        title: "Spades",
+        objective: "Meet your partnership bid with spades fixed as trump.",
+        scoring: "Made bids score 10 per bid book plus overtrick bags; failed bids lose 10 per bid book.",
+        lesson: "Start by recognizing when you must follow suit, when a spade can cut the trick, and when an extra book becomes a bag."
       }
     ],
     contractRoadmap: [
       {
         id: "spades-reference",
         title: "Reference baseline",
-        coreStatus: "Starter",
+        coreStatus: "Core",
         appStatus: "Defined",
-        note: "Spades is defined as a Whist-family partnership game with fixed spades trump."
+        note: "Spades is defined as a Whist-family partnership game with fixed spades trump, bids, books, and bags."
       },
       {
         id: "spades-play",
-        title: "Playable starter hand",
-        coreStatus: "Starter",
+        title: "Playable scored hand",
+        coreStatus: "Core",
         appStatus: "Playable",
-        note: "The first implementation reuses the partnership full-hand table and fixes trump to spades."
+        note: "The first implementation reuses the partnership full-hand table and adds simple side bids plus match scoring."
       },
       {
         id: "spades-scoring",
-        title: "Bidding and bags",
-        coreStatus: "Core",
+        title: "Nil and advanced bags",
+        coreStatus: "Variant",
         appStatus: "Planned",
-        note: "Full Spades needs bids, nil, overtrick bags, and match settlement before production readiness."
+        note: "Nil, blind nil, and ten-bag penalties remain later Spades variants."
       }
     ],
     variants: [
       {
-        id: "starter-boundary",
-        title: "Starter Boundary",
+        id: "nil-boundary",
+        title: "Nil Boundary",
         note:
-          "This is not yet full Spades. It is the first playable foundation so the table, trump logic, and partnership UI can settle before bidding is added."
+          "The current table teaches ordinary partnership bidding first. Nil and blind nil should be introduced as named variants once the core hand feels settled."
       }
     ]
   }

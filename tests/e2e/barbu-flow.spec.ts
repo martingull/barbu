@@ -626,19 +626,22 @@ test("Whist play starts a partnership trump hand", async ({ page }, testInfo) =>
   await expect(page.getByRole("heading", { name: /Whist hand|Read the table/ })).toBeVisible();
 });
 
-test("Spades play starts a fixed-trump partnership hand", async ({ page }, testInfo) => {
+test("Spades play starts a bid-scored partnership hand", async ({ page }, testInfo) => {
   await gotoWithPracticeSeed(page, 8);
   await page.getByRole("button", { name: /Open Spades/ }).click();
   await page.getByRole("tab", { name: "Play" }).click();
 
   await expect(page.getByRole("tabpanel", { name: "Play" })).toContainText("spades always trump");
+  await expect(page.getByRole("tabpanel", { name: "Play" })).toContainText("simple side bids");
   await page.getByRole("button", { name: "Play Spades" }).click();
 
   await expect(page.getByRole("heading", { name: "Spades hand" })).toBeVisible();
   await expect(page.getByLabel("Spades full hand")).toContainText("Trump: spades");
   await expect(page.getByLabel("Spades hand score")).toContainText("Your side");
   await expect(page.getByLabel("Spades hand score")).toContainText("Opponents");
+  await expect(page.getByLabel("Spades hand score")).toContainText("Bid");
   await expect(page.getByLabel("Spades match score")).toContainText("You + Barbu");
+  await expect(page.getByLabel("Spades match score")).toContainText("Bags");
   await expect(page.getByLabel("Spades hand table")).toBeVisible();
   await expect(page.getByLabel("Your Spades hand")).toBeVisible();
   await expectNoPageScroll(page);

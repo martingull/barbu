@@ -57,11 +57,11 @@ content/             Structured game and lesson content
 
 ## Current Product Shape
 
-- A catalog/welcome screen that treats Barbu as the first playable core game in a broader card-game curriculum, with Hearts, Whist, and starter Spades as active starter tables, plus later packs such as Solitaire, Bridge, Gin Rummy, and Canasta.
+- A catalog/welcome screen that treats Barbu as the first playable core game in a broader card-game curriculum, with Hearts, Whist, and Spades as active starter tables, plus later packs such as Solitaire, Bridge, Gin Rummy, and Canasta.
 - The intended free starter catalog is Hearts, Barbu, Whist, and Spades; the other catalog entries can become later packs once the first game loops are strong. Whist-family bidding games can be added later as narrower named variants.
 - The catalog stays focused on core games; varieties and teaching modes stay attached to their parent game screens.
 - A Hearts table with the same Learn, Practice, Play, and Perfect structure; Play rotates pass direction and then moves into a local multi-hand Black Lady-style match to 100 points with 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, queen-of-spades scoring, and shoot-the-moon scoring, while Practice trains hearts and queen-of-spades patterns on the shared trick-taking surface.
-- A Spades starter table that reuses the Whist-family partnership hand with spades fixed as trump. Full bidding, nil, bags, and Spades match settlement are planned later.
+- A Spades table that reuses the Whist-family partnership hand with spades fixed as trump, simple partnership bids, made/failed bid scoring, visible bags, and a local score to 500. Nil, blind nil, and advanced bag penalties are planned later.
 - A Barbu table screen with grouped Learn, Practice, Play, and Reference entry points, a contract-hand practice chooser, and a five-step training path.
 - Quick Drill mode with seven quick mixed-contract decisions across the playable contract roster, immediate feedback, and a compact result; Tauri builds use Rust-generated scenarios, while browser runs use a local generated fallback.
 - No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps full-hand skeletons with deterministic local deals, legal-card play, contract-aware auto opponents, hand scoring, and short per-trick feedback.

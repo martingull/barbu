@@ -351,6 +351,28 @@
     opponentSideOddTricks: number;
   };
 
+  type SpadesBidState = {
+    playerSide: number;
+    opponentSide: number;
+  };
+
+  type SpadesScoreState = {
+    playerSide: number;
+    opponentSide: number;
+  };
+
+  type SpadesHandResult = {
+    handNumber: number;
+    playerSideBid: number;
+    opponentSideBid: number;
+    playerSideTricks: number;
+    opponentSideTricks: number;
+    playerSideScore: number;
+    opponentSideScore: number;
+    playerSideBags: number;
+    opponentSideBags: number;
+  };
+
   type WhistOpeningLeadPracticeDeal = {
     id: string;
     trumpSuit: Suit;
@@ -469,6 +491,7 @@
   const heartsHandPenaltyTotal = 26;
   const heartsMatchTarget = 100;
   const whistMatchTarget = 5;
+  const spadesMatchTarget = 500;
   const seatByPlayerIndex: Record<number, Seat> = {
     0: "Tutor",
     1: "Right",
@@ -2054,6 +2077,10 @@
   let heartsHandResults: HeartsHandResult[] = [];
   let whistMatchScores = { playerSide: 0, opponentSide: 0 };
   let whistHandResults: WhistHandResult[] = [];
+  let spadesBids: SpadesBidState = { playerSide: 4, opponentSide: 4 };
+  let spadesMatchScores: SpadesScoreState = { playerSide: 0, opponentSide: 0 };
+  let spadesBagScores: SpadesScoreState = { playerSide: 0, opponentSide: 0 };
+  let spadesHandResults: SpadesHandResult[] = [];
   let usingGeneratedPractice = false;
   let generatedPracticeError = "";
   let fullHand: FullHandState | null = null;
@@ -2271,21 +2298,80 @@
     };
   }
 
+  function defaultSpadesBids(handNumber: number): SpadesBidState {
+    const bids: SpadesBidState[] = [
+      { playerSide: 4, opponentSide: 4 },
+      { playerSide: 4, opponentSide: 5 },
+      { playerSide: 5, opponentSide: 4 },
+      { playerSide: 5, opponentSide: 5 }
+    ];
+
+    return bids[(handNumber - 1) % bids.length] ?? bids[0];
+  }
+
+  function spadesScoreForBid(tricks: number, bid: number) {
+    if (tricks < bid) {
+      return { score: -10 * bid, bags: 0 };
+    }
+
+    const bags = tricks - bid;
+    return { score: bid * 10 + bags, bags };
+  }
+
+  function spadesHandResultFor(hand: FullHandState, handNumber = spadesHandResults.length + 1): SpadesHandResult {
+    const partnershipTricks = whistPartnershipTrickCounts(hand.completedTricks);
+    const playerSide = spadesScoreForBid(partnershipTricks.playerSide, spadesBids.playerSide);
+    const opponentSide = spadesScoreForBid(partnershipTricks.opponentSide, spadesBids.opponentSide);
+
+    return {
+      handNumber,
+      playerSideBid: spadesBids.playerSide,
+      opponentSideBid: spadesBids.opponentSide,
+      playerSideTricks: partnershipTricks.playerSide,
+      opponentSideTricks: partnershipTricks.opponentSide,
+      playerSideScore: playerSide.score,
+      opponentSideScore: opponentSide.score,
+      playerSideBags: playerSide.bags,
+      opponentSideBags: opponentSide.bags
+    };
+  }
+
+  function addSpadesMatchResult(
+    scores: SpadesScoreState,
+    bags: SpadesScoreState,
+    result: SpadesHandResult
+  ) {
+    return {
+      scores: {
+        playerSide: scores.playerSide + result.playerSideScore,
+        opponentSide: scores.opponentSide + result.opponentSideScore
+      },
+      bags: {
+        playerSide: bags.playerSide + result.playerSideBags,
+        opponentSide: bags.opponentSide + result.opponentSideBags
+      }
+    };
+  }
+
+  function spadesBidLabel(bids = spadesBids) {
+    return `${bids.playerSide}-${bids.opponentSide}`;
+  }
+
   function whistMatchResultHeading() {
-    if (whistVisibleMatchScores.playerSide === whistVisibleMatchScores.opponentSide) {
+    if (partnershipVisibleMatchScores.playerSide === partnershipVisibleMatchScores.opponentSide) {
       return `${fullHand?.contract ?? "Partnership"} match tied`;
     }
 
-    return whistVisibleMatchScores.playerSide > whistVisibleMatchScores.opponentSide
+    return partnershipVisibleMatchScores.playerSide > partnershipVisibleMatchScores.opponentSide
       ? "Your partnership won"
       : "Opponents won the match";
   }
 
   function whistMatchResultSummary() {
-    return `${whistMatchLeaderLabel} reached ${Math.max(
-      whistVisibleMatchScores.playerSide,
-      whistVisibleMatchScores.opponentSide
-    )} points. Final match score: ${whistMatchScoreLabel}.`;
+    return `${partnershipMatchLeaderLabel} reached ${Math.max(
+      partnershipVisibleMatchScores.playerSide,
+      partnershipVisibleMatchScores.opponentSide
+    )} points. Final match score: ${partnershipMatchScoreLabel}.`;
   }
 
   function rankValue(rank: string) {
@@ -2662,7 +2748,7 @@
   $: fullHandSeatPenalties = fullHand ? seatPenaltiesForTricks(fullHand.completedTricks) : emptySeatPenalties();
   $: fullHandSeatTrickCounts = fullHand ? seatTricksWonForTricks(fullHand.completedTricks) : emptySeatPenalties();
   $: fullHandResultTitle = fullHand ? fullHandResultHeading(fullHand) : "";
-  $: fullHandResultSummary = fullHand ? fullHandResultText(fullHand, whistMatchScoreLabel) : "";
+  $: fullHandResultSummary = fullHand ? fullHandResultText(fullHand, partnershipMatchScoreLabel) : "";
   $: fullHandBestTrick = fullHand ? fullHandBestTrickLabel(fullHand) : "";
   $: fullHandWorstTrick = fullHand ? fullHandWorstTrickLabel(fullHand) : "";
   $: fullHandIsHeartsGame = activeGameTable === "hearts" && fullHand?.contract === "Hearts" && !fullHandRunActive;
@@ -2681,19 +2767,37 @@
   $: whistOpponentSideOddTricks = whistOddScore.opponentSideOddTricks;
   $: whistOddProgressLabel = whistOddScore.label;
   $: whistOddProgressValue = whistOddScore.value;
-  $: currentWhistHandResult = fullHandIsPartnershipGame && fullHand?.status === "complete" ? whistHandResultFor(fullHand) : null;
+  $: currentWhistHandResult = fullHandIsWhistGame && fullHand?.status === "complete" ? whistHandResultFor(fullHand) : null;
+  $: currentSpadesHandResult = fullHandIsSpadesGame && fullHand?.status === "complete" ? spadesHandResultFor(fullHand) : null;
   $: fullHandShowWhistMatchSummary = fullHandIsPartnershipGame && !fullHandCardCountingActive;
   $: whistVisibleMatchScores = currentWhistHandResult
     ? addWhistMatchResult(whistMatchScores, currentWhistHandResult)
     : whistMatchScores;
   $: whistVisibleHandCount = whistHandResults.length + (currentWhistHandResult ? 1 : 0);
+  $: spadesVisibleResult = currentSpadesHandResult
+    ? addSpadesMatchResult(spadesMatchScores, spadesBagScores, currentSpadesHandResult)
+    : { scores: spadesMatchScores, bags: spadesBagScores };
+  $: spadesVisibleMatchScores = spadesVisibleResult.scores;
+  $: spadesVisibleBags = spadesVisibleResult.bags;
+  $: spadesVisibleHandCount = spadesHandResults.length + (currentSpadesHandResult ? 1 : 0);
+  $: partnershipVisibleMatchScores = fullHandIsSpadesGame ? spadesVisibleMatchScores : whistVisibleMatchScores;
+  $: partnershipVisibleHandCount = fullHandIsSpadesGame ? spadesVisibleHandCount : whistVisibleHandCount;
+  $: partnershipMatchTarget = fullHandIsSpadesGame ? spadesMatchTarget : whistMatchTarget;
   $: whistMatchIsComplete =
-    fullHandIsPartnershipGame &&
+    fullHandIsWhistGame &&
     fullHand?.status === "complete" &&
     Math.max(whistVisibleMatchScores.playerSide, whistVisibleMatchScores.opponentSide) >= whistMatchTarget;
+  $: spadesMatchIsComplete =
+    fullHandIsSpadesGame &&
+    fullHand?.status === "complete" &&
+    Math.max(spadesVisibleMatchScores.playerSide, spadesVisibleMatchScores.opponentSide) >= spadesMatchTarget;
+  $: partnershipMatchIsComplete = fullHandIsSpadesGame ? spadesMatchIsComplete : whistMatchIsComplete;
   $: whistMatchLeaderLabel =
     whistVisibleMatchScores.playerSide >= whistVisibleMatchScores.opponentSide ? "You + Barbu" : "Left + Right";
   $: whistMatchScoreLabel = `${whistVisibleMatchScores.playerSide} - ${whistVisibleMatchScores.opponentSide}`;
+  $: partnershipMatchLeaderLabel =
+    partnershipVisibleMatchScores.playerSide >= partnershipVisibleMatchScores.opponentSide ? "You + Barbu" : "Left + Right";
+  $: partnershipMatchScoreLabel = `${partnershipVisibleMatchScores.playerSide} - ${partnershipVisibleMatchScores.opponentSide}`;
   $: heartsCurrentMoonShooter = fullHandIsHeartsGame ? heartsMoonShooter(fullHandSeatPenalties) : undefined;
   $: heartsCurrentMoonThreatSeat = fullHandIsHeartsGame ? heartsMoonThreatSeat(fullHandSeatPenalties) : undefined;
   $: heartsCurrentScoredSeatPenalties = fullHandIsHeartsGame
@@ -2797,7 +2901,7 @@
     : fullHandIsPartnershipGame
     ? whistFullHandSource === "practice"
       ? "Try another"
-      : whistMatchIsComplete
+      : partnershipMatchIsComplete
       ? "New match"
       : "Next hand"
     : fullHandRunActive
@@ -5280,9 +5384,11 @@
     activeTableTabs.spades = "play";
     whistFullHandSource = "play";
     if (!options.keepSession) {
-      whistMatchScores = { playerSide: 0, opponentSide: 0 };
-      whistHandResults = [];
+      spadesMatchScores = { playerSide: 0, opponentSide: 0 };
+      spadesBagScores = { playerSide: 0, opponentSide: 0 };
+      spadesHandResults = [];
     }
+    spadesBids = defaultSpadesBids(spadesHandResults.length + 1);
     await startFullHand("Spades");
   }
 
@@ -5295,8 +5401,10 @@
     activeTableTabs.spades = "practice";
     whistFullHandSource = "practice";
     activePathStepId = pathStepId;
-    whistMatchScores = { playerSide: 0, opponentSide: 0 };
-    whistHandResults = [];
+    spadesBids = defaultSpadesBids(1);
+    spadesMatchScores = { playerSide: 0, opponentSide: 0 };
+    spadesBagScores = { playerSide: 0, opponentSide: 0 };
+    spadesHandResults = [];
     await startFullHand("Spades");
   }
 
@@ -5765,8 +5873,19 @@
         return;
       }
 
-      if (whistMatchIsComplete) {
+      if (partnershipMatchIsComplete) {
         startPartnershipHand();
+        return;
+      }
+
+      if (fullHandIsSpadesGame) {
+        if (currentSpadesHandResult) {
+          const updated = addSpadesMatchResult(spadesMatchScores, spadesBagScores, currentSpadesHandResult);
+          spadesHandResults = [...spadesHandResults, currentSpadesHandResult];
+          spadesMatchScores = updated.scores;
+          spadesBagScores = updated.bags;
+        }
+        startSpadesHand({ keepSession: true });
         return;
       }
 
@@ -6441,8 +6560,18 @@
 
   function fullHandResultHeading(hand: FullHandState) {
     if (fullHandIsPartnershipGame) {
-      if (whistMatchIsComplete) {
+      if (partnershipMatchIsComplete) {
         return whistMatchResultHeading();
+      }
+      if (fullHandIsSpadesGame && currentSpadesHandResult) {
+        if (currentSpadesHandResult.playerSideScore > currentSpadesHandResult.opponentSideScore) {
+          return "Your partnership made the bid";
+        }
+        if (currentSpadesHandResult.playerSideScore === currentSpadesHandResult.opponentSideScore) {
+          return "Spades hand tied";
+        }
+
+        return "Opponents scored the hand";
       }
       if (whistPlayerSideOddTricks > whistOpponentSideOddTricks) {
         return "Your partnership won";
@@ -6491,8 +6620,17 @@
 
   function fullHandResultText(hand: FullHandState, currentWhistMatchScoreLabel = whistMatchScoreLabel) {
     if (fullHandIsPartnershipGame) {
-      if (whistMatchIsComplete) {
+      if (partnershipMatchIsComplete) {
         return whistMatchResultSummary();
+      }
+
+      if (fullHandIsSpadesGame && currentSpadesHandResult) {
+        const result = currentSpadesHandResult;
+        return `Bid ${result.playerSideBid}-${result.opponentSideBid}. You + Barbu won ${result.playerSideTricks} books for ${formatSignedScore(
+          result.playerSideScore
+        )}; Left + Right won ${result.opponentSideTricks} books for ${formatSignedScore(
+          result.opponentSideScore
+        )}. Match score: ${currentWhistMatchScoreLabel}.`;
       }
 
       return `Trump was ${whistTrumpSuitLabel}. You + Barbu won ${whistPartnershipTricks.playerSide} tricks for ${whistPlayerSideOddTricks} odd ${
@@ -7869,7 +8007,7 @@
     spades: {
       learnProps: { steps: spadesUi.learnSteps, completedCount: spadesUi.learnSteps.filter(s => completedPathSteps[s.id]).length, nextStep: spadesUi.learnSteps.find(s => !completedPathSteps[s.id]), actions: spadesLearnPanelActions, onStepSelect: startSpadesPathStep },
       practiceProps: { actions: spadesPracticeActions },
-      playProps: { onPrimary: () => void startSpadesHand(), footerNote: "Starter Spades uses fixed spades trump. Bidding, nil, and bag scoring come next." }
+      playProps: { onPrimary: () => void startSpadesHand(), footerNote: `Bids and bags score locally. Play to ${spadesMatchTarget}; nil comes later.` }
     }
   } as Record<string, any>;
 
@@ -9430,8 +9568,8 @@
                 </div>
                 {#if fullHandShowWhistMatchSummary}
                   <div>
-                    <span>{whistOpeningLeadPracticeActive ? "Focus" : whistOddProgressLabel}</span>
-                    <strong>{whistOpeningLeadPracticeActive ? "Opening" : whistOddProgressValue}</strong>
+                    <span>{fullHandIsSpadesGame ? "Bid" : whistOpeningLeadPracticeActive ? "Focus" : whistOddProgressLabel}</span>
+                    <strong>{fullHandIsSpadesGame ? spadesBidLabel() : whistOpeningLeadPracticeActive ? "Opening" : whistOddProgressValue}</strong>
                   </div>
                 {/if}
                 {#if fullHand.contract === "No Last Two"}
@@ -9454,18 +9592,18 @@
               {/if}
               {#if fullHandShowWhistMatchSummary}
                 <div class="full-hand-summary-row table-score" aria-label={`${fullHand.contract} match score`}>
-                  <span class="summary-row-label">Match to {whistMatchTarget}</span>
+                  <span class="summary-row-label">{fullHandIsSpadesGame ? "Score" : "Match"} to {partnershipMatchTarget}</span>
                   <div>
                     <span>You + Barbu</span>
-                    <strong>{whistVisibleMatchScores.playerSide}</strong>
+                    <strong>{partnershipVisibleMatchScores.playerSide}</strong>
                   </div>
                   <div>
                     <span>Left + Right</span>
-                    <strong>{whistVisibleMatchScores.opponentSide}</strong>
+                    <strong>{partnershipVisibleMatchScores.opponentSide}</strong>
                   </div>
                   <div>
-                    <span>Hands</span>
-                    <strong>{whistVisibleHandCount}</strong>
+                    <span>{fullHandIsSpadesGame ? "Bags" : "Hands"}</span>
+                    <strong>{fullHandIsSpadesGame ? `${spadesVisibleBags.playerSide}-${spadesVisibleBags.opponentSide}` : partnershipVisibleHandCount}</strong>
                   </div>
                 </div>
               {/if}
@@ -9590,19 +9728,19 @@
                       <span>Partnership</span>
                       <span>Match</span>
                       <span>Tricks</span>
-                      <span>Odd</span>
+                      <span>{fullHandIsSpadesGame ? "Bid" : "Odd"}</span>
                     </div>
                     <div class:active={true} class="hearts-hand-breakdown-row whist-score-row">
                       <span>You + Barbu</span>
-                      <strong>{whistVisibleMatchScores.playerSide}</strong>
+                      <strong>{partnershipVisibleMatchScores.playerSide}</strong>
                       <strong>{whistPartnershipTricks.playerSide}</strong>
-                      <strong>{whistPlayerSideOddTricks}</strong>
+                      <strong>{fullHandIsSpadesGame ? `${spadesBids.playerSide}` : whistPlayerSideOddTricks}</strong>
                     </div>
                     <div class="hearts-hand-breakdown-row whist-score-row">
                       <span>Left + Right</span>
-                      <strong>{whistVisibleMatchScores.opponentSide}</strong>
+                      <strong>{partnershipVisibleMatchScores.opponentSide}</strong>
                       <strong>{whistPartnershipTricks.opponentSide}</strong>
-                      <strong>{whistOpponentSideOddTricks}</strong>
+                      <strong>{fullHandIsSpadesGame ? `${spadesBids.opponentSide}` : whistOpponentSideOddTricks}</strong>
                     </div>
                   </div>
                 </div>

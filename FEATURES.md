@@ -10,7 +10,7 @@ Barbu is an iPhone-first learning app for classic card games. The first playable
 
 Barbu is the first complete curriculum, not the app boundary. The product should grow through reusable game-family foundations, starting with Hearts-family overlap such as follow-suit trick taking, contract scoring, penalty cards, reward tricks, and clockwise table play.
 
-Whist is the next intended free starter after Hearts and Barbu because it can reuse the shared trick-taking foundations while introducing partnerships and trump tracking. Spades has started as the next Whist-family table: it should reuse the partnership table, fix spades as trump, and defer bidding, nil, bags, and full Spades settlement until the starter hand feels solid. Bridge is an important later family, but it should wait until Barbu, Hearts, Whist, and the starter Spades table have a strong learning, practice, and play loop.
+Whist is the next intended free starter after Hearts and Barbu because it can reuse the shared trick-taking foundations while introducing partnerships and trump tracking. Spades has started as the next Whist-family table: it reuses the partnership table, fixes spades as trump, and now adds simple side bids, made/failed bid scoring, visible bags, and a score-to-500 shell. Nil, blind nil, and advanced bag penalties remain later variants. Bridge is an important later family, but it should wait until Barbu, Hearts, Whist, and Spades have a strong learning, practice, and play loop.
 
 David Parlett's *The Penguin Book of Card Games* is the baseline reference for how supported games are played and described. Product variants are allowed only when they are deliberate and documented.
 
@@ -41,7 +41,7 @@ The intended monetization model is free starter tables first, then paid packs wi
 - Hearts Practice entry metadata now comes from the shared table/catalog factory, so practice buttons, tab metadata, and action keys stay aligned as more games add practice sets.
 - Barbu Practice entry metadata now comes from the shared table/catalog factory for Quick Drill, fixed drills, and Domino full-hand practice.
 - Hearts table with the shared Learn, Practice, Play, and Pro structure; Play opens with rotating passes and then a local multi-hand Black Lady-style match to 100 points with 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, and shoot-the-moon scoring, while Practice covers avoiding hearts and the queen-of-spades pattern.
-- Spades starter table with the shared Learn, Practice, Play, and Pro structure; Play starts a local partnership hand using the Whist-family table with spades fixed as trump. Bidding, nil, bags, and full Spades settlement remain planned.
+- Spades table with the shared Learn, Practice, Play, and Pro structure; Play starts a local partnership hand using the Whist-family table with spades fixed as trump, simple side bids, made/failed bid scoring, visible bags, and a score-to-500 shell. Nil and blind nil remain planned variants.
 - Hearts Passing Drill v1 teaches the beginner pass-three habit: identify the queen of spades, high hearts, and dangerous high spades before hand play begins.
 - Hearts Practice Scenario Pool v1 adds a small authored pool behind Quick Drill, varying first-trick restrictions, avoid-hearts, safe and dangerous queen-of-spades play, break-hearts, moon-defense, and score-reading decisions without expanding the Learn path. Pass-three practice now covers both danger-card passing and a long-suit preservation pattern.
 - Hearts Generated Practice v2B moves first-trick, avoid-hearts, queen-of-spades danger, break-hearts legality, stop-the-moon defense, and score-reading practice into Rust-backed generated scenario families while keeping the shared Svelte drill surface and browser fallback. Focused Hearts practice buttons now run through their small scenario pool once instead of showing a single repeated sample.
@@ -106,7 +106,7 @@ Must ship:
 
 1. Free starter catalog
    - Hearts, Barbu, Whist, and Spades visible first.
-   - Barbu and Hearts are active playable tables. Whist is an active starter table with a Parlett-style reference baseline, Learning Path v1, and first playable practice drills for follow-suit and trump decisions. Spades is an early active starter table that reuses the Whist-family partnership hand with spades fixed as trump.
+   - Barbu and Hearts are active playable tables. Whist is an active starter table with a Parlett-style reference baseline, Learning Path v1, and first playable practice drills for follow-suit and trump decisions. Spades is an active starter table that reuses the Whist-family partnership hand with spades fixed as trump, simple bids, bags, and match scoring.
    - Paid/future packs such as Card Counting II, Solitaire, Bridge, Gin Rummy, and Canasta can stay visible as roadmap signals only.
 
 2. Barbu
@@ -143,8 +143,9 @@ Must ship:
 6. Spades starter table
    - Start from the Whist-family partnership table: You + Barbu against Left + Right.
    - Keep spades fixed as trump in the first playable hand.
-   - Teach follow-suit, trumping when void, and counting books before adding full bidding.
-   - Defer bids, nil, bags, and full match settlement until the starter hand and table feedback feel good.
+   - Teach follow-suit, trumping when void, counting books, making the bid, and watching bags.
+   - Score made bids, failed bids, visible bags, and a local score to 500.
+   - Defer nil, blind nil, and advanced bag penalties until the basic Spades loop feels good.
 
 7. Mobile quality
    - Active table screens should be stable on the physical iPhone.
