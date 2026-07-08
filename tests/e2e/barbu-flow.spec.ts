@@ -358,7 +358,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
     .poll(async () =>
       page.locator(".game-card strong").evaluateAll((items) => items.slice(0, 5).map((item) => item.textContent?.trim()))
     )
-    .toEqual(["Hearts", "Barbu", "Whist", "Spades", "Amerikaner"]);
+    .toEqual(["Hearts", "Barbu", "Whist", "Spades", "Card Counting I"]);
 
   await page.screenshot({ path: testInfo.outputPath("catalog.png"), fullPage: true });
 

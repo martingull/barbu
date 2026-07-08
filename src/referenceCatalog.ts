@@ -507,7 +507,7 @@ export const referenceCatalog: GameReference[] = [
         id: "whist-family-varieties",
         title: "Whist-Family Varieties",
         note:
-          "Bid Whist, Knock-out Whist, honours, rubber scoring, and Amerikaner-style auction play are related varieties that should be introduced as named tables or variants."
+          "Bid Whist, Knock-out Whist, honours, rubber scoring, and other auction-whist play are related varieties that should be introduced as named tables or variants."
       }
     ]
   },
