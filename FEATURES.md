@@ -72,7 +72,7 @@ The intended monetization model is free starter tables first, then paid packs wi
 - Full-hand tactical feedback v1 with structured trick tags for followed suit, void discards, moved danger cards, No Last Two setup/final tricks, trump wins, and overtrumps.
 - Training path practice step connected to Quick Drill completion.
 - Review step with latest Quick Drill score, weakest-contract advice, recent attempts, and replay actions.
-- Card Counting I pack started with its own Learn/Play table plus Count Trumps, Trump Memory Hand, Track Court Cards, and Danger Cards. Card Counting II is visible as a planned subscriber pack for Bridge-oriented counting. Pro tabs now point to paid AI play and Competitive Play instead of embedding card-counting exercises.
+- Card Counting I pack started with its own Learn/Play table plus Count Trumps, Trump Memory Hand, Three Amigos Memory, and Danger Cards. Card Counting II is visible as a planned subscriber pack for Bridge-oriented counting. Pro tabs now point to paid AI play and Competitive Play instead of embedding card-counting exercises.
 - Reason-based review advice that turns recent practice tags into one short next-step correction.
 - Local Quick Drill result history with contract-level summaries and focused replay for the weakest contract.
 - Local course progress for the playable Barbu path.
@@ -361,7 +361,7 @@ These are the next product increments that keep the app coherent.
    - Product framing: each exercise should feel like playing a real hand with one extra memory job, not like a detached flash-card drill.
    - Count Trumps reveals all thirteen tricks in segments, hides the segment, then asks either how many hearts appeared or whether a specific heart appeared.
    - Heart Memory Hand is the lead Card Counting I exercise: play a full Black Lady Hearts hand, make normal avoidance decisions, then answer heart-memory checks during the hand.
-   - Track Court Cards is the third active exercise and uses the realistic table surface for high-card memory.
+   - Three Amigos Memory is the third active exercise and uses a real Whist hand to track jacks, queens, and kings.
    - Danger Cards is the fourth active exercise and tracks Barbu-specific danger cards: queens and the king of hearts. Danger Cards v2 now uses a small memory-exercise config for tracked cards, prompts, targets, and return behavior so later Queen Watch / King Watch variants can reuse the same shape.
    - Add short mini-games for serious 52-card-deck skills and practical card-counting habits: Suit Count, Danger Card Tracker, Trump Count, Void Finder, High Card Memory, and Safe Exit Trainer.
    - Next: connect card-counting exercises back to Play Barbu feedback and focused replay.

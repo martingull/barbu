@@ -94,7 +94,8 @@
 
   type CardCountingTabId = "learn" | "play";
   type CardCountingReturnTarget = ActiveGameTable | "card-counting";
-  type CardCountingExerciseAction = "heart-memory" | "trump-count" | "court-count" | "danger-count" | "whist-memory";
+  type CardCountingExerciseAction = "heart-memory" | "trump-count" | "high-card-memory" | "danger-count" | "whist-memory";
+  type FullHandCardCountingExercise = "heart-memory" | "danger-count" | "whist-memory" | "high-card-memory";
 
   type CardCountingLearnStep = {
     eyebrow: string;
@@ -406,10 +407,10 @@
       action: "heart-memory"
     },
     {
-      eyebrow: "High-card memory",
-      title: "Track court cards",
-      summary: "Play a hand while remembering kings, queens, and jacks that have left the table.",
-      action: "court-count"
+      eyebrow: "Three amigos",
+      title: "Three amigos memory",
+      summary: "Play a real Whist hand while remembering kings, queens, and jacks that have left the table.",
+      action: "high-card-memory"
     },
     {
       eyebrow: "No Queens memory",
@@ -2080,6 +2081,7 @@
   let trumpCountAttempts = 0;
   let trumpCountClean = 0;
   let fullHandCardCountingMode = false;
+  let fullHandCardCountingExercise: FullHandCardCountingExercise = "heart-memory";
   let fullHandCardCountingPlaySeed = practiceSeed;
   let fullHandCardCountingSeed = 1;
   let fullHandCardCountingAnswer: number | boolean | Seat | null = null;
@@ -2445,9 +2447,10 @@
     fullHandCardCountingMode &&
     (fullHand?.contract === "Hearts" || fullHand?.contract === "Whist" || fullHand?.contract === "No Queens") &&
     !fullHandRunActive;
-  $: fullHandCardCountingIsWhist = fullHandCardCountingActive && fullHand?.contract === "Whist";
-  $: fullHandCardCountingIsHearts = fullHandCardCountingActive && fullHand?.contract === "Hearts";
-  $: fullHandCardCountingIsDanger = fullHandCardCountingActive && fullHand?.contract === "No Queens";
+  $: fullHandCardCountingIsWhist = fullHandCardCountingActive && fullHandCardCountingExercise === "whist-memory";
+  $: fullHandCardCountingIsHighCard = fullHandCardCountingActive && fullHandCardCountingExercise === "high-card-memory";
+  $: fullHandCardCountingIsHearts = fullHandCardCountingActive && fullHandCardCountingExercise === "heart-memory";
+  $: fullHandCardCountingIsDanger = fullHandCardCountingActive && fullHandCardCountingExercise === "danger-count";
   $: fullHandCardCountingCompletedTricks = fullHandCardCountingActive
     ? fullHand?.completedTricks.map((trick) => trick.cards) ?? []
     : [];
@@ -2459,6 +2462,11 @@
             whistTrumpSuitFromHandId(fullHand.id),
             fullHandCardCountingSeed + fullHand.completedTricks.length
           )
+        : fullHandCardCountingIsHighCard
+          ? buildCourtMemoryQuestion(
+              fullHandCardCountingCompletedTricks,
+              fullHandCardCountingSeed + fullHand.completedTricks.length
+            )
         : fullHandCardCountingIsDanger
           ? buildDangerMemoryQuestion(
               fullHandCardCountingCompletedTricks,
@@ -2466,7 +2474,8 @@
             )
         : buildTrumpMemoryQuestion(fullHandCardCountingCompletedTricks, fullHandCardCountingSeed + fullHand.completedTricks.length)
       : undefined;
-  $: fullHandCardCountingCheckpoints = fullHandCardCountingIsWhist ? realisticWhistCheckpoints : realisticTrumpCheckpoints;
+  $: fullHandCardCountingCheckpoints =
+    fullHandCardCountingIsWhist || fullHandCardCountingIsHighCard ? realisticWhistCheckpoints : realisticTrumpCheckpoints;
   $: fullHandCardCountingCheckpointIndex =
     fullHandCardCountingActive && fullHandReviewTrickCount > 0
       ? fullHandCardCountingCheckpoints.indexOf(fullHandReviewTrickCount)
@@ -2485,12 +2494,14 @@
     trick.map((play) => play.card)
   );
   $: fullHandCardCountingTrackedSuit = fullHandCardCountingIsWhist && fullHand ? whistTrumpSuitFromHandId(fullHand.id) : "H";
-  $: fullHandCardCountingReviewCards = fullHandCardCountingIsDanger
-    ? fullHandCardCountingSeenCards.filter(dangerCardMemoryConfig.isTrackedCard)
-    : fullHandCardCountingSeenCards.filter((card) => card.suit === fullHandCardCountingTrackedSuit);
+  $: fullHandCardCountingReviewCards = fullHandCardCountingIsHighCard
+    ? fullHandCardCountingSeenCards.filter(isCourtCard)
+    : fullHandCardCountingIsDanger
+      ? fullHandCardCountingSeenCards.filter(dangerCardMemoryConfig.isTrackedCard)
+      : fullHandCardCountingSeenCards.filter((card) => card.suit === fullHandCardCountingTrackedSuit);
   $: fullHandCardCountingSeenCount = fullHandCardCountingReviewCards.length;
   $: fullHandCardCountingCoreScore = fullHandCardCountingActive
-    ? fullHandCardCountingIsWhist
+    ? fullHandCardCountingIsWhist || fullHandCardCountingIsHighCard
       ? whistPartnershipTricks.playerSide
       : fullHandCardCountingIsDanger
         ? fullHandSeatPenalties.You
@@ -2501,45 +2512,67 @@
       ? fullHandCardCountingAnswer === fullHandCardCountingQuestion?.answer
         ? "Correct. Memory held."
         : fullHandCardCountingQuestion
-          ? fullHandCardCountingAnswerText(fullHandCardCountingQuestion, fullHandCardCountingIsDanger)
+          ? fullHandCardCountingAnswerText(
+              fullHandCardCountingQuestion,
+              fullHandCardCountingIsDanger,
+              fullHandCardCountingIsHighCard
+            )
           : ""
       : "Answer from memory. Old tricks are hidden.";
-  $: fullHandCardCountingTitle = fullHandCardCountingIsWhist
+  $: fullHandCardCountingTitle = fullHandCardCountingIsHighCard
+    ? "Three amigos memory"
+    : fullHandCardCountingIsWhist
     ? "Whist memory hand"
     : fullHandCardCountingIsDanger
       ? "Danger cards"
       : "Heart memory hand";
-  $: fullHandCardCountingStatusLabel = fullHandCardCountingIsWhist
+  $: fullHandCardCountingStatusLabel = fullHandCardCountingIsWhist || fullHandCardCountingIsHighCard
     ? "Whist"
     : fullHandCardCountingIsDanger
       ? "No Queens"
       : "Black Lady";
   $: fullHandCardCountingQuestionTitle = fullHandCardCountingQuestion
-    ? fullHandCardCountingQuestionHeading(fullHandCardCountingQuestion, fullHandCardCountingIsDanger)
+    ? fullHandCardCountingQuestionHeading(
+        fullHandCardCountingQuestion,
+        fullHandCardCountingIsDanger,
+        fullHandCardCountingIsHighCard
+      )
     : "";
-  $: fullHandCardCountingTargetLabel = fullHandCardCountingIsWhist
+  $: fullHandCardCountingTargetLabel = fullHandCardCountingIsHighCard
+    ? "Target high card"
+    : fullHandCardCountingIsWhist
     ? "Target whist card"
     : fullHandCardCountingIsDanger
       ? dangerCardMemoryConfig.targetAriaLabel
       : "Target heart card";
-  $: fullHandCardCountingAnswerOptionsLabel = fullHandCardCountingIsWhist
+  $: fullHandCardCountingAnswerOptionsLabel = fullHandCardCountingIsHighCard
+    ? "High card answer options"
+    : fullHandCardCountingIsWhist
     ? "Whist card answer options"
     : fullHandCardCountingIsDanger
       ? dangerCardMemoryConfig.answerAriaLabel
       : "Heart card answer options";
   $: fullHandCardCountingCountOptionsLabel = fullHandCardCountingIsDanger
     ? "Danger card count answers"
+    : fullHandCardCountingIsHighCard
+      ? "High card count answers"
     : fullHandCardCountingIsWhist
       ? "Whist count answer options"
       : "Heart count answer options";
-  $: fullHandCardCountingSeenLabel = fullHandCardCountingIsWhist
+  $: fullHandCardCountingSeenLabel = fullHandCardCountingIsHighCard
+    ? "High cards seen so far"
+    : fullHandCardCountingIsWhist
     ? "Trumps seen so far"
     : fullHandCardCountingIsDanger
       ? "Queens seen so far"
       : "Hearts seen so far";
   $: fullHandCardCountingBreakSummary = countingBreakSummary({
     title:
-      fullHandCardCountingIsWhist
+      fullHandCardCountingIsHighCard
+        ? fullHandCardCountingClean === fullHandCardCountingQuestionsAsked && fullHandCardCountingQuestionsAsked > 0
+          ? "High cards remembered"
+          : "High card hand complete"
+        : fullHandCardCountingIsWhist
         ? fullHandCardCountingClean === fullHandCardCountingQuestionsAsked && fullHandCardCountingQuestionsAsked > 0
           ? "Sharp Whist memory"
           : "Whist memory hand complete"
@@ -2551,7 +2584,11 @@
           ? "Sharp heart memory"
           : "Heart memory hand complete",
     summary:
-      fullHandCardCountingIsWhist
+      fullHandCardCountingIsHighCard
+        ? fullHandCardCountingClean === fullHandCardCountingQuestionsAsked && fullHandCardCountingQuestionsAsked > 0
+          ? "You played the Whist hand and kept the court cards clean in memory. That is strong table awareness."
+          : "You finished a real Whist hand while tracking jacks, queens, and kings. Next run, name each court card as it leaves."
+        : fullHandCardCountingIsWhist
         ? fullHandCardCountingClean === fullHandCardCountingQuestionsAsked && fullHandCardCountingQuestionsAsked > 0
           ? "You played the Whist hand and kept the trump and table state clean in memory. That is strong partnership awareness."
           : "You finished a real Whist hand while tracking trump, boss cards, and voids. Next run, keep naming the table state after every trick."
@@ -2565,11 +2602,11 @@
     firstLabel: "Card counting",
     firstValue: `${fullHandCardCountingClean} of ${fullHandCardCountingQuestionsAsked}`,
     firstDetail: "Memory checks answered cleanly.",
-    secondLabel: fullHandCardCountingIsWhist ? "Your side" : fullHandCardCountingIsDanger ? "Queens taken" : "Hearts score",
-    secondValue: fullHandCardCountingIsWhist
+    secondLabel: fullHandCardCountingIsWhist || fullHandCardCountingIsHighCard ? "Your side" : fullHandCardCountingIsDanger ? "Queens taken" : "Hearts score",
+    secondValue: fullHandCardCountingIsWhist || fullHandCardCountingIsHighCard
       ? `${fullHandCardCountingCoreScore} ${fullHandCardCountingCoreScore === 1 ? "trick" : "tricks"}`
       : formatPointCount(fullHandCardCountingCoreScore),
-    secondDetail: fullHandCardCountingIsWhist
+    secondDetail: fullHandCardCountingIsWhist || fullHandCardCountingIsHighCard
       ? "Tricks won by You + Barbu in the Whist hand."
       : fullHandCardCountingIsDanger
         ? "Queen penalties you captured in the No Queens hand."
@@ -3661,6 +3698,7 @@
   }
 
   function startTrumpMemoryFullHand(seed = usePracticeSeed()) {
+    fullHandCardCountingExercise = "heart-memory";
     fullHandCardCountingPlaySeed = seed;
     fullHandCardCountingSeed = seed + 101;
     fullHandCardCountingAnswer = null;
@@ -3670,10 +3708,22 @@
     void startFullHand("Hearts", { cardCounting: true, seed });
   }
 
-  function openCourtCountTrainer() {
+  function openHighCardMemoryTrainer() {
     rememberCardCountingReturnTarget();
-    nextCourtCountRound();
-    appView = "courtCount";
+    startHighCardMemoryFullHand();
+  }
+
+  function startHighCardMemoryFullHand(seed = usePracticeSeed()) {
+    activeGameTable = "whist";
+    whistFullHandSource = "card-counting";
+    fullHandCardCountingExercise = "high-card-memory";
+    fullHandCardCountingPlaySeed = seed;
+    fullHandCardCountingSeed = seed + 17;
+    fullHandCardCountingAnswer = null;
+    fullHandCardCountingChecked = false;
+    fullHandCardCountingQuestionsAsked = 0;
+    fullHandCardCountingClean = 0;
+    void startFullHand("Whist", { cardCounting: true, seed });
   }
 
   function openDangerCountTrainer() {
@@ -3683,6 +3733,7 @@
   }
 
   function startDangerCardsFullHand(seed = usePracticeSeed()) {
+    fullHandCardCountingExercise = "danger-count";
     fullHandCardCountingPlaySeed = seed;
     fullHandCardCountingSeed = seed + dangerCardMemoryConfig.seedOffset;
     fullHandCardCountingAnswer = null;
@@ -3703,8 +3754,8 @@
       return;
     }
 
-    if (action === "court-count") {
-      openCourtCountTrainer();
+    if (action === "high-card-memory") {
+      openHighCardMemoryTrainer();
       return;
     }
 
@@ -3724,6 +3775,7 @@
   function startWhistMemoryFullHand(seed = usePracticeSeed()) {
     activeGameTable = "whist";
     whistFullHandSource = "card-counting";
+    fullHandCardCountingExercise = "whist-memory";
     fullHandCardCountingPlaySeed = seed;
     fullHandCardCountingSeed = seed + whistMemoryConfig.seedOffset;
     fullHandCardCountingAnswer = null;
@@ -4330,6 +4382,11 @@
   }
 
   function replayFullHandCardCounting() {
+    if (fullHandCardCountingIsHighCard) {
+      startHighCardMemoryFullHand(fullHandCardCountingPlaySeed);
+      return;
+    }
+
     if (fullHandCardCountingIsWhist) {
       startWhistMemoryFullHand(fullHandCardCountingPlaySeed);
       return;
@@ -4344,6 +4401,11 @@
   }
 
   function nextFullHandCardCounting() {
+    if (fullHandCardCountingIsHighCard) {
+      startHighCardMemoryFullHand();
+      return;
+    }
+
     if (fullHandCardCountingIsWhist) {
       startWhistMemoryFullHand();
       return;
@@ -4367,12 +4429,16 @@
       : `No. ${formatCardLabel(question.targetCard)} was not played.`;
   }
 
-  function fullHandCardCountingQuestionHeading(question: TrumpMemoryQuestion | DangerMemoryQuestion | WhistMemoryQuestion, isDanger = false) {
+  function fullHandCardCountingQuestionHeading(
+    question: TrumpMemoryQuestion | DangerMemoryQuestion | WhistMemoryQuestion,
+    isDanger = false,
+    isHighCard = false
+  ) {
     if (question.kind === "count") {
-      return isDanger ? "How many queens appeared?" : "How many hearts appeared?";
+      return isDanger ? "How many queens appeared?" : isHighCard ? "How many high cards appeared?" : "How many hearts appeared?";
     }
     if (question.kind === "specific") {
-      return isDanger ? "Did this queen appear?" : "Did this heart appear?";
+      return isDanger ? "Did this queen appear?" : isHighCard ? "Did this high card appear?" : "Did this heart appear?";
     }
     if (question.kind === "trump_count") {
       return "How many trumps appeared?";
@@ -4387,11 +4453,25 @@
     return "Did this trump appear?";
   }
 
-  function fullHandCardCountingAnswerText(question: TrumpMemoryQuestion | DangerMemoryQuestion | WhistMemoryQuestion, isDanger = false) {
+  function fullHandCardCountingAnswerText(
+    question: TrumpMemoryQuestion | DangerMemoryQuestion | WhistMemoryQuestion,
+    isDanger = false,
+    isHighCard = false
+  ) {
     if (question.kind === "count") {
-      return isDanger ? `${question.answer} queens have been played so far.` : realisticTrumpQuestionAnswerText(question);
+      return isDanger
+        ? `${question.answer} queens have been played so far.`
+        : isHighCard
+          ? `${question.answer} high cards have been played so far.`
+          : realisticTrumpQuestionAnswerText(question);
     }
     if (question.kind === "specific") {
+      if (isHighCard) {
+        return question.answer
+          ? `Yes. ${formatCardLabel(question.targetCard)} was played.`
+          : `No. ${formatCardLabel(question.targetCard)} was not played.`;
+      }
+
       return isDanger
         ? question.answer
           ? `Yes. ${formatCardLabel(question.targetCard)} was played.`
@@ -4490,7 +4570,7 @@
     if (seed % 2 === 0) {
       return {
         kind: "count",
-        prompt: "How many court cards have been played so far?",
+        prompt: "How many high cards have been played so far?",
         answer: courtSeen,
         options: countOptions(courtSeen, seed, 12)
       };
@@ -4508,7 +4588,7 @@
 
     return {
       kind: "specific",
-      prompt: "Has this court card been played so far?",
+      prompt: "Has this high card been played so far?",
       answer: seenCards.some((card) => card.id === targetCard.id),
       targetCard
     };
@@ -8342,8 +8422,8 @@
     <TablePlaySurface
       mode={realisticCourtRound.status === "complete" ? "result" : "play"}
       showTable={realisticCourtRound.status !== "complete"}
-      ariaLabel="Track court cards trainer"
-      title="Track court cards"
+      ariaLabel="Three amigos memory trainer"
+      title="Three amigos memory"
       eyebrow="Card Counting I"
       statusLabel="Memory"
       statusValue={`${courtCountClean} of ${courtCountAttempts}`}

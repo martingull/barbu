@@ -429,7 +429,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByLabel("Card Counting I exercises")).toContainText("Count trumps");
   await expect(page.getByLabel("Card Counting I exercises")).toContainText("Heart memory hand");
-  await expect(page.getByLabel("Card Counting I exercises")).toContainText("Track court cards");
+  await expect(page.getByLabel("Card Counting I exercises")).toContainText("Three amigos memory");
   await expect(page.getByLabel("Card Counting I exercises")).toContainText("Danger cards");
   await page.getByRole("tab", { name: "Learn" }).click();
   await expect(page.getByLabel("Card Counting I learning path")).toContainText("Count one suit");
@@ -1203,70 +1203,50 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
   await expectGameplayActionRowPinned(page);
 
   await page.getByLabel("Hearts full hand").getByRole("button", { name: "Table" }).click();
-  await page.getByLabel("Card Counting I exercises").getByRole("button", { name: "Track court cards" }).click();
+  await page.getByLabel("Card Counting I exercises").getByRole("button", { name: "Three amigos memory" }).click();
 
-  await expect(page.getByRole("heading", { name: "Track court cards" })).toBeVisible();
-  await expect(page.getByLabel("Track court cards trainer")).toContainText("Jacks, queens, kings");
-  await expect(page.getByLabel("Court card memory table")).toBeVisible();
-  await expect(page.getByLabel("Court card memory status")).toContainText("Memory run");
-  await expect(page.getByLabel("Court card memory status")).not.toContainText("Court cards seen");
-  await expect(page.getByLabel("Court card memory challenge")).toContainText(/Lead|Follow|void/);
+  await expect(page.getByRole("heading", { name: "Three amigos memory" })).toBeVisible();
+  await expect(page.getByLabel("Whist full hand")).toBeVisible();
+  await expect(page.getByLabel("Whist hand table")).toBeVisible();
+  await expect(page.getByLabel("Whist hand score")).toContainText("Your side");
+  await expect(page.getByLabel("Whist hand decision")).toContainText(/Lead|Follow|void|Choose/);
   await expect(page.getByRole("button", { name: "Play card" })).toBeDisabled();
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
-  await expectHandNearActionRow(page, ".realistic-trump-hand");
-  await expectFeedbackAboveHand(page, ".realistic-trump-hand");
+  await expectHandNearActionRow(page, ".full-hand-cards");
+  await expectFeedbackAboveHand(page, ".full-hand-cards");
 
   for (let trick = 1; trick <= 3; trick += 1) {
-    await page.locator(".realistic-trump-hand .full-hand-card.legal").first().click();
+    await page.locator(".full-hand-cards .full-hand-card.legal").first().click();
     await expect(page.getByRole("button", { name: "Play card" })).toBeEnabled();
     await page.getByRole("button", { name: "Play card" }).click();
-    await page.getByRole("button", { name: trick === 3 ? "Answer memory" : "Next trick", exact: true }).click();
+    if (trick < 3) {
+      await page.getByRole("button", { name: "Next trick", exact: true }).click();
+    }
   }
 
-  await expect(page.getByLabel("Court card memory challenge")).toContainText("Answer from memory");
-  const courtCountAnswers = page.getByLabel("Court card count answers").getByRole("button");
-  if ((await courtCountAnswers.count()) > 0) {
-    await courtCountAnswers.first().click();
+  await expect(page.getByLabel("Whist hand decision")).toContainText(/How many high cards|Did this high card/);
+  const highCardCountAnswers = page.getByLabel("High card count answers").getByRole("button");
+  if ((await highCardCountAnswers.count()) > 0) {
+    await highCardCountAnswers.first().click();
   } else {
-    await expect(page.getByLabel(/Target court card/)).toBeVisible();
-    await page.getByLabel("Court card specific answers").getByRole("button").first().click();
+    await expect(page.getByLabel(/Target high card/)).toBeVisible();
+    await page.getByLabel("High card answer options").getByRole("button").first().click();
   }
   await expect(page.getByRole("button", { name: "Check memory" })).toBeEnabled();
   await page.getByRole("button", { name: "Check memory" }).click();
 
-  await expect(page.getByLabel("Court card memory review")).toContainText("court cards appeared");
-  await expect(page.getByRole("button", { name: "Continue hand" })).toBeVisible();
-  await page.screenshot({ path: testInfo.outputPath("perfect-track-court-cards.png"), fullPage: true });
+  await expect(page.getByLabel("Whist hand decision")).toContainText(/high cards have been played|was played|was not played|Correct/);
+  await expect(page.getByRole("button", { name: "Next trick", exact: true })).toBeVisible();
+  await expectNoVerticalCollision(
+    page,
+    ".table-play-panel .trump-count-options, .table-play-panel .trump-specific-check, .table-play-panel .trump-count-review",
+    ".table-play-surface .action-row",
+    16
+  );
+  await page.screenshot({ path: testInfo.outputPath("perfect-high-card-memory.png"), fullPage: true });
 
-  await page.getByRole("button", { name: "Continue hand" }).click();
-  for (let trick = 4; trick <= 13; trick += 1) {
-    await page.locator(".realistic-trump-hand .full-hand-card.legal").first().click();
-    await expect(page.getByRole("button", { name: "Play card" })).toBeEnabled();
-    await page.getByRole("button", { name: "Play card" }).click();
-    const isCheckpoint = [7, 11].includes(trick);
-    await page.getByRole("button", { name: trick === 13 ? "Finish hand" : isCheckpoint ? "Answer memory" : "Next trick", exact: true }).click();
-
-    if (isCheckpoint) {
-      const checkpointCountAnswers = page.getByLabel("Court card count answers").getByRole("button");
-      if ((await checkpointCountAnswers.count()) > 0) {
-        await checkpointCountAnswers.first().click();
-      } else {
-        await expect(page.getByLabel(/Target court card/)).toBeVisible();
-        await page.getByLabel("Court card specific answers").getByRole("button").first().click();
-      }
-      await page.getByRole("button", { name: "Check memory" }).click();
-      await page.getByRole("button", { name: "Continue hand" }).click();
-    }
-  }
-
-  await expect(page.getByLabel("Court cards intermission")).toContainText(/Court hand complete|Court cards remembered/);
-  await expect(page.getByLabel("Track court cards trainer").getByRole("button", { name: "Replay" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Next hand" })).toBeVisible();
-  await expectNoPageScroll(page);
-  await expectGameplayActionRowPinned(page);
-
-  await page.getByLabel("Track court cards", { exact: true }).getByRole("button", { name: "Table" }).click();
+  await page.getByLabel("Whist full hand").getByRole("button", { name: "Table" }).click();
   await page.getByLabel("Card Counting I exercises").getByRole("button", { name: "Danger cards" }).click();
 
   await expect(page.getByRole("heading", { name: "Danger cards" })).toBeVisible();
