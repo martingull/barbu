@@ -823,6 +823,25 @@ test("Spades play can resume a saved local match", async ({ page }) => {
   await expectNoPageScroll(page);
 });
 
+test("Spades practice starts three scripted decisions per topic", async ({ page }) => {
+  await gotoWithPracticeSeed(page, 6);
+  await page.getByRole("button", { name: /Open Spades/ }).click();
+  await page.getByRole("tab", { name: "Practice" }).click();
+
+  await page.getByLabel("Spades practice drills").getByRole("button", { name: "Trump or discard" }).click();
+  await expect(page.getByRole("heading", { name: "Spades practice: trump or discard" })).toBeVisible();
+  await expect(page.getByLabel("Drill decision")).toContainText("Spades");
+  await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
+  await expect(page.getByLabel("Drill decision")).toContainText(/Cut with the low spade|Discard when partner is winning|Overtrump the opponent/);
+
+  await completeVisibleDrillSession(page);
+  await expect(page.getByRole("heading", { name: "Session complete" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Practice Spades again" })).toBeVisible();
+  await page.getByRole("button", { name: "Back to Spades practice" }).click();
+  await expect(page.getByRole("heading", { name: "Spades table", exact: true })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
+});
+
 test("Whist completed hand score fits the phone screen", async ({ page }, testInfo) => {
   await gotoWithPracticeSeed(page, 8);
   await page.getByRole("button", { name: /Open Whist/ }).click();
@@ -957,7 +976,7 @@ test("Hearts learn start advances through learning stages instead of play loop",
   await expect(page.getByLabel("Drill decision")).not.toContainText("No Queens");
 });
 
-test("Spades learn path opens course content before a practice hand", async ({ page }) => {
+test("Spades learn path opens course content before scripted practice", async ({ page }) => {
   await gotoWithPracticeSeed(page, 8);
   await page.getByRole("button", { name: /Open Spades/ }).click();
   await page.getByRole("tab", { name: "Learn" }).click();
@@ -972,10 +991,14 @@ test("Spades learn path opens course content before a practice hand", async ({ p
 
   await page.getByRole("button", { name: "See example" }).click();
   await expect(page.getByLabel("Spades object example table")).toBeVisible();
-  await page.getByRole("button", { name: "Practice hand" }).click();
-  await expect(page.getByRole("heading", { name: "Spades hand" })).toBeVisible();
-  await expect(page.getByLabel("Your Spades hand")).toBeVisible();
-  await expect(page.getByLabel("Spades hand score")).toContainText("Bid");
+  await page.getByRole("button", { name: "Practice decision" }).click();
+  await expect(page.getByRole("heading", { name: "Spades practice: follow suit" })).toBeVisible();
+  await expect(page.getByLabel("Drill decision")).toContainText("Spades");
+  await expect(page.getByText("Decision 1 of 3")).toBeVisible();
+
+  await completeVisibleDrillSession(page);
+  await expect(page.getByRole("heading", { name: "Review" })).toBeVisible();
+  await expect(page.getByText("The bid gives every Spades hand its plan.")).toBeVisible();
 });
 
 test("Hearts passing drill teaches the danger-card pass", async ({ page }, testInfo) => {

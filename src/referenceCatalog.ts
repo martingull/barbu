@@ -603,10 +603,10 @@ export const referenceCatalog: GameReference[] = [
         id: "app-learning",
         title: "App Learning Path",
         body:
-          "The Spades lessons reuse the shared game-table course flow used by Hearts and Whist. The path starts with the partnership object, then practices follow-suit legality, fixed trump, bidding from a visible hand, nil awareness, and bag management before moving into full local play.",
+          "The Spades lessons reuse the shared game-table course flow used by Hearts and Whist. The path starts with the partnership object, then practices follow-suit legality, fixed trump, bidding from a visible hand, nil awareness, and bag management through short scripted decisions before moving into full local play.",
         facts: [
           { label: "First step", value: "Concept: win your books" },
-          { label: "Practice", value: "Full Spades hand from each lesson" },
+          { label: "Practice", value: "Three short scripted decisions per topic" },
           { label: "Play", value: "Playable local match with resume" }
         ]
       }

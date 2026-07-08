@@ -35,7 +35,7 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
       practice: {
         eyebrow: "Practice",
         title: "Practice one Spades habit.",
-        summary: "Practice follow-suit, trump decisions, book targets, and avoiding unnecessary bags."
+        summary: "Repeat short scripted decisions for follow-suit, trump choices, book targets, and avoiding unnecessary bags."
       },
       play: {
         eyebrow: "Play",
@@ -115,7 +115,7 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
           id: "follow-suit",
           label: "Rule",
           title: "Follow suit",
-          summary: "Find the legal card before thinking about trump.",
+          summary: "Play three short table decisions where the led suit comes before trump.",
           action: "follow",
           group: "fixed-drills"
         },
@@ -123,7 +123,7 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
           id: "trump-or-discard",
           label: "Trump",
           title: "Trump or discard",
-          summary: "When you are void, decide whether spending a spade is worth it.",
+          summary: "Practice when to cut, preserve, or overtrump with spades.",
           action: "trump",
           group: "fixed-drills"
         },
@@ -131,7 +131,7 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
           id: "bid-books",
           label: "Bidding",
           title: "Bid books",
-          summary: "Estimate how many tricks your side can take before the hand begins.",
+          summary: "Identify the cards that count toward a bid and the hands that make nil risky.",
           action: "bid",
           group: "fixed-drills"
         },
@@ -139,7 +139,7 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
           id: "bags",
           label: "Scoring",
           title: "Avoid bags",
-          summary: "Make the bid without taking more tricks than the scorecard needs.",
+          summary: "Practice ducking extra tricks while still protecting nil when it matters.",
           action: "bags",
           group: "fixed-drills"
         }
