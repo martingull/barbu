@@ -2081,6 +2081,9 @@
   let spadesMatchScores: SpadesScoreState = { playerSide: 0, opponentSide: 0 };
   let spadesBagScores: SpadesScoreState = { playerSide: 0, opponentSide: 0 };
   let spadesHandResults: SpadesHandResult[] = [];
+  $: spadesBidTotal = spadesBids.playerSide + spadesBids.opponentSide;
+  $: spadesBidError = spadesBidTotal === 13 ? "" : `Set bids to 13 total tricks (currently ${spadesBidTotal}).`;
+  $: spadesBidReady = spadesBidTotal === 13;
   let usingGeneratedPractice = false;
   let generatedPracticeError = "";
   let fullHand: FullHandState | null = null;
@@ -5406,6 +5409,10 @@
   }
 
   async function startSpadesHand(options: { keepSession?: boolean } = {}) {
+    if (!spadesBidReady) {
+      return;
+    }
+
     activeGameTable = "spades";
     activeTableTabs.spades = "play";
     whistFullHandSource = "play";
@@ -8034,7 +8041,12 @@
     spades: {
       learnProps: { steps: spadesUi.learnSteps, completedCount: spadesUi.learnSteps.filter(s => completedPathSteps[s.id]).length, nextStep: spadesUi.learnSteps.find(s => !completedPathSteps[s.id]), actions: spadesLearnPanelActions, onStepSelect: startSpadesPathStep },
       practiceProps: { actions: spadesPracticeActions },
-      playProps: { onPrimary: () => void startSpadesHand(), footerNote: `Bids and bags score locally. Play to ${spadesMatchTarget}; nil comes later.` }
+      playProps: {
+        onPrimary: () => void startSpadesHand(),
+        footerNote: `Bids and bags score locally. Play to ${spadesMatchTarget}; nil comes later.`,
+        primaryDisabled: !spadesBidReady,
+        primaryWarning: spadesBidError
+      }
     }
   } as Record<string, any>;
 
@@ -8194,6 +8206,9 @@
     </div>
     <p class="saved-run-note">
       {editable ? "You can still edit bids before the first trick." : "Bids are locked for this hand."}
+    </p>
+    <p class="spades-bid-summary">
+      Total: <strong>{spadesBidTotal}</strong> / 13
     </p>
   </section>
 {/snippet}
@@ -8402,6 +8417,8 @@
           primaryLabel={gameUi.playTabConfig!.primaryLabel}
           supportingCopy={gameUi.playTabConfig!.supportingCopy}
           footerNote={activeConfig.playProps.footerNote}
+          primaryDisabled={activeConfig.playProps.primaryDisabled}
+          primaryWarning={activeConfig.playProps.primaryWarning}
           onPrimary={activeConfig.playProps.onPrimary}
           resumeLabel={activeConfig.playProps.resumeLabel}
           resumeNote={activeConfig.playProps.resumeNote}

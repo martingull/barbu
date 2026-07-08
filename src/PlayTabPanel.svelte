@@ -15,6 +15,8 @@
     onResume?: () => void;
     supportingCopy?: string;
     footerNote?: string;
+    primaryDisabled?: boolean;
+    primaryWarning?: string;
     children?: Snippet;
   };
 
@@ -31,6 +33,8 @@
     onResume,
     supportingCopy,
     footerNote,
+    primaryDisabled = false,
+    primaryWarning = "",
     children
   }: Props = $props();
 
@@ -56,7 +60,16 @@
           <small class="saved-run-note">{resumeNote}</small>
         {/if}
       {/if}
-      <button class:resume-secondary={hasResume} class="drill-action" onclick={onPrimary} type="button">
+      {#if primaryWarning}
+        <small class="play-action-warning" role="status">{primaryWarning}</small>
+      {/if}
+      <button
+        class:resume-secondary={hasResume}
+        class="drill-action"
+        onclick={onPrimary}
+        disabled={primaryDisabled}
+        type="button"
+      >
         {primaryLabel}
       </button>
       {#if footerNote}

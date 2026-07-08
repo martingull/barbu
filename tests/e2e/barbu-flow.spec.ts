@@ -638,14 +638,63 @@ test("Spades play starts a bid-scored partnership hand", async ({ page }, testIn
   await expect(page.getByLabel("Increase your side bid")).toBeVisible();
   await expect(page.getByLabel("Decrease opponent side bid")).toBeVisible();
   await expect(page.getByLabel("Increase opponent side bid")).toBeVisible();
+  const playSpadesBtn = page.getByRole("button", { name: "Play Spades" });
+  const bidSummary = page.locator(".spades-bid-summary");
+  const yourBidValue = page.locator(".play-spades-bids .spades-bid-value").first();
+  const oppBidValue = page.locator(".play-spades-bids .spades-bid-value").nth(1);
+  const yourBidDown = page.getByRole("button", { name: "Decrease your side bid" });
+  const yourBidUp = page.getByRole("button", { name: "Increase your side bid" });
+  const oppBidDown = page.getByRole("button", { name: "Decrease opponent side bid" });
+  const oppBidUp = page.getByRole("button", { name: "Increase opponent side bid" });
 
-  await expect(page.getByLabel("Your side bid 4")).toBeVisible();
-  await expect(page.getByLabel("Opponent side bid 4")).toBeVisible();
-  await page.getByRole("button", { name: "Increase your side bid" }).click();
-  await page.getByRole("button", { name: "Increase opponent side bid" }).click();
-  await expect(page.getByLabel("Your side bid 5")).toBeVisible();
-  await expect(page.getByLabel("Opponent side bid 5")).toBeVisible();
-  await page.getByRole("button", { name: "Play Spades" }).click();
+  const readBidSummary = async () => {
+    const summary = (await bidSummary.textContent()) ?? "";
+    const match = summary.match(/Total:\s*(\d+)\s*\/\s*13/);
+    return match ? Number(match[1]) : 0;
+  };
+
+  const readBid = async (seat: "you" | "opp"): Promise<number> => {
+    if (seat === "you") {
+      const text = (await yourBidValue.textContent()) ?? "0";
+      return Number(text.trim());
+    }
+    const text = (await oppBidValue.textContent()) ?? "0";
+    return Number(text.trim());
+  };
+
+  await expect(page.getByLabel(/Your side bid \d+/)).toBeVisible();
+  await expect(page.getByLabel(/Opponent side bid \d+/)).toBeVisible();
+
+  const yourBidBase = await readBid("you");
+  if (yourBidBase > 0) {
+    await yourBidDown.click();
+  } else {
+    await oppBidDown.click();
+  }
+
+  await expect(playSpadesBtn).toBeDisabled();
+  await expect(page.getByRole("status")).toContainText("Set bids to 13 total tricks");
+
+  const currentTotal = await readBidSummary();
+  const needed = 13 - currentTotal;
+  let remaining = needed;
+  while (remaining > 0) {
+    const oppBid = await readBid("opp");
+    if (oppBid < 13) {
+      await oppBidUp.click();
+    } else {
+      await yourBidUp.click();
+    }
+    remaining -= 1;
+  }
+
+  await expect(page.getByText("Total:")).toContainText("Total: 13 / 13");
+  await expect(playSpadesBtn).toBeEnabled();
+  const yourBidFinal = await readBid("you");
+  const oppBidFinal = await readBid("opp");
+  expect(yourBidFinal + oppBidFinal).toBe(13);
+
+  await playSpadesBtn.click();
 
   await expect(page.getByRole("heading", { name: "Spades hand" })).toBeVisible();
   await expect(page.getByLabel("Spades full hand")).toContainText("Trump: spades");
