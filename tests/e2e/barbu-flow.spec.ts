@@ -986,7 +986,7 @@ test("Hearts practice result returns to the Hearts table", async ({ page }) => {
   await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
 });
 
-test("Hearts reference explains the current rule boundary", async ({ page }, testInfo) => {
+test("Hearts reference explains the Black Lady rule boundary", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Open Hearts" }).click();
 
@@ -1000,10 +1000,9 @@ test("Hearts reference explains the current rule boundary", async ({ page }, tes
   await expect(page.getByLabel("Contract reference")).toContainText("queen of spades is 13");
   await expect(page.getByLabel("Contract reference")).toContainText("shooting the moon");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Rotating pass");
-  await expect(page.getByLabel("Contract roadmap")).toContainText("Hearts v1");
-  await expect(page.getByLabel("Contract roadmap")).toContainText("Hearts v2");
+  await expect(page.getByLabel("Contract roadmap")).toContainText("Core");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Playable");
-  await expect(page.getByLabel("Variants and varieties")).toContainText("Current Rule Boundary");
+  await expect(page.getByLabel("Variants and varieties")).toContainText("House-Rule Boundary");
   await page.screenshot({ path: testInfo.outputPath("hearts-reference.png"), fullPage: true });
 
   await page.getByRole("button", { name: "Back to Hearts table" }).click();
@@ -1011,7 +1010,7 @@ test("Hearts reference explains the current rule boundary", async ({ page }, tes
   await expect(page.getByRole("tab", { name: "Learn" })).toHaveAttribute("aria-selected", "true");
 });
 
-test("Whist reference reflects the playable starter table", async ({ page }, testInfo) => {
+test("Whist reference reflects the classic partnership table", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Open Whist/ }).click();
 
@@ -1019,13 +1018,13 @@ test("Whist reference reflects the playable starter table", async ({ page }, tes
   await page.getByLabel("Whist learn actions").getByRole("button", { name: "Rules Reference" }).click();
 
   await expect(page.getByRole("heading", { name: "Whist reference" })).toBeVisible();
-  await expect(page.getByLabel("Whist overview")).toContainText("partnership trick-taking starter");
+  await expect(page.getByLabel("Whist overview")).toContainText("classic four-player partnership trick-taking game");
   await expect(page.getByLabel("Whist reference sections")).toContainText("App Learning Path");
   await expect(page.getByLabel("Whist reference sections")).toContainText("Playable local match with resume");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Learning path");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Playable hand");
-  await expect(page.getByLabel("Contract roadmap")).toContainText("Production polish");
-  await expect(page.getByLabel("Contract roadmap")).toContainText("Next");
+  await expect(page.getByLabel("Contract roadmap")).toContainText("Table habits");
+  await expect(page.getByLabel("Contract roadmap")).toContainText("Playable");
   await page.screenshot({ path: testInfo.outputPath("whist-reference.png"), fullPage: true });
 
   await page.getByRole("button", { name: "Back to Whist table" }).click();
