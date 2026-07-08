@@ -37,10 +37,14 @@ export function startBrowserHeartsHand(seed: number): FullHandState {
 }
 
 export function startBrowserWhistHand(seed: number): FullHandState {
+  return startBrowserWhistFamilyHand("Whist", seed);
+}
+
+function startBrowserWhistFamilyHand(contract: "Whist" | "Spades", seed: number, fixedTrump?: Suit): FullHandState {
   const deck = shuffledDeck(seed);
   const dealer = whistDealerForSeed(seed);
   const leader = (dealer + 1) % 4;
-  const trumpCard = deck[dealer + 48];
+  const trumpSuit = fixedTrump ?? deck[dealer + 48].suit;
   const hands: Card[][] = [[], [], [], []];
 
   deck.forEach((card, index) => hands[index % 4].push(card));
@@ -48,8 +52,8 @@ export function startBrowserWhistHand(seed: number): FullHandState {
 
   return advanceToPlayerTurn(
     hydrateFullHandState({
-      id: `browser-whist-hand-${seed}-dealer-${dealer}-${trumpCard.suit}`,
-      contract: "Whist",
+      id: `browser-${contract.toLowerCase()}-hand-${seed}-dealer-${dealer}-${trumpSuit}`,
+      contract,
       hands,
       currentPlayerIndex: leader,
       currentPlayer: playerNames[leader],
@@ -65,6 +69,10 @@ export function startBrowserWhistHand(seed: number): FullHandState {
       prompt: ""
     })
   );
+}
+
+export function startBrowserSpadesHand(seed: number): FullHandState {
+  return startBrowserWhistFamilyHand("Spades", seed, "S");
 }
 
 export function generateBrowserHeartsPassPractice(seed: number): HeartsPassScenario {
@@ -272,6 +280,10 @@ export function playBrowserWhistCard(state: FullHandState, cardId: string): Full
   return playBrowserFullHandCard(state, cardId);
 }
 
+export function playBrowserSpadesCard(state: FullHandState, cardId: string): FullHandState {
+  return playBrowserFullHandCard(state, cardId);
+}
+
 export function playBrowserNoQueensCard(state: FullHandState, cardId: string): FullHandState {
   return playBrowserFullHandCard(state, cardId);
 }
@@ -410,7 +422,7 @@ function completedTrickTacticalTags(
     if (winnerCard?.suit === "H" && trumpCards.length > 1) {
       tags.push("overtrumped");
     }
-  } else if (contract === "Whist") {
+  } else if (contract === "Whist" || contract === "Spades") {
     const winnerCard = trick.cards.find((played) => played.seat === trick.winner)?.card;
     const playerCard = trick.cards.find((played) => played.seat === "You")?.card;
     const partnerCard = trick.cards.find((played) => played.seat === "Tutor")?.card;
@@ -494,7 +506,7 @@ function chooseOpponentCard(state: FullHandState) {
   }
 
   if (!led) {
-    if (state.contract === "Whist") {
+    if (state.contract === "Whist" || state.contract === "Spades") {
       return chooseWhistLeadCard(state, legal);
     }
     if (state.contract === "Hearts Trumps") {
@@ -515,7 +527,7 @@ function chooseOpponentCard(state: FullHandState) {
   const followsSuit = legal.every((card) => card.suit === led);
 
   if (!followsSuit) {
-    if (state.contract === "Whist") {
+    if (state.contract === "Whist" || state.contract === "Spades") {
       return chooseWhistVoidCard(state, legal);
     }
     if (state.contract === "Hearts Trumps") {
@@ -544,7 +556,7 @@ function chooseOpponentCard(state: FullHandState) {
     return highestCard(legal.filter((card) => isPenaltyCard(state.contract, card))) ?? highestCard(legal);
   }
 
-  if (state.contract === "Whist") {
+  if (state.contract === "Whist" || state.contract === "Spades") {
     return chooseWhistFollowCard(state, legal);
   }
 
@@ -681,7 +693,7 @@ function cardWouldWinTrick(state: FullHandState, card: Card) {
   if (!led) {
     return true;
   }
-  if (state.contract === "Hearts Trumps" || state.contract === "Whist") {
+  if (state.contract === "Hearts Trumps" || state.contract === "Whist" || state.contract === "Spades") {
     const simulated = [...state.currentTrick, { seat: playerNames[state.currentPlayerIndex], card }];
     return trickWinnerForState(state, simulated) === state.currentPlayerIndex;
   }
@@ -893,7 +905,7 @@ function compareByRankThenSuit(left: Card, right: Card) {
 }
 
 function scoreTrick(state: FullHandState, cards: TableCard[]) {
-  if (state.contract === "Whist") {
+  if (state.contract === "Whist" || state.contract === "Spades") {
     return 1;
   }
   if (state.contract === "No Tricks") {
@@ -935,7 +947,7 @@ function scoreTrick(state: FullHandState, cards: TableCard[]) {
 }
 
 function isPenaltyCard(contract: FullHandContract, card: Card) {
-  if (contract === "No Tricks" || contract === "Hearts Trumps" || contract === "Whist") {
+  if (contract === "No Tricks" || contract === "Hearts Trumps" || contract === "Whist" || contract === "Spades") {
     return false;
   }
   if (contract === "No Last Two") {
@@ -1011,8 +1023,8 @@ function ledSuit(state: FullHandState): Suit | undefined {
 }
 
 function trickWinnerForState(state: FullHandState, cards: TableCard[]) {
-  if (state.contract === "Hearts Trumps" || state.contract === "Whist") {
-    const trumpSuit = state.contract === "Whist" ? whistTrumpSuitFromState(state) : "H";
+  if (state.contract === "Hearts Trumps" || state.contract === "Whist" || state.contract === "Spades") {
+    const trumpSuit = state.contract === "Whist" || state.contract === "Spades" ? whistTrumpSuitFromState(state) : "H";
     const trumpWinner = cards
       .filter((played) => played.card.suit === trumpSuit)
       .reduce<TableCard | undefined>(
@@ -1038,8 +1050,8 @@ function trickWinnerForState(state: FullHandState, cards: TableCard[]) {
 
 function promptForState(state: FullHandState, playerPenalty: number) {
   if (state.status === "complete") {
-    if (state.contract === "Whist") {
-      return `Whist hand complete. ${suitName(whistTrumpSuitFromState(state))} were trumps.`;
+    if (state.contract === "Whist" || state.contract === "Spades") {
+      return `${state.contract} hand complete. ${suitName(whistTrumpSuitFromState(state))} were trumps.`;
     }
 
     return `Hand complete. You took ${playerPenalty} ${playerPenalty === 1 ? "point" : "points"}.`;
@@ -1053,12 +1065,12 @@ function promptForState(state: FullHandState, playerPenalty: number) {
     return "You hold 2C, so you must open the first trick with 2C.";
   }
 
-  if (state.contract === "Whist") {
+  if (state.contract === "Whist" || state.contract === "Spades") {
     const trump = suitName(whistTrumpSuitFromState(state)).toLowerCase();
     const led = ledSuit(state);
 
     if (state.status === "complete") {
-      return `Whist hand complete. ${trump} were trumps.`;
+      return `${state.contract} hand complete. ${trump} were trumps.`;
     }
 
     if (!led) {

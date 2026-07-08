@@ -125,6 +125,7 @@ export type FullHandContract =
   | "No Tricks"
   | "Hearts Trumps"
   | "Whist"
+  | "Spades"
   | "Domino";
 
 export type FullHandState = {

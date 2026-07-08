@@ -10,7 +10,7 @@ Barbu is an iPhone-first learning app for classic card games. The first playable
 
 Barbu is the first complete curriculum, not the app boundary. The product should grow through reusable game-family foundations, starting with Hearts-family overlap such as follow-suit trick taking, contract scoring, penalty cards, reward tricks, and clockwise table play.
 
-Whist is the next intended free starter after Hearts and Barbu because it can reuse the shared trick-taking foundations while introducing partnerships and trump tracking. Bridge is an important later family, but it should wait until Barbu, Hearts, and Whist have a strong learning, practice, and play loop.
+Whist is the next intended free starter after Hearts and Barbu because it can reuse the shared trick-taking foundations while introducing partnerships and trump tracking. Spades has started as the next Whist-family table: it should reuse the partnership table, fix spades as trump, and defer bidding, nil, bags, and full Spades settlement until the starter hand feels solid. Bridge is an important later family, but it should wait until Barbu, Hearts, Whist, and the starter Spades table have a strong learning, practice, and play loop.
 
 David Parlett's *The Penguin Book of Card Games* is the baseline reference for how supported games are played and described. Product variants are allowed only when they are deliberate and documented.
 
@@ -30,7 +30,7 @@ The intended monetization model is free starter tables first, then paid packs wi
 
 ## Current Feature Set
 
-- Game catalog ordered with free starter tables first: Hearts, Barbu, and Whist, followed by paid packs/future paid games such as Amerikaner, Card Counting I, Card Counting II, Solitaire, Bridge, Gin Rummy, and Canasta.
+- Game catalog ordered with free starter tables first: Hearts, Barbu, Whist, and Spades, followed by paid packs/future paid games such as Amerikaner, Card Counting I, Card Counting II, Solitaire, Bridge, Gin Rummy, and Canasta.
 - Game catalog metadata now comes from a shared table/catalog factory, including free starter versus metered pack access metadata, so future game additions do not start as hardcoded home-screen branches.
 - Learn tab shell metadata now comes from the shared table/catalog factory: each active game declares its path title, progress label, continue summary, complete summary, and reference summary before screen-specific content is added.
 - Table tab intro metadata now comes from the shared table/catalog factory: Learn, Practice, Play, and Pro each declare their heading copy in one place before game-specific controls render underneath.
@@ -41,6 +41,7 @@ The intended monetization model is free starter tables first, then paid packs wi
 - Hearts Practice entry metadata now comes from the shared table/catalog factory, so practice buttons, tab metadata, and action keys stay aligned as more games add practice sets.
 - Barbu Practice entry metadata now comes from the shared table/catalog factory for Quick Drill, fixed drills, and Domino full-hand practice.
 - Hearts table with the shared Learn, Practice, Play, and Pro structure; Play opens with rotating passes and then a local multi-hand Black Lady-style match to 100 points with 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, and shoot-the-moon scoring, while Practice covers avoiding hearts and the queen-of-spades pattern.
+- Spades starter table with the shared Learn, Practice, Play, and Pro structure; Play starts a local partnership hand using the Whist-family table with spades fixed as trump. Bidding, nil, bags, and full Spades settlement remain planned.
 - Hearts Passing Drill v1 teaches the beginner pass-three habit: identify the queen of spades, high hearts, and dangerous high spades before hand play begins.
 - Hearts Practice Scenario Pool v1 adds a small authored pool behind Quick Drill, varying first-trick restrictions, avoid-hearts, safe and dangerous queen-of-spades play, break-hearts, moon-defense, and score-reading decisions without expanding the Learn path. Pass-three practice now covers both danger-card passing and a long-suit preservation pattern.
 - Hearts Generated Practice v2B moves first-trick, avoid-hearts, queen-of-spades danger, break-hearts legality, stop-the-moon defense, and score-reading practice into Rust-backed generated scenario families while keeping the shared Svelte drill surface and browser fallback. Focused Hearts practice buttons now run through their small scenario pool once instead of showing a single repeated sample.
@@ -104,8 +105,8 @@ The launch target is an iPhone-first local card tutor and practice app. It shoul
 Must ship:
 
 1. Free starter catalog
-   - Hearts, Barbu, and Whist visible first.
-   - Barbu and Hearts are active playable tables. Whist is an active starter table with a Parlett-style reference baseline, Learning Path v1, and first playable practice drills for follow-suit and trump decisions.
+   - Hearts, Barbu, Whist, and Spades visible first.
+   - Barbu and Hearts are active playable tables. Whist is an active starter table with a Parlett-style reference baseline, Learning Path v1, and first playable practice drills for follow-suit and trump decisions. Spades is an early active starter table that reuses the Whist-family partnership hand with spades fixed as trump.
    - Paid/future packs such as Amerikaner, Card Counting II, Solitaire, Bridge, Gin Rummy, and Canasta can stay visible as roadmap signals only.
 
 2. Barbu
@@ -139,7 +140,13 @@ Must ship:
    - Deal v1B derives trump from the dealer's last card and starts the hand from dealer-left; fuller dealer rotation controls remain planned.
    - Amerikaner is parked as the later Whist-family bidding game: build it after Whist feels good, using the same partnership table plus an auction/contract layer.
 
-6. Mobile quality
+6. Spades starter table
+   - Start from the Whist-family partnership table: You + Barbu against Left + Right.
+   - Keep spades fixed as trump in the first playable hand.
+   - Teach follow-suit, trumping when void, and counting books before adding full bidding.
+   - Defer bids, nil, bags, and full match settlement until the starter hand and table feedback feel good.
+
+7. Mobile quality
    - Active table screens should be stable on the physical iPhone.
    - No accidental active-game page scroll.
    - Bottom actions stay pinned and reachable.
@@ -152,7 +159,8 @@ Not launch scope:
 - Multiplayer.
 - Subscription or StoreKit implementation.
 - Additional Hearts variants beyond the current Black Lady-style starter.
-- Full Bridge, Whist, Gin Rummy, Canasta, or Solitaire implementations.
+- Full Bridge, Gin Rummy, Canasta, or Solitaire implementations.
+- Full Spades bidding, nil, bag scoring, and match settlement.
 - Full Amerikaner implementation.
 - Barbu character animation.
 - Advanced AI opponent strategy beyond useful local training behavior.
@@ -195,7 +203,7 @@ This section is the short list for getting from the current app to something tha
    - Stop adding mini-games until each active one has clear feedback and a reason to return.
 
 5. Product shell and launch readiness
-   - Keep the catalog free-first: Hearts, Barbu, Whist, then paid/future packs.
+  - Keep the catalog free-first: Hearts, Barbu, Whist, Spades, then paid/future packs.
    - Whist can remain lighter than Barbu and Hearts for launch if those games feel good, but it should keep receiving practice coverage before Solitaire.
    - Make app icon, launch screen, iPhone safe areas, and local Tauri/iOS packaging reliable.
    - Add a short manual smoke checklist for physical iPhone testing before each TestFlight-style build.

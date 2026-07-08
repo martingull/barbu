@@ -345,10 +345,12 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByRole("button", { name: "Card Counting II planned" })).toContainText("Bridge-oriented");
   await expect(page.getByRole("button", { name: "Solitaire planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Open Whist/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Open Spades/ })).toBeVisible();
   await expect(page.getByRole("button", { name: "Bridge planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Gin Rummy planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Canasta planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Open Whist/ })).toContainText("Free");
+  await expect(page.getByRole("button", { name: /Open Spades/ })).toContainText("Free");
   await expect(page.getByRole("button", { name: "Solitaire planned" })).toContainText("Pack");
   await expect(page.getByRole("heading", { name: "Varieties of play" })).toHaveCount(0);
   await expect(page.getByText("Barbu Learning Table")).toHaveCount(0);
@@ -356,7 +358,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
     .poll(async () =>
       page.locator(".game-card strong").evaluateAll((items) => items.slice(0, 5).map((item) => item.textContent?.trim()))
     )
-    .toEqual(["Hearts", "Barbu", "Whist", "Amerikaner", "Card Counting I"]);
+    .toEqual(["Hearts", "Barbu", "Whist", "Spades", "Amerikaner"]);
 
   await page.screenshot({ path: testInfo.outputPath("catalog.png"), fullPage: true });
 
@@ -377,6 +379,18 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByLabel("Whist practice drills")).toContainText("Third hand high");
   await expect(page.getByLabel("Whist practice drills")).toContainText("Return partner's suit");
   await expect(page.getByLabel("Whist practice drills")).toContainText("Count odd tricks");
+  await page.getByRole("button", { name: "Games" }).click();
+
+  await page.getByRole("button", { name: /Open Spades/ }).click();
+  await expect(page.getByRole("heading", { name: "Spades table", exact: true })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
+  await page.getByRole("tab", { name: "Learn" }).click();
+  await expect(page.getByLabel("Spades lesson path")).toContainText("Spades always trump");
+  await expect(page.getByLabel("Spades learn actions").getByRole("button", { name: "Rules Reference" })).toBeVisible();
+  await page.getByRole("tab", { name: "Practice" }).click();
+  await expect(page.getByRole("tabpanel", { name: "Practice" })).toContainText("Practice one Spades habit.");
+  await expect(page.getByLabel("Spades practice drills")).toContainText("Follow suit");
+  await expect(page.getByLabel("Spades practice drills")).toContainText("Trump or discard");
   await page.getByRole("button", { name: "Games" }).click();
 
   await page.getByRole("button", { name: "Open Barbu" }).click();
@@ -610,6 +624,31 @@ test("Whist play starts a partnership trump hand", async ({ page }, testInfo) =>
 
   await playFullHandDecision(page);
   await expect(page.getByRole("heading", { name: /Whist hand|Read the table/ })).toBeVisible();
+});
+
+test("Spades play starts a fixed-trump partnership hand", async ({ page }, testInfo) => {
+  await gotoWithPracticeSeed(page, 8);
+  await page.getByRole("button", { name: /Open Spades/ }).click();
+  await page.getByRole("tab", { name: "Play" }).click();
+
+  await expect(page.getByRole("tabpanel", { name: "Play" })).toContainText("spades always trump");
+  await page.getByRole("button", { name: "Play Spades" }).click();
+
+  await expect(page.getByRole("heading", { name: "Spades hand" })).toBeVisible();
+  await expect(page.getByLabel("Spades full hand")).toContainText("Trump: spades");
+  await expect(page.getByLabel("Spades hand score")).toContainText("Your side");
+  await expect(page.getByLabel("Spades hand score")).toContainText("Opponents");
+  await expect(page.getByLabel("Spades match score")).toContainText("You + Barbu");
+  await expect(page.getByLabel("Spades hand table")).toBeVisible();
+  await expect(page.getByLabel("Your Spades hand")).toBeVisible();
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
+  await expectHandNearActionRow(page, ".full-hand-cards");
+  await expectFeedbackAboveHand(page, ".full-hand-cards");
+  await page.screenshot({ path: testInfo.outputPath("spades-hand.png"), fullPage: true });
+
+  await playFullHandDecision(page);
+  await expect(page.getByRole("heading", { name: /Spades hand|Read the table/ })).toBeVisible();
 });
 
 test("Whist play can resume a saved local match", async ({ page }) => {
@@ -901,7 +940,7 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
   const qsBtn = page.getByRole("button", { name: "Q S" });
   if (await qsBtn.count() > 0) {
     const promptText = await page.getByLabel("Drill decision").textContent();
-    if (promptText && promptText.includes("chance to move")) {
+    if (promptText && /chance to move|Dump Queen of Spades safely|Barbu is already winning/.test(promptText)) {
       await qsBtn.click();
       await checkDrillAnswer(page);
     } else {

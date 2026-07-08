@@ -7,6 +7,7 @@ pub enum HandPolicy {
     HeartsBlackLady,
     HeartsBlackLadyPassing,
     Whist,
+    Spades,
 }
 
 impl HandPolicy {
@@ -20,6 +21,9 @@ impl HandPolicy {
         if id.starts_with("whist-hand-") {
             return Some(Self::Whist);
         }
+        if id.starts_with("spades-hand-") {
+            return Some(Self::Spades);
+        }
 
         BarbuContractPolicy::from_hand_id(id).map(Self::BarbuContract)
     }
@@ -30,6 +34,9 @@ impl HandPolicy {
         }
         if contract == "Whist" {
             return Some(Self::Whist);
+        }
+        if contract == "Spades" {
+            return Some(Self::Spades);
         }
 
         BarbuContractPolicy::from_contract_name(contract).map(Self::BarbuContract)

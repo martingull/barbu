@@ -1,7 +1,7 @@
 export const tableTabIds = ["learn", "practice", "play", "perfect"] as const;
 
 export type TableTabId = (typeof tableTabIds)[number];
-export type ActiveGameTable = "barbu" | "hearts" | "whist" | string;
+export type ActiveGameTable = "barbu" | "hearts" | "whist" | "spades" | string;
 export type CatalogGameId =
   | ActiveGameTable
   | "amerikaner"
@@ -110,7 +110,7 @@ export type PracticeGroup<Action extends string = string> = {
 
 export const monetizationPolicy = {
   model: "free-usage-then-unlock",
-  freeStarterIds: ["hearts", "barbu", "whist"],
+  freeStarterIds: ["hearts", "barbu", "whist", "spades"],
   paidUnlocks: ["individual-pack", "subscription"],
   meteredFreeUsage: {
     unitLimit: "tbd",
@@ -183,6 +183,15 @@ export function createCatalogEntries(): CatalogEntry[] {
       access: "Free",
       accessModel: "free-starter",
       summary: "Partnership trick play and silent suit signals."
+    }),
+    createCatalogEntry({
+      id: "spades",
+      family: "Whist",
+      title: "Spades",
+      status: "Ready",
+      access: "Free",
+      accessModel: "free-starter",
+      summary: "Partnership trick play with spades always trump."
     }),
     createCatalogEntry({
       id: "amerikaner",

@@ -35,7 +35,13 @@
 
   let tableActionLabel = $derived(table.id === "barbu" ? "Barbu table actions" : `${table.title} actions`);
   let learnActionLabel = $derived(
-    table.id === "hearts" ? "Hearts learn actions" : table.id === "whist" ? "Whist learn actions" : "Learn actions"
+    table.id === "hearts"
+      ? "Hearts learn actions"
+      : table.id === "whist"
+        ? "Whist learn actions"
+        : table.id === "spades"
+          ? "Spades learn actions"
+          : "Learn actions"
   );
 </script>
 

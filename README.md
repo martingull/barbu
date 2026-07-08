@@ -57,10 +57,11 @@ content/             Structured game and lesson content
 
 ## Current Product Shape
 
-- A catalog/welcome screen that treats Barbu as the first playable core game in a broader card-game curriculum, with Hearts as the second active starter table and placeholders for Whist-family bidding games such as Amerikaner, plus Solitaire, Bridge, Gin Rummy, and Canasta.
-- The intended free starter catalog is Hearts, Barbu, and Whist; the other catalog entries can become later packs once the first game loops are strong. Amerikaner is planned as a Whist-family pack with a bidding round before play.
+- A catalog/welcome screen that treats Barbu as the first playable core game in a broader card-game curriculum, with Hearts, Whist, and starter Spades as active starter tables and placeholders for Whist-family bidding games such as Amerikaner, plus Solitaire, Bridge, Gin Rummy, and Canasta.
+- The intended free starter catalog is Hearts, Barbu, Whist, and Spades; the other catalog entries can become later packs once the first game loops are strong. Amerikaner is planned as a Whist-family pack with a bidding round before play.
 - The catalog stays focused on core games; varieties and teaching modes stay attached to their parent game screens.
 - A Hearts table with the same Learn, Practice, Play, and Perfect structure; Play rotates pass direction and then moves into a local multi-hand Black Lady-style match to 100 points with 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, queen-of-spades scoring, and shoot-the-moon scoring, while Practice trains hearts and queen-of-spades patterns on the shared trick-taking surface.
+- A Spades starter table that reuses the Whist-family partnership hand with spades fixed as trump. Full bidding, nil, bags, and Spades match settlement are planned later.
 - A Barbu table screen with grouped Learn, Practice, Play, and Reference entry points, a contract-hand practice chooser, and a five-step training path.
 - Quick Drill mode with seven quick mixed-contract decisions across the playable contract roster, immediate feedback, and a compact result; Tauri builds use Rust-generated scenarios, while browser runs use a local generated fallback.
 - No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps full-hand skeletons with deterministic local deals, legal-card play, contract-aware auto opponents, hand scoring, and short per-trick feedback.
@@ -96,14 +97,16 @@ content/             Structured game and lesson content
 
 ## Launch Scope
 
-The launch target is a local iPhone-first card tutor with two active starter games:
+The launch target is a local iPhone-first card tutor with active starter games:
 
 - **Barbu**: the main curriculum and play mode.
 - **Hearts**: the familiar free starter game that proves the shared Hearts-family engine can support more than Barbu.
+- **Whist**: the partnership trick-taking starter.
+- **Spades**: the first Whist-family variant, starting with fixed spades trump before bidding is added.
 
 Hearts should be real but intentionally focused in the Black Lady style: rotate the pass left, right, across, and hold, then play local hands on the shared trick-taking table until one seat reaches 100 points, scoring hearts plus the queen of spades. The current rule target includes the Wikipedia-style holder-of-2C opening, first-trick penalty restrictions, no heart leads until hearts are broken, and shooting the moon as 0 for the shooter and 26 for every other seat. The queen of spades is passable by default; locked danger spades and bonus-jack rules can become named variants later.
 
-Whist can remain visible as the next free starter placeholder until Barbu and Hearts feel stable. Solitaire, Bridge, Gin Rummy, Canasta, and Card Counting can remain visible as future packs or skill areas, but should not distract from getting Barbu and Hearts playable on the phone.
+Solitaire, Bridge, Gin Rummy, Canasta, and Card Counting can remain visible as future packs or skill areas, but should not distract from getting the current starter games playable on the phone.
 
 For launch-focused planning, use the Launch Rounding-Off Roadmap in [FEATURES.md](./FEATURES.md). That list is the current stop-building guide before adding new game families or monetization surfaces.
 

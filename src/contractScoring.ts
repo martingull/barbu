@@ -40,6 +40,18 @@ export const contractScoreModel: Record<FullHandContract, ContractScoreMeta> = {
     bestLabel: "Best partnership trick",
     weakestLabel: "Missed odd trick"
   },
+  Spades: {
+    kind: "reward",
+    runSign: 1,
+    unitName: "book",
+    unitPlural: "books",
+    totalValue: 13,
+    inPlayLabel: "books played",
+    playerValueLabel: "Your side",
+    resultVerb: "won",
+    bestLabel: "Best trump",
+    weakestLabel: "Missed book"
+  },
   "No Hearts": {
     kind: "avoidance",
     runSign: -1,

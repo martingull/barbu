@@ -5,15 +5,14 @@ pub mod guided;
 pub mod hand;
 pub mod learning;
 pub mod practice;
-pub mod trick;
 pub mod ruleset;
+pub mod trick;
 
 pub use cards::{Card, Rank, Suit};
 pub use domino::{
     pass_domino_turn, play_domino_card, start_domino_hand, start_domino_hand_with_start_rank,
     DominoHandState, DominoStatus, DOMINO_START_RANK,
 };
-pub use ruleset::*;
 pub use guided::{
     first_no_hearts_trick, no_hearts_guided_tricks, second_no_hearts_trick, GuidedNoHeartsTrick,
     GuidedTrickResult, Seat,
@@ -21,13 +20,14 @@ pub use guided::{
 pub use hand::{
     apply_hearts_pass, apply_hearts_pass_direction, completed_trick_tactical_tags,
     play_hearts_card, play_king_of_hearts_card, play_no_hearts_card, play_no_last_two_card,
-    play_no_queens_card, play_no_tricks_card, play_positive_tricks_card, play_trick_taking_card,
-    play_whist_card, start_hearts_hand, start_hearts_passing_hand, start_king_of_hearts_hand,
-    start_no_hearts_hand, start_no_last_two_hand, start_no_queens_hand, start_no_tricks_hand,
-    start_positive_tricks_hand, start_trick_taking_hand, start_whist_hand, CompletedTrick,
-    HandStatus, HandTrickOutcome, HeartsHandState, KingOfHeartsHandState, NoHeartsHandState,
-    NoLastTwoHandState, NoQueensHandState, NoTricksHandState, OpponentPolicyFn,
-    PositiveTricksHandState, TrickScoreFn, TrickTakingHandState, WhistHandState,
+    play_no_queens_card, play_no_tricks_card, play_positive_tricks_card, play_spades_card,
+    play_trick_taking_card, play_whist_card, start_hearts_hand, start_hearts_passing_hand,
+    start_king_of_hearts_hand, start_no_hearts_hand, start_no_last_two_hand, start_no_queens_hand,
+    start_no_tricks_hand, start_positive_tricks_hand, start_spades_hand, start_trick_taking_hand,
+    start_whist_hand, CompletedTrick, HandStatus, HandTrickOutcome, HeartsHandState,
+    KingOfHeartsHandState, NoHeartsHandState, NoLastTwoHandState, NoQueensHandState,
+    NoTricksHandState, OpponentPolicyFn, PositiveTricksHandState, SpadesHandState, TrickScoreFn,
+    TrickTakingHandState, WhistHandState,
 };
 pub use learning::{barbu_learning_path, ContractLesson, GameLesson, LessonStep};
 pub use practice::{
@@ -44,4 +44,5 @@ pub use practice::{
     HeartsPassOutcome, HeartsPassScenario, PracticeContractKind, PracticeDrillSet, PracticeOutcome,
     PracticeOutcomeKind, PracticeOutcomeReason, PracticeScenario,
 };
+pub use ruleset::*;
 pub use trick::{legal_cards, score_no_hearts_trick, trick_winner, PlayedCard, PlayerIndex};

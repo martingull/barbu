@@ -15,6 +15,7 @@ pub type NoTricksHandState = TrickTakingHandState;
 pub type PositiveTricksHandState = TrickTakingHandState;
 pub type HeartsHandState = TrickTakingHandState;
 pub type WhistHandState = TrickTakingHandState;
+pub type SpadesHandState = TrickTakingHandState;
 const HEARTS_TRUMP_SUIT: Suit = Suit::Hearts;
 const HEARTS_MOON_LEAD_THRESHOLD: i32 = 8;
 
@@ -537,6 +538,44 @@ pub fn play_whist_card(state: WhistHandState, player_card: Card) -> Result<Whist
     )
 }
 
+pub fn start_spades_hand(seed: u64) -> SpadesHandState {
+    let deck = shuffled_standard_deck(seed);
+    let dealer = whist_dealer_for_seed(seed);
+    let leader = (dealer + 1) % 4;
+    let mut hands = [Vec::new(), Vec::new(), Vec::new(), Vec::new()];
+
+    for (index, card) in deck.into_iter().enumerate() {
+        hands[index % 4].push(card);
+    }
+
+    for hand in &mut hands {
+        sort_hand(hand);
+    }
+
+    let state = SpadesHandState {
+        id: format!("spades-hand-{seed}-dealer-{dealer}-S"),
+        hands,
+        current_player: leader,
+        current_trick: Vec::new(),
+        completed_tricks: Vec::new(),
+        status: HandStatus::InProgress,
+    };
+    advance_to_player_turn(state, 2, score_whist_trick, choose_whist_opponent_card)
+}
+
+pub fn play_spades_card(
+    state: SpadesHandState,
+    player_card: Card,
+) -> Result<SpadesHandState, String> {
+    play_trick_taking_card(
+        state,
+        player_card,
+        2,
+        score_whist_trick,
+        choose_whist_opponent_card,
+    )
+}
+
 fn apply_hearts_pass_with_direction(
     mut state: HeartsHandState,
     player_cards: Vec<Card>,
@@ -741,7 +780,7 @@ fn is_hearts_state(state: &TrickTakingHandState) -> bool {
 }
 
 fn is_whist_state(state: &TrickTakingHandState) -> bool {
-    matches!(state.policy(), Some(HandPolicy::Whist))
+    matches!(state.policy(), Some(HandPolicy::Whist | HandPolicy::Spades))
 }
 
 fn whist_trump_suit(state: &TrickTakingHandState) -> Suit {
@@ -1581,6 +1620,22 @@ mod tests {
         assert_eq!(state.current_player, 2);
         assert!(state.current_trick.is_empty());
         assert_eq!(state.hands.iter().map(Vec::len).sum::<usize>(), 52);
+    }
+
+    #[test]
+    fn spades_hand_uses_spades_as_fixed_trump() {
+        let state = start_spades_hand(8);
+
+        assert!(state.id.ends_with("-S"));
+
+        let trick = vec![
+            PlayedCard::new(1, Card::new(Rank::Ace, Suit::Hearts)),
+            PlayedCard::new(2, Card::new(Rank::Two, Suit::Spades)),
+            PlayedCard::new(3, Card::new(Rank::King, Suit::Hearts)),
+            PlayedCard::new(0, Card::new(Rank::Three, Suit::Hearts)),
+        ];
+
+        assert_eq!(trick_winner_for_state(&state, &trick), Some(2));
     }
 
     #[test]

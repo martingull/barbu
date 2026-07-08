@@ -510,5 +510,96 @@ export const referenceCatalog: GameReference[] = [
           "Bid Whist, Knock-out Whist, honours, rubber scoring, and richer table customs are later varieties, not the first app definition."
       }
     ]
+  },
+  {
+    id: "spades",
+    title: "Spades",
+    family: "Whist",
+    baseline: "Whist-family starter, Spades fixed-trump baseline",
+    overview:
+      "Spades is the app's next Whist-family partnership table. The starter version shares the Whist hand surface: You and Barbu play against Left and Right, players follow suit when able, and spades are always trump.",
+    sections: [
+      {
+        id: "object",
+        title: "Object",
+        body:
+          "Win tricks with your partner while treating spades as the permanent trump suit. The full game adds bidding so each side tries to make the number of tricks it promised.",
+        facts: [
+          { label: "Game type", value: "Partnership trick-taking" },
+          { label: "Current focus", value: "Fixed spades trump" }
+        ]
+      },
+      {
+        id: "players",
+        title: "Players And Partnerships",
+        body:
+          "The app uses the same partnership seating as Whist. You sit opposite Barbu, and the side seats play as the opposing partnership.",
+        facts: [
+          { label: "Players", value: "Four" },
+          { label: "Partner", value: "Barbu" }
+        ]
+      },
+      {
+        id: "play",
+        title: "Play",
+        body:
+          "A player who can follow the led suit must follow. A player who is void may discard or play a spade. If any spade is played, the highest spade wins the trick; otherwise the highest card of the led suit wins.",
+        facts: [
+          { label: "Trump", value: "Spades are always trump" },
+          { label: "Legal play", value: "Follow suit when possible" },
+          { label: "Trick winner", value: "Highest spade, otherwise highest led-suit card" }
+        ]
+      },
+      {
+        id: "scoring",
+        title: "Scoring Boundary",
+        body:
+          "The first app version plays a starter hand and counts partnership tricks. Bids, nil bids, bags, and match settlement are planned next before this table is considered a complete Spades game.",
+        facts: [
+          { label: "Now", value: "Playable fixed-trump hand" },
+          { label: "Next", value: "Bidding, nil, bags, match score" }
+        ]
+      }
+    ],
+    contracts: [
+      {
+        id: "starter-spades",
+        title: "Starter Spades",
+        objective: "Win partnership tricks with spades fixed as trump.",
+        scoring: "The starter table counts tricks and odd-trick style match points until bidding is added.",
+        lesson: "Start by recognizing when you must follow suit and when a spade can cut the trick."
+      }
+    ],
+    contractRoadmap: [
+      {
+        id: "spades-reference",
+        title: "Reference baseline",
+        coreStatus: "Starter",
+        appStatus: "Defined",
+        note: "Spades is defined as a Whist-family partnership game with fixed spades trump."
+      },
+      {
+        id: "spades-play",
+        title: "Playable starter hand",
+        coreStatus: "Starter",
+        appStatus: "Playable",
+        note: "The first implementation reuses the partnership full-hand table and fixes trump to spades."
+      },
+      {
+        id: "spades-scoring",
+        title: "Bidding and bags",
+        coreStatus: "Core",
+        appStatus: "Planned",
+        note: "Full Spades needs bids, nil, overtrick bags, and match settlement before production readiness."
+      }
+    ],
+    variants: [
+      {
+        id: "starter-boundary",
+        title: "Starter Boundary",
+        note:
+          "This is not yet full Spades. It is the first playable foundation so the table, trump logic, and partnership UI can settle before bidding is added."
+      }
+    ]
   }
 ];
