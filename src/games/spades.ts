@@ -21,9 +21,9 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
       pathEyebrow: "Training path",
       pathTitle: "Learn the Spades table",
       progressAriaLabel: "Spades course progress",
-      nextSummary: "Start with fixed-trump partnership play, bids, and book targets.",
-      completeSummary: "You have tried the first Spades habits: follow suit, count spades, bid books, and watch bags.",
-      referenceSummary: "Check the Spades baseline: partnership play, spades as trump, bidding, bags, and later nil."
+      nextSummary: "Start by seeing your hand, estimating a bid, then playing to the partnership target.",
+      completeSummary: "You have tried the first Spades habits: follow suit, count spades, bid books, protect nil, and watch bags.",
+      referenceSummary: "Check the Spades baseline: partnership play, fixed trump, bidding, nil, bags, and ten-bag penalties."
     },
     tabIntros: {
       learn: {
@@ -71,7 +71,7 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
       id: "spades-object",
       step: "Concept",
       title: "Win your books",
-      summary: "Spades is partnership trick-taking where the target is to win the tricks your side promised.",
+      summary: "Spades is partnership trick-taking where each side tries to win the books it promised.",
       action: "object"
     },
     {
@@ -92,7 +92,7 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
       id: "spades-books",
       step: "Scoring",
       title: "Count books",
-      summary: "Each trick is a book. The bid tells you how many your partnership needs.",
+      summary: "Each trick is a book. Estimate your bid from visible winners and realistic nil chances.",
       action: "bid"
     },
     {

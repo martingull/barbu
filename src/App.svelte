@@ -2613,20 +2613,41 @@
       onClick: () => openReference(whistUi.table.referenceId)
     }
   ];
+  $: nextSpadesLearnStep = findNextSpadesPathStep();
   $: spadesLearnPanelActions = [
+    {
+      id: "course",
+      eyebrow: nextSpadesLearnStep ? "Lesson" : "Path",
+      title: nextSpadesLearnStep ? nextSpadesLearnStep.title : "Review path",
+      summary: nextSpadesLearnStep
+        ? nextSpadesLearnStep.summary
+        : "You have completed the current Spades learning path.",
+      primary: true,
+      disabled: !nextSpadesLearnStep,
+      onClick: () => {
+        if (nextSpadesLearnStep) {
+          startSpadesPathStep(nextSpadesLearnStep);
+        }
+      }
+    },
     {
       id: "reference",
       eyebrow: "Rules",
       title: "Reference",
       summary: spadesUi.table.learn.referenceSummary,
-      primary: true,
       onClick: () => openReference(spadesUi.table.referenceId)
     }
   ];
   $: lessonOutcome = selectedCard && (playedCard || !isSelectedLegal) ? buildLessonOutcome(selectedCard, playedCard) : "";
   $: activeCourse = courseCatalog.find((course) => course.id === activeCourseId) ?? courseCatalog[0];
   $: activeCourseTableLabel =
-    activeCourse.game === "whist" ? "Whist" : activeCourse.game === "hearts" ? "Hearts" : "Barbu";
+    activeCourse.game === "spades"
+      ? "Spades"
+      : activeCourse.game === "whist"
+        ? "Whist"
+        : activeCourse.game === "hearts"
+          ? "Hearts"
+          : "Barbu";
   $: activeReference = referenceCatalog.find((reference) => reference.id === activeReferenceId) ?? referenceCatalog[0];
   $: activeReferenceIsBarbu = activeReference.id === "barbu";
   $: currentDrill = activeDrillSteps[drillIndex] ?? activeDrillSteps[0] ?? drillSteps[0];
@@ -5784,6 +5805,13 @@
   }
 
   function startSpadesPathStep(step: SpadesLearnPathStep) {
+    const course = courseCatalog.find((item) => item.pathStepId === step.id && item.game === "spades");
+
+    if (course) {
+      startCourse(course.id);
+      return;
+    }
+
     activePathStepId = step.id;
     void startSpadesPracticeHand(step.id, step.action === "object" ? "follow" : (step.action as SpadesPracticeAction));
   }
@@ -6062,6 +6090,18 @@
         if (fullHandIsSpadesGame) {
           if (activePathStepId) {
             const completedStepId = activePathStepId;
+            const completedSpadesCourse = courseCatalog.find(
+              (course) => course.game === "spades" && course.pathStepId === completedStepId
+            );
+
+            if (completedSpadesCourse) {
+              activeCourseId = completedSpadesCourse.id;
+              activePathStepId = completedSpadesCourse.pathStepId;
+              activeCourseStage = "review";
+              appView = "courseContent";
+              return;
+            }
+
             completeSpadesPathStep(completedStepId);
             continueSpadesPath(completedStepId);
           } else {
@@ -7282,6 +7322,12 @@
   }
 
   function openActiveCourseTable() {
+    if (activeCourse.game === "spades") {
+      activeTableTabs.spades = "learn";
+      openSpadesTable();
+      return;
+    }
+
     if (activeCourse.game === "whist") {
       activeTableTabs.whist = "learn";
       openWhistTable();
@@ -7310,7 +7356,12 @@
       return;
     }
 
-    practiceActionRegistry.whist[target.action]({ pathStepId: course.pathStepId, source: "course" });
+    if (target.game === "whist") {
+      practiceActionRegistry.whist[target.action]({ pathStepId: course.pathStepId, source: "course" });
+      return;
+    }
+
+    practiceActionRegistry.spades[target.action]({ pathStepId: course.pathStepId, source: "course" });
   }
 
   async function startGeneratedDrill() {
@@ -9448,7 +9499,7 @@
           {#if activeCourseStage === "concept"}
             See example
           {:else if activeCourseStage === "example"}
-            {activeCourse.game === "barbu" ? "Play guided trick" : "Practice decision"}
+            {activeCourse.game === "barbu" ? "Play guided trick" : activeCourse.game === "spades" ? "Practice hand" : "Practice decision"}
           {:else}
             Finish {activeCourse.contract}
           {/if}
