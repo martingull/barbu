@@ -368,7 +368,7 @@ export const referenceCatalog: GameReference[] = [
     family: "Whist",
     baseline: "David Parlett structure, classic Whist baseline with Wikipedia cross-check",
     overview:
-      "Whist is the app's partnership trick-taking starter. The current definition is classic four-player Whist: fixed partners sit opposite each other, the dealer's last card sets trump, players follow suit when able, and each partnership scores odd tricks above six.",
+      "Whist is a classic four-player partnership trick-taking game. Fixed partners sit opposite each other, the dealer's last card sets trump, players follow suit when able, and each partnership scores odd tricks above six.",
     sections: [
       {
         id: "object",
@@ -405,11 +405,11 @@ export const referenceCatalog: GameReference[] = [
         id: "deal",
         title: "Deal And Trump",
         body:
-          "Each player receives thirteen cards. The dealer's last card sets trump for the hand. The app keeps this as the first Whist rule before adding bidding, honours, rubber scoring, or other varieties.",
+          "Each player receives thirteen cards. The dealer's last card sets trump for the hand. This table teaches the classic no-bidding form before moving into Whist-family varieties.",
         facts: [
           { label: "Cards per player", value: "13" },
           { label: "Trump", value: "Dealer's last card" },
-          { label: "Deferred", value: "Bidding, honours, rubber scoring" }
+          { label: "Style", value: "Classic Whist" }
         ]
       },
       {
@@ -427,11 +427,11 @@ export const referenceCatalog: GameReference[] = [
         id: "scoring",
         title: "Scoring",
         body:
-          "A partnership scores one point for each trick above six. Seven tricks scores one point, eight tricks scores two, and so on. The current app match plays to 5 points so testing stays short on a phone.",
+          "A partnership scores one point for each trick above six. Seven tricks scores one point, eight tricks scores two, and so on. The phone table uses a short five-point match so a session fits comfortably in one sitting.",
         facts: [
           { label: "Six tricks", value: "Book, no points yet" },
           { label: "Seven tricks", value: "1 point" },
-          { label: "App target", value: "First partnership to 5 points" }
+          { label: "Table target", value: "First partnership to 5 points" }
         ]
       },
       {
@@ -449,10 +449,10 @@ export const referenceCatalog: GameReference[] = [
         id: "app-learning",
         title: "App Learning Path",
         body:
-          "The Whist table now uses the same teaching shape as Hearts: a short object lesson first, then compact practice decisions. The first habits are partnership object, follow suit, trump or discard, third hand high, returning partner's suit, and odd-trick scoring.",
+          "The Whist lessons start with the partnership object, then move into compact table decisions. The first habits are follow suit, trump or discard, third hand high, returning partner's suit, inviting with a strong suit, and counting odd tricks.",
         facts: [
           { label: "First step", value: "Concept: win tricks together" },
-          { label: "Practice", value: "Five compact Whist habits" },
+          { label: "Practice", value: "Compact Whist habits" },
           { label: "Play", value: "Playable local match with resume" }
         ]
       }
@@ -479,7 +479,7 @@ export const referenceCatalog: GameReference[] = [
         title: "Learning path",
         coreStatus: "Core",
         appStatus: "Playable",
-        note: "The current path teaches object, follow-suit, trumps, partner reading, suit invitation, and odd-trick scoring."
+        note: "The path teaches object, follow-suit, trumps, partner reading, suit invitation, and odd-trick scoring."
       },
       {
         id: "whist-play",
@@ -489,11 +489,11 @@ export const referenceCatalog: GameReference[] = [
         note: "Playable Whist has partnership seating, trump selection from dealer's last card, thirteen-trick play, partnership scoring, and local resume state."
       },
       {
-        id: "whist-polish",
-        title: "Production polish",
+        id: "whist-table-habits",
+        title: "Table habits",
         coreStatus: "Core",
-        appStatus: "Next",
-        note: "The next production work is opponent policy, more practice variety, and phone-layout polishing before adding Whist-family variants."
+        appStatus: "Playable",
+        note: "The table emphasizes opening leads, partner returns, third-hand support, trump use, and odd-trick awareness."
       }
     ],
     variants: [
@@ -501,13 +501,13 @@ export const referenceCatalog: GameReference[] = [
         id: "classic-baseline",
         title: "Classic Baseline",
         note:
-          "Whist v1 should stay with fixed partnerships, dealer-last-card trump, and odd-trick scoring before adding other Whist-family varieties."
+          "Classic Whist uses fixed partnerships, dealer-last-card trump, and odd-trick scoring."
       },
       {
-        id: "deferred-varieties",
-        title: "Deferred Varieties",
+        id: "whist-family-varieties",
+        title: "Whist-Family Varieties",
         note:
-          "Bid Whist, Knock-out Whist, honours, rubber scoring, and richer table customs are later varieties, not the first app definition."
+          "Bid Whist, Knock-out Whist, honours, rubber scoring, and Amerikaner-style auction play are related varieties that should be introduced as named tables or variants."
       }
     ]
   },
