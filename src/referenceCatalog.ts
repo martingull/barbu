@@ -517,7 +517,7 @@ export const referenceCatalog: GameReference[] = [
     family: "Whist",
     baseline: "Whist-family partnership game, Spades fixed-trump baseline",
     overview:
-      "Spades is a Whist-family partnership table. You and Barbu play against Left and Right, players follow suit when able, spades are always trump, and each side tries to meet its bid.",
+      "Spades is a Whist-family partnership table. You and Barbu play against Left and Right, players follow suit when able, spades are always trump, and each side tries to meet its bid while managing nil and bags.",
     sections: [
       {
         id: "object",
@@ -540,25 +540,74 @@ export const referenceCatalog: GameReference[] = [
         ]
       },
       {
+        id: "cards",
+        title: "Cards",
+        body:
+          "Spades uses a standard fifty-two card pack. Aces are high, then kings, queens, jacks, tens, and down to twos. The suit names matter because the led suit controls legal play and spades are the fixed trump suit.",
+        facts: [
+          { label: "Pack", value: "52 cards" },
+          { label: "Cards per player", value: "13" },
+          { label: "Rank", value: "A K Q J 10 9 8 7 6 5 4 3 2" }
+        ]
+      },
+      {
+        id: "deal-and-bid",
+        title: "Deal And Bid",
+        body:
+          "Each player receives thirteen cards. In the app, you see your hand before bidding, the table estimates the hidden hands, and you may adjust only your own bid. Individual bids combine into partnership totals, while nil remains an individual promise to take no tricks.",
+        facts: [
+          { label: "Deal", value: "13 cards each" },
+          { label: "Player control", value: "You adjust only your own bid" },
+          { label: "Hidden seats", value: "Barbu, Left, and Right use hand-based estimates" },
+          { label: "Nil", value: "Individual bid to win zero tricks" }
+        ]
+      },
+      {
         id: "play",
         title: "Play",
         body:
-          "A player who can follow the led suit must follow. A player who is void may discard or play a spade. If any spade is played, the highest spade wins the trick; otherwise the highest card of the led suit wins.",
+          "A player who can follow the led suit must follow. A player who is void may discard or play a spade. Spades cannot be led until spades have been broken, unless the leader has only spades. If any spade is played, the highest spade wins the trick; otherwise the highest card of the led suit wins.",
         facts: [
           { label: "Trump", value: "Spades are always trump" },
           { label: "Legal play", value: "Follow suit when possible" },
+          { label: "Spade leads", value: "Blocked until spades are broken unless only spades remain" },
           { label: "Trick winner", value: "Highest spade, otherwise highest led-suit card" }
+        ]
+      },
+      {
+        id: "bidding-heuristic",
+        title: "Bidding Heuristic",
+        body:
+          "The starter estimate uses a simple club-player heuristic: count likely books from aces, protected non-spade kings, high spades, and extra spade length. Nil is suggested only when the hand has no obvious aces, high spades, or protected kings and enough low cards to duck.",
+        facts: [
+          { label: "Aces", value: "Usually count as likely books" },
+          { label: "Kings", value: "Protected kings count more than lonely kings" },
+          { label: "Spades", value: "High spades and long spade length add control" },
+          { label: "Nil check", value: "No clear winners and limited spade danger" }
         ]
       },
       {
         id: "scoring",
         title: "Scoring",
         body:
-          "A made bid scores ten points per bid book plus one point for each overtrick bag. A failed bid scores minus ten points per bid book. A nil bid scores 100 when that player takes no tricks and -100 when they take any trick. Every tenth accumulated bag costs 100 points.",
+          "A made bid scores ten points per bid book plus one point for each overtrick bag. A failed bid scores minus ten points per bid book. A nil bid scores 100 when that player takes no tricks and -100 when they take any trick. Every tenth accumulated bag costs 100 points. The local table plays to 500.",
         facts: [
           { label: "Made bid", value: "10 per bid book + bags" },
           { label: "Failed bid", value: "-10 per bid book" },
+          { label: "Nil", value: "+100 if made, -100 if missed" },
+          { label: "Ten bags", value: "-100 point penalty" },
           { label: "Match target", value: "500 points" }
+        ]
+      },
+      {
+        id: "app-learning",
+        title: "App Learning Path",
+        body:
+          "The Spades lessons reuse the shared game-table course flow used by Hearts and Whist. The path starts with the partnership object, then practices follow-suit legality, fixed trump, bidding from a visible hand, nil awareness, and bag management before moving into full local play.",
+        facts: [
+          { label: "First step", value: "Concept: win your books" },
+          { label: "Practice", value: "Full Spades hand from each lesson" },
+          { label: "Play", value: "Playable local match with resume" }
         ]
       }
     ],
@@ -567,8 +616,8 @@ export const referenceCatalog: GameReference[] = [
         id: "starter-spades",
         title: "Spades",
         objective: "Meet your partnership bid with spades fixed as trump.",
-        scoring: "Made bids score 10 per bid book plus overtrick bags; failed bids lose 10 per bid book.",
-        lesson: "Start by recognizing when you must follow suit, when a spade can cut the trick, and when an extra book becomes a bag."
+        scoring: "Made bids score 10 per bid book plus overtrick bags; failed bids lose 10 per bid book; nil scores +100 or -100; every tenth bag costs 100.",
+        lesson: "Start by recognizing when you must follow suit, when a spade can cut the trick, when nil needs protection, and when an extra book becomes a bag."
       }
     ],
     contractRoadmap: [
@@ -580,18 +629,32 @@ export const referenceCatalog: GameReference[] = [
         note: "Spades is defined as a Whist-family partnership game with fixed spades trump, bids, books, and bags."
       },
       {
+        id: "spades-learn",
+        title: "Learning path",
+        coreStatus: "Core",
+        appStatus: "Playable",
+        note: "The path uses the shared course template and teaches object, follow-suit legality, fixed trump, bidding, nil awareness, and bag management."
+      },
+      {
         id: "spades-play",
         title: "Playable scored hand",
         coreStatus: "Core",
         appStatus: "Playable",
-        note: "The current implementation reuses the partnership full-hand table, estimates each hidden bid from that hand, lets the player adjust only their own bid, and scores nil, bags, ten-bag penalties, and matches."
+        note: "The current implementation reuses the partnership full-hand table, shows your hand before bidding, estimates each hidden bid from that hand, lets the player adjust only their own bid, and scores nil, bags, ten-bag penalties, and matches."
       },
       {
-        id: "spades-scoring",
-        title: "Nil and advanced bags",
+        id: "spades-resume",
+        title: "Local match resume",
+        coreStatus: "Core",
+        appStatus: "Playable",
+        note: "Local play saves match score, bag count, bids, hand state, and the pre-play bid/table toggle so Spades can resume like Hearts and Whist."
+      },
+      {
+        id: "spades-variants",
+        title: "Advanced variants",
         coreStatus: "Variant",
         appStatus: "Planned",
-        note: "Nil and ten-bag penalties are active. Blind nil remains a later Spades variant."
+        note: "Blind nil, alternate bag penalties, jokers, partnership bidding conventions, and table-specific scoring should be introduced as named Spades variants."
       }
     ],
     variants: [

@@ -398,6 +398,20 @@
     savedAt: string;
   };
 
+  type SavedSpadesRun = {
+    version: 1;
+    scores: SpadesScoreState;
+    bags: SpadesScoreState;
+    bids: SpadesBidState;
+    results: SpadesHandResult[];
+    fullHand: FullHandState;
+    fullHandReviewTrickCount: number;
+    usingBrowserFullHand: boolean;
+    playStarted: boolean;
+    openingPanel: "table" | "bid";
+    savedAt: string;
+  };
+
   const catalogEntries = createCatalogEntries();
   const barbuUi = registry.get("barbu")!;
   const heartsUi = registry.get("hearts")!;
@@ -411,6 +425,7 @@
   const savedPlayBarbuRunStorageKey = "barbu.savedPlayRun.v1";
   const savedHeartsRunStorageKey = "barbu.savedHeartsRun.v1";
   const savedWhistRunStorageKey = "barbu.savedWhistRun.v1";
+  const savedSpadesRunStorageKey = "barbu.savedSpadesRun.v1";
   const maxStoredDrillPatterns = 6;
   const maxStoredPlayBarbuAttempts = 8;
   const scoreSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
@@ -2078,14 +2093,15 @@
   let activeGameTable: ActiveGameTable = "barbu";
   let completedPathSteps: Record<string, boolean> = loadCourseProgress();
   let playBarbuHistory: PlayBarbuAttempt[] = loadPlayBarbuHistory();
+  const defaultSpadesBidState: SpadesBidState = { You: 4, Tutor: 3, Left: 3, Right: 3 };
   let savedPlayBarbuRun: SavedPlayBarbuRun | null = loadSavedPlayBarbuRun();
   let savedHeartsRun: SavedHeartsRun | null = loadSavedHeartsRun();
   let savedWhistRun: SavedWhistRun | null = loadSavedWhistRun();
+  let savedSpadesRun: SavedSpadesRun | null = loadSavedSpadesRun();
   let heartsSessionScores: Record<Seat, number> = emptySeatPenalties();
   let heartsHandResults: HeartsHandResult[] = [];
   let whistMatchScores = { playerSide: 0, opponentSide: 0 };
   let whistHandResults: WhistHandResult[] = [];
-  const defaultSpadesBidState: SpadesBidState = { You: 4, Tutor: 3, Left: 3, Right: 3 };
   let spadesBids: SpadesBidState = { ...defaultSpadesBidState };
   let spadesPlayStarted = true;
   let spadesOpeningPanel: "table" | "bid" = "table";
@@ -2486,6 +2502,7 @@
       ...spadesBids,
       [seat]: spadesClampBid(value)
     };
+    persistSavedSpadesRun();
   }
 
   function bumpSpadesSeatBid(seat: Seat, delta: number) {
@@ -3839,6 +3856,187 @@
     lastFullHandTapAt = 0;
     appView = "fullHand";
     savedWhistRun = savedRun;
+  }
+
+  function loadSavedSpadesRun(): SavedSpadesRun | null {
+    if (typeof localStorage === "undefined") {
+      return null;
+    }
+
+    try {
+      return normalizeSavedSpadesRun(JSON.parse(localStorage.getItem(savedSpadesRunStorageKey) ?? "null"));
+    } catch {
+      return null;
+    }
+  }
+
+  function normalizeSavedSpadesRun(savedRun: unknown): SavedSpadesRun | null {
+    if (!savedRun || typeof savedRun !== "object") {
+      return null;
+    }
+
+    const candidate = savedRun as Partial<SavedSpadesRun>;
+    const savedFullHand = candidate.fullHand?.contract === "Spades" ? candidate.fullHand : null;
+
+    if (candidate.version !== 1 || !savedFullHand) {
+      return null;
+    }
+
+    return {
+      version: 1,
+      scores: normalizeSpadesScoreMap(candidate.scores),
+      bags: normalizeSpadesScoreMap(candidate.bags),
+      bids: normalizeSpadesBidState(candidate.bids),
+      results: Array.isArray(candidate.results) ? candidate.results.filter(isSpadesHandResult) : [],
+      fullHand: savedFullHand,
+      fullHandReviewTrickCount:
+        Number.isInteger(candidate.fullHandReviewTrickCount) && candidate.fullHandReviewTrickCount >= 0
+          ? candidate.fullHandReviewTrickCount
+          : 0,
+      usingBrowserFullHand: Boolean(candidate.usingBrowserFullHand),
+      playStarted: Boolean(candidate.playStarted),
+      openingPanel: candidate.openingPanel === "bid" ? "bid" : "table",
+      savedAt: typeof candidate.savedAt === "string" ? candidate.savedAt : new Date().toISOString()
+    };
+  }
+
+  function normalizeSpadesScoreMap(scores: unknown): SpadesScoreState {
+    if (!scores || typeof scores !== "object") {
+      return { playerSide: 0, opponentSide: 0 };
+    }
+
+    const candidate = scores as Partial<SpadesScoreState>;
+    return {
+      playerSide: Number.isFinite(candidate.playerSide) ? Number(candidate.playerSide) : 0,
+      opponentSide: Number.isFinite(candidate.opponentSide) ? Number(candidate.opponentSide) : 0
+    };
+  }
+
+  function normalizeSpadesBidState(bids: unknown): SpadesBidState {
+    if (!bids || typeof bids !== "object") {
+      return { ...defaultSpadesBidState };
+    }
+
+    const candidate = bids as Partial<SpadesBidState>;
+    return {
+      You: spadesClampBid(candidate.You ?? defaultSpadesBidState.You),
+      Tutor: spadesClampBid(candidate.Tutor ?? defaultSpadesBidState.Tutor),
+      Left: spadesClampBid(candidate.Left ?? defaultSpadesBidState.Left),
+      Right: spadesClampBid(candidate.Right ?? defaultSpadesBidState.Right)
+    };
+  }
+
+  function isSpadesHandResult(result: unknown): result is SpadesHandResult {
+    if (!result || typeof result !== "object") {
+      return false;
+    }
+
+    const candidate = result as Partial<SpadesHandResult>;
+    return (
+      Number.isInteger(candidate.handNumber) &&
+      Number.isInteger(candidate.playerSideBid) &&
+      Number.isInteger(candidate.opponentSideBid) &&
+      Number.isInteger(candidate.playerSideTricks) &&
+      Number.isInteger(candidate.opponentSideTricks) &&
+      Number.isFinite(candidate.playerSideScore) &&
+      Number.isFinite(candidate.opponentSideScore) &&
+      Number.isInteger(candidate.playerSideBags) &&
+      Number.isInteger(candidate.opponentSideBags) &&
+      Number.isInteger(candidate.playerSideBagPenalty) &&
+      Number.isInteger(candidate.opponentSideBagPenalty)
+    );
+  }
+
+  function persistSavedSpadesRun() {
+    const isSpadesFullHand = activeGameTable === "spades" && fullHand?.contract === "Spades" && !fullHandRunActive;
+
+    if (whistFullHandSource !== "play" || !isSpadesFullHand || !fullHand) {
+      return;
+    }
+
+    const currentResult = fullHand.status === "complete" ? spadesHandResultFor(fullHand) : null;
+    const visibleResult = currentResult ? addSpadesMatchResult(spadesMatchScores, spadesBagScores, currentResult) : null;
+    const matchIsComplete =
+      fullHand.status === "complete" &&
+      visibleResult !== null &&
+      Math.max(visibleResult.scores.playerSide, visibleResult.scores.opponentSide) >= spadesMatchTarget;
+
+    if (matchIsComplete) {
+      clearSavedSpadesRun();
+      return;
+    }
+
+    const nextSavedRun: SavedSpadesRun = {
+      version: 1,
+      scores: spadesMatchScores,
+      bags: spadesBagScores,
+      bids: spadesBids,
+      results: spadesHandResults,
+      fullHand,
+      fullHandReviewTrickCount,
+      usingBrowserFullHand,
+      playStarted: spadesPlayStarted,
+      openingPanel: spadesOpeningPanel,
+      savedAt: new Date().toISOString()
+    };
+
+    savedSpadesRun = nextSavedRun;
+
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(savedSpadesRunStorageKey, JSON.stringify(nextSavedRun));
+    }
+  }
+
+  function clearSavedSpadesRun() {
+    savedSpadesRun = null;
+
+    if (typeof localStorage !== "undefined") {
+      localStorage.removeItem(savedSpadesRunStorageKey);
+    }
+  }
+
+  function savedSpadesRunSummary(savedRun: SavedSpadesRun) {
+    const handNumber = savedRun.results.length + 1;
+    const matchScore = `${savedRun.scores.playerSide} - ${savedRun.scores.opponentSide}`;
+
+    if (!savedRun.playStarted && savedRun.fullHand.status !== "complete") {
+      return `Hand ${handNumber}, bid ${spadesBidLabel(savedRun.bids)}, match ${matchScore}`;
+    }
+
+    return savedRun.fullHand.status === "complete"
+      ? `Hand ${handNumber} complete, match ${matchScore}`
+      : `Hand ${handNumber}, trick ${savedRun.fullHand.trickNumber}, match ${matchScore}`;
+  }
+
+  function continueSavedSpadesRun() {
+    const savedRun = savedSpadesRun ?? loadSavedSpadesRun();
+
+    if (!savedRun) {
+      return;
+    }
+
+    activeGameTable = "spades";
+    activeTableTabs.spades = "play";
+    whistFullHandSource = "play";
+    fullHandRunActive = false;
+    fullHandRunResults = [];
+    dominoHand = null;
+    heartsPassingHand = null;
+    spadesMatchScores = savedRun.scores;
+    spadesBagScores = savedRun.bags;
+    spadesBids = savedRun.bids;
+    spadesHandResults = savedRun.results;
+    spadesPlayStarted = savedRun.playStarted;
+    spadesOpeningPanel = savedRun.openingPanel;
+    fullHand = savedRun.fullHand;
+    fullHandReviewTrickCount = savedRun.fullHandReviewTrickCount;
+    usingBrowserFullHand = savedRun.usingBrowserFullHand || !hasTauriRuntime();
+    fullHandSelectedCardId = "";
+    fullHandError = "";
+    lastFullHandTapCardId = "";
+    lastFullHandTapAt = 0;
+    appView = "fullHand";
+    savedSpadesRun = savedRun;
   }
 
   function loadPracticeSeed() {
@@ -5455,6 +5653,7 @@
       persistSavedPlayBarbuRun("fullHand");
       persistSavedHeartsRun("fullHand");
       persistSavedWhistRun();
+      persistSavedSpadesRun();
       return;
     }
 
@@ -5473,6 +5672,7 @@
       persistSavedPlayBarbuRun("fullHand");
       persistSavedHeartsRun("fullHand");
       persistSavedWhistRun();
+      persistSavedSpadesRun();
     } catch (error) {
       fullHandError = typeof error === "string" ? error : "That card could not be played.";
     }
@@ -5498,6 +5698,7 @@
     persistSavedPlayBarbuRun("fullHand");
     persistSavedHeartsRun("fullHand");
     persistSavedWhistRun();
+    persistSavedSpadesRun();
   }
 
   function continueWhistOpeningLeadPractice() {
@@ -5544,6 +5745,7 @@
     spadesOpeningPanel = spadesOpeningPanel === "bid" ? "table" : "bid";
     fullHandSelectedCardId = "";
     fullHandError = "";
+    persistSavedSpadesRun();
   }
 
   function startSpadesOpeningPlay() {
@@ -5564,6 +5766,7 @@
     fullHandError = "";
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
+    persistSavedSpadesRun();
   }
 
   function startNoHeartsHand() {
@@ -5604,9 +5807,11 @@
       spadesMatchScores = { playerSide: 0, opponentSide: 0 };
       spadesBagScores = { playerSide: 0, opponentSide: 0 };
       spadesHandResults = [];
+      clearSavedSpadesRun();
     }
     await startFullHand("Spades");
     spadesBids = suggestedSpadesBidsForHand(fullHand);
+    persistSavedSpadesRun();
   }
 
   function startPartnershipHand(options: { keepSession?: boolean } = {}) {
@@ -8273,6 +8478,9 @@
       practiceProps: { actions: spadesPracticeActions },
       playProps: {
         onPrimary: () => void startSpadesHand(),
+        resumeLabel: savedSpadesRun ? "Continue Spades" : undefined,
+        resumeNote: savedSpadesRun ? savedSpadesRunSummary(savedSpadesRun) : undefined,
+        onResume: savedSpadesRun ? continueSavedSpadesRun : undefined,
         footerNote: `Individual bids, nil, bags, and ten-bag penalties score locally. Play to ${spadesMatchTarget}.`,
         primaryDisabled: !spadesBidReady,
         primaryWarning: spadesBidError

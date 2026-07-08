@@ -795,6 +795,34 @@ test("Whist play can resume a saved local match", async ({ page }) => {
   await expectNoPageScroll(page);
 });
 
+test("Spades play can resume a saved local match", async ({ page }) => {
+  await gotoWithPracticeSeed(page, 15);
+  await page.getByRole("button", { name: /Open Spades/ }).click();
+  await page.getByRole("tab", { name: "Play" }).click();
+  await page.getByRole("button", { name: "Play Spades" }).click();
+
+  await expect(page.getByRole("heading", { name: "Spades hand" })).toBeVisible();
+  await expect(page.getByLabel("Your Spades hand")).toBeVisible();
+  await expect.poll(async () => page.evaluate(() => localStorage.getItem("barbu.savedSpadesRun.v1"))).not.toBeNull();
+
+  await page.getByLabel("Spades full hand").getByRole("button", { name: "Table" }).click();
+  await expect(page.getByRole("heading", { name: "Spades table", exact: true })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("button", { name: "Continue Spades" })).toBeVisible();
+  await expect(page.getByText(/Hand 1, bid \d+-\d+, match 0 - 0/)).toBeVisible();
+
+  await page.reload();
+  await page.getByRole("button", { name: /Open Spades/ }).click();
+  await page.getByRole("tab", { name: "Play" }).click();
+  await expect(page.getByRole("button", { name: "Continue Spades" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Continue Spades" }).click();
+  await expect(page.getByRole("heading", { name: "Spades hand" })).toBeVisible();
+  await expect(page.getByLabel("Your Spades hand")).toBeVisible();
+  await expect(page.getByLabel("Spades full hand").getByRole("button", { name: "Adjust bid" })).toBeVisible();
+  await expectNoPageScroll(page);
+});
+
 test("Whist completed hand score fits the phone screen", async ({ page }, testInfo) => {
   await gotoWithPracticeSeed(page, 8);
   await page.getByRole("button", { name: /Open Whist/ }).click();
@@ -1167,6 +1195,30 @@ test("Whist reference reflects the classic partnership table", async ({ page }, 
 
   await page.getByRole("button", { name: "Back to Whist table" }).click();
   await expect(page.getByRole("heading", { name: "Whist table", exact: true })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Learn" })).toHaveAttribute("aria-selected", "true");
+});
+
+test("Spades reference reflects the finished partnership table", async ({ page }, testInfo) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Open Spades/ }).click();
+
+  await page.getByRole("tab", { name: "Learn" }).click();
+  await page.getByLabel("Spades learn actions").getByRole("button", { name: "Rules Reference" }).click();
+
+  await expect(page.getByRole("heading", { name: "Spades reference" })).toBeVisible();
+  await expect(page.getByLabel("Spades overview")).toContainText("nil and bags");
+  await expect(page.getByLabel("Spades reference sections")).toContainText("Deal And Bid");
+  await expect(page.getByLabel("Spades reference sections")).toContainText("Bidding Heuristic");
+  await expect(page.getByLabel("Spades reference sections")).toContainText("App Learning Path");
+  await expect(page.getByLabel("Contract reference")).toContainText("nil scores +100 or -100");
+  await expect(page.getByLabel("Contract roadmap")).toContainText("Learning path");
+  await expect(page.getByLabel("Contract roadmap")).toContainText("Local match resume");
+  await expect(page.getByLabel("Contract roadmap")).toContainText("Playable");
+  await expect(page.getByLabel("Variants and varieties")).toContainText("Blind nil");
+  await page.screenshot({ path: testInfo.outputPath("spades-reference.png"), fullPage: true });
+
+  await page.getByRole("button", { name: "Back to Spades table" }).click();
+  await expect(page.getByRole("heading", { name: "Spades table", exact: true })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Learn" })).toHaveAttribute("aria-selected", "true");
 });
 
