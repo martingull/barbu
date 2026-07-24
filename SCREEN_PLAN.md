@@ -28,7 +28,8 @@ The app should separate these concerns:
 - **Playing**: full hands and Play Barbu sessions.
 - **Reference**: Parlett-style rule structure and variants.
 - **Meta features**: progress, monetization, multiplayer, accounts, and future character presentation.
-- **Pro/card sense**: short skill trainers for transferable counting, memory, and table-reading habits, with future subscriber AI play and opponent play.
+- **Pro Tables**: monetized AI partners and competitive matches.
+- **Skill Packs / Card Sense**: short skill trainers for transferable counting, memory, and table-reading habits.
 
 When a feature is added, it should have one primary home. Cross-links are allowed, but the feature should not become another button scattered across every screen.
 
@@ -61,7 +62,7 @@ Design implication:
 - New games should be added through family-aware data and reusable rules where practical, not by cloning the whole Barbu interface.
 - Bridge, Gin Rummy, Canasta, and Solitaire should stay visible as future product direction, but only Whist should be treated as the next free starter implementation target after Barbu and Hearts. Hearts, Barbu, and Whist are intended as the free starter catalog.
 - Narrow Whist-family bidding games can be added later as named packs once the core Whist and Spades loops feel solid.
-- Catalog order should show free starter tables first: Hearts, Barbu, and Whist. Paid packs and paid future games should follow.
+- Catalog is structured into semantic groups: "The Bridge Path", "Club Games", and "Skill Packs & Solitaire".
 - Monetization should support limited free usage for paid packs, individual pack purchases, and one subscription that unlocks the full catalog. UI can label packs before entitlement plumbing exists, but access and usage-meter decisions should later be centralized.
 
 ## Screen Map
@@ -72,13 +73,11 @@ Purpose: choose the game family or core game.
 
 Current role:
 
-- Shows free starter tables first: Hearts, Barbu, and Whist.
-- Hearts opens to a starter table with the shared Learn, Practice, Play, and Pro structure. Play is active with rotating passes and a focused local hand.
-- Keeps narrow regional Whist-family bidding games out of the first catalog until they have a clear product shape.
-- Shows Card Counting I after the free starters as the first ready paid skill pack and Card Counting II as a planned subscriber pack.
-- Shows future paid games such as Solitaire, Bridge, Gin Rummy, and Canasta.
+- Groups games into "The Bridge Path" (Hearts, Whist, Spades, Bridge), "Club Games" (Barbu, Gin Rummy, Canasta), and "Skill Packs & Solitaire".
+- Games open into the standard factory-defined Learn, Practice, Play, and Pro tab structure.
+- Shows future paid games as planned entities within their relevant conceptual group.
 - Keeps varieties under their parent game instead of showing them as separate first-screen tables.
-- Signals that Barbu belongs to a broader Hearts-family catalog.
+- Signals that the product is a progressive card club pushing toward Bridge and other tabletop classics.
 
 Future role:
 
@@ -305,7 +304,7 @@ Should not contain:
 - Practice results.
 - Character dialogue unless it clarifies a rule.
 
-### Pro / Card Sense
+### Skill Packs / Card Sense
 
 Purpose: train skills that make the player stronger across 52-card games.
 
@@ -323,6 +322,14 @@ Near-term direction:
 - Tie Pro exercises back to Barbu, Hearts-family games, Whist, and Bridge.
 - Keep each exercise short and interactive, not a rules article.
 - Keep realistic exercises close to real table play. In Trump Memory Hand, table seats now use the first trump-aware choice: overtrumping a low trump when void in the led suit and able to beat the current winning trump. Continue refining discard/conserve choices as the core game improves.
+
+### Pro Tab (In-Game)
+
+Purpose: monetized AI partners and competitive matches.
+
+Current role:
+- Placeholder tab on individual game screens (e.g. Spades, Whist).
+- Points to future subscriber AI partners, competitive matches, and advanced review.
 
 ### Barbu Character Layer
 
