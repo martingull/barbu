@@ -20,6 +20,10 @@ const iPhone15ProMax = {
   viewport: { width: 430, height: 932 }
 };
 
+const pixel7 = {
+  ...devices["Pixel 7"]
+};
+
 export default defineConfig({
   testDir: "./tests/e2e",
   timeout: 30_000,
@@ -54,6 +58,10 @@ export default defineConfig({
     {
       name: "iphone-15-pro-max",
       use: iPhone15ProMax
+    },
+    {
+      name: "pixel-7",
+      use: pixel7
     }
   ]
 });
