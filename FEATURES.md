@@ -30,8 +30,8 @@ The intended monetization model is free starter tables first, then paid packs wi
 
 ## Current Feature Set
 
-- Game catalog ordered with free starter tables first: Hearts, Barbu, Whist, and Spades, followed by paid packs/future paid games such as Card Counting I, Card Counting II, Solitaire, Bridge, Gin Rummy, and Canasta.
-- Game catalog metadata now comes from a shared table/catalog factory, including free starter versus metered pack access metadata, so future game additions do not start as hardcoded home-screen branches.
+- Game catalog structured into semantic groups: "The Bridge Path" (Hearts, Whist, Spades, Bridge), "Club Games" (Barbu, Gin Rummy, Canasta), and "Skill Packs & Solitaire".
+- Game catalog metadata now comes from a shared table/catalog factory, clearly pushing the product's narrative toward Bridge.
 - Learn tab shell metadata now comes from the shared table/catalog factory: each active game declares its path title, progress label, continue summary, complete summary, and reference summary before screen-specific content is added.
 - Table tab intro metadata now comes from the shared table/catalog factory: Learn, Practice, Play, and Pro each declare their heading copy in one place before game-specific controls render underneath.
 - Barbu and Hearts Learn tabs now render through a shared Svelte LearnPanel template backed by the table factory, so future games can reuse the same path/progress/action structure instead of cloning the tab markup.
@@ -41,7 +41,7 @@ The intended monetization model is free starter tables first, then paid packs wi
 - Hearts Practice entry metadata now comes from the shared table/catalog factory, so practice buttons, tab metadata, and action keys stay aligned as more games add practice sets.
 - Barbu Practice entry metadata now comes from the shared table/catalog factory for Quick Drill, fixed drills, and Domino full-hand practice.
 - Hearts table with the shared Learn, Practice, Play, and Pro structure; Play opens with rotating passes and then a local multi-hand Black Lady-style match to 100 points with 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, and shoot-the-moon scoring, while Practice covers avoiding hearts and the queen-of-spades pattern.
-- Spades table with the shared Learn, Practice, Play, and Pro structure; Play starts a local partnership hand using the Whist-family table with spades fixed as trump, simple side bids, made/failed bid scoring, visible bags, and a score-to-500 shell. Nil and blind nil remain planned variants.
+- Spades table with the shared Learn, Practice, Play, and Pro structure; Play starts a local partnership hand using the Whist-family table with spades fixed as trump, simple side bids, made/failed bid scoring, visible bags, 10-bag penalties, and a score-to-500 shell. Nil bids are fully implemented. Blind nil remains a planned variant.
 - Hearts Passing Drill v1 teaches the beginner pass-three habit: identify the queen of spades, high hearts, and dangerous high spades before hand play begins.
 - Hearts Practice Scenario Pool v1 adds a small authored pool behind Quick Drill, varying first-trick restrictions, avoid-hearts, safe and dangerous queen-of-spades play, break-hearts, moon-defense, and score-reading decisions without expanding the Learn path. Pass-three practice now covers both danger-card passing and a long-suit preservation pattern.
 - Hearts Generated Practice v2B moves first-trick, avoid-hearts, queen-of-spades danger, break-hearts legality, stop-the-moon defense, and score-reading practice into Rust-backed generated scenario families while keeping the shared Svelte drill surface and browser fallback. Focused Hearts practice buttons now run through their small scenario pool once instead of showing a single repeated sample.
@@ -135,7 +135,7 @@ Must ship:
    - Practice v1B has playable starter drills for follow suit, trump or discard, third hand high, return partner's suit, and odd-trick counting.
    - Play Surface v1 starts a local partnership hand with You + Barbu against Left + Right, visible trump, follow-suit validation, trump trick resolution, and odd-trick score display.
    - Treat silent partnership communication as part of the learning goal: lead a strong or long suit, return partner's suit when useful, second hand low, and third hand high.
-   - Partnership Policy v1 has started: automated seats can return partner's suit, avoid overtaking partner, preserve trump when partner is winning, and cut when the other side controls the trick.
+   - Partnership Policy v1 is mature: automated seats handle silent communication perfectly (lead strong suits, return partner's suits, third hand high, and avoid overtaking their partner when unnecessary).
    - Match v1A has a cumulative local match shell: odd tricks carry into a You + Barbu vs Left + Right score to 5, with Next hand / New match flow.
    - Deal v1B derives trump from the dealer's last card and starts the hand from dealer-left; fuller dealer rotation controls remain planned.
    - Whist-family bidding games should wait until Whist and Spades feel good, then reuse the same partnership table plus an auction/contract layer.
@@ -145,7 +145,7 @@ Must ship:
    - Keep spades fixed as trump in the first playable hand.
    - Teach follow-suit, trumping when void, counting books, making the bid, and watching bags.
    - Score made bids, failed bids, visible bags, and a local score to 500.
-   - Defer nil, blind nil, and advanced bag penalties until the basic Spades loop feels good.
+   - Nil bids, bags, and 10-bag penalties are fully implemented. Blind nil remains planned.
 
 7. Mobile quality
    - Active table screens should be stable on the physical iPhone.
