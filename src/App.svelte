@@ -50,7 +50,7 @@
   import type { SpadesLearnPathAction, SpadesPracticeAction } from "./games/spades";
   import type { WhistLearnPathAction, WhistPracticeAction } from "./games/whist";
   import {
-    createCatalogEntries,
+    getCatalogCategories,
     type ActiveGameTable,
     type CatalogGameId,
     type LearnPathStep,
@@ -412,7 +412,7 @@
     savedAt: string;
   };
 
-  const catalogEntries = createCatalogEntries();
+  const catalogCategories = getCatalogCategories();
   const barbuUi = registry.get("barbu")!;
   const heartsUi = registry.get("hearts")!;
   const whistUi = registry.get("whist")!;
@@ -9186,7 +9186,7 @@
         <p class="eyebrow">Card game catalog</p>
         <h1 id="catalog-title">Choose a table</h1>
         <p class="intro">
-          Pick the game first. Each table keeps its own learning path, practice hands, play modes, and reference.
+          Learn, practice, and play. Follow the Bridge path from Hearts to Whist, or explore other classic card club games.
         </p>
       </div>
 
@@ -9198,33 +9198,35 @@
     </section>
 
     <section class="catalog-section" aria-label="Games">
-      <div class="section-heading">
-        <p class="eyebrow">Games</p>
-        <h2>Core games</h2>
-      </div>
+      {#each catalogCategories as category}
+        <div class="section-heading">
+          <p class="eyebrow">{category.summary}</p>
+          <h2>{category.title}</h2>
+        </div>
 
-      <div class="game-grid">
-        {#each catalogEntries as game}
-          <button
-            aria-label={game.status === "Ready" ? `Open ${game.title}` : `${game.title} planned`}
-            class:ready={game.status === "Ready"}
-            class="game-card"
-            disabled={game.status !== "Ready"}
-            onclick={() => openGame(game.id)}
-            type="button"
-          >
-            <span class="game-card-meta">
-              <span class="game-family">{game.family}</span>
-              <span class:free-access={game.access === "Free"} class="game-access">{game.access}</span>
-            </span>
-            <strong>{game.title}</strong>
-            <span class="game-summary">{game.summary}</span>
-            <span class="game-footer">
-              <span>{game.status}</span>
-            </span>
-          </button>
-        {/each}
-      </div>
+        <div class="game-grid">
+          {#each category.entries as game}
+            <button
+              aria-label={game.status === "Ready" ? `Open ${game.title}` : `${game.title} planned`}
+              class:ready={game.status === "Ready"}
+              class="game-card"
+              disabled={game.status !== "Ready"}
+              onclick={() => openGame(game.id)}
+              type="button"
+            >
+              <span class="game-card-meta">
+                <span class="game-family">{game.family}</span>
+                <span class:free-access={game.access === "Free"} class="game-access">{game.access}</span>
+              </span>
+              <strong>{game.title}</strong>
+              <span class="game-summary">{game.summary}</span>
+              <span class="game-footer">
+                <span>{game.status}</span>
+              </span>
+            </button>
+          {/each}
+        </div>
+      {/each}
     </section>
   {:else if appView === "cardCountingTable"}
     <header class="topbar table-topbar" aria-label="Card Counting I table">

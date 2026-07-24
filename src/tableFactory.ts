@@ -154,97 +154,125 @@ function createCatalogEntry(entry: CatalogEntry): CatalogEntry {
   return entry;
 }
 
-export function createCatalogEntries(): CatalogEntry[] {
+export type CatalogCategory = {
+  id: string;
+  title: string;
+  summary: string;
+  entries: CatalogEntry[];
+};
+
+export function getCatalogCategories(): CatalogCategory[] {
   return [
-    createCatalogEntry({
-      id: "hearts",
-      family: "Hearts",
-      title: "Hearts",
-      status: "Ready",
-      access: "Free",
-      accessModel: "free-starter",
-      summary: "Black Lady style penalty play."
-    }),
-    createCatalogEntry({
-      id: "barbu",
-      family: "Hearts",
-      title: "Barbu",
-      status: "Ready",
-      access: "Free",
-      accessModel: "free-starter",
-      summary: "Seven-contract table play with changing objectives."
-    }),
-    createCatalogEntry({
-      id: "whist",
-      family: "Whist",
-      title: "Whist",
-      status: "Ready",
-      access: "Free",
-      accessModel: "free-starter",
-      summary: "Partnership trick play and silent suit signals."
-    }),
-    createCatalogEntry({
-      id: "spades",
-      family: "Whist",
-      title: "Spades",
-      status: "Ready",
-      access: "Free",
-      accessModel: "free-starter",
-      summary: "Partnership trick play with spades always trump."
-    }),
-    createCatalogEntry({
-      id: "card-counting",
-      family: "Skill pack",
-      title: "Card Counting I",
-      status: "Ready",
-      access: "Pack",
-      accessModel: "metered-pack",
-      summary: "4 minigames for real-hand memory: trumps, court cards, and danger cards."
-    }),
-    createCatalogEntry({
-      id: "card-counting-ii",
-      family: "Skill pack",
-      title: "Card Counting II",
-      status: "Planned",
-      access: "Pack",
-      accessModel: "metered-pack",
-      summary: "Bridge-oriented counting for suits, high cards, and table inference."
-    }),
-    createCatalogEntry({
-      id: "solitaire",
-      family: "Patience",
-      title: "Solitaire",
-      status: "Planned",
-      access: "Pack",
-      accessModel: "metered-pack",
-      summary: "Solo card play for practicing order, suits, and patience habits."
-    }),
-    createCatalogEntry({
-      id: "bridge",
-      family: "Bridge",
-      title: "Bridge",
-      status: "Planned",
-      access: "Pack",
-      accessModel: "metered-pack",
-      summary: "Declarer play, defense, and bidding concepts."
-    }),
-    createCatalogEntry({
-      id: "gin-rummy",
-      family: "Rummy",
-      title: "Gin Rummy",
-      status: "Planned",
-      access: "Pack",
-      accessModel: "metered-pack",
-      summary: "Draw, discard, meld, and read what the opponent is collecting."
-    }),
-    createCatalogEntry({
-      id: "canasta",
-      family: "Rummy",
-      title: "Canasta",
-      status: "Planned",
-      access: "Pack",
-      accessModel: "metered-pack",
-      summary: "Partnership meld-building with wild cards, packs, and bonuses."
-    })
+    {
+      id: "bridge-path",
+      title: "The Bridge Path",
+      summary: "Learn the fundamentals of trick-taking and partnership play.",
+      entries: [
+        createCatalogEntry({
+          id: "hearts",
+          family: "Hearts",
+          title: "Hearts",
+          status: "Ready",
+          access: "Free",
+          accessModel: "free-starter",
+          summary: "Black Lady style penalty play."
+        }),
+        createCatalogEntry({
+          id: "whist",
+          family: "Whist",
+          title: "Whist",
+          status: "Ready",
+          access: "Free",
+          accessModel: "free-starter",
+          summary: "Partnership trick play and silent suit signals."
+        }),
+        createCatalogEntry({
+          id: "spades",
+          family: "Whist",
+          title: "Spades",
+          status: "Ready",
+          access: "Free",
+          accessModel: "free-starter",
+          summary: "Partnership trick play with spades always trump."
+        }),
+        createCatalogEntry({
+          id: "bridge",
+          family: "Bridge",
+          title: "Bridge",
+          status: "Planned",
+          access: "Pack",
+          accessModel: "metered-pack",
+          summary: "Declarer play, defense, and bidding concepts."
+        })
+      ]
+    },
+    {
+      id: "club-games",
+      title: "Club Games",
+      summary: "Other classic card club tables.",
+      entries: [
+        createCatalogEntry({
+          id: "barbu",
+          family: "Hearts",
+          title: "Barbu",
+          status: "Ready",
+          access: "Free",
+          accessModel: "free-starter",
+          summary: "Seven-contract table play with changing objectives."
+        }),
+        createCatalogEntry({
+          id: "gin-rummy",
+          family: "Rummy",
+          title: "Gin Rummy",
+          status: "Planned",
+          access: "Pack",
+          accessModel: "metered-pack",
+          summary: "Draw, discard, meld, and read what the opponent is collecting."
+        }),
+        createCatalogEntry({
+          id: "canasta",
+          family: "Rummy",
+          title: "Canasta",
+          status: "Planned",
+          access: "Pack",
+          accessModel: "metered-pack",
+          summary: "Partnership meld-building with wild cards, packs, and bonuses."
+        })
+      ]
+    },
+    {
+      id: "skill-packs",
+      title: "Skill Packs & Solitaire",
+      summary: "Solo drills and memory trainers.",
+      entries: [
+        createCatalogEntry({
+          id: "card-counting",
+          family: "Skill pack",
+          title: "Card Counting I",
+          status: "Ready",
+          access: "Pack",
+          accessModel: "metered-pack",
+          summary: "4 minigames for real-hand memory: trumps, court cards, and danger cards."
+        }),
+        createCatalogEntry({
+          id: "card-counting-ii",
+          family: "Skill pack",
+          title: "Card Counting II",
+          status: "Planned",
+          access: "Pack",
+          accessModel: "metered-pack",
+          summary: "Bridge-oriented counting for suits, high cards, and table inference."
+        }),
+        createCatalogEntry({
+          id: "solitaire",
+          family: "Patience",
+          title: "Solitaire",
+          status: "Planned",
+          access: "Pack",
+          accessModel: "metered-pack",
+          summary: "Solo card play for practicing order, suits, and patience habits."
+        })
+      ]
+    }
   ];
 }

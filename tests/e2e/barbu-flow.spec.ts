@@ -335,7 +335,9 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: "Choose a table" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Core games" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "The Bridge Path" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Club Games" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Skill Packs & Solitaire" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Hearts" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Barbu" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Card Counting I" })).toContainText("Pack");
@@ -358,7 +360,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
     .poll(async () =>
       page.locator(".game-card strong").evaluateAll((items) => items.slice(0, 5).map((item) => item.textContent?.trim()))
     )
-    .toEqual(["Hearts", "Barbu", "Whist", "Spades", "Card Counting I"]);
+    .toEqual(["Hearts", "Whist", "Spades", "Bridge", "Barbu"]);
 
   await page.screenshot({ path: testInfo.outputPath("catalog.png"), fullPage: true });
 
