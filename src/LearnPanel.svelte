@@ -43,12 +43,28 @@
           ? "Spades learn actions"
           : "Learn actions"
   );
+
+  let courseAction = $derived({
+    id: "course",
+    eyebrow: nextStep ? "Lesson" : "Path",
+    title: nextStep ? nextStep.title : "Review path",
+    summary: nextStep ? nextStep.summary : table.learn.completeSummary,
+    primary: true,
+    disabled: !nextStep,
+    onClick: () => {
+      if (nextStep) {
+        onStepSelect(nextStep);
+      }
+    }
+  });
+
+  let allActions = $derived([courseAction, ...actions]);
 </script>
 
 <div aria-label="Learn" class="barbu-tab-panel learn-panel" id={table.tabs.learn.panelId} role="tabpanel">
   <div class="table-action-groups" aria-label={tableActionLabel}>
     <section class="learn-action-grid" aria-label={learnActionLabel}>
-      {#each actions as action}
+      {#each allActions as action}
         <button
           class:primary={action.primary}
           class="learn-action-card"

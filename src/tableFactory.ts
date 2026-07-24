@@ -147,7 +147,7 @@ export function tableTabLabel(tab: TableTabId) {
 }
 
 export function tableTabsFor(table: GameTableDefinition) {
-  return tableTabIds.map((tab) => table.tabs[tab]);
+  return tableTabIds.filter(tab => tab !== "perfect").map((tab) => table.tabs[tab]);
 }
 
 function createCatalogEntry(entry: CatalogEntry): CatalogEntry {

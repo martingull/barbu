@@ -3048,7 +3048,6 @@
       eyebrow: "Rules",
       title: "Reference",
       summary: barbuUi.table.learn.referenceSummary,
-      primary: true,
       onClick: () => openReference(barbuUi.table.referenceId)
     },
     {
@@ -3065,7 +3064,6 @@
       eyebrow: "Rules",
       title: "Reference",
       summary: heartsUi.table.learn.referenceSummary,
-      primary: true,
       onClick: () => openReference(heartsUi.table.referenceId)
     }
   ];
@@ -3075,27 +3073,10 @@
       eyebrow: "Rules",
       title: "Reference",
       summary: whistUi.table.learn.referenceSummary,
-      primary: true,
       onClick: () => openReference(whistUi.table.referenceId)
     }
   ];
-  $: nextSpadesLearnStep = findNextSpadesPathStep();
   $: spadesLearnPanelActions = [
-    {
-      id: "course",
-      eyebrow: nextSpadesLearnStep ? "Lesson" : "Path",
-      title: nextSpadesLearnStep ? nextSpadesLearnStep.title : "Review path",
-      summary: nextSpadesLearnStep
-        ? nextSpadesLearnStep.summary
-        : "You have completed the current Spades learning path.",
-      primary: true,
-      disabled: !nextSpadesLearnStep,
-      onClick: () => {
-        if (nextSpadesLearnStep) {
-          startSpadesPathStep(nextSpadesLearnStep);
-        }
-      }
-    },
     {
       id: "reference",
       eyebrow: "Rules",

@@ -158,7 +158,7 @@ async function expectTableSlotsSeparated(page: Page) {
     .toBe(true);
 }
 
-async function openBarbuTab(page: Page, tab: "Learn" | "Practice" | "Play" | "Pro") {
+async function openBarbuTab(page: Page, tab: "Learn" | "Practice" | "Play") {
   await page.getByRole("tab", { name: tab }).click();
   await expect(page.getByRole("tab", { name: tab })).toHaveAttribute("aria-selected", "true");
 }
@@ -400,7 +400,6 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByLabel("Barbu table actions").getByRole("button", { name: "Play Barbu" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Practice" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Learn" })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Pro" })).toBeVisible();
 
   await openBarbuTab(page, "Learn");
   await expect(page.getByRole("button", { name: /^1 Concept Meet the contract/ })).toBeVisible();
@@ -429,13 +428,6 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await openBarbuTab(page, "Play");
   await expect(page.getByLabel("Barbu table actions").getByRole("button", { name: "Play Barbu" })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath("barbu-play.png"), fullPage: true });
-
-  await openBarbuTab(page, "Pro");
-  await expect(page.getByRole("heading", { name: "Paid table play." })).toBeVisible();
-  await expect(page.getByLabel("Barbu Pro features")).toContainText("Play against AI");
-  await expect(page.getByLabel("Barbu Pro features")).toContainText("Competitive Play");
-  await expect(page.getByLabel("Barbu Pro features")).not.toContainText("Count trumps");
-  await page.screenshot({ path: testInfo.outputPath("barbu-perfect.png"), fullPage: true });
 
   await page.getByRole("button", { name: "Games" }).click();
   await page.getByRole("button", { name: "Open Card Counting I" }).click();
@@ -933,12 +925,6 @@ test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testI
   await page.getByLabel("Drill decision").getByRole("button", { name: "Table" }).click();
   await expect(page.getByRole("heading", { name: "Hearts table" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
-
-  await page.getByRole("tab", { name: "Pro" }).click();
-  await expect(page.getByRole("tab", { name: "Pro" })).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByLabel("Hearts Pro features")).toContainText("Play against AI");
-  await expect(page.getByLabel("Hearts Pro features")).toContainText("Competitive Play");
-  await expect(page.getByLabel("Hearts Pro features").getByRole("button")).toHaveCount(0);
 });
 
 test("Hearts learn start advances through learning stages instead of play loop", async ({ page }) => {
@@ -2611,8 +2597,6 @@ test("completed course does not loop back to the first lesson", async ({ page })
   await expect(page.getByRole("button", { name: /^9 Review Review the hand/ })).toContainText("Complete");
   await expect(page.getByRole("button", { name: /^1 Concept Meet the contract/ })).toContainText("Complete");
 
-  await openBarbuTab(page, "Pro");
-  await expect(page.getByRole("tab", { name: "Pro" })).toHaveAttribute("aria-selected", "true");
   await page.getByRole("button", { name: "Games" }).click();
   await page.getByRole("button", { name: /Open Barbu/ }).click();
   await openBarbuTab(page, "Learn");
