@@ -1,6 +1,7 @@
 <script lang="ts">
   import { invoke, isTauri } from "@tauri-apps/api/core";
   import {
+    applyBrowserBridgeAuction,
     applyBrowserHeartsPass,
     generateBrowserHeartsPassPractice,
     playBrowserHeartsCard,
@@ -73,6 +74,7 @@
     BridgeAuctionCall,
     BridgeContractState,
     BridgeStrain,
+    BridgeVulnerability,
     HeartsPassScenario,
     PracticeReason,
     Seat,
@@ -211,6 +213,30 @@
     longLabel: string;
     target: number;
     order: number;
+  };
+
+  type BridgeCallOption = "Pass" | "Double" | "Redouble" | BridgeBidOption["id"];
+
+  type BridgeAuctionStatus = {
+    complete: boolean;
+    passedOut: boolean;
+    currentSeat: Seat;
+    lastBid?: BridgeAuctionCall;
+    doubled: boolean;
+    redoubled: boolean;
+  };
+
+  type BridgeHandResult = {
+    handNumber: number;
+    contract: string;
+    declarer: Seat;
+    declarerSide: "NS" | "EW";
+    vulnerability: BridgeVulnerability;
+    target: number;
+    tricks: number;
+    defenders: number;
+    score: number;
+    made: boolean;
   };
 
   type FullHandRunResult = {
@@ -2726,8 +2752,11 @@
   let spadesBagScores: SpadesScoreState = { playerSide: 0, opponentSide: 0 };
   let spadesHandResults: SpadesHandResult[] = [];
   let bridgeAuctionSelectedBidId = "1NT";
+  let bridgeAuctionSelectedCall: BridgeCallOption = "1NT";
   let bridgeAuctionCalls: BridgeAuctionCall[] = [];
   let bridgeAuctionError = "";
+  let bridgeHandResults: BridgeHandResult[] = [];
+  let bridgeMatchScores = { ns: 0, ew: 0 };
   $: spadesPartnershipBids = {
     playerSide: spadesSideBid(spadesBids, spadesPlayerSideSeats),
     opponentSide: spadesSideBid(spadesBids, spadesOpponentSideSeats)
@@ -2934,6 +2963,57 @@
       }),
       { playerSide: 0, opponentSide: 0 }
     );
+  }
+
+  function bridgeDeclarerTrickCounts(hand: FullHandState | null) {
+    const contract = hand?.bridgeContract;
+    if (!hand || !contract) {
+      return { declarer: 0, defenders: 0 };
+    }
+
+    const declarerSide = playerIndexBySeat[contract.declarer] % 2;
+
+    return hand.completedTricks.reduce(
+      (totals, trick) => ({
+        declarer: totals.declarer + (trick.winnerIndex % 2 === declarerSide ? 1 : 0),
+        defenders: totals.defenders + (trick.winnerIndex % 2 === declarerSide ? 0 : 1)
+      }),
+      { declarer: 0, defenders: 0 }
+    );
+  }
+
+  function bridgeHandResultFor(hand: FullHandState, handNumber = bridgeHandResults.length + 1): BridgeHandResult | null {
+    const contract = hand.bridgeContract;
+    if (!contract) {
+      return null;
+    }
+
+    const counts = bridgeDeclarerTrickCounts(hand);
+    const score = bridgeDuplicateScore(contract, counts.declarer);
+
+    return {
+      handNumber,
+      contract: contract.label,
+      declarer: contract.declarer,
+      declarerSide: contract.declarerSide ?? bridgeSideForSeat(contract.declarer),
+      vulnerability: contract.vulnerability,
+      target: contract.target,
+      tricks: counts.declarer,
+      defenders: counts.defenders,
+      score,
+      made: counts.declarer >= contract.target
+    };
+  }
+
+  function bridgeScoreTotalsWith(result: BridgeHandResult | null) {
+    if (!result) {
+      return bridgeMatchScores;
+    }
+
+    return {
+      ns: bridgeMatchScores.ns + (result.declarerSide === "NS" ? result.score : -result.score),
+      ew: bridgeMatchScores.ew + (result.declarerSide === "EW" ? result.score : -result.score)
+    };
   }
 
   function addWhistMatchResult(scores: { playerSide: number; opponentSide: number }, result: WhistHandResult) {
@@ -3215,6 +3295,18 @@
     return bridgeBidOptions.find((bid) => bid.id === id) ?? bridgeBidOptions[4];
   }
 
+  function bridgeBidFromCall(call: string) {
+    const normalized = call.replace(/[♣♦♥♠]/g, (symbol) => {
+      if (symbol === "♣") return "C";
+      if (symbol === "♦") return "D";
+      if (symbol === "♥") return "H";
+      if (symbol === "♠") return "S";
+      return symbol;
+    }).replace(/\s+/g, "");
+
+    return bridgeBidOptions.find((bid) => bid.id === normalized || bid.label === call || bid.longLabel === call);
+  }
+
   function bridgeSuggestedBidForHand(cards: Card[]) {
     const points = bridgeHighCardPoints(cards);
     const balanced = bridgeIsBalanced(cards);
@@ -3235,6 +3327,222 @@
     return bridgeBidById("1NT");
   }
 
+  function bridgeDealerSeat(hand: FullHandState | null = fullHand): Seat {
+    return hand?.bridgeDealer ?? "You";
+  }
+
+  function bridgeDealerIndex(hand: FullHandState | null = fullHand) {
+    return playerIndexBySeat[bridgeDealerSeat(hand)];
+  }
+
+  function bridgeVulnerabilityForHand(hand: FullHandState | null = fullHand): BridgeVulnerability {
+    return hand?.bridgeVulnerability ?? "None";
+  }
+
+  function bridgeSideForSeat(seat: Seat): "NS" | "EW" {
+    return playerIndexBySeat[seat] % 2 === 0 ? "NS" : "EW";
+  }
+
+  function bridgeSeatLabel(seat: Seat) {
+    if (seat === "Tutor") return "Barbu";
+    if (seat === "You") return "South";
+    if (seat === "Right") return "East";
+    return "West";
+  }
+
+  function bridgePartnershipLabel(side: "NS" | "EW") {
+    return side === "NS" ? "North-South" : "East-West";
+  }
+
+  function bridgeAuctionStatus(calls: BridgeAuctionCall[], dealerIndex = bridgeDealerIndex()): BridgeAuctionStatus {
+    const currentSeat = seatByPlayerIndex[(dealerIndex + calls.length) % 4];
+    const lastBid = [...calls].reverse().find((call) => Boolean(bridgeBidFromCall(call.call)));
+    const callsAfterLastBid = lastBid ? calls.slice(calls.lastIndexOf(lastBid) + 1) : calls;
+    const passedOut = !lastBid && calls.length >= 4 && calls.slice(-4).every((call) => call.call === "Pass");
+    const complete = passedOut || Boolean(lastBid && callsAfterLastBid.length >= 3 && callsAfterLastBid.slice(-3).every((call) => call.call === "Pass"));
+    const doubled = lastBid ? callsAfterLastBid.some((call) => call.call === "X") : false;
+    const redoubled = lastBid ? callsAfterLastBid.some((call) => call.call === "XX") : false;
+
+    return { complete, passedOut, currentSeat, lastBid, doubled, redoubled };
+  }
+
+  function bridgeLastBidOption(calls = bridgeAuctionCalls) {
+    return bridgeBidFromCall([...calls].reverse().find((call) => Boolean(bridgeBidFromCall(call.call)))?.call ?? "");
+  }
+
+  function bridgeCanBid(option: BridgeBidOption, calls = bridgeAuctionCalls) {
+    const lastBid = bridgeLastBidOption(calls);
+    return !lastBid || option.order > lastBid.order;
+  }
+
+  function bridgeCanDouble(calls = bridgeAuctionCalls, seat = bridgeAuctionStatus(calls).currentSeat) {
+    const status = bridgeAuctionStatus(calls);
+    if (!status.lastBid || status.doubled || status.redoubled) {
+      return false;
+    }
+
+    return bridgeSideForSeat(status.lastBid.seat) !== bridgeSideForSeat(seat);
+  }
+
+  function bridgeCanRedouble(calls = bridgeAuctionCalls, seat = bridgeAuctionStatus(calls).currentSeat) {
+    const status = bridgeAuctionStatus(calls);
+    if (!status.lastBid || !status.doubled || status.redoubled) {
+      return false;
+    }
+
+    return bridgeSideForSeat(status.lastBid.seat) === bridgeSideForSeat(seat);
+  }
+
+  function bridgeLegalCallOptions(calls = bridgeAuctionCalls, seat = bridgeAuctionStatus(calls).currentSeat): BridgeCallOption[] {
+    const options: BridgeCallOption[] = ["Pass"];
+
+    if (bridgeCanDouble(calls, seat)) {
+      options.push("Double");
+    }
+    if (bridgeCanRedouble(calls, seat)) {
+      options.push("Redouble");
+    }
+
+    options.push(...bridgeBidOptions.filter((bid) => bridgeCanBid(bid, calls)).map((bid) => bid.id));
+    return options;
+  }
+
+  function bridgeCallLabel(call: BridgeCallOption) {
+    if (call === "Pass") return "Pass";
+    if (call === "Double") return "X";
+    if (call === "Redouble") return "XX";
+    return bridgeBidById(call).label;
+  }
+
+  function bridgeCallLongLabel(call: BridgeCallOption) {
+    if (call === "Pass") return "Pass";
+    if (call === "Double") return "Double";
+    if (call === "Redouble") return "Redouble";
+    return bridgeBidById(call).longLabel;
+  }
+
+  function bridgeChooseAutoCall(hand: FullHandState, seat: Seat, calls: BridgeAuctionCall[]): BridgeCallOption {
+    const cards = hand.hands[playerIndexBySeat[seat]] ?? [];
+    const points = bridgeHighCardPoints(cards);
+    const legal = bridgeLegalCallOptions(calls, seat);
+    const lastBid = bridgeLastBidOption(calls);
+    const partnerLastBid = [...calls].reverse().find((call) => bridgeSideForSeat(call.seat) === bridgeSideForSeat(seat) && Boolean(bridgeBidFromCall(call.call)));
+    const opponentsHaveBid = calls.some((call) => bridgeSideForSeat(call.seat) !== bridgeSideForSeat(seat) && Boolean(bridgeBidFromCall(call.call)));
+
+    if (bridgeCanDouble(calls, seat) && points >= 16) {
+      return "Double";
+    }
+
+    if (!lastBid && points >= 12) {
+      return bridgeSuggestedBidForHand(cards).id;
+    }
+
+    if (partnerLastBid && points >= 10) {
+      const partnerBid = bridgeBidFromCall(partnerLastBid.call);
+      const raise = partnerBid && partnerBid.strain !== "NT" && bridgeSuitCount(cards, partnerBid.strain) >= 3
+        ? bridgeBidById(`${Math.min(4, partnerBid.level + (points >= 13 ? 2 : 1))}${partnerBid.strain}`)
+        : bridgeBidById(points >= 13 ? "3NT" : "2NT");
+      if (legal.includes(raise.id)) {
+        return raise.id;
+      }
+    }
+
+    if (opponentsHaveBid && points >= 13) {
+      const overcall = bridgeBidOptions.find((bid) => bid.level <= 2 && bid.strain === bridgeLongestSuit(cards) && legal.includes(bid.id));
+      if (overcall) {
+        return overcall.id;
+      }
+    }
+
+    return "Pass";
+  }
+
+  function bridgeAutoAdvanceAuction(calls: BridgeAuctionCall[], hand: FullHandState | null = fullHand) {
+    if (!hand) {
+      return calls;
+    }
+
+    let nextCalls = [...calls];
+
+    while (!bridgeAuctionStatus(nextCalls, bridgeDealerIndex(hand)).complete) {
+      const seat = bridgeAuctionStatus(nextCalls, bridgeDealerIndex(hand)).currentSeat;
+      if (seat === "You") {
+        break;
+      }
+
+      const call = bridgeChooseAutoCall(hand, seat, nextCalls);
+      nextCalls = [...nextCalls, { seat, call: bridgeCallLabel(call) }];
+    }
+
+    return nextCalls;
+  }
+
+  function bridgeApplyUserCall(call: BridgeCallOption) {
+    if (!fullHand) {
+      return;
+    }
+
+    const status = bridgeAuctionStatus(bridgeAuctionCalls, bridgeDealerIndex(fullHand));
+    if (status.complete || status.currentSeat !== "You") {
+      return;
+    }
+
+    if (!bridgeLegalCallOptions(bridgeAuctionCalls, "You").includes(call)) {
+      bridgeAuctionError = "That call is not legal in the current auction.";
+      return;
+    }
+
+    const nextCalls = bridgeAutoAdvanceAuction([...bridgeAuctionCalls, { seat: "You", call: bridgeCallLabel(call) }], fullHand);
+    bridgeAuctionCalls = nextCalls;
+    bridgeAuctionSelectedCall = bridgeSuggestedLegalUserCall();
+    bridgeAuctionSelectedBidId = bridgeAuctionSelectedCall === "Pass" || bridgeAuctionSelectedCall === "Double" || bridgeAuctionSelectedCall === "Redouble" ? bridgeAuctionSelectedBidId : bridgeAuctionSelectedCall;
+    bridgeAuctionError = "";
+  }
+
+  function bridgeSuggestedLegalUserCall() {
+    const legal = bridgeLegalCallOptions(bridgeAuctionCalls, "You");
+    const suggested = bridgeSuggestedBid.id;
+
+    if (legal.includes(suggested)) {
+      return suggested;
+    }
+
+    return "Pass";
+  }
+
+  function bridgeFinalizeContract(calls = bridgeAuctionCalls, hand: FullHandState | null = fullHand): BridgeContractState | null {
+    const lastBidCall = [...calls].reverse().find((call) => Boolean(bridgeBidFromCall(call.call)));
+    const bid = bridgeBidFromCall(lastBidCall?.call ?? "");
+
+    if (!lastBidCall || !bid || !hand) {
+      return null;
+    }
+
+    const declarerSide = bridgeSideForSeat(lastBidCall.seat);
+    const firstStrainBid = calls.find((call) => bridgeSideForSeat(call.seat) === declarerSide && bridgeBidFromCall(call.call)?.strain === bid.strain);
+    const declarer = firstStrainBid?.seat ?? lastBidCall.seat;
+    const declarerIndex = playerIndexBySeat[declarer];
+    const dummy = seatByPlayerIndex[(declarerIndex + 2) % 4];
+    const openingLeader = seatByPlayerIndex[(declarerIndex + 1) % 4];
+    const status = bridgeAuctionStatus(calls, bridgeDealerIndex(hand));
+    const suffix = status.redoubled ? " redoubled" : status.doubled ? " doubled" : "";
+
+    return {
+      level: bid.level,
+      strain: bid.strain,
+      label: `${bid.longLabel}${suffix}`,
+      declarer,
+      dummy,
+      target: bid.target,
+      vulnerability: bridgeVulnerabilityForHand(hand),
+      doubled: status.doubled,
+      redoubled: status.redoubled,
+      declarerSide,
+      dealer: bridgeDealerSeat(hand),
+      openingLeader
+    };
+  }
+
   function bridgeContractFromBid(bid: BridgeBidOption): BridgeContractState {
     return {
       level: bid.level,
@@ -3243,7 +3551,10 @@
       declarer: "You",
       dummy: "Tutor",
       target: bid.target,
-      vulnerability: "None"
+      vulnerability: "None",
+      declarerSide: "NS",
+      dealer: "You",
+      openingLeader: "Left"
     };
   }
 
@@ -3254,6 +3565,74 @@
       { seat: "Tutor", call: "Pass" },
       { seat: "Right", call: "Pass" }
     ];
+  }
+
+  function bridgeContractTrickPoints(contract: BridgeContractState) {
+    const base = contract.strain === "C" || contract.strain === "D" ? 20 : 30;
+    const noTrumpBonus = contract.strain === "NT" ? 10 : 0;
+    const undoubled = contract.level * base + noTrumpBonus;
+
+    return undoubled * (contract.redoubled ? 4 : contract.doubled ? 2 : 1);
+  }
+
+  function bridgeOvertrickPoints(contract: BridgeContractState, overtricks: number) {
+    if (overtricks <= 0) {
+      return 0;
+    }
+
+    const vulnerable = bridgeContractIsVulnerable(contract);
+
+    if (contract.redoubled) {
+      return overtricks * (vulnerable ? 400 : 200);
+    }
+    if (contract.doubled) {
+      return overtricks * (vulnerable ? 200 : 100);
+    }
+
+    return overtricks * (contract.strain === "C" || contract.strain === "D" ? 20 : 30);
+  }
+
+  function bridgeUndertrickPenalty(contract: BridgeContractState, undertricks: number) {
+    if (undertricks <= 0) {
+      return 0;
+    }
+
+    const vulnerable = bridgeContractIsVulnerable(contract);
+
+    if (!contract.doubled && !contract.redoubled) {
+      return undertricks * (vulnerable ? 100 : 50);
+    }
+
+    const doubledPenalty = Array.from({ length: undertricks }, (_, index) => {
+      if (vulnerable) {
+        return index === 0 ? 200 : 300;
+      }
+
+      if (index === 0) return 100;
+      if (index <= 2) return 200;
+      return 300;
+    }).reduce((total, value) => total + value, 0);
+
+    return contract.redoubled ? doubledPenalty * 2 : doubledPenalty;
+  }
+
+  function bridgeContractIsVulnerable(contract: BridgeContractState) {
+    return contract.vulnerability === "Both" || contract.vulnerability === contract.declarerSide;
+  }
+
+  function bridgeDuplicateScore(contract: BridgeContractState, declarerTricks: number) {
+    const overtricks = declarerTricks - contract.target;
+
+    if (overtricks < 0) {
+      return -bridgeUndertrickPenalty(contract, Math.abs(overtricks));
+    }
+
+    const contractPoints = bridgeContractTrickPoints(contract);
+    const gameBonus = contractPoints >= 100 ? (bridgeContractIsVulnerable(contract) ? 500 : 300) : 50;
+    const slamBonus = contract.level === 6 ? (bridgeContractIsVulnerable(contract) ? 750 : 500) : contract.level === 7 ? (bridgeContractIsVulnerable(contract) ? 1500 : 1000) : 0;
+    const insult = contract.redoubled ? 100 : contract.doubled ? 50 : 0;
+
+    return contractPoints + gameBonus + slamBonus + insult + bridgeOvertrickPoints(contract, overtricks);
   }
 
   $: selectedLesson = guidedLessons.find((lesson) => lesson.id === selectedLessonId) ?? guidedLessons[0];
@@ -3650,7 +4029,10 @@
   $: fullHandIsSpadesGame = activeGameTable === "spades" && fullHand?.contract === "Spades" && !fullHandRunActive;
   $: fullHandIsBridgeGame = activeGameTable === "bridge" && fullHand?.contract === "Bridge" && !fullHandRunActive;
   $: fullHandIsPartnershipGame = fullHandIsWhistGame || fullHandIsSpadesGame || fullHandIsBridgeGame;
-  $: isBridgeDummyTurn = fullHandIsBridgeGame && fullHand?.currentPlayer === "Tutor";
+  $: bridgeDummySeat = fullHand?.bridgeContract?.dummy ?? "Tutor";
+  $: bridgeDeclarerSeat = fullHand?.bridgeContract?.declarer ?? "You";
+  $: bridgeUserSideDeclares = fullHandIsBridgeGame && (bridgeSideForSeat(bridgeDeclarerSeat) === "NS");
+  $: isBridgeDummyTurn = fullHandIsBridgeGame && bridgeUserSideDeclares && fullHand?.currentPlayer === bridgeDummySeat;
   $: whistOpeningLeadPracticeActive = fullHandIsWhistGame && whistFullHandSource === "practice" && activeWhistPracticeFocus === "lead";
   $: whistOpeningLeadPracticeReview =
     whistOpeningLeadPracticeActive &&
@@ -3670,14 +4052,21 @@
   $: whistOpponentSideOddTricks = whistOddScore.opponentSideOddTricks;
   $: whistOddProgressLabel = whistOddScore.label;
   $: whistOddProgressValue = whistOddScore.value;
+  $: bridgeAuctionCurrentStatus = bridgeAuctionStatus(bridgeAuctionCalls, bridgeDealerIndex(fullHand));
+  $: bridgeAuctionLegalCalls = bridgeLegalCallOptions(bridgeAuctionCalls, bridgeAuctionCurrentStatus.currentSeat);
+  $: bridgeAuctionReadyToPlay = bridgeAuctionCurrentStatus.complete && !bridgeAuctionCurrentStatus.passedOut;
+  $: bridgeAuctionActionLabel = bridgeAuctionReadyToPlay ? "Start play" : bridgeAuctionCurrentStatus.passedOut ? "Deal again" : "Make call";
   $: bridgeSelectedBid = bridgeBidOptions.find((bid) => bid.id === bridgeAuctionSelectedBidId) ?? bridgeBidOptions[4];
   $: bridgeSuggestedBid = bridgeSuggestedBidForHand(fullHand?.playerHand ?? []);
-  $: bridgeVisibleContract = fullHand?.bridgeContract ?? bridgeContractFromBid(bridgeSelectedBid);
+  $: bridgeVisibleContract = fullHand?.bridgeContract ?? bridgeFinalizeContract(bridgeAuctionCalls, fullHand) ?? bridgeContractFromBid(bridgeSelectedBid);
   $: bridgeContractLabel = bridgeVisibleContract.label;
-  $: bridgeDeclarerTricks = whistPartnershipTricks.playerSide;
-  $: bridgeDefenderTricks = whistPartnershipTricks.opponentSide;
+  $: bridgeTrickCounts = bridgeDeclarerTrickCounts(fullHand);
+  $: bridgeDeclarerTricks = bridgeTrickCounts.declarer;
+  $: bridgeDefenderTricks = bridgeTrickCounts.defenders;
   $: bridgeContractTarget = bridgeVisibleContract.target;
   $: bridgeContractMade = bridgeDeclarerTricks >= bridgeContractTarget;
+  $: currentBridgeHandResult = fullHandIsBridgeGame && fullHand?.status === "complete" ? bridgeHandResultFor(fullHand) : null;
+  $: bridgeVisibleMatchScores = bridgeScoreTotalsWith(currentBridgeHandResult);
   $: currentWhistHandResult = fullHandIsWhistGame && fullHand?.status === "complete" ? whistHandResultFor(fullHand) : null;
   $: currentSpadesHandResult = fullHandIsSpadesGame && fullHand?.status === "complete" ? spadesHandResultFor(fullHand) : null;
   $: fullHandShowWhistMatchSummary =
@@ -6182,6 +6571,13 @@
     lastFullHandTapAt = 0;
     const metadata = fullHandContractCommands[contract];
 
+    if (contract === "Bridge") {
+      fullHand = startBrowserFullHand(contract, seed);
+      usingBrowserFullHand = true;
+      appView = "fullHand";
+      return;
+    }
+
     try {
       fullHand = await invoke<FullHandState>(metadata.startCommand, {
         seed,
@@ -6593,18 +6989,31 @@
     activeTableTabs.bridge = "play";
     whistFullHandSource = "play";
     if (!options.keepSession) {
-      whistMatchScores = { playerSide: 0, opponentSide: 0 };
-      whistHandResults = [];
+      bridgeMatchScores = { ns: 0, ew: 0 };
+      bridgeHandResults = [];
     }
     await startFullHand("Bridge");
-    bridgeAuctionSelectedBidId = bridgeSuggestedBidForHand(fullHand?.playerHand ?? []).id;
-    bridgeAuctionCalls = [];
+    const openingCalls = bridgeAutoAdvanceAuction([], fullHand);
+    bridgeAuctionCalls = openingCalls;
+    bridgeAuctionSelectedCall = bridgeSuggestedLegalUserCall();
+    bridgeAuctionSelectedBidId = bridgeAuctionSelectedCall === "Pass" || bridgeAuctionSelectedCall === "Double" || bridgeAuctionSelectedCall === "Redouble"
+      ? bridgeSuggestedBidForHand(fullHand?.playerHand ?? []).id
+      : bridgeAuctionSelectedCall;
     bridgeAuctionError = "";
     appView = "bridgeAuction";
   }
 
   function selectBridgeAuctionBid(bidId: string) {
     bridgeAuctionSelectedBidId = bidId;
+    bridgeAuctionSelectedCall = bidId;
+    bridgeAuctionError = "";
+  }
+
+  function selectBridgeAuctionCall(call: BridgeCallOption) {
+    bridgeAuctionSelectedCall = call;
+    if (call !== "Pass" && call !== "Double" && call !== "Redouble") {
+      bridgeAuctionSelectedBidId = call;
+    }
     bridgeAuctionError = "";
   }
 
@@ -6613,16 +7022,31 @@
       return;
     }
 
-    const bid = bridgeBidById(bridgeAuctionSelectedBidId);
-    const auction = bridgeAuctionForBid(bid);
-    const bridgeContract = bridgeContractFromBid(bid);
-    bridgeAuctionCalls = auction;
-    fullHand = {
-      ...fullHand,
-      bridgeAuction: auction,
-      bridgeContract,
-      trumpSuit: bid.strain === "NT" ? null : bid.strain
-    };
+    const status = bridgeAuctionStatus(bridgeAuctionCalls, bridgeDealerIndex(fullHand));
+
+    if (!status.complete) {
+      bridgeApplyUserCall(bridgeAuctionSelectedCall);
+      return;
+    }
+
+    if (status.passedOut) {
+      bridgeAuctionError = "The hand was passed out. Deal a new Bridge hand.";
+      return;
+    }
+
+    const bridgeContract = bridgeFinalizeContract(bridgeAuctionCalls, fullHand);
+    if (!bridgeContract) {
+      bridgeAuctionError = "The auction does not contain a contract yet.";
+      return;
+    }
+
+    fullHand = applyBrowserBridgeAuction(fullHand, bridgeContract, bridgeAuctionCalls);
+    usingBrowserFullHand = true;
+    fullHandSelectedCardId = "";
+    dummySelectedCardId = "";
+    fullHandReviewTrickCount = 0;
+    lastFullHandTapCardId = "";
+    lastFullHandTapAt = 0;
     appView = "fullHand";
   }
 
@@ -7153,6 +7577,15 @@
     }
 
     if (fullHandIsPartnershipGame) {
+      if (fullHandIsBridgeGame) {
+        if (currentBridgeHandResult) {
+          bridgeHandResults = [...bridgeHandResults, currentBridgeHandResult];
+          bridgeMatchScores = bridgeScoreTotalsWith(currentBridgeHandResult);
+        }
+        startBridgeHand({ keepSession: true });
+        return;
+      }
+
       if (whistFullHandSource === "practice") {
         if (fullHandIsSpadesGame) {
           if (activePathStepId) {
@@ -7239,6 +7672,11 @@
     }
 
     if (fullHandIsPartnershipGame) {
+      if (fullHandIsBridgeGame) {
+        startBridgeHand({ keepSession: true });
+        return;
+      }
+
       if (whistFullHandSource === "practice") {
         if (fullHandIsSpadesGame) {
           void startSpadesPracticeHand(activePathStepId);
@@ -7741,9 +8179,11 @@
 
       const winnerIsPlayerSide = trick.winnerIndex === 0 || trick.winnerIndex === 2;
       if (fullHandIsBridgeGame) {
-        return winnerIsPlayerSide
-          ? `${trick.winner} won for declarer. Count that toward the ${bridgeContractTarget} tricks needed for ${bridgeContractLabel}.`
-          : `${trick.winner} won for the defense. Protect entries and look for the next sure trick.`;
+        const winnerIsDeclarerSide = trick.winnerIndex % 2 === playerIndexBySeat[bridgeVisibleContract.declarer] % 2;
+
+        return winnerIsDeclarerSide
+          ? `${bridgeSeatLabel(trick.winner)} won for declarer. Count that toward the ${bridgeContractTarget} tricks needed for ${bridgeContractLabel}.`
+          : `${bridgeSeatLabel(trick.winner)} won for the defense. Protect entries and look for the next sure trick.`;
       }
 
       const partnershipLabel = winnerIsPlayerSide ? "You + Barbu" : "Left + Right";
@@ -7943,11 +8383,12 @@
   function fullHandResultText(hand: FullHandState, currentWhistMatchScoreLabel = whistMatchScoreLabel) {
     if (fullHandIsPartnershipGame) {
       if (fullHandIsBridgeGame) {
-        return `Contract: ${bridgeContractLabel}. Declarer side won ${bridgeDeclarerTricks} tricks; defenders won ${bridgeDefenderTricks}. ${
+        const score = currentBridgeHandResult?.score ?? bridgeDuplicateScore(bridgeVisibleContract, bridgeDeclarerTricks);
+        return `Contract: ${bridgeContractLabel} by ${bridgeSeatLabel(bridgeVisibleContract.declarer)}. Declarer side won ${bridgeDeclarerTricks} tricks; defenders won ${bridgeDefenderTricks}. ${
           bridgeContractMade
-            ? `You reached the ${bridgeContractTarget}-trick target.`
+            ? `Contract made for ${formatSignedScore(score)}.`
             : `You needed ${bridgeContractTarget} tricks, so the defense defeated the contract.`
-        }`;
+        } Duplicate score: NS ${formatSignedScore(bridgeVisibleMatchScores.ns)}, EW ${formatSignedScore(bridgeVisibleMatchScores.ew)}.`;
       }
 
       if (partnershipMatchIsComplete) {
@@ -9476,7 +9917,7 @@
       practiceProps: { actions: bridgePracticeActions },
       playProps: {
         onPrimary: () => void startBridgeHand(),
-        footerNote: `Starter Bridge now opens with a simplified auction, then plays the selected contract with visible dummy. Duplicate movement is planned next.`
+        footerNote: `Bridge now opens with a rotating auction, then plays the contract with declarer, dummy, opening lead, vulnerability, and duplicate scoring.`
       }
     }
   } as Record<string, any>;
@@ -11064,7 +11505,7 @@
         </div>
         <div class="contract-status">
           <span>Dealer</span>
-          <strong>You</strong>
+          <strong>{bridgeSeatLabel(bridgeDealerSeat(fullHand))}</strong>
         </div>
       </header>
 
@@ -11072,12 +11513,12 @@
         <section class="lesson-panel bridge-auction-panel" aria-label="Bridge bidding box">
           <div class="lesson-heading">
             <p class="eyebrow">Before dummy appears</p>
-            <h2>Choose your opening bid</h2>
+            <h2>{bridgeAuctionCurrentStatus.complete ? "Auction complete" : bridgeAuctionCurrentStatus.currentSeat === "You" ? "Choose your call" : "Auction in progress"}</h2>
           </div>
 
           <p class="result">
-            You are South. This starter table lets you open the auction, then Left, Barbu, and Right pass so you can practice
-            declaring the contract.
+            You are South. The auction rotates from the dealer, opponents bid from their hands, and the final contract sets
+            declarer, dummy, opening lead, vulnerability, and scoring.
           </p>
 
           <div class="bridge-auction-metrics" aria-label="Bridge hand estimate">
@@ -11090,12 +11531,12 @@
               <strong>{bridgeSuggestedBid.longLabel}</strong>
             </div>
             <div>
-              <span>Selected</span>
-              <strong>{bridgeSelectedBid.longLabel}</strong>
+              <span>Turn</span>
+              <strong>{bridgeAuctionCurrentStatus.complete ? "Done" : bridgeSeatLabel(bridgeAuctionCurrentStatus.currentSeat)}</strong>
             </div>
             <div>
-              <span>Target</span>
-              <strong>{bridgeSelectedBid.target} tricks</strong>
+              <span>Vulnerability</span>
+              <strong>{bridgeVulnerabilityForHand(fullHand)}</strong>
             </div>
           </div>
 
@@ -11110,17 +11551,47 @@
           />
 
           <div class="bridge-call-grid" aria-label="Bridge calls">
-            <button class="secondary-action" disabled type="button">Pass</button>
-            <button aria-label="Double" class="secondary-action" disabled type="button">X</button>
-            <button aria-label="Redouble" class="secondary-action" disabled type="button">XX</button>
+            <button
+              aria-pressed={bridgeAuctionSelectedCall === "Pass"}
+              class:selected={bridgeAuctionSelectedCall === "Pass"}
+              class="secondary-action"
+              disabled={bridgeAuctionCurrentStatus.currentSeat !== "You" || !bridgeAuctionLegalCalls.includes("Pass")}
+              onclick={() => selectBridgeAuctionCall("Pass")}
+              type="button"
+            >
+              Pass
+            </button>
+            <button
+              aria-label="Double"
+              aria-pressed={bridgeAuctionSelectedCall === "Double"}
+              class:selected={bridgeAuctionSelectedCall === "Double"}
+              class="secondary-action"
+              disabled={bridgeAuctionCurrentStatus.currentSeat !== "You" || !bridgeAuctionLegalCalls.includes("Double")}
+              onclick={() => selectBridgeAuctionCall("Double")}
+              type="button"
+            >
+              X
+            </button>
+            <button
+              aria-label="Redouble"
+              aria-pressed={bridgeAuctionSelectedCall === "Redouble"}
+              class:selected={bridgeAuctionSelectedCall === "Redouble"}
+              class="secondary-action"
+              disabled={bridgeAuctionCurrentStatus.currentSeat !== "You" || !bridgeAuctionLegalCalls.includes("Redouble")}
+              onclick={() => selectBridgeAuctionCall("Redouble")}
+              type="button"
+            >
+              XX
+            </button>
           </div>
 
-          <div class="bridge-bidding-grid" aria-label="Bridge opening bids">
+          <div class="bridge-bidding-grid" aria-label="Bridge bids">
             {#each bridgeBidOptions as bid}
               <button
-                aria-pressed={bridgeAuctionSelectedBidId === bid.id}
-                class:selected={bridgeAuctionSelectedBidId === bid.id}
+                aria-pressed={bridgeAuctionSelectedCall === bid.id}
+                class:selected={bridgeAuctionSelectedCall === bid.id}
                 class:recommended={bridgeSuggestedBid.id === bid.id}
+                disabled={bridgeAuctionCurrentStatus.currentSeat !== "You" || !bridgeAuctionLegalCalls.includes(bid.id)}
                 onclick={() => selectBridgeAuctionBid(bid.id)}
                 type="button"
               >
@@ -11130,16 +11601,34 @@
           </div>
 
           <div class="bridge-auction-history" aria-label="Bridge auction history">
-            <span>Auction preview</span>
+            <span>Auction</span>
             <div>
-              {#each bridgeAuctionForBid(bridgeSelectedBid) as call}
+              {#if bridgeAuctionCalls.length === 0}
                 <p>
-                  <strong>{call.seat === "Tutor" ? "Barbu" : call.seat}</strong>
+                  <strong>{bridgeSeatLabel(bridgeAuctionCurrentStatus.currentSeat)}</strong>
+                  <span>to call</span>
+                </p>
+              {/if}
+              {#each bridgeAuctionCalls as call}
+                <p>
+                  <strong>{bridgeSeatLabel(call.seat)}</strong>
                   <span>{call.call}</span>
                 </p>
               {/each}
             </div>
           </div>
+
+          {#if bridgeAuctionReadyToPlay}
+            <div class="bridge-auction-history bridge-contract-preview" aria-label="Bridge contract preview">
+              <span>Contract</span>
+              <div>
+                <p>
+                  <strong>{bridgeVisibleContract.label}</strong>
+                  <span>{bridgeSeatLabel(bridgeVisibleContract.declarer)} declares; {bridgeSeatLabel(bridgeVisibleContract.dummy)} is dummy.</span>
+                </p>
+              </div>
+            </div>
+          {/if}
 
           {#if bridgeAuctionError}
             <p class="outcome warning">{bridgeAuctionError}</p>
@@ -11147,10 +11636,22 @@
 
           <div class="action-row">
             <button class="secondary-action" onclick={openBridgeTable} type="button">Table</button>
-            <button class="secondary-action" onclick={() => selectBridgeAuctionBid(bridgeSuggestedBid.id)} type="button">
+            <button
+              class="secondary-action"
+              disabled={bridgeAuctionCurrentStatus.currentSeat !== "You" || !bridgeAuctionLegalCalls.includes(bridgeSuggestedBid.id)}
+              onclick={() => selectBridgeAuctionBid(bridgeSuggestedBid.id)}
+              type="button"
+            >
               Use suggestion
             </button>
-            <button class="primary-action" onclick={confirmBridgeAuction} type="button">Start play</button>
+            <button
+              class="primary-action"
+              disabled={!bridgeAuctionReadyToPlay && bridgeAuctionCurrentStatus.currentSeat !== "You"}
+              onclick={bridgeAuctionCurrentStatus.passedOut ? () => void startBridgeHand() : confirmBridgeAuction}
+              type="button"
+            >
+              {bridgeAuctionActionLabel}
+            </button>
           </div>
         </section>
       </section>
@@ -11185,6 +11686,7 @@
             dummyHand={fullHand.dummyHand}
             dummyLegalCardIds={fullHand.dummyLegalCardIds}
             dummySelectedCardId={dummySelectedCardId}
+            dummySeatLabel={`${bridgeSeatLabel(bridgeDummySeat)} Dummy`}
             isDummyTurn={isBridgeDummyTurn}
             isReviewing={fullHandIsReviewingTrick}
             onSelectDummy={selectDummyCard}
@@ -11192,6 +11694,8 @@
             pendingBySeat={fullHandPendingBySeat}
             playerHand={fullHand.playerHand}
             playerLegalCardIds={fullHand.legalCardIds}
+            playerRoleLabel={bridgeUserSideDeclares ? "Declarer" : "Defender"}
+            playerSeatLabel="South"
             playerSelectedCardId={fullHandSelectedCardId}
             tableCards={fullHandVisibleTableCards}
           />
@@ -11208,12 +11712,12 @@
               >
                 <span class="summary-row-label">Current hand</span>
                 <div>
-                  <span>{fullHandIsPartnershipGame ? "Your side" : fullHandContractMeta.playerValueLabel}</span>
-                  <strong>{fullHandIsPartnershipGame ? whistPartnershipTricks.playerSide : fullHand.playerPenalty}</strong>
+                  <span>{fullHandIsBridgeGame ? "Declarer" : fullHandIsPartnershipGame ? "Your side" : fullHandContractMeta.playerValueLabel}</span>
+                  <strong>{fullHandIsBridgeGame ? bridgeDeclarerTricks : fullHandIsPartnershipGame ? whistPartnershipTricks.playerSide : fullHand.playerPenalty}</strong>
                 </div>
                 <div>
-                  <span>{fullHandIsPartnershipGame ? "Opponents" : fullHandPenaltyPlayedLabel}</span>
-                  <strong>{fullHandIsPartnershipGame ? whistPartnershipTricks.opponentSide : `${fullHand.totalPenalty} / ${fullHandPenaltyTotal}`}</strong>
+                  <span>{fullHandIsBridgeGame ? "Defense" : fullHandIsPartnershipGame ? "Opponents" : fullHandPenaltyPlayedLabel}</span>
+                  <strong>{fullHandIsBridgeGame ? bridgeDefenderTricks : fullHandIsPartnershipGame ? whistPartnershipTricks.opponentSide : `${fullHand.totalPenalty} / ${fullHandPenaltyTotal}`}</strong>
                 </div>
                 <div>
                   <span>{whistOpeningLeadPracticeActive ? "Lead" : "Tricks"}</span>
@@ -11227,8 +11731,12 @@
                 {/if}
                 {#if fullHandIsBridgeGame}
                   <div>
-                    <span>Contract</span>
-                    <strong>{bridgeContractLabel}</strong>
+                    <span>Target</span>
+                    <strong>{bridgeContractTarget}</strong>
+                  </div>
+                  <div>
+                    <span>Score</span>
+                    <strong>{currentBridgeHandResult ? formatSignedScore(currentBridgeHandResult.score) : "Playing"}</strong>
                   </div>
                 {/if}
                 {#if fullHand.contract === "No Last Two"}
@@ -11263,6 +11771,23 @@
                   <div>
                     <span>{fullHandIsSpadesGame ? "Bags" : "Hands"}</span>
                     <strong>{fullHandIsSpadesGame ? `${spadesVisibleBags.playerSide}-${spadesVisibleBags.opponentSide}` : partnershipVisibleHandCount}</strong>
+                  </div>
+                </div>
+              {/if}
+              {#if fullHandIsBridgeGame}
+                <div class="full-hand-summary-row table-score" aria-label="Bridge score">
+                  <span class="summary-row-label">Duplicate</span>
+                  <div>
+                    <span>NS</span>
+                    <strong>{formatSignedScore(bridgeVisibleMatchScores.ns)}</strong>
+                  </div>
+                  <div>
+                    <span>EW</span>
+                    <strong>{formatSignedScore(bridgeVisibleMatchScores.ew)}</strong>
+                  </div>
+                  <div>
+                    <span>Board</span>
+                    <strong>{bridgeHandResults.length + 1}</strong>
                   </div>
                 </div>
               {/if}
@@ -11394,6 +11919,18 @@
                       <strong>{bridgeContractTarget}</strong>
                       <strong>{bridgeDeclarerTricks}</strong>
                       <strong>{bridgeDefenderTricks}</strong>
+                    </div>
+                    <div class="hearts-hand-breakdown-row whist-score-row">
+                      <span>{bridgePartnershipLabel(bridgeVisibleContract.declarerSide ?? bridgeSideForSeat(bridgeVisibleContract.declarer))}</span>
+                      <strong>{bridgeVisibleContract.vulnerability}</strong>
+                      <strong>{formatSignedScore(currentBridgeHandResult?.score ?? 0)}</strong>
+                      <strong>{bridgeSeatLabel(bridgeVisibleContract.declarer)}</strong>
+                    </div>
+                    <div class="hearts-hand-breakdown-row whist-score-row">
+                      <span>Score</span>
+                      <strong>NS {formatSignedScore(bridgeVisibleMatchScores.ns)}</strong>
+                      <strong>EW {formatSignedScore(bridgeVisibleMatchScores.ew)}</strong>
+                      <strong>Board {bridgeHandResults.length + 1}</strong>
                     </div>
                   </div>
                 </div>
@@ -11530,7 +12067,9 @@
                 {fullHandReviewFeedback}
               </p>
               <p class="explanation">
-                {fullHandIsPartnershipGame
+                {fullHandIsBridgeGame
+                  ? "Check who won and press Next trick when ready."
+                  : fullHandIsPartnershipGame
                   ? "Check whether the trick stayed with your partnership, whether trump changed the winner, and who leads next."
                   : fullHand.contract === "No Last Two"
                   ? "Check the trick number first. Tap the table or press Next trick when you are ready."
@@ -11567,8 +12106,8 @@
             <div class:bridge-dummy-turn-feedback={isBridgeDummyTurn}>
               <ExerciseFeedback
                 eyebrow="Your turn"
-                title={isBridgeDummyTurn ? "Play from dummy" : fullHandIsBridgeGame ? "Play as declarer" : "Choose your card"}
-                result={isBridgeDummyTurn ? "You are declarer. Choose a card from dummy's exposed hand." : fullHand.prompt}
+                title={isBridgeDummyTurn ? "Play from dummy" : fullHandIsBridgeGame ? (bridgeUserSideDeclares ? "Play as declarer" : "Defend the contract") : "Choose your card"}
+                result={isBridgeDummyTurn ? `You are declarer. Choose a card from ${bridgeSeatLabel(bridgeDummySeat)}'s exposed hand.` : fullHand.prompt}
                 error={fullHandError}
               />
             </div>

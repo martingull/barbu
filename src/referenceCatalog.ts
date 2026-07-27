@@ -670,18 +670,18 @@ export const referenceCatalog: GameReference[] = [
     id: "bridge",
     title: "Bridge",
     family: "Bridge",
-    baseline: "Contract Bridge starter table, simplified auction and declarer-play baseline",
+    baseline: "Contract Bridge local table with auction, declarer play, dummy, vulnerability, and duplicate scoring",
     overview:
-      "Bridge is a four-player partnership trick-taking game with an auction, a contract, declarer play, an exposed dummy, and two defenders. The first app slice teaches a simplified opening auction before the player practices declarer planning, dummy play, and defense.",
+      "Bridge is a four-player partnership trick-taking game with an auction, a contract, declarer play, an exposed dummy, and two defenders. The app now plays a local contract hand from a rotating auction into declarer/dummy play or defense.",
     sections: [
       {
         id: "object",
         title: "Object",
         body:
-          "One side declares a contract and tries to take enough tricks to make it. The defenders try to defeat that contract. The starter app table lets you choose an opening bid, then plays the selected contract with Barbu as dummy.",
+          "One side declares a contract and tries to take enough tricks to make it. The defenders try to defeat that contract. The app table runs a rotating auction, then derives the contract, declarer, dummy, opening leader, vulnerability, and duplicate score.",
         facts: [
           { label: "Game type", value: "Contract partnership trick-taking" },
-          { label: "Starter auction", value: "You open, table passes" },
+          { label: "Auction", value: "Rotating calls with pass, double, and redouble" },
           { label: "Declarer target", value: "6 plus contract level" }
         ]
       },
@@ -689,10 +689,10 @@ export const referenceCatalog: GameReference[] = [
         id: "players",
         title: "Players And Partnerships",
         body:
-          "Bridge uses four players in two partnerships. Partners sit opposite one another. In the starter table you declare with Barbu as dummy, while Left and Right defend.",
+          "Bridge uses four players in two partnerships. Partners sit opposite one another. Depending on the auction, you may declare with Barbu as dummy, play dummy for Barbu, or defend against an opponent contract.",
         facts: [
           { label: "Players", value: "Four" },
-          { label: "Partner", value: "Barbu" },
+          { label: "Partner", value: "Barbu / North" },
           { label: "Opponents", value: "Left and Right" }
         ]
       },
@@ -711,11 +711,11 @@ export const referenceCatalog: GameReference[] = [
         id: "dummy",
         title: "The Dummy",
         body:
-          "After the opening lead, declarer's partner becomes dummy and their hand is played face up. Declarer chooses cards from both declarer's hand and dummy. The app exposes Barbu's hand and lets you play from it when dummy is on turn.",
+          "After the opening lead, declarer's partner becomes dummy and their hand is played face up. Declarer chooses cards from both declarer's hand and dummy. The app keeps dummy hidden until the opening lead, then exposes the correct dummy for the contract.",
         facts: [
           { label: "Dummy", value: "Declarer's partner" },
           { label: "Control", value: "Declarer plays both hands" },
-          { label: "App role", value: "You play your hand and Barbu's dummy" }
+          { label: "App role", value: "You declare, play dummy, or defend based on the auction" }
         ]
       },
       {
@@ -733,20 +733,20 @@ export const referenceCatalog: GameReference[] = [
         id: "app-learning",
         title: "App Learning Path",
         body:
-          "The Bridge path currently teaches a starter auction table. It has compact scripted decisions for declarer play and defense, plus a playable local hand with visible dummy. Smarter opponent bidding, duplicate scoring, vulnerability, and rubber scoring are later named layers.",
+          "The Bridge path teaches declarer play, dummy handling, and defense through short decisions, plus a playable local hand with auction, vulnerability, dummy reveal, and duplicate scoring. Stronger bidding systems and duplicate movement remain later layers.",
         facts: [
-          { label: "First slice", value: "Opening bid into play" },
+          { label: "Play", value: "Auction into scored contract hand" },
           { label: "Practice", value: "Short scripted decisions" },
-          { label: "Play", value: "Playable dummy hand" }
+          { label: "Future", value: "Stronger systems and movement" }
         ]
       }
     ],
     contracts: [
       {
         id: "starter-1nt",
-        title: "Starter contract",
+        title: "Contract hand",
         objective: "Take at least six plus the contract level as declarer.",
-        scoring: "The current starter table shows trick counts only; full contract scoring is planned.",
+        scoring: "Duplicate-style scoring is active for made contracts, undertricks, overtricks, doubles, redoubles, game, slam, and vulnerability.",
         lesson: "Start by planning sure tricks, using dummy, establishing long suits, and timing stoppers."
       }
     ],
@@ -767,25 +767,25 @@ export const referenceCatalog: GameReference[] = [
       },
       {
         id: "bridge-play",
-        title: "Playable starter hand",
-        coreStatus: "Starter",
+        title: "Playable contract hand",
+        coreStatus: "Core",
         appStatus: "Playable",
-        note: "The app currently starts with a simplified auction, then plays the selected contract with You as declarer and Barbu as visible dummy."
+        note: "The app runs a rotating auction, derives declarer/dummy/opening lead, hides dummy until the opening lead, and scores the completed contract."
       },
       {
         id: "bridge-auction",
         title: "Auction and scoring",
         coreStatus: "Core",
-        appStatus: "Partial",
-        note: "Opening bids and contract selection are started. Responses, doubles, vulnerability, duplicate scoring, and rubber scoring should be introduced as explicit Bridge layers."
+        appStatus: "Playable",
+        note: "Pass, double, redouble, vulnerability, duplicate scoring, and simple rule-based opponent calls are active. Strong natural bidding agreements and duplicate movement remain future layers."
       }
     ],
     variants: [
       {
         id: "starter-boundary",
-        title: "Starter Boundary",
+        title: "Current Boundary",
         note:
-          "The current table has a simplified auction and declarer-play slice. It should not be presented as complete club Bridge until opponent bidding, doubles, vulnerability, and contract scoring are implemented."
+          "The current table is playable club-style contract Bridge for local practice, but the bidding and cardplay AI are still simple heuristics rather than a full partnership system."
       }
     ]
   }

@@ -123,6 +123,8 @@ export type BridgeAuctionCall = {
   call: string;
 };
 
+export type BridgeVulnerability = "None" | "NS" | "EW" | "Both";
+
 export type BridgeContractState = {
   level: number;
   strain: BridgeStrain;
@@ -130,7 +132,12 @@ export type BridgeContractState = {
   declarer: Seat;
   dummy: Seat;
   target: number;
-  vulnerability: "None" | "NS" | "EW" | "Both";
+  vulnerability: BridgeVulnerability;
+  doubled?: boolean;
+  redoubled?: boolean;
+  declarerSide?: "NS" | "EW";
+  dealer?: Seat;
+  openingLeader?: Seat;
 };
 
 export type FullHandContract =
@@ -168,6 +175,8 @@ export type FullHandState = {
   dummyLegalCardIds?: string[];
   bridgeAuction?: BridgeAuctionCall[];
   bridgeContract?: BridgeContractState;
+  bridgeDealer?: Seat;
+  bridgeVulnerability?: BridgeVulnerability;
 };
 
 export type NoHeartsHandState = FullHandState;

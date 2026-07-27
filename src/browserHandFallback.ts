@@ -1,5 +1,8 @@
 import type {
   Card,
+  BridgeAuctionCall,
+  BridgeContractState,
+  BridgeVulnerability,
   CompletedHandTrick,
   FullHandContract,
   FullHandState,
@@ -31,6 +34,7 @@ const rankOrder: Record<Rank, number> = {
 const suitOrder: Record<Suit, number> = { C: 0, D: 1, S: 2, H: 3 };
 const playerNames: Array<Seat> = ["Tutor", "Right", "You", "Left"];
 const heartsMoonLeadThreshold = 8;
+const bridgeVulnerabilityCycle: BridgeVulnerability[] = ["None", "NS", "EW", "Both"];
 
 export function startBrowserHeartsHand(seed: number): FullHandState {
   return startBrowserFullHand("Hearts", seed, { startAtTwoOfClubs: true });
@@ -47,36 +51,79 @@ export function startBrowserBridgeHand(seed: number): FullHandState {
 function startBrowserWhistFamilyHand(contract: "Whist" | "Spades" | "Bridge", seed: number, fixedTrump?: Suit | null): FullHandState {
   const deck = shuffledDeck(seed);
   const dealer = whistDealerForSeed(seed);
-  const leader = contract === "Bridge" ? 3 : (dealer + 1) % 4;
+  const leader = contract === "Bridge" ? dealer : (dealer + 1) % 4;
   const trumpSuit = fixedTrump !== undefined ? fixedTrump : deck[dealer + 48].suit;
   const hands: Card[][] = [[], [], [], []];
 
   deck.forEach((card, index) => hands[index % 4].push(card));
   hands.forEach((hand) => hand.sort(compareCards));
 
-  const dummySeat = contract === "Bridge" ? ("Tutor" as const) : undefined;
-  const dummyHand = contract === "Bridge" ? hands[0] : undefined;
+  const bridgeDealer = contract === "Bridge" ? playerNames[dealer] : undefined;
+  const bridgeVulnerability = contract === "Bridge" ? bridgeVulnerabilityCycle[seed % bridgeVulnerabilityCycle.length] : undefined;
+
+  const initialState = hydrateFullHandState({
+    id: `browser-${contract.toLowerCase()}-hand-${seed}-dealer-${dealer}-${trumpSuit}`,
+    contract,
+    hands,
+    currentPlayerIndex: leader,
+    currentPlayer: playerNames[leader],
+    currentTrick: [],
+    completedTricks: [],
+    playerHand: hands[2],
+    legalCardIds: [],
+    playerPenalty: 0,
+    totalPenalty: 0,
+    cardsRemaining: 52,
+    trickNumber: 1,
+    status: "in_progress",
+    prompt: "",
+    trumpSuit,
+    bridgeDealer,
+    bridgeVulnerability
+  });
+
+  return contract === "Bridge" ? initialState : advanceToPlayerTurn(initialState);
+}
+
+export function applyBrowserBridgeAuction(
+  state: FullHandState,
+  bridgeContract: BridgeContractState,
+  bridgeAuction: BridgeAuctionCall[]
+): FullHandState {
+  if (state.contract !== "Bridge") {
+    return state;
+  }
+
+  const declarerIndex = playerNames.indexOf(bridgeContract.declarer);
+  const dummyIndex = playerNames.indexOf(bridgeContract.dummy);
+  const openingLeaderIndex = playerNames.indexOf(bridgeContract.openingLeader ?? playerNames[(declarerIndex + 1) % 4]);
+
+  if (declarerIndex < 0 || dummyIndex < 0 || openingLeaderIndex < 0) {
+    return state;
+  }
 
   return advanceToPlayerTurn(
     hydrateFullHandState({
-      id: `browser-${contract.toLowerCase()}-hand-${seed}-dealer-${dealer}-${trumpSuit}`,
-      contract,
-      hands,
-      currentPlayerIndex: leader,
-      currentPlayer: playerNames[leader],
+      ...cloneState(state),
+      bridgeAuction,
+      bridgeContract,
+      bridgeDealer: bridgeContract.dealer ?? state.bridgeDealer,
+      bridgeVulnerability: bridgeContract.vulnerability,
+      trumpSuit: bridgeContract.strain === "NT" ? null : bridgeContract.strain,
+      dummySeat: bridgeContract.dummy,
+      dummyHand: state.hands[dummyIndex],
+      currentPlayerIndex: openingLeaderIndex,
+      currentPlayer: playerNames[openingLeaderIndex],
       currentTrick: [],
       completedTricks: [],
-      playerHand: hands[2],
       legalCardIds: [],
+      dummyLegalCardIds: [],
       playerPenalty: 0,
       totalPenalty: 0,
-      cardsRemaining: 52,
+      cardsRemaining: state.hands.flat().length,
       trickNumber: 1,
       status: "in_progress",
-      prompt: "",
-      trumpSuit,
-      dummySeat,
-      dummyHand
+      prompt: ""
     })
   );
 }
@@ -323,7 +370,7 @@ export function playBrowserPositiveTricksCard(state: FullHandState, cardId: stri
 }
 
 function playBrowserFullHandCard(state: FullHandState, cardId: string): FullHandState {
-  const playableSeatIndex = state.contract === "Bridge" && state.currentPlayerIndex === 0 ? 0 : 2;
+  const playableSeatIndex = browserPlayableSeatIndex(state);
   const selectedCard = state.hands[playableSeatIndex].find((card) => card.id === cardId);
 
   if (!selectedCard || state.status === "complete" || state.currentPlayerIndex !== playableSeatIndex) {
@@ -341,9 +388,8 @@ function playBrowserFullHandCard(state: FullHandState, cardId: string): FullHand
 
 function advanceToPlayerTurn(state: FullHandState): FullHandState {
   const nextState = cloneState(state);
-  const dummyIndex = nextState.contract === "Bridge" ? 0 : -1;
 
-  while (nextState.status === "in_progress" && nextState.currentPlayerIndex !== 2 && nextState.currentPlayerIndex !== dummyIndex) {
+  while (nextState.status === "in_progress" && !browserSeatNeedsUserInput(nextState)) {
     const card = chooseOpponentCard(nextState);
 
     if (!card) {
@@ -355,6 +401,44 @@ function advanceToPlayerTurn(state: FullHandState): FullHandState {
   }
 
   return hydrateFullHandState(nextState);
+}
+
+function browserSeatNeedsUserInput(state: FullHandState) {
+  if (state.currentPlayerIndex === 2) {
+    return true;
+  }
+
+  return state.contract === "Bridge" && userControlsBridgeDummy(state) && state.currentPlayerIndex === bridgeDummyIndex(state);
+}
+
+function browserPlayableSeatIndex(state: FullHandState) {
+  if (state.contract === "Bridge" && userControlsBridgeDummy(state) && state.currentPlayerIndex === bridgeDummyIndex(state)) {
+    return bridgeDummyIndex(state);
+  }
+
+  return 2;
+}
+
+function bridgeDeclarerIndex(state: FullHandState) {
+  const seat = state.bridgeContract?.declarer;
+  const index = seat ? playerNames.indexOf(seat) : 2;
+
+  return index >= 0 ? index : 2;
+}
+
+function bridgeDummyIndex(state: FullHandState) {
+  const seat = state.bridgeContract?.dummy;
+  const index = seat ? playerNames.indexOf(seat) : 0;
+
+  return index >= 0 ? index : 0;
+}
+
+function userControlsBridgeDummy(state: FullHandState) {
+  return bridgeDeclarerIndex(state) % 2 === 0;
+}
+
+function bridgeDummyIsRevealed(state: FullHandState) {
+  return state.contract !== "Bridge" || state.currentTrick.length > 0 || state.completedTricks.length > 0;
 }
 
 function playCardForCurrentPlayer(state: FullHandState, card: Card) {
@@ -497,7 +581,12 @@ function completedTrickTacticalTags(
 }
 
 export function hydrateFullHandState(state: FullHandState): FullHandState {
-  const dummyHand = state.contract === "Bridge" ? [...state.hands[0]] : state.dummyHand;
+  const dummyIndex = state.contract === "Bridge" ? bridgeDummyIndex(state) : -1;
+  const dummyHand = state.contract === "Bridge"
+    ? dummyIndex >= 0 && bridgeDummyIsRevealed(state)
+      ? [...state.hands[dummyIndex]]
+      : undefined
+    : state.dummyHand;
 
   if (state.status === "complete") {
     state.legalCardIds = [];
@@ -517,14 +606,12 @@ export function hydrateFullHandState(state: FullHandState): FullHandState {
     };
   }
 
-  const isDummyTurn = state.contract === "Bridge" && state.currentPlayerIndex === 0;
+  const isDummyTurn = state.contract === "Bridge" && userControlsBridgeDummy(state) && state.currentPlayerIndex === dummyIndex;
 
-  state.legalCardIds = isDummyTurn ? [] : legalCardsForState(state, 2).map(
-    (card) => card.id
-  );
+  state.legalCardIds = state.currentPlayerIndex === 2 ? legalCardsForState(state, 2).map((card) => card.id) : [];
   
   if (state.contract === "Bridge") {
-    state.dummyLegalCardIds = !isDummyTurn ? [] : legalCardsForState(state, 0).map(
+    state.dummyLegalCardIds = !isDummyTurn ? [] : legalCardsForState(state, dummyIndex).map(
       (card) => card.id
     );
   }
@@ -557,6 +644,9 @@ function chooseOpponentCard(state: FullHandState) {
   }
 
   if (!led) {
+    if (state.contract === "Bridge") {
+      return chooseBridgeLeadCard(state, legal);
+    }
     if (state.contract === "Spades") {
       return chooseSpadesLeadCard(state, legal);
     }
@@ -581,6 +671,9 @@ function chooseOpponentCard(state: FullHandState) {
   const followsSuit = legal.every((card) => card.suit === led);
 
   if (!followsSuit) {
+    if (state.contract === "Bridge") {
+      return chooseBridgeVoidCard(state, legal);
+    }
     if (state.contract === "Spades") {
       return chooseSpadesVoidCard(state, legal);
     }
@@ -611,6 +704,10 @@ function chooseOpponentCard(state: FullHandState) {
       return chooseHeartsVoidDiscard(legal, currentWinner, heartsTrickPenalty(state.currentTrick) > 0);
     }
     return highestCard(legal.filter((card) => isPenaltyCard(state.contract, card))) ?? highestCard(legal);
+  }
+
+  if (state.contract === "Bridge") {
+    return chooseBridgeFollowCard(state, legal);
   }
 
   if (state.contract === "Spades") {
@@ -685,6 +782,60 @@ function chooseOpponentCard(state: FullHandState) {
   }
 
   return lowestCard(legal);
+}
+
+function chooseBridgeLeadCard(state: FullHandState, legal: Card[]) {
+  const trump = whistTrumpSuitFromState(state);
+  const declarerSide = bridgeDeclarerIndex(state) % 2;
+  const currentSide = state.currentPlayerIndex % 2;
+
+  if (currentSide === declarerSide) {
+    if (trump) {
+      const trumpLead = highestCard(legal.filter((card) => card.suit === trump));
+      if (trumpLead) {
+        return trumpLead;
+      }
+    }
+
+    return highestCardFromLongestSuit(legal.filter((card) => card.suit !== trump), legal) ?? highestCard(legal);
+  }
+
+  return lowestCardFromLongestSuit(legal.filter((card) => card.suit !== trump), legal) ?? lowestCard(legal);
+}
+
+function chooseBridgeFollowCard(state: FullHandState, legal: Card[]) {
+  const declarerSide = bridgeDeclarerIndex(state) % 2;
+  const currentSide = state.currentPlayerIndex % 2;
+
+  if (currentSide === declarerSide) {
+    return lowestWinningCard(state, legal) ?? lowestCard(legal);
+  }
+
+  if (whistPartnerIsWinning(state)) {
+    return lowestCard(legal);
+  }
+
+  return lowestWinningCard(state, legal) ?? lowestCard(legal);
+}
+
+function chooseBridgeVoidCard(state: FullHandState, legal: Card[]) {
+  const trump = whistTrumpSuitFromState(state);
+  const declarerSide = bridgeDeclarerIndex(state) % 2;
+  const currentSide = state.currentPlayerIndex % 2;
+
+  if (currentSide === declarerSide) {
+    return lowestCard(legal.filter((card) => trump && card.suit === trump && cardWouldWinTrick(state, card))) ?? highestCard(legal);
+  }
+
+  if (whistPartnerIsWinning(state)) {
+    return lowestCard(legal.filter((card) => card.suit !== trump)) ?? lowestCard(legal);
+  }
+
+  return (
+    lowestCard(legal.filter((card) => trump && card.suit === trump && cardWouldWinTrick(state, card))) ??
+    highestCard(legal.filter((card) => card.suit !== trump)) ??
+    lowestCard(legal)
+  );
 }
 
 function chooseWhistLeadCard(state: FullHandState, legal: Card[]) {
@@ -933,7 +1084,7 @@ function cardWouldWinTrick(state: FullHandState, card: Card) {
   if (!led) {
     return true;
   }
-  if (state.contract === "Hearts Trumps" || state.contract === "Whist" || state.contract === "Spades") {
+  if (state.contract === "Hearts Trumps" || state.contract === "Whist" || state.contract === "Spades" || state.contract === "Bridge") {
     const simulated = [...state.currentTrick, { seat: playerNames[state.currentPlayerIndex], card }];
     return trickWinnerForState(state, simulated) === state.currentPlayerIndex;
   }
@@ -1317,6 +1468,8 @@ function trickWinnerForState(state: FullHandState, cards: TableCard[]) {
 
 function promptForState(state: FullHandState, playerPenalty: number) {
   const bridgeContractLabel = state.bridgeContract?.label ?? "1 No Trump";
+  const bridgeDeclarer = state.bridgeContract?.declarer ?? "You";
+  const bridgeDummy = state.bridgeContract?.dummy ?? "Tutor";
 
   if (state.status === "complete") {
     if (state.contract === "Whist" || state.contract === "Spades" || state.contract === "Bridge") {
@@ -1349,9 +1502,13 @@ function promptForState(state: FullHandState, playerPenalty: number) {
 
     if (!led) {
       if (state.contract === "Bridge") {
-        return state.currentPlayerIndex === 0
-          ? `Dummy is on lead. Choose from Barbu's exposed hand and plan the ${bridgeContractLabel} winners.`
-          : `You lead in ${bridgeContractLabel}. Choose a suit that builds declarer tricks.`;
+        if (state.currentPlayerIndex === bridgeDummyIndex(state)) {
+          return `Dummy is on lead. Choose from ${scoreSeatLabel(bridgeDummy)}'s exposed hand and plan the ${bridgeContractLabel} winners.`;
+        }
+
+        return bridgeDeclarer === "You" || bridgeDummy === "You"
+          ? `You lead for declarer in ${bridgeContractLabel}. Choose a suit that builds winners.`
+          : `You are defending ${bridgeContractLabel}. Make the opening lead before dummy appears.`;
       }
       if (state.contract === "Spades" && !spadesHaveBeenBroken(state)) {
         return "You lead. Spades are trump, but you cannot lead spades until they are broken unless you only hold spades.";
@@ -1363,7 +1520,9 @@ function promptForState(state: FullHandState, playerPenalty: number) {
     }
 
     if (state.contract === "Bridge") {
-      return `${suitName(led)} were led. Follow suit if you can. Contract: ${bridgeContractLabel}.`;
+      return bridgeDeclarer === "You" || bridgeDummy === "You"
+        ? `${suitName(led)} were led. Follow suit if you can. Contract: ${bridgeContractLabel}.`
+        : `${suitName(led)} were led. You are defending ${bridgeContractLabel}; follow suit if you can.`;
     }
 
     return `${suitName(led)} were led. Follow suit if you can. Trump: ${trump}.`;
@@ -1405,6 +1564,10 @@ function compareCards(left: Card, right: Card) {
 
 function suitName(suit: Suit) {
   return { C: "Clubs", D: "Diamonds", H: "Hearts", S: "Spades" }[suit];
+}
+
+function scoreSeatLabel(seat: Seat) {
+  return seat === "Tutor" ? "Barbu" : seat;
 }
 
 function whistDealerForSeed(seed: number) {

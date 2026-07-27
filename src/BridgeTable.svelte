@@ -10,6 +10,7 @@
     dummyHand?: Card[];
     dummyLegalCardIds?: string[];
     dummySelectedCardId?: string;
+    dummySeatLabel?: string;
     isDummyTurn?: boolean;
     isReviewing?: boolean;
     onSelectDummy?: (card: Card) => void | Promise<void>;
@@ -17,7 +18,9 @@
     pendingBySeat?: Partial<Record<Seat, string>>;
     playerHand?: Card[];
     playerLegalCardIds?: string[];
+    playerSeatLabel?: string;
     playerSelectedCardId?: string;
+    playerRoleLabel?: string;
     tableCards: TableCard[];
   };
 
@@ -26,6 +29,7 @@
     dummyHand = [],
     dummyLegalCardIds = [],
     dummySelectedCardId = "",
+    dummySeatLabel = "Dummy",
     isDummyTurn = false,
     isReviewing = false,
     onSelectDummy,
@@ -33,7 +37,9 @@
     pendingBySeat = {},
     playerHand = [],
     playerLegalCardIds = [],
+    playerSeatLabel = "South",
     playerSelectedCardId = "",
+    playerRoleLabel = "Declarer",
     tableCards
   }: Props = $props();
 
@@ -80,18 +86,22 @@
 
 <section class="bridge-table" aria-label={ariaLabel}>
   <div class="bridge-seat bridge-seat-north" aria-label="Visible dummy cards">
-    <span class="bridge-seat-label">Dummy</span>
-    <CardChoiceHand
-      cards={dummyHand}
-      ariaLabel="Dummy hand"
-      className="hand full-hand-cards bridge-table-hand bridge-dummy-action-hand"
-      cardClassName="card hand-card full-hand-card bridge-mini-card"
-      getCardClasses={dummyCardClasses}
-      isPressed={(card) => dummySelectedCardId === card.id}
-      onSelect={(card) => {
-        if (isDummyTurn && !isReviewing) void onSelectDummy?.(card);
-      }}
-    />
+    <span class="bridge-seat-label">{dummySeatLabel}</span>
+    {#if dummyHand.length}
+      <CardChoiceHand
+        cards={dummyHand}
+        ariaLabel="Dummy hand"
+        className="hand full-hand-cards bridge-table-hand bridge-dummy-action-hand"
+        cardClassName="card hand-card full-hand-card bridge-mini-card"
+        getCardClasses={dummyCardClasses}
+        isPressed={(card) => dummySelectedCardId === card.id}
+        onSelect={(card) => {
+          if (isDummyTurn && !isReviewing) void onSelectDummy?.(card);
+        }}
+      />
+    {:else}
+      <div class="bridge-dummy-hidden" aria-label="Dummy hidden">Dummy appears after the opening lead.</div>
+    {/if}
   </div>
 
   <div class:active={Boolean(pendingBySeat.Left)} class="bridge-defender bridge-defender-left" aria-label="Left defender">
@@ -127,10 +137,10 @@
   </div>
 
   <div class:active={Boolean(pendingBySeat.You)} class="bridge-seat bridge-seat-south">
-    <span class="bridge-seat-label">Declarer</span>
+    <span class="bridge-seat-label">{playerRoleLabel}</span>
     <CardChoiceHand
       cards={playerHand}
-      ariaLabel="Declarer Bridge hand"
+      ariaLabel={`${playerSeatLabel} Bridge hand`}
       className="hand full-hand-cards bridge-table-hand bridge-player-table-hand"
       cardClassName="card hand-card full-hand-card bridge-mini-card"
       getCardClasses={playerCardClasses}
@@ -165,6 +175,21 @@
     display: grid;
     gap: 3px;
     min-width: 0;
+  }
+
+  .bridge-dummy-hidden {
+    display: grid;
+    align-items: center;
+    justify-items: center;
+    width: min(100%, 330px);
+    min-height: 104px;
+    padding: 10px;
+    border: 1px dashed rgba(245, 241, 207, 0.42);
+    border-radius: 8px;
+    color: rgba(245, 241, 207, 0.86);
+    font-size: 0.74rem;
+    font-weight: 800;
+    text-align: center;
   }
 
   .bridge-seat-north,

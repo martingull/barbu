@@ -775,40 +775,51 @@ test("Spades bid controls estimate the table and only let the player adjust", as
   await expectSummaryMatchesBids();
 });
 
-test("Bridge play starts from a simplified auction into a dummy hand", async ({ page }, testInfo) => {
+test("Bridge play starts from a rotating auction into a scored contract hand", async ({ page }, testInfo) => {
   await gotoWithPracticeSeed(page, 12);
   await page.getByRole("button", { name: /Open Bridge/ }).click();
   await page.getByRole("tab", { name: "Play" }).click();
 
-  await expect(page.getByRole("tabpanel", { name: "Play" })).toContainText("simplified auction");
+  await expect(page.getByRole("tabpanel", { name: "Play" })).toContainText("rotating auction");
   await page.getByRole("button", { name: "Play Bridge" }).click();
 
   await expect(page.getByRole("heading", { name: "Bridge auction" })).toBeVisible();
-  await expect(page.getByLabel("Bridge bidding box")).toContainText("Choose your opening bid");
-  await expect(page.getByLabel("Bridge bidding box")).toContainText("Auction preview");
-  await expect(page.getByLabel("Bridge opening bids").getByRole("button", { name: "1NT" })).toBeVisible();
+  await expect(page.getByLabel("Bridge bidding box")).toContainText(/Choose your call|Auction complete/);
+  await expect(page.getByLabel("Bridge bidding box")).toContainText("Vulnerability");
+  await expect(page.getByLabel("Bridge bidding box")).toContainText("Auction");
+  await expect(page.getByLabel("Bridge bids").getByRole("button", { name: "1NT" })).toBeVisible();
+  for (let callIndex = 0; callIndex < 4 && (await page.getByRole("button", { name: "Start play" }).count()) === 0; callIndex += 1) {
+    await page.getByRole("button", { name: "Make call" }).click();
+  }
   await page.getByRole("button", { name: "Start play" }).click();
 
   await expect(page.getByRole("heading", { name: "Bridge hand" })).toBeVisible();
-  await expect(page.getByLabel("Bridge full hand")).toContainText("Contract");
-  await expect(page.getByLabel("Bridge full hand")).toContainText("No Trump");
-  await expect(page.getByLabel("Bridge hand score")).toContainText("Your side");
-  await expect(page.getByLabel("Bridge hand score")).toContainText("Opponents");
+  await expect(page.getByLabel("Bridge hand score")).toContainText("Target");
+  await expect(page.getByLabel("Bridge hand score")).toContainText("Declarer");
+  await expect(page.getByLabel("Bridge hand score")).toContainText("Defense");
+  await expect(page.getByLabel("Bridge score")).toContainText("NS");
+  await expect(page.getByLabel("Bridge score")).toContainText("EW");
   await expect(page.getByLabel("Bridge hand table")).toBeVisible();
   await expect(page.getByLabel("Visible dummy cards")).toBeVisible();
   await expect(page.getByLabel("Current trick")).toBeVisible();
-  await expect(page.locator(".bridge-trick-card")).toHaveCount(1);
+  if ((await page.getByLabel("Dummy hidden").count()) > 0) {
+    await expect(page.locator(".bridge-player-table-hand .full-hand-card.legal").first()).toBeVisible();
+    await page.locator(".bridge-player-table-hand .full-hand-card.legal").first().dblclick();
+  }
   await expect(page.getByLabel("Dummy hand", { exact: true })).toBeVisible();
-  await expect(page.getByText("You are declarer. Choose a card from dummy's exposed hand.")).toBeVisible();
-  await expect(page.locator(".bridge-dummy-action-hand .full-hand-card.legal").first()).toBeVisible();
+  if ((await page.getByRole("button", { name: "Next trick" }).count()) > 0) {
+    await page.getByRole("button", { name: "Next trick" }).click();
+  }
+  await expect(page.locator(".bridge-dummy-action-hand .full-hand-card.legal, .bridge-player-table-hand .full-hand-card.legal").first()).toBeVisible();
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
   await page.screenshot({ path: testInfo.outputPath("bridge-hand.png"), fullPage: true });
 
-  await page.locator(".bridge-dummy-action-hand .full-hand-card.legal").first().dblclick();
+  await page.locator(".bridge-dummy-action-hand .full-hand-card.legal, .bridge-player-table-hand .full-hand-card.legal").first().dblclick();
   await expect(page.getByRole("heading", { name: /Bridge hand|Read the table/ })).toBeVisible();
-  await expect(page.getByLabel("Declarer Bridge hand")).toBeVisible();
-  await expect(page.locator(".bridge-trick-card")).toHaveCount(3);
+  await expect(page.getByLabel("South Bridge hand")).toBeVisible();
+  const bridgeTrickCards = await page.locator(".bridge-trick-card").count();
+  expect(bridgeTrickCards).toBeGreaterThan(0);
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
   await page.screenshot({ path: testInfo.outputPath("bridge-after-dummy-play.png"), fullPage: true });
