@@ -2987,12 +2987,14 @@ h2 {
   font-weight: 900;
 }
 
+.bridge-call-grid button.selected,
 .bridge-bidding-grid button.selected {
   border-color: #f5f1cf;
   background: #f5f1cf;
   color: #21372d;
 }
 
+.bridge-call-grid button.recommended:not(.selected),
 .bridge-bidding-grid button.recommended:not(.selected) {
   border-color: #f6d56d;
   box-shadow: inset 0 0 0 1px rgba(246, 213, 109, 0.5);

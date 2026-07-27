@@ -900,6 +900,31 @@ test("Spades play can resume a saved local match", async ({ page }) => {
   await expectNoPageScroll(page);
 });
 
+test("Bridge play can resume a saved local board", async ({ page }) => {
+  await gotoWithPracticeSeed(page, 12);
+  await page.getByRole("button", { name: /Open Bridge/ }).click();
+  await page.getByRole("tab", { name: "Play" }).click();
+  await page.getByRole("button", { name: "Play Bridge" }).click();
+
+  await expect(page.getByRole("heading", { name: "Bridge auction" })).toBeVisible();
+  await expect.poll(async () => page.evaluate(() => localStorage.getItem("barbu.savedBridgeRun.v1"))).not.toBeNull();
+
+  await page.getByLabel("Bridge bidding box").getByRole("button", { name: "Table" }).click();
+  await expect(page.getByRole("heading", { name: "Bridge table", exact: true })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("button", { name: "Continue Bridge" })).toBeVisible();
+  await expect(page.getByText(/Board 1, auction in progress/)).toBeVisible();
+
+  await page.reload();
+  await page.getByRole("button", { name: /Open Bridge/ }).click();
+  await page.getByRole("tab", { name: "Play" }).click();
+  await expect(page.getByRole("button", { name: "Continue Bridge" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Continue Bridge" }).click();
+  await expect(page.getByRole("heading", { name: "Bridge auction" })).toBeVisible();
+  await expect(page.getByLabel("Bridge bidding box")).toContainText("Auction");
+});
+
 test("Spades practice starts three scripted decisions per topic", async ({ page }) => {
   await gotoWithPracticeSeed(page, 6);
   await page.getByRole("button", { name: /Open Spades/ }).click();

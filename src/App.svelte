@@ -239,6 +239,11 @@
     made: boolean;
   };
 
+  type BridgeScoreState = {
+    ns: number;
+    ew: number;
+  };
+
   type FullHandRunResult = {
     contract: FullHandContract;
     playerPenalty: number;
@@ -458,6 +463,19 @@
     savedAt: string;
   };
 
+  type SavedBridgeRun = {
+    version: 1;
+    view: "bridgeAuction" | "fullHand";
+    scores: BridgeScoreState;
+    results: BridgeHandResult[];
+    fullHand: FullHandState;
+    auctionCalls: BridgeAuctionCall[];
+    selectedCall: BridgeCallOption;
+    fullHandReviewTrickCount: number;
+    usingBrowserFullHand: boolean;
+    savedAt: string;
+  };
+
   const catalogCategories = getCatalogCategories();
   const barbuUi = registry.get("barbu")!;
   const heartsUi = registry.get("hearts")!;
@@ -473,6 +491,7 @@
   const savedHeartsRunStorageKey = "barbu.savedHeartsRun.v1";
   const savedWhistRunStorageKey = "barbu.savedWhistRun.v1";
   const savedSpadesRunStorageKey = "barbu.savedSpadesRun.v1";
+  const savedBridgeRunStorageKey = "barbu.savedBridgeRun.v1";
   const maxStoredDrillPatterns = 6;
   const maxStoredPlayBarbuAttempts = 8;
   const scoreSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
@@ -2741,6 +2760,7 @@
   let savedHeartsRun: SavedHeartsRun | null = loadSavedHeartsRun();
   let savedWhistRun: SavedWhistRun | null = loadSavedWhistRun();
   let savedSpadesRun: SavedSpadesRun | null = loadSavedSpadesRun();
+  let savedBridgeRun: SavedBridgeRun | null = loadSavedBridgeRun();
   let heartsSessionScores: Record<Seat, number> = emptySeatPenalties();
   let heartsHandResults: HeartsHandResult[] = [];
   let whistMatchScores = { playerSide: 0, opponentSide: 0 };
@@ -2756,7 +2776,7 @@
   let bridgeAuctionCalls: BridgeAuctionCall[] = [];
   let bridgeAuctionError = "";
   let bridgeHandResults: BridgeHandResult[] = [];
-  let bridgeMatchScores = { ns: 0, ew: 0 };
+  let bridgeMatchScores: BridgeScoreState = { ns: 0, ew: 0 };
   $: spadesPartnershipBids = {
     playerSide: spadesSideBid(spadesBids, spadesPlayerSideSeats),
     opponentSide: spadesSideBid(spadesBids, spadesOpponentSideSeats)
@@ -3423,6 +3443,15 @@
 
   function bridgeChooseAutoCall(hand: FullHandState, seat: Seat, calls: BridgeAuctionCall[]): BridgeCallOption {
     const cards = hand.hands[playerIndexBySeat[seat]] ?? [];
+    return bridgeSuggestedCallForCards(cards, seat, calls);
+  }
+
+  function bridgeSuggestedCallForHand(hand: FullHandState | null, calls = bridgeAuctionCalls, seat: Seat = "You"): BridgeCallOption {
+    const cards = hand?.hands[playerIndexBySeat[seat]] ?? [];
+    return bridgeSuggestedCallForCards(cards, seat, calls);
+  }
+
+  function bridgeSuggestedCallForCards(cards: Card[], seat: Seat, calls: BridgeAuctionCall[]): BridgeCallOption {
     const points = bridgeHighCardPoints(cards);
     const legal = bridgeLegalCallOptions(calls, seat);
     const lastBid = bridgeLastBidOption(calls);
@@ -3497,11 +3526,12 @@
     bridgeAuctionSelectedCall = bridgeSuggestedLegalUserCall();
     bridgeAuctionSelectedBidId = bridgeAuctionSelectedCall === "Pass" || bridgeAuctionSelectedCall === "Double" || bridgeAuctionSelectedCall === "Redouble" ? bridgeAuctionSelectedBidId : bridgeAuctionSelectedCall;
     bridgeAuctionError = "";
+    persistSavedBridgeRun("bridgeAuction");
   }
 
   function bridgeSuggestedLegalUserCall() {
     const legal = bridgeLegalCallOptions(bridgeAuctionCalls, "You");
-    const suggested = bridgeSuggestedBid.id;
+    const suggested = bridgeSuggestedCallForHand(fullHand, bridgeAuctionCalls, "You");
 
     if (legal.includes(suggested)) {
       return suggested;
@@ -4058,6 +4088,7 @@
   $: bridgeAuctionActionLabel = bridgeAuctionReadyToPlay ? "Start play" : bridgeAuctionCurrentStatus.passedOut ? "Deal again" : "Make call";
   $: bridgeSelectedBid = bridgeBidOptions.find((bid) => bid.id === bridgeAuctionSelectedBidId) ?? bridgeBidOptions[4];
   $: bridgeSuggestedBid = bridgeSuggestedBidForHand(fullHand?.playerHand ?? []);
+  $: bridgeSuggestedCall = bridgeSuggestedCallForHand(fullHand, bridgeAuctionCalls, "You");
   $: bridgeVisibleContract = fullHand?.bridgeContract ?? bridgeFinalizeContract(bridgeAuctionCalls, fullHand) ?? bridgeContractFromBid(bridgeSelectedBid);
   $: bridgeContractLabel = bridgeVisibleContract.label;
   $: bridgeTrickCounts = bridgeDeclarerTrickCounts(fullHand);
@@ -5149,6 +5180,183 @@
     lastFullHandTapAt = 0;
     appView = "fullHand";
     savedSpadesRun = savedRun;
+  }
+
+  function loadSavedBridgeRun(): SavedBridgeRun | null {
+    if (typeof localStorage === "undefined") {
+      return null;
+    }
+
+    try {
+      return normalizeSavedBridgeRun(JSON.parse(localStorage.getItem(savedBridgeRunStorageKey) ?? "null"));
+    } catch {
+      return null;
+    }
+  }
+
+  function normalizeSavedBridgeRun(savedRun: unknown): SavedBridgeRun | null {
+    if (!savedRun || typeof savedRun !== "object") {
+      return null;
+    }
+
+    const candidate = savedRun as Partial<SavedBridgeRun>;
+    const savedFullHand = candidate.fullHand?.contract === "Bridge" ? candidate.fullHand : null;
+
+    if (candidate.version !== 1 || !savedFullHand) {
+      return null;
+    }
+
+    return {
+      version: 1,
+      view: candidate.view === "bridgeAuction" ? "bridgeAuction" : "fullHand",
+      scores: normalizeBridgeScoreMap(candidate.scores),
+      results: Array.isArray(candidate.results) ? candidate.results.filter(isBridgeHandResult) : [],
+      fullHand: savedFullHand,
+      auctionCalls: Array.isArray(candidate.auctionCalls) ? candidate.auctionCalls.filter(isBridgeAuctionCall) : [],
+      selectedCall: normalizeBridgeCallOption(candidate.selectedCall),
+      fullHandReviewTrickCount:
+        Number.isInteger(candidate.fullHandReviewTrickCount) && candidate.fullHandReviewTrickCount >= 0
+          ? candidate.fullHandReviewTrickCount
+          : 0,
+      usingBrowserFullHand: Boolean(candidate.usingBrowserFullHand),
+      savedAt: typeof candidate.savedAt === "string" ? candidate.savedAt : new Date().toISOString()
+    };
+  }
+
+  function normalizeBridgeScoreMap(scores: unknown): BridgeScoreState {
+    if (!scores || typeof scores !== "object") {
+      return { ns: 0, ew: 0 };
+    }
+
+    const candidate = scores as Partial<BridgeScoreState>;
+    return {
+      ns: Number.isFinite(candidate.ns) ? Number(candidate.ns) : 0,
+      ew: Number.isFinite(candidate.ew) ? Number(candidate.ew) : 0
+    };
+  }
+
+  function isBridgeAuctionCall(call: unknown): call is BridgeAuctionCall {
+    if (!call || typeof call !== "object") {
+      return false;
+    }
+
+    const candidate = call as Partial<BridgeAuctionCall>;
+    return (
+      (candidate.seat === "Tutor" || candidate.seat === "Right" || candidate.seat === "You" || candidate.seat === "Left") &&
+      typeof candidate.call === "string"
+    );
+  }
+
+  function normalizeBridgeCallOption(call: unknown): BridgeCallOption {
+    if (call === "Pass" || call === "Double" || call === "Redouble") {
+      return call;
+    }
+
+    return typeof call === "string" && bridgeBidOptions.some((bid) => bid.id === call) ? call : "Pass";
+  }
+
+  function isBridgeHandResult(result: unknown): result is BridgeHandResult {
+    if (!result || typeof result !== "object") {
+      return false;
+    }
+
+    const candidate = result as Partial<BridgeHandResult>;
+    return (
+      Number.isInteger(candidate.handNumber) &&
+      typeof candidate.contract === "string" &&
+      (candidate.declarer === "Tutor" || candidate.declarer === "Right" || candidate.declarer === "You" || candidate.declarer === "Left") &&
+      (candidate.declarerSide === "NS" || candidate.declarerSide === "EW") &&
+      (candidate.vulnerability === "None" || candidate.vulnerability === "NS" || candidate.vulnerability === "EW" || candidate.vulnerability === "Both") &&
+      Number.isInteger(candidate.target) &&
+      Number.isInteger(candidate.tricks) &&
+      Number.isInteger(candidate.defenders) &&
+      Number.isFinite(candidate.score) &&
+      typeof candidate.made === "boolean"
+    );
+  }
+
+  function persistSavedBridgeRun(view: SavedBridgeRun["view"] = appView === "bridgeAuction" ? "bridgeAuction" : "fullHand") {
+    const isBridgeFullHand = activeGameTable === "bridge" && fullHand?.contract === "Bridge" && !fullHandRunActive;
+
+    if (whistFullHandSource !== "play" || !isBridgeFullHand || !fullHand) {
+      return;
+    }
+
+    const nextSavedRun: SavedBridgeRun = {
+      version: 1,
+      view,
+      scores: bridgeMatchScores,
+      results: bridgeHandResults,
+      fullHand,
+      auctionCalls: bridgeAuctionCalls,
+      selectedCall: bridgeAuctionSelectedCall,
+      fullHandReviewTrickCount,
+      usingBrowserFullHand,
+      savedAt: new Date().toISOString()
+    };
+
+    savedBridgeRun = nextSavedRun;
+
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(savedBridgeRunStorageKey, JSON.stringify(nextSavedRun));
+    }
+  }
+
+  function clearSavedBridgeRun() {
+    savedBridgeRun = null;
+
+    if (typeof localStorage !== "undefined") {
+      localStorage.removeItem(savedBridgeRunStorageKey);
+    }
+  }
+
+  function savedBridgeRunSummary(savedRun: SavedBridgeRun) {
+    const handNumber = savedRun.results.length + 1;
+    const score = `NS ${formatSignedScore(savedRun.scores.ns)}, EW ${formatSignedScore(savedRun.scores.ew)}`;
+    const finalContract = savedRun.fullHand.bridgeContract?.label;
+
+    if (savedRun.view === "bridgeAuction") {
+      return `Board ${handNumber}, auction in progress, ${score}`;
+    }
+
+    return savedRun.fullHand.status === "complete"
+      ? `Board ${handNumber} complete, ${score}`
+      : `Board ${handNumber}, ${finalContract ?? "contract"}, trick ${savedRun.fullHand.trickNumber}, ${score}`;
+  }
+
+  function continueSavedBridgeRun() {
+    const savedRun = savedBridgeRun ?? loadSavedBridgeRun();
+
+    if (!savedRun) {
+      return;
+    }
+
+    activeGameTable = "bridge";
+    activeTableTabs.bridge = "play";
+    whistFullHandSource = "play";
+    fullHandRunActive = false;
+    fullHandRunResults = [];
+    dominoHand = null;
+    heartsPassingHand = null;
+    bridgeMatchScores = savedRun.scores;
+    bridgeHandResults = savedRun.results;
+    bridgeAuctionCalls = savedRun.auctionCalls;
+    bridgeAuctionSelectedCall = savedRun.selectedCall;
+    bridgeAuctionSelectedBidId =
+      savedRun.selectedCall === "Pass" || savedRun.selectedCall === "Double" || savedRun.selectedCall === "Redouble"
+        ? bridgeSuggestedBidForHand(savedRun.fullHand.playerHand).id
+        : savedRun.selectedCall;
+    fullHand = savedRun.fullHand;
+    fullHandReviewTrickCount = savedRun.fullHandReviewTrickCount;
+    usingBrowserFullHand = true;
+    fullHandSelectedCardId = "";
+    dummySelectedCardId = "";
+    bridgeAuctionError = "";
+    fullHandError = "";
+    lastFullHandTapCardId = "";
+    lastFullHandTapAt = 0;
+    appView = savedRun.view;
+    savedBridgeRun = savedRun;
   }
 
   function loadPracticeSeed() {
@@ -6822,6 +7030,7 @@
       persistSavedHeartsRun("fullHand");
       persistSavedWhistRun();
       persistSavedSpadesRun();
+      persistSavedBridgeRun();
       return;
     }
 
@@ -6842,6 +7051,7 @@
       persistSavedHeartsRun("fullHand");
       persistSavedWhistRun();
       persistSavedSpadesRun();
+      persistSavedBridgeRun();
     } catch (error) {
       fullHandError = typeof error === "string" ? error : "That card could not be played.";
     }
@@ -6869,6 +7079,7 @@
     persistSavedHeartsRun("fullHand");
     persistSavedWhistRun();
     persistSavedSpadesRun();
+    persistSavedBridgeRun();
   }
 
   function continueWhistOpeningLeadPractice() {
@@ -6991,22 +7202,25 @@
     if (!options.keepSession) {
       bridgeMatchScores = { ns: 0, ew: 0 };
       bridgeHandResults = [];
+      clearSavedBridgeRun();
     }
     await startFullHand("Bridge");
     const openingCalls = bridgeAutoAdvanceAuction([], fullHand);
     bridgeAuctionCalls = openingCalls;
-    bridgeAuctionSelectedCall = bridgeSuggestedLegalUserCall();
+    bridgeAuctionSelectedCall = bridgeSuggestedCallForHand(fullHand, bridgeAuctionCalls, "You");
     bridgeAuctionSelectedBidId = bridgeAuctionSelectedCall === "Pass" || bridgeAuctionSelectedCall === "Double" || bridgeAuctionSelectedCall === "Redouble"
       ? bridgeSuggestedBidForHand(fullHand?.playerHand ?? []).id
       : bridgeAuctionSelectedCall;
     bridgeAuctionError = "";
     appView = "bridgeAuction";
+    persistSavedBridgeRun("bridgeAuction");
   }
 
   function selectBridgeAuctionBid(bidId: string) {
     bridgeAuctionSelectedBidId = bidId;
     bridgeAuctionSelectedCall = bidId;
     bridgeAuctionError = "";
+    persistSavedBridgeRun("bridgeAuction");
   }
 
   function selectBridgeAuctionCall(call: BridgeCallOption) {
@@ -7015,6 +7229,7 @@
       bridgeAuctionSelectedBidId = call;
     }
     bridgeAuctionError = "";
+    persistSavedBridgeRun("bridgeAuction");
   }
 
   function confirmBridgeAuction() {
@@ -7048,6 +7263,7 @@
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
     appView = "fullHand";
+    persistSavedBridgeRun("fullHand");
   }
 
   function startPartnershipHand(options: { keepSession?: boolean } = {}) {
@@ -9917,6 +10133,9 @@
       practiceProps: { actions: bridgePracticeActions },
       playProps: {
         onPrimary: () => void startBridgeHand(),
+        resumeLabel: savedBridgeRun ? "Continue Bridge" : undefined,
+        resumeNote: savedBridgeRun ? savedBridgeRunSummary(savedBridgeRun) : undefined,
+        onResume: savedBridgeRun ? continueSavedBridgeRun : undefined,
         footerNote: `Bridge now opens with a rotating auction, then plays the contract with declarer, dummy, opening lead, vulnerability, and duplicate scoring.`
       }
     }
@@ -11528,7 +11747,7 @@
             </div>
             <div>
               <span>Suggested</span>
-              <strong>{bridgeSuggestedBid.longLabel}</strong>
+              <strong>{bridgeCallLongLabel(bridgeSuggestedCall)}</strong>
             </div>
             <div>
               <span>Turn</span>
@@ -11553,6 +11772,7 @@
           <div class="bridge-call-grid" aria-label="Bridge calls">
             <button
               aria-pressed={bridgeAuctionSelectedCall === "Pass"}
+              class:recommended={bridgeSuggestedCall === "Pass"}
               class:selected={bridgeAuctionSelectedCall === "Pass"}
               class="secondary-action"
               disabled={bridgeAuctionCurrentStatus.currentSeat !== "You" || !bridgeAuctionLegalCalls.includes("Pass")}
@@ -11564,6 +11784,7 @@
             <button
               aria-label="Double"
               aria-pressed={bridgeAuctionSelectedCall === "Double"}
+              class:recommended={bridgeSuggestedCall === "Double"}
               class:selected={bridgeAuctionSelectedCall === "Double"}
               class="secondary-action"
               disabled={bridgeAuctionCurrentStatus.currentSeat !== "You" || !bridgeAuctionLegalCalls.includes("Double")}
@@ -11575,6 +11796,7 @@
             <button
               aria-label="Redouble"
               aria-pressed={bridgeAuctionSelectedCall === "Redouble"}
+              class:recommended={bridgeSuggestedCall === "Redouble"}
               class:selected={bridgeAuctionSelectedCall === "Redouble"}
               class="secondary-action"
               disabled={bridgeAuctionCurrentStatus.currentSeat !== "You" || !bridgeAuctionLegalCalls.includes("Redouble")}
@@ -11590,7 +11812,7 @@
               <button
                 aria-pressed={bridgeAuctionSelectedCall === bid.id}
                 class:selected={bridgeAuctionSelectedCall === bid.id}
-                class:recommended={bridgeSuggestedBid.id === bid.id}
+                class:recommended={bridgeSuggestedCall === bid.id}
                 disabled={bridgeAuctionCurrentStatus.currentSeat !== "You" || !bridgeAuctionLegalCalls.includes(bid.id)}
                 onclick={() => selectBridgeAuctionBid(bid.id)}
                 type="button"
@@ -11638,8 +11860,8 @@
             <button class="secondary-action" onclick={openBridgeTable} type="button">Table</button>
             <button
               class="secondary-action"
-              disabled={bridgeAuctionCurrentStatus.currentSeat !== "You" || !bridgeAuctionLegalCalls.includes(bridgeSuggestedBid.id)}
-              onclick={() => selectBridgeAuctionBid(bridgeSuggestedBid.id)}
+              disabled={bridgeAuctionCurrentStatus.currentSeat !== "You" || !bridgeAuctionLegalCalls.includes(bridgeSuggestedCall)}
+              onclick={() => selectBridgeAuctionCall(bridgeSuggestedCall)}
               type="button"
             >
               Use suggestion
