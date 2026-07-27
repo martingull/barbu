@@ -116,6 +116,23 @@ export type CompletedHandTrick = {
   tacticalTags?: FullHandTacticalTag[];
 };
 
+export type BridgeStrain = Suit | "NT";
+
+export type BridgeAuctionCall = {
+  seat: Seat;
+  call: string;
+};
+
+export type BridgeContractState = {
+  level: number;
+  strain: BridgeStrain;
+  label: string;
+  declarer: Seat;
+  dummy: Seat;
+  target: number;
+  vulnerability: "None" | "NS" | "EW" | "Both";
+};
+
 export type FullHandContract =
   | "Hearts"
   | "No Hearts"
@@ -126,6 +143,7 @@ export type FullHandContract =
   | "Hearts Trumps"
   | "Whist"
   | "Spades"
+  | "Bridge"
   | "Domino";
 
 export type FullHandState = {
@@ -144,6 +162,12 @@ export type FullHandState = {
   trickNumber: number;
   status: HandStatus;
   prompt: string;
+  trumpSuit?: Suit | null;
+  dummySeat?: Seat;
+  dummyHand?: Card[];
+  dummyLegalCardIds?: string[];
+  bridgeAuction?: BridgeAuctionCall[];
+  bridgeContract?: BridgeContractState;
 };
 
 export type NoHeartsHandState = FullHandState;

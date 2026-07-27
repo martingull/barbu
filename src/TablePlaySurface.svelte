@@ -19,10 +19,15 @@
     statusValue: string;
     showTable?: boolean;
     summary?: Snippet;
+    surfaceClassName?: string;
+    table?: Snippet;
     tableAriaLabel: string;
     tableCards: TableCard[];
+    tableVariant?: "default" | "bridge";
     title: string;
     track?: Snippet;
+    aboveTable?: Snippet;
+    useCustomTable?: boolean;
   };
 
   let {
@@ -39,10 +44,15 @@
     statusValue,
     showTable = true,
     summary,
+    surfaceClassName = "",
+    table,
     tableAriaLabel,
     tableCards,
+    tableVariant = "default",
     title,
-    track
+    track,
+    aboveTable,
+    useCustomTable = false
   }: Props = $props();
 
   function handleSurfaceKeydown(event: KeyboardEvent) {
@@ -79,7 +89,7 @@
   class:compact-play={mode === "play"}
   class:compact-result={mode === "result"}
   class:table-hidden={!showTable}
-  class="table-play-surface"
+  class={`table-play-surface ${surfaceClassName}`.trim()}
   aria-label={ariaLabel}
 >
   {#if summary}
@@ -90,8 +100,14 @@
     {@render track()}
   {/if}
 
+  {#if aboveTable}
+    {@render aboveTable()}
+  {/if}
+
   {#if showTable}
-    {#if onSurfaceClick}
+    {#if useCustomTable && table}
+      {@render table()}
+    {:else if onSurfaceClick}
       <div
         class="table-tap-target"
         onclick={onSurfaceClick}
@@ -100,10 +116,10 @@
         tabindex="0"
         aria-label="Continue to next trick"
       >
-        <CardTable ariaLabel={tableAriaLabel} {pendingBySeat} tableCards={tableCards} />
+        <CardTable ariaLabel={tableAriaLabel} {pendingBySeat} tableCards={tableCards} variant={tableVariant} />
       </div>
     {:else}
-      <CardTable ariaLabel={tableAriaLabel} {pendingBySeat} tableCards={tableCards} />
+      <CardTable ariaLabel={tableAriaLabel} {pendingBySeat} tableCards={tableCards} variant={tableVariant} />
     {/if}
   {/if}
 

@@ -1,7 +1,7 @@
 export const tableTabIds = ["learn", "practice", "play", "perfect"] as const;
 
 export type TableTabId = (typeof tableTabIds)[number];
-export type ActiveGameTable = "barbu" | "hearts" | "whist" | "spades" | string;
+export type ActiveGameTable = "barbu" | "hearts" | "whist" | "spades" | "bridge" | string;
 export type CatalogGameId =
   | ActiveGameTable
   | "solitaire"
@@ -109,7 +109,7 @@ export type PracticeGroup<Action extends string = string> = {
 
 export const monetizationPolicy = {
   model: "free-usage-then-unlock",
-  freeStarterIds: ["hearts", "barbu", "whist", "spades"],
+  freeStarterIds: ["hearts", "barbu", "whist", "spades", "bridge"],
   paidUnlocks: ["individual-pack", "subscription"],
   meteredFreeUsage: {
     unitLimit: "tbd",
@@ -199,9 +199,9 @@ export function getCatalogCategories(): CatalogCategory[] {
           id: "bridge",
           family: "Bridge",
           title: "Bridge",
-          status: "Planned",
-          access: "Pack",
-          accessModel: "metered-pack",
+          status: "Ready",
+          access: "Free",
+          accessModel: "free-starter",
           summary: "Declarer play, defense, and bidding concepts."
         })
       ]

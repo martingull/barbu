@@ -2917,6 +2917,114 @@ h2 {
   width: 100%;
 }
 
+.bridge-auction-screen {
+  display: grid;
+  gap: 12px;
+}
+
+.bridge-auction-panel {
+  min-height: 0;
+}
+
+.bridge-auction-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.bridge-auction-metrics div,
+.bridge-auction-history {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid rgba(245, 241, 207, 0.22);
+  border-radius: 8px;
+  background: rgba(245, 241, 207, 0.08);
+}
+
+.bridge-auction-metrics span,
+.bridge-auction-history > span {
+  color: #dbe7d1;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.bridge-auction-metrics strong {
+  color: #f7faf3;
+  font-size: 1rem;
+}
+
+.bridge-auction-hand.full-hand-cards {
+  grid-template-columns: repeat(7, minmax(42px, 1fr));
+  gap: 6px;
+}
+
+.bridge-call-grid,
+.bridge-bidding-grid {
+  display: grid;
+  gap: 6px;
+}
+
+.bridge-call-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.bridge-bidding-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.bridge-call-grid button,
+.bridge-bidding-grid button {
+  min-height: 38px;
+  min-width: 0;
+  padding: 0 4px;
+  border: 1px solid rgba(245, 241, 207, 0.24);
+  border-radius: 8px;
+  background: rgba(245, 241, 207, 0.08);
+  color: #f5f1cf;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.bridge-bidding-grid button.selected {
+  border-color: #f5f1cf;
+  background: #f5f1cf;
+  color: #21372d;
+}
+
+.bridge-bidding-grid button.recommended:not(.selected) {
+  border-color: #f6d56d;
+  box-shadow: inset 0 0 0 1px rgba(246, 213, 109, 0.5);
+}
+
+.bridge-call-grid button:disabled,
+.bridge-bidding-grid button:disabled {
+  opacity: 0.42;
+}
+
+.bridge-auction-history div {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.bridge-auction-history p {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+
+.bridge-auction-history strong {
+  color: #dbe7d1;
+  font-size: 0.72rem;
+}
+
+.bridge-auction-history p span {
+  color: #f7faf3;
+  font-weight: 900;
+}
+
 .supporting-copy {
   margin: 0;
   color: #dbe7d1;
@@ -3913,6 +4021,16 @@ h2 {
     display: none;
   }
 
+  .table-play-surface.compact-play .bridge-dummy-turn-feedback .lesson-heading {
+    display: grid;
+    gap: 2px;
+  }
+
+  .table-play-surface.compact-play .bridge-dummy-turn-feedback .lesson-heading h2 {
+    font-size: 1rem;
+    line-height: 1.1;
+  }
+
   .table-play-surface.compact-result .lesson-heading {
     gap: 0;
   }
@@ -4238,6 +4356,44 @@ h2 {
     width: auto;
     z-index: 24;
     padding-top: 0;
+  }
+
+  .fixed-play-screen .bridge-play-surface.compact-play {
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 6px;
+    padding-bottom: calc(max(8px, var(--app-safe-area-bottom)) + 74px);
+  }
+
+  .fixed-play-screen .bridge-play-surface.compact-play .full-hand-summary {
+    grid-row: 1;
+  }
+
+  .fixed-play-screen .bridge-play-surface.compact-play .bridge-table {
+    grid-row: 2;
+    height: 438px;
+    min-height: 438px;
+  }
+
+  .fixed-play-screen .bridge-play-surface.compact-play .table-play-panel {
+    grid-row: 3;
+    gap: 6px;
+    min-height: 0;
+  }
+
+  .fixed-play-screen .bridge-play-surface.compact-play .bridge-table .bridge-table-hand.full-hand-cards {
+    position: static;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    z-index: auto;
+    width: 100%;
+    padding-top: 1px;
+  }
+
+  .fixed-play-screen .bridge-play-surface.compact-play .bridge-dummy-action-hand .hand-card.legal {
+    box-shadow:
+      0 0 0 2px rgba(245, 241, 207, 0.95),
+      0 8px 16px rgba(4, 18, 11, 0.22);
   }
 
   .fixed-play-screen .table-play-surface.compact-play .domino-cards {

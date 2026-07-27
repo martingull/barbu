@@ -10,8 +10,10 @@
     playBrowserNoQueensCard,
     playBrowserNoTricksCard,
     playBrowserPositiveTricksCard,
+    playBrowserBridgeCard,
     playBrowserSpadesCard,
     playBrowserWhistCard,
+    startBrowserBridgeHand,
     startBrowserHeartsHand,
     startBrowserHeartsPassingHand,
     startBrowserKingOfHeartsHand,
@@ -25,6 +27,7 @@
   } from "./browserHandFallback";
   import { passBrowserDominoTurn, playBrowserDominoCard, startBrowserDominoHand } from "./browserDominoFallback";
   import { generateBrowserPlayBarbuDrillSteps } from "./browserDrillFallback";
+  import BridgeTable from "./BridgeTable.svelte";
   import CardChoiceHand from "./CardChoiceHand.svelte";
   import CardFace from "./CardFace.svelte";
   import CardTable from "./CardTable.svelte";
@@ -46,6 +49,7 @@
   import { referenceCatalog } from "./referenceCatalog";
   import { whistOddProgress } from "./whistScoring";
   import type { BarbuLearnPathAction } from "./games/barbu";
+  import type { BridgeLearnPathAction, BridgePracticeAction } from "./games/bridge";
   import type { HeartsLearnPathAction } from "./games/hearts";
   import type { SpadesLearnPathAction, SpadesPracticeAction } from "./games/spades";
   import type { WhistLearnPathAction, WhistPracticeAction } from "./games/whist";
@@ -66,6 +70,9 @@
     GeneratedPracticeScenario,
     GuidedCardOutcome,
     GuidedTrick,
+    BridgeAuctionCall,
+    BridgeContractState,
+    BridgeStrain,
     HeartsPassScenario,
     PracticeReason,
     Seat,
@@ -90,6 +97,7 @@
     | "drill"
     | "drillResult"
     | "runContractIntro"
+    | "bridgeAuction"
     | "heartsPass"
     | "heartsPassPractice"
     | "fullHand"
@@ -186,12 +194,24 @@
     hearts: Record<string, PracticeActionLauncher>;
     whist: Record<string, PracticeActionLauncher>;
     spades: Record<string, PracticeActionLauncher>;
+    bridge: Record<string, PracticeActionLauncher>;
   };
 
   type BarbuLearnPathStep = LearnPathStep<BarbuLearnPathAction>;
   type HeartsLearnPathStep = LearnPathStep<HeartsLearnPathAction>;
   type WhistLearnPathStep = LearnPathStep<WhistLearnPathAction>;
   type SpadesLearnPathStep = LearnPathStep<SpadesLearnPathAction>;
+  type BridgeLearnPathStep = LearnPathStep<BridgeLearnPathAction>;
+
+  type BridgeBidOption = {
+    id: string;
+    level: number;
+    strain: BridgeStrain;
+    label: string;
+    longLabel: string;
+    target: number;
+    order: number;
+  };
 
   type FullHandRunResult = {
     contract: FullHandContract;
@@ -417,6 +437,7 @@
   const heartsUi = registry.get("hearts")!;
   const whistUi = registry.get("whist")!;
   const spadesUi = registry.get<SpadesLearnPathAction | SpadesPracticeAction>("spades")!;
+  const bridgeUi = registry.get<BridgeLearnPathAction | BridgePracticeAction>("bridge")!;
 
   const progressStorageKey = "barbu.courseProgress.v1";
   const practiceSeedStorageKey = "barbu.practiceSeed.v1";
@@ -607,6 +628,38 @@
     H: "hearts",
     S: "spades"
   };
+  const bridgeStrainOrder: BridgeStrain[] = ["C", "D", "H", "S", "NT"];
+  const bridgeStrainSymbols: Record<BridgeStrain, string> = {
+    C: "♣",
+    D: "♦",
+    H: "♥",
+    S: "♠",
+    NT: "NT"
+  };
+  const bridgeStrainNames: Record<BridgeStrain, string> = {
+    C: "Clubs",
+    D: "Diamonds",
+    H: "Hearts",
+    S: "Spades",
+    NT: "No Trump"
+  };
+  const bridgeBidOptions: BridgeBidOption[] = Array.from({ length: 7 }, (_, levelIndex) => {
+    const level = levelIndex + 1;
+    return bridgeStrainOrder.map((strain, strainIndex) => ({
+      id: `${level}${strain}`,
+      level,
+      strain,
+      label: `${level}${bridgeStrainSymbols[strain]}`,
+      longLabel: `${level} ${bridgeStrainNames[strain]}`,
+      target: level + 6,
+      order: levelIndex * bridgeStrainOrder.length + strainIndex
+    }));
+  }).flat();
+
+  function card(rank: string, suit: Suit): Card {
+    const label = `${rank}${suit}`;
+    return { id: label, rank, suit, label };
+  }
 
   const drillSteps: DrillStep[] = guidedLessons.map((lesson) => ({
     contract: lesson.contract,
@@ -2507,6 +2560,120 @@
   const spadesTrumpOrDiscardDrillPool = [spadesTrumpCutDrillStep, spadesTrumpPreserveDrillStep, spadesTrumpOvertrumpDrillStep];
   const spadesBidBooksDrillPool = [spadesBidAceDrillStep, spadesBidProtectedKingDrillStep, spadesBidNilDrillStep];
   const spadesAvoidBagsDrillPool = [spadesBagsDuckDrillStep, spadesBagsDiscardDrillStep, spadesBagsProtectNilDrillStep];
+  const bridgeFinesseDrillStep: DrillStep = {
+    scenarioId: "bridge-finesse-low-toward-honor",
+    contract: "Bridge",
+    title: "Lead toward the queen",
+    trick: {
+      title: "Try the finesse",
+      beforeResult: "Dummy can lead toward your QJ. Choose the small club from dummy to make Right decide first.",
+      afterResult: "A low lead toward honors is the basic finesse shape in declarer play.",
+      emptyExplanation: "When an honor may be on your right, lead low from dummy toward your touching honors.",
+      legalCardIds: ["3C"],
+      hand: [card("3", "C"), card("Q", "C"), card("J", "C"), card("7", "D")],
+      tableBeforeChoice: [],
+      tableAfterChoice: [
+        { seat: "Right", card: card("K", "C") },
+        { seat: "You", card: card("A", "C") },
+        { seat: "Left", card: card("5", "C") }
+      ],
+      pendingBySeat: { Tutor: "Dummy", Right: "Right", You: "You", Left: "Left" },
+      playedExplanations: {
+        "3C": "Good. Low toward QJ keeps your honors useful and tests where the king sits.",
+        QC: "Risky. Playing the queen first gives up the finesse shape.",
+        JC: "Risky. The jack spends an honor before Right has to commit.",
+        "7D": "Illegal. Dummy has clubs, so dummy must follow the suit you lead."
+      },
+      cardOutcomes: { "3C": "good", QC: "risky", JC: "risky", "7D": "illegal" },
+      cardReasons: { "3C": "followed_suit", QC: "won_clean_trick", JC: "won_clean_trick", "7D": "off_suit" }
+    }
+  };
+  const bridgeEstablishSuitDrillStep: DrillStep = {
+    scenarioId: "bridge-establish-long-suit",
+    contract: "Bridge",
+    title: "Establish the long suit",
+    trick: {
+      title: "Force out the ace",
+      beforeResult: "You need extra tricks in 1NT. Lead the king to drive out the ace and set up dummy's diamonds.",
+      afterResult: "Declarer often gives up one trick early to establish a long suit for later winners.",
+      emptyExplanation: "With KQJ10 opposite length, start the sequence and make the defenders spend the ace.",
+      legalCardIds: ["KD"],
+      hand: [card("K", "D"), card("Q", "D"), card("J", "D"), card("4", "S")],
+      tableBeforeChoice: [],
+      tableAfterChoice: [
+        { seat: "Left", card: card("A", "D") },
+        { seat: "Tutor", card: card("3", "D") },
+        { seat: "Right", card: card("7", "D") }
+      ],
+      pendingBySeat: { You: "You", Left: "Left", Tutor: "Dummy", Right: "Right" },
+      playedExplanations: {
+        KD: "Good. The king starts the work of knocking out the ace so the suit can run later.",
+        QD: "Risky. The queen may also work, but standard sequencing starts with the king from this holding.",
+        JD: "Risky. The jack gives the defense a cheaper hold-up.",
+        "4S": "Legal, but it ignores the long diamond source of tricks."
+      },
+      cardOutcomes: { KD: "good", QD: "risky", JD: "risky", "4S": "risky" },
+      cardReasons: { KD: "won_clean_trick", QD: "won_clean_trick", JD: "won_clean_trick", "4S": "void_discard" }
+    }
+  };
+  const bridgeHoldUpDrillStep: DrillStep = {
+    scenarioId: "bridge-hold-up-notrump",
+    contract: "Bridge",
+    title: "Hold up once",
+    trick: {
+      title: "Break defender communication",
+      beforeResult: "Left leads a long-suit king in 1NT. Duck the first round to make the defenders spend an entry.",
+      afterResult: "Holding up can cut communication between defenders in no-trump contracts.",
+      emptyExplanation: "In no trump, you do not always take the first winner. Sometimes you duck to exhaust one defender's suit.",
+      legalCardIds: ["4H", "AH"],
+      hand: [card("A", "H"), card("4", "H"), card("Q", "C"), card("8", "S")],
+      tableBeforeChoice: [{ seat: "Left", card: card("K", "H") }],
+      tableAfterChoice: [
+        { seat: "Tutor", card: card("7", "H") },
+        { seat: "Right", card: card("2", "H") }
+      ],
+      pendingBySeat: { You: "You", Tutor: "Dummy", Right: "Right" },
+      playedExplanations: {
+        "4H": "Good. Ducking once can leave the defense without an easy way back to the long hearts.",
+        AH: "Risky. Taking immediately may leave Left's long hearts live if Right still has an entry.",
+        QC: "Illegal. Hearts were led and you still have hearts.",
+        "8S": "Illegal. Hearts were led and you still have hearts."
+      },
+      cardOutcomes: { "4H": "good", AH: "risky", QC: "illegal", "8S": "illegal" },
+      cardReasons: { "4H": "followed_suit", AH: "won_clean_trick", QC: "off_suit", "8S": "off_suit" }
+    }
+  };
+  const bridgeOpeningLeadDrillStep: DrillStep = {
+    scenarioId: "bridge-defense-fourth-best",
+    contract: "Bridge",
+    title: "Lead fourth best",
+    trick: {
+      title: "Defend 1NT",
+      beforeResult: "Against 1NT, lead from your longest useful suit. Choose the fourth-best spade.",
+      afterResult: "A fourth-best lead from length is a standard no-trump defensive habit.",
+      emptyExplanation: "No-trump defense often starts by building tricks in the longest suit.",
+      legalCardIds: ["4S"],
+      hand: [card("K", "S"), card("J", "S"), card("8", "S"), card("4", "S"), card("Q", "D")],
+      tableBeforeChoice: [],
+      tableAfterChoice: [
+        { seat: "Tutor", card: card("2", "S") },
+        { seat: "Right", card: card("A", "S") },
+        { seat: "Left", card: card("6", "S") }
+      ],
+      pendingBySeat: { You: "You", Tutor: "Dummy", Right: "Declarer", Left: "Partner" },
+      playedExplanations: {
+        "4S": "Good. Fourth best starts your long suit without spending the king.",
+        KS: "Risky. The king may give declarer a clear read and spend your stopper early.",
+        JS: "Risky. The jack is not the standard lead from this holding.",
+        "8S": "Risky. The eight muddies partner's count and attitude read.",
+        QD: "Legal, but it abandons your longest suit."
+      },
+      cardOutcomes: { "4S": "good", KS: "risky", JS: "risky", "8S": "risky", QD: "risky" },
+      cardReasons: { "4S": "won_clean_trick", KS: "won_clean_trick", JS: "won_clean_trick", "8S": "won_clean_trick", QD: "void_discard" }
+    }
+  };
+  const bridgeDeclarerDrillPool = [bridgeFinesseDrillStep, bridgeEstablishSuitDrillStep, bridgeHoldUpDrillStep];
+  const bridgeDefenseDrillPool = [bridgeOpeningLeadDrillStep, bridgeHoldUpDrillStep, bridgeEstablishSuitDrillStep];
   const catalogTableCards: Card[] = [
     { id: "catalog-queen-spades", rank: "Q", suit: "S", label: "QS" },
     { id: "catalog-king-hearts", rank: "K", suit: "H", label: "KH" },
@@ -2535,6 +2702,7 @@
   let activeTableTabs: Record<string, TableTabId> = {};
   let activeWhistPracticeFocus: WhistPracticeAction = "follow";
   let activeSpadesPracticeFocus: SpadesPracticeAction = "follow";
+  let activeBridgePracticeFocus: BridgePracticeAction = "declarer";
   let whistFullHandSource: "play" | "practice" | "card-counting" = "play";
   let whistOpeningLeadPracticeRound = 0;
   let activeCardCountingTab: CardCountingTabId = "play";
@@ -2557,6 +2725,9 @@
   let spadesMatchScores: SpadesScoreState = { playerSide: 0, opponentSide: 0 };
   let spadesBagScores: SpadesScoreState = { playerSide: 0, opponentSide: 0 };
   let spadesHandResults: SpadesHandResult[] = [];
+  let bridgeAuctionSelectedBidId = "1NT";
+  let bridgeAuctionCalls: BridgeAuctionCall[] = [];
+  let bridgeAuctionError = "";
   $: spadesPartnershipBids = {
     playerSide: spadesSideBid(spadesBids, spadesPlayerSideSeats),
     opponentSide: spadesSideBid(spadesBids, spadesOpponentSideSeats)
@@ -2574,6 +2745,7 @@
   let heartsPassPracticeStepIndex = 0;
   let dominoHand: DominoHandState | null = null;
   let fullHandSelectedCardId = "";
+  let dummySelectedCardId = "";
   let heartsPassSelectedCardIds: string[] = [];
   let heartsPassDirection: HeartsPassDirection = "left";
   let heartsPassPracticeSelectedCardIds: string[] = [];
@@ -2748,8 +2920,9 @@
     };
   }
 
-  function whistTrumpSuitFromHandId(id: string): Suit {
+  function whistTrumpSuitFromHandId(id: string): Suit | null {
     const suffix = id.split("-").at(-1);
+    if (suffix === "null") return null;
     return suffix === "C" || suffix === "D" || suffix === "H" || suffix === "S" ? suffix : "S";
   }
 
@@ -3011,6 +3184,78 @@
     return values[rank] ?? 0;
   }
 
+  function bridgeHighCardPoints(cards: Card[]) {
+    return cards.reduce((total, card) => {
+      if (card.rank === "A") return total + 4;
+      if (card.rank === "K") return total + 3;
+      if (card.rank === "Q") return total + 2;
+      if (card.rank === "J") return total + 1;
+      return total;
+    }, 0);
+  }
+
+  function bridgeSuitCount(cards: Card[], suit: Suit) {
+    return cards.filter((card) => card.suit === suit).length;
+  }
+
+  function bridgeLongestSuit(cards: Card[]): Suit {
+    return (["S", "H", "D", "C"] as Suit[]).sort((left, right) => {
+      const countDelta = bridgeSuitCount(cards, right) - bridgeSuitCount(cards, left);
+      if (countDelta !== 0) return countDelta;
+      return bridgeStrainOrder.indexOf(right) - bridgeStrainOrder.indexOf(left);
+    })[0] ?? "C";
+  }
+
+  function bridgeIsBalanced(cards: Card[]) {
+    const counts = (["C", "D", "H", "S"] as Suit[]).map((suit) => bridgeSuitCount(cards, suit)).sort((left, right) => left - right);
+    return counts.join("-") === "3-3-3-4" || counts.join("-") === "2-3-4-4" || counts.join("-") === "2-3-3-5";
+  }
+
+  function bridgeBidById(id: string) {
+    return bridgeBidOptions.find((bid) => bid.id === id) ?? bridgeBidOptions[4];
+  }
+
+  function bridgeSuggestedBidForHand(cards: Card[]) {
+    const points = bridgeHighCardPoints(cards);
+    const balanced = bridgeIsBalanced(cards);
+
+    if (balanced && points >= 20 && points <= 21) {
+      return bridgeBidById("2NT");
+    }
+    if (balanced && points >= 15 && points <= 17) {
+      return bridgeBidById("1NT");
+    }
+    if (points >= 22) {
+      return bridgeBidById("2C");
+    }
+    if (points >= 12) {
+      return bridgeBidById(`1${bridgeLongestSuit(cards)}`);
+    }
+
+    return bridgeBidById("1NT");
+  }
+
+  function bridgeContractFromBid(bid: BridgeBidOption): BridgeContractState {
+    return {
+      level: bid.level,
+      strain: bid.strain,
+      label: bid.longLabel,
+      declarer: "You",
+      dummy: "Tutor",
+      target: bid.target,
+      vulnerability: "None"
+    };
+  }
+
+  function bridgeAuctionForBid(bid: BridgeBidOption): BridgeAuctionCall[] {
+    return [
+      { seat: "You", call: bid.label },
+      { seat: "Left", call: "Pass" },
+      { seat: "Tutor", call: "Pass" },
+      { seat: "Right", call: "Pass" }
+    ];
+  }
+
   $: selectedLesson = guidedLessons.find((lesson) => lesson.id === selectedLessonId) ?? guidedLessons[0];
   $: familyLabel = usingGeneratedPractice ? "Hearts" : selectedLesson.family;
   $: gameLabel = usingGeneratedPractice ? "Generated practice" : selectedLesson.game;
@@ -3042,6 +3287,9 @@
   $: spadesCompletedCount = spadesUi.learnSteps.filter((step) => completedPathSteps[step.id]).length;
   $: nextSpadesPathStep = spadesUi.learnSteps.find((step) => !completedPathSteps[step.id]);
   $: isSpadesCourseComplete = spadesCompletedCount === spadesUi.learnSteps.length;
+  $: bridgeCompletedCount = bridgeUi.learnSteps.filter((step) => completedPathSteps[step.id]).length;
+  $: nextBridgePathStep = bridgeUi.learnSteps.find((step) => !completedPathSteps[step.id]);
+  $: isBridgeCourseComplete = bridgeCompletedCount === bridgeUi.learnSteps.length;
   $: barbuLearnPanelActions = [
     {
       id: "reference",
@@ -3085,6 +3333,15 @@
       onClick: () => openReference(spadesUi.table.referenceId)
     }
   ];
+  $: bridgeLearnPanelActions = [
+    {
+      id: "reference",
+      eyebrow: "Rules",
+      title: "Reference",
+      summary: bridgeUi.table.learn.referenceSummary,
+      onClick: () => openReference(bridgeUi.table.referenceId)
+    }
+  ];
   $: lessonOutcome = selectedCard && (playedCard || !isSelectedLegal) ? buildLessonOutcome(selectedCard, playedCard) : "";
   $: activeCourse = courseCatalog.find((course) => course.id === activeCourseId) ?? courseCatalog[0];
   $: activeCourseTableLabel =
@@ -3118,7 +3375,10 @@
   $: cleanDrillCount = drillResults.filter((result) => result.clean).length;
   $: currentDrillDecisionNumber = drillCheckedCard ? drillResults.length : drillResults.length + 1;
   $: isLastDrillDecision = drillIndex >= activeDrillSteps.length - 1;
-  $: drillScreenTitle = activeGameTable === "whist" || activeGameTable === "spades" ? drillSetTitle : "Quick drill";
+  $: drillScreenTitle =
+    activeGameTable === "whist" || activeGameTable === "spades" || activeGameTable === "bridge"
+      ? drillSetTitle
+      : "Quick drill";
   $: completedPracticeTableSession =
     !activeDrillFocusContract && activeDrillSteps.length >= fullHandContracts.length && drillResults.length >= activeDrillSteps.length;
   $: canMarkPracticeTableComplete = completedPracticeTableSession && !completedPathSteps["generated-drill"];
@@ -3127,7 +3387,9 @@
   $: drillResultIsHeartsPractice = activeGameTable === "hearts";
   $: drillResultIsWhistPractice = activeGameTable === "whist";
   $: drillResultIsSpadesPractice = activeGameTable === "spades";
-  $: drillResultIsTablePractice = drillResultIsHeartsPractice || drillResultIsWhistPractice || drillResultIsSpadesPractice;
+  $: drillResultIsBridgePractice = activeGameTable === "bridge";
+  $: drillResultIsTablePractice =
+    drillResultIsHeartsPractice || drillResultIsWhistPractice || drillResultIsSpadesPractice || drillResultIsBridgePractice;
   $: drillResultMessage =
     drillResults.length > 0 && cleanDrillCount === drillResults.length
       ? drillResultIsHeartsPractice
@@ -3136,6 +3398,8 @@
           ? "Clean Whist practice. Keep reading partner, led suit, and trump before full hands arrive."
           : drillResultIsSpadesPractice
             ? "Clean Spades practice. Keep reading the bid, trump, nil, and bags before full hands arrive."
+            : drillResultIsBridgePractice
+              ? "Clean Bridge practice. Keep planning declarer play, using dummy, and defending 1NT."
         : "Clean session. Barbu is ready to raise the pressure."
       : drillResultIsHeartsPractice
         ? "Repeat the Hearts pattern until following suit and avoiding penalties feels automatic."
@@ -3143,6 +3407,8 @@
           ? "Repeat the Whist pattern until follow-suit and trump decisions feel automatic."
           : drillResultIsSpadesPractice
             ? "Repeat the Spades pattern until bid-aware trick decisions feel automatic."
+            : drillResultIsBridgePractice
+              ? "Repeat the Bridge pattern until dummy, declarer, and defensive plans feel automatic."
         : "Use the next repetition to make the weak decision automatic.";
   $: currentContractResults = summarizeContractResults(drillResults);
   $: weakContract = weakestContractFromResults(currentContractResults);
@@ -3357,8 +3623,12 @@
       ? (fullHandLastCompletedTrick?.cards ?? [])
       : [];
   $: fullHandPendingBySeat =
-    !fullHandIsReviewingTrick && fullHand?.status === "in_progress" && fullHand.currentPlayer === "You" && fullHand.currentTrick.length < 4
-      ? { You: "You" }
+    !fullHandIsReviewingTrick && fullHand?.status === "in_progress" && fullHand.currentTrick.length < 4
+      ? fullHand.currentPlayer === "You"
+        ? { You: "You" }
+        : fullHandIsBridgeGame && fullHand.currentPlayer === "Tutor"
+          ? { Tutor: "Dummy" }
+          : {}
       : {};
   $: fullHandContractMeta = contractScoreMeta(fullHand?.contract ?? "No Hearts");
   $: fullHandPenaltyName = fullHandContractMeta.unitName;
@@ -3378,22 +3648,40 @@
   $: fullHandIsHeartsGame = activeGameTable === "hearts" && fullHand?.contract === "Hearts" && !fullHandRunActive;
   $: fullHandIsWhistGame = activeGameTable === "whist" && fullHand?.contract === "Whist" && !fullHandRunActive;
   $: fullHandIsSpadesGame = activeGameTable === "spades" && fullHand?.contract === "Spades" && !fullHandRunActive;
-  $: fullHandIsPartnershipGame = fullHandIsWhistGame || fullHandIsSpadesGame;
+  $: fullHandIsBridgeGame = activeGameTable === "bridge" && fullHand?.contract === "Bridge" && !fullHandRunActive;
+  $: fullHandIsPartnershipGame = fullHandIsWhistGame || fullHandIsSpadesGame || fullHandIsBridgeGame;
+  $: isBridgeDummyTurn = fullHandIsBridgeGame && fullHand?.currentPlayer === "Tutor";
   $: whistOpeningLeadPracticeActive = fullHandIsWhistGame && whistFullHandSource === "practice" && activeWhistPracticeFocus === "lead";
   $: whistOpeningLeadPracticeReview =
     whistOpeningLeadPracticeActive &&
     fullHandIsReviewingTrick &&
     Boolean(fullHandReviewTrick && fullHandCompletedTrickNumber(fullHandReviewTrick) === 1);
-  $: whistTrumpSuitLabel = fullHandIsPartnershipGame && fullHand ? suitNameFromId(whistTrumpSuitFromHandId(fullHand.id)) : "";
+  $: whistTrumpSuitLabel =
+    fullHandIsPartnershipGame && fullHand
+      ? fullHand.trumpSuit
+        ? suitNameFromId(fullHand.trumpSuit)
+        : fullHandIsBridgeGame
+          ? "No Trump"
+          : suitNameFromId(whistTrumpSuitFromHandId(fullHand.id))
+      : "";
   $: whistPartnershipTricks = fullHand ? whistPartnershipTrickCounts(fullHand.completedTricks) : { playerSide: 0, opponentSide: 0 };
   $: whistOddScore = whistOddProgress(whistPartnershipTricks);
   $: whistPlayerSideOddTricks = whistOddScore.playerSideOddTricks;
   $: whistOpponentSideOddTricks = whistOddScore.opponentSideOddTricks;
   $: whistOddProgressLabel = whistOddScore.label;
   $: whistOddProgressValue = whistOddScore.value;
+  $: bridgeSelectedBid = bridgeBidOptions.find((bid) => bid.id === bridgeAuctionSelectedBidId) ?? bridgeBidOptions[4];
+  $: bridgeSuggestedBid = bridgeSuggestedBidForHand(fullHand?.playerHand ?? []);
+  $: bridgeVisibleContract = fullHand?.bridgeContract ?? bridgeContractFromBid(bridgeSelectedBid);
+  $: bridgeContractLabel = bridgeVisibleContract.label;
+  $: bridgeDeclarerTricks = whistPartnershipTricks.playerSide;
+  $: bridgeDefenderTricks = whistPartnershipTricks.opponentSide;
+  $: bridgeContractTarget = bridgeVisibleContract.target;
+  $: bridgeContractMade = bridgeDeclarerTricks >= bridgeContractTarget;
   $: currentWhistHandResult = fullHandIsWhistGame && fullHand?.status === "complete" ? whistHandResultFor(fullHand) : null;
   $: currentSpadesHandResult = fullHandIsSpadesGame && fullHand?.status === "complete" ? spadesHandResultFor(fullHand) : null;
-  $: fullHandShowWhistMatchSummary = fullHandIsPartnershipGame && !fullHandCardCountingActive;
+  $: fullHandShowWhistMatchSummary =
+    (fullHandIsWhistGame || fullHandIsSpadesGame) && !fullHandCardCountingActive;
   $: spadesBidsAdjustable =
     fullHandIsSpadesGame &&
     whistFullHandSource === "play" &&
@@ -4593,6 +4881,11 @@
     appView = "gameTable";
   }
 
+  function openBridgeTable() {
+    activeGameTable = "bridge";
+    appView = "gameTable";
+  }
+
   function openCardCountingTable(tab: CardCountingTabId = activeCardCountingTab) {
     activeCardCountingTab = tab;
     cardCountingReturnTarget = "card-counting";
@@ -4626,6 +4919,11 @@
 
     if (activeGameTable === "spades") {
       openSpadesTable();
+      return;
+    }
+
+    if (activeGameTable === "bridge") {
+      openBridgeTable();
       return;
     }
 
@@ -5757,6 +6055,11 @@
       return;
     }
 
+    if (gameId === "bridge") {
+      openBridgeTable();
+      return;
+    }
+
     if (gameId === "card-counting") {
       openCardCountingTable("play");
       return;
@@ -5779,6 +6082,9 @@
     }
     if (contract === "Spades") {
       return startBrowserSpadesHand(seed);
+    }
+    if (contract === "Bridge") {
+      return startBrowserBridgeHand(seed);
     }
     if (contract === "No Queens") {
       return startBrowserNoQueensHand(seed);
@@ -5826,6 +6132,9 @@
     if (state.contract === "Spades") {
       return playBrowserSpadesCard(state, cardId);
     }
+    if (state.contract === "Bridge") {
+      return playBrowserBridgeCard(state, cardId);
+    }
     if (state.contract === "No Queens") {
       return playBrowserNoQueensCard(state, cardId);
     }
@@ -5866,6 +6175,7 @@
     heartsPassingHand = null;
     const seed = options.seed ?? (options.keepRun && fullHandRunActive ? runSeedForContract(contract) : usePracticeSeed());
     fullHandSelectedCardId = "";
+    dummySelectedCardId = "";
     fullHandError = "";
     fullHandReviewTrickCount = 0;
     lastFullHandTapCardId = "";
@@ -6071,8 +6381,34 @@
     }
   }
 
-  async function playFullHandCard(cardId = fullHandSelectedCard?.id) {
-    if (!fullHand || fullHandIsReviewingTrick || spadesOpeningDecisionActive || !cardId || !fullHandLegalCardIds.has(cardId)) {
+  async function selectDummyCard(card: Card) {
+    if (!fullHand || fullHand.status === "complete" || fullHandIsReviewingTrick || spadesOpeningDecisionActive) {
+      return;
+    }
+
+    const now = Date.now();
+    const isDoubleTap = lastFullHandTapCardId === card.id && now - lastFullHandTapAt < 450;
+
+    dummySelectedCardId = card.id;
+    lastFullHandTapCardId = card.id;
+    lastFullHandTapAt = now;
+
+    if (isDoubleTap && fullHand.dummyLegalCardIds?.includes(card.id)) {
+      await playFullHandCard(card.id);
+    }
+  }
+
+  async function playFullHandCard(cardId?: string) {
+    const targetId = cardId || (isBridgeDummyTurn ? dummySelectedCardId : fullHandSelectedCard?.id);
+    if (!fullHand || fullHandIsReviewingTrick || spadesOpeningDecisionActive || !targetId) {
+      return;
+    }
+    
+    if (isBridgeDummyTurn && (!fullHand.dummyLegalCardIds || !fullHand.dummyLegalCardIds.includes(targetId))) {
+      return;
+    }
+    
+    if (!isBridgeDummyTurn && !fullHandLegalCardIds.has(targetId)) {
       return;
     }
 
@@ -6080,9 +6416,10 @@
     const completedTrickCount = fullHand.completedTricks.length;
 
     if (usingBrowserFullHand) {
-      updateFullHandAfterPlayerPlay(playBrowserFullHand(fullHand, cardId), completedTrickCount);
+      updateFullHandAfterPlayerPlay(playBrowserFullHand(fullHand, targetId), completedTrickCount);
       recordCompletedFullHandRunResult(fullHand);
       fullHandSelectedCardId = "";
+      dummySelectedCardId = "";
       lastFullHandTapCardId = "";
       lastFullHandTapAt = 0;
       persistSavedPlayBarbuRun("fullHand");
@@ -6095,13 +6432,14 @@
     try {
       const nextFullHand = await invoke<FullHandState>(fullHandContractCommands[fullHand.contract].playCommand, {
         state: fullHand,
-        cardId,
+        cardId: targetId,
         gameId: activeGameTable,
         contract: fullHand.contract
       });
       updateFullHandAfterPlayerPlay(nextFullHand, completedTrickCount);
       recordCompletedFullHandRunResult(fullHand);
       fullHandSelectedCardId = "";
+      dummySelectedCardId = "";
       lastFullHandTapCardId = "";
       lastFullHandTapAt = 0;
       persistSavedPlayBarbuRun("fullHand");
@@ -6128,6 +6466,7 @@
 
     fullHandReviewTrickCount = 0;
     fullHandSelectedCardId = "";
+    dummySelectedCardId = "";
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
     persistSavedPlayBarbuRun("fullHand");
@@ -6249,8 +6588,50 @@
     persistSavedSpadesRun();
   }
 
+  async function startBridgeHand(options: { keepSession?: boolean } = {}) {
+    activeGameTable = "bridge";
+    activeTableTabs.bridge = "play";
+    whistFullHandSource = "play";
+    if (!options.keepSession) {
+      whistMatchScores = { playerSide: 0, opponentSide: 0 };
+      whistHandResults = [];
+    }
+    await startFullHand("Bridge");
+    bridgeAuctionSelectedBidId = bridgeSuggestedBidForHand(fullHand?.playerHand ?? []).id;
+    bridgeAuctionCalls = [];
+    bridgeAuctionError = "";
+    appView = "bridgeAuction";
+  }
+
+  function selectBridgeAuctionBid(bidId: string) {
+    bridgeAuctionSelectedBidId = bidId;
+    bridgeAuctionError = "";
+  }
+
+  function confirmBridgeAuction() {
+    if (!fullHand) {
+      return;
+    }
+
+    const bid = bridgeBidById(bridgeAuctionSelectedBidId);
+    const auction = bridgeAuctionForBid(bid);
+    const bridgeContract = bridgeContractFromBid(bid);
+    bridgeAuctionCalls = auction;
+    fullHand = {
+      ...fullHand,
+      bridgeAuction: auction,
+      bridgeContract,
+      trumpSuit: bid.strain === "NT" ? null : bid.strain
+    };
+    appView = "fullHand";
+  }
+
   function startPartnershipHand(options: { keepSession?: boolean } = {}) {
-    return fullHandIsSpadesGame ? startSpadesHand(options) : startWhistHand(options);
+    return fullHandIsSpadesGame
+      ? startSpadesHand(options)
+      : fullHandIsBridgeGame
+        ? startBridgeHand(options)
+        : startWhistHand(options);
   }
 
   async function startSpadesPracticeHand(pathStepId = "", _focus: SpadesPracticeAction = "follow") {
@@ -6481,6 +6862,52 @@
     }
 
     startSpadesPathStep(nextStep);
+  }
+
+  function completeBridgePathStep(stepId = activePathStepId) {
+    if (!stepId.startsWith("bridge-")) {
+      return;
+    }
+
+    saveCourseProgress({ ...completedPathSteps, [stepId]: true });
+  }
+
+  function startBridgePathStep(step: BridgeLearnPathStep) {
+    activePathStepId = step.id;
+
+    if (step.action === "defense") {
+      startBridgeDefenseDrill(step.id);
+      return;
+    }
+
+    startBridgeDeclarerDrill(step.id);
+  }
+
+  function findNextBridgePathStep(fromStepId = "") {
+    const currentStepIndex = bridgeUi.learnSteps.findIndex((step) => step.id === fromStepId);
+    if (currentStepIndex >= 0 && completedPathSteps[fromStepId]) {
+      const nextSequentialStep = bridgeUi.learnSteps
+        .slice(currentStepIndex + 1)
+        .find((step) => !completedPathSteps[step.id]);
+
+      if (nextSequentialStep) {
+        return nextSequentialStep;
+      }
+    }
+
+    return bridgeUi.learnSteps.find((step) => !completedPathSteps[step.id]);
+  }
+
+  function continueBridgePath(fromStepId = activePathStepId) {
+    const nextStep = findNextBridgePathStep(fromStepId);
+
+    if (!nextStep) {
+      activeTableTabs.bridge = "learn";
+      openBridgeTable();
+      return;
+    }
+
+    startBridgePathStep(nextStep);
   }
 
   function startNoQueensHand() {
@@ -7313,6 +7740,12 @@
       }
 
       const winnerIsPlayerSide = trick.winnerIndex === 0 || trick.winnerIndex === 2;
+      if (fullHandIsBridgeGame) {
+        return winnerIsPlayerSide
+          ? `${trick.winner} won for declarer. Count that toward the ${bridgeContractTarget} tricks needed for ${bridgeContractLabel}.`
+          : `${trick.winner} won for the defense. Protect entries and look for the next sure trick.`;
+      }
+
       const partnershipLabel = winnerIsPlayerSide ? "You + Barbu" : "Left + Right";
 
       if (fullHandTrickHasTag(trick, "trump_won")) {
@@ -7446,6 +7879,9 @@
 
   function fullHandResultHeading(hand: FullHandState) {
     if (fullHandIsPartnershipGame) {
+      if (fullHandIsBridgeGame) {
+        return bridgeContractMade ? `${bridgeContractLabel} made` : `${bridgeContractLabel} defeated`;
+      }
       if (partnershipMatchIsComplete) {
         return whistMatchResultHeading();
       }
@@ -7506,6 +7942,14 @@
 
   function fullHandResultText(hand: FullHandState, currentWhistMatchScoreLabel = whistMatchScoreLabel) {
     if (fullHandIsPartnershipGame) {
+      if (fullHandIsBridgeGame) {
+        return `Contract: ${bridgeContractLabel}. Declarer side won ${bridgeDeclarerTricks} tricks; defenders won ${bridgeDefenderTricks}. ${
+          bridgeContractMade
+            ? `You reached the ${bridgeContractTarget}-trick target.`
+            : `You needed ${bridgeContractTarget} tricks, so the defense defeated the contract.`
+        }`;
+      }
+
       if (partnershipMatchIsComplete) {
         return whistMatchResultSummary();
       }
@@ -8288,6 +8732,37 @@
     }
   }
 
+  function startBridgePracticeSession(focus: BridgePracticeAction, steps: DrillStep[], title: string, pathStepId = "") {
+    activeGameTable = "bridge";
+    activeTableTabs.bridge = "practice";
+    activeBridgePracticeFocus = focus;
+    activePathStepId = pathStepId;
+    activeDrillFocusContract = "Bridge";
+    drillIndex = 0;
+    drillResults = [];
+    drillSetTitle = title;
+    activeDrillSteps = orderPracticePool(steps, usePracticeSeed());
+    resetDrillDecision();
+    appView = "drill";
+  }
+
+  function startBridgeDeclarerDrill(pathStepId = "") {
+    startBridgePracticeSession("declarer", bridgeDeclarerDrillPool, "Bridge practice: declarer play", pathStepId);
+  }
+
+  function startBridgeDefenseDrill(pathStepId = "") {
+    startBridgePracticeSession("defense", bridgeDefenseDrillPool, "Bridge practice: defense", pathStepId);
+  }
+
+  function replayBridgePracticeDrill() {
+    if (activeBridgePracticeFocus === "defense") {
+      startBridgeDefenseDrill();
+      return;
+    }
+
+    startBridgeDeclarerDrill();
+  }
+
   async function startHeartsPassPractice(pathStepId = "") {
     activeGameTable = "hearts";
     activePathStepId = pathStepId;
@@ -8404,6 +8879,10 @@
       trump: ({ pathStepId } = {}) => startSpadesTrumpOrDiscardDrill(pathStepId),
       bid: ({ pathStepId } = {}) => startSpadesBidBooksDrill(pathStepId),
       bags: ({ pathStepId } = {}) => startSpadesAvoidBagsDrill(pathStepId)
+    },
+    bridge: {
+      declarer: ({ pathStepId } = {}) => startBridgeDeclarerDrill(pathStepId),
+      defense: ({ pathStepId } = {}) => startBridgeDefenseDrill(pathStepId)
     }
   };
 
@@ -8411,6 +8890,7 @@
   const heartsPracticeActions = createPracticePanelActions(practiceActionRegistry.hearts);
   const whistPracticeActions = createPracticePanelActions(practiceActionRegistry.whist);
   const spadesPracticeActions = createPracticePanelActions(practiceActionRegistry.spades);
+  const bridgePracticeActions = createPracticePanelActions(practiceActionRegistry.bridge);
 
   function continueCourse() {
     if (isCourseComplete || !nextPathStep) {
@@ -8558,6 +9038,7 @@
     const completedHeartsPathStepId = activePathStepId.startsWith("hearts-") ? activePathStepId : "";
     const completedWhistPathStepId = activePathStepId.startsWith("whist-") ? activePathStepId : "";
     const completedSpadesPathStepId = activePathStepId.startsWith("spades-") ? activePathStepId : "";
+    const completedBridgePathStepId = activePathStepId.startsWith("bridge-") ? activePathStepId : "";
     const completedHeartsCourse = courseCatalog.find(
       (course) => course.game === "hearts" && course.pathStepId === completedHeartsPathStepId
     );
@@ -8576,6 +9057,8 @@
         completeWhistPathStep(completedWhistPathStepId);
       } else if (completedSpadesPathStepId && !completedSpadesCourse) {
         completeSpadesPathStep(completedSpadesPathStepId);
+      } else if (completedBridgePathStepId) {
+        completeBridgePathStep(completedBridgePathStepId);
       }
     } catch {
       // The result screen should still open if local storage is unavailable.
@@ -8980,6 +9463,20 @@
         footerNote: `Individual bids, nil, bags, and ten-bag penalties score locally. Play to ${spadesMatchTarget}.`,
         primaryDisabled: !spadesBidReady,
         primaryWarning: spadesBidError
+      }
+    },
+    bridge: {
+      learnProps: {
+        steps: bridgeUi.learnSteps,
+        completedCount: bridgeUi.learnSteps.filter((step) => completedPathSteps[step.id]).length,
+        nextStep: bridgeUi.learnSteps.find((step) => !completedPathSteps[step.id]),
+        actions: bridgeLearnPanelActions,
+        onStepSelect: startBridgePathStep
+      },
+      practiceProps: { actions: bridgePracticeActions },
+      playProps: {
+        onPrimary: () => void startBridgeHand(),
+        footerNote: `Starter Bridge now opens with a simplified auction, then plays the selected contract with visible dummy. Duplicate movement is planned next.`
       }
     }
   } as Record<string, any>;
@@ -10557,6 +11054,107 @@
         {/snippet}
       </TablePlaySurface>
     {/if}
+  {:else if appView === "bridgeAuction"}
+    {#if fullHand}
+      <header class="topbar table-play-topbar" aria-label="Bridge auction">
+        <button class="back-button" onclick={openBridgeTable} type="button">Table</button>
+        <div>
+          <p class="eyebrow">Contract Bridge</p>
+          <h1>Bridge auction</h1>
+        </div>
+        <div class="contract-status">
+          <span>Dealer</span>
+          <strong>You</strong>
+        </div>
+      </header>
+
+      <section class="bridge-auction-screen" aria-label="Bridge auction">
+        <section class="lesson-panel bridge-auction-panel" aria-label="Bridge bidding box">
+          <div class="lesson-heading">
+            <p class="eyebrow">Before dummy appears</p>
+            <h2>Choose your opening bid</h2>
+          </div>
+
+          <p class="result">
+            You are South. This starter table lets you open the auction, then Left, Barbu, and Right pass so you can practice
+            declaring the contract.
+          </p>
+
+          <div class="bridge-auction-metrics" aria-label="Bridge hand estimate">
+            <div>
+              <span>High-card points</span>
+              <strong>{bridgeHighCardPoints(fullHand.playerHand)}</strong>
+            </div>
+            <div>
+              <span>Suggested</span>
+              <strong>{bridgeSuggestedBid.longLabel}</strong>
+            </div>
+            <div>
+              <span>Selected</span>
+              <strong>{bridgeSelectedBid.longLabel}</strong>
+            </div>
+            <div>
+              <span>Target</span>
+              <strong>{bridgeSelectedBid.target} tricks</strong>
+            </div>
+          </div>
+
+          <CardChoiceHand
+            cards={fullHand.playerHand}
+            ariaLabel="Your Bridge auction hand"
+            className="hand full-hand-cards bridge-auction-hand"
+            cardClassName="card hand-card full-hand-card"
+            getCardClasses={() => ({ legal: false })}
+            isPressed={() => false}
+            onSelect={() => {}}
+          />
+
+          <div class="bridge-call-grid" aria-label="Bridge calls">
+            <button class="secondary-action" disabled type="button">Pass</button>
+            <button aria-label="Double" class="secondary-action" disabled type="button">X</button>
+            <button aria-label="Redouble" class="secondary-action" disabled type="button">XX</button>
+          </div>
+
+          <div class="bridge-bidding-grid" aria-label="Bridge opening bids">
+            {#each bridgeBidOptions as bid}
+              <button
+                aria-pressed={bridgeAuctionSelectedBidId === bid.id}
+                class:selected={bridgeAuctionSelectedBidId === bid.id}
+                class:recommended={bridgeSuggestedBid.id === bid.id}
+                onclick={() => selectBridgeAuctionBid(bid.id)}
+                type="button"
+              >
+                {bid.label}
+              </button>
+            {/each}
+          </div>
+
+          <div class="bridge-auction-history" aria-label="Bridge auction history">
+            <span>Auction preview</span>
+            <div>
+              {#each bridgeAuctionForBid(bridgeSelectedBid) as call}
+                <p>
+                  <strong>{call.seat === "Tutor" ? "Barbu" : call.seat}</strong>
+                  <span>{call.call}</span>
+                </p>
+              {/each}
+            </div>
+          </div>
+
+          {#if bridgeAuctionError}
+            <p class="outcome warning">{bridgeAuctionError}</p>
+          {/if}
+
+          <div class="action-row">
+            <button class="secondary-action" onclick={openBridgeTable} type="button">Table</button>
+            <button class="secondary-action" onclick={() => selectBridgeAuctionBid(bridgeSuggestedBid.id)} type="button">
+              Use suggestion
+            </button>
+            <button class="primary-action" onclick={confirmBridgeAuction} type="button">Start play</button>
+          </div>
+        </section>
+      </section>
+    {/if}
   {:else if appView === "fullHand"}
     {#if fullHand}
       <TablePlaySurface
@@ -10564,26 +11162,47 @@
         ariaLabel={`${fullHand.contract} full hand`}
         title={fullHandCardCountingActive ? fullHandCardCountingTitle : `${fullHand.contract} hand`}
         eyebrow={fullHandCardCountingActive ? "Card Counting I" : fullHandIsPartnershipGame ? (whistFullHandSource === "practice" ? `${fullHand.contract} practice` : `Play ${fullHand.contract}`) : fullHandRunActive ? "Play Barbu" : "Contract hand"}
-        statusLabel={fullHandCardCountingActive ? fullHandCardCountingStatusLabel : fullHandIsPartnershipGame ? "Trump" : fullHandRunStatusLabel}
-        statusValue={fullHandCardCountingActive ? `${fullHand.completedTricks.length} / 13 tricks` : fullHandIsPartnershipGame ? whistTrumpSuitLabel : `${fullHand.playerPenalty} ${fullHandPlayerPenaltyLabel}`}
+        statusLabel={fullHandCardCountingActive ? fullHandCardCountingStatusLabel : fullHandIsBridgeGame ? "Contract" : fullHandIsPartnershipGame ? "Trump" : fullHandRunStatusLabel}
+        statusValue={fullHandCardCountingActive ? `${fullHand.completedTricks.length} / 13 tricks` : fullHandIsBridgeGame ? bridgeContractLabel : fullHandIsPartnershipGame ? whistTrumpSuitLabel : `${fullHand.playerPenalty} ${fullHandPlayerPenaltyLabel}`}
         tableAriaLabel={`${fullHand.contract} hand table`}
         pendingBySeat={fullHandPendingBySeat}
+        surfaceClassName={fullHandIsBridgeGame ? "bridge-play-surface" : ""}
         showTable={
           !fullHandRunIsComplete &&
           !(fullHandIsHeartsGame && fullHand.status === "complete") &&
           !(fullHandIsPartnershipGame && fullHand.status === "complete")
         }
         tableCards={fullHandVisibleTableCards}
+        tableVariant={fullHandIsBridgeGame ? "bridge" : "default"}
         panelAriaLabel={`${fullHand.contract} hand decision`}
         onBack={openFullHandTableTarget}
         onSurfaceClick={fullHandIsReviewingTrick ? continueFullHandReview : undefined}
+        useCustomTable={fullHandIsBridgeGame}
       >
+        {#snippet table()}
+          <BridgeTable
+            ariaLabel={`${fullHand.contract} hand table`}
+            dummyHand={fullHand.dummyHand}
+            dummyLegalCardIds={fullHand.dummyLegalCardIds}
+            dummySelectedCardId={dummySelectedCardId}
+            isDummyTurn={isBridgeDummyTurn}
+            isReviewing={fullHandIsReviewingTrick}
+            onSelectDummy={selectDummyCard}
+            onSelectPlayer={selectFullHandCard}
+            pendingBySeat={fullHandPendingBySeat}
+            playerHand={fullHand.playerHand}
+            playerLegalCardIds={fullHand.legalCardIds}
+            playerSelectedCardId={fullHandSelectedCardId}
+            tableCards={fullHandVisibleTableCards}
+          />
+        {/snippet}
+
         {#snippet summary()}
           {#if !fullHandRunIsComplete && !(fullHandIsPartnershipGame && fullHand.status === "complete")}
             <div class="full-hand-summary grouped-play-summary" aria-label={`${fullHand.contract} hand score`}>
               <div
                 class:no-last-two={fullHand.contract === "No Last Two"}
-                class:whist-hand-summary={fullHandShowWhistMatchSummary}
+                class:whist-hand-summary={fullHandShowWhistMatchSummary || fullHandIsBridgeGame}
                 class="full-hand-summary-row current-hand"
                 aria-label="Current hand"
               >
@@ -10604,6 +11223,12 @@
                   <div>
                     <span>{fullHandIsSpadesGame ? "Bid" : whistOpeningLeadPracticeActive ? "Focus" : whistOddProgressLabel}</span>
                     <strong>{fullHandIsSpadesGame ? spadesCurrentBidLabel : whistOpeningLeadPracticeActive ? "Opening" : whistOddProgressValue}</strong>
+                  </div>
+                {/if}
+                {#if fullHandIsBridgeGame}
+                  <div>
+                    <span>Contract</span>
+                    <strong>{bridgeContractLabel}</strong>
                   </div>
                 {/if}
                 {#if fullHand.contract === "No Last Two"}
@@ -10755,6 +11380,23 @@
                     </div>
                   </div>
                 {/if}
+              {:else if fullHandIsBridgeGame}
+                <div class="hearts-result-stack" aria-label="Bridge hand score">
+                  <div class="hearts-hand-breakdown" aria-label="Bridge contract breakdown">
+                    <div class="hearts-hand-breakdown-row whist-score-row header">
+                      <span>Contract</span>
+                      <span>Target</span>
+                      <span>Declarer</span>
+                      <span>Defense</span>
+                    </div>
+                    <div class:active={true} class="hearts-hand-breakdown-row whist-score-row">
+                      <span>{bridgeContractLabel}</span>
+                      <strong>{bridgeContractTarget}</strong>
+                      <strong>{bridgeDeclarerTricks}</strong>
+                      <strong>{bridgeDefenderTricks}</strong>
+                    </div>
+                  </div>
+                </div>
               {:else if fullHandIsPartnershipGame}
                 <div class="hearts-result-stack" aria-label={`${fullHand.contract} hand score`}>
                   <div class="hearts-hand-breakdown" aria-label={`${fullHand.contract} partnership breakdown`}>
@@ -10922,17 +11564,26 @@
               />
             {/if}
           {:else}
-            <ExerciseFeedback eyebrow="Your turn" title="Choose your card" result={fullHand.prompt} error={fullHandError} />
+            <div class:bridge-dummy-turn-feedback={isBridgeDummyTurn}>
+              <ExerciseFeedback
+                eyebrow="Your turn"
+                title={isBridgeDummyTurn ? "Play from dummy" : fullHandIsBridgeGame ? "Play as declarer" : "Choose your card"}
+                result={isBridgeDummyTurn ? "You are declarer. Choose a card from dummy's exposed hand." : fullHand.prompt}
+                error={fullHandError}
+              />
+            </div>
 
-            <CardChoiceHand
-              cards={fullHand.playerHand}
-              ariaLabel={`Your ${fullHand.contract} hand`}
-              className="hand full-hand-cards"
-              cardClassName="card hand-card full-hand-card"
-              getCardClasses={fullHandCardClasses}
-              isPressed={(card) => fullHandSelectedCardId === card.id}
-              onSelect={(card) => void selectFullHandCard(card)}
-            />
+            {#if !fullHandIsBridgeGame}
+              <CardChoiceHand
+                cards={fullHand.playerHand}
+                ariaLabel={`Your ${fullHand.contract} hand`}
+                className="hand full-hand-cards"
+                cardClassName="card hand-card full-hand-card"
+                getCardClasses={fullHandCardClasses}
+                isPressed={(card) => fullHandSelectedCardId === card.id}
+                onSelect={(card) => void selectFullHandCard(card)}
+              />
+            {/if}
           {/if}
 
           <div class="action-row">
@@ -10985,7 +11636,7 @@
               <button class="secondary-action" onclick={openFullHandTableTarget} type="button">Table</button>
               <button
                 class="primary-action"
-                disabled={!fullHandSelectedCard || !fullHandLegalCardIds.has(fullHandSelectedCard.id)}
+                disabled={(isBridgeDummyTurn ? (!dummySelectedCardId || !fullHand.dummyLegalCardIds?.includes(dummySelectedCardId)) : (!fullHandSelectedCard || !fullHandLegalCardIds.has(fullHandSelectedCard.id)))}
                 onclick={() => void playFullHandCard()}
                 type="button"
               >
@@ -11176,7 +11827,7 @@
       mode="play"
       ariaLabel={drillScreenTitle}
       title={drillScreenTitle}
-      eyebrow={activeGameTable === "whist" || activeGameTable === "spades" ? currentDrill.contract : drillSetTitle}
+      eyebrow={activeGameTable === "whist" || activeGameTable === "spades" || activeGameTable === "bridge" ? currentDrill.contract : drillSetTitle}
       statusLabel={currentDrill.contract}
       statusValue={`Decision ${currentDrillDecisionNumber} of ${activeDrillSteps.length}`}
       tableAriaLabel="Drill card table"
@@ -11308,6 +11959,16 @@
               <button class="primary-action" onclick={replaySpadesPracticeDrill} type="button">Practice Spades again</button>
               <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
             {/if}
+          {:else if drillResultIsBridgePractice}
+            {#if activePathStepId.startsWith("bridge-")}
+              <button class="primary-action" onclick={() => continueBridgePath()} type="button">
+                {isBridgeCourseComplete ? "Back to Bridge table" : "Continue Bridge path"}
+              </button>
+              <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
+            {:else}
+              <button class="primary-action" onclick={replayBridgePracticeDrill} type="button">Practice Bridge again</button>
+              <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
+            {/if}
           {:else}
             <button class="primary-action" onclick={() => void replayWeakContract()} type="button">
               Replay {drillLoopFocus}
@@ -11371,6 +12032,10 @@
         {:else if drillResultIsSpadesPractice}
           {#if !activePathStepId.startsWith("spades-")}
             <button class="primary-action" onclick={openActiveGameTable} type="button">Back to Spades practice</button>
+          {/if}
+        {:else if drillResultIsBridgePractice}
+          {#if !activePathStepId.startsWith("bridge-")}
+            <button class="primary-action" onclick={openActiveGameTable} type="button">Back to Bridge practice</button>
           {/if}
         {:else if drillResultIsBarbuPractice && !drillResultIsBarbuPathPractice}
           <button class="primary-action" onclick={openActiveGameTable} type="button">Back to Barbu practice</button>

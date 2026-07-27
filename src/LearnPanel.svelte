@@ -41,6 +41,8 @@
         ? "Whist learn actions"
         : table.id === "spades"
           ? "Spades learn actions"
+          : table.id === "bridge"
+            ? "Bridge learn actions"
           : "Learn actions"
   );
 

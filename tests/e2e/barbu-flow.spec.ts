@@ -348,7 +348,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByRole("button", { name: "Solitaire planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Open Whist/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Open Spades/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Bridge planned" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Open Bridge/ })).toBeVisible();
   await expect(page.getByRole("button", { name: "Gin Rummy planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Canasta planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Open Whist/ })).toContainText("Free");
@@ -393,6 +393,19 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByRole("tabpanel", { name: "Practice" })).toContainText("Practice one Spades habit.");
   await expect(page.getByLabel("Spades practice drills")).toContainText("Follow suit");
   await expect(page.getByLabel("Spades practice drills")).toContainText("Trump or discard");
+  await page.getByRole("button", { name: "Games" }).click();
+
+  await page.getByRole("button", { name: /Open Bridge/ }).click();
+  await expect(page.getByRole("heading", { name: "Bridge table", exact: true })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
+  await page.getByRole("tab", { name: "Learn" }).click();
+  await expect(page.getByLabel("Bridge lesson path")).toContainText("Declarer play");
+  await expect(page.getByLabel("Bridge lesson path")).toContainText("The Dummy");
+  await expect(page.getByLabel("Bridge learn actions").getByRole("button", { name: "Rules Reference" })).toBeVisible();
+  await page.getByRole("tab", { name: "Practice" }).click();
+  await expect(page.getByRole("tabpanel", { name: "Practice" })).toContainText("Practice one Bridge habit.");
+  await expect(page.getByLabel("Bridge practice drills")).toContainText("Declarer play");
+  await expect(page.getByLabel("Bridge practice drills")).toContainText("Defense");
   await page.getByRole("button", { name: "Games" }).click();
 
   await page.getByRole("button", { name: "Open Barbu" }).click();
@@ -760,6 +773,65 @@ test("Spades bid controls estimate the table and only let the player adjust", as
   await spadesFullHand.getByRole("button", { name: "Adjust bid" }).click();
   await expect(page.getByLabel("You bid 7")).toBeVisible();
   await expectSummaryMatchesBids();
+});
+
+test("Bridge play starts from a simplified auction into a dummy hand", async ({ page }, testInfo) => {
+  await gotoWithPracticeSeed(page, 12);
+  await page.getByRole("button", { name: /Open Bridge/ }).click();
+  await page.getByRole("tab", { name: "Play" }).click();
+
+  await expect(page.getByRole("tabpanel", { name: "Play" })).toContainText("simplified auction");
+  await page.getByRole("button", { name: "Play Bridge" }).click();
+
+  await expect(page.getByRole("heading", { name: "Bridge auction" })).toBeVisible();
+  await expect(page.getByLabel("Bridge bidding box")).toContainText("Choose your opening bid");
+  await expect(page.getByLabel("Bridge bidding box")).toContainText("Auction preview");
+  await expect(page.getByLabel("Bridge opening bids").getByRole("button", { name: "1NT" })).toBeVisible();
+  await page.getByRole("button", { name: "Start play" }).click();
+
+  await expect(page.getByRole("heading", { name: "Bridge hand" })).toBeVisible();
+  await expect(page.getByLabel("Bridge full hand")).toContainText("Contract");
+  await expect(page.getByLabel("Bridge full hand")).toContainText("No Trump");
+  await expect(page.getByLabel("Bridge hand score")).toContainText("Your side");
+  await expect(page.getByLabel("Bridge hand score")).toContainText("Opponents");
+  await expect(page.getByLabel("Bridge hand table")).toBeVisible();
+  await expect(page.getByLabel("Visible dummy cards")).toBeVisible();
+  await expect(page.getByLabel("Current trick")).toBeVisible();
+  await expect(page.locator(".bridge-trick-card")).toHaveCount(1);
+  await expect(page.getByLabel("Dummy hand", { exact: true })).toBeVisible();
+  await expect(page.getByText("You are declarer. Choose a card from dummy's exposed hand.")).toBeVisible();
+  await expect(page.locator(".bridge-dummy-action-hand .full-hand-card.legal").first()).toBeVisible();
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
+  await page.screenshot({ path: testInfo.outputPath("bridge-hand.png"), fullPage: true });
+
+  await page.locator(".bridge-dummy-action-hand .full-hand-card.legal").first().dblclick();
+  await expect(page.getByRole("heading", { name: /Bridge hand|Read the table/ })).toBeVisible();
+  await expect(page.getByLabel("Declarer Bridge hand")).toBeVisible();
+  await expect(page.locator(".bridge-trick-card")).toHaveCount(3);
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
+  await page.screenshot({ path: testInfo.outputPath("bridge-after-dummy-play.png"), fullPage: true });
+});
+
+test("Bridge practice starts three short scripted decisions", async ({ page }) => {
+  await gotoWithPracticeSeed(page, 5);
+  await page.getByRole("button", { name: /Open Bridge/ }).click();
+  await page.getByRole("tab", { name: "Practice" }).click();
+
+  await page.getByLabel("Bridge practice drills").getByRole("button", { name: "Declarer play" }).click();
+
+  await expect(page.getByRole("heading", { name: "Bridge practice: declarer play" })).toBeVisible();
+  await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
+  await expect(page.getByLabel("Drill decision")).toContainText(/Try the finesse|Force out the ace|Break defender communication/);
+
+  await completeVisibleDrillSession(page);
+
+  await expect(page.getByRole("heading", { name: "Session complete" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Practice Bridge again" })).toBeVisible();
+  await page.getByRole("button", { name: "Back to Bridge practice" }).click();
+  await expect(page.getByRole("heading", { name: "Bridge table", exact: true })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
 });
 
 test("Whist play can resume a saved local match", async ({ page }) => {

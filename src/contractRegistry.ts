@@ -28,6 +28,10 @@ export const fullHandContractCommands: Record<FullHandContract, FullHandContract
     startCommand: "start_hand",
     playCommand: "play_hand_card"
   },
+  Bridge: {
+    startCommand: "start_hand",
+    playCommand: "play_hand_card"
+  },
   "No Hearts": {
     startCommand: "start_hand",
     playCommand: "play_hand_card"

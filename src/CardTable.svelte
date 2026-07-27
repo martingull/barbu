@@ -6,9 +6,10 @@
     ariaLabel?: string;
     tableCards: TableCard[];
     pendingBySeat?: Partial<Record<Seat, string>>;
+    variant?: "default" | "bridge";
   };
 
-  let { ariaLabel = "Card table", tableCards, pendingBySeat = {} }: Props = $props();
+  let { ariaLabel = "Card table", tableCards, pendingBySeat = {}, variant = "default" }: Props = $props();
 
   function cardAt(seat: Seat) {
     return tableCards.find((play) => play.seat === seat)?.card;
@@ -24,7 +25,20 @@
   const youCard = $derived(cardAt("You"));
 </script>
 
-<section class="card-table" aria-label={ariaLabel}>
+<section class:bridge-table={variant === "bridge"} class="card-table" aria-label={ariaLabel}>
+  {#if variant === "bridge"}
+    <div class="bridge-opponent-stack bridge-west-stack" aria-hidden="true">
+      {#each Array(5) as _, index}
+        <span style={`--stack-index: ${index}`}></span>
+      {/each}
+    </div>
+    <div class="bridge-opponent-stack bridge-east-stack" aria-hidden="true">
+      {#each Array(5) as _, index}
+        <span style={`--stack-index: ${index}`}></span>
+      {/each}
+    </div>
+  {/if}
+
   <div class="played-slot tutor-slot">
     <div class:active={Boolean(pendingBySeat.Tutor) || Boolean(tutorCard)} class:occupied={Boolean(tutorCard)} class="cardholder">
       {#if tutorCard}
@@ -72,6 +86,7 @@
 
 <style>
   .card-table {
+    position: relative;
     display: grid;
     grid-template-columns: 1fr;
     grid-template-rows: minmax(330px, 1fr);
@@ -85,7 +100,65 @@
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
   }
 
+  .bridge-table {
+    min-height: 360px;
+    overflow: hidden;
+    border-color: rgba(245, 241, 207, 0.32);
+    border-radius: 999px / 62%;
+    background:
+      radial-gradient(ellipse at center, rgba(255, 255, 255, 0.16), transparent 54%),
+      radial-gradient(ellipse at 50% 48%, rgba(75, 35, 73, 0.68), rgba(35, 63, 50, 0.42) 68%, transparent 70%),
+      #295544;
+    box-shadow:
+      inset 0 0 0 6px rgba(245, 241, 207, 0.08),
+      inset 0 0 34px rgba(6, 20, 13, 0.36);
+  }
+
+  .bridge-table::before {
+    content: "";
+    position: absolute;
+    inset: 5%;
+    border: 1px solid rgba(245, 241, 207, 0.14);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  .bridge-opponent-stack {
+    position: absolute;
+    top: 50%;
+    z-index: 0;
+    width: 50px;
+    height: 86px;
+    transform: translateY(-50%);
+  }
+
+  .bridge-west-stack {
+    left: 20px;
+  }
+
+  .bridge-east-stack {
+    right: 20px;
+  }
+
+  .bridge-opponent-stack span {
+    position: absolute;
+    inset: 0;
+    border: 2px solid #fff7ec;
+    border-radius: 7px;
+    background:
+      repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.18) 0 3px, transparent 3px 6px),
+      #c83f45;
+    box-shadow: 0 6px 12px rgba(5, 16, 10, 0.22);
+    transform: translateX(calc(var(--stack-index) * 5px));
+  }
+
+  .bridge-east-stack span {
+    transform: translateX(calc(var(--stack-index) * -5px));
+  }
+
   .played-slot {
+    position: relative;
+    z-index: 1;
     display: grid;
     place-items: center;
     min-width: 88px;
@@ -174,6 +247,24 @@
     text-transform: uppercase;
   }
 
+  .bridge-table .cardholder {
+    width: 84px;
+    border-color: rgba(245, 241, 207, 0.42);
+    background: rgba(8, 30, 21, 0.22);
+  }
+
+  .bridge-table .cardholder-label {
+    padding: 4px 7px;
+    border-radius: 6px;
+    background: rgba(7, 21, 14, 0.6);
+    color: #f7faf3;
+    font-size: 0.66rem;
+  }
+
+  .bridge-table .cardholder .table-card {
+    width: 54px;
+  }
+
   .table-card {
     align-self: start;
     grid-column: 1;
@@ -229,6 +320,58 @@
 
     .you-slot {
       padding-bottom: 18px;
+    }
+
+    .bridge-table {
+      grid-template-rows: 246px;
+      min-height: auto;
+      border-radius: 52% / 38%;
+    }
+
+    .bridge-table .cardholder {
+      width: 72px;
+      padding: 4px 4px 15px;
+    }
+
+    .bridge-table .cardholder .table-card {
+      width: 46px;
+    }
+
+    .bridge-table .tutor-slot {
+      padding-top: 10px;
+    }
+
+    .bridge-table .left-slot {
+      padding-left: 48px;
+    }
+
+    .bridge-table .right-slot {
+      padding-right: 48px;
+    }
+
+    .bridge-table .you-slot {
+      padding-bottom: 10px;
+    }
+
+    .bridge-opponent-stack {
+      width: 36px;
+      height: 62px;
+    }
+
+    .bridge-west-stack {
+      left: 8px;
+    }
+
+    .bridge-east-stack {
+      right: 8px;
+    }
+
+    .bridge-opponent-stack span {
+      transform: translateX(calc(var(--stack-index) * 3px));
+    }
+
+    .bridge-east-stack span {
+      transform: translateX(calc(var(--stack-index) * -3px));
     }
   }
 </style>

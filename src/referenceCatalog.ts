@@ -665,5 +665,128 @@ export const referenceCatalog: GameReference[] = [
           "The current table teaches ordinary individual bids, partnership totals, nil, bags, and the ten-bag penalty. The opening bid estimate counts aces, protected kings, high spades, and spade length, then suggests nil only for hands with no clear winners. Blind nil should be introduced as a named variant once the core hand feels settled."
       }
     ]
+  },
+  {
+    id: "bridge",
+    title: "Bridge",
+    family: "Bridge",
+    baseline: "Contract Bridge starter table, simplified auction and declarer-play baseline",
+    overview:
+      "Bridge is a four-player partnership trick-taking game with an auction, a contract, declarer play, an exposed dummy, and two defenders. The first app slice teaches a simplified opening auction before the player practices declarer planning, dummy play, and defense.",
+    sections: [
+      {
+        id: "object",
+        title: "Object",
+        body:
+          "One side declares a contract and tries to take enough tricks to make it. The defenders try to defeat that contract. The starter app table lets you choose an opening bid, then plays the selected contract with Barbu as dummy.",
+        facts: [
+          { label: "Game type", value: "Contract partnership trick-taking" },
+          { label: "Starter auction", value: "You open, table passes" },
+          { label: "Declarer target", value: "6 plus contract level" }
+        ]
+      },
+      {
+        id: "players",
+        title: "Players And Partnerships",
+        body:
+          "Bridge uses four players in two partnerships. Partners sit opposite one another. In the starter table you declare with Barbu as dummy, while Left and Right defend.",
+        facts: [
+          { label: "Players", value: "Four" },
+          { label: "Partner", value: "Barbu" },
+          { label: "Opponents", value: "Left and Right" }
+        ]
+      },
+      {
+        id: "cards-and-play",
+        title: "Cards And Play",
+        body:
+          "Bridge uses a standard fifty-two card pack with aces high. A player who can follow the led suit must follow. In no trump, the highest card of the led suit wins. In a suit contract, trump can beat the led suit. The trick winner leads next.",
+        facts: [
+          { label: "Pack", value: "52 cards" },
+          { label: "Cards per player", value: "13" },
+          { label: "Winner", value: "Highest led-suit card, unless trumped" }
+        ]
+      },
+      {
+        id: "dummy",
+        title: "The Dummy",
+        body:
+          "After the opening lead, declarer's partner becomes dummy and their hand is played face up. Declarer chooses cards from both declarer's hand and dummy. The app exposes Barbu's hand and lets you play from it when dummy is on turn.",
+        facts: [
+          { label: "Dummy", value: "Declarer's partner" },
+          { label: "Control", value: "Declarer plays both hands" },
+          { label: "App role", value: "You play your hand and Barbu's dummy" }
+        ]
+      },
+      {
+        id: "habits",
+        title: "Starter Habits",
+        body:
+          "The first Bridge lessons focus on club-table habits that carry into real play: count sure winners, establish long suits, lead toward honors for finesses, hold up in no trump when defender communication matters, and lead length on defense.",
+        facts: [
+          { label: "Declarer", value: "Plan winners before playing fast" },
+          { label: "Dummy", value: "Use the exposed hand as a resource" },
+          { label: "Defense", value: "Build tricks in a long suit" }
+        ]
+      },
+      {
+        id: "app-learning",
+        title: "App Learning Path",
+        body:
+          "The Bridge path currently teaches a starter auction table. It has compact scripted decisions for declarer play and defense, plus a playable local hand with visible dummy. Smarter opponent bidding, duplicate scoring, vulnerability, and rubber scoring are later named layers.",
+        facts: [
+          { label: "First slice", value: "Opening bid into play" },
+          { label: "Practice", value: "Short scripted decisions" },
+          { label: "Play", value: "Playable dummy hand" }
+        ]
+      }
+    ],
+    contracts: [
+      {
+        id: "starter-1nt",
+        title: "Starter contract",
+        objective: "Take at least six plus the contract level as declarer.",
+        scoring: "The current starter table shows trick counts only; full contract scoring is planned.",
+        lesson: "Start by planning sure tricks, using dummy, establishing long suits, and timing stoppers."
+      }
+    ],
+    contractRoadmap: [
+      {
+        id: "bridge-reference",
+        title: "Reference baseline",
+        coreStatus: "Core",
+        appStatus: "Defined",
+        note: "Bridge is defined as contract partnership play with auction, declarer, dummy, defense, and contract scoring layers."
+      },
+      {
+        id: "bridge-learn",
+        title: "Learning path",
+        coreStatus: "Core",
+        appStatus: "Playable",
+        note: "The current path teaches declarer planning, dummy handling, and defense through short table decisions."
+      },
+      {
+        id: "bridge-play",
+        title: "Playable starter hand",
+        coreStatus: "Starter",
+        appStatus: "Playable",
+        note: "The app currently starts with a simplified auction, then plays the selected contract with You as declarer and Barbu as visible dummy."
+      },
+      {
+        id: "bridge-auction",
+        title: "Auction and scoring",
+        coreStatus: "Core",
+        appStatus: "Partial",
+        note: "Opening bids and contract selection are started. Responses, doubles, vulnerability, duplicate scoring, and rubber scoring should be introduced as explicit Bridge layers."
+      }
+    ],
+    variants: [
+      {
+        id: "starter-boundary",
+        title: "Starter Boundary",
+        note:
+          "The current table has a simplified auction and declarer-play slice. It should not be presented as complete club Bridge until opponent bidding, doubles, vulnerability, and contract scoring are implemented."
+      }
+    ]
   }
 ];
