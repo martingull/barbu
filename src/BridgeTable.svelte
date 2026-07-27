@@ -333,6 +333,7 @@
     align-content: start;
     width: 100%;
     max-width: 100%;
+    min-height: 128px;
     min-width: 0;
     overflow: visible;
     padding: 1px 0;

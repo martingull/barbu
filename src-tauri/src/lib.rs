@@ -39,16 +39,29 @@ fn generate_hearts_practice_set(seed: u64, focus: Option<String>) -> PracticeDri
 fn start_hand(game_id: String, contract: String, seed: u64) -> Result<FullHandDto, String> {
     let ruleset = barbu_core::get_ruleset(&game_id, &contract);
     let state = ruleset.start_hand(seed);
-    Ok(FullHandDto::from_core(&state, &contract, ruleset.score_type()))
+    Ok(FullHandDto::from_core(
+        &state,
+        &contract,
+        ruleset.score_type(),
+    ))
 }
 
 #[tauri::command]
-fn play_hand_card(game_id: String, contract: String, state: FullHandDto, card_id: String) -> Result<FullHandDto, String> {
+fn play_hand_card(
+    game_id: String,
+    contract: String,
+    state: FullHandDto,
+    card_id: String,
+) -> Result<FullHandDto, String> {
     let ruleset = barbu_core::get_ruleset(&game_id, &contract);
     let state_core = state.to_core()?;
     let card = card_from_label(&card_id)?;
     let next_state = ruleset.play_card(state_core, card)?;
-    Ok(FullHandDto::from_core(&next_state, &contract, ruleset.score_type()))
+    Ok(FullHandDto::from_core(
+        &next_state,
+        &contract,
+        ruleset.score_type(),
+    ))
 }
 
 #[tauri::command]
@@ -71,6 +84,65 @@ fn apply_hearts_pass(
     let next_state = barbu_core::apply_hearts_pass_direction(state, cards, direction.unwrap_or(1))?;
 
     Ok(FullHandDto::from_core(&next_state, "Hearts", "point"))
+}
+
+#[tauri::command]
+fn bridge_legal_calls(
+    calls: Vec<BridgeAuctionCallDto>,
+    seat: String,
+    dealer: String,
+) -> Result<Vec<String>, String> {
+    let calls = bridge_calls_to_core(&calls)?;
+    let seat = player_index(&seat)?;
+    let dealer = player_index(&dealer)?;
+
+    Ok(barbu_core::bridge_legal_calls(&calls, seat, dealer)
+        .into_iter()
+        .map(|call| call.id())
+        .collect())
+}
+
+#[tauri::command]
+fn bridge_suggest_call(
+    cards: Vec<CardDto>,
+    seat: String,
+    calls: Vec<BridgeAuctionCallDto>,
+    dealer: String,
+) -> Result<String, String> {
+    let cards = cards_from_dto(&cards)?;
+    let calls = bridge_calls_to_core(&calls)?;
+    let seat = player_index(&seat)?;
+    let dealer = player_index(&dealer)?;
+
+    Ok(barbu_core::bridge_suggest_call(&cards, seat, &calls, dealer).id())
+}
+
+#[tauri::command]
+fn finalize_bridge_contract(
+    calls: Vec<BridgeAuctionCallDto>,
+    dealer: String,
+    vulnerability: String,
+) -> Result<Option<BridgeContractDto>, String> {
+    let calls = bridge_calls_to_core(&calls)?;
+    let dealer = player_index(&dealer)?;
+    let vulnerability = barbu_core::BridgeVulnerability::from_label(&vulnerability)
+        .ok_or_else(|| format!("Unknown Bridge vulnerability: {vulnerability}"))?;
+
+    Ok(
+        barbu_core::bridge_finalize_contract(&calls, dealer, vulnerability)
+            .as_ref()
+            .map(BridgeContractDto::from_core),
+    )
+}
+
+#[tauri::command]
+fn score_bridge_contract(contract: BridgeContractDto, declarer_tricks: u8) -> Result<i32, String> {
+    let contract = contract.to_core()?;
+
+    Ok(barbu_core::bridge_duplicate_score(
+        &contract,
+        declarer_tricks,
+    ))
 }
 
 #[tauri::command]
@@ -464,6 +536,95 @@ struct CompletedTrickDto {
     tactical_tags: Vec<String>,
 }
 
+#[derive(Clone, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct BridgeAuctionCallDto {
+    seat: String,
+    call: String,
+}
+
+impl BridgeAuctionCallDto {
+    fn to_core(&self) -> Result<barbu_core::BridgeAuctionCall, String> {
+        Ok(barbu_core::BridgeAuctionCall {
+            seat: player_index(&self.seat)?,
+            call: barbu_core::BridgeCall::from_label(&self.call)
+                .ok_or_else(|| format!("Unknown Bridge call: {}", self.call))?,
+        })
+    }
+}
+
+#[derive(Clone, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct BridgeContractDto {
+    level: u8,
+    strain: String,
+    label: String,
+    declarer: String,
+    dummy: String,
+    target: u8,
+    vulnerability: String,
+    doubled: bool,
+    redoubled: bool,
+    declarer_side: String,
+    dealer: String,
+    opening_leader: String,
+}
+
+impl BridgeContractDto {
+    fn from_core(contract: &barbu_core::BridgeContract) -> Self {
+        Self {
+            level: contract.level,
+            strain: contract.strain.short_name().to_string(),
+            label: contract.label.clone(),
+            declarer: player_name(contract.declarer).to_string(),
+            dummy: player_name(contract.dummy).to_string(),
+            target: contract.target,
+            vulnerability: contract.vulnerability.label().to_string(),
+            doubled: contract.doubled,
+            redoubled: contract.redoubled,
+            declarer_side: contract.declarer_side.label().to_string(),
+            dealer: player_name(contract.dealer).to_string(),
+            opening_leader: player_name(contract.opening_leader).to_string(),
+        }
+    }
+
+    fn to_core(&self) -> Result<barbu_core::BridgeContract, String> {
+        let strain = barbu_core::BridgeStrain::from_label(&self.strain)
+            .ok_or_else(|| format!("Unknown Bridge strain: {}", self.strain))?;
+        let vulnerability = barbu_core::BridgeVulnerability::from_label(&self.vulnerability)
+            .ok_or_else(|| format!("Unknown Bridge vulnerability: {}", self.vulnerability))?;
+        let declarer_side = match self.declarer_side.as_str() {
+            "NS" => barbu_core::BridgeSide::NorthSouth,
+            "EW" => barbu_core::BridgeSide::EastWest,
+            _ => return Err(format!("Unknown Bridge side: {}", self.declarer_side)),
+        };
+
+        Ok(barbu_core::BridgeContract {
+            level: self.level,
+            strain,
+            label: self.label.clone(),
+            declarer: player_index(&self.declarer)?,
+            dummy: player_index(&self.dummy)?,
+            target: self.target,
+            vulnerability,
+            doubled: self.doubled,
+            redoubled: self.redoubled,
+            declarer_side,
+            dealer: player_index(&self.dealer)?,
+            opening_leader: player_index(&self.opening_leader)?,
+        })
+    }
+}
+
+fn bridge_calls_to_core(
+    calls: &[BridgeAuctionCallDto],
+) -> Result<Vec<barbu_core::BridgeAuctionCall>, String> {
+    calls
+        .iter()
+        .map(BridgeAuctionCallDto::to_core)
+        .collect::<Result<Vec<_>, _>>()
+}
+
 impl CompletedTrickDto {
     fn from_core(trick: &barbu_core::CompletedTrick, contract: &str, trick_number: usize) -> Self {
         Self {
@@ -730,18 +891,22 @@ pub fn run() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             apply_hearts_pass,
+            bridge_legal_calls,
+            bridge_suggest_call,
             current_game,
+            finalize_bridge_contract,
             generate_daily_drill_set,
             generate_hearts_pass_practice,
             generate_hearts_practice_set,
             generate_no_hearts_follow_suit,
             pass_domino_turn,
             play_hand_card,
+            score_bridge_contract,
             start_hand,
             play_domino_card,
             start_domino_hand,
             start_hearts_passing_hand,
-            ])
+        ])
         .run(tauri::generate_context!())
         .expect("error while running Tauri application");
 }

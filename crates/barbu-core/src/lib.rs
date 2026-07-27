@@ -1,3 +1,4 @@
+pub mod bridge;
 pub mod cards;
 pub mod contract_policy;
 pub mod domino;
@@ -8,6 +9,12 @@ pub mod practice;
 pub mod ruleset;
 pub mod trick;
 
+pub use bridge::{
+    bridge_auction_status, bridge_duplicate_score, bridge_finalize_contract,
+    bridge_high_card_points, bridge_legal_calls, bridge_side_for_seat, bridge_suggest_call,
+    BridgeAuctionCall, BridgeAuctionStatus, BridgeBid, BridgeCall, BridgeContract, BridgeSide,
+    BridgeStrain, BridgeVulnerability,
+};
 pub use cards::{Card, Rank, Suit};
 pub use domino::{
     pass_domino_turn, play_domino_card, start_domino_hand, start_domino_hand_with_start_rank,

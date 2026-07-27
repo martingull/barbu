@@ -3506,7 +3506,7 @@
     return nextCalls;
   }
 
-  function bridgeApplyUserCall(call: BridgeCallOption) {
+  async function bridgeApplyUserCall(call: BridgeCallOption) {
     if (!fullHand) {
       return;
     }
@@ -3523,7 +3523,7 @@
 
     const nextCalls = bridgeAutoAdvanceAuction([...bridgeAuctionCalls, { seat: "You", call: bridgeCallLabel(call) }], fullHand);
     bridgeAuctionCalls = nextCalls;
-    bridgeAuctionSelectedCall = bridgeSuggestedLegalUserCall();
+    bridgeAuctionSelectedCall = await bridgeSuggestedLegalUserCallWithCore(fullHand, bridgeAuctionCalls, "You");
     bridgeAuctionSelectedBidId = bridgeAuctionSelectedCall === "Pass" || bridgeAuctionSelectedCall === "Double" || bridgeAuctionSelectedCall === "Redouble" ? bridgeAuctionSelectedBidId : bridgeAuctionSelectedCall;
     bridgeAuctionError = "";
     persistSavedBridgeRun("bridgeAuction");
@@ -3538,6 +3538,47 @@
     }
 
     return "Pass";
+  }
+
+  async function bridgeSuggestedLegalUserCallWithCore(hand: FullHandState | null = fullHand, calls = bridgeAuctionCalls, seat: Seat = "You") {
+    const fallback = bridgeSuggestedCallForHand(hand, calls, seat);
+
+    if (!hasTauriRuntime() || !hand) {
+      return fallback;
+    }
+
+    try {
+      const suggestion = await invoke<string>("bridge_suggest_call", {
+        cards: hand.hands[playerIndexBySeat[seat]] ?? [],
+        seat,
+        calls,
+        dealer: bridgeDealerSeat(hand)
+      });
+      const normalized = normalizeBridgeCallOption(suggestion);
+      const legal = bridgeLegalCallOptions(calls, seat);
+
+      return legal.includes(normalized) ? normalized : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  async function bridgeFinalizeContractWithCore(calls = bridgeAuctionCalls, hand: FullHandState | null = fullHand) {
+    const fallback = bridgeFinalizeContract(calls, hand);
+
+    if (!hasTauriRuntime() || !hand) {
+      return fallback;
+    }
+
+    try {
+      return (await invoke<BridgeContractState | null>("finalize_bridge_contract", {
+        calls,
+        dealer: bridgeDealerSeat(hand),
+        vulnerability: bridgeVulnerabilityForHand(hand)
+      })) ?? fallback;
+    } catch {
+      return fallback;
+    }
   }
 
   function bridgeFinalizeContract(calls = bridgeAuctionCalls, hand: FullHandState | null = fullHand): BridgeContractState | null {
@@ -7207,7 +7248,7 @@
     await startFullHand("Bridge");
     const openingCalls = bridgeAutoAdvanceAuction([], fullHand);
     bridgeAuctionCalls = openingCalls;
-    bridgeAuctionSelectedCall = bridgeSuggestedCallForHand(fullHand, bridgeAuctionCalls, "You");
+    bridgeAuctionSelectedCall = await bridgeSuggestedLegalUserCallWithCore(fullHand, bridgeAuctionCalls, "You");
     bridgeAuctionSelectedBidId = bridgeAuctionSelectedCall === "Pass" || bridgeAuctionSelectedCall === "Double" || bridgeAuctionSelectedCall === "Redouble"
       ? bridgeSuggestedBidForHand(fullHand?.playerHand ?? []).id
       : bridgeAuctionSelectedCall;
@@ -7232,7 +7273,7 @@
     persistSavedBridgeRun("bridgeAuction");
   }
 
-  function confirmBridgeAuction() {
+  async function confirmBridgeAuction() {
     if (!fullHand) {
       return;
     }
@@ -7240,7 +7281,7 @@
     const status = bridgeAuctionStatus(bridgeAuctionCalls, bridgeDealerIndex(fullHand));
 
     if (!status.complete) {
-      bridgeApplyUserCall(bridgeAuctionSelectedCall);
+      await bridgeApplyUserCall(bridgeAuctionSelectedCall);
       return;
     }
 
@@ -7249,7 +7290,7 @@
       return;
     }
 
-    const bridgeContract = bridgeFinalizeContract(bridgeAuctionCalls, fullHand);
+    const bridgeContract = await bridgeFinalizeContractWithCore(bridgeAuctionCalls, fullHand);
     if (!bridgeContract) {
       bridgeAuctionError = "The auction does not contain a contract yet.";
       return;

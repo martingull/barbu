@@ -825,6 +825,58 @@ test("Bridge play starts from a rotating auction into a scored contract hand", a
   await page.screenshot({ path: testInfo.outputPath("bridge-after-dummy-play.png"), fullPage: true });
 });
 
+test("Bridge table hand rows do not shift after cards are played", async ({ page }) => {
+  await gotoWithPracticeSeed(page, 12);
+  await page.getByRole("button", { name: /Open Bridge/ }).click();
+  await page.getByRole("tab", { name: "Play" }).click();
+  await page.getByRole("button", { name: "Play Bridge" }).click();
+
+  await expect(page.getByRole("heading", { name: "Bridge auction" })).toBeVisible();
+  for (let callIndex = 0; callIndex < 4 && (await page.getByRole("button", { name: "Start play" }).count()) === 0; callIndex += 1) {
+    await page.getByRole("button", { name: "Make call" }).click();
+  }
+  await page.getByRole("button", { name: "Start play" }).click();
+
+  await expect(page.getByRole("heading", { name: "Bridge hand" })).toBeVisible();
+  if ((await page.getByLabel("Dummy hidden").count()) > 0) {
+    await page.locator(".bridge-player-table-hand .full-hand-card.legal").first().dblclick();
+  }
+  await expect(page.getByLabel("Dummy hand", { exact: true })).toBeVisible();
+  if (await page.getByRole("button", { name: "Next trick" }).isVisible().catch(() => false)) {
+    await page.getByRole("button", { name: "Next trick" }).click();
+  }
+
+  const initialPlayerBox = await page.locator(".bridge-player-table-hand").boundingBox();
+  expect(initialPlayerBox).not.toBeNull();
+
+  for (let playIndex = 0; playIndex < 12; playIndex += 1) {
+    if (await page.getByRole("button", { name: "Next trick" }).isVisible().catch(() => false)) {
+      await page.getByRole("button", { name: "Next trick" }).click();
+    }
+
+    const playerCards = await page.locator(".bridge-player-table-hand .hand-card").count();
+    const dummyCards = await page.locator(".bridge-dummy-action-hand .hand-card").count();
+    if (playerCards <= 7 && dummyCards <= 7) {
+      break;
+    }
+
+    const card = page.locator(".bridge-dummy-action-hand .full-hand-card.legal, .bridge-player-table-hand .full-hand-card.legal").first();
+    await expect(card).toBeVisible();
+    await card.dblclick();
+  }
+
+  await expect(page.locator(".bridge-player-table-hand .hand-card")).toHaveCount(7);
+  await expect(page.locator(".bridge-dummy-action-hand .hand-card")).toHaveCount(7);
+
+  const finalPlayerBox = await page.locator(".bridge-player-table-hand").boundingBox();
+  const finalDummyBox = await page.locator(".bridge-dummy-action-hand").boundingBox();
+  expect(finalPlayerBox).not.toBeNull();
+  expect(finalDummyBox).not.toBeNull();
+  expect(Math.round(finalPlayerBox!.height)).toBe(Math.round(initialPlayerBox!.height));
+  expect(Math.round(finalPlayerBox!.y)).toBe(Math.round(initialPlayerBox!.y));
+  expect(Math.round(finalDummyBox!.height)).toBe(Math.round(initialPlayerBox!.height));
+});
+
 test("Bridge practice starts three short scripted decisions", async ({ page }) => {
   await gotoWithPracticeSeed(page, 5);
   await page.getByRole("button", { name: /Open Bridge/ }).click();
