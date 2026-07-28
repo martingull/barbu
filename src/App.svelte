@@ -11968,14 +11968,18 @@
 
         {#snippet summary()}
           {#if !fullHandRunIsComplete && !(fullHandIsPartnershipGame && fullHand.status === "complete")}
-            <div class="full-hand-summary grouped-play-summary" aria-label={`${fullHand.contract} hand score`}>
+            <div
+              class:bridge-play-summary={fullHandIsBridgeGame}
+              class="full-hand-summary grouped-play-summary"
+              aria-label={`${fullHand.contract} hand score`}
+            >
               <div
                 class:no-last-two={fullHand.contract === "No Last Two"}
                 class:whist-hand-summary={fullHandShowWhistMatchSummary || fullHandIsBridgeGame}
                 class="full-hand-summary-row current-hand"
                 aria-label="Current hand"
               >
-                <span class="summary-row-label">Current hand</span>
+                <span class="summary-row-label">{fullHandIsBridgeGame ? "Hand" : "Current hand"}</span>
                 <div>
                   <span>{fullHandIsBridgeGame ? "Declarer" : fullHandIsPartnershipGame ? "Your side" : fullHandContractMeta.playerValueLabel}</span>
                   <strong>{fullHandIsBridgeGame ? bridgeDeclarerTricks : fullHandIsPartnershipGame ? whistPartnershipTricks.playerSide : fullHand.playerPenalty}</strong>
@@ -12037,7 +12041,7 @@
               {/if}
               {#if fullHandIsBridgeGame}
                 <div class="full-hand-summary-row table-score" aria-label="Bridge score">
-                  <span class="summary-row-label">Duplicate</span>
+                  <span class="summary-row-label">{fullHandIsBridgeGame ? "Dup." : "Duplicate"}</span>
                   <div>
                     <span>NS</span>
                     <strong>{formatSignedScore(bridgeVisibleMatchScores.ns)}</strong>

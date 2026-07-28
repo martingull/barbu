@@ -3853,6 +3853,48 @@ h2 {
     padding: 6px;
   }
 
+  .table-play-surface .full-hand-summary.bridge-play-summary {
+    gap: 4px;
+    padding: 5px;
+  }
+
+  .table-play-surface .bridge-play-summary .full-hand-summary-row.current-hand,
+  .table-play-surface .bridge-play-summary .full-hand-summary-row.current-hand.whist-hand-summary,
+  .table-play-surface .bridge-play-summary .full-hand-summary-row.table-score {
+    grid-template-columns: minmax(42px, 0.55fr) repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    align-items: stretch;
+  }
+
+  .table-play-surface .bridge-play-summary .summary-row-label {
+    grid-column: auto;
+    display: grid;
+    min-height: 42px;
+    align-items: center;
+    padding: 0 2px;
+    font-size: 0.5rem;
+    line-height: 1.05;
+    overflow-wrap: anywhere;
+  }
+
+  .table-play-surface .bridge-play-summary .full-hand-summary-row > div,
+  .table-play-surface .bridge-play-summary .full-hand-summary-row.table-score > div {
+    min-height: 42px;
+    gap: 2px;
+    padding: 5px;
+  }
+
+  .table-play-surface .bridge-play-summary .full-hand-summary-row > div > span {
+    font-size: 0.5rem;
+    line-height: 1;
+  }
+
+  .table-play-surface .bridge-play-summary .full-hand-summary-row strong {
+    font-size: 0.92rem;
+    line-height: 1;
+    overflow-wrap: anywhere;
+  }
+
   .table-play-surface .full-hand-summary-row.current-hand {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -4416,8 +4458,8 @@ h2 {
 
   .fixed-play-screen .bridge-play-surface.compact-play .bridge-table {
     grid-row: 2;
-    height: 438px;
-    min-height: 438px;
+    height: clamp(396px, 48dvh, 438px);
+    min-height: 0;
   }
 
   .fixed-play-screen .bridge-play-surface.compact-play .table-play-panel {

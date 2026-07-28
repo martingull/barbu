@@ -47,7 +47,6 @@
     tableCards
   }: Props = $props();
 
-  const defenderBacks = [0, 1, 2, 3, 4, 5];
   const tableSeats: Seat[] = ["Tutor", "Left", "Right", "You"];
   const compassSeatLabels: Record<Seat, string> = {
     Tutor: "North",
@@ -80,6 +79,10 @@
     }
 
     return label;
+  }
+
+  function compassLabel(seat: Seat) {
+    return compassSeatLabels[seat];
   }
 
   function dummyCardClasses(card: Card): CardClassFlags {
@@ -138,35 +141,27 @@
     {/if}
   </div>
 
-  <div class:active={Boolean(pendingBySeat.Left)} class="bridge-defender bridge-defender-left" aria-label="West defender">
-    <span class="bridge-side-label">{seatLabel("Left")}</span>
-    <div class="bridge-back-stack" aria-hidden="true">
-      {#each defenderBacks as back}
-        <span class="bridge-card-back" style={`--back: ${back}`}></span>
+  <div class="bridge-felt" aria-label="Current Bridge table">
+    <div class:active={Boolean(pendingBySeat.Left)} class="bridge-defender bridge-defender-left" aria-label="West defender">
+      <span class="bridge-side-label">{compassLabel("Left")}</span>
+    </div>
+
+    <div class="bridge-trick-cluster" aria-label="Current trick">
+      {#each tableSeats as seat}
+        {@const tableCard = cardAt(seat)}
+        <div class={`bridge-trick-slot bridge-trick-${seat.toLowerCase()}`} class:occupied={Boolean(tableCard)}>
+          {#if tableCard}
+            <div class:heart={tableCard.suit === "H"} class="bridge-trick-card">
+              <CardFace card={tableCard} />
+            </div>
+          {/if}
+          <span>{compassLabel(seat)}</span>
+        </div>
       {/each}
     </div>
-  </div>
 
-  <div class="bridge-trick-cluster" aria-label="Current trick">
-    {#each tableSeats as seat}
-      {@const tableCard = cardAt(seat)}
-      <div class={`bridge-trick-slot bridge-trick-${seat.toLowerCase()}`} class:occupied={Boolean(tableCard)}>
-        {#if tableCard}
-          <div class:heart={tableCard.suit === "H"} class="bridge-trick-card">
-            <CardFace card={tableCard} />
-          </div>
-        {/if}
-        <span>{seatLabel(seat)}</span>
-      </div>
-    {/each}
-  </div>
-
-  <div class:active={Boolean(pendingBySeat.Right)} class="bridge-defender bridge-defender-right" aria-label="East defender">
-    <span class="bridge-side-label">{seatLabel("Right")}</span>
-    <div class="bridge-back-stack" aria-hidden="true">
-      {#each defenderBacks as back}
-        <span class="bridge-card-back" style={`--back: ${back}`}></span>
-      {/each}
+    <div class:active={Boolean(pendingBySeat.Right)} class="bridge-defender bridge-defender-right" aria-label="East defender">
+      <span class="bridge-side-label">{compassLabel("Right")}</span>
     </div>
   </div>
 
@@ -187,20 +182,31 @@
 <style>
   .bridge-table {
     display: grid;
-    grid-template-columns: 48px minmax(0, 1fr) 48px;
-    grid-template-rows: auto minmax(126px, 1fr) auto;
+    grid-template-rows: auto minmax(148px, 1fr) auto;
     gap: 6px;
     align-self: start;
     width: 100%;
     min-height: 438px;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .bridge-felt {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr) 64px;
+    gap: 6px;
+    min-height: 148px;
     padding: 7px;
+    border: 1px solid #bec8b6;
+    border-radius: 8px;
+    background:
+      radial-gradient(circle at center, rgba(255, 255, 255, 0.14), transparent 58%),
+      #386b54;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
     overflow: hidden;
-    border: 1px solid rgba(245, 241, 207, 0.7);
-    border-radius: 18px;
-    background: #223328;
-    box-shadow:
-      inset 0 0 0 1px rgba(255, 255, 255, 0.18),
-      0 10px 24px rgba(4, 18, 11, 0.18);
   }
 
   .bridge-seat {
@@ -213,11 +219,12 @@
     display: grid;
     align-items: center;
     justify-items: center;
-    width: min(100%, 330px);
-    min-height: 104px;
-    padding: 10px;
+    width: min(100%, 320px);
+    min-height: 44px;
+    padding: 7px 10px;
     border: 1px dashed rgba(245, 241, 207, 0.42);
     border-radius: 8px;
+    background: rgba(56, 107, 84, 0.42);
     color: rgba(245, 241, 207, 0.86);
     font-size: 0.74rem;
     font-weight: 800;
@@ -226,7 +233,6 @@
 
   .bridge-seat-north,
   .bridge-seat-south {
-    grid-column: 1 / -1;
     justify-items: center;
   }
 
@@ -247,20 +253,25 @@
 
   .bridge-defender {
     display: grid;
-    gap: 6px;
     align-self: center;
+    width: 58px;
+    min-height: 78px;
     justify-items: center;
+    align-content: center;
     min-width: 0;
+    padding: 6px;
+    border: 2px dashed rgba(255, 255, 255, 0.54);
+    border-radius: 8px;
+    background: rgba(13, 44, 31, 0.12);
+    text-align: center;
   }
 
   .bridge-defender-left {
     grid-column: 1;
-    grid-row: 2;
   }
 
   .bridge-defender-right {
     grid-column: 3;
-    grid-row: 2;
   }
 
   .bridge-defender.active .bridge-side-label,
@@ -268,37 +279,14 @@
     color: #f6d56d;
   }
 
-  .bridge-back-stack {
-    position: relative;
-    width: 32px;
-    height: 58px;
-  }
-
-  .bridge-card-back {
-    position: absolute;
-    top: calc(var(--back) * 4px);
-    left: 50%;
-    width: 30px;
-    aspect-ratio: 5 / 7;
-    border: 2px solid rgba(255, 255, 255, 0.92);
-    border-radius: 5px;
-    background:
-      linear-gradient(45deg, rgba(255, 255, 255, 0.18) 25%, transparent 25% 50%, rgba(255, 255, 255, 0.18) 50% 75%, transparent 75%),
-      #c72f35;
-    background-size: 10px 10px;
-    box-shadow: 0 5px 10px rgba(4, 18, 11, 0.28);
-    transform: translateX(-50%);
-  }
-
   .bridge-trick-cluster {
     position: relative;
     grid-column: 2;
-    grid-row: 2;
     align-self: stretch;
     min-height: 98px;
-    border: 1px solid rgba(245, 241, 207, 0.24);
-    border-radius: 999px / 62%;
-    background: rgba(18, 56, 27, 0.14);
+    border: 1px solid rgba(245, 241, 207, 0.2);
+    border-radius: 8px;
+    background: rgba(13, 44, 31, 0.1);
   }
 
   .bridge-trick-slot {
@@ -358,21 +346,22 @@
     bottom: auto;
     left: auto;
     z-index: auto;
-    display: grid;
-    grid-template-columns: repeat(7, minmax(0, 44px));
+    display: flex;
+    flex-wrap: wrap;
     gap: 3px 4px;
     justify-content: center;
-    align-content: start;
+    align-content: flex-start;
     width: 100%;
     max-width: 100%;
-    min-height: 128px;
+    min-height: 123px;
     min-width: 0;
     overflow: visible;
     padding: 1px 0;
   }
 
   .bridge-table :global(.bridge-table-hand .hand-card) {
-    width: 100%;
+    flex: 0 0 42px;
+    width: 42px;
     min-width: 0;
   }
 
