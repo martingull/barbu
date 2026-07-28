@@ -1503,7 +1503,7 @@ function promptForState(state: FullHandState, playerPenalty: number) {
     if (!led) {
       if (state.contract === "Bridge") {
         if (state.currentPlayerIndex === bridgeDummyIndex(state)) {
-          return `Dummy is on lead. Choose from ${scoreSeatLabel(bridgeDummy)}'s exposed hand and plan the ${bridgeContractLabel} winners.`;
+          return `Dummy is on lead. Choose from ${bridgeSeatLabel(bridgeDummy)}'s exposed hand and plan the ${bridgeContractLabel} winners.`;
         }
 
         return bridgeDeclarer === "You" || bridgeDummy === "You"
@@ -1568,6 +1568,13 @@ function suitName(suit: Suit) {
 
 function scoreSeatLabel(seat: Seat) {
   return seat === "Tutor" ? "Barbu" : seat;
+}
+
+function bridgeSeatLabel(seat: Seat) {
+  if (seat === "Tutor") return "North";
+  if (seat === "Right") return "East";
+  if (seat === "You") return "South";
+  return "West";
 }
 
 function whistDealerForSeed(seed: number) {

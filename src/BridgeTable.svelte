@@ -10,7 +10,9 @@
     dummyHand?: Card[];
     dummyLegalCardIds?: string[];
     dummySelectedCardId?: string;
+    dummySeat?: Seat;
     dummySeatLabel?: string;
+    declarerSeat?: Seat;
     isDummyTurn?: boolean;
     isReviewing?: boolean;
     onSelectDummy?: (card: Card) => void | Promise<void>;
@@ -29,7 +31,9 @@
     dummyHand = [],
     dummyLegalCardIds = [],
     dummySelectedCardId = "",
+    dummySeat = "Tutor",
     dummySeatLabel = "Dummy",
+    declarerSeat = "You",
     isDummyTurn = false,
     isReviewing = false,
     onSelectDummy,
@@ -45,18 +49,37 @@
 
   const defenderBacks = [0, 1, 2, 3, 4, 5];
   const tableSeats: Seat[] = ["Tutor", "Left", "Right", "You"];
+  const compassSeatLabels: Record<Seat, string> = {
+    Tutor: "North",
+    Right: "East",
+    You: "South",
+    Left: "West"
+  };
   const dummyLegalSet = $derived(new Set(dummyLegalCardIds));
   const playerLegalSet = $derived(new Set(playerLegalCardIds));
+  const southIsDummy = $derived(dummySeat === "You");
+  const showNorthHand = $derived(dummySeat !== "You");
+  const southHand = $derived(southIsDummy ? dummyHand : playerHand);
+  const southSelectedCardId = $derived(southIsDummy ? dummySelectedCardId : playerSelectedCardId);
+  const southSeatLabel = $derived(southIsDummy ? dummySeatLabel : playerRoleLabel);
+  const southAriaLabel = $derived(southIsDummy ? "South dummy hand" : `${playerSeatLabel} Bridge hand`);
 
   function cardAt(seat: Seat) {
     return tableCards.find((play) => play.seat === seat)?.card;
   }
 
   function seatLabel(seat: Seat) {
-    if (seat === "You") {
-      return "Decl.";
+    const label = compassSeatLabels[seat];
+
+    if (seat === dummySeat) {
+      return `${label} Dummy`;
     }
-    return seat === "Tutor" ? "Dummy" : seat;
+
+    if (seat === declarerSeat) {
+      return `${label} Decl.`;
+    }
+
+    return label;
   }
 
   function dummyCardClasses(card: Card): CardClassFlags {
@@ -72,22 +95,31 @@
   }
 
   function playerCardClasses(card: Card): CardClassFlags {
-    const canPlay = !isDummyTurn && !isReviewing;
-    const isLegal = canPlay && playerLegalSet.has(card.id);
+    const canPlay = (southIsDummy ? isDummyTurn : !isDummyTurn) && !isReviewing;
+    const isLegal = canPlay && (southIsDummy ? dummyLegalSet : playerLegalSet).has(card.id);
 
     return {
       heart: card.suit === "H",
       legal: isLegal,
       illegal: canPlay && !isLegal,
-      selected: playerSelectedCardId === card.id
+      selected: southSelectedCardId === card.id
     };
+  }
+
+  function selectSouthCard(card: Card) {
+    if (southIsDummy) {
+      if (isDummyTurn && !isReviewing) void onSelectDummy?.(card);
+      return;
+    }
+
+    if (!isDummyTurn && !isReviewing) void onSelectPlayer?.(card);
   }
 </script>
 
 <section class="bridge-table" aria-label={ariaLabel}>
   <div class="bridge-seat bridge-seat-north" aria-label="Visible dummy cards">
-    <span class="bridge-seat-label">{dummySeatLabel}</span>
-    {#if dummyHand.length}
+    <span class="bridge-seat-label">{showNorthHand ? dummySeatLabel : seatLabel("Tutor")}</span>
+    {#if showNorthHand && dummyHand.length}
       <CardChoiceHand
         cards={dummyHand}
         ariaLabel="Dummy hand"
@@ -99,13 +131,15 @@
           if (isDummyTurn && !isReviewing) void onSelectDummy?.(card);
         }}
       />
-    {:else}
+    {:else if showNorthHand}
       <div class="bridge-dummy-hidden" aria-label="Dummy hidden">Dummy appears after the opening lead.</div>
+    {:else}
+      <div class="bridge-dummy-hidden" aria-label="North hand hidden">Declarer's hand stays hidden.</div>
     {/if}
   </div>
 
-  <div class:active={Boolean(pendingBySeat.Left)} class="bridge-defender bridge-defender-left" aria-label="Left defender">
-    <span class="bridge-side-label">Left</span>
+  <div class:active={Boolean(pendingBySeat.Left)} class="bridge-defender bridge-defender-left" aria-label="West defender">
+    <span class="bridge-side-label">{seatLabel("Left")}</span>
     <div class="bridge-back-stack" aria-hidden="true">
       {#each defenderBacks as back}
         <span class="bridge-card-back" style={`--back: ${back}`}></span>
@@ -127,8 +161,8 @@
     {/each}
   </div>
 
-  <div class:active={Boolean(pendingBySeat.Right)} class="bridge-defender bridge-defender-right" aria-label="Right defender">
-    <span class="bridge-side-label">Right</span>
+  <div class:active={Boolean(pendingBySeat.Right)} class="bridge-defender bridge-defender-right" aria-label="East defender">
+    <span class="bridge-side-label">{seatLabel("Right")}</span>
     <div class="bridge-back-stack" aria-hidden="true">
       {#each defenderBacks as back}
         <span class="bridge-card-back" style={`--back: ${back}`}></span>
@@ -137,17 +171,15 @@
   </div>
 
   <div class:active={Boolean(pendingBySeat.You)} class="bridge-seat bridge-seat-south">
-    <span class="bridge-seat-label">{playerRoleLabel}</span>
+    <span class="bridge-seat-label">{southSeatLabel}</span>
     <CardChoiceHand
-      cards={playerHand}
-      ariaLabel={`${playerSeatLabel} Bridge hand`}
+      cards={southHand}
+      ariaLabel={southAriaLabel}
       className="hand full-hand-cards bridge-table-hand bridge-player-table-hand"
       cardClassName="card hand-card full-hand-card bridge-mini-card"
       getCardClasses={playerCardClasses}
-      isPressed={(card) => playerSelectedCardId === card.id}
-      onSelect={(card) => {
-        if (!isDummyTurn && !isReviewing) void onSelectPlayer?.(card);
-      }}
+      isPressed={(card) => southSelectedCardId === card.id}
+      onSelect={selectSouthCard}
     />
   </div>
 </section>

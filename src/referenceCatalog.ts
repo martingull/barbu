@@ -689,11 +689,11 @@ export const referenceCatalog: GameReference[] = [
         id: "players",
         title: "Players And Partnerships",
         body:
-          "Bridge uses four players in two partnerships. Partners sit opposite one another. Depending on the auction, you may declare with Barbu as dummy, play dummy for Barbu, or defend against an opponent contract.",
+          "Bridge uses four players in two partnerships. Partners sit opposite one another. Depending on the auction, South may declare with North as dummy, play dummy for North, or defend against an opponent contract.",
         facts: [
           { label: "Players", value: "Four" },
-          { label: "Partner", value: "Barbu / North" },
-          { label: "Opponents", value: "Left and Right" }
+          { label: "Partner", value: "North" },
+          { label: "Opponents", value: "East and West" }
         ]
       },
       {

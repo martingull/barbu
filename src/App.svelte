@@ -2611,9 +2611,9 @@
     title: "Lead toward the queen",
     trick: {
       title: "Try the finesse",
-      beforeResult: "Dummy can lead toward your QJ. Choose the small club from dummy to make Right decide first.",
+      beforeResult: "Dummy can lead toward your QJ. Choose the small club from dummy to make East decide first.",
       afterResult: "A low lead toward honors is the basic finesse shape in declarer play.",
-      emptyExplanation: "When an honor may be on your right, lead low from dummy toward your touching honors.",
+      emptyExplanation: "When an honor may be with East, lead low from dummy toward your touching honors.",
       legalCardIds: ["3C"],
       hand: [card("3", "C"), card("Q", "C"), card("J", "C"), card("7", "D")],
       tableBeforeChoice: [],
@@ -2622,11 +2622,11 @@
         { seat: "You", card: card("A", "C") },
         { seat: "Left", card: card("5", "C") }
       ],
-      pendingBySeat: { Tutor: "Dummy", Right: "Right", You: "You", Left: "Left" },
+      pendingBySeat: { Tutor: "North Dummy", Right: "East", You: "South", Left: "West" },
       playedExplanations: {
         "3C": "Good. Low toward QJ keeps your honors useful and tests where the king sits.",
         QC: "Risky. Playing the queen first gives up the finesse shape.",
-        JC: "Risky. The jack spends an honor before Right has to commit.",
+        JC: "Risky. The jack spends an honor before East has to commit.",
         "7D": "Illegal. Dummy has clubs, so dummy must follow the suit you lead."
       },
       cardOutcomes: { "3C": "good", QC: "risky", JC: "risky", "7D": "illegal" },
@@ -2650,7 +2650,7 @@
         { seat: "Tutor", card: card("3", "D") },
         { seat: "Right", card: card("7", "D") }
       ],
-      pendingBySeat: { You: "You", Left: "Left", Tutor: "Dummy", Right: "Right" },
+      pendingBySeat: { You: "South", Left: "West", Tutor: "North Dummy", Right: "East" },
       playedExplanations: {
         KD: "Good. The king starts the work of knocking out the ace so the suit can run later.",
         QD: "Risky. The queen may also work, but standard sequencing starts with the king from this holding.",
@@ -2667,7 +2667,7 @@
     title: "Hold up once",
     trick: {
       title: "Break defender communication",
-      beforeResult: "Left leads a long-suit king in 1NT. Duck the first round to make the defenders spend an entry.",
+      beforeResult: "West leads a long-suit king in 1NT. Duck the first round to make the defenders spend an entry.",
       afterResult: "Holding up can cut communication between defenders in no-trump contracts.",
       emptyExplanation: "In no trump, you do not always take the first winner. Sometimes you duck to exhaust one defender's suit.",
       legalCardIds: ["4H", "AH"],
@@ -2677,10 +2677,10 @@
         { seat: "Tutor", card: card("7", "H") },
         { seat: "Right", card: card("2", "H") }
       ],
-      pendingBySeat: { You: "You", Tutor: "Dummy", Right: "Right" },
+      pendingBySeat: { You: "South", Tutor: "North Dummy", Right: "East" },
       playedExplanations: {
         "4H": "Good. Ducking once can leave the defense without an easy way back to the long hearts.",
-        AH: "Risky. Taking immediately may leave Left's long hearts live if Right still has an entry.",
+        AH: "Risky. Taking immediately may leave West's long hearts live if East still has an entry.",
         QC: "Illegal. Hearts were led and you still have hearts.",
         "8S": "Illegal. Hearts were led and you still have hearts."
       },
@@ -2705,7 +2705,7 @@
         { seat: "Right", card: card("A", "S") },
         { seat: "Left", card: card("6", "S") }
       ],
-      pendingBySeat: { You: "You", Tutor: "Dummy", Right: "Declarer", Left: "Partner" },
+      pendingBySeat: { You: "South", Tutor: "North Dummy", Right: "East Declarer", Left: "West Partner" },
       playedExplanations: {
         "4S": "Good. Fourth best starts your long suit without spending the king.",
         KS: "Risky. The king may give declarer a clear read and spend your stopper early.",
@@ -3364,7 +3364,7 @@
   }
 
   function bridgeSeatLabel(seat: Seat) {
-    if (seat === "Tutor") return "Barbu";
+    if (seat === "Tutor") return "North";
     if (seat === "You") return "South";
     if (seat === "Right") return "East";
     return "West";
@@ -11949,7 +11949,9 @@
             dummyHand={fullHand.dummyHand}
             dummyLegalCardIds={fullHand.dummyLegalCardIds}
             dummySelectedCardId={dummySelectedCardId}
+            dummySeat={bridgeDummySeat}
             dummySeatLabel={`${bridgeSeatLabel(bridgeDummySeat)} Dummy`}
+            declarerSeat={bridgeDeclarerSeat}
             isDummyTurn={isBridgeDummyTurn}
             isReviewing={fullHandIsReviewingTrick}
             onSelectDummy={selectDummyCard}
@@ -11957,7 +11959,7 @@
             pendingBySeat={fullHandPendingBySeat}
             playerHand={fullHand.playerHand}
             playerLegalCardIds={fullHand.legalCardIds}
-            playerRoleLabel={bridgeUserSideDeclares ? "Declarer" : "Defender"}
+            playerRoleLabel={`South ${bridgeUserSideDeclares ? "Declarer" : "Defender"}`}
             playerSeatLabel="South"
             playerSelectedCardId={fullHandSelectedCardId}
             tableCards={fullHandVisibleTableCards}
@@ -11996,10 +11998,6 @@
                   <div>
                     <span>Target</span>
                     <strong>{bridgeContractTarget}</strong>
-                  </div>
-                  <div>
-                    <span>Score</span>
-                    <strong>{currentBridgeHandResult ? formatSignedScore(currentBridgeHandResult.score) : "Playing"}</strong>
                   </div>
                 {/if}
                 {#if fullHand.contract === "No Last Two"}
@@ -12051,6 +12049,10 @@
                   <div>
                     <span>Board</span>
                     <strong>{bridgeHandResults.length + 1}</strong>
+                  </div>
+                  <div>
+                    <span>Score</span>
+                    <strong>{currentBridgeHandResult ? formatSignedScore(currentBridgeHandResult.score) : "Playing"}</strong>
                   </div>
                 </div>
               {/if}

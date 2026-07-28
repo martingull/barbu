@@ -41,7 +41,7 @@ export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAct
         eyebrow: "Play",
         title: "Play a Bridge hand.",
         summary:
-          "Play You and Partner against Left and Right. Win the auction, declare the contract, and play with a visible dummy."
+          "Play South and North against East and West. Win the auction, declare the contract, and play with a visible dummy."
       },
       perfect: {
         eyebrow: "Pro",

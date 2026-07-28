@@ -800,6 +800,11 @@ test("Bridge play starts from a rotating auction into a scored contract hand", a
   await expect(page.getByLabel("Bridge score")).toContainText("NS");
   await expect(page.getByLabel("Bridge score")).toContainText("EW");
   await expect(page.getByLabel("Bridge hand table")).toBeVisible();
+  await expect(page.getByLabel("Bridge hand table")).toContainText("North");
+  await expect(page.getByLabel("Bridge hand table")).toContainText("East");
+  await expect(page.getByLabel("Bridge hand table")).toContainText("South");
+  await expect(page.getByLabel("Bridge hand table")).toContainText("West");
+  await expect(page.getByLabel("Bridge hand table")).not.toContainText(/\bLeft\b|\bRight\b/);
   await expect(page.getByLabel("Visible dummy cards")).toBeVisible();
   await expect(page.getByLabel("Current trick")).toBeVisible();
   if ((await page.getByLabel("Dummy hidden").count()) > 0) {
@@ -975,6 +980,120 @@ test("Bridge play can resume a saved local board", async ({ page }) => {
   await page.getByRole("button", { name: "Continue Bridge" }).click();
   await expect(page.getByRole("heading", { name: "Bridge auction" })).toBeVisible();
   await expect(page.getByLabel("Bridge bidding box")).toContainText("Auction");
+});
+
+test("Bridge table does not duplicate the South dummy hand", async ({ page }) => {
+  await gotoWithPracticeSeed(page, 21);
+  await page.evaluate(() => {
+    const card = (rank: string, suit: "C" | "D" | "H" | "S") => ({ id: `${rank}${suit}`, rank, suit, label: `${rank}${suit}` });
+    const southHand = [
+      card("4", "C"),
+      card("7", "C"),
+      card("10", "C"),
+      card("Q", "C"),
+      card("2", "D"),
+      card("5", "D"),
+      card("9", "D"),
+      card("K", "D"),
+      card("3", "H"),
+      card("8", "H"),
+      card("J", "H"),
+      card("6", "S"),
+      card("A", "S")
+    ];
+    const fullHand = {
+      id: "bridge-south-dummy-regression",
+      contract: "Bridge",
+      hands: [
+        [card("A", "C"), card("K", "C"), card("2", "C"), card("3", "C"), card("4", "D"), card("6", "D"), card("8", "D"), card("10", "D"), card("2", "H"), card("4", "H"), card("6", "H"), card("8", "S"), card("10", "S")],
+        [card("5", "C"), card("6", "C"), card("8", "C"), card("9", "C"), card("J", "D"), card("Q", "D"), card("A", "D"), card("5", "H"), card("7", "H"), card("9", "H"), card("Q", "H"), card("2", "S"), card("3", "S")],
+        southHand,
+        [card("J", "C"), card("3", "D"), card("7", "D"), card("10", "H"), card("K", "H"), card("A", "H"), card("4", "S"), card("5", "S"), card("7", "S"), card("9", "S"), card("J", "S"), card("Q", "S"), card("K", "S")]
+      ],
+      currentPlayerIndex: 2,
+      currentPlayer: "You",
+      currentTrick: [],
+      completedTricks: [
+        {
+          cards: [
+            { seat: "Right", card: card("5", "C") },
+            { seat: "You", card: card("4", "C") },
+            { seat: "Left", card: card("J", "C") },
+            { seat: "Tutor", card: card("A", "C") }
+          ],
+          winner: "Tutor",
+          winnerIndex: 0,
+          penalty: 0,
+          outcome: "stayed_clear",
+          tacticalTags: ["partner_trick"]
+        }
+      ],
+      playerHand: southHand,
+      legalCardIds: ["4C", "7C", "10C", "QC"],
+      playerPenalty: 0,
+      totalPenalty: 0,
+      cardsRemaining: 52,
+      trickNumber: 2,
+      status: "in_progress",
+      prompt: "Dummy is on lead. Choose from South's exposed hand and plan the 4 Clubs winners.",
+      trumpSuit: "C",
+      dummySeat: "You",
+      dummyHand: southHand,
+      dummyLegalCardIds: ["4C", "7C", "10C", "QC"],
+      bridgeAuction: [
+        { seat: "Tutor", call: "4C" },
+        { seat: "Right", call: "Pass" },
+        { seat: "You", call: "Pass" },
+        { seat: "Left", call: "Pass" }
+      ],
+      bridgeContract: {
+        level: 4,
+        strain: "C",
+        label: "4 Clubs",
+        declarer: "Tutor",
+        dummy: "You",
+        target: 10,
+        vulnerability: "None",
+        declarerSide: "NS",
+        dealer: "Tutor",
+        openingLeader: "Right"
+      },
+      bridgeDealer: "Tutor",
+      bridgeVulnerability: "None"
+    };
+
+    localStorage.setItem(
+      "barbu.savedBridgeRun.v1",
+      JSON.stringify({
+        version: 1,
+        view: "fullHand",
+        scores: { ns: 0, ew: 0 },
+        results: [],
+        fullHand,
+        auctionCalls: fullHand.bridgeAuction,
+        selectedCall: "Pass",
+        fullHandReviewTrickCount: 0,
+        usingBrowserFullHand: true,
+        savedAt: "2026-07-28T00:00:00.000Z"
+      })
+    );
+  });
+
+  await page.reload();
+  await page.getByRole("button", { name: /Open Bridge/ }).click();
+  await page.getByRole("tab", { name: "Play" }).click();
+  await page.getByRole("button", { name: "Continue Bridge" }).click();
+
+  await expect(page.getByRole("heading", { name: "Bridge hand" })).toBeVisible();
+  await expect(page.getByLabel("Bridge hand table")).toContainText("North Decl.");
+  await expect(page.getByLabel("Bridge hand table")).toContainText("South Dummy");
+  await expect(page.getByLabel("Current hand")).not.toContainText("Score");
+  await expect(page.getByLabel("Bridge score")).toContainText("Score");
+  await expect(page.getByLabel("North hand hidden")).toBeVisible();
+  await expect(page.getByLabel("Dummy hand", { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("South dummy hand")).toBeVisible();
+  await expect(page.locator(".bridge-player-table-hand .hand-card")).toHaveCount(13);
+  await expect(page.locator(".bridge-dummy-action-hand .hand-card")).toHaveCount(0);
 });
 
 test("Spades practice starts three scripted decisions per topic", async ({ page }) => {
