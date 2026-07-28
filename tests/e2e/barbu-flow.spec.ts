@@ -785,9 +785,18 @@ test("Bridge play starts from a rotating auction into a scored contract hand", a
 
   await expect(page.getByRole("heading", { name: "Bridge auction" })).toBeVisible();
   await expect(page.getByLabel("Bridge bidding box")).toContainText(/Choose your call|Auction complete/);
-  await expect(page.getByLabel("Bridge bidding box")).toContainText("Vulnerability");
+  await expect(page.getByLabel("Bridge hand estimate")).toContainText("Vuln.");
   await expect(page.getByLabel("Bridge bidding box")).toContainText("Auction");
   await expect(page.getByLabel("Bridge bids").getByRole("button", { name: "1NT" })).toBeVisible();
+  await expect
+    .poll(async () =>
+      page.evaluate(() =>
+        [...document.querySelectorAll(".bridge-auction-metrics > div")].every(
+          (tile) => tile.scrollWidth <= tile.clientWidth && tile.scrollHeight <= tile.clientHeight
+        )
+      )
+    )
+    .toBe(true);
   for (let callIndex = 0; callIndex < 4 && (await page.getByRole("button", { name: "Start play" }).count()) === 0; callIndex += 1) {
     await page.getByRole("button", { name: "Make call" }).click();
   }

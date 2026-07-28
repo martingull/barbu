@@ -11783,7 +11783,7 @@
 
           <div class="bridge-auction-metrics" aria-label="Bridge hand estimate">
             <div>
-              <span>High-card points</span>
+              <span>HCP</span>
               <strong>{bridgeHighCardPoints(fullHand.playerHand)}</strong>
             </div>
             <div>
@@ -11795,7 +11795,7 @@
               <strong>{bridgeAuctionCurrentStatus.complete ? "Done" : bridgeSeatLabel(bridgeAuctionCurrentStatus.currentSeat)}</strong>
             </div>
             <div>
-              <span>Vulnerability</span>
+              <span>Vuln.</span>
               <strong>{bridgeVulnerabilityForHand(fullHand)}</strong>
             </div>
           </div>
