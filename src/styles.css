@@ -3037,6 +3037,15 @@ h2 {
   font-weight: 900;
 }
 
+.bridge-call-explanation {
+  margin: 6px 0 0;
+  color: #dbe7d1;
+  font-size: 0.84rem;
+  font-style: italic;
+  line-height: 1.25;
+  text-align: center;
+}
+
 @media (max-width: 430px) {
   .bridge-auction-panel .result {
     font-size: 0.86rem;
@@ -3862,6 +3871,13 @@ h2 {
   .table-play-surface .bridge-play-summary .full-hand-summary-row.current-hand.whist-hand-summary,
   .table-play-surface .bridge-play-summary .full-hand-summary-row.table-score {
     grid-template-columns: minmax(42px, 0.55fr) repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    align-items: stretch;
+  }
+
+  .table-play-surface .bridge-play-summary .full-hand-summary-row.bridge-current-hand-row,
+  .table-play-surface .bridge-play-summary .full-hand-summary-row.bridge-duplicate-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 4px;
     align-items: stretch;
   }

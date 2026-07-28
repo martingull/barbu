@@ -443,7 +443,7 @@ pub fn bridge_suggest_call(
         return BridgeCall::Double;
     }
 
-    if last_bid.is_none() && points >= 12 {
+    if last_bid.is_none() {
         return opening_bid_for_hand(hand)
             .filter(|bid| legal.contains(&BridgeCall::Bid(*bid)))
             .map(BridgeCall::Bid)
@@ -504,17 +504,40 @@ fn opening_bid_for_hand(hand: &[Card]) -> Option<BridgeBid> {
     let points = bridge_high_card_points(hand);
     let balanced = bridge_is_balanced(hand);
 
-    if balanced && points >= 20 {
-        return BridgeBid::new(2, BridgeStrain::NoTrump);
-    }
-    if balanced && points >= 15 {
-        return BridgeBid::new(1, BridgeStrain::NoTrump);
-    }
     if points >= 22 {
         return BridgeBid::new(2, BridgeStrain::Clubs);
     }
-    if points >= 12 {
-        return BridgeBid::new(1, BridgeStrain::from_suit(bridge_longest_suit(hand)));
+    if balanced && (20..=21).contains(&points) {
+        return BridgeBid::new(2, BridgeStrain::NoTrump);
+    }
+    if balanced && (15..=17).contains(&points) {
+        return BridgeBid::new(1, BridgeStrain::NoTrump);
+    }
+    if points >= 13 {
+        // Simple 5-card major logic or longest minor
+        let spades = bridge_strain_count(hand, BridgeStrain::Spades);
+        let hearts = bridge_strain_count(hand, BridgeStrain::Hearts);
+        let diamonds = bridge_strain_count(hand, BridgeStrain::Diamonds);
+        let clubs = bridge_strain_count(hand, BridgeStrain::Clubs);
+
+        if spades >= 5 && spades >= hearts {
+            return BridgeBid::new(1, BridgeStrain::Spades);
+        } else if hearts >= 5 {
+            return BridgeBid::new(1, BridgeStrain::Hearts);
+        } else if diamonds >= clubs {
+            return BridgeBid::new(1, BridgeStrain::Diamonds);
+        } else {
+            return BridgeBid::new(1, BridgeStrain::Clubs);
+        }
+    }
+
+    // Weak two
+    let longest_suit = BridgeStrain::from_suit(bridge_longest_suit(hand));
+    if (5..=11).contains(&points)
+        && bridge_strain_count(hand, longest_suit) >= 6
+        && longest_suit != BridgeStrain::Clubs
+    {
+        return BridgeBid::new(2, longest_suit);
     }
 
     None
@@ -691,10 +714,12 @@ fn suit_count(cards: &[Card], suit: Suit) -> usize {
 fn contract_modifier(calls_after_last_bid: &[BridgeAuctionCall]) -> (bool, bool) {
     calls_after_last_bid
         .iter()
-        .fold((false, false), |(doubled, redoubled), call| match call.call {
-            BridgeCall::Double => (true, false),
-            BridgeCall::Redouble => (false, true),
-            _ => (doubled, redoubled),
+        .fold((false, false), |(doubled, redoubled), call| {
+            match call.call {
+                BridgeCall::Double => (true, false),
+                BridgeCall::Redouble => (false, true),
+                _ => (doubled, redoubled),
+            }
         })
 }
 
@@ -941,5 +966,74 @@ mod tests {
         ];
 
         assert_eq!(bridge_suggest_call(&hand, 2, &[], 2), BridgeCall::Pass);
+    }
+
+    #[test]
+    fn standard_opening_passes_twelve_count_hands() {
+        let hand = [
+            card(Rank::Ace, Suit::Spades),
+            card(Rank::King, Suit::Spades),
+            card(Rank::Queen, Suit::Spades),
+            card(Rank::Two, Suit::Spades),
+            card(Rank::King, Suit::Hearts),
+            card(Rank::Three, Suit::Hearts),
+            card(Rank::Four, Suit::Hearts),
+            card(Rank::Two, Suit::Diamonds),
+            card(Rank::Three, Suit::Diamonds),
+            card(Rank::Four, Suit::Diamonds),
+            card(Rank::Five, Suit::Clubs),
+            card(Rank::Six, Suit::Clubs),
+            card(Rank::Seven, Suit::Clubs),
+        ];
+
+        assert_eq!(bridge_suggest_call(&hand, 2, &[], 2), BridgeCall::Pass);
+    }
+
+    #[test]
+    fn standard_opening_prefers_five_card_major() {
+        let hand = [
+            card(Rank::Ace, Suit::Spades),
+            card(Rank::King, Suit::Spades),
+            card(Rank::Queen, Suit::Spades),
+            card(Rank::Two, Suit::Spades),
+            card(Rank::Three, Suit::Spades),
+            card(Rank::Ace, Suit::Hearts),
+            card(Rank::Two, Suit::Hearts),
+            card(Rank::Two, Suit::Diamonds),
+            card(Rank::Three, Suit::Diamonds),
+            card(Rank::Four, Suit::Diamonds),
+            card(Rank::Five, Suit::Clubs),
+            card(Rank::Six, Suit::Clubs),
+            card(Rank::Seven, Suit::Clubs),
+        ];
+
+        assert_eq!(
+            bridge_suggest_call(&hand, 2, &[], 2),
+            bid(1, BridgeStrain::Spades)
+        );
+    }
+
+    #[test]
+    fn weak_two_opens_six_card_major_below_opening_strength() {
+        let hand = [
+            card(Rank::King, Suit::Spades),
+            card(Rank::Queen, Suit::Spades),
+            card(Rank::Jack, Suit::Spades),
+            card(Rank::Ten, Suit::Spades),
+            card(Rank::Nine, Suit::Spades),
+            card(Rank::Two, Suit::Spades),
+            card(Rank::Three, Suit::Hearts),
+            card(Rank::Four, Suit::Hearts),
+            card(Rank::Five, Suit::Diamonds),
+            card(Rank::Six, Suit::Diamonds),
+            card(Rank::Seven, Suit::Clubs),
+            card(Rank::Eight, Suit::Clubs),
+            card(Rank::Nine, Suit::Clubs),
+        ];
+
+        assert_eq!(
+            bridge_suggest_call(&hand, 2, &[], 2),
+            bid(2, BridgeStrain::Spades)
+        );
     }
 }
