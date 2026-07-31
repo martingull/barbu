@@ -991,6 +991,83 @@ test("Bridge play can resume a saved local board", async ({ page }) => {
   await expect(page.getByLabel("Bridge bidding box")).toContainText("Auction");
 });
 
+test("Bridge passed-out auction can deal again", async ({ page }) => {
+  await gotoWithPracticeSeed(page, 31);
+  await page.evaluate(() => {
+    const card = (rank: string, suit: "C" | "D" | "H" | "S") => ({ id: `${rank}${suit}`, rank, suit, label: `${rank}${suit}` });
+    const southHand = [
+      card("3", "C"),
+      card("5", "C"),
+      card("10", "C"),
+      card("Q", "C"),
+      card("5", "D"),
+      card("7", "D"),
+      card("Q", "D"),
+      card("A", "D"),
+      card("7", "S"),
+      card("9", "S"),
+      card("2", "H"),
+      card("3", "H"),
+      card("10", "H")
+    ];
+    const fullHand = {
+      id: "bridge-passed-out-regression",
+      contract: "Bridge",
+      hands: [[], [], southHand, []],
+      currentPlayerIndex: 2,
+      currentPlayer: "You",
+      currentTrick: [],
+      completedTricks: [],
+      playerHand: southHand,
+      legalCardIds: [],
+      playerPenalty: 0,
+      totalPenalty: 0,
+      cardsRemaining: 52,
+      trickNumber: 1,
+      status: "in_progress",
+      prompt: "The auction was passed out.",
+      trumpSuit: undefined,
+      bridgeAuction: [
+        { seat: "Right", call: "Pass" },
+        { seat: "You", call: "Pass" },
+        { seat: "Left", call: "Pass" },
+        { seat: "Tutor", call: "Pass" }
+      ],
+      bridgeDealer: "Right",
+      bridgeVulnerability: "NS"
+    };
+
+    localStorage.setItem(
+      "barbu.savedBridgeRun.v1",
+      JSON.stringify({
+        version: 1,
+        view: "bridgeAuction",
+        scores: { ns: 0, ew: 0 },
+        results: [],
+        fullHand,
+        auctionCalls: fullHand.bridgeAuction,
+        selectedCall: "Pass",
+        fullHandReviewTrickCount: 0,
+        usingBrowserFullHand: true,
+        savedAt: "2026-07-31T00:00:00.000Z"
+      })
+    );
+  });
+
+  await page.reload();
+  await page.getByRole("button", { name: /Open Bridge/ }).click();
+  await page.getByRole("tab", { name: "Play" }).click();
+  await page.getByRole("button", { name: "Continue Bridge" }).click();
+
+  await expect(page.getByRole("heading", { name: "Bridge auction" })).toBeVisible();
+  await expect(page.getByLabel("Bridge bidding box")).toContainText("Auction complete");
+  await expect(page.getByLabel("Bridge auction history")).toContainText("Pass");
+  await expect(page.getByRole("button", { name: "Deal again" })).toBeEnabled();
+  await page.getByRole("button", { name: "Deal again" }).click();
+  await expect(page.getByRole("heading", { name: "Bridge auction" })).toBeVisible();
+  await expect(page.getByLabel("Bridge bidding box")).toContainText(/Choose your call|Auction in progress|Auction complete/);
+});
+
 test("Bridge table does not duplicate the South dummy hand", async ({ page }) => {
   await gotoWithPracticeSeed(page, 21);
   await page.evaluate(() => {

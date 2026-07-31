@@ -11971,7 +11971,7 @@
             </button>
             <button
               class="primary-action"
-              disabled={!bridgeAuctionReadyToPlay && bridgeAuctionCurrentStatus.currentSeat !== "You"}
+              disabled={!bridgeAuctionCurrentStatus.passedOut && !bridgeAuctionReadyToPlay && bridgeAuctionCurrentStatus.currentSeat !== "You"}
               onclick={bridgeAuctionCurrentStatus.passedOut ? () => void startBridgeHand() : confirmBridgeAuction}
               type="button"
             >
