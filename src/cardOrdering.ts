@@ -2,7 +2,8 @@ import type { Card, Suit } from "./lessonTypes";
 
 type Rank = "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "J" | "Q" | "K" | "A";
 
-export const displaySuitOrder: Record<Suit, number> = { C: 0, D: 1, S: 2, H: 3 };
+export const displaySuitSequence: Suit[] = ["S", "H", "D", "C"];
+export const displaySuitOrder: Record<Suit, number> = { S: 0, H: 1, D: 2, C: 3 };
 
 const rankOrder: Record<Rank, number> = {
   "2": 2,

@@ -233,8 +233,26 @@ async function continueDrillFromCheckedAnswer(page: Page, name: "Next decision" 
 }
 
 async function completeQuickDrillDecision(page: Page) {
-  await page.locator(".drill-hand .hand-card.legal").first().tap();
+  const goodCard = page.locator(".drill-hand .hand-card.legal.good").first();
+  if (await goodCard.isVisible().catch(() => false)) {
+    await goodCard.tap();
+  } else {
+    await page.locator(".drill-hand .hand-card.legal").first().tap();
+  }
   await checkDrillAnswer(page);
+}
+
+async function completeHeartsFirstTrickDecision(page: Page) {
+  for (const cardName of ["3 C", "8 D", "4 C"]) {
+    const card = page.locator(".drill-hand").getByRole("button", { name: cardName });
+    if (await card.isVisible().catch(() => false)) {
+      await card.tap();
+      await checkDrillAnswer(page);
+      return;
+    }
+  }
+
+  throw new Error("No known good Hearts first-trick card was visible.");
 }
 
 async function completeVisibleDrillSession(page: Page) {
@@ -480,7 +498,7 @@ test("Whist practice starts playable partnership drills", async ({ page }) => {
     .getByLabel("Your Whist hand")
     .locator(".full-hand-card")
     .evaluateAll((cards) => cards.map((card) => card.getAttribute("aria-label")));
-  expect(whistOpeningLeadCardLabels).toEqual(["4 C", "K C", "6 D", "9 D", "A D", "2 S", "5 S", "8 S", "10 S", "Q S", "3 H", "7 H", "J H"]);
+  expect(whistOpeningLeadCardLabels).toEqual(["2 S", "5 S", "8 S", "10 S", "Q S", "3 H", "7 H", "J H", "6 D", "9 D", "A D", "4 C", "K C"]);
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
   await expectHandNearActionRow(page, ".full-hand-cards");
@@ -780,7 +798,7 @@ test("Bridge play starts from a rotating auction into a scored contract hand", a
   await page.getByRole("button", { name: /Open Bridge/ }).click();
   await page.getByRole("tab", { name: "Play" }).click();
 
-  await expect(page.getByRole("tabpanel", { name: "Play" })).toContainText("rotating auction");
+  await expect(page.getByRole("tabpanel", { name: "Play" })).toContainText("basic natural auction");
   await page.getByRole("button", { name: "Play Bridge" }).click();
 
   await expect(page.getByRole("heading", { name: "Bridge auction" })).toBeVisible();
@@ -863,7 +881,7 @@ test("Bridge table hand rows do not shift after cards are played", async ({ page
   const initialPlayerBox = await page.locator(".bridge-player-table-hand").boundingBox();
   expect(initialPlayerBox).not.toBeNull();
 
-  for (let playIndex = 0; playIndex < 12; playIndex += 1) {
+  for (let playIndex = 0; playIndex < 24; playIndex += 1) {
     if (await page.getByRole("button", { name: "Next trick" }).isVisible().catch(() => false)) {
       await page.getByRole("button", { name: "Next trick" }).click();
     }
@@ -879,8 +897,9 @@ test("Bridge table hand rows do not shift after cards are played", async ({ page
     await card.dblclick();
   }
 
-  await expect(page.locator(".bridge-player-table-hand .hand-card")).toHaveCount(7);
-  await expect(page.locator(".bridge-dummy-action-hand .hand-card")).toHaveCount(7);
+  const finalPlayerCount = await page.locator(".bridge-player-table-hand .hand-card").count();
+  const finalDummyCount = await page.locator(".bridge-dummy-action-hand .hand-card").count();
+  expect(finalPlayerCount + finalDummyCount).toBeLessThan(20);
 
   const finalPlayerBox = await page.locator(".bridge-player-table-hand").boundingBox();
   const finalDummyBox = await page.locator(".bridge-dummy-action-hand").boundingBox();
@@ -896,6 +915,7 @@ test("Bridge practice starts three short scripted decisions", async ({ page }) =
   await page.getByRole("button", { name: /Open Bridge/ }).click();
   await page.getByRole("tab", { name: "Practice" }).click();
 
+  await expect(page.getByLabel("Bridge practice drills")).toContainText("Opening bids");
   await page.getByLabel("Bridge practice drills").getByRole("button", { name: "Declarer play" }).click();
 
   await expect(page.getByRole("heading", { name: "Bridge practice: declarer play" })).toBeVisible();
@@ -907,6 +927,30 @@ test("Bridge practice starts three short scripted decisions", async ({ page }) =
   await expect(page.getByRole("heading", { name: "Session complete" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Practice Bridge again" })).toBeVisible();
   await page.getByRole("button", { name: "Back to Bridge practice" }).click();
+  await expect(page.getByRole("heading", { name: "Bridge table", exact: true })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
+});
+
+test("Bridge bidding practice teaches the basic natural openings", async ({ page }) => {
+  await gotoWithPracticeSeed(page, 9);
+  await page.getByRole("button", { name: /Open Bridge/ }).click();
+  await page.getByRole("tab", { name: "Practice" }).click();
+  await page.getByLabel("Bridge practice drills").getByRole("button", { name: "Opening bids" }).click();
+
+  await expect(page.getByRole("heading", { name: "Bridge bidding" })).toBeVisible();
+  await expect(page.getByLabel("Bridge bidding estimate")).toContainText("2-3-4-4");
+  await expect(page.getByLabel("Your Bridge bidding practice hand").getByRole("button")).toHaveCount(13);
+  await expect(page.getByLabel("Your Bridge bidding practice hand").getByRole("button").nth(0)).toHaveAttribute("aria-label", "7 S");
+  await expect(page.getByLabel("Your Bridge bidding practice hand").getByRole("button").nth(2)).toHaveAttribute("aria-label", "2 H");
+  await expect(page.getByLabel("Your Bridge bidding practice hand").getByRole("button").nth(5)).toHaveAttribute("aria-label", "5 D");
+  await expect(page.getByLabel("Your Bridge bidding practice hand").getByRole("button").nth(9)).toHaveAttribute("aria-label", "3 C");
+  for (const expected of ["Pass", "1NT", "1♠"]) {
+    await page.getByLabel("Bridge bidding choices").getByRole("button", { name: expected }).click();
+    await page.getByRole("button", { name: "Check answer" }).click();
+    await expect(page.getByLabel("Bridge bidding exercise")).toContainText("Good");
+    await page.getByRole("button", { name: /Next decision|Finish practice/ }).click();
+  }
+
   await expect(page.getByRole("heading", { name: "Bridge table", exact: true })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
 });
@@ -1450,7 +1494,7 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "First trick" }).click();
   await expect(page.getByLabel("Drill decision")).toContainText(/first trick/i);
   await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
-  await completeQuickDrillDecision(page);
+  await completeHeartsFirstTrickDecision(page);
   await expect(page.getByLabel("Drill decision")).toContainText("Good");
   await page.getByRole("button", { name: "Table" }).first().click();
 

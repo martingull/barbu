@@ -228,7 +228,7 @@ export const referenceCatalog: GameReference[] = [
         id: "parlett-baseline",
         title: "Core Baseline",
         note:
-          "The core Barbu game starts from Parlett for rules, terminology, play direction, and contract descriptions before the app adapts them into lessons."
+          "The core Barbu game starts from Parlett for rules, terminology, play direction, and contract descriptions before Barbu adapts them into lessons."
       },
       {
         id: "learning-table",
@@ -533,7 +533,7 @@ export const referenceCatalog: GameReference[] = [
         id: "players",
         title: "Players And Partnerships",
         body:
-          "The app uses the same partnership seating as Whist. You sit opposite Barbu, and the side seats play as the opposing partnership.",
+          "The Spades table uses the same partnership seating as Whist. You sit opposite Barbu, and the side seats play as the opposing partnership.",
         facts: [
           { label: "Players", value: "Four" },
           { label: "Partner", value: "Barbu" }
@@ -554,7 +554,7 @@ export const referenceCatalog: GameReference[] = [
         id: "deal-and-bid",
         title: "Deal And Bid",
         body:
-          "Each player receives thirteen cards. In the app, you see your hand before bidding, the table estimates the hidden hands, and you may adjust only your own bid. Individual bids combine into partnership totals, while nil remains an individual promise to take no tricks.",
+          "Each player receives thirteen cards. At the Spades table, you see your hand before bidding, the table estimates the hidden hands, and you may adjust only your own bid. Individual bids combine into partnership totals, while nil remains an individual promise to take no tricks.",
         facts: [
           { label: "Deal", value: "13 cards each" },
           { label: "Player control", value: "You adjust only your own bid" },
@@ -578,7 +578,7 @@ export const referenceCatalog: GameReference[] = [
         id: "bidding-heuristic",
         title: "Bidding Heuristic",
         body:
-          "The starter estimate uses a simple club-player heuristic: count likely books from aces, protected non-spade kings, high spades, and extra spade length. Nil is suggested only when the hand has no obvious aces, high spades, or protected kings and enough low cards to duck.",
+          "The starter estimate uses a simple card-club player heuristic: count likely books from aces, protected non-spade kings, high spades, and extra spade length. Nil is suggested only when the hand has no obvious aces, high spades, or protected kings and enough low cards to duck.",
         facts: [
           { label: "Aces", value: "Usually count as likely books" },
           { label: "Kings", value: "Protected kings count more than lonely kings" },
@@ -672,13 +672,13 @@ export const referenceCatalog: GameReference[] = [
     family: "Bridge",
     baseline: "Contract Bridge local table with auction, declarer play, dummy, vulnerability, and duplicate scoring",
     overview:
-      "Bridge is a four-player partnership trick-taking game with an auction, a contract, declarer play, an exposed dummy, and two defenders. The app now plays a local contract hand from a rotating auction into declarer/dummy play or defense.",
+      "Bridge is a four-player partnership trick-taking game with an auction, a contract, declarer play, an exposed dummy, and two defenders. The Bridge table now plays a local contract hand from a rotating auction into declarer/dummy play or defense.",
     sections: [
       {
         id: "object",
         title: "Object",
         body:
-          "One side declares a contract and tries to take enough tricks to make it. The defenders try to defeat that contract. The app table runs a rotating auction, then derives the contract, declarer, dummy, opening leader, vulnerability, and duplicate score.",
+          "One side declares a contract and tries to take enough tricks to make it. The defenders try to defeat that contract. The Bridge table runs a rotating auction, then derives the contract, declarer, dummy, opening leader, vulnerability, and duplicate score.",
         facts: [
           { label: "Game type", value: "Contract partnership trick-taking" },
           { label: "Auction", value: "Rotating calls with pass, double, and redouble" },
@@ -711,11 +711,11 @@ export const referenceCatalog: GameReference[] = [
         id: "dummy",
         title: "The Dummy",
         body:
-          "After the opening lead, declarer's partner becomes dummy and their hand is played face up. Declarer chooses cards from both declarer's hand and dummy. The app keeps dummy hidden until the opening lead, then exposes the correct dummy for the contract.",
+          "After the opening lead, declarer's partner becomes dummy and their hand is played face up. Declarer chooses cards from both declarer's hand and dummy. The Bridge table keeps dummy hidden until the opening lead, then exposes the correct dummy for the contract.",
         facts: [
           { label: "Dummy", value: "Declarer's partner" },
           { label: "Control", value: "Declarer plays both hands" },
-          { label: "App role", value: "You declare, play dummy, or defend based on the auction" }
+          { label: "Table role", value: "You declare, play dummy, or defend based on the auction" }
         ]
       },
       {
@@ -731,7 +731,7 @@ export const referenceCatalog: GameReference[] = [
       },
       {
         id: "app-learning",
-        title: "App Learning Path",
+        title: "Learning Path",
         body:
           "The Bridge path teaches declarer play, dummy handling, and defense through short decisions, plus a playable local hand with auction, vulnerability, dummy reveal, and duplicate scoring. Stronger bidding systems and duplicate movement remain later layers.",
         facts: [
@@ -770,7 +770,7 @@ export const referenceCatalog: GameReference[] = [
         title: "Playable contract hand",
         coreStatus: "Core",
         appStatus: "Playable",
-        note: "The app runs a rotating auction, derives declarer/dummy/opening lead, hides dummy until the opening lead, and scores the completed contract."
+        note: "The Bridge table runs a rotating auction, derives declarer/dummy/opening lead, hides dummy until the opening lead, and scores the completed contract."
       },
       {
         id: "bridge-auction",

@@ -32,7 +32,7 @@
   import CardChoiceHand from "./CardChoiceHand.svelte";
   import CardFace from "./CardFace.svelte";
   import CardTable from "./CardTable.svelte";
-  import { compareCardsForDisplay } from "./cardOrdering";
+  import { compareCardsForDisplay, displaySuitSequence } from "./cardOrdering";
   import { formatCardLabel, formatCardList } from "./cardDisplay";
   import ExerciseFeedback from "./ExerciseFeedback.svelte";
   import "./games";
@@ -100,6 +100,7 @@
     | "drillResult"
     | "runContractIntro"
     | "bridgeAuction"
+    | "bridgeBiddingPractice"
     | "heartsPass"
     | "heartsPassPractice"
     | "fullHand"
@@ -158,6 +159,25 @@
     cardLabel: string;
     outcome: GuidedCardOutcome | "illegal";
     reason: PracticeReason;
+    clean: boolean;
+  };
+
+  type BridgeBiddingPracticeStep = {
+    id: string;
+    title: string;
+    prompt: string;
+    hand: Card[];
+    dealer: Seat;
+    vulnerability: BridgeVulnerability;
+    options: BridgeCallOption[];
+    correctCall: BridgeCallOption;
+    explanations: Partial<Record<BridgeCallOption, string>>;
+  };
+
+  type BridgeBiddingPracticeResult = {
+    id: string;
+    selectedCall: BridgeCallOption;
+    correctCall: BridgeCallOption;
     clean: boolean;
   };
 
@@ -705,6 +725,99 @@
     const label = `${rank}${suit}`;
     return { id: label, rank, suit, label };
   }
+
+  const bridgeBiddingPracticeSteps: BridgeBiddingPracticeStep[] = [
+    {
+      id: "bridge-bid-pass-light-balanced",
+      title: "Pass a light hand",
+      prompt: "You are South with 8 HCP and no six-card preempt. In basic natural bidding, do not open just because you like the shape.",
+      hand: [
+        card("3", "C"),
+        card("5", "C"),
+        card("10", "C"),
+        card("Q", "C"),
+        card("5", "D"),
+        card("7", "D"),
+        card("Q", "D"),
+        card("A", "D"),
+        card("7", "S"),
+        card("9", "S"),
+        card("2", "H"),
+        card("3", "H"),
+        card("10", "H")
+      ],
+      dealer: "You",
+      vulnerability: "NS",
+      options: ["Pass", "1C", "1D", "1NT"],
+      correctCall: "Pass",
+      explanations: {
+        Pass: "Good. 8 HCP balanced is below opening strength, so pass.",
+        "1C": "Risky. Better-minor openings still need opening strength.",
+        "1D": "Risky. Four diamonds does not make this an opening bid.",
+        "1NT": "1NT shows 15-17 balanced, not 8."
+      }
+    },
+    {
+      id: "bridge-bid-one-notrump",
+      title: "Open 1NT",
+      prompt: "You are South with 16 HCP and a balanced hand. Show the range immediately.",
+      hand: [
+        card("A", "C"),
+        card("7", "C"),
+        card("4", "C"),
+        card("K", "D"),
+        card("8", "D"),
+        card("3", "D"),
+        card("Q", "H"),
+        card("9", "H"),
+        card("5", "H"),
+        card("A", "S"),
+        card("J", "S"),
+        card("6", "S"),
+        card("2", "S")
+      ],
+      dealer: "You",
+      vulnerability: "None",
+      options: ["Pass", "1C", "1S", "1NT"],
+      correctCall: "1NT",
+      explanations: {
+        Pass: "Too cautious. 16 HCP balanced is a normal opening hand.",
+        "1C": "Legal shape, but 1NT describes 15-17 balanced much better.",
+        "1S": "Do not open a four-card major in this system.",
+        "1NT": "Good. 15-17 balanced opens 1NT."
+      }
+    },
+    {
+      id: "bridge-bid-five-card-major",
+      title: "Open the five-card major",
+      prompt: "You are South with 13 HCP and five spades. In basic natural bidding, five-card majors come before a minor opening.",
+      hand: [
+        card("A", "S"),
+        card("K", "S"),
+        card("Q", "S"),
+        card("3", "S"),
+        card("2", "S"),
+        card("A", "H"),
+        card("4", "H"),
+        card("7", "D"),
+        card("6", "D"),
+        card("5", "D"),
+        card("8", "C"),
+        card("6", "C"),
+        card("2", "C")
+      ],
+      dealer: "You",
+      vulnerability: "EW",
+      options: ["Pass", "1C", "1NT", "1S"],
+      correctCall: "1S",
+      explanations: {
+        Pass: "Too cautious. 13 HCP with a five-card major opens.",
+        "1C": "The club suit is not the message. Show the five-card major first.",
+        "1NT": "1NT needs a balanced 15-17 HCP hand.",
+        "1S": "Good. With opening strength and five spades, open 1S."
+      }
+    }
+  ];
 
   const drillSteps: DrillStep[] = guidedLessons.map((lesson) => ({
     contract: lesson.contract,
@@ -2748,6 +2861,10 @@
   let activeWhistPracticeFocus: WhistPracticeAction = "follow";
   let activeSpadesPracticeFocus: SpadesPracticeAction = "follow";
   let activeBridgePracticeFocus: BridgePracticeAction = "declarer";
+  let bridgeBiddingPracticeIndex = 0;
+  let bridgeBiddingSelectedCall: BridgeCallOption = "Pass";
+  let bridgeBiddingCheckedCall: BridgeCallOption | "" = "";
+  let bridgeBiddingPracticeResults: BridgeBiddingPracticeResult[] = [];
   let whistFullHandSource: "play" | "practice" | "card-counting" = "play";
   let whistOpeningLeadPracticeRound = 0;
   let activeCardCountingTab: CardCountingTabId = "play";
@@ -3037,6 +3154,21 @@
     };
   }
 
+  function bridgeAuctionSummary(calls: BridgeAuctionCall[] = fullHand?.bridgeAuction ?? bridgeAuctionCalls) {
+    return calls.length
+      ? calls.map((call) => `${bridgeSeatLabel(call.seat)} ${bridgeCallLongLabel(call.call as BridgeCallOption)}`).join(", ")
+      : "No auction recorded";
+  }
+
+  function bridgeOpeningLeadSummary(hand: FullHandState | null = fullHand) {
+    const openingLead = hand?.completedTricks[0]?.cards[0];
+    if (!openingLead) {
+      return `${bridgeSeatLabel(bridgeVisibleContract.openingLeader)} is on opening lead.`;
+    }
+
+    return `${bridgeSeatLabel(openingLead.seat)} led ${formatCardLabel(openingLead.card)}.`;
+  }
+
   function addWhistMatchResult(scores: { playerSide: number; opponentSide: number }, result: WhistHandResult) {
     return {
       playerSide: scores.playerSide + result.playerSideOddTricks,
@@ -3297,6 +3429,10 @@
 
   function bridgeSuitCount(cards: Card[], suit: Suit) {
     return cards.filter((card) => card.suit === suit).length;
+  }
+
+  function bridgeHandShapeLabel(cards: Card[]) {
+    return displaySuitSequence.map((suit) => bridgeSuitCount(cards, suit)).join("-");
   }
 
   function bridgeLongestSuit(cards: Card[]): Suit {
@@ -3921,6 +4057,19 @@
   $: drillLoopInsight = buildDrillLoopInsight(drillResults, recentPlayBarbuAttempts);
   $: drillLoopFocus = drillLoopInsight.contract || weakContract || "Full table";
   $: drillLoopFocusSummary = currentContractResults.find((result) => result.contract === drillLoopFocus);
+  $: currentBridgeBiddingPractice = bridgeBiddingPracticeSteps[bridgeBiddingPracticeIndex] ?? bridgeBiddingPracticeSteps[0];
+  $: bridgeBiddingPracticeDecisionNumber = bridgeBiddingCheckedCall ? bridgeBiddingPracticeResults.length : bridgeBiddingPracticeResults.length + 1;
+  $: bridgeBiddingPracticeCleanCount = bridgeBiddingPracticeResults.filter((result) => result.clean).length;
+  $: bridgeBiddingPracticeIsLast = bridgeBiddingPracticeIndex >= bridgeBiddingPracticeSteps.length - 1;
+  $: bridgeBiddingPracticeFeedback = bridgeBiddingCheckedCall
+    ? currentBridgeBiddingPractice.explanations[bridgeBiddingCheckedCall] ?? "Compare your call with basic natural bidding."
+    : "Choose the call that best describes South's hand for basic natural bidding.";
+  $: bridgeBiddingPracticeOutcome =
+    bridgeBiddingCheckedCall
+      ? bridgeBiddingCheckedCall === currentBridgeBiddingPractice.correctCall
+        ? "Good"
+        : "Risky"
+      : "";
   $: latestPlayBarbuAttempt = playBarbuHistory[0];
   $: reviewResults = latestPlayBarbuAttempt?.results ?? [];
   $: reviewContractResults = summarizeContractResults(reviewResults);
@@ -7612,6 +7761,11 @@
   function startBridgePathStep(step: BridgeLearnPathStep) {
     activePathStepId = step.id;
 
+    if (step.action === "bidding") {
+      startBridgeBiddingDrill(step.id);
+      return;
+    }
+
     if (step.action === "defense") {
       startBridgeDefenseDrill(step.id);
       return;
@@ -8697,7 +8851,9 @@
     if (fullHandIsPartnershipGame) {
       if (fullHandIsBridgeGame) {
         const score = currentBridgeHandResult?.score ?? bridgeDuplicateScore(bridgeVisibleContract, bridgeDeclarerTricks);
-        return `Contract: ${bridgeContractLabel} by ${bridgeSeatLabel(bridgeVisibleContract.declarer)}. Declarer side won ${bridgeDeclarerTricks} tricks; defenders won ${bridgeDefenderTricks}. ${
+        return `Auction: ${bridgeAuctionSummary(hand.bridgeAuction ?? bridgeAuctionCalls)}. Contract: ${bridgeContractLabel} by ${bridgeSeatLabel(
+          bridgeVisibleContract.declarer
+        )}; ${bridgeSeatLabel(bridgeVisibleContract.dummy)} was dummy. ${bridgeOpeningLeadSummary(hand)} Declarer side won ${bridgeDeclarerTricks} tricks; defenders won ${bridgeDefenderTricks}. ${
           bridgeContractMade
             ? `Contract made for ${formatSignedScore(score)}.`
             : `You needed ${bridgeContractTarget} tricks, so the defense defeated the contract.`
@@ -9500,6 +9656,18 @@
     appView = "drill";
   }
 
+  function startBridgeBiddingDrill(pathStepId = "") {
+    activeGameTable = "bridge";
+    activeTableTabs.bridge = "practice";
+    activeBridgePracticeFocus = "bidding";
+    activePathStepId = pathStepId;
+    bridgeBiddingPracticeIndex = 0;
+    bridgeBiddingSelectedCall = bridgeBiddingPracticeSteps[0]?.correctCall ?? "Pass";
+    bridgeBiddingCheckedCall = "";
+    bridgeBiddingPracticeResults = [];
+    appView = "bridgeBiddingPractice";
+  }
+
   function startBridgeDeclarerDrill(pathStepId = "") {
     startBridgePracticeSession("declarer", bridgeDeclarerDrillPool, "Bridge practice: declarer play", pathStepId);
   }
@@ -9508,13 +9676,63 @@
     startBridgePracticeSession("defense", bridgeDefenseDrillPool, "Bridge practice: defense", pathStepId);
   }
 
-  function replayBridgePracticeDrill() {
-    if (activeBridgePracticeFocus === "defense") {
-      startBridgeDefenseDrill();
+  function selectBridgeBiddingPracticeCall(call: BridgeCallOption) {
+    if (bridgeBiddingCheckedCall) {
       return;
     }
 
-    startBridgeDeclarerDrill();
+    bridgeBiddingSelectedCall = call;
+  }
+
+  function checkBridgeBiddingPractice() {
+    if (bridgeBiddingCheckedCall) {
+      return;
+    }
+
+    const step = currentBridgeBiddingPractice;
+    bridgeBiddingCheckedCall = bridgeBiddingSelectedCall;
+    bridgeBiddingPracticeResults = [
+      ...bridgeBiddingPracticeResults,
+      {
+        id: step.id,
+        selectedCall: bridgeBiddingSelectedCall,
+        correctCall: step.correctCall,
+        clean: bridgeBiddingSelectedCall === step.correctCall
+      }
+    ];
+  }
+
+  function nextBridgeBiddingPracticeDecision() {
+    if (!bridgeBiddingCheckedCall) {
+      return;
+    }
+
+    if (bridgeBiddingPracticeIsLast) {
+      if (activePathStepId === "bridge-bidding") {
+        completeBridgePathStep("bridge-bidding");
+      }
+      openBridgeTable();
+      activeTableTabs.bridge = "practice";
+      return;
+    }
+
+    bridgeBiddingPracticeIndex += 1;
+    bridgeBiddingSelectedCall = bridgeBiddingPracticeSteps[bridgeBiddingPracticeIndex]?.correctCall ?? "Pass";
+    bridgeBiddingCheckedCall = "";
+  }
+
+  function replayBridgePracticeDrill() {
+    switch (activeBridgePracticeFocus) {
+      case "bidding":
+        startBridgeBiddingDrill();
+        return;
+      case "defense":
+        startBridgeDefenseDrill();
+        return;
+      case "declarer":
+      default:
+        startBridgeDeclarerDrill();
+    }
   }
 
   async function startHeartsPassPractice(pathStepId = "") {
@@ -9635,6 +9853,7 @@
       bags: ({ pathStepId } = {}) => startSpadesAvoidBagsDrill(pathStepId)
     },
     bridge: {
+      bidding: ({ pathStepId } = {}) => startBridgeBiddingDrill(pathStepId),
       declarer: ({ pathStepId } = {}) => startBridgeDeclarerDrill(pathStepId),
       defense: ({ pathStepId } = {}) => startBridgeDefenseDrill(pathStepId)
     }
@@ -9716,7 +9935,7 @@
       resetTrick();
     } catch {
       usingGeneratedPractice = true;
-      generatedPracticeError = "Generated drills need the Tauri runtime. Use the fixed lesson here, or run the app with Tauri.";
+      generatedPracticeError = "Generated drills need the Tauri runtime. Use the fixed lesson here, or run Barbu with Tauri.";
     }
   }
 
@@ -10233,7 +10452,7 @@
         resumeLabel: savedBridgeRun ? "Continue Bridge" : undefined,
         resumeNote: savedBridgeRun ? savedBridgeRunSummary(savedBridgeRun) : undefined,
         onResume: savedBridgeRun ? continueSavedBridgeRun : undefined,
-        footerNote: `Bridge now opens with a rotating auction, then plays the contract with declarer, dummy, opening lead, vulnerability, and duplicate scoring.`
+        footerNote: `Bridge uses a basic natural auction: five-card majors, better minor, 15-17 1NT, strong 2C, declarer, dummy, opening lead, vulnerability, and duplicate scoring.`
       }
     }
   } as Record<string, any>;
@@ -11833,8 +12052,8 @@
           </div>
 
           <p class="result">
-            You are South. The auction rotates from the dealer, opponents bid from their hands, and the final contract sets
-            declarer, dummy, opening lead, vulnerability, and scoring.
+            You are South. The auction uses basic natural bidding: five-card majors, better minor, 15-17 1NT, strong 2C,
+            and weak twos. The final contract sets declarer, dummy, opening lead, vulnerability, and scoring.
           </p>
 
           <div class="bridge-auction-metrics" aria-label="Bridge hand estimate">
@@ -11981,6 +12200,93 @@
         </section>
       </section>
     {/if}
+  {:else if appView === "bridgeBiddingPractice"}
+    <header class="topbar table-play-topbar" aria-label="Bridge bidding practice">
+      <button class="back-button" onclick={openBridgeTable} type="button">Table</button>
+      <div>
+        <p class="eyebrow">Basic natural</p>
+        <h1>Bridge bidding</h1>
+      </div>
+      <div class="contract-status">
+        <span>Clean</span>
+        <strong>{bridgeBiddingPracticeCleanCount}/{bridgeBiddingPracticeSteps.length}</strong>
+      </div>
+    </header>
+
+    <section class="bridge-auction-screen" aria-label="Bridge bidding practice">
+      <section class="lesson-panel bridge-auction-panel" aria-label="Bridge bidding exercise">
+        <div class="lesson-heading">
+          <p class="eyebrow">Decision {bridgeBiddingPracticeDecisionNumber} of {bridgeBiddingPracticeSteps.length}</p>
+          <h2>{currentBridgeBiddingPractice.title}</h2>
+        </div>
+
+        <ExerciseFeedback
+          eyebrow="Opening bid"
+          title={bridgeCallLongLabel(currentBridgeBiddingPractice.correctCall)}
+          result={currentBridgeBiddingPractice.prompt}
+          explanation={bridgeBiddingPracticeFeedback}
+          outcome={bridgeBiddingPracticeOutcome}
+          warning={bridgeBiddingPracticeOutcome === "Risky"}
+        />
+
+        <div class="bridge-auction-metrics" aria-label="Bridge bidding estimate">
+          <div>
+            <span>HCP</span>
+            <strong>{bridgeHighCardPoints(currentBridgeBiddingPractice.hand)}</strong>
+          </div>
+          <div>
+            <span>Shape</span>
+            <strong>{bridgeHandShapeLabel(currentBridgeBiddingPractice.hand)}</strong>
+          </div>
+          <div>
+            <span>Dealer</span>
+            <strong>{bridgeSeatLabel(currentBridgeBiddingPractice.dealer)}</strong>
+          </div>
+          <div>
+            <span>Vuln.</span>
+            <strong>{currentBridgeBiddingPractice.vulnerability}</strong>
+          </div>
+        </div>
+
+        <CardChoiceHand
+          cards={currentBridgeBiddingPractice.hand}
+          ariaLabel="Your Bridge bidding practice hand"
+          className="hand full-hand-cards bridge-auction-hand"
+          cardClassName="card hand-card full-hand-card"
+          getCardClasses={() => ({ legal: false })}
+          isPressed={() => false}
+          onSelect={() => {}}
+        />
+
+        <div class="bridge-call-grid bridge-practice-call-grid" aria-label="Bridge bidding choices">
+          {#each currentBridgeBiddingPractice.options as call}
+            <button
+              aria-pressed={bridgeBiddingSelectedCall === call}
+              class:recommended={bridgeBiddingCheckedCall && currentBridgeBiddingPractice.correctCall === call}
+              class:selected={bridgeBiddingSelectedCall === call}
+              class="secondary-action"
+              onclick={() => selectBridgeBiddingPracticeCall(call)}
+              type="button"
+            >
+              {bridgeCallLabel(call)}
+            </button>
+          {/each}
+        </div>
+
+        <div class="action-row">
+          <button class="secondary-action" onclick={openBridgeTable} type="button">Table</button>
+          {#if bridgeBiddingCheckedCall}
+            <button class="primary-action" onclick={nextBridgeBiddingPracticeDecision} type="button">
+              {bridgeBiddingPracticeIsLast ? "Finish practice" : "Next decision"}
+            </button>
+          {:else}
+            <button class="primary-action" onclick={checkBridgeBiddingPractice} type="button">
+              Check answer
+            </button>
+          {/if}
+        </div>
+      </section>
+    </section>
   {:else if appView === "fullHand"}
     {#if fullHand}
       <TablePlaySurface

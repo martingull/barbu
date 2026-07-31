@@ -821,7 +821,7 @@ export const courseCatalog: CourseContent[] = [
     concept: {
       heading: "Bid from likely winners, then check whether nil is realistic.",
       body:
-        "A simple club-table estimate starts with high cards and spade length: aces, protected kings, high spades, and long spade control. Nil needs the opposite: few forced winners and enough low cards to duck.",
+        "A simple card-club estimate starts with high cards and spade length: aces, protected kings, high spades, and long spade control. Nil needs the opposite: few forced winners and enough low cards to duck.",
       points: [
         { marker: "A", text: "Count most aces as likely books." },
         { marker: "K", text: "Count protected kings more than lonely kings." },

@@ -8,7 +8,7 @@
   "reference": {
     "object": "Play each deal under the current contract and avoid the penalty cards or tricks named by that contract.",
     "cards": "Standard 52-card pack.",
-    "deal": "The app currently teaches from guided positions before full deals are introduced.",
+    "deal": "The Barbu course currently teaches from guided positions before full deals are introduced.",
     "play": {
       "direction": "clockwise",
       "followSuit": "A player who can follow the led suit must do so.",
@@ -97,7 +97,7 @@
       "title": "King of Hearts",
       "coreStatus": "core",
       "appStatus": "playable",
-      "note": "The app currently names the Barbu contract by its danger card for beginner clarity."
+      "note": "The Barbu table currently names the contract by its danger card for beginner clarity."
     },
     {
       "id": "no_last_two",
@@ -125,7 +125,7 @@
       "title": "Domino",
       "coreStatus": "core",
       "appStatus": "playable",
-      "note": "Opening-rank state exists but the app currently defaults to fixed-seven layout v1; guided course, generated practice, full hand, and Barbu run support exist. Chooser/declarer-selected starting rank is later."
+      "note": "Opening-rank state exists but the Barbu table currently defaults to fixed-seven layout v1; guided course, generated practice, full hand, and Barbu run support exist. Chooser/declarer-selected starting rank is later."
     }
   ]
 }

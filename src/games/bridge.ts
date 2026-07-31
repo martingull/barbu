@@ -1,8 +1,8 @@
 import type { GameDefinition } from "../gameRegistry";
 import { createGameTableDefinition } from "../tableFactory";
 
-export type BridgeLearnPathAction = "declarer" | "dummy" | "defense";
-export type BridgePracticeAction = "declarer" | "defense";
+export type BridgeLearnPathAction = "bidding" | "declarer" | "dummy" | "defense";
+export type BridgePracticeAction = "bidding" | "declarer" | "defense";
 
 export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAction> = {
   table: createGameTableDefinition({
@@ -22,26 +22,26 @@ export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAct
       pathTitle: "Learn the Bridge table",
       progressAriaLabel: "Bridge course progress",
       nextSummary: "Open a compact Bridge decision, then repeat the same habit in practice.",
-      completeSummary: "You have tried the first Bridge habits: declarer play, the dummy, and defense.",
-      referenceSummary: "Check the Bridge baseline: bidding, declarer play, the dummy, and defense."
+      completeSummary: "You have tried the first Bridge habits: opening bids, declarer play, the dummy, and defense.",
+      referenceSummary: "Check the Bridge baseline: basic natural bidding, declarer play, the dummy, and defense."
     },
     tabIntros: {
       learn: {
         eyebrow: "Learn",
         title: "Learn declarer and defense.",
         summary:
-          "Bridge introduces the dummy, contract bidding, and advanced partnership defense."
+          "Bridge introduces basic natural bidding, the dummy, declarer play, and partnership defense."
       },
       practice: {
         eyebrow: "Practice",
         title: "Repeat one Bridge habit.",
-        summary: "Repeat compact trick-taking topics, then test the same habits in a full Bridge hand."
+        summary: "Repeat opening-bid, declarer-play, and defense decisions, then test the same habits in a full Bridge hand."
       },
       play: {
         eyebrow: "Play",
         title: "Play a Bridge hand.",
         summary:
-          "Play South and North against East and West. Win the auction, declare the contract, and play with a visible dummy."
+          "Play South and North against East and West. Bid a natural system, declare the contract, and play with a visible dummy."
       },
       perfect: {
         eyebrow: "Pro",
@@ -53,11 +53,13 @@ export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAct
     actionsByTab: {
       learn: [
         { id: "reference", label: "Reference", destination: "Bridge reference" },
+        { id: "bidding", label: "Bidding", destination: "Bridge bidding concept" },
         { id: "declarer", label: "Declarer play", destination: "Bridge declarer concept" },
         { id: "dummy", label: "The Dummy", destination: "Bridge dummy concept" },
         { id: "defense", label: "Defense", destination: "Bridge defense concept" }
       ],
       practice: [
+        { id: "bidding", label: "Bidding", destination: "Bridge practice: Bidding" },
         { id: "declarer-play", label: "Declarer play", destination: "Bridge practice: Declarer play" },
         { id: "defense", label: "Defense", destination: "Bridge practice: Defense" }
       ],
@@ -65,6 +67,13 @@ export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAct
     }
   }),
   learnSteps: [
+    {
+      id: "bridge-bidding",
+      step: "System",
+      title: "Opening bids",
+      summary: "Use basic natural bidding: 15-17 balanced opens 1NT, five-card majors open first, and weak hands pass.",
+      action: "bidding"
+    },
     {
       id: "bridge-declarer",
       step: "Concept",
@@ -95,6 +104,14 @@ export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAct
       title: "Practice one Bridge habit.",
       layout: "entry-grid",
       entries: [
+        {
+          id: "bidding",
+          label: "Bidding",
+          title: "Opening bids",
+          summary: "Practice pass, 1NT, and five-card-major openings from the Bridge table.",
+          action: "bidding",
+          group: "bridge-drills"
+        },
         {
           id: "declarer-play",
           label: "Declarer",
