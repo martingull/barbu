@@ -5,6 +5,7 @@
 /src-tauri/gen/schemas/
 /playwright-report/
 /test-results/
+/release/google-play/
 
 .idea/
 .DS_Store
