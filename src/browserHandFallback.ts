@@ -784,6 +784,10 @@ function chooseOpponentCard(state: FullHandState) {
   return lowestCard(legal);
 }
 
+export function chooseBrowserOpponentCardForState(state: FullHandState) {
+  return chooseOpponentCard(hydrateFullHandState(cloneState(state)));
+}
+
 function chooseBridgeLeadCard(state: FullHandState, legal: Card[]) {
   const trump = whistTrumpSuitFromState(state);
   const declarerSide = bridgeDeclarerIndex(state) % 2;
@@ -822,19 +826,19 @@ function chooseBridgeVoidCard(state: FullHandState, legal: Card[]) {
   const trump = whistTrumpSuitFromState(state);
   const declarerSide = bridgeDeclarerIndex(state) % 2;
   const currentSide = state.currentPlayerIndex % 2;
+  const lowestNonTrump = lowestCard(legal.filter((card) => card.suit !== trump)) ?? lowestCard(legal);
 
   if (currentSide === declarerSide) {
-    return lowestCard(legal.filter((card) => trump && card.suit === trump && cardWouldWinTrick(state, card))) ?? highestCard(legal);
+    return lowestCard(legal.filter((card) => trump && card.suit === trump && cardWouldWinTrick(state, card))) ?? lowestNonTrump;
   }
 
   if (whistPartnerIsWinning(state)) {
-    return lowestCard(legal.filter((card) => card.suit !== trump)) ?? lowestCard(legal);
+    return lowestNonTrump;
   }
 
   return (
     lowestCard(legal.filter((card) => trump && card.suit === trump && cardWouldWinTrick(state, card))) ??
-    highestCard(legal.filter((card) => card.suit !== trump)) ??
-    lowestCard(legal)
+    lowestNonTrump
   );
 }
 

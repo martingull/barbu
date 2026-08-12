@@ -60,7 +60,8 @@
   const showNorthHand = $derived(dummySeat !== "You");
   const southHand = $derived(southIsDummy ? dummyHand : playerHand);
   const southSelectedCardId = $derived(southIsDummy ? dummySelectedCardId : playerSelectedCardId);
-  const southSeatLabel = $derived(southIsDummy ? dummySeatLabel : playerRoleLabel);
+  const northHandLabel = $derived(showNorthHand ? dummySeatLabel : seatRoleLabel("Tutor"));
+  const southSeatLabel = $derived(seatRoleLabel("You"));
   const southAriaLabel = $derived(southIsDummy ? "South dummy hand" : `${playerSeatLabel} Bridge hand`);
 
   function cardAt(seat: Seat) {
@@ -81,8 +82,36 @@
     return label;
   }
 
+  function handRoleLabel(seat: Seat) {
+    if (seat === dummySeat) {
+      return "Dummy";
+    }
+
+    if (seat === declarerSeat) {
+      return "Declarer";
+    }
+
+    return seat === "You" ? (playerRoleLabel.includes("Declarer") ? "Declarer" : "Defender") : "Defender";
+  }
+
+  function seatRoleLabel(seat: Seat) {
+    return `${compassLabel(seat)} ${handRoleLabel(seat)}`;
+  }
+
   function compassLabel(seat: Seat) {
     return compassSeatLabels[seat];
+  }
+
+  function tableRoleLabel(seat: Seat) {
+    if (seat === dummySeat) {
+      return "Dummy";
+    }
+
+    if (seat === declarerSeat) {
+      return "Decl.";
+    }
+
+    return "Def.";
   }
 
   function dummyCardClasses(card: Card): CardClassFlags {
@@ -121,7 +150,7 @@
 
 <section class="bridge-table" aria-label={ariaLabel}>
   <div class="bridge-seat bridge-seat-north" aria-label="Visible dummy cards">
-    <span class="bridge-seat-label">{showNorthHand ? dummySeatLabel : seatLabel("Tutor")}</span>
+    <span class="bridge-seat-label">{northHandLabel}</span>
     {#if showNorthHand && dummyHand.length}
       <CardChoiceHand
         cards={dummyHand}
@@ -142,26 +171,25 @@
   </div>
 
   <div class="bridge-felt" aria-label="Current Bridge table">
-    <div class:active={Boolean(pendingBySeat.Left)} class="bridge-defender bridge-defender-left" aria-label="West defender">
-      <span class="bridge-side-label">{compassLabel("Left")}</span>
-    </div>
-
     <div class="bridge-trick-cluster" aria-label="Current trick">
       {#each tableSeats as seat}
         {@const tableCard = cardAt(seat)}
-        <div class={`bridge-trick-slot bridge-trick-${seat.toLowerCase()}`} class:occupied={Boolean(tableCard)}>
-          {#if tableCard}
-            <div class:heart={tableCard.suit === "H"} class="bridge-trick-card">
-              <CardFace card={tableCard} />
-            </div>
-          {/if}
+        <div
+          class={`bridge-trick-slot bridge-trick-${seat.toLowerCase()}`}
+          class:active={Boolean(pendingBySeat[seat])}
+          class:occupied={Boolean(tableCard)}
+        >
+          <div class="bridge-trick-card-space">
+            {#if tableCard}
+              <div class:heart={tableCard.suit === "H"} class="bridge-trick-card">
+                <CardFace card={tableCard} />
+              </div>
+            {/if}
+          </div>
           <span>{compassLabel(seat)}</span>
+          <small>{tableRoleLabel(seat)}</small>
         </div>
       {/each}
-    </div>
-
-    <div class:active={Boolean(pendingBySeat.Right)} class="bridge-defender bridge-defender-right" aria-label="East defender">
-      <span class="bridge-side-label">{compassLabel("Right")}</span>
     </div>
   </div>
 
@@ -195,9 +223,7 @@
   }
 
   .bridge-felt {
-    display: grid;
-    grid-template-columns: 64px minmax(0, 1fr) 64px;
-    gap: 6px;
+    display: block;
     min-height: 148px;
     padding: 7px;
     border: 1px solid #bec8b6;
@@ -219,9 +245,9 @@
     display: grid;
     align-items: center;
     justify-items: center;
-    width: min(100%, 320px);
-    min-height: 44px;
-    padding: 7px 10px;
+    width: 100%;
+    min-height: 123px;
+    padding: 8px 10px;
     border: 1px dashed rgba(245, 241, 207, 0.42);
     border-radius: 8px;
     background: rgba(56, 107, 84, 0.42);
@@ -241,103 +267,104 @@
   }
 
   .bridge-seat-label,
-  .bridge-side-label,
-  .bridge-trick-slot > span {
+  .bridge-trick-slot > span,
+  .bridge-trick-slot > small {
     color: #f5f1cf;
-    font-size: 0.6rem;
     font-weight: 900;
     line-height: 1;
     text-transform: uppercase;
     text-shadow: 0 1px 3px rgba(8, 19, 13, 0.72);
   }
 
-  .bridge-defender {
-    display: grid;
-    align-self: center;
-    width: 58px;
-    min-height: 78px;
-    justify-items: center;
-    align-content: center;
-    min-width: 0;
-    padding: 6px;
-    border: 2px dashed rgba(255, 255, 255, 0.54);
-    border-radius: 8px;
-    background: rgba(13, 44, 31, 0.12);
-    text-align: center;
+  .bridge-seat-label {
+    font-size: 0.54rem;
+    opacity: 0.9;
   }
 
-  .bridge-defender-left {
-    grid-column: 1;
-  }
-
-  .bridge-defender-right {
-    grid-column: 3;
-  }
-
-  .bridge-defender.active .bridge-side-label,
-  .bridge-seat.active .bridge-seat-label {
+  .bridge-seat.active .bridge-seat-label,
+  .bridge-trick-slot.active > span {
     color: #f6d56d;
   }
 
   .bridge-trick-cluster {
     position: relative;
-    grid-column: 2;
-    align-self: stretch;
-    min-height: 98px;
-    border: 1px solid rgba(245, 241, 207, 0.2);
+    min-height: 148px;
+    border: 0;
     border-radius: 8px;
-    background: rgba(13, 44, 31, 0.1);
+    background: transparent;
   }
 
   .bridge-trick-slot {
     position: absolute;
     display: grid;
-    width: 48px;
-    min-height: 58px;
+    grid-template-rows: minmax(0, 1fr) auto auto;
+    width: 50px;
+    min-height: 68px;
     justify-items: center;
-    align-content: center;
+    align-content: stretch;
     gap: 2px;
-    border: 1px dashed rgba(245, 241, 207, 0.34);
-    border-radius: 8px;
-    background: rgba(16, 54, 26, 0.12);
+    padding: 0;
+    border: 0;
+    background: transparent;
   }
 
   .bridge-trick-slot.occupied {
-    border-color: rgba(245, 241, 207, 0.54);
-    background: rgba(16, 54, 26, 0.22);
+    background: transparent;
   }
 
   .bridge-trick-tutor {
-    top: 0;
+    top: 2px;
     left: 50%;
     transform: translateX(-50%);
   }
 
   .bridge-trick-left {
     top: 50%;
-    left: 0;
+    left: 18%;
     transform: translateY(-50%);
   }
 
   .bridge-trick-right {
     top: 50%;
-    right: 0;
+    right: 18%;
     transform: translateY(-50%);
   }
 
   .bridge-trick-you {
-    bottom: 0;
+    bottom: 8px;
     left: 50%;
     transform: translateX(-50%);
   }
 
   .bridge-trick-card {
     display: grid;
-    width: 34px;
+    width: 31px;
     aspect-ratio: 5 / 7;
     place-items: center;
     border-radius: 6px;
     filter: drop-shadow(0 9px 14px rgba(4, 18, 11, 0.26));
+  }
+
+  .bridge-trick-card-space {
+    display: grid;
+    width: 33px;
+    min-height: 44px;
+    place-items: center;
+  }
+
+  .bridge-trick-slot:not(.occupied) .bridge-trick-card-space {
+    border: 1px dashed rgba(245, 241, 207, 0.36);
+    border-radius: 7px;
+    background: rgba(8, 30, 21, 0.12);
+  }
+
+  .bridge-trick-slot > span {
+    font-size: 0.58rem;
+  }
+
+  .bridge-trick-slot > small {
+    color: rgba(245, 241, 207, 0.78);
+    font-size: 0.48rem;
   }
 
   .bridge-table :global(.bridge-table-hand.full-hand-cards) {

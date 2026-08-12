@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 import type { Locator, Page } from "@playwright/test";
+import { chooseBrowserOpponentCardForState } from "../../src/browserHandFallback";
+import type { Card, FullHandState } from "../../src/lessonTypes";
 import { whistOddProgress } from "../../src/whistScoring";
 
 test.beforeEach(async ({ page }, testInfo) => {
@@ -92,6 +94,10 @@ async function expectHandNearActionRow(page: Page, handSelector: string) {
       return gap >= 0 && gap <= 28;
     })
     .toBe(true);
+}
+
+function testCard(rank: string, suit: Card["suit"]): Card {
+  return { id: `${rank}${suit}`, rank, suit, label: `${rank}${suit}` };
 }
 
 async function expectNoVerticalCollision(page: Page, upperSelector: string, lowerSelector: string, minimumGap = 8) {
@@ -857,6 +863,58 @@ test("Bridge play starts from a rotating auction into a scored contract hand", a
   await page.screenshot({ path: testInfo.outputPath("bridge-after-dummy-play.png"), fullPage: true });
 });
 
+test("Bridge defender void discard preserves high side-suit cards", () => {
+  const northHand = [testCard("2", "H"), testCard("K", "H"), testCard("3", "C"), testCard("4", "S")];
+  const state: FullHandState = {
+    id: "bridge-void-discard-preserve-king",
+    contract: "Bridge",
+    hands: [
+      northHand,
+      [testCard("10", "D"), testCard("5", "C")],
+      [testCard("8", "C"), testCard("9", "S")],
+      [testCard("2", "D"), testCard("7", "C")]
+    ],
+    currentPlayerIndex: 0,
+    currentPlayer: "Tutor",
+    currentTrick: [
+      { seat: "Left", card: testCard("2", "D") },
+      { seat: "Right", card: testCard("10", "D") }
+    ],
+    completedTricks: [],
+    playerHand: [],
+    legalCardIds: [],
+    playerPenalty: 0,
+    totalPenalty: 0,
+    cardsRemaining: 10,
+    trickNumber: 1,
+    status: "in_progress",
+    prompt: "",
+    trumpSuit: "D",
+    bridgeAuction: [
+      { seat: "Right", call: "1D" },
+      { seat: "You", call: "Pass" },
+      { seat: "Left", call: "Pass" },
+      { seat: "Tutor", call: "Pass" }
+    ],
+    bridgeContract: {
+      level: 1,
+      strain: "D",
+      label: "1 Diamonds",
+      declarer: "Right",
+      dummy: "Left",
+      target: 7,
+      vulnerability: "None",
+      declarerSide: "EW",
+      dealer: "Right",
+      openingLeader: "Left"
+    },
+    bridgeDealer: "Right",
+    bridgeVulnerability: "None"
+  };
+
+  expect(chooseBrowserOpponentCardForState(state)?.id).toBe("2H");
+});
+
 test("Bridge table hand rows do not shift after cards are played", async ({ page }) => {
   await gotoWithPracticeSeed(page, 12);
   await page.getByRole("button", { name: /Open Bridge/ }).click();
@@ -870,16 +928,25 @@ test("Bridge table hand rows do not shift after cards are played", async ({ page
   await page.getByRole("button", { name: "Start play" }).click();
 
   await expect(page.getByRole("heading", { name: "Bridge hand" })).toBeVisible();
+  const initialTableBox = await page.getByLabel("Bridge hand table").boundingBox();
+  const initialPlayerBox = await page.locator(".bridge-player-table-hand").boundingBox();
+  expect(initialTableBox).not.toBeNull();
+  expect(initialPlayerBox).not.toBeNull();
+
   if ((await page.getByLabel("Dummy hidden").count()) > 0) {
     await page.locator(".bridge-player-table-hand .full-hand-card.legal").first().dblclick();
   }
   await expect(page.getByLabel("Dummy hand", { exact: true })).toBeVisible();
+  const revealedTableBox = await page.getByLabel("Bridge hand table").boundingBox();
+  const revealedPlayerBox = await page.locator(".bridge-player-table-hand").boundingBox();
+  expect(revealedTableBox).not.toBeNull();
+  expect(revealedPlayerBox).not.toBeNull();
+  expect(Math.abs(Math.round(revealedTableBox!.height) - Math.round(initialTableBox!.height))).toBeLessThanOrEqual(1);
+  expect(Math.abs(Math.round(revealedPlayerBox!.y) - Math.round(initialPlayerBox!.y))).toBeLessThanOrEqual(1);
+
   if (await page.getByRole("button", { name: "Next trick" }).isVisible().catch(() => false)) {
     await page.getByRole("button", { name: "Next trick" }).click();
   }
-
-  const initialPlayerBox = await page.locator(".bridge-player-table-hand").boundingBox();
-  expect(initialPlayerBox).not.toBeNull();
 
   for (let playIndex = 0; playIndex < 24; playIndex += 1) {
     if (await page.getByRole("button", { name: "Next trick" }).isVisible().catch(() => false)) {
@@ -1215,8 +1282,13 @@ test("Bridge table does not duplicate the South dummy hand", async ({ page }) =>
   await page.getByRole("button", { name: "Continue Bridge" }).click();
 
   await expect(page.getByRole("heading", { name: "Bridge hand" })).toBeVisible();
-  await expect(page.getByLabel("Bridge hand table")).toContainText("North Decl.");
-  await expect(page.getByLabel("Bridge hand table")).toContainText("South Dummy");
+  await expect(page.getByLabel("Bridge hand table")).toContainText("Declarer");
+  await expect(page.getByLabel("Bridge hand table")).toContainText("Dummy");
+  await expect(page.getByLabel("Current trick")).toContainText("North");
+  await expect(page.getByLabel("Current trick")).toContainText("South");
+  await expect(page.locator(".bridge-seat-label")).toHaveText(["North Declarer", "South Dummy"]);
+  await expect(page.locator(".bridge-trick-slot > span")).toHaveText(["North", "West", "East", "South"]);
+  await expect(page.locator(".bridge-trick-slot > small")).toHaveText(["Decl.", "Def.", "Def.", "Dummy"]);
   await expect(page.getByLabel("Current hand")).not.toContainText("Score");
   await expect(page.getByLabel("Bridge score")).toContainText("Score");
   await expect(page.getByLabel("North hand hidden")).toBeVisible();
@@ -1224,6 +1296,116 @@ test("Bridge table does not duplicate the South dummy hand", async ({ page }) =>
   await expect(page.getByLabel("South dummy hand")).toBeVisible();
   await expect(page.locator(".bridge-player-table-hand .hand-card")).toHaveCount(13);
   await expect(page.locator(".bridge-dummy-action-hand .hand-card")).toHaveCount(0);
+});
+
+test("Bridge exposed dummy row names the actual dummy seat", async ({ page }) => {
+  await gotoWithPracticeSeed(page, 22);
+  await page.evaluate(() => {
+    const card = (rank: string, suit: "C" | "D" | "H" | "S") => ({ id: `${rank}${suit}`, rank, suit, label: `${rank}${suit}` });
+    const eastDummyHand = [
+      card("2", "C"),
+      card("4", "C"),
+      card("6", "C"),
+      card("8", "C"),
+      card("10", "C"),
+      card("2", "D"),
+      card("4", "D"),
+      card("6", "D"),
+      card("8", "D"),
+      card("2", "H"),
+      card("4", "H"),
+      card("2", "S"),
+      card("4", "S")
+    ];
+    const southHand = [
+      card("3", "C"),
+      card("5", "C"),
+      card("7", "C"),
+      card("9", "C"),
+      card("J", "C"),
+      card("3", "D"),
+      card("5", "D"),
+      card("7", "D"),
+      card("9", "D"),
+      card("3", "H"),
+      card("5", "H"),
+      card("3", "S"),
+      card("5", "S")
+    ];
+    const fullHand = {
+      id: "bridge-east-dummy-label-regression",
+      contract: "Bridge",
+      hands: [
+        [card("A", "C"), card("K", "C"), card("Q", "C"), card("A", "D"), card("K", "D"), card("Q", "D"), card("A", "H"), card("K", "H"), card("Q", "H"), card("A", "S"), card("K", "S"), card("Q", "S"), card("J", "S")],
+        eastDummyHand,
+        southHand,
+        [card("10", "D"), card("J", "D"), card("10", "H"), card("J", "H"), card("6", "H"), card("7", "H"), card("8", "H"), card("9", "H"), card("6", "S"), card("7", "S"), card("8", "S"), card("9", "S"), card("10", "S")]
+      ],
+      currentPlayerIndex: 2,
+      currentPlayer: "You",
+      currentTrick: [{ seat: "Left", card: card("10", "D") }],
+      completedTricks: [],
+      playerHand: southHand,
+      legalCardIds: ["3D", "5D", "7D", "9D"],
+      playerPenalty: 0,
+      totalPenalty: 0,
+      cardsRemaining: 51,
+      trickNumber: 1,
+      status: "in_progress",
+      prompt: "Diamonds were led. You are defending 1 Diamonds; follow suit if you can.",
+      trumpSuit: "D",
+      dummySeat: "Right",
+      dummyHand: eastDummyHand,
+      dummyLegalCardIds: [],
+      bridgeAuction: [
+        { seat: "Left", call: "1D" },
+        { seat: "Tutor", call: "Pass" },
+        { seat: "Right", call: "Pass" },
+        { seat: "You", call: "Pass" }
+      ],
+      bridgeContract: {
+        level: 1,
+        strain: "D",
+        label: "1 Diamonds",
+        declarer: "Left",
+        dummy: "Right",
+        target: 7,
+        vulnerability: "None",
+        declarerSide: "EW",
+        dealer: "Left",
+        openingLeader: "Tutor"
+      },
+      bridgeDealer: "Left",
+      bridgeVulnerability: "None"
+    };
+
+    localStorage.setItem(
+      "barbu.savedBridgeRun.v1",
+      JSON.stringify({
+        version: 1,
+        view: "fullHand",
+        scores: { ns: 0, ew: 0 },
+        results: [],
+        fullHand,
+        auctionCalls: fullHand.bridgeAuction,
+        selectedCall: "Pass",
+        fullHandReviewTrickCount: 0,
+        usingBrowserFullHand: true,
+        savedAt: "2026-08-12T00:00:00.000Z"
+      })
+    );
+  });
+
+  await page.reload();
+  await page.getByRole("button", { name: /Open Bridge/ }).click();
+  await page.getByRole("tab", { name: "Play" }).click();
+  await page.getByRole("button", { name: "Continue Bridge" }).click();
+
+  await expect(page.getByRole("heading", { name: "Bridge hand" })).toBeVisible();
+  await expect(page.locator(".bridge-seat-label").first()).toHaveText("East Dummy");
+  await expect(page.getByLabel("Dummy hand", { exact: true })).toBeVisible();
+  await expect(page.locator(".bridge-trick-slot > span")).toHaveText(["North", "West", "East", "South"]);
+  await expect(page.locator(".bridge-trick-slot > small")).toHaveText(["Def.", "Decl.", "Dummy", "Def."]);
 });
 
 test("Spades practice starts three scripted decisions per topic", async ({ page }) => {
