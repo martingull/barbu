@@ -497,6 +497,7 @@
   };
 
   const catalogCategories = getCatalogCategories();
+  const privacyPolicyUrl = "https://martingull.github.io/barbu/privacy-policy.html";
   const barbuUi = registry.get("barbu")!;
   const heartsUi = registry.get("hearts")!;
   const whistUi = registry.get("whist")!;
@@ -10701,6 +10702,10 @@
         </div>
       {/each}
     </section>
+
+    <footer class="catalog-footer">
+      <a href={privacyPolicyUrl} rel="noreferrer" target="_blank">Privacy policy</a>
+    </footer>
   {:else if appView === "cardCountingTable"}
     <header class="topbar table-topbar" aria-label="Card Counting I table">
       <button class="back-button" onclick={openCatalog} type="button">Games</button>

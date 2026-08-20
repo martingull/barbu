@@ -244,6 +244,20 @@ button {
   color: #f5f1cf;
 }
 
+.catalog-footer {
+  display: flex;
+  justify-content: center;
+  padding: 18px 0 2px;
+}
+
+.catalog-footer a {
+  color: #dbe7d1;
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-decoration-color: rgba(219, 231, 209, 0.5);
+  text-underline-offset: 4px;
+}
+
 .table-room {
   display: grid;
   grid-template-columns: minmax(0, 0.92fr) minmax(320px, 1.08fr);
