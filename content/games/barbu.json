@@ -1,7 +1,8 @@
 {
   "id": "barbu",
+  "tableId": "barbu",
   "title": "Barbu",
-  "family": "hearts",
+  "family": "Hearts",
   "gameType": "core",
   "baseline": "David Parlett, The Penguin Book of Card Games",
   "players": 4,
@@ -12,7 +13,7 @@
     "play": {
       "direction": "clockwise",
       "followSuit": "A player who can follow the led suit must do so.",
-      "appSeatOrderFromBarbuLead": ["Barbu", "Right", "You", "Left"]
+      "tableSeatOrderFromBarbuLead": ["Barbu", "Right", "You", "Left"]
     },
     "scoring": "Penalty scoring depends on the active contract and applies to the player who wins the trick containing the penalty card."
   },
@@ -74,7 +75,7 @@
     {
       "id": "learning_table",
       "title": "Teaching variety",
-      "note": "The current app uses authored tricks and generated drills before full contract deals."
+      "note": "The current Barbu table uses authored tricks and generated drills before full contract deals."
     }
   ],
   "contractRoadmap": [
@@ -82,50 +83,50 @@
       "id": "no_hearts",
       "title": "No Hearts",
       "coreStatus": "core",
-      "appStatus": "playable",
+      "barbuStatus": "playable",
       "note": "Reference, learning path, generated practice, full hand, and Barbu run support exist."
     },
     {
       "id": "no_queens",
       "title": "No Queens",
       "coreStatus": "core",
-      "appStatus": "playable",
+      "barbuStatus": "playable",
       "note": "Reference, learning path, generated practice, full hand, and Barbu run support exist."
     },
     {
       "id": "king_of_hearts",
       "title": "King of Hearts",
       "coreStatus": "core",
-      "appStatus": "playable",
+      "barbuStatus": "playable",
       "note": "The Barbu table currently names the contract by its danger card for beginner clarity."
     },
     {
       "id": "no_last_two",
       "title": "No Last Two",
       "coreStatus": "core",
-      "appStatus": "playable",
+      "barbuStatus": "playable",
       "note": "Reference, guided course, generated practice, full hand, and Barbu run support exist."
     },
     {
       "id": "no_tricks",
       "title": "No Tricks",
       "coreStatus": "core",
-      "appStatus": "playable",
+      "barbuStatus": "playable",
       "note": "Reference, guided course, generated practice, full hand, and Barbu run support exist."
     },
     {
       "id": "hearts_trumps",
       "title": "Hearts Trumps",
       "coreStatus": "core",
-      "appStatus": "playable",
+      "barbuStatus": "playable",
       "note": "Hearts are currently fixed as the trump suit; guided course, generated practice, full hand, and Barbu run support exist."
     },
     {
       "id": "domino",
       "title": "Domino",
       "coreStatus": "core",
-      "appStatus": "playable",
-      "note": "Opening-rank state exists but the Barbu table currently defaults to fixed-seven layout v1; guided course, generated practice, full hand, and Barbu run support exist. Chooser/declarer-selected starting rank is later."
+      "barbuStatus": "playable",
+      "note": "Opening-rank state exists but the Barbu table currently defaults to fixed-seven layout v1; chooser/declarer-selected starting rank is later."
     }
   ]
 }
