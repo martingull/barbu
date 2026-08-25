@@ -16,12 +16,7 @@
     isDummyTurn?: boolean;
     isReviewing?: boolean;
     onSelectDummy?: (card: Card) => void | Promise<void>;
-    onSelectPlayer?: (card: Card) => void | Promise<void>;
     pendingBySeat?: Partial<Record<Seat, string>>;
-    playerHand?: Card[];
-    playerLegalCardIds?: string[];
-    playerSeatLabel?: string;
-    playerSelectedCardId?: string;
     playerRoleLabel?: string;
     tableCards: TableCard[];
   };
@@ -37,12 +32,7 @@
     isDummyTurn = false,
     isReviewing = false,
     onSelectDummy,
-    onSelectPlayer,
     pendingBySeat = {},
-    playerHand = [],
-    playerLegalCardIds = [],
-    playerSeatLabel = "South",
-    playerSelectedCardId = "",
     playerRoleLabel = "Declarer",
     tableCards
   }: Props = $props();
@@ -55,31 +45,11 @@
     Left: "West"
   };
   const dummyLegalSet = $derived(new Set(dummyLegalCardIds));
-  const playerLegalSet = $derived(new Set(playerLegalCardIds));
-  const southIsDummy = $derived(dummySeat === "You");
   const showNorthHand = $derived(dummySeat !== "You");
-  const southHand = $derived(southIsDummy ? dummyHand : playerHand);
-  const southSelectedCardId = $derived(southIsDummy ? dummySelectedCardId : playerSelectedCardId);
   const northHandLabel = $derived(showNorthHand ? dummySeatLabel : seatRoleLabel("Tutor"));
-  const southSeatLabel = $derived(seatRoleLabel("You"));
-  const southAriaLabel = $derived(southIsDummy ? "South dummy hand" : `${playerSeatLabel} Bridge hand`);
 
   function cardAt(seat: Seat) {
     return tableCards.find((play) => play.seat === seat)?.card;
-  }
-
-  function seatLabel(seat: Seat) {
-    const label = compassSeatLabels[seat];
-
-    if (seat === dummySeat) {
-      return `${label} Dummy`;
-    }
-
-    if (seat === declarerSeat) {
-      return `${label} Decl.`;
-    }
-
-    return label;
   }
 
   function handRoleLabel(seat: Seat) {
@@ -126,26 +96,6 @@
     };
   }
 
-  function playerCardClasses(card: Card): CardClassFlags {
-    const canPlay = (southIsDummy ? isDummyTurn : !isDummyTurn) && !isReviewing;
-    const isLegal = canPlay && (southIsDummy ? dummyLegalSet : playerLegalSet).has(card.id);
-
-    return {
-      heart: card.suit === "H",
-      legal: isLegal,
-      illegal: canPlay && !isLegal,
-      selected: southSelectedCardId === card.id
-    };
-  }
-
-  function selectSouthCard(card: Card) {
-    if (southIsDummy) {
-      if (isDummyTurn && !isReviewing) void onSelectDummy?.(card);
-      return;
-    }
-
-    if (!isDummyTurn && !isReviewing) void onSelectPlayer?.(card);
-  }
 </script>
 
 <section class="bridge-table" aria-label={ariaLabel}>
@@ -192,25 +142,21 @@
       {/each}
     </div>
   </div>
-
-  <div class:active={Boolean(pendingBySeat.You)} class="bridge-seat bridge-seat-south">
-    <span class="bridge-seat-label">{southSeatLabel}</span>
-    <CardChoiceHand
-      cards={southHand}
-      ariaLabel={southAriaLabel}
-      className="hand full-hand-cards bridge-table-hand bridge-player-table-hand"
-      cardClassName="card hand-card full-hand-card bridge-mini-card"
-      getCardClasses={playerCardClasses}
-      isPressed={(card) => southSelectedCardId === card.id}
-      onSelect={selectSouthCard}
-    />
-  </div>
 </section>
 
 <style>
   .bridge-table {
+    --bridge-felt-min-height: 148px;
+    --bridge-hand-height: 123px;
+    --bridge-mini-card-width: 42px;
+    --bridge-seat-label-size: 0.54rem;
+    --bridge-trick-card-width: 29px;
+    --bridge-trick-card-space-width: 31px;
+    --bridge-trick-card-space-height: 38px;
+    --bridge-trick-slot-width: 48px;
+    --bridge-trick-slot-min-height: 58px;
     display: grid;
-    grid-template-rows: auto minmax(148px, 1fr) auto;
+    grid-template-rows: var(--bridge-hand-height) minmax(0, 1fr);
     gap: 6px;
     align-self: start;
     width: 100%;
@@ -223,8 +169,8 @@
   }
 
   .bridge-felt {
-    display: block;
-    min-height: 148px;
+    display: grid;
+    min-height: var(--bridge-felt-min-height);
     padding: 7px;
     border: 1px solid #bec8b6;
     border-radius: 8px;
@@ -246,7 +192,7 @@
     align-items: center;
     justify-items: center;
     width: 100%;
-    min-height: 123px;
+    height: var(--bridge-hand-height);
     padding: 8px 10px;
     border: 1px dashed rgba(245, 241, 207, 0.42);
     border-radius: 8px;
@@ -257,13 +203,8 @@
     text-align: center;
   }
 
-  .bridge-seat-north,
-  .bridge-seat-south {
+  .bridge-seat-north {
     justify-items: center;
-  }
-
-  .bridge-seat-south {
-    align-self: end;
   }
 
   .bridge-seat-label,
@@ -277,18 +218,19 @@
   }
 
   .bridge-seat-label {
-    font-size: 0.54rem;
+    font-size: var(--bridge-seat-label-size);
     opacity: 0.9;
   }
 
-  .bridge-seat.active .bridge-seat-label,
   .bridge-trick-slot.active > span {
     color: #f6d56d;
   }
 
   .bridge-trick-cluster {
     position: relative;
-    min-height: 148px;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
     border: 0;
     border-radius: 8px;
     background: transparent;
@@ -298,8 +240,8 @@
     position: absolute;
     display: grid;
     grid-template-rows: minmax(0, 1fr) auto auto;
-    width: 50px;
-    min-height: 68px;
+    width: var(--bridge-trick-slot-width);
+    min-height: var(--bridge-trick-slot-min-height);
     justify-items: center;
     align-content: stretch;
     gap: 2px;
@@ -338,7 +280,7 @@
 
   .bridge-trick-card {
     display: grid;
-    width: 31px;
+    width: var(--bridge-trick-card-width);
     aspect-ratio: 5 / 7;
     place-items: center;
     border-radius: 6px;
@@ -347,8 +289,8 @@
 
   .bridge-trick-card-space {
     display: grid;
-    width: 33px;
-    min-height: 44px;
+    width: var(--bridge-trick-card-space-width);
+    min-height: var(--bridge-trick-card-space-height);
     place-items: center;
   }
 
@@ -373,22 +315,22 @@
     bottom: auto;
     left: auto;
     z-index: auto;
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(7, var(--bridge-mini-card-width));
     gap: 3px 4px;
     justify-content: center;
     align-content: flex-start;
     width: 100%;
     max-width: 100%;
-    min-height: 123px;
+    height: var(--bridge-hand-height);
+    min-height: 0;
     min-width: 0;
-    overflow: visible;
+    overflow: hidden;
     padding: 1px 0;
   }
 
   .bridge-table :global(.bridge-table-hand .hand-card) {
-    flex: 0 0 42px;
-    width: 42px;
+    width: var(--bridge-mini-card-width);
     min-width: 0;
   }
 

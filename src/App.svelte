@@ -4309,6 +4309,16 @@
   $: bridgeDeclarerSeat = fullHand?.bridgeContract?.declarer ?? "You";
   $: bridgeUserSideDeclares = fullHandIsBridgeGame && (bridgeSideForSeat(bridgeDeclarerSeat) === "NS");
   $: isBridgeDummyTurn = fullHandIsBridgeGame && bridgeUserSideDeclares && fullHand?.currentPlayer === bridgeDummySeat;
+  $: bridgeActiveHandCards =
+    fullHandIsBridgeGame && fullHand
+      ? isBridgeDummyTurn
+        ? fullHand.dummyHand ?? []
+        : fullHand.playerHand
+      : [];
+  $: bridgeActiveHandAriaLabel =
+    fullHandIsBridgeGame && isBridgeDummyTurn
+      ? `${bridgeSeatLabel(bridgeDummySeat)} dummy hand`
+      : "South Bridge hand";
   $: whistOpeningLeadPracticeActive = fullHandIsWhistGame && whistFullHandSource === "practice" && activeWhistPracticeFocus === "lead";
   $: whistOpeningLeadPracticeReview =
     whistOpeningLeadPracticeActive &&
@@ -8546,6 +8556,17 @@
     };
   }
 
+  function bridgeThumbCardClasses(card: Card) {
+    const legalCardIds = isBridgeDummyTurn ? new Set(fullHand?.dummyLegalCardIds ?? []) : fullHandLegalCardIds;
+
+    return {
+      heart: card.suit === "H",
+      legal: legalCardIds.has(card.id),
+      illegal: !legalCardIds.has(card.id),
+      selected: isBridgeDummyTurn ? dummySelectedCardId === card.id : fullHandSelectedCardId === card.id
+    };
+  }
+
   function spadesOpeningCardClasses(card: Card) {
     return {
       heart: card.suit === "H"
@@ -12328,13 +12349,8 @@
             isDummyTurn={isBridgeDummyTurn}
             isReviewing={fullHandIsReviewingTrick}
             onSelectDummy={selectDummyCard}
-            onSelectPlayer={selectFullHandCard}
             pendingBySeat={fullHandPendingBySeat}
-            playerHand={fullHand.playerHand}
-            playerLegalCardIds={fullHand.legalCardIds}
             playerRoleLabel={`South ${bridgeUserSideDeclares ? "Declarer" : "Defender"}`}
-            playerSeatLabel="South"
-            playerSelectedCardId={fullHandSelectedCardId}
             tableCards={fullHandVisibleTableCards}
           />
         {/snippet}
@@ -12771,7 +12787,17 @@
               />
             </div>
 
-            {#if !fullHandIsBridgeGame}
+            {#if fullHandIsBridgeGame}
+              <CardChoiceHand
+                cards={bridgeActiveHandCards}
+                ariaLabel={bridgeActiveHandAriaLabel}
+                className="hand full-hand-cards bridge-thumb-hand"
+                cardClassName="card hand-card full-hand-card"
+                getCardClasses={bridgeThumbCardClasses}
+                isPressed={(card) => isBridgeDummyTurn ? dummySelectedCardId === card.id : fullHandSelectedCardId === card.id}
+                onSelect={(card) => void (isBridgeDummyTurn ? selectDummyCard(card) : selectFullHandCard(card))}
+              />
+            {:else}
               <CardChoiceHand
                 cards={fullHand.playerHand}
                 ariaLabel={`Your ${fullHand.contract} hand`}

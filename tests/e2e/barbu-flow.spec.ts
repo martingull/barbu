@@ -241,6 +241,73 @@ async function expectTableCardLabelsBelowCards(page: Page) {
     .toBe(true);
 }
 
+async function expectBridgeTableHandsUseSevenCardRows(page: Page) {
+  const hands = page.locator(".bridge-table-hand, .bridge-thumb-hand");
+  await expect(hands.first()).toBeVisible();
+  await expect
+    .poll(async () =>
+      hands.evaluateAll((nodes) =>
+        nodes.every((hand) => {
+          const cards = [...hand.querySelectorAll(".hand-card")]
+            .map((card) => card.getBoundingClientRect())
+            .filter((rect) => rect.width > 0 && rect.height > 0)
+            .map((rect) => ({
+              top: Math.round(rect.top),
+              right: rect.right,
+              bottom: rect.bottom,
+              left: rect.left
+            }));
+
+          if (cards.length === 0) {
+            return true;
+          }
+
+          const rowSizes = [...new Set(cards.map((card) => card.top))].map(
+            (top) => cards.filter((card) => card.top === top).length
+          );
+          const hasCollision = cards.some((first, firstIndex) =>
+            cards.slice(firstIndex + 1).some((second) => {
+              const horizontal = Math.min(first.right, second.right) - Math.max(first.left, second.left);
+              const vertical = Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top);
+              return horizontal > 1 && vertical > 1;
+            })
+          );
+
+          return rowSizes.length <= 2 && rowSizes[0] <= 7 && (cards.length <= 7 || rowSizes[0] === 7) && !hasCollision;
+        })
+      )
+    )
+    .toBe(true);
+}
+
+async function expectBridgeTrickSlotsDoNotOverlap(page: Page) {
+  const slots = page.locator(".bridge-trick-slot");
+  await expect(slots.first()).toBeVisible();
+  await expect
+    .poll(async () =>
+      slots.evaluateAll((nodes) => {
+        const rects = nodes
+          .map((slot) => slot.getBoundingClientRect())
+          .filter((rect) => rect.width > 0 && rect.height > 0)
+          .map((rect) => ({
+            top: rect.top,
+            right: rect.right,
+            bottom: rect.bottom,
+            left: rect.left
+          }));
+
+        return !rects.some((first, firstIndex) =>
+          rects.slice(firstIndex + 1).some((second) => {
+            const horizontal = Math.min(first.right, second.right) - Math.max(first.left, second.left);
+            const vertical = Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top);
+            return horizontal > 1 && vertical > 1;
+          })
+        );
+      })
+    )
+    .toBe(true);
+}
+
 async function expectElementsDoNotOverlap(page: Page, firstSelector: string, secondSelector: string) {
   const first = page.locator(firstSelector).first();
   const second = page.locator(secondSelector).last();
@@ -937,27 +1004,84 @@ test("Bridge play starts from a rotating auction into a scored contract hand", a
   await expect(page.getByLabel("Bridge hand table")).not.toContainText(/\bLeft\b|\bRight\b/);
   await expect(page.getByLabel("Visible dummy cards")).toBeVisible();
   await expect(page.getByLabel("Current trick")).toBeVisible();
+  await expectBridgeTableHandsUseSevenCardRows(page);
+  await expectBridgeTrickSlotsDoNotOverlap(page);
   if ((await page.getByLabel("Dummy hidden").count()) > 0) {
-    await expect(page.locator(".bridge-player-table-hand .full-hand-card.legal").first()).toBeVisible();
-    await page.locator(".bridge-player-table-hand .full-hand-card.legal").first().dblclick();
+    await expect(page.locator(".bridge-thumb-hand .full-hand-card.legal").first()).toBeVisible();
+    await page.locator(".bridge-thumb-hand .full-hand-card.legal").first().dblclick();
   }
   await expect(page.getByLabel("Dummy hand", { exact: true })).toBeVisible();
   if ((await page.getByRole("button", { name: "Next trick" }).count()) > 0) {
     await page.getByRole("button", { name: "Next trick" }).click();
   }
-  await expect(page.locator(".bridge-dummy-action-hand .full-hand-card.legal, .bridge-player-table-hand .full-hand-card.legal").first()).toBeVisible();
+  await expect(page.locator(".bridge-thumb-hand .full-hand-card.legal").first()).toBeVisible();
+  await expectBridgeTableHandsUseSevenCardRows(page);
+  await expectBridgeTrickSlotsDoNotOverlap(page);
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
   await page.screenshot({ path: testInfo.outputPath("bridge-hand.png"), fullPage: true });
 
-  await page.locator(".bridge-dummy-action-hand .full-hand-card.legal, .bridge-player-table-hand .full-hand-card.legal").first().dblclick();
+  await page.locator(".bridge-thumb-hand .full-hand-card.legal").first().dblclick();
   await expect(page.getByRole("heading", { name: /Bridge hand|Read the table/ })).toBeVisible();
-  await expect(page.getByLabel("South Bridge hand")).toBeVisible();
   const bridgeTrickCards = await page.locator(".bridge-trick-card").count();
   expect(bridgeTrickCards).toBeGreaterThan(0);
+  await expectBridgeTableHandsUseSevenCardRows(page);
+  await expectBridgeTrickSlotsDoNotOverlap(page);
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
   await page.screenshot({ path: testInfo.outputPath("bridge-after-dummy-play.png"), fullPage: true });
+});
+
+test("Bridge compact play keeps table hands readable on short screens", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "galaxy-s9", "Viewport matrix for older phone and narrow browser sizes.");
+
+  for (const viewport of [
+    { name: "narrow-320", width: 320, height: 568 },
+    { name: "se-height", width: 375, height: 568 },
+    { name: "s9-short", width: 360, height: 640 },
+    { name: "intermediate-browser", width: 600, height: 740 }
+  ]) {
+    await test.step(viewport.name, async () => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await gotoWithPracticeSeed(page, 12);
+      await page.getByRole("button", { name: /Open Bridge/ }).click();
+      await page.getByRole("tab", { name: "Play" }).click();
+      await page.getByRole("button", { name: "Play Bridge" }).click();
+
+      for (let callIndex = 0; callIndex < 4 && (await page.getByRole("button", { name: "Start play" }).count()) === 0; callIndex += 1) {
+        await page.getByRole("button", { name: "Make call" }).click({ force: true });
+      }
+      await page.getByRole("button", { name: "Start play" }).click({ force: true });
+
+      await expect(page.getByRole("heading", { name: "Bridge hand" })).toBeVisible();
+      await expect(page.getByLabel("Bridge hand table")).toBeVisible();
+      await expectBridgeTableHandsUseSevenCardRows(page);
+      await expectBridgeTrickSlotsDoNotOverlap(page);
+      await expectElementsDoNotOverlap(page, ".bridge-play-summary", ".bridge-table");
+      await expectElementsDoNotOverlap(page, ".bridge-seat-north", ".bridge-felt");
+      await expectElementsDoNotOverlap(page, ".bridge-table", ".table-play-panel .result, .table-play-panel .outcome");
+      await expectElementsDoNotOverlap(page, ".table-play-panel .result, .table-play-panel .outcome", ".action-row");
+      await expectNoPageScroll(page);
+      if (viewport.width <= 520) {
+        await expectGameplayActionRowPinned(page);
+      }
+
+      const legalCard = page.locator(".bridge-thumb-hand .full-hand-card.legal").first();
+      if ((await legalCard.count()) > 0) {
+        await legalCard.dblclick({ force: true });
+        await expect(page.getByLabel("Dummy hand", { exact: true })).toBeVisible();
+        await expectBridgeTableHandsUseSevenCardRows(page);
+        await expectBridgeTrickSlotsDoNotOverlap(page);
+        await expectElementsDoNotOverlap(page, ".bridge-table", ".table-play-panel .result, .table-play-panel .outcome");
+        await expectNoPageScroll(page);
+        if (viewport.width <= 520) {
+          await expectGameplayActionRowPinned(page);
+        }
+      }
+
+      await page.screenshot({ path: testInfo.outputPath(`bridge-compact-${viewport.name}.png`), fullPage: true });
+    });
+  }
 });
 
 test("Bridge defender void discard preserves high side-suit cards", () => {
@@ -1026,20 +1150,24 @@ test("Bridge table hand rows do not shift after cards are played", async ({ page
 
   await expect(page.getByRole("heading", { name: "Bridge hand" })).toBeVisible();
   const initialTableBox = await page.getByLabel("Bridge hand table").boundingBox();
-  const initialPlayerBox = await page.locator(".bridge-player-table-hand").boundingBox();
+  const initialThumbBox = await page.locator(".bridge-thumb-hand").boundingBox();
   expect(initialTableBox).not.toBeNull();
-  expect(initialPlayerBox).not.toBeNull();
+  expect(initialThumbBox).not.toBeNull();
 
   if ((await page.getByLabel("Dummy hidden").count()) > 0) {
-    await page.locator(".bridge-player-table-hand .full-hand-card.legal").first().dblclick();
+    await page.locator(".bridge-thumb-hand .full-hand-card.legal").first().dblclick();
   }
   await expect(page.getByLabel("Dummy hand", { exact: true })).toBeVisible();
+  if (await page.getByRole("button", { name: "Next trick" }).isVisible().catch(() => false)) {
+    await page.getByRole("button", { name: "Next trick" }).click();
+  }
+  await expect(page.locator(".bridge-thumb-hand")).toBeVisible();
   const revealedTableBox = await page.getByLabel("Bridge hand table").boundingBox();
-  const revealedPlayerBox = await page.locator(".bridge-player-table-hand").boundingBox();
+  const revealedThumbBox = await page.locator(".bridge-thumb-hand").boundingBox();
   expect(revealedTableBox).not.toBeNull();
-  expect(revealedPlayerBox).not.toBeNull();
+  expect(revealedThumbBox).not.toBeNull();
   expect(Math.abs(Math.round(revealedTableBox!.height) - Math.round(initialTableBox!.height))).toBeLessThanOrEqual(1);
-  expect(Math.abs(Math.round(revealedPlayerBox!.y) - Math.round(initialPlayerBox!.y))).toBeLessThanOrEqual(1);
+  expect(Math.abs(Math.round(revealedThumbBox!.y) - Math.round(initialThumbBox!.y))).toBeLessThanOrEqual(1);
 
   if (await page.getByRole("button", { name: "Next trick" }).isVisible().catch(() => false)) {
     await page.getByRole("button", { name: "Next trick" }).click();
@@ -1050,28 +1178,23 @@ test("Bridge table hand rows do not shift after cards are played", async ({ page
       await page.getByRole("button", { name: "Next trick" }).click();
     }
 
-    const playerCards = await page.locator(".bridge-player-table-hand .hand-card").count();
-    const dummyCards = await page.locator(".bridge-dummy-action-hand .hand-card").count();
-    if (playerCards <= 7 && dummyCards <= 7) {
+    const thumbCards = await page.locator(".bridge-thumb-hand .hand-card").count();
+    if (thumbCards <= 7) {
       break;
     }
 
-    const card = page.locator(".bridge-dummy-action-hand .full-hand-card.legal, .bridge-player-table-hand .full-hand-card.legal").first();
+    const card = page.locator(".bridge-thumb-hand .full-hand-card.legal").first();
     await expect(card).toBeVisible();
     await card.dblclick();
   }
 
-  const finalPlayerCount = await page.locator(".bridge-player-table-hand .hand-card").count();
-  const finalDummyCount = await page.locator(".bridge-dummy-action-hand .hand-card").count();
-  expect(finalPlayerCount + finalDummyCount).toBeLessThan(20);
+  const finalThumbCount = await page.locator(".bridge-thumb-hand .hand-card").count();
+  expect(finalThumbCount).toBeLessThanOrEqual(7);
 
-  const finalPlayerBox = await page.locator(".bridge-player-table-hand").boundingBox();
-  const finalDummyBox = await page.locator(".bridge-dummy-action-hand").boundingBox();
-  expect(finalPlayerBox).not.toBeNull();
-  expect(finalDummyBox).not.toBeNull();
-  expect(Math.round(finalPlayerBox!.height)).toBe(Math.round(initialPlayerBox!.height));
-  expect(Math.round(finalPlayerBox!.y)).toBe(Math.round(initialPlayerBox!.y));
-  expect(Math.round(finalDummyBox!.height)).toBe(Math.round(initialPlayerBox!.height));
+  const finalThumbBox = await page.locator(".bridge-thumb-hand").boundingBox();
+  expect(finalThumbBox).not.toBeNull();
+  expect(Math.round(finalThumbBox!.height)).toBe(Math.round(initialThumbBox!.height));
+  expect(Math.round(finalThumbBox!.y)).toBe(Math.round(initialThumbBox!.y));
 });
 
 test("Bridge practice starts three short scripted decisions", async ({ page }) => {
@@ -1383,7 +1506,7 @@ test("Bridge table does not duplicate the South dummy hand", async ({ page }) =>
   await expect(page.getByLabel("Bridge hand table")).toContainText("Dummy");
   await expect(page.getByLabel("Current trick")).toContainText("North");
   await expect(page.getByLabel("Current trick")).toContainText("South");
-  await expect(page.locator(".bridge-seat-label")).toHaveText(["North Declarer", "South Dummy"]);
+  await expect(page.locator(".bridge-seat-label")).toHaveText(["North Declarer"]);
   await expect(page.locator(".bridge-trick-slot > span")).toHaveText(["North", "West", "East", "South"]);
   await expect(page.locator(".bridge-trick-slot > small")).toHaveText(["Decl.", "Def.", "Def.", "Dummy"]);
   await expect(page.getByLabel("Current hand")).not.toContainText("Score");
@@ -1391,7 +1514,7 @@ test("Bridge table does not duplicate the South dummy hand", async ({ page }) =>
   await expect(page.getByLabel("North hand hidden")).toBeVisible();
   await expect(page.getByLabel("Dummy hand", { exact: true })).toHaveCount(0);
   await expect(page.getByLabel("South dummy hand")).toBeVisible();
-  await expect(page.locator(".bridge-player-table-hand .hand-card")).toHaveCount(13);
+  await expect(page.locator(".bridge-thumb-hand .hand-card")).toHaveCount(13);
   await expect(page.locator(".bridge-dummy-action-hand .hand-card")).toHaveCount(0);
 });
 
