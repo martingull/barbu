@@ -86,6 +86,10 @@
 
 <style>
   .card-table {
+    --table-card-face-width: 58px;
+    --table-holder-label-size: 0.74rem;
+    --table-holder-padding: 7px 7px 19px;
+    --table-holder-width: 96px;
     position: relative;
     display: grid;
     grid-template-columns: 1fr;
@@ -238,7 +242,7 @@
   .table-card {
     display: grid;
     place-items: center;
-    width: 76px;
+    width: var(--table-card-face-width);
     aspect-ratio: 5 / 7;
     border: 0;
     border-radius: 7px;
@@ -252,17 +256,19 @@
   }
 
   .cardholder {
+    position: relative;
     display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
-    width: 96px;
+    grid-template-rows: auto auto;
+    align-content: space-between;
+    width: var(--table-holder-width);
     aspect-ratio: 5 / 7;
-    align-items: center;
+    overflow: hidden;
     justify-items: center;
-    padding: 7px 7px 19px;
+    padding: var(--table-holder-padding);
     border: 2px dashed rgba(255, 255, 255, 0.54);
     border-radius: 8px;
     color: rgba(255, 255, 255, 0.82);
-    font-size: 0.74rem;
+    font-size: var(--table-holder-label-size);
     font-weight: 900;
     text-align: center;
   }
@@ -279,18 +285,25 @@
   }
 
   .cardholder-label {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    left: 4px;
     align-self: end;
     grid-column: 1;
     grid-row: 2;
     z-index: 1;
     min-width: 0;
-    font-size: 0.74rem;
+    font-size: var(--table-holder-label-size);
     line-height: 1;
     text-shadow: 0 1px 3px rgba(8, 19, 13, 0.72);
     text-transform: uppercase;
   }
 
   .bridge-table .cardholder {
+    --table-card-face-width: 54px;
+    --table-holder-label-size: 0.66rem;
+    --table-holder-width: 84px;
     width: 84px;
     border-color: rgba(245, 241, 207, 0.42);
     background: rgba(8, 30, 21, 0.22);
@@ -301,11 +314,10 @@
     border-radius: 6px;
     background: rgba(7, 21, 14, 0.6);
     color: #f7faf3;
-    font-size: 0.66rem;
   }
 
   .bridge-table .cardholder .table-card {
-    width: 54px;
+    width: var(--table-card-face-width);
   }
 
   .table-card {
@@ -315,7 +327,7 @@
   }
 
   .cardholder .table-card {
-    width: 58px;
+    width: var(--table-card-face-width);
   }
 
   @media (max-width: 820px) {
@@ -326,6 +338,10 @@
     }
 
     .compass-table {
+      --table-card-face-width: clamp(40px, min(8.6vw, 7.5dvh), 58px);
+      --table-holder-label-size: clamp(0.62rem, 1.4dvh, 0.74rem);
+      --table-holder-padding: 6px 6px clamp(14px, 2.25dvh, 19px);
+      --table-holder-width: clamp(68px, min(14.6vw, 13dvh), 96px);
       grid-template-columns: minmax(72px, 1fr) minmax(96px, auto) minmax(72px, 1fr);
       grid-template-rows: minmax(104px, 1fr) minmax(12px, 0.18fr) minmax(104px, 1fr);
     }
@@ -333,25 +349,38 @@
 
   @media (max-width: 520px) {
     .card-table {
+      --table-card-face-width: 52px;
+      --table-holder-label-size: 0.68rem;
+      --table-holder-padding: 5px 5px 16px;
+      --table-holder-width: 82px;
       grid-template-columns: 1fr;
       grid-template-rows: 270px;
     }
 
+    .compass-table {
+      --table-card-face-width: clamp(38px, min(10.6vw, 7.5dvh), 52px);
+      --table-holder-label-size: clamp(0.58rem, 1.4dvh, 0.68rem);
+      --table-holder-padding: 5px 5px clamp(12px, 2.2dvh, 16px);
+      --table-holder-width: clamp(64px, min(18vw, 13dvh), 82px);
+      grid-template-columns: minmax(64px, 1fr) minmax(82px, auto) minmax(64px, 1fr);
+      grid-template-rows: minmax(86px, 1fr) minmax(8px, 0.12fr) minmax(86px, 1fr);
+    }
+
     .table-card {
-      width: 72px;
+      width: var(--table-card-face-width);
     }
 
     .cardholder .table-card {
-      width: 52px;
+      width: var(--table-card-face-width);
     }
 
     .cardholder {
-      width: 82px;
-      padding: 5px 5px 16px;
+      width: var(--table-holder-width);
+      padding: var(--table-holder-padding);
     }
 
     .cardholder-label {
-      font-size: 0.68rem;
+      font-size: var(--table-holder-label-size);
     }
 
     .tutor-slot {

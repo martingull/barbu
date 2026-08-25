@@ -241,6 +241,26 @@ async function expectTableCardLabelsBelowCards(page: Page) {
     .toBe(true);
 }
 
+async function expectElementsDoNotOverlap(page: Page, firstSelector: string, secondSelector: string) {
+  const first = page.locator(firstSelector).first();
+  const second = page.locator(secondSelector).last();
+  await expect(first).toBeVisible();
+  await expect(second).toBeVisible();
+  await expect
+    .poll(async () => {
+      const firstBox = await first.boundingBox();
+      const secondBox = await second.boundingBox();
+      if (!firstBox || !secondBox) {
+        return false;
+      }
+
+      const horizontal = Math.min(firstBox.x + firstBox.width, secondBox.x + secondBox.width) - Math.max(firstBox.x, secondBox.x);
+      const vertical = Math.min(firstBox.y + firstBox.height, secondBox.y + secondBox.height) - Math.max(firstBox.y, secondBox.y);
+      return horizontal <= 1 || vertical <= 1;
+    })
+    .toBe(true);
+}
+
 async function openBarbuTab(page: Page, tab: "Learn" | "Practice" | "Play") {
   await page.getByRole("tab", { name: tab }).click();
   await expect(page.getByRole("tab", { name: tab })).toHaveAttribute("aria-selected", "true");
@@ -1947,32 +1967,56 @@ test("Hearts play starts with a rotating pass phase before the hand", async ({ p
   await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
 });
 
-test("Hearts table keeps compass seats separated at intermediate browser widths", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "galaxy-s9", "Focused regression for the Android browser width that exposed overlap.");
+test("Hearts compact play avoids card table collisions on short screens", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "galaxy-s9", "Viewport matrix for older phone and narrow browser sizes.");
 
-  await page.setViewportSize({ width: 600, height: 740 });
-  await page.goto("/");
-  await page.getByRole("button", { name: "Open Hearts" }).click();
-  await page.getByRole("button", { name: "Play Hearts" }).click();
-  await passThreeHeartsCards(page);
+  for (const viewport of [
+    { name: "narrow-320", width: 320, height: 568 },
+    { name: "se-height", width: 375, height: 568 },
+    { name: "s9-short", width: 360, height: 640 },
+    { name: "intermediate-browser", width: 600, height: 740 }
+  ]) {
+    await test.step(viewport.name, async () => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto("/");
+      await page.evaluate(() => {
+        localStorage.clear();
+        localStorage.setItem("barbu.practiceSeed.v1", "2");
+      });
+      await page.reload();
+      await page.getByRole("button", { name: "Open Hearts" }).click();
+      await page.getByRole("button", { name: "Play Hearts" }).click();
+      await passThreeHeartsCards(page);
 
-  for (let index = 0; index < 4; index += 1) {
-    const legalCard = page.locator(".full-hand-cards .full-hand-card.legal").first();
-    if ((await legalCard.count()) === 0) {
-      break;
-    }
+      await expect(page.locator(".card-table .cardholder").first()).toBeVisible();
+      await expectTableSlotsSeparated(page);
+      await expectTableCardholdersDoNotOverlap(page);
+      await expectElementsDoNotOverlap(page, ".card-table", ".full-hand-cards");
+      await expectFeedbackAboveHand(page, ".full-hand-cards");
+      await expectHandCardsDoNotOverlap(page, ".full-hand-cards");
+      await expect
+        .poll(async () =>
+          page.locator(".card-table.compass-table").evaluate((table) =>
+            getComputedStyle(table).getPropertyValue("--table-card-face-width").includes("clamp(")
+          )
+        )
+        .toBe(true);
 
-    await legalCard.click();
-    const playAction = page.getByRole("button", { name: /Play card|Continue|Next trick/ }).first();
-    if ((await playAction.count()) > 0) {
-      await playAction.click();
-    }
+      const legalCard = page.locator(".full-hand-cards .full-hand-card.legal").first();
+      if ((await legalCard.count()) > 0) {
+        await legalCard.click();
+        const playAction = page.getByRole("button", { name: /Play card|Continue/ }).first();
+        if ((await playAction.count()) > 0) {
+          await playAction.click();
+        }
+        if ((await page.locator(".card-table .table-card").count()) > 0) {
+          await expectTableCardLabelsBelowCards(page);
+        }
+      }
+
+      await page.screenshot({ path: testInfo.outputPath(`hearts-compact-${viewport.name}.png`), fullPage: true });
+    });
   }
-
-  await expectTableSlotsSeparated(page);
-  await expectTableCardholdersDoNotOverlap(page);
-  await expectTableCardLabelsBelowCards(page);
-  await page.screenshot({ path: testInfo.outputPath("hearts-compass-wide.png"), fullPage: true });
 });
 
 test("Hearts play can resume a saved local hand", async ({ page }) => {
