@@ -1,6 +1,9 @@
 :root {
   --app-safe-area-top: env(safe-area-inset-top, 0px);
   --app-safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --app-thumb-bottom-gap: max(16px, var(--app-safe-area-bottom));
+  --app-hand-thumb-offset: 64px;
+  --app-hand-bottom-gap: calc(var(--app-thumb-bottom-gap) + var(--app-hand-thumb-offset));
   color: #17201a;
   background: #102319;
   font-family:
@@ -3968,6 +3971,12 @@ h2 {
     grid-template-rows: 270px;
   }
 
+  .table-play-surface.compact-play .card-table.compass-table,
+  .table-play-surface.compact-result .card-table.compass-table {
+    grid-template-columns: minmax(64px, 1fr) minmax(82px, auto) minmax(64px, 1fr);
+    grid-template-rows: minmax(86px, 1fr) minmax(8px, 0.12fr) minmax(86px, 1fr);
+  }
+
   .table-play-surface .table-card {
     width: 56px;
   }
@@ -3991,6 +4000,13 @@ h2 {
 
   .table-play-surface .you-slot {
     padding-bottom: 16px;
+  }
+
+  .table-play-surface .compass-table .tutor-slot,
+  .table-play-surface .compass-table .left-slot,
+  .table-play-surface .compass-table .right-slot,
+  .table-play-surface .compass-table .you-slot {
+    padding: 0;
   }
 
   .table-play-surface .table-play-panel {
@@ -4473,7 +4489,7 @@ h2 {
   .fixed-play-screen .table-play-surface.compact-play .drill-hand {
     position: fixed;
     right: 16px;
-    bottom: calc(max(8px, var(--app-safe-area-bottom)) + 80px);
+    bottom: var(--app-hand-bottom-gap);
     left: 16px;
     width: auto;
     z-index: 24;
@@ -4519,7 +4535,7 @@ h2 {
   }
 
   .fixed-play-screen .table-play-surface.compact-play .domino-cards {
-    bottom: calc(max(8px, var(--app-safe-area-bottom)) + 72px);
+    bottom: calc(var(--app-thumb-bottom-gap) + 72px);
   }
 
   .fixed-play-screen .table-play-surface.compact-play .table-play-panel:has(.domino-cards) {
@@ -4548,7 +4564,7 @@ h2 {
     position: fixed;
     grid-row: 1;
     right: 12px;
-    bottom: max(8px, var(--app-safe-area-bottom));
+    bottom: var(--app-thumb-bottom-gap);
     left: 12px;
     z-index: 80;
     display: grid;
@@ -4592,6 +4608,10 @@ h2 {
 }
 
 @media (max-width: 360px) {
+  :root {
+    --app-hand-thumb-offset: 58px;
+  }
+
   .game-grid {
     grid-template-columns: 1fr;
   }
@@ -4601,6 +4621,59 @@ h2 {
   }
 
   .table-play-surface.compact-play .full-hand-cards {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+    gap: 3px;
+  }
+
+  .fixed-play-screen .table-play-surface.compact-play,
+  .fixed-play-screen .table-play-surface.compact-result:not(.table-hidden) {
+    grid-template-rows: auto 232px minmax(0, 1fr);
+  }
+
+  .table-play-surface.compact-play .card-table,
+  .table-play-surface.compact-result .card-table {
+    grid-template-rows: 232px;
+  }
+
+  .table-play-surface.compact-play .card-table.compass-table,
+  .table-play-surface.compact-result .card-table.compass-table {
+    grid-template-columns: minmax(58px, 1fr) minmax(64px, auto) minmax(58px, 1fr);
+    grid-template-rows: minmax(86px, 1fr) minmax(8px, 0.1fr) minmax(86px, 1fr);
+  }
+
+  .table-play-surface .cardholder {
+    width: 64px;
+    padding: 4px 4px 14px;
+  }
+
+  .table-play-surface .cardholder .table-card {
+    width: 39px;
+  }
+
+  .table-play-surface .cardholder-label {
+    font-size: 0.58rem;
+  }
+
+  .table-play-surface .tutor-slot {
+    padding-top: 14px;
+  }
+
+  .table-play-surface .you-slot {
+    padding-bottom: 14px;
+  }
+
+  .table-play-surface .left-slot {
+    padding-left: 14px;
+  }
+
+  .table-play-surface .right-slot {
+    padding-right: 14px;
+  }
+
+  .table-play-surface .compass-table .tutor-slot,
+  .table-play-surface .compass-table .left-slot,
+  .table-play-surface .compass-table .right-slot,
+  .table-play-surface .compass-table .you-slot {
+    padding: 0;
   }
 }

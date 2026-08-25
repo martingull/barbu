@@ -71,7 +71,7 @@ async function expectGameplayActionRowPinned(page: Page) {
 
       const viewportHeight = await page.evaluate(() => window.innerHeight);
       const bottomGap = viewportHeight - (box.y + box.height);
-      const expectedBottomGap = await safeAreaBottom(page);
+      const expectedBottomGap = Math.max(16, await safeAreaBottom(page));
       return bottomGap >= expectedBottomGap - 1 && bottomGap <= expectedBottomGap + 18;
     })
     .toBe(true);
@@ -142,6 +142,37 @@ async function expectFeedbackClearOfHand(page: Page, handSelector: string) {
   );
 }
 
+async function expectHandCardsDoNotOverlap(page: Page, handSelector: string, maxRows = 2) {
+  const cards = page.locator(`${handSelector} .full-hand-card`);
+  await expect(cards.first()).toBeVisible();
+  await expect
+    .poll(async () =>
+      cards.evaluateAll((nodes, expectedMaxRows) => {
+        const rects = nodes
+          .map((node) => node.getBoundingClientRect())
+          .filter((rect) => rect.width > 0 && rect.height > 0)
+          .map((rect) => ({
+            top: Math.round(rect.top),
+            right: rect.right,
+            bottom: rect.bottom,
+            left: rect.left
+          }));
+
+        const rowCount = new Set(rects.map((rect) => rect.top)).size;
+        const hasCollision = rects.some((first, firstIndex) =>
+          rects.slice(firstIndex + 1).some((second) => {
+            const horizontal = Math.min(first.right, second.right) - Math.max(first.left, second.left);
+            const vertical = Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top);
+            return horizontal > 1 && vertical > 1;
+          })
+        );
+
+        return rects.length > 0 && rowCount <= expectedMaxRows && !hasCollision;
+      }, maxRows)
+    )
+    .toBe(true);
+}
+
 async function gotoWithPracticeSeed(page: Page, seed: number) {
   await page.goto("/");
   await page.evaluate((nextSeed) => {
@@ -161,6 +192,52 @@ async function expectTableSlotsSeparated(page: Page) {
 
       return tutor.y + tutor.height <= you.y;
     })
+    .toBe(true);
+}
+
+async function expectTableCardholdersDoNotOverlap(page: Page) {
+  const holders = page.locator(".card-table .cardholder");
+  await expect(holders.first()).toBeVisible();
+  await expect
+    .poll(async () =>
+      holders.evaluateAll((nodes) => {
+        const rects = nodes
+          .map((node) => node.getBoundingClientRect())
+          .filter((rect) => rect.width > 0 && rect.height > 0)
+          .map((rect) => ({
+            top: rect.top,
+            right: rect.right,
+            bottom: rect.bottom,
+            left: rect.left
+          }));
+
+        return !rects.some((first, firstIndex) =>
+          rects.slice(firstIndex + 1).some((second) => {
+            const horizontal = Math.min(first.right, second.right) - Math.max(first.left, second.left);
+            const vertical = Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top);
+            return horizontal > 1 && vertical > 1;
+          })
+        );
+      })
+    )
+    .toBe(true);
+}
+
+async function expectTableCardLabelsBelowCards(page: Page) {
+  const holders = page.locator(".card-table .cardholder");
+  await expect(holders.first()).toBeVisible();
+  await expect
+    .poll(async () =>
+      holders.evaluateAll((nodes) =>
+        nodes
+          .filter((holder) => holder.querySelector(".table-card"))
+          .every((holder) => {
+            const card = holder.querySelector(".table-card")?.getBoundingClientRect();
+            const label = holder.querySelector(".cardholder-label")?.getBoundingClientRect();
+            return Boolean(card && label && label.top >= card.bottom - 0.5);
+          })
+      )
+    )
     .toBe(true);
 }
 
@@ -1853,17 +1930,49 @@ test("Hearts play starts with a rotating pass phase before the hand", async ({ p
   await expect(page.getByLabel("Hearts table score")).toContainText("Left penalty");
   await expect(page.getByLabel("Hearts table score")).toContainText("Right penalty");
   await expect(page.getByLabel("Hearts hand table")).toBeVisible();
+  await expectTableSlotsSeparated(page);
+  await expectTableCardholdersDoNotOverlap(page);
+  await expectTableCardLabelsBelowCards(page);
   await expect(page.getByLabel("Your Hearts hand")).toBeVisible();
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
   await expectHandNearActionRow(page, ".full-hand-cards");
   await expectFeedbackAboveHand(page, ".full-hand-cards");
+  await expectHandCardsDoNotOverlap(page, ".full-hand-cards");
   await expect(page.locator(".full-hand-card").first()).toHaveCSS("touch-action", "manipulation");
   await page.screenshot({ path: testInfo.outputPath("hearts-hand.png"), fullPage: true });
 
   await page.getByLabel("Hearts full hand").getByRole("button", { name: "Table" }).click();
   await expect(page.getByRole("heading", { name: "Hearts table" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
+});
+
+test("Hearts table keeps compass seats separated at intermediate browser widths", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "galaxy-s9", "Focused regression for the Android browser width that exposed overlap.");
+
+  await page.setViewportSize({ width: 600, height: 740 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Hearts" }).click();
+  await page.getByRole("button", { name: "Play Hearts" }).click();
+  await passThreeHeartsCards(page);
+
+  for (let index = 0; index < 4; index += 1) {
+    const legalCard = page.locator(".full-hand-cards .full-hand-card.legal").first();
+    if ((await legalCard.count()) === 0) {
+      break;
+    }
+
+    await legalCard.click();
+    const playAction = page.getByRole("button", { name: /Play card|Continue|Next trick/ }).first();
+    if ((await playAction.count()) > 0) {
+      await playAction.click();
+    }
+  }
+
+  await expectTableSlotsSeparated(page);
+  await expectTableCardholdersDoNotOverlap(page);
+  await expectTableCardLabelsBelowCards(page);
+  await page.screenshot({ path: testInfo.outputPath("hearts-compass-wide.png"), fullPage: true });
 });
 
 test("Hearts play can resume a saved local hand", async ({ page }) => {

@@ -25,7 +25,7 @@
   const youCard = $derived(cardAt("You"));
 </script>
 
-<section class:bridge-table={variant === "bridge"} class="card-table" aria-label={ariaLabel}>
+<section class:bridge-table={variant === "bridge"} class:compass-table={variant !== "bridge"} class="card-table" aria-label={ariaLabel}>
   {#if variant === "bridge"}
     <div class="bridge-opponent-stack bridge-west-stack" aria-hidden="true">
       {#each Array(5) as _, index}
@@ -156,6 +156,14 @@
     transform: translateX(calc(var(--stack-index) * -5px));
   }
 
+  .compass-table {
+    grid-template-columns: minmax(72px, 1fr) minmax(96px, auto) minmax(72px, 1fr);
+    grid-template-rows: minmax(104px, 1fr) minmax(12px, 0.18fr) minmax(104px, 1fr);
+    gap: 2px 10px;
+    align-items: stretch;
+    padding: 14px;
+  }
+
   .played-slot {
     position: relative;
     z-index: 1;
@@ -163,6 +171,12 @@
     place-items: center;
     min-width: 88px;
     min-height: 124px;
+  }
+
+  .compass-table .played-slot {
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
   }
 
   .tutor-slot {
@@ -193,6 +207,34 @@
     padding-bottom: 54px;
   }
 
+  .compass-table .tutor-slot {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+    justify-self: center;
+  }
+
+  .compass-table .left-slot {
+    grid-column: 1;
+    grid-row: 1 / 4;
+    align-self: center;
+    justify-self: start;
+  }
+
+  .compass-table .right-slot {
+    grid-column: 3;
+    grid-row: 1 / 4;
+    align-self: center;
+    justify-self: end;
+  }
+
+  .compass-table .you-slot {
+    grid-column: 2;
+    grid-row: 3;
+    align-self: end;
+    justify-self: center;
+  }
+
   .table-card {
     display: grid;
     place-items: center;
@@ -211,6 +253,7 @@
 
   .cardholder {
     display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
     width: 96px;
     aspect-ratio: 5 / 7;
     align-items: center;
@@ -238,7 +281,7 @@
   .cardholder-label {
     align-self: end;
     grid-column: 1;
-    grid-row: 1;
+    grid-row: 2;
     z-index: 1;
     min-width: 0;
     font-size: 0.74rem;
@@ -280,6 +323,11 @@
       grid-template-columns: 1fr;
       grid-template-rows: 270px;
       min-height: auto;
+    }
+
+    .compass-table {
+      grid-template-columns: minmax(72px, 1fr) minmax(96px, auto) minmax(72px, 1fr);
+      grid-template-rows: minmax(104px, 1fr) minmax(12px, 0.18fr) minmax(104px, 1fr);
     }
   }
 
@@ -372,6 +420,15 @@
 
     .bridge-east-stack span {
       transform: translateX(calc(var(--stack-index) * -3px));
+    }
+  }
+
+  @media (max-width: 520px) {
+    .compass-table {
+      grid-template-columns: minmax(64px, 1fr) minmax(82px, auto) minmax(64px, 1fr);
+      grid-template-rows: minmax(86px, 1fr) minmax(8px, 0.12fr) minmax(86px, 1fr);
+      gap: 2px 6px;
+      padding: 10px;
     }
   }
 </style>

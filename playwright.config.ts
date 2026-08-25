@@ -24,6 +24,11 @@ const pixel7 = {
   ...devices["Pixel 7"]
 };
 
+const galaxyS9 = {
+  ...devices["Galaxy S9+"],
+  viewport: { width: 360, height: 740 }
+};
+
 export default defineConfig({
   testDir: "./tests/e2e",
   timeout: 30_000,
@@ -62,6 +67,10 @@ export default defineConfig({
     {
       name: "pixel-7",
       use: pixel7
+    },
+    {
+      name: "galaxy-s9",
+      use: galaxyS9
     }
   ]
 });
