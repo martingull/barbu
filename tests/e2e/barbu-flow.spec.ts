@@ -281,11 +281,12 @@ async function expectBridgeTableHandsUseSevenCardRows(page: Page) {
 }
 
 async function expectBridgeTrickSlotsDoNotOverlap(page: Page) {
-  const slots = page.locator(".bridge-trick-slot");
+  const slots = page.locator(".bridge-felt .cardholder");
+  const minGap = 4;
   await expect(slots.first()).toBeVisible();
   await expect
     .poll(async () =>
-      slots.evaluateAll((nodes) => {
+      slots.evaluateAll((nodes, requiredGap) => {
         const rects = nodes
           .map((slot) => slot.getBoundingClientRect())
           .filter((rect) => rect.width > 0 && rect.height > 0)
@@ -300,10 +301,16 @@ async function expectBridgeTrickSlotsDoNotOverlap(page: Page) {
           rects.slice(firstIndex + 1).some((second) => {
             const horizontal = Math.min(first.right, second.right) - Math.max(first.left, second.left);
             const vertical = Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top);
-            return horizontal > 1 && vertical > 1;
+            const horizontalGap = Math.max(second.left - first.right, first.left - second.right, 0);
+            const verticalGap = Math.max(second.top - first.bottom, first.top - second.bottom, 0);
+            return (
+              (horizontal > 1 && vertical > 1) ||
+              (horizontal > 1 && verticalGap < requiredGap) ||
+              (vertical > 1 && horizontalGap < requiredGap)
+            );
           })
         );
-      })
+      }, minGap)
     )
     .toBe(true);
 }
@@ -1021,10 +1028,18 @@ test("Bridge play starts from a rotating auction into a scored contract hand", a
   await expectGameplayActionRowPinned(page);
   await page.screenshot({ path: testInfo.outputPath("bridge-hand.png"), fullPage: true });
 
+  const bridgeThumbCardBox = await page.locator(".bridge-thumb-hand .full-hand-card.legal").first().boundingBox();
+  expect(bridgeThumbCardBox).not.toBeNull();
   await page.locator(".bridge-thumb-hand .full-hand-card.legal").first().dblclick();
   await expect(page.getByRole("heading", { name: /Bridge hand|Read the table/ })).toBeVisible();
-  const bridgeTrickCards = await page.locator(".bridge-trick-card").count();
+  const bridgeTrickCards = await page.locator(".bridge-felt .table-card").count();
   expect(bridgeTrickCards).toBeGreaterThan(0);
+  const bridgeTableCardBox = await page.locator(".bridge-felt .table-card").first().boundingBox();
+  const bridgeDummyCardBox = await page.locator(".bridge-seat-north .full-hand-card").first().boundingBox();
+  expect(bridgeTableCardBox).not.toBeNull();
+  expect(bridgeDummyCardBox).not.toBeNull();
+  expect(Math.abs((bridgeTableCardBox?.width ?? 0) - (bridgeThumbCardBox?.width ?? 0))).toBeLessThanOrEqual(1);
+  expect(Math.abs((bridgeDummyCardBox?.width ?? 0) - (bridgeThumbCardBox?.width ?? 0))).toBeLessThanOrEqual(1);
   await expectBridgeTableHandsUseSevenCardRows(page);
   await expectBridgeTrickSlotsDoNotOverlap(page);
   await expectNoPageScroll(page);
@@ -1060,6 +1075,7 @@ test("Bridge compact play keeps table hands readable on short screens", async ({
       await expectElementsDoNotOverlap(page, ".bridge-play-summary", ".bridge-table");
       await expectElementsDoNotOverlap(page, ".bridge-seat-north", ".bridge-felt");
       await expectElementsDoNotOverlap(page, ".bridge-table", ".table-play-panel .result, .table-play-panel .outcome");
+      await expectElementsDoNotOverlap(page, ".table-play-panel .result, .table-play-panel .outcome", ".bridge-thumb-hand");
       await expectElementsDoNotOverlap(page, ".table-play-panel .result, .table-play-panel .outcome", ".action-row");
       await expectNoPageScroll(page);
       if (viewport.width <= 520) {
@@ -1070,9 +1086,13 @@ test("Bridge compact play keeps table hands readable on short screens", async ({
       if ((await legalCard.count()) > 0) {
         await legalCard.dblclick({ force: true });
         await expect(page.getByLabel("Dummy hand", { exact: true })).toBeVisible();
+        await expect(page.locator(".bridge-dummy-turn-feedback .lesson-heading")).toBeHidden();
         await expectBridgeTableHandsUseSevenCardRows(page);
         await expectBridgeTrickSlotsDoNotOverlap(page);
         await expectElementsDoNotOverlap(page, ".bridge-table", ".table-play-panel .result, .table-play-panel .outcome");
+        if ((await page.locator(".bridge-thumb-hand").count()) > 0) {
+          await expectElementsDoNotOverlap(page, ".table-play-panel .result, .table-play-panel .outcome", ".bridge-thumb-hand");
+        }
         await expectNoPageScroll(page);
         if (viewport.width <= 520) {
           await expectGameplayActionRowPinned(page);
@@ -1507,8 +1527,8 @@ test("Bridge table does not duplicate the South dummy hand", async ({ page }) =>
   await expect(page.getByLabel("Current trick")).toContainText("North");
   await expect(page.getByLabel("Current trick")).toContainText("South");
   await expect(page.locator(".bridge-seat-label")).toHaveText(["North Declarer"]);
-  await expect(page.locator(".bridge-trick-slot > span")).toHaveText(["North", "West", "East", "South"]);
-  await expect(page.locator(".bridge-trick-slot > small")).toHaveText(["Decl.", "Def.", "Def.", "Dummy"]);
+  await expect(page.locator(".bridge-felt .cardholder-label > span")).toHaveText(["North", "West", "East", "South"]);
+  await expect(page.locator(".bridge-felt .cardholder-label > small")).toHaveText(["Decl.", "Def.", "Def.", "Dummy"]);
   await expect(page.getByLabel("Current hand")).not.toContainText("Score");
   await expect(page.getByLabel("Bridge score")).toContainText("Score");
   await expect(page.getByLabel("North hand hidden")).toBeVisible();
@@ -1624,8 +1644,8 @@ test("Bridge exposed dummy row names the actual dummy seat", async ({ page }) =>
   await expect(page.getByRole("heading", { name: "Bridge hand" })).toBeVisible();
   await expect(page.locator(".bridge-seat-label").first()).toHaveText("East Dummy");
   await expect(page.getByLabel("Dummy hand", { exact: true })).toBeVisible();
-  await expect(page.locator(".bridge-trick-slot > span")).toHaveText(["North", "West", "East", "South"]);
-  await expect(page.locator(".bridge-trick-slot > small")).toHaveText(["Def.", "Decl.", "Dummy", "Def."]);
+  await expect(page.locator(".bridge-felt .cardholder-label > span")).toHaveText(["North", "West", "East", "South"]);
+  await expect(page.locator(".bridge-felt .cardholder-label > small")).toHaveText(["Def.", "Decl.", "Dummy", "Def."]);
 });
 
 test("Spades practice starts three scripted decisions per topic", async ({ page }) => {

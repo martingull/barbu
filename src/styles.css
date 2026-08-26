@@ -1860,12 +1860,24 @@ h2 {
 }
 
 .full-hand-cards {
-  grid-template-columns: repeat(5, minmax(52px, 1fr));
+  --full-hand-columns: 5;
+  --full-hand-gap: 8px;
+  --full-hand-max-card-width: 86px;
+  grid-template-columns: repeat(var(--full-hand-columns), minmax(0, 1fr));
+  gap: var(--full-hand-gap);
+  justify-content: center;
+}
+
+.full-hand-cards > .hand-card {
+  justify-self: center;
+  max-width: var(--full-hand-max-card-width);
 }
 
 .table-play-surface.compact-play .full-hand-cards {
-  grid-template-columns: repeat(7, minmax(46px, 1fr));
-  gap: 8px;
+  --full-hand-columns: 7;
+  --full-hand-gap: 8px;
+  --full-hand-max-card-width: 80px;
+  grid-template-columns: repeat(var(--full-hand-columns), minmax(0, 1fr));
 }
 
 .table-play-surface .domino-layout {
@@ -3747,7 +3759,8 @@ h2 {
   }
 
   .full-hand-cards {
-    grid-template-columns: repeat(4, minmax(52px, 1fr));
+    --full-hand-columns: 4;
+    --full-hand-max-card-width: 78px;
   }
 
   .topbar.compact-play {
@@ -3865,7 +3878,9 @@ h2 {
 
   .fixed-play-screen .table-play-surface.compact-play .table-tap-target .card-table,
   .fixed-play-screen .table-play-surface.compact-result:not(.table-hidden) .table-tap-target .card-table {
-    height: 100%;
+    align-self: stretch;
+    height: var(--compact-table-height, 270px);
+    min-height: 0;
   }
 
   .fixed-play-screen .table-play-surface.compact-play .table-play-panel,
@@ -4184,14 +4199,18 @@ h2 {
     gap: 2px;
   }
 
-  .table-play-surface.compact-play .bridge-dummy-turn-feedback .lesson-heading h2 {
-    font-size: 1rem;
-    line-height: 1.1;
-  }
+.table-play-surface.compact-play .bridge-dummy-turn-feedback .lesson-heading h2 {
+  font-size: 1rem;
+  line-height: 1.1;
+}
 
-  .table-play-surface.compact-result .lesson-heading {
-    gap: 0;
-  }
+.fixed-play-screen .bridge-play-surface.compact-play .bridge-dummy-turn-feedback .lesson-heading {
+  display: none;
+}
+
+.table-play-surface.compact-result .lesson-heading {
+  gap: 0;
+}
 
   .table-play-surface.compact-result .lesson-heading .eyebrow {
     display: none;
@@ -4622,23 +4641,14 @@ h2 {
   }
 
   .table-play-surface.compact-play .full-hand-cards {
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 4px;
+    --full-hand-columns: 7;
+    --full-hand-gap: 4px;
+    --full-hand-max-card-width: 74px;
   }
 
   .action-row {
     display: grid;
     grid-template-columns: 0.8fr 1fr;
-  }
-}
-
-@media (max-width: 520px) {
-  .fixed-play-screen .bridge-play-surface.compact-play .bridge-table {
-    --bridge-trick-card-width: clamp(26px, 7vw, 30px);
-    --bridge-trick-card-space-width: clamp(28px, 7.8vw, 32px);
-    --bridge-trick-card-space-height: clamp(36px, 5.4dvh, 40px);
-    --bridge-trick-slot-width: clamp(42px, 12vw, 46px);
-    --bridge-trick-slot-min-height: clamp(56px, 8.2dvh, 60px);
   }
 }
 
@@ -4656,8 +4666,9 @@ h2 {
   }
 
   .table-play-surface.compact-play .full-hand-cards {
-    grid-template-columns: repeat(8, minmax(0, 1fr));
-    gap: 3px;
+    --full-hand-columns: 7;
+    --full-hand-gap: 3px;
+    --full-hand-max-card-width: 58px;
   }
 
   .fixed-play-screen .table-play-surface.compact-play,
@@ -4745,11 +4756,6 @@ h2 {
     --bridge-hand-height: clamp(70px, 13.4dvh, 80px);
     --bridge-mini-card-width: clamp(24px, 7.3vw, 28px);
     --bridge-seat-label-size: clamp(0.46rem, 1.15dvh, 0.54rem);
-    --bridge-trick-card-width: clamp(20px, 5.9vw, 26px);
-    --bridge-trick-card-space-width: clamp(22px, 6.4vw, 28px);
-    --bridge-trick-card-space-height: clamp(28px, 8.2vw, 36px);
-    --bridge-trick-slot-width: clamp(34px, 10.5vw, 42px);
-    --bridge-trick-slot-min-height: clamp(44px, 9dvh, 50px);
     grid-row: 2;
     height: var(--bridge-compact-table-height, 272px);
     gap: 4px;
@@ -4757,32 +4763,6 @@ h2 {
 
   .fixed-play-screen .bridge-play-surface.compact-play .bridge-table .bridge-table-hand.full-hand-cards {
     gap: 2px 3px;
-  }
-
-  .fixed-play-screen .bridge-play-surface.compact-play .bridge-felt {
-    padding: 5px;
-  }
-
-  .fixed-play-screen .bridge-play-surface.compact-play .bridge-trick-slot {
-    gap: 0;
-  }
-
-  .fixed-play-screen .bridge-play-surface.compact-play .bridge-trick-slot > span {
-    font-size: 0.48rem;
-    line-height: 0.95;
-  }
-
-  .fixed-play-screen .bridge-play-surface.compact-play .bridge-trick-slot > small {
-    font-size: 0.38rem;
-    line-height: 0.95;
-  }
-
-  .fixed-play-screen .bridge-play-surface.compact-play .bridge-trick-tutor {
-    top: 0;
-  }
-
-  .fixed-play-screen .bridge-play-surface.compact-play .bridge-trick-you {
-    bottom: 0;
   }
 
   .fixed-play-screen .bridge-play-surface.compact-play .table-play-panel {
@@ -4864,13 +4844,21 @@ h2 {
     padding: 8px;
   }
 
+  .table-play-surface.compact-play .cardholder-label > span,
+  .table-play-surface.compact-play .cardholder-label > small,
+  .table-play-surface.compact-result .cardholder-label > span,
+  .table-play-surface.compact-result .cardholder-label > small {
+    overflow-wrap: normal;
+    white-space: nowrap;
+  }
+
   .fixed-play-screen
     .table-play-surface.compact-play:not(.table-hidden):has(.card-table):has(.full-hand-cards)
     .table-play-panel
     .result {
     position: fixed;
     right: 16px;
-    bottom: calc(var(--app-hand-bottom-gap) + var(--play-hand-height) + 12px);
+    bottom: calc(var(--app-hand-bottom-gap) + var(--play-hand-height) + 20px);
     left: 16px;
     z-index: 26;
     display: flex;
@@ -4893,11 +4881,6 @@ h2 {
     --bridge-felt-min-height: clamp(94px, 17dvh, 100px);
     --bridge-hand-height: clamp(68px, 13dvh, 76px);
     --bridge-mini-card-width: clamp(23px, 7.3vw, 26px);
-    --bridge-trick-card-width: clamp(18px, 5.8vw, 23px);
-    --bridge-trick-card-space-width: clamp(20px, 6.2vw, 25px);
-    --bridge-trick-card-space-height: clamp(26px, 8vw, 34px);
-    --bridge-trick-slot-width: clamp(32px, 10vw, 38px);
-    --bridge-trick-slot-min-height: clamp(40px, 7.6dvh, 44px);
   }
 
   .fixed-play-screen .table-play-surface.compact-play:not(.table-hidden):has(.full-hand-cards) {
@@ -4924,11 +4907,6 @@ h2 {
     --bridge-felt-min-height: clamp(94px, 17dvh, 100px);
     --bridge-hand-height: clamp(62px, 12.2dvh, 70px);
     --bridge-mini-card-width: clamp(21px, 6vw, 24px);
-    --bridge-trick-card-width: clamp(18px, 5.4vw, 22px);
-    --bridge-trick-card-space-width: clamp(20px, 6vw, 24px);
-    --bridge-trick-card-space-height: clamp(23px, 6.7vw, 27px);
-    --bridge-trick-slot-width: clamp(32px, 9.5vw, 38px);
-    --bridge-trick-slot-min-height: clamp(34px, 7dvh, 40px);
   }
 
   .fixed-play-screen .bridge-play-surface.compact-play .table-play-panel .result {
@@ -4951,11 +4929,117 @@ h2 {
 }
 
 .table-play-surface.compact-play .bridge-thumb-hand.full-hand-cards {
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  --full-hand-columns: 7;
+}
+
+.table-play-surface.compact-play .bridge-thumb-hand.full-hand-cards > .hand-card {
+  max-width: var(--bridge-card-width, var(--full-hand-max-card-width));
+}
+
+.fixed-play-screen .table-play-surface.bridge-play-surface.compact-play .bridge-felt .card-table.compass-table {
+  --bridge-table-holder-height: clamp(66px, 9.1dvh, 74px);
+  --table-card-face-width: var(--bridge-card-width, clamp(18px, min(6vw, 3.9dvh), 26px));
+  --table-holder-label-size: clamp(0.32rem, 0.84dvh, 0.42rem);
+  --table-holder-padding: 2px 3px 2px;
+  --table-holder-width: clamp(56px, min(16vw, 11dvh), 72px);
+  grid-template-columns: minmax(56px, 1fr) minmax(72px, auto) minmax(56px, 1fr);
+  grid-template-rows: minmax(0, 1fr) minmax(8px, 8px) minmax(0, 1fr);
+  gap: 2px 4px;
+  padding: 7px;
+}
+
+.fixed-play-screen .table-play-surface.bridge-play-surface.compact-play .bridge-felt .played-slot {
+  min-height: 0;
+}
+
+.fixed-play-screen .table-play-surface.bridge-play-surface.compact-play .bridge-felt .cardholder {
+  height: var(--bridge-table-holder-height);
+  min-height: 0;
+  aspect-ratio: auto;
+}
+
+.fixed-play-screen .table-play-surface.bridge-play-surface.compact-play .bridge-felt .cardholder-label {
+  right: 3px;
+  bottom: 2px;
+  left: 3px;
+  gap: 0;
+  padding: 1px 2px;
+  background: rgba(7, 21, 14, 0.42);
+}
+
+.fixed-play-screen .table-play-surface.bridge-play-surface.compact-play .bridge-felt .cardholder-label > span,
+.fixed-play-screen .table-play-surface.bridge-play-surface.compact-play .bridge-felt .cardholder-label > small {
+  overflow-wrap: normal;
+  white-space: nowrap;
+}
+
+.fixed-play-screen
+  .table-play-surface.bridge-play-surface.compact-play:not(.table-hidden):has(.card-table):has(.bridge-thumb-hand)
+  .table-play-panel
+  .result {
+  position: fixed;
+  right: 16px;
+  bottom: calc(var(--app-hand-bottom-gap) + var(--bridge-thumb-hand-height));
+  left: 16px;
+  z-index: 26;
+  display: flex;
+  align-items: center;
+  width: auto;
+  max-height: 28px;
+  overflow: hidden;
+  padding: 5px 8px;
+  font-size: 0.62rem;
+  line-height: 1.05;
+}
+
+@media (min-width: 521px) and (max-width: 700px) and (max-height: 780px) {
+  .fixed-play-screen .bridge-play-surface.compact-play {
+    --bridge-card-width: clamp(24px, 4.4vw, 30px);
+    --bridge-thumb-hand-height: clamp(138px, 23vw, 154px);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 6px;
+    padding-bottom: calc(max(8px, var(--app-safe-area-bottom)) + 74px);
+  }
+
+  .fixed-play-screen .bridge-play-surface.compact-play:has(.bridge-thumb-hand) {
+    --app-hand-bottom-gap: calc(var(--app-thumb-bottom-gap) + 92px);
+  }
+
+  .fixed-play-screen .bridge-play-surface.compact-play .bridge-table {
+    --bridge-card-width: clamp(24px, 4.4vw, 30px);
+    --bridge-felt-min-height: clamp(102px, 15dvh, 116px);
+    --bridge-hand-height: clamp(44px, 7dvh, 54px);
+    --bridge-mini-card-width: var(--bridge-card-width);
+    --bridge-seat-label-size: clamp(0.42rem, 1dvh, 0.54rem);
+    height: clamp(154px, 21.5dvh, 166px);
+    min-height: 0;
+    gap: 4px;
+  }
+
+  .fixed-play-screen .bridge-play-surface.compact-play .bridge-thumb-hand.full-hand-cards {
+    position: fixed;
+    right: 18px;
+    bottom: var(--app-hand-bottom-gap);
+    left: 18px;
+    width: auto;
+    gap: 5px;
+    z-index: 24;
+  }
+
+  .fixed-play-screen .table-play-surface.bridge-play-surface.compact-play .bridge-felt .card-table.compass-table {
+    --bridge-table-holder-height: clamp(42px, 6dvh, 46px);
+    --table-holder-label-size: clamp(0.3rem, 0.78dvh, 0.36rem);
+    --table-holder-padding: 2px 2px;
+    --table-holder-width: clamp(42px, min(10vw, 7.4dvh), 52px);
+    grid-template-columns: minmax(42px, 1fr) minmax(52px, auto) minmax(42px, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(8px, 8px) minmax(0, 1fr);
+    padding: 6px;
+  }
 }
 
 @media (max-width: 520px) {
   .fixed-play-screen .bridge-play-surface.compact-play {
+    --bridge-card-width: clamp(36px, calc((100vw - 52px) / 7), 52px);
     --bridge-thumb-hand-height: clamp(112px, 35vw, 138px);
   }
 
@@ -4964,7 +5048,13 @@ h2 {
   }
 
   .fixed-play-screen .bridge-play-surface.compact-play .bridge-table {
-    height: clamp(210px, 34dvh, 286px);
+    --bridge-card-width: clamp(36px, calc((100vw - 52px) / 7), 52px);
+    --bridge-felt-min-height: clamp(132px, 20dvh, 156px);
+    --bridge-hand-height: clamp(112px, 17dvh, 146px);
+    --bridge-mini-card-width: var(--bridge-card-width);
+    --bridge-seat-label-size: clamp(0.42rem, 1dvh, 0.54rem);
+    height: clamp(284px, 39dvh, 326px);
+    gap: 4px;
   }
 
   .fixed-play-screen .bridge-play-surface.compact-play .bridge-thumb-hand.full-hand-cards {
@@ -4976,52 +5066,51 @@ h2 {
 
 @media (max-width: 520px) and (max-height: 700px) {
   .fixed-play-screen .bridge-play-surface.compact-play {
+    --bridge-card-width: clamp(20px, 6vw, 24px);
     --bridge-compact-table-height: clamp(148px, 44vw, 188px);
     grid-template-rows: auto var(--bridge-compact-table-height) minmax(0, 1fr);
   }
 
   .fixed-play-screen .bridge-play-surface.compact-play .bridge-table {
-    --bridge-felt-min-height: clamp(82px, 15dvh, 104px);
-    --bridge-hand-height: clamp(50px, 10dvh, 64px);
-    --bridge-mini-card-width: clamp(20px, 6vw, 24px);
-    --bridge-trick-card-width: clamp(16px, 5vw, 20px);
-    --bridge-trick-card-space-width: clamp(18px, 5.6vw, 22px);
-    --bridge-trick-card-space-height: clamp(21px, 6.4vw, 25px);
-    --bridge-trick-slot-width: clamp(30px, 9.4vw, 34px);
-    --bridge-trick-slot-min-height: clamp(32px, 10vw, 36px);
+    --bridge-card-width: clamp(20px, 6vw, 24px);
+    --bridge-felt-min-height: clamp(96px, 17dvh, 108px);
+    --bridge-hand-height: clamp(30px, 6.4dvh, 38px);
+    --bridge-mini-card-width: var(--bridge-card-width);
     height: var(--bridge-compact-table-height);
   }
 
-  .fixed-play-screen .bridge-play-surface.compact-play:has(.bridge-thumb-hand) .table-play-panel .result {
-    position: fixed;
-    right: 16px;
-    bottom: calc(var(--app-hand-bottom-gap) + var(--bridge-thumb-hand-height) + 8px);
-    left: 16px;
-    z-index: 26;
-    display: flex;
-    align-items: center;
-    width: auto;
-    max-height: 28px;
-    overflow: hidden;
-    padding: 5px 8px;
-    font-size: 0.62rem;
-    line-height: 1.05;
+  .fixed-play-screen .table-play-surface.bridge-play-surface.compact-play .bridge-felt .card-table.compass-table {
+    --bridge-table-holder-height: clamp(38px, 7.4dvh, 42px);
+    --table-card-face-width: var(--bridge-card-width);
+    --table-holder-label-size: clamp(0.36rem, 0.92dvh, 0.46rem);
+    --table-holder-padding: 2px 2px clamp(8px, 1.4dvh, 10px);
+    --table-holder-width: clamp(40px, min(11vw, 7.4dvh), 46px);
+    grid-template-columns: minmax(40px, 1fr) minmax(46px, auto) minmax(40px, 1fr);
+    grid-template-rows: minmax(42px, 1fr) minmax(2px, 0.04fr) minmax(42px, 1fr);
+    padding: 5px;
   }
+
 }
 
 @media (max-width: 520px) and (max-height: 600px) {
   .fixed-play-screen .bridge-play-surface.compact-play {
-    --bridge-compact-table-height: clamp(124px, 34vw, 140px);
+    --bridge-compact-table-height: clamp(132px, 36vw, 148px);
   }
 
   .fixed-play-screen .bridge-play-surface.compact-play .bridge-table {
-    --bridge-felt-min-height: clamp(68px, 18vw, 78px);
-    --bridge-hand-height: clamp(44px, 12vw, 52px);
-    --bridge-trick-card-width: clamp(14px, 4.2vw, 16px);
-    --bridge-trick-card-space-width: clamp(16px, 5vw, 18px);
-    --bridge-trick-card-space-height: clamp(17px, 5vw, 19px);
-    --bridge-trick-slot-width: clamp(28px, 8.4vw, 32px);
-    --bridge-trick-slot-min-height: clamp(28px, 8.6vw, 32px);
+    --bridge-felt-min-height: clamp(94px, 18vw, 104px);
+    --bridge-hand-height: clamp(26px, 5.8dvh, 34px);
+  }
+
+  .fixed-play-screen .table-play-surface.bridge-play-surface.compact-play .bridge-felt .card-table.compass-table {
+    --bridge-table-holder-height: clamp(36px, 7.2dvh, 40px);
+    --table-card-face-width: var(--bridge-card-width);
+    --table-holder-label-size: clamp(0.3rem, 0.82dvh, 0.38rem);
+    --table-holder-padding: 2px 2px 7px;
+    --table-holder-width: clamp(38px, min(10.5vw, 7dvh), 42px);
+    grid-template-columns: minmax(38px, 1fr) minmax(42px, auto) minmax(38px, 1fr);
+    grid-template-rows: minmax(40px, 1fr) minmax(2px, 0.04fr) minmax(40px, 1fr);
+    padding: 4px;
   }
 
   .fixed-play-screen .bridge-play-surface.compact-play .bridge-dummy-hidden {
@@ -5030,13 +5119,4 @@ h2 {
     line-height: 1.05;
   }
 
-  .fixed-play-screen .bridge-play-surface.compact-play .bridge-trick-slot > span {
-    font-size: 0.4rem;
-    line-height: 0.95;
-  }
-
-  .fixed-play-screen .bridge-play-surface.compact-play .bridge-trick-slot > small {
-    font-size: 0.31rem;
-    line-height: 0.95;
-  }
 }

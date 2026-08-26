@@ -6,17 +6,30 @@
     ariaLabel?: string;
     tableCards: TableCard[];
     pendingBySeat?: Partial<Record<Seat, string>>;
+    seatLabels?: Partial<Record<Seat, string>>;
+    seatRoleLabels?: Partial<Record<Seat, string>>;
     variant?: "default" | "bridge";
   };
 
-  let { ariaLabel = "Card table", tableCards, pendingBySeat = {}, variant = "default" }: Props = $props();
+  let {
+    ariaLabel = "Card table",
+    tableCards,
+    pendingBySeat = {},
+    seatLabels = {},
+    seatRoleLabels = {},
+    variant = "default"
+  }: Props = $props();
 
   function cardAt(seat: Seat) {
     return tableCards.find((play) => play.seat === seat)?.card;
   }
 
   function seatLabel(seat: Seat) {
-    return seat === "Tutor" ? "Barbu" : seat;
+    return seatLabels[seat] ?? (seat === "Tutor" ? "Barbu" : seat);
+  }
+
+  function seatRoleLabel(seat: Seat) {
+    return seatRoleLabels[seat] ?? "";
   }
 
   const tutorCard = $derived(cardAt("Tutor"));
@@ -46,7 +59,12 @@
           <CardFace card={tutorCard} />
         </div>
       {/if}
-      <span class="cardholder-label">{seatLabel("Tutor")}</span>
+      <span class="cardholder-label">
+        <span>{seatLabel("Tutor")}</span>
+        {#if seatRoleLabel("Tutor")}
+          <small>{seatRoleLabel("Tutor")}</small>
+        {/if}
+      </span>
     </div>
   </div>
 
@@ -57,7 +75,12 @@
           <CardFace card={leftCard} />
         </div>
       {/if}
-      <span class="cardholder-label">{seatLabel("Left")}</span>
+      <span class="cardholder-label">
+        <span>{seatLabel("Left")}</span>
+        {#if seatRoleLabel("Left")}
+          <small>{seatRoleLabel("Left")}</small>
+        {/if}
+      </span>
     </div>
   </div>
 
@@ -68,7 +91,12 @@
           <CardFace card={rightCard} />
         </div>
       {/if}
-      <span class="cardholder-label">{seatLabel("Right")}</span>
+      <span class="cardholder-label">
+        <span>{seatLabel("Right")}</span>
+        {#if seatRoleLabel("Right")}
+          <small>{seatRoleLabel("Right")}</small>
+        {/if}
+      </span>
     </div>
   </div>
 
@@ -79,7 +107,12 @@
           <CardFace card={youCard} />
         </div>
       {/if}
-      <span class="cardholder-label">{seatLabel("You")}</span>
+      <span class="cardholder-label">
+        <span>{seatLabel("You")}</span>
+        {#if seatRoleLabel("You")}
+          <small>{seatRoleLabel("You")}</small>
+        {/if}
+      </span>
     </div>
   </div>
 </section>
@@ -293,11 +326,25 @@
     grid-column: 1;
     grid-row: 2;
     z-index: 1;
+    display: grid;
+    gap: 1px;
     min-width: 0;
     font-size: var(--table-holder-label-size);
     line-height: 1;
     text-shadow: 0 1px 3px rgba(8, 19, 13, 0.72);
     text-transform: uppercase;
+  }
+
+  .cardholder-label > span,
+  .cardholder-label > small {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    line-height: 1;
+  }
+
+  .cardholder-label > small {
+    color: rgba(245, 241, 207, 0.78);
+    font-size: 0.78em;
   }
 
   .bridge-table .cardholder {

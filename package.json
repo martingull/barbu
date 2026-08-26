@@ -15,7 +15,8 @@
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:ios": "tauri ios dev",
-    "tauri:android": "tauri android dev"
+    "sync:android-icons": "node scripts/sync-android-icons.mjs",
+    "tauri:android": "npm run sync:android-icons && tauri android dev"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",
