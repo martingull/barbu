@@ -20,6 +20,13 @@ test.beforeEach(async ({ page }, testInfo) => {
   });
 });
 
+const compactLayoutViewports = [
+  { name: "narrow-320", width: 320, height: 568 },
+  { name: "se-height", width: 375, height: 568 },
+  { name: "s9-short", width: 360, height: 640 },
+  { name: "intermediate-browser", width: 600, height: 740 }
+] as const;
+
 async function safeAreaBottom(page: Page) {
   return page.evaluate(() => {
     const value = getComputedStyle(document.documentElement).getPropertyValue("--app-safe-area-bottom").trim();
@@ -142,6 +149,35 @@ async function expectFeedbackClearOfHand(page: Page, handSelector: string) {
   );
 }
 
+async function expectCompactPlayStack(
+  page: Page,
+  handSelector: string,
+  options: {
+    feedbackGap?: number;
+    tableSelector?: string;
+  } = {}
+) {
+  const { feedbackGap = 8, tableSelector = ".card-table" } = options;
+
+  await expectNoPageScroll(page);
+  await expectGameplayActionRowPinned(page);
+  await expectHandNearActionRow(page, handSelector);
+  await expectNoVerticalCollision(page, tableSelector, handSelector, 0);
+  await expectNoVerticalCollision(
+    page,
+    ".table-play-surface.compact-play .table-play-panel .result, .table-play-surface.compact-play .table-play-panel .outcome, .table-play-surface.compact-play .table-play-panel .explanation",
+    handSelector,
+    feedbackGap
+  );
+  await expectNoVerticalCollision(page, tableSelector, ".table-play-surface .action-row", 0);
+  await expectNoVerticalCollision(
+    page,
+    ".table-play-surface.compact-play .table-play-panel .result, .table-play-surface.compact-play .table-play-panel .outcome, .table-play-surface.compact-play .table-play-panel .explanation",
+    ".table-play-surface .action-row",
+    feedbackGap
+  );
+}
+
 async function expectHandCardsDoNotOverlap(page: Page, handSelector: string, maxRows = 2) {
   const cards = page.locator(`${handSelector} .full-hand-card`);
   await expect(cards.first()).toBeVisible();
@@ -176,6 +212,15 @@ async function expectHandCardsDoNotOverlap(page: Page, handSelector: string, max
 async function gotoWithPracticeSeed(page: Page, seed: number) {
   await page.goto("/");
   await page.evaluate((nextSeed) => {
+    localStorage.setItem("barbu.practiceSeed.v1", String(nextSeed));
+  }, seed);
+  await page.reload();
+}
+
+async function gotoFreshPracticeSeed(page: Page, seed: number) {
+  await page.goto("/");
+  await page.evaluate((nextSeed) => {
+    localStorage.clear();
     localStorage.setItem("barbu.practiceSeed.v1", String(nextSeed));
   }, seed);
   await page.reload();
@@ -1050,12 +1095,7 @@ test("Bridge play starts from a rotating auction into a scored contract hand", a
 test("Bridge compact play keeps table hands readable on short screens", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "galaxy-s9", "Viewport matrix for older phone and narrow browser sizes.");
 
-  for (const viewport of [
-    { name: "narrow-320", width: 320, height: 568 },
-    { name: "se-height", width: 375, height: 568 },
-    { name: "s9-short", width: 360, height: 640 },
-    { name: "intermediate-browser", width: 600, height: 740 }
-  ]) {
+  for (const viewport of compactLayoutViewports) {
     await test.step(viewport.name, async () => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await gotoWithPracticeSeed(page, 12);
@@ -1077,10 +1117,7 @@ test("Bridge compact play keeps table hands readable on short screens", async ({
       await expectElementsDoNotOverlap(page, ".bridge-table", ".table-play-panel .result, .table-play-panel .outcome");
       await expectElementsDoNotOverlap(page, ".table-play-panel .result, .table-play-panel .outcome", ".bridge-thumb-hand");
       await expectElementsDoNotOverlap(page, ".table-play-panel .result, .table-play-panel .outcome", ".action-row");
-      await expectNoPageScroll(page);
-      if (viewport.width <= 520) {
-        await expectGameplayActionRowPinned(page);
-      }
+      await expectCompactPlayStack(page, ".bridge-thumb-hand", { feedbackGap: 0, tableSelector: ".bridge-table" });
 
       const legalCard = page.locator(".bridge-thumb-hand .full-hand-card.legal").first();
       if ((await legalCard.count()) > 0) {
@@ -1094,13 +1131,70 @@ test("Bridge compact play keeps table hands readable on short screens", async ({
           await expectElementsDoNotOverlap(page, ".table-play-panel .result, .table-play-panel .outcome", ".bridge-thumb-hand");
         }
         await expectNoPageScroll(page);
-        if (viewport.width <= 520) {
-          await expectGameplayActionRowPinned(page);
-        }
+        await expectGameplayActionRowPinned(page);
       }
 
       await page.screenshot({ path: testInfo.outputPath(`bridge-compact-${viewport.name}.png`), fullPage: true });
     });
+  }
+});
+
+test("shared compact play stack fits Barbu, Whist, and Spades on constrained screens", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "galaxy-s9", "Viewport matrix for older phone and narrow browser sizes.");
+
+  const games: {
+    name: string;
+    handSelector: string;
+    start: () => Promise<void>;
+  }[] = [
+    {
+      name: "barbu",
+      handSelector: ".full-hand-cards",
+      start: async () => {
+        await page.getByRole("button", { name: /Barbu/ }).click();
+        await openBarbuTab(page, "Play");
+        await page.getByRole("button", { name: "Play Barbu" }).click();
+        await page.getByRole("button", { name: "Start hand" }).click({ force: true });
+        await expect(page.getByRole("heading", { name: "No Hearts hand" })).toBeVisible();
+      }
+    },
+    {
+      name: "whist",
+      handSelector: ".full-hand-cards",
+      start: async () => {
+        await page.getByRole("button", { name: /Open Whist/ }).click();
+        await page.getByRole("tab", { name: "Play" }).click();
+        await page.getByRole("button", { name: "Play Whist" }).click();
+        await expect(page.getByRole("heading", { name: "Whist hand" })).toBeVisible();
+      }
+    },
+    {
+      name: "spades",
+      handSelector: ".full-hand-cards",
+      start: async () => {
+        await page.getByRole("button", { name: /Open Spades/ }).click();
+        await page.getByRole("tab", { name: "Play" }).click();
+        await page.getByRole("button", { name: "Play Spades" }).click();
+        await expect(page.getByRole("heading", { name: "Spades hand" })).toBeVisible();
+      }
+    }
+  ];
+
+  for (const game of games) {
+    for (const viewport of compactLayoutViewports) {
+      await test.step(`${game.name}-${viewport.name}`, async () => {
+        await page.setViewportSize({ width: viewport.width, height: viewport.height });
+        await gotoFreshPracticeSeed(page, 8);
+        await game.start();
+
+        await expect(page.locator(".table-play-surface.compact-play")).toBeVisible();
+        await expect(page.locator(".card-table .cardholder")).toHaveCount(4);
+        await expectTableSlotsSeparated(page);
+        await expectTableCardholdersDoNotOverlap(page);
+        await expectCompactPlayStack(page, game.handSelector);
+        await expectHandCardsDoNotOverlap(page, game.handSelector);
+      });
+    }
   }
 });
 
@@ -2113,12 +2207,7 @@ test("Hearts play starts with a rotating pass phase before the hand", async ({ p
 test("Hearts compact play avoids card table collisions on short screens", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "galaxy-s9", "Viewport matrix for older phone and narrow browser sizes.");
 
-  for (const viewport of [
-    { name: "narrow-320", width: 320, height: 568 },
-    { name: "se-height", width: 375, height: 568 },
-    { name: "s9-short", width: 360, height: 640 },
-    { name: "intermediate-browser", width: 600, height: 740 }
-  ]) {
+  for (const viewport of compactLayoutViewports) {
     await test.step(viewport.name, async () => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.goto("/");
@@ -2135,7 +2224,7 @@ test("Hearts compact play avoids card table collisions on short screens", async 
       await expectTableSlotsSeparated(page);
       await expectTableCardholdersDoNotOverlap(page);
       await expectElementsDoNotOverlap(page, ".card-table", ".full-hand-cards");
-      await expectFeedbackAboveHand(page, ".full-hand-cards");
+      await expectCompactPlayStack(page, ".full-hand-cards");
       await expectHandCardsDoNotOverlap(page, ".full-hand-cards");
       await expect
         .poll(async () =>
