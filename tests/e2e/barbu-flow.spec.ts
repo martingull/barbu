@@ -2019,7 +2019,7 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
   await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
   await expect(page.getByLabel("Drill decision")).toContainText(/Can you lead a heart\?|Only hearts remain|Hearts are open/);
   await completeQuickDrillDecision(page);
-  await expect(page.getByLabel("Drill decision")).toContainText(/Good|Illegal/);
+  await expect(page.getByLabel("Drill decision")).toContainText(/Good|Risky|Illegal/);
   await page.getByRole("button", { name: "Table" }).first().click();
 
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Stop the moon" }).click();

@@ -2969,6 +2969,7 @@
     appView === "drill" ||
     appView === "heartsPass" ||
     appView === "heartsPassPractice" ||
+    appView === "runContractIntro" ||
     appView === "fullHand" ||
     appView === "dominoHand" ||
     appView === "trumpCount" ||

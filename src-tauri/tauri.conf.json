@@ -26,6 +26,9 @@
     "active": true,
     "targets": "all",
     "icon": ["icons/icon.png"],
+    "android": {
+      "versionCode": 1000001
+    },
     "iOS": {
       "developmentTeam": "3PB43Q6B3W"
     }

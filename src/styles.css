@@ -3492,6 +3492,36 @@ h2 {
     font-size: 0.42rem;
   }
 
+  .run-intro-screen {
+    grid-template-rows: minmax(0, auto) minmax(0, 1fr);
+    min-height: 0;
+    overflow: hidden;
+    padding-bottom: calc(var(--app-thumb-bottom-gap) + var(--play-action-shell-height) + 8px);
+  }
+
+  .run-intro-card,
+  .run-intro-panel {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .fixed-play-screen .run-intro-panel .course-actions {
+    position: fixed;
+    right: 12px;
+    bottom: var(--app-thumb-bottom-gap);
+    left: 12px;
+    z-index: 80;
+    display: grid;
+    grid-template-columns: 0.8fr 1fr;
+    gap: 8px;
+    width: auto;
+    padding: 8px;
+    border: 1px solid rgba(245, 241, 207, 0.22);
+    border-radius: 10px;
+    background: rgba(16, 35, 25, 0.96);
+    box-shadow: 0 -10px 28px rgba(4, 18, 11, 0.36);
+  }
+
   .practice-choice-list {
     gap: 7px;
   }
@@ -4532,6 +4562,33 @@ h2 {
     padding-top: 0;
   }
 
+  .fixed-play-screen .table-play-surface.compact-play:not(.bridge-play-surface):not(.table-hidden):has(.full-hand-cards) {
+    --play-hand-height: clamp(150px, 46vw, 170px);
+  }
+
+  .fixed-play-screen
+    .table-play-surface.compact-play:not(.bridge-play-surface):not(.table-hidden):has(.card-table):has(.full-hand-cards)
+    .table-play-panel
+    .result,
+  .fixed-play-screen
+    .table-play-surface.compact-play:not(.bridge-play-surface):not(.table-hidden):has(.card-table):has(.full-hand-cards)
+    .table-play-panel
+    .outcome {
+    position: fixed;
+    right: 16px;
+    bottom: var(--play-feedback-bottom-gap);
+    left: 16px;
+    z-index: 26;
+    display: flex;
+    align-items: center;
+    width: auto;
+    max-height: 42px;
+    overflow: hidden;
+    padding: 7px 10px;
+    font-size: 0.78rem;
+    line-height: 1.18;
+  }
+
   .fixed-play-screen .bridge-play-surface.compact-play {
     --play-hand-height: var(--bridge-thumb-hand-height, clamp(112px, 35vw, 138px));
     --play-feedback-hand-gap: 0px;
@@ -4589,6 +4646,51 @@ h2 {
 
   .fixed-play-screen .table-play-surface.compact-play .table-play-panel:has(.domino-cards) {
     gap: 5px;
+  }
+
+  .fixed-play-screen .table-play-surface.compact-play.table-hidden:has(.hand-domino-layout):has(.domino-cards) {
+    --play-hand-height: 120px;
+    --play-feedback-bottom-gap: calc(
+      var(--play-action-bottom-gap, var(--app-thumb-bottom-gap)) +
+        var(--play-action-shell-height, 56px) + 16px + var(--play-hand-height) + 56px
+    );
+  }
+
+  .fixed-play-screen
+    .table-play-surface.compact-play.table-hidden:has(.hand-domino-layout):has(.domino-cards)
+    .table-play-panel:has(.outcome)
+    .result {
+    display: none;
+  }
+
+  .fixed-play-screen
+    .table-play-surface.compact-play.table-hidden:has(.hand-domino-layout):has(.domino-cards)
+    .table-play-panel
+    .explanation,
+  .fixed-play-screen
+    .table-play-surface.compact-play.table-hidden:has(.hand-domino-layout):has(.domino-cards)
+    .table-play-panel
+    .outcome {
+    position: fixed;
+    right: 16px;
+    bottom: var(--play-feedback-bottom-gap);
+    left: 16px;
+    z-index: 26;
+    display: flex;
+    align-items: center;
+    width: auto;
+    max-height: 34px;
+    overflow: hidden;
+    padding: 6px 8px;
+    font-size: 0.72rem;
+    line-height: 1.15;
+  }
+
+  .fixed-play-screen
+    .table-play-surface.compact-play.table-hidden:has(.hand-domino-layout):has(.domino-cards)
+    .table-play-panel:has(.explanation)
+    .result {
+    display: none;
   }
 
   .fixed-play-screen .table-play-surface.compact-play .table-play-panel:has(.domino-cards) .result,
@@ -4679,7 +4781,7 @@ h2 {
   .fixed-play-screen .table-play-surface.compact-play,
   .fixed-play-screen .table-play-surface.compact-result:not(.table-hidden) {
     --play-hand-action-gap: 2px;
-    --compact-table-height: 232px;
+    --compact-table-height: 202px;
   }
 
   .table-play-surface.compact-play .card-table,
