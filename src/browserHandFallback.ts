@@ -1,3 +1,4 @@
+import { chooseWhistCard, whistPositionFromHand } from "./whistPolicy";
 import type {
   Card,
   BridgeAuctionCall,
@@ -40,17 +41,18 @@ export function startBrowserHeartsHand(seed: number): FullHandState {
   return startBrowserFullHand("Hearts", seed, { startAtTwoOfClubs: true });
 }
 
-export function startBrowserWhistHand(seed: number): FullHandState {
-  return startBrowserWhistFamilyHand("Whist", seed);
+export function startBrowserWhistHand(seed: number, dealer?: number): FullHandState {
+  if (dealer !== undefined && (!Number.isInteger(dealer) || dealer < 0 || dealer > 3)) throw new Error("Invalid Whist dealer");
+  return startBrowserWhistFamilyHand("Whist", seed, undefined, dealer);
 }
 
 export function startBrowserBridgeHand(seed: number): FullHandState {
   return startBrowserWhistFamilyHand("Bridge", seed, null);
 }
 
-function startBrowserWhistFamilyHand(contract: "Whist" | "Spades" | "Bridge", seed: number, fixedTrump?: Suit | null): FullHandState {
+function startBrowserWhistFamilyHand(contract: "Whist" | "Spades" | "Bridge", seed: number, fixedTrump?: Suit | null, selectedDealer?: number): FullHandState {
   const deck = shuffledDeck(seed);
-  const dealer = whistDealerForSeed(seed);
+  const dealer = selectedDealer ?? whistDealerForSeed(seed);
   const leader = contract === "Bridge" ? dealer : (dealer + 1) % 4;
   const trumpSuit = fixedTrump !== undefined ? fixedTrump : deck[dealer + 48].suit;
   const hands: Card[][] = [[], [], [], []];
@@ -78,6 +80,8 @@ function startBrowserWhistFamilyHand(contract: "Whist" | "Spades" | "Bridge", se
     status: "in_progress",
     prompt: "",
     trumpSuit,
+    whistDealer: contract === "Whist" ? dealer : undefined,
+    whistTurnedTrump: contract === "Whist" ? deck[dealer + 48] : undefined,
     bridgeDealer,
     bridgeVulnerability
   });
@@ -636,6 +640,7 @@ export function hydrateFullHandState(state: FullHandState): FullHandState {
 }
 
 function chooseOpponentCard(state: FullHandState) {
+  if (state.contract === "Whist") return chooseWhistCard(whistPositionFromHand(state));
   const legal = legalCardsForState(state, state.currentPlayerIndex);
   const led = ledSuit(state);
 
@@ -649,9 +654,6 @@ function chooseOpponentCard(state: FullHandState) {
     }
     if (state.contract === "Spades") {
       return chooseSpadesLeadCard(state, legal);
-    }
-    if (state.contract === "Whist") {
-      return chooseWhistLeadCard(state, legal);
     }
     if (state.contract === "Hearts Trumps") {
       return highestCard(legal.filter((card) => card.suit === "H")) ?? highestCard(legal);
@@ -676,9 +678,6 @@ function chooseOpponentCard(state: FullHandState) {
     }
     if (state.contract === "Spades") {
       return chooseSpadesVoidCard(state, legal);
-    }
-    if (state.contract === "Whist") {
-      return chooseWhistVoidCard(state, legal);
     }
     if (state.contract === "Hearts Trumps") {
       return (
@@ -712,10 +711,6 @@ function chooseOpponentCard(state: FullHandState) {
 
   if (state.contract === "Spades") {
     return chooseSpadesFollowCard(state, legal);
-  }
-
-  if (state.contract === "Whist") {
-    return chooseWhistFollowCard(state, legal);
   }
 
   if (state.contract === "Hearts Trumps") {
@@ -839,42 +834,6 @@ function chooseBridgeVoidCard(state: FullHandState, legal: Card[]) {
   return (
     lowestCard(legal.filter((card) => trump && card.suit === trump && cardWouldWinTrick(state, card))) ??
     lowestNonTrump
-  );
-}
-
-function chooseWhistLeadCard(state: FullHandState, legal: Card[]) {
-  const trump = whistTrumpSuitFromState(state);
-
-  const partnerSuit = whistPartnerSignalSuit(state);
-  if (partnerSuit && partnerSuit !== trump) {
-    const returnCard = highestCard(legal.filter((card) => card.suit === partnerSuit));
-    if (returnCard) {
-      return returnCard;
-    }
-  }
-
-  return highestCardFromLongestSuit(legal.filter((card) => card.suit !== trump), legal) ?? highestCard(legal);
-}
-
-function chooseWhistFollowCard(state: FullHandState, legal: Card[]) {
-  if (whistPartnerIsWinning(state)) {
-    return lowestCard(legal);
-  }
-
-  return lowestWinningCard(state, legal) ?? lowestCard(legal);
-}
-
-function chooseWhistVoidCard(state: FullHandState, legal: Card[]) {
-  const trump = whistTrumpSuitFromState(state);
-
-  if (whistPartnerIsWinning(state)) {
-    return lowestCard(legal.filter((card) => card.suit !== trump)) ?? lowestCard(legal);
-  }
-
-  return (
-    lowestCard(legal.filter((card) => card.suit === trump && cardWouldWinTrick(state, card))) ??
-    highestCard(legal.filter((card) => card.suit !== trump)) ??
-    lowestCard(legal)
   );
 }
 
@@ -1067,19 +1026,6 @@ function whistPartnerIsWinning(state: FullHandState) {
 
 function sameWhistPartnership(left: number, right: number) {
   return left % 2 === right % 2;
-}
-
-function whistPartnerSignalSuit(state: FullHandState): Suit | undefined {
-  const partner = (state.currentPlayerIndex + 2) % 4;
-
-  for (const trick of [...state.completedTricks].reverse()) {
-    const led = trick.cards[0];
-    if (led && playerNames.indexOf(led.seat) === partner && sameWhistPartnership(trick.winnerIndex, state.currentPlayerIndex)) {
-      return led.card.suit;
-    }
-  }
-
-  return undefined;
 }
 
 function cardWouldWinTrick(state: FullHandState, card: Card) {
@@ -1627,11 +1573,11 @@ class DeterministicRng {
   }
 }
 
-export function startBrowserHand(contract: string, seed: number): FullHandState {
+export function startBrowserHand(contract: string, seed: number, dealer?: number): FullHandState {
     switch (contract) {
         case "Hearts": return startBrowserHeartsHand(seed);
         case "Whist":
-      return startBrowserWhistHand(seed);
+      return startBrowserWhistHand(seed, dealer);
     case "Spades":
       return startBrowserSpadesHand(seed);
     case "Bridge":

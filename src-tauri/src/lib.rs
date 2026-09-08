@@ -36,9 +36,21 @@ fn generate_hearts_practice_set(seed: u64, focus: Option<String>) -> PracticeDri
 }
 
 #[tauri::command]
-fn start_hand(game_id: String, contract: String, seed: u64) -> Result<FullHandDto, String> {
+fn start_hand(
+    game_id: String,
+    contract: String,
+    seed: u64,
+    dealer: Option<usize>,
+) -> Result<FullHandDto, String> {
     let ruleset = barbu_core::get_ruleset(&game_id, &contract);
-    let state = ruleset.start_hand(seed);
+    let state = if game_id == "whist" && contract == "Whist" {
+        if dealer.is_some_and(|seat| seat >= 4) {
+            return Err("Invalid Whist dealer".to_string());
+        }
+        barbu_core::start_whist_hand_with_dealer(seed, dealer.unwrap_or((seed % 4) as usize))
+    } else {
+        ruleset.start_hand(seed)
+    };
     Ok(FullHandDto::from_core(
         &state,
         &contract,
@@ -340,6 +352,10 @@ struct FullHandDto {
     trick_number: usize,
     status: String,
     prompt: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    whist_dealer: Option<usize>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    whist_turned_trump: Option<CardDto>,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -457,6 +473,7 @@ impl FullHandDto {
         contract: &str,
         penalty_name: &str,
     ) -> Self {
+        let whist_deal = barbu_core::whist_deal_info(state);
         Self {
             id: state.id.clone(),
             contract: contract.to_string(),
@@ -495,6 +512,8 @@ impl FullHandDto {
             trick_number: state.trick_number(),
             status: state.status.as_str().to_string(),
             prompt: hand_prompt(state, penalty_name),
+            whist_dealer: whist_deal.map(|(dealer, _)| dealer),
+            whist_turned_trump: whist_deal.map(|(_, card)| CardDto::from_core(card)),
         }
     }
 
@@ -909,4 +928,26 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running Tauri application");
+}
+
+#[cfg(test)]
+mod whist_tests {
+    use super::*;
+
+    #[test]
+    fn whist_command_preserves_dealer_and_turned_card_through_legacy_dto() {
+        let dto = start_hand("whist".into(), "Whist".into(), 8, Some(1)).unwrap();
+        assert_eq!(dto.whist_dealer, Some(1));
+        let turned = dto.whist_turned_trump.as_ref().unwrap().id.clone();
+        assert!(dto.hands[1].iter().any(|card| card.id == turned));
+        let mut saved = serde_json::to_value(&dto).unwrap();
+        saved.as_object_mut().unwrap().remove("whistDealer");
+        saved.as_object_mut().unwrap().remove("whistTurnedTrump");
+        let legacy: FullHandDto = serde_json::from_value(saved).unwrap();
+        let restored = FullHandDto::from_core(&legacy.to_core().unwrap(), "Whist", "trick");
+        assert_eq!(restored.whist_dealer, Some(1));
+        assert_eq!(restored.whist_turned_trump.unwrap().id, turned);
+        assert!(start_hand("whist".into(), "Whist".into(), 8, Some(4)).is_err());
+        assert!(start_hand("hearts".into(), "Hearts".into(), 8, None).unwrap().whist_dealer.is_none());
+    }
 }

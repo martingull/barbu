@@ -745,10 +745,10 @@ test("Whist practice starts playable partnership drills", async ({ page }) => {
   await expectFeedbackAboveHand(page, ".full-hand-cards");
   await expect.poll(async () => page.evaluate(() => localStorage.getItem("barbu.savedWhistRun.v1"))).toBeNull();
 
-  await page.getByLabel("Your Whist hand").getByRole("button", { name: "Q S" }).click();
+  await page.getByLabel("Your Whist hand").getByRole("button", { name: "5 S" }).click();
   await page.getByRole("button", { name: "Play card" }).click();
   await expect(page.getByRole("button", { name: "Next lead", exact: true })).toBeVisible();
-  await expect(page.getByLabel("Whist hand decision")).toContainText(/strongest suit|highest card in spades/);
+  await expect(page.getByLabel("Whist hand decision")).toContainText("fourth highest");
 
   await page.getByRole("button", { name: "Next lead", exact: true }).click();
   await expect(page.getByLabel("Whist hand score")).toContainText("2 / 3");
@@ -792,7 +792,7 @@ test("Whist practice starts playable partnership drills", async ({ page }) => {
 
   await page.getByLabel("Whist practice drills").getByRole("button", { name: "Third hand high" }).click();
   await expect(page.getByRole("heading", { name: "Whist practice: third hand high" })).toBeVisible();
-  await expect(page.getByLabel("Drill decision")).toContainText(/Support partner's lead|Do not overpay|Spend enough, not everything/);
+  await expect(page.getByLabel("Drill decision")).toContainText(/Support partner's lead|Do not overpay|Allow for fourth hand/);
   await page.getByLabel("Drill decision").getByRole("button", { name: "Table" }).click();
 
   await page.getByLabel("Whist practice drills").getByRole("button", { name: "Return partner's suit" }).click();
@@ -876,7 +876,7 @@ test("Whist play starts a partnership trump hand", async ({ page }, testInfo) =>
   await expect(page.getByLabel("Whist hand score")).toContainText("Your side");
   await expect(page.getByLabel("Whist hand score")).toContainText("Opponents");
   await expect(page.getByLabel("Whist hand score")).toContainText("To odd");
-  await expect(page.getByLabel("Whist match score")).toContainText("Match to 5");
+  await expect(page.getByLabel("Whist match score")).toContainText("Game to 5");
   await expect(page.getByLabel("Whist match score")).toContainText("You + Barbu");
   await expect(page.getByLabel("Whist match score")).toContainText("Left + Right");
   await expect(page.getByLabel("Whist hand table")).toBeVisible();
@@ -1412,7 +1412,7 @@ test("Whist play can resume a saved local match", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Whist table", exact: true })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("button", { name: "Continue Whist" })).toBeVisible();
-  await expect(page.getByText("Hand 1, trick 1, match 0 - 0")).toBeVisible();
+  await expect(page.getByText("Hand 1, trick 1, game 0 - 0")).toBeVisible();
 
   await page.reload();
   await page.getByRole("button", { name: /Open Whist/ }).click();
@@ -1813,7 +1813,7 @@ test("Whist completed hand score fits the phone screen", async ({ page }, testIn
 
   await expect(page.getByRole("heading", { name: /Your partnership won|Opponents won the hand|Whist hand tied/ })).toBeVisible();
   const resultPanel = page.getByRole("region", { name: "Whist hand decision" });
-  await expect(resultPanel.getByLabel("Whist hand score")).toContainText("Match");
+  await expect(resultPanel.getByLabel("Whist hand score")).toContainText("Game");
   await expect(resultPanel.getByLabel("Whist partnership breakdown")).toContainText("You + Barbu");
   await expect(resultPanel.getByLabel("Whist partnership breakdown")).toContainText("Left + Right");
   await expectNoPageScroll(page);
@@ -2163,7 +2163,7 @@ test("Whist reference reflects the classic partnership table", async ({ page }, 
 
   await expect(page.getByRole("heading", { name: "Whist reference" })).toBeVisible();
   await expect(page.getByLabel("Whist overview")).toContainText("classic four-player partnership trick-taking game");
-  await expect(page.getByLabel("Whist reference sections")).toContainText("App Learning Path");
+  await expect(page.getByLabel("Whist reference sections")).toContainText("Learning Path");
   await expect(page.getByLabel("Whist reference sections")).toContainText("Playable local match with resume");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Learning path");
   await expect(page.getByLabel("Contract roadmap")).toContainText("Playable hand");

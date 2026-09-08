@@ -170,6 +170,8 @@ export type FullHandState = {
   status: HandStatus;
   prompt: string;
   trumpSuit?: Suit | null;
+  whistDealer?: number;
+  whistTurnedTrump?: Card;
   dummySeat?: Seat;
   dummyHand?: Card[];
   dummyLegalCardIds?: string[];

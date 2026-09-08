@@ -8,6 +8,7 @@ pub mod learning;
 pub mod practice;
 pub mod ruleset;
 pub mod trick;
+pub mod whist;
 
 pub use bridge::{
     bridge_auction_status, bridge_duplicate_score, bridge_finalize_contract,
@@ -31,7 +32,7 @@ pub use hand::{
     play_trick_taking_card, play_whist_card, start_hearts_hand, start_hearts_passing_hand,
     start_king_of_hearts_hand, start_no_hearts_hand, start_no_last_two_hand, start_no_queens_hand,
     start_no_tricks_hand, start_positive_tricks_hand, start_spades_hand, start_trick_taking_hand,
-    start_whist_hand, CompletedTrick, HandStatus, HandTrickOutcome, HeartsHandState,
+    start_whist_hand, start_whist_hand_with_dealer, whist_deal_info, CompletedTrick, HandStatus, HandTrickOutcome, HeartsHandState,
     KingOfHeartsHandState, NoHeartsHandState, NoLastTwoHandState, NoQueensHandState,
     NoTricksHandState, OpponentPolicyFn, PositiveTricksHandState, SpadesHandState, TrickScoreFn,
     TrickTakingHandState, WhistHandState,

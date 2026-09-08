@@ -405,7 +405,7 @@ export const referenceCatalog: GameReference[] = [
         id: "deal",
         title: "Deal And Trump",
         body:
-          "Each player receives thirteen cards. The dealer's last card sets trump for the hand. This table teaches the classic no-bidding form before moving into Whist-family varieties.",
+          "Each player receives thirteen cards. The dealer's last card is turned face up to set trump and remains exposed until the dealer's first play. The deal passes clockwise after each hand. This table uses classic Whist without bidding.",
         facts: [
           { label: "Cards per player", value: "13" },
           { label: "Trump", value: "Dealer's last card" },
@@ -427,18 +427,19 @@ export const referenceCatalog: GameReference[] = [
         id: "scoring",
         title: "Scoring",
         body:
-          "A partnership scores one point for each trick above six. Seven tricks scores one point, eight tricks scores two, and so on. The phone table uses a short five-point match so a session fits comfortably in one sitting.",
+          "A partnership scores one point for each trick above six. Seven tricks scores one point, eight tricks scores two, and so on. A classic game ends when a side reaches five points. Choose a single game or a best-of-three rubber: points reset between games, and the first side to win two games wins the rubber. Honours and stake settlement are not counted at this table.",
         facts: [
           { label: "Six tricks", value: "Book, no points yet" },
           { label: "Seven tricks", value: "1 point" },
-          { label: "Table target", value: "First partnership to 5 points" }
+          { label: "Game target", value: "First partnership to 5 points" },
+          { label: "Rubber", value: "First partnership to win 2 games" }
         ]
       },
       {
         id: "signals",
         title: "Silent Partnership Signals",
         body:
-          "Whist communication happens through legal card play. Lead a strong or long suit to invite partner's help. Return partner's suit when it makes sense. Support partner's lead by playing high in third hand, and avoid spending strength too early in second hand.",
+          "Whist communication happens through legal card play, not discussion of concealed cards. Lead low, often fourth highest, from broken length; lead the top of a touching honour sequence. Return partner's suit when useful, including trumps, but reconsider known ruffs or exhausted suits. Second hand low and third hand high are starting habits, not absolute rules: cover a supported honour when useful and avoid overtaking a secure partner winner.",
         facts: [
           { label: "Lead", value: "Show a strong or long suit" },
           { label: "Partner return", value: "Lead partner's suit back when useful" },
@@ -447,7 +448,7 @@ export const referenceCatalog: GameReference[] = [
       },
       {
         id: "app-learning",
-        title: "App Learning Path",
+        title: "Learning Path",
         body:
           "The Whist lessons start with the partnership object, then move into compact table decisions. The first habits are follow suit, trump or discard, third hand high, returning partner's suit, inviting with a strong suit, and counting odd tricks.",
         facts: [
@@ -486,7 +487,7 @@ export const referenceCatalog: GameReference[] = [
         title: "Playable hand",
         coreStatus: "Core",
         appStatus: "Playable",
-        note: "Playable Whist has partnership seating, trump selection from dealer's last card, thirteen-trick play, partnership scoring, and local resume state."
+        note: "Playable Whist has a visible turned trump, clockwise dealer rotation, thirteen-trick play, five-point games, optional best-of-three rubbers, and local resume. Computer players use public-information heuristics, not expert search."
       },
       {
         id: "whist-table-habits",
@@ -507,7 +508,7 @@ export const referenceCatalog: GameReference[] = [
         id: "whist-family-varieties",
         title: "Whist-Family Varieties",
         note:
-          "Bid Whist, Knock-out Whist, honours, rubber scoring, and other auction-whist play are related varieties that should be introduced as named tables or variants."
+          "Honours, traditional rubber stake settlement, whist drives, Bid Whist, and Knock-out Whist are not part of this table. Club formats vary; the selected baseline is classic Whist, honours off, with optional best-of-three games."
       }
     ]
   },

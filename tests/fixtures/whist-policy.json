@@ -1,0 +1,18 @@
+[
+  {"history":[],"name":"discard small heart, preserve king","hand":["KH","2H"],"player":2,"trump":"D","trick":[[3,"2D"],[0,"10D"],[1,"3D"]],"expected":"2H"},
+  {"history":[],"name":"do not undertrump a winner","hand":["KH","2H","3S"],"player":2,"trump":"S","trick":[[3,"2D"],[0,"10D"],[1,"8S"]],"expected":"2H"},
+  {"history":[],"name":"second hand low","hand":["AC","3C"],"player":1,"trump":"S","trick":[[0,"5C"]],"expected":"3C"},
+  {"history":[],"name":"cover touching honour","hand":["KC","3C"],"player":1,"trump":"S","trick":[[0,"QC"]],"expected":"KC"},
+  {"history":[],"name":"third hand high","hand":["KC","9C","3C"],"player":2,"trump":"S","trick":[[0,"5C"],[1,"6C"]],"expected":"KC"},
+  {"history":[],"name":"third hand cheapest equivalent honour","hand":["KC","QC","3C"],"player":2,"trump":"S","trick":[[0,"5C"],[1,"6C"]],"expected":"QC"},
+  {"history":[],"name":"keep partners master","hand":["KC","3C"],"player":2,"trump":"S","trick":[[0,"AC"],[1,"6C"]],"expected":"3C"},
+  {"history":[],"name":"fourth hand cheapest winner","hand":["KC","9C","3C"],"player":3,"trump":"S","trick":[[0,"5C"],[1,"2C"],[2,"6C"]],"expected":"9C"},
+  {"history":[],"name":"fourth hand do not overtake partner","hand":["AC","3C"],"player":3,"trump":"S","trick":[[0,"5C"],[1,"KC"],[2,"6C"]],"expected":"3C"},
+  {"history":[],"name":"lead top of sequence","hand":["KC","QC","JC","5C","AH"],"player":0,"trump":"S","trick":[],"expected":"KC"},
+  {"history":[],"name":"fourth highest from broken length","hand":["QS","10S","8S","5S","2S","AC"],"player":0,"trump":"H","trick":[],"expected":"5S"},
+  {"history":[[[2,"KS"],[3,"2S"],[0,"10S"],[1,"4S"]]],"name":"return partners trump","hand":["AC","3D","5S"],"player":0,"trump":"S","trick":[],"expected":"5S"},
+  {"history":[],"name":"draw trumps with length and control","hand":["AS","KS","8S","7S","3S","KC","QC","JC"],"player":0,"trump":"S","trick":[],"expected":"AS"},
+  {"history":[[[2,"AC"],[3,"2S"],[0,"3C"],[1,"4C"]]],"name":"avoid known ruff in partners suit","hand":["KC","QC","JC","AD"],"player":0,"trump":"S","trick":[],"expected":"AD"},
+  {"history":[],"name":"preserve honour below exposed dealer trump","hand":["KS","3S"],"player":2,"trump":"S","trick":[[0,"5S"],[1,"6S"]],"turnedTrump":[3,"AS"],"expected":"3S"},
+  {"history":[[[1,"AC"],[2,"KC"],[3,"QC"],[0,"2C"]]],"name":"exhausted honours promote a master","hand":["JC","2D"],"player":0,"trump":"S","trick":[],"expected":"JC"}
+]

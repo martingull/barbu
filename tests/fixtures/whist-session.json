@@ -1,0 +1,8 @@
+[
+  {"name":"part score continues","mode":"game","scores":[1,2],"games":[0,0],"odd":[2,0],"points":[3,2],"gamesWon":[0,0],"gameComplete":false,"complete":false,"nextScores":[3,2]},
+  {"name":"single game ends on five","mode":"game","scores":[4,3],"games":[0,0],"odd":[1,0],"points":[5,3],"gamesWon":[1,0],"gameComplete":true,"complete":true,"nextScores":[0,0]},
+  {"name":"rubber continues after first game","mode":"rubber","scores":[4,3],"games":[0,0],"odd":[2,0],"points":[6,3],"gamesWon":[1,0],"gameComplete":true,"complete":false,"nextScores":[0,0]},
+  {"name":"rubber level at one all","mode":"rubber","scores":[2,4],"games":[1,0],"odd":[0,1],"points":[2,5],"gamesWon":[1,1],"gameComplete":true,"complete":false,"nextScores":[0,0]},
+  {"name":"rubber two nil","mode":"rubber","scores":[3,2],"games":[1,0],"odd":[2,0],"points":[5,2],"gamesWon":[2,0],"gameComplete":true,"complete":true,"nextScores":[0,0]},
+  {"name":"rubber lost two one","mode":"rubber","scores":[4,3],"games":[1,1],"odd":[0,4],"points":[4,7],"gamesWon":[1,2],"gameComplete":true,"complete":true,"nextScores":[0,0]}
+]

@@ -504,8 +504,12 @@ pub fn play_hearts_card(
 }
 
 pub fn start_whist_hand(seed: u64) -> WhistHandState {
+    start_whist_hand_with_dealer(seed, whist_dealer_for_seed(seed))
+}
+
+pub fn start_whist_hand_with_dealer(seed: u64, dealer: PlayerIndex) -> WhistHandState {
+    assert!(dealer < 4, "Whist dealer must be a seat at the table");
     let deck = shuffled_standard_deck(seed);
-    let dealer = whist_dealer_for_seed(seed);
     let leader = (dealer + 1) % 4;
     let trump_card = deck[dealer + 48];
     let mut hands = [Vec::new(), Vec::new(), Vec::new(), Vec::new()];
@@ -530,6 +534,15 @@ pub fn start_whist_hand(seed: u64) -> WhistHandState {
         status: HandStatus::InProgress,
     };
     advance_to_player_turn(state, 2, score_whist_trick, choose_whist_opponent_card)
+}
+
+/// Recover public deal metadata for both current and previously saved native hands.
+pub fn whist_deal_info(state: &TrickTakingHandState) -> Option<(PlayerIndex, Card)> {
+    let suffix = state.id.strip_prefix("whist-hand-")?;
+    let (seed, suffix) = suffix.split_once("-dealer-")?;
+    let (dealer, _) = suffix.split_once('-')?;
+    let dealer = dealer.parse::<usize>().ok().filter(|dealer| *dealer < 4)?;
+    Some((dealer, shuffled_standard_deck(seed.parse().ok()?)[dealer + 48]))
 }
 
 pub fn play_whist_card(state: WhistHandState, player_card: Card) -> Result<WhistHandState, String> {
@@ -1360,42 +1373,14 @@ fn choose_positive_tricks_opponent_card(state: &TrickTakingHandState) -> Option<
 }
 
 fn choose_whist_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
-    let legal = state.legal_cards_for_player(state.current_player);
-    let led_suit = state.led_suit();
-    let trump_suit = whist_trump_suit(state);
-
-    if legal.is_empty() {
-        return None;
-    }
-
-    if led_suit.is_none() {
-        return whist_lead_card(state, &legal, trump_suit);
-    }
-
-    let current_winner = trick_winner_for_state(state, &state.current_trick);
-    let partner_is_winning =
-        current_winner.is_some_and(|winner| whist_same_partnership(winner, state.current_player));
-    let follows_suit = legal.iter().all(|card| Some(card.suit) == led_suit);
-
-    if follows_suit {
-        if partner_is_winning {
-            return lowest_card(&legal);
-        }
-
-        return lowest_card_matching(&legal, |card| card_would_win_whist_trick(state, card))
-            .or_else(|| lowest_card(&legal));
-    }
-
-    if partner_is_winning {
-        return lowest_card_matching(&legal, |card| card.suit != trump_suit)
-            .or_else(|| lowest_card(&legal));
-    }
-
-    lowest_card_matching(&legal, |card| {
-        card.suit == trump_suit && card_would_win_whist_trick(state, card)
+    crate::whist::choose_whist_card(&crate::whist::WhistPosition {
+        hand: &state.hands[state.current_player],
+        player: state.current_player,
+        trump: whist_trump_suit(state),
+        trick: &state.current_trick,
+        history: &state.completed_tricks,
+        turned_trump: whist_deal_info(state),
     })
-    .or_else(|| highest_card_matching(&legal, |card| card.suit != trump_suit))
-    .or_else(|| lowest_card(&legal))
 }
 
 fn choose_spades_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
@@ -1622,38 +1607,6 @@ fn spades_tricks_won_by_side(state: &TrickTakingHandState, player: PlayerIndex) 
         .iter()
         .filter(|trick| whist_same_partnership(trick.winner, player))
         .count()
-}
-
-fn whist_lead_card(state: &TrickTakingHandState, legal: &[Card], trump_suit: Suit) -> Option<Card> {
-    if let Some(partner_suit) = whist_partner_signal_suit(state) {
-        if partner_suit != trump_suit {
-            if let Some(card) = highest_card_matching(legal, |card| card.suit == partner_suit) {
-                return Some(card);
-            }
-        }
-    }
-
-    if state.current_player == 0 {
-        return highest_card_from_longest_suit(legal, |card| card.suit != trump_suit)
-            .or_else(|| highest_card(legal));
-    }
-
-    highest_card_from_longest_suit(legal, |card| card.suit != trump_suit)
-        .or_else(|| lowest_card_matching(legal, |card| card.suit == trump_suit))
-        .or_else(|| lowest_card(legal))
-}
-
-fn whist_partner_signal_suit(state: &TrickTakingHandState) -> Option<Suit> {
-    let partner = (state.current_player + 2) % 4;
-
-    state.completed_tricks.iter().rev().find_map(|trick| {
-        let led = trick.cards.first()?;
-        if led.player == partner && whist_same_partnership(trick.winner, state.current_player) {
-            Some(led.card.suit)
-        } else {
-            None
-        }
-    })
 }
 
 fn whist_same_partnership(left: PlayerIndex, right: PlayerIndex) -> bool {
@@ -2366,14 +2319,14 @@ mod tests {
     }
 
     #[test]
-    fn whist_partner_signal_does_not_return_trump_on_lead() {
+    fn whist_partner_returns_trump_when_opponents_still_have_trumps() {
         let state = WhistHandState {
             id: "whist-hand-test-S".to_string(),
             hands: [
                 vec![
                     Card::new(Rank::Ace, Suit::Clubs),
                     Card::new(Rank::Three, Suit::Diamonds),
-                    Card::new(Rank::Two, Suit::Spades),
+                    Card::new(Rank::Five, Suit::Spades),
                 ],
                 Vec::new(),
                 Vec::new(),
@@ -2396,7 +2349,7 @@ mod tests {
 
         assert_eq!(
             choose_whist_opponent_card(&state),
-            Some(Card::new(Rank::Ace, Suit::Clubs))
+            Some(Card::new(Rank::Five, Suit::Spades))
         );
     }
 

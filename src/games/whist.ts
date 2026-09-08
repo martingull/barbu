@@ -101,12 +101,12 @@ export const whistDef: GameDefinition<WhistLearnPathAction | WhistPracticeAction
       id: "whist-opening-lead",
       step: "Lead",
       title: "Opening leads",
-      summary: "Show Barbu your strongest plain suit by leading your highest card in that suit.",
+      summary: "Invite a long plain suit: low from broken length, high from an honour sequence.",
       action: "lead"
     },
     {
       id: "whist-suit-invite",
-      step: "Table talk",
+      step: "Signals",
       title: "Invite a suit",
       summary: "Lead a strong or long suit to show partner where your hand wants help.",
       action: "return"
@@ -115,7 +115,7 @@ export const whistDef: GameDefinition<WhistLearnPathAction | WhistPracticeAction
       id: "whist-odd-tricks",
       step: "Scoring",
       title: "Count odd tricks",
-      summary: "Only tricks above six score, so seven tricks is one point for your partnership.",
+      summary: "Score tricks above six. Five points wins a game; win two games to take the rubber.",
       action: "odd"
     }
   ],
@@ -131,7 +131,7 @@ export const whistDef: GameDefinition<WhistLearnPathAction | WhistPracticeAction
           id: "opening-lead",
           label: "Lead",
           title: "Opening lead",
-          summary: "Play a full Whist hand and feel how the first lead shapes the partnership.",
+          summary: "Try three opening leads: broken length, an honour sequence, and a plain-suit ace.",
           action: "lead",
           group: "fixed-drills"
         },
@@ -155,7 +155,7 @@ export const whistDef: GameDefinition<WhistLearnPathAction | WhistPracticeAction
           id: "third-hand-high",
           label: "Partnership",
           title: "Third hand high",
-          summary: "Support partner's lead by spending strength at the right seat.",
+          summary: "Allow for fourth hand, play high from unequal honours, and preserve a secure partner winner.",
           action: "third",
           group: "fixed-drills"
         },
