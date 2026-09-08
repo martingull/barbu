@@ -10744,7 +10744,6 @@
     <section class="table-room" aria-label="Card Counting I modes">
       <div class="barbu-table-rail">
         <div class="barbu-mode-box">
-          <p class="eyebrow">Table mode</p>
           <div class="barbu-table-tabs compact" aria-label="Card Counting I sections" role="tablist">
             <button
               aria-controls="card-counting-learn-panel"
@@ -11985,6 +11984,7 @@
       <TablePlaySurface
         mode="play"
         ariaLabel="Hearts passing phase"
+        flowLayout
         title="Pass cards"
         eyebrow="Hearts"
         statusLabel={heartsPassDirectionLabel(heartsPassDirection)}
@@ -12319,6 +12319,7 @@
       <TablePlaySurface
         mode={fullHand.status === "complete" ? "result" : "play"}
         ariaLabel={`${fullHand.contract} full hand`}
+        flowLayout
         title={fullHandCardCountingActive ? fullHandCardCountingTitle : `${fullHand.contract} hand`}
         eyebrow={fullHandCardCountingActive ? "Card Counting I" : fullHandIsPartnershipGame ? (whistFullHandSource === "practice" ? `${fullHand.contract} practice` : `Play ${fullHand.contract}`) : fullHandRunActive ? "Play Barbu" : "Contract hand"}
         statusLabel={fullHandCardCountingActive ? fullHandCardCountingStatusLabel : fullHandIsBridgeGame ? "Contract" : fullHandIsPartnershipGame ? "Trump" : fullHandRunStatusLabel}

@@ -30,7 +30,6 @@
 <section class="table-room" aria-label={`${table.title} modes`}>
   <div class="barbu-table-rail">
     <div class="barbu-mode-box">
-      <p class="eyebrow">Table mode</p>
       <div class="barbu-table-tabs" aria-label={`${table.title} sections`} role="tablist">
         {#each tableTabsFor(table) as tab}
           <button

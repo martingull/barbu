@@ -24,6 +24,8 @@ const compactLayoutViewports = [
   { name: "narrow-320", width: 320, height: 568 },
   { name: "se-height", width: 375, height: 568 },
   { name: "s9-short", width: 360, height: 640 },
+  { name: "s9", width: 360, height: 740 },
+  { name: "wide-phone", width: 430, height: 740 },
   { name: "intermediate-browser", width: 600, height: 740 }
 ] as const;
 
@@ -68,7 +70,6 @@ async function expectNoPageScroll(page: Page) {
 async function expectGameplayActionRowPinned(page: Page) {
   const row = page.locator(".table-play-surface .action-row").last();
   await expect(row).toBeVisible();
-  await expect(row).toHaveCSS("position", "fixed");
   await expect
     .poll(async () => {
       const box = await row.boundingBox();
@@ -163,6 +164,15 @@ async function expectCompactPlayStack(
   await expectGameplayActionRowPinned(page);
   await expectHandNearActionRow(page, handSelector);
   await expectNoVerticalCollision(page, tableSelector, handSelector, 0);
+  const feedback = page.locator(".table-play-panel :is(.result, .outcome, .explanation)");
+  for (const message of await feedback.all()) {
+    if (await message.isVisible()) {
+      const tableBox = await page.locator(tableSelector).last().boundingBox();
+      const messageBox = await message.boundingBox();
+      expect(messageBox!.y).toBeGreaterThanOrEqual(tableBox!.y + tableBox!.height + 7);
+      expect(await message.evaluate((node) => node.scrollHeight <= node.clientHeight + 1)).toBe(true);
+    }
+  }
   await expectNoVerticalCollision(
     page,
     ".table-play-surface.compact-play .table-play-panel .result, .table-play-surface.compact-play .table-play-panel .outcome, .table-play-surface.compact-play .table-play-panel .explanation",
@@ -293,6 +303,14 @@ async function expectBridgeTableHandsUseSevenCardRows(page: Page) {
     .poll(async () =>
       hands.evaluateAll((nodes) =>
         nodes.every((hand) => {
+          const handBox = hand.getBoundingClientRect();
+          const facesFillCards = [...hand.querySelectorAll(".hand-card")].every((card) => {
+            const face = card.querySelector(".card-face");
+            const box = card.getBoundingClientRect();
+            return face && Math.abs(face.getBoundingClientRect().width - box.width) <= 1
+              && Math.abs(box.height - box.width * 1.4) <= 1
+              && box.top >= handBox.top - 1 && box.bottom <= handBox.bottom + 1;
+          });
           const cards = [...hand.querySelectorAll(".hand-card")]
             .map((card) => card.getBoundingClientRect())
             .filter((rect) => rect.width > 0 && rect.height > 0)
@@ -318,7 +336,7 @@ async function expectBridgeTableHandsUseSevenCardRows(page: Page) {
             })
           );
 
-          return rowSizes.length <= 2 && rowSizes[0] <= 7 && (cards.length <= 7 || rowSizes[0] === 7) && !hasCollision;
+          return facesFillCards && rowSizes.length <= 2 && rowSizes[0] <= 7 && (cards.length <= 7 || rowSizes[0] === 7) && !hasCollision;
         })
       )
     )
@@ -1126,6 +1144,7 @@ test("Bridge compact play keeps table hands readable on short screens", async ({
         await expect(page.locator(".bridge-dummy-turn-feedback .lesson-heading")).toBeHidden();
         await expectBridgeTableHandsUseSevenCardRows(page);
         await expectBridgeTrickSlotsDoNotOverlap(page);
+        await expectTableCardLabelsBelowCards(page);
         await expectElementsDoNotOverlap(page, ".bridge-table", ".table-play-panel .result, .table-play-panel .outcome");
         if ((await page.locator(".bridge-thumb-hand").count()) > 0) {
           await expectElementsDoNotOverlap(page, ".table-play-panel .result, .table-play-panel .outcome", ".bridge-thumb-hand");
@@ -1196,6 +1215,29 @@ test("shared compact play stack fits Barbu, Whist, and Spades on constrained scr
       });
     }
   }
+});
+
+test("shared play keeps wrapped feedback below the board when the viewport changes", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "galaxy-s9", "Live resize and enlarged text regression.");
+  await gotoFreshPracticeSeed(page, 8);
+  await page.getByRole("button", { name: "Open Whist", exact: true }).click();
+  await page.getByRole("tab", { name: "Play" }).click();
+  await page.getByRole("button", { name: "Play Whist", exact: true }).click();
+
+  for (const viewport of [...compactLayoutViewports, { name: "desktop", width: 1280, height: 900 }]) {
+    await page.setViewportSize(viewport);
+    await expectCompactPlayStack(page, ".full-hand-cards");
+    await expectHandCardsDoNotOverlap(page, ".full-hand-cards");
+  }
+
+  await page.setViewportSize({ width: 360, height: 740 });
+  await page.addStyleTag({ content: ":root { font-size: 20px; }" });
+  await page.locator(".table-play-panel .result").evaluate((node) => {
+    node.textContent = "Hearts were led. Follow suit if you can. Choose a legal card from your hand, then play it to continue the trick with your partnership.";
+  });
+  await expectCompactPlayStack(page, ".full-hand-cards");
+  await expectTableCardholdersDoNotOverlap(page);
+  await page.screenshot({ path: testInfo.outputPath("wrapped-feedback-large-text.png"), fullPage: true });
 });
 
 test("Bridge defender void discard preserves high side-suit cards", () => {
@@ -3010,7 +3052,7 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
   await expectHandNearActionRow(page, ".full-hand-cards");
   await expectFeedbackAboveHand(page, ".full-hand-cards");
   expect(Math.abs((noHeartsTable?.width ?? 0) - (playBarbuTable?.width ?? 0))).toBeLessThanOrEqual(1);
-  expect(Math.abs((noHeartsTable?.height ?? 0) - (playBarbuTable?.height ?? 0))).toBeLessThanOrEqual(1);
+  await expectCompactPlayStack(page, ".full-hand-cards");
   const initialNoHeartsHand = await page.locator(".full-hand-cards .full-hand-card").evaluateAll((cards) =>
     cards.map((card) => card.getAttribute("aria-label"))
   );
@@ -3051,8 +3093,8 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
   await expect(page.getByLabel("No Hearts hand table")).toBeVisible();
   const replayNoHeartsTable = await page.getByLabel("No Hearts hand table").boundingBox();
   expect(replayNoHeartsTable).not.toBeNull();
-  expect(Math.abs((replayNoHeartsTable?.y ?? 0) - (noHeartsTable?.y ?? 0))).toBeLessThanOrEqual(1);
-  expect(Math.abs((replayNoHeartsTable?.height ?? 0) - (noHeartsTable?.height ?? 0))).toBeLessThanOrEqual(1);
+  await expectTableSlotsSeparated(page);
+  await expectNoVerticalCollision(page, ".card-table", ".table-play-panel", 6);
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
   await page.screenshot({ path: testInfo.outputPath("play-barbu-replay-hand.png"), fullPage: true });
@@ -3234,7 +3276,8 @@ for (const contract of barbuTrickContractSmokeCases) {
     await expect(page.getByLabel(`${contract} key tricks`)).toBeVisible();
     const resultTable = await page.getByLabel(`${contract} hand table`).boundingBox();
     expect(resultTable).not.toBeNull();
-    expect(Math.round(resultTable?.height ?? 0)).toBe(Math.round(activeTable?.height ?? -1));
+    await expectTableSlotsSeparated(page);
+    await expectNoVerticalCollision(page, ".card-table", ".table-play-panel", 6);
     await expect(page.getByRole("button", { name: "Replay" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Next contract" })).toBeVisible();
     await expectNoPageScroll(page);

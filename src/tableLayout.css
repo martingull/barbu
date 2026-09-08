@@ -1,0 +1,218 @@
+/* Full hands share one height budget. Messages and cards stay in document flow,
+   so wrapped feedback consumes space before the board is sized. */
+.app-shell.fixed-play-screen:has(.flow-play) {
+  padding-bottom: var(--app-thumb-bottom-gap);
+  overflow-y: auto;
+}
+
+.app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play {
+  --flow-card-width: min(52px, 6dvh, calc((100vw - 60px) / 7));
+  --flow-hand-height: calc(var(--flow-card-width) * 2.8 + 8px);
+  --flow-panel-space: 102px;
+  --flow-board-space: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: 0;
+  overflow: visible;
+}
+
+.flow-play > .full-hand-summary {
+  flex: none;
+}
+
+.app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play .full-hand-summary {
+  gap: 3px;
+  padding: 2px 0 5px;
+}
+
+.app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play .full-hand-summary .full-hand-summary-row > div {
+  min-height: 26px;
+  padding: 2px;
+}
+
+.flow-play > .play-board-region {
+  flex: 1 0 140px;
+  min-height: 140px;
+  container-type: size;
+  margin-bottom: 2px;
+}
+
+.flow-play.bridge-play-surface > .play-board-region {
+  flex-basis: calc(var(--flow-card-width) * 5.6 + var(--flow-board-space));
+  min-height: calc(var(--flow-card-width) * 5.6 + var(--flow-board-space));
+}
+
+.app-shell.fixed-play-screen .flow-play .play-board-region :is(.card-table, .table-tap-target) {
+  grid-row: auto;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+  align-self: stretch;
+}
+
+.flow-play .play-board-region .table-tap-target {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.app-shell.fixed-play-screen .flow-play .play-board-region .card-table.compass-table {
+  --table-card-face-width: clamp(24px, min(11cqw, calc((100cqh - 80px) / 2.8)), 58px);
+  --table-holder-width: calc(var(--table-card-face-width) + 18px);
+  --table-holder-label-size: 0.62rem;
+  --table-holder-padding: 3px 4px 18px;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: minmax(0, 1fr) 8px minmax(0, 1fr);
+  gap: 2px 4px;
+  padding: 6px;
+}
+
+.app-shell.fixed-play-screen .flow-play .play-board-region .played-slot {
+  min-height: 0;
+  padding: 0;
+}
+
+.app-shell.fixed-play-screen .flow-play .play-board-region .cardholder {
+  height: calc(var(--table-card-face-width) * 1.4 + 28px);
+  min-height: 0;
+  aspect-ratio: auto;
+}
+
+.app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play .table-play-panel {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  gap: 8px;
+  min-height: calc(var(--flow-hand-height) + var(--flow-panel-space));
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Reset the former independent viewport anchors, including short-screen rules. */
+.app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play .table-play-panel :is(.result, .outcome, .explanation, .full-hand-cards, .action-row) {
+  position: static;
+  inset: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play .table-play-panel :is(.result, .outcome, .explanation) {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 4px 2px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.app-shell.fixed-play-screen .flow-play .table-play-panel .lesson-heading {
+  display: none;
+}
+
+.app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play .table-play-panel .full-hand-cards {
+  --full-hand-max-card-width: var(--flow-card-width);
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: repeat(2, calc(var(--flow-card-width) * 1.4));
+  align-content: end;
+  flex: none;
+  gap: 8px 4px;
+  width: 100%;
+  height: var(--flow-hand-height);
+  min-height: 0;
+  margin-top: auto;
+  padding: 0;
+}
+
+.app-shell.fixed-play-screen .flow-play .table-play-panel .full-hand-cards > .hand-card {
+  width: var(--flow-card-width);
+  max-width: var(--flow-card-width);
+  align-self: start;
+}
+
+.app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play .action-row {
+  display: grid;
+  grid-template-columns: 0.8fr 1fr;
+  flex: none;
+  gap: 8px;
+  width: 100%;
+  margin-top: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play .action-row:has(> :nth-child(3)) {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play .full-hand-cards + .action-row {
+  margin-top: 0;
+}
+
+.app-shell.fixed-play-screen .flow-play .action-row > button {
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px;
+  font-size: 0.88rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play.table-hidden .table-play-panel {
+  flex: 1;
+}
+
+.app-shell.fixed-play-screen .flow-play .play-board-region .bridge-table {
+  --bridge-card-width: var(--flow-card-width);
+  --bridge-mini-card-width: var(--bridge-card-width);
+  --bridge-hand-height: calc(var(--bridge-card-width) * 2.8 + 6px);
+  --bridge-felt-min-height: 0px;
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: calc(var(--bridge-hand-height) + 14px) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.app-shell.fixed-play-screen .flow-play .play-board-region .bridge-felt .card-table.compass-table {
+  --table-card-face-width: var(--bridge-card-width);
+  --table-holder-label-size: 0.5rem;
+  --table-holder-width: max(46px, calc(var(--bridge-card-width) + 12px));
+  --table-holder-padding: 2px 3px 20px;
+  grid-template-rows: minmax(0, 1fr) 4px minmax(0, 1fr);
+  padding: 4px;
+}
+
+.app-shell.fixed-play-screen .flow-play .play-board-region .bridge-felt .cardholder {
+  height: calc(var(--bridge-card-width) * 1.4 + 28px);
+  aspect-ratio: auto;
+  min-height: 0;
+}
+
+.app-shell.fixed-play-screen .flow-play .play-board-region .cardholder-label {
+  grid-column: auto;
+  grid-row: auto;
+  right: 2px;
+  left: 2px;
+  bottom: 2px;
+  padding: 1px 2px;
+}
+
+.app-shell.fixed-play-screen .flow-play .play-board-region .cardholder-label > :is(span, small) {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+@media (min-width: 821px) {
+  .app-shell.fixed-play-screen:has(.flow-play) {
+    max-width: 720px;
+  }
+}

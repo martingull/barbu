@@ -1,6 +1,7 @@
 import App from "./App.svelte";
 import { mount } from "svelte";
 import "./styles.css";
+import "./tableLayout.css";
 
 function applyPlatformInsets() {
   if (/Android/i.test(navigator.userAgent)) {

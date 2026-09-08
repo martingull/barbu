@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
   import CardTable from "./CardTable.svelte";
+  import { fitBridgeCardSize } from "./tableLayout";
   import type { Seat, TableCard } from "./lessonTypes";
 
   type TablePlayMode = "play" | "result";
@@ -10,6 +11,7 @@
     backLabel?: string;
     eyebrow?: string;
     mode?: TablePlayMode;
+    flowLayout?: boolean;
     onBack: () => void;
     onSurfaceClick?: () => void;
     panel: Snippet;
@@ -35,6 +37,7 @@
     backLabel = "Table",
     eyebrow = "",
     mode = "play",
+    flowLayout = false,
     onBack,
     onSurfaceClick,
     panel,
@@ -89,7 +92,9 @@
   class:compact-play={mode === "play"}
   class:compact-result={mode === "result"}
   class:table-hidden={!showTable}
+  class:flow-play={flowLayout && mode === "play"}
   class={`table-play-surface ${surfaceClassName}`.trim()}
+  use:fitBridgeCardSize={flowLayout && mode === "play" && tableVariant === "bridge"}
   aria-label={ariaLabel}
 >
   {#if summary}
@@ -105,21 +110,29 @@
   {/if}
 
   {#if showTable}
-    {#if useCustomTable && table}
-      {@render table()}
-    {:else if onSurfaceClick}
-      <div
-        class="table-tap-target"
-        onclick={onSurfaceClick}
-        onkeydown={handleSurfaceKeydown}
-        role="button"
-        tabindex="0"
-        aria-label="Continue to next trick"
-      >
-        <CardTable ariaLabel={tableAriaLabel} {pendingBySeat} tableCards={tableCards} variant={tableVariant} />
-      </div>
+    {#snippet board()}
+      {#if useCustomTable && table}
+        {@render table()}
+      {:else if onSurfaceClick}
+        <div
+          class="table-tap-target"
+          onclick={onSurfaceClick}
+          onkeydown={handleSurfaceKeydown}
+          role="button"
+          tabindex="0"
+          aria-label="Continue to next trick"
+        >
+          <CardTable ariaLabel={tableAriaLabel} {pendingBySeat} {tableCards} />
+        </div>
+      {:else}
+        <CardTable ariaLabel={tableAriaLabel} {pendingBySeat} {tableCards} />
+      {/if}
+    {/snippet}
+
+    {#if flowLayout && mode === "play"}
+      <div class="play-board-region">{@render board()}</div>
     {:else}
-      <CardTable ariaLabel={tableAriaLabel} {pendingBySeat} tableCards={tableCards} variant={tableVariant} />
+      {@render board()}
     {/if}
   {/if}
 

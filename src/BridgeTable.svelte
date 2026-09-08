@@ -184,9 +184,10 @@
   }
 
   .bridge-felt :global(.cardholder-label) {
-    padding: 3px 5px;
+    gap: 0;
+    padding: 1px 2px;
     border-radius: 6px;
-    background: rgba(7, 21, 14, 0.58);
+    background: rgba(7, 21, 14, 0.42);
     color: #f7faf3;
   }
 
@@ -255,5 +256,25 @@
     box-shadow:
       0 0 0 2px rgba(245, 241, 207, 0.95),
       0 8px 16px rgba(4, 18, 11, 0.22);
+  }
+
+  @media (max-width: 700px) {
+    .bridge-table {
+      --bridge-seat-label-size: clamp(0.42rem, 1dvh, 0.54rem);
+    }
+  }
+
+  @media (max-width: 520px) and (max-height: 700px) {
+    .bridge-table :global(.bridge-table-hand.full-hand-cards) {
+      gap: 2px 3px;
+    }
+  }
+
+  @media (max-width: 520px) and (max-height: 600px) {
+    .bridge-dummy-hidden {
+      padding: 5px 8px;
+      font-size: 0.58rem;
+      line-height: 1.05;
+    }
   }
 </style>

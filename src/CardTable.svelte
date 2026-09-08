@@ -8,7 +8,6 @@
     pendingBySeat?: Partial<Record<Seat, string>>;
     seatLabels?: Partial<Record<Seat, string>>;
     seatRoleLabels?: Partial<Record<Seat, string>>;
-    variant?: "default" | "bridge";
   };
 
   let {
@@ -16,8 +15,7 @@
     tableCards,
     pendingBySeat = {},
     seatLabels = {},
-    seatRoleLabels = {},
-    variant = "default"
+    seatRoleLabels = {}
   }: Props = $props();
 
   function cardAt(seat: Seat) {
@@ -32,89 +30,33 @@
     return seatRoleLabels[seat] ?? "";
   }
 
-  const tutorCard = $derived(cardAt("Tutor"));
-  const leftCard = $derived(cardAt("Left"));
-  const rightCard = $derived(cardAt("Right"));
-  const youCard = $derived(cardAt("You"));
+  const seats: { seat: Seat; slot: string }[] = [
+    { seat: "Tutor", slot: "tutor" },
+    { seat: "Left", slot: "left" },
+    { seat: "Right", slot: "right" },
+    { seat: "You", slot: "you" }
+  ];
 </script>
 
-<section class:bridge-table={variant === "bridge"} class:compass-table={variant !== "bridge"} class="card-table" aria-label={ariaLabel}>
-  {#if variant === "bridge"}
-    <div class="bridge-opponent-stack bridge-west-stack" aria-hidden="true">
-      {#each Array(5) as _, index}
-        <span style={`--stack-index: ${index}`}></span>
-      {/each}
-    </div>
-    <div class="bridge-opponent-stack bridge-east-stack" aria-hidden="true">
-      {#each Array(5) as _, index}
-        <span style={`--stack-index: ${index}`}></span>
-      {/each}
-    </div>
-  {/if}
-
-  <div class="played-slot tutor-slot">
-    <div class:active={Boolean(pendingBySeat.Tutor) || Boolean(tutorCard)} class:occupied={Boolean(tutorCard)} class="cardholder">
-      {#if tutorCard}
-        <div class:heart={tutorCard.suit === "H"} class="table-card">
-          <CardFace card={tutorCard} />
-        </div>
-      {/if}
-      <span class="cardholder-label">
-        <span>{seatLabel("Tutor")}</span>
-        {#if seatRoleLabel("Tutor")}
-          <small>{seatRoleLabel("Tutor")}</small>
+<section class="card-table compass-table" aria-label={ariaLabel}>
+  {#each seats as { seat, slot } (seat)}
+    {@const card = cardAt(seat)}
+    <div class={`played-slot ${slot}-slot`}>
+      <div class:active={Boolean(pendingBySeat[seat]) || Boolean(card)} class:occupied={Boolean(card)} class="cardholder">
+        {#if card}
+          <div class:heart={card.suit === "H"} class="table-card">
+            <CardFace {card} />
+          </div>
         {/if}
-      </span>
+        <span class="cardholder-label">
+          <span>{seatLabel(seat)}</span>
+          {#if seatRoleLabel(seat)}
+            <small>{seatRoleLabel(seat)}</small>
+          {/if}
+        </span>
+      </div>
     </div>
-  </div>
-
-  <div class="played-slot left-slot">
-    <div class:active={Boolean(pendingBySeat.Left) || Boolean(leftCard)} class:occupied={Boolean(leftCard)} class="cardholder">
-      {#if leftCard}
-        <div class:heart={leftCard.suit === "H"} class="table-card">
-          <CardFace card={leftCard} />
-        </div>
-      {/if}
-      <span class="cardholder-label">
-        <span>{seatLabel("Left")}</span>
-        {#if seatRoleLabel("Left")}
-          <small>{seatRoleLabel("Left")}</small>
-        {/if}
-      </span>
-    </div>
-  </div>
-
-  <div class="played-slot right-slot">
-    <div class:active={Boolean(pendingBySeat.Right) || Boolean(rightCard)} class:occupied={Boolean(rightCard)} class="cardholder">
-      {#if rightCard}
-        <div class:heart={rightCard.suit === "H"} class="table-card">
-          <CardFace card={rightCard} />
-        </div>
-      {/if}
-      <span class="cardholder-label">
-        <span>{seatLabel("Right")}</span>
-        {#if seatRoleLabel("Right")}
-          <small>{seatRoleLabel("Right")}</small>
-        {/if}
-      </span>
-    </div>
-  </div>
-
-  <div class="played-slot you-slot">
-    <div class:active={Boolean(pendingBySeat.You) || Boolean(youCard)} class:occupied={Boolean(youCard)} class="cardholder">
-      {#if youCard}
-        <div class:heart={youCard.suit === "H"} class="table-card">
-          <CardFace card={youCard} />
-        </div>
-      {/if}
-      <span class="cardholder-label">
-        <span>{seatLabel("You")}</span>
-        {#if seatRoleLabel("You")}
-          <small>{seatRoleLabel("You")}</small>
-        {/if}
-      </span>
-    </div>
-  </div>
+  {/each}
 </section>
 
 <style>
@@ -135,62 +77,6 @@
       radial-gradient(circle at center, rgba(255, 255, 255, 0.18), transparent 56%),
       #386b54;
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
-  }
-
-  .bridge-table {
-    min-height: 360px;
-    overflow: hidden;
-    border-color: rgba(245, 241, 207, 0.32);
-    border-radius: 999px / 62%;
-    background:
-      radial-gradient(ellipse at center, rgba(255, 255, 255, 0.16), transparent 54%),
-      radial-gradient(ellipse at 50% 48%, rgba(75, 35, 73, 0.68), rgba(35, 63, 50, 0.42) 68%, transparent 70%),
-      #295544;
-    box-shadow:
-      inset 0 0 0 6px rgba(245, 241, 207, 0.08),
-      inset 0 0 34px rgba(6, 20, 13, 0.36);
-  }
-
-  .bridge-table::before {
-    content: "";
-    position: absolute;
-    inset: 5%;
-    border: 1px solid rgba(245, 241, 207, 0.14);
-    border-radius: inherit;
-    pointer-events: none;
-  }
-
-  .bridge-opponent-stack {
-    position: absolute;
-    top: 50%;
-    z-index: 0;
-    width: 50px;
-    height: 86px;
-    transform: translateY(-50%);
-  }
-
-  .bridge-west-stack {
-    left: 20px;
-  }
-
-  .bridge-east-stack {
-    right: 20px;
-  }
-
-  .bridge-opponent-stack span {
-    position: absolute;
-    inset: 0;
-    border: 2px solid #fff7ec;
-    border-radius: 7px;
-    background:
-      repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.18) 0 3px, transparent 3px 6px),
-      #c83f45;
-    box-shadow: 0 6px 12px rgba(5, 16, 10, 0.22);
-    transform: translateX(calc(var(--stack-index) * 5px));
-  }
-
-  .bridge-east-stack span {
-    transform: translateX(calc(var(--stack-index) * -5px));
   }
 
   .compass-table {
@@ -214,34 +100,6 @@
     min-width: 0;
     min-height: 0;
     padding: 0;
-  }
-
-  .tutor-slot {
-    grid-column: 1;
-    grid-row: 1;
-    align-self: start;
-    padding-top: 54px;
-  }
-
-  .left-slot {
-    grid-column: 1;
-    grid-row: 1;
-    justify-self: start;
-    padding-left: 52px;
-  }
-
-  .right-slot {
-    grid-column: 1;
-    grid-row: 1;
-    justify-self: end;
-    padding-right: 52px;
-  }
-
-  .you-slot {
-    grid-column: 1;
-    grid-row: 1;
-    align-self: end;
-    padding-bottom: 54px;
   }
 
   .compass-table .tutor-slot {
@@ -347,26 +205,6 @@
     font-size: 0.78em;
   }
 
-  .bridge-table .cardholder {
-    --table-card-face-width: 54px;
-    --table-holder-label-size: 0.66rem;
-    --table-holder-width: 84px;
-    width: 84px;
-    border-color: rgba(245, 241, 207, 0.42);
-    background: rgba(8, 30, 21, 0.22);
-  }
-
-  .bridge-table .cardholder-label {
-    padding: 4px 7px;
-    border-radius: 6px;
-    background: rgba(7, 21, 14, 0.6);
-    color: #f7faf3;
-  }
-
-  .bridge-table .cardholder .table-card {
-    width: var(--table-card-face-width);
-  }
-
   .table-card {
     align-self: start;
     grid-column: 1;
@@ -428,74 +266,6 @@
 
     .cardholder-label {
       font-size: var(--table-holder-label-size);
-    }
-
-    .tutor-slot {
-      padding-top: 18px;
-    }
-
-    .left-slot {
-      padding-left: 18px;
-    }
-
-    .right-slot {
-      padding-right: 18px;
-    }
-
-    .you-slot {
-      padding-bottom: 18px;
-    }
-
-    .bridge-table {
-      grid-template-rows: 246px;
-      min-height: auto;
-      border-radius: 52% / 38%;
-    }
-
-    .bridge-table .cardholder {
-      width: 72px;
-      padding: 4px 4px 15px;
-    }
-
-    .bridge-table .cardholder .table-card {
-      width: 46px;
-    }
-
-    .bridge-table .tutor-slot {
-      padding-top: 10px;
-    }
-
-    .bridge-table .left-slot {
-      padding-left: 48px;
-    }
-
-    .bridge-table .right-slot {
-      padding-right: 48px;
-    }
-
-    .bridge-table .you-slot {
-      padding-bottom: 10px;
-    }
-
-    .bridge-opponent-stack {
-      width: 36px;
-      height: 62px;
-    }
-
-    .bridge-west-stack {
-      left: 8px;
-    }
-
-    .bridge-east-stack {
-      right: 8px;
-    }
-
-    .bridge-opponent-stack span {
-      transform: translateX(calc(var(--stack-index) * 3px));
-    }
-
-    .bridge-east-stack span {
-      transform: translateX(calc(var(--stack-index) * -3px));
     }
   }
 
