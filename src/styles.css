@@ -2943,12 +2943,12 @@ strong[aria-label="Whist dealer"] {
 .hand-card.selected {
   border-color: transparent;
   background: transparent;
-  outline: 0;
-  box-shadow:
-    inset 0 0 0 3px #f5f1cf,
-    inset 0 0 0 6px rgba(40, 79, 64, 0.78),
-    0 10px 20px rgba(4, 18, 11, 0.28);
+  box-shadow: none;
   transform: none;
+}
+
+.has-selection .hand-card:not([aria-pressed="true"]):not(.illegal):not(.played) {
+  opacity: 0.55;
 }
 
 .hand-card.recommended:not(.selected) {

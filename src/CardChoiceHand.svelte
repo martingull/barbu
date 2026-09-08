@@ -37,7 +37,7 @@
   }
 </script>
 
-<div class={className} aria-label={ariaLabel}>
+<div class={className} class:has-selection={cards.some(isPressed)} aria-label={ariaLabel}>
   {#each sortCardsForDisplay(cards) as card}
     <button
       aria-label={`${card.rank} ${card.suit}`}
