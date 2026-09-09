@@ -1212,6 +1212,15 @@ fn choose_spades_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
     }
 
     if context.opponent_nil_winning {
+        if follows_suit {
+            return highest_card_matching(&legal, |card| !card_would_win_whist_trick(state, card))
+                .or_else(|| lowest_card(&legal));
+        }
+        if let Some(card) = lowest_card_matching(&legal, |card| {
+            card.suit != Suit::Spades && !card_would_win_whist_trick(state, card)
+        }) {
+            return Some(card);
+        }
         return lowest_card_matching(&legal, |card| !card_would_win_whist_trick(state, card))
             .or_else(|| lowest_card(&legal));
     }
@@ -1570,6 +1579,79 @@ impl DeterministicRng {
 mod tests {
     use super::*;
     use crate::cards::Rank;
+
+    #[test]
+    fn spades_nil_policy_matches_shared_browser_fixtures() {
+        use serde_json::Value;
+
+        fn card(value: &Value) -> Card {
+            let id = value.as_str().unwrap();
+            let (rank, suit) = id.split_at(id.len() - 1);
+            Card::new(
+                Rank::ALL
+                    .into_iter()
+                    .find(|r| r.short_name() == rank)
+                    .unwrap(),
+                Suit::ALL
+                    .into_iter()
+                    .find(|s| s.short_name() == suit)
+                    .unwrap(),
+            )
+        }
+
+        let cases: Value = serde_json::from_str(include_str!(
+            "../../../tests/fixtures/spades-nil-policy.json"
+        ))
+        .unwrap();
+        for case in cases.as_array().unwrap() {
+            for rotation in 0..4 {
+                let player = (case["player"].as_u64().unwrap() as usize + rotation) % 4;
+                let mut bids = [0; 4];
+                for seat in 0..4 {
+                    bids[(seat + rotation) % 4] = case["bids"][seat].as_u64().unwrap();
+                }
+                let mut hands = [Vec::new(), Vec::new(), Vec::new(), Vec::new()];
+                hands[player] = case["hand"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(card)
+                    .collect();
+                let mut state = SpadesHandState {
+                    id: format!(
+                        "spades-hand-fixture-bids-{}.{}.{}.{}-S",
+                        bids[0], bids[1], bids[2], bids[3]
+                    ),
+                    hands,
+                    current_player: player,
+                    current_trick: case["trick"]
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .map(|play| {
+                            PlayedCard::new(
+                                (play[0].as_u64().unwrap() as usize + rotation) % 4,
+                                card(&play[1]),
+                            )
+                        })
+                        .collect(),
+                    completed_tricks: Vec::new(),
+                    status: HandStatus::InProgress,
+                };
+                for _ in 0..2 {
+                    let chosen = choose_spades_opponent_card(&state);
+                    assert_eq!(
+                        chosen,
+                        Some(card(&case["expected"])),
+                        "{} rotation {rotation}",
+                        case["name"]
+                    );
+                    assert!(state.legal_cards_for_player(player).contains(&chosen.unwrap()));
+                    state.hands[player].reverse();
+                }
+            }
+        }
+    }
 
     #[test]
     fn no_hearts_hand_deals_thirteen_cards_to_each_player() {

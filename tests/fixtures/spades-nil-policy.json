@@ -1,0 +1,13 @@
+[
+  {"name":"follow with the highest losing card","hand":["2C","QC","AC"],"player":1,"bids":[0,3,3,3],"trick":[[0,"KC"]],"expected":"QC"},
+  {"name":"follow spades with the highest losing trump","hand":["3S","QS","AS"],"player":1,"bids":[0,3,3,3],"trick":[[0,"KS"]],"expected":"QS"},
+  {"name":"forced winner preserves the higher card","hand":["JC","KC"],"player":1,"bids":[0,3,3,3],"trick":[[0,"9C"]],"expected":"JC"},
+  {"name":"void player discards low instead of trumping","hand":["2S","5D","AD"],"player":1,"bids":[0,3,3,3],"trick":[[0,"KC"]],"expected":"5D"},
+  {"name":"void player preserves a losing trump when a plain discard exists","hand":["2S","5D","AD"],"player":1,"bids":[0,3,3,3],"trick":[[3,"3C"],[0,"9S"]],"expected":"5D"},
+  {"name":"only trumps remain so undertrump cheaply","hand":["2S","7S","JS"],"player":1,"bids":[0,3,3,3],"trick":[[3,"3C"],[0,"9S"]],"expected":"2S"},
+  {"name":"forced overtrump uses the cheapest winner","hand":["JS","AS"],"player":1,"bids":[0,3,3,3],"trick":[[3,"3C"],[0,"9S"]],"expected":"JS"},
+  {"name":"cannot discard while holding the led suit","hand":["2C","QC","AD"],"player":1,"bids":[0,3,3,3],"trick":[[0,"KC"]],"expected":"QC"},
+  {"name":"shed the highest led-suit card beneath a trump","hand":["2C","AC"],"player":1,"bids":[0,3,3,3],"trick":[[3,"3C"],[0,"9S"]],"expected":"AC"},
+  {"name":"own nil still takes priority","hand":["2S","5D","AD"],"player":1,"bids":[0,0,3,3],"trick":[[0,"KC"]],"expected":"AD"},
+  {"name":"ordinary opponent does not trigger nil ducking","hand":["2C","QC","AC"],"player":1,"bids":[3,3,3,3],"trick":[[0,"KC"]],"expected":"AC"}
+]
