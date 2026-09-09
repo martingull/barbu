@@ -1,0 +1,22 @@
+[
+  {"name":"discard the queen onto any opponent","hand":["QS","AH","KH"],"player":1,"trick":[[0,"7C"]],"history":[],"expected":"QS"},
+  {"name":"second seat ducks instead of targeting the winner","hand":["AC","3C"],"player":1,"trick":[[0,"KC"]],"history":[],"expected":"3C"},
+  {"name":"fourth seat sheds ace on a clean trick","hand":["AC","3C"],"player":3,"trick":[[0,"KC"],[1,"QC"],[2,"JC"]],"history":[],"expected":"AC"},
+  {"name":"fourth seat ducks a loaded trick","hand":["AC","3C","9C"],"player":3,"trick":[[0,"KC"],[1,"2H"],[2,"JC"]],"history":[],"expected":"9C"},
+  {"name":"forced fourth seat sheds highest card","hand":["AC","KC"],"player":3,"trick":[[0,"QC"],[1,"2H"],[2,"JC"]],"history":[],"expected":"AC"},
+  {"name":"discard queen below ace instead of preserving it under king","hand":["QS","KS","3S"],"player":1,"trick":[[0,"AS"]],"history":[],"expected":"QS"},
+  {"name":"do not win with queen when king is available","hand":["QS","KS"],"player":1,"trick":[[0,"JS"]],"history":[],"expected":"KS"},
+  {"name":"never lead high spade into an outstanding queen","hand":["AS","KS","5D"],"player":0,"trick":[],"history":[],"expected":"5D"},
+  {"name":"known void makes a high diamond lead unsafe","hand":["KD","9C","AS"],"player":1,"trick":[],"history":[[[0,"4D"],[1,"6D"],[2,"AH"],[3,"7D"]]],"expected":"9C"},
+  {"name":"queen played permits high spade when no void is known","hand":["AS","5D"],"player":1,"trick":[],"history":[[[0,"KS"],[1,"QS"],[2,"2S"],[3,"3S"]]],"expected":"AS"},
+  {"name":"avoid giving more points to a credible moon threat","hand":["AH","KD","2D"],"player":1,"trick":[[0,"KC"]],"history":[[[0,"AC"],[1,"QS"],[2,"2H"],[3,"3C"]]],"expected":"KD"},
+  {"name":"take a point away from a credible moon threat","hand":["AC","3C"],"player":2,"trick":[[0,"KC"],[1,"4H"]],"history":[[[0,"AD"],[1,"QS"],[2,"2H"],[3,"3D"]]],"expected":"AC"},
+  {"name":"one stray heart does not trigger desperate moon defense","hand":["AC","3C"],"player":2,"trick":[[0,"KC"],[1,"4H"]],"history":[[[0,"AD"],[1,"2H"],[2,"2D"],[3,"3D"]]],"expected":"3C"},
+  {"name":"accidental queen capture does not force a moon attempt","hand":["KC","2C","3H"],"player":1,"trick":[[3,"10C"],[0,"4H"]],"history":[[[1,"AD"],[2,"QS"],[3,"2H"],[0,"3D"]]],"expected":"2C"},
+  {"name":"moon candidate with heart control takes points","hand":["KC","2C","AH","KH"],"player":1,"trick":[[3,"10C"],[0,"4H"]],"history":[[[1,"AD"],[2,"QS"],[3,"2H"],[0,"3D"]]],"expected":"KC"},
+  {"name":"moon candidate with heart control leads a master heart","hand":["9S","AH","KH"],"player":1,"trick":[],"history":[[[1,"AD"],[2,"QS"],[3,"2H"],[0,"3D"]]],"expected":"AH"},
+  {"name":"ordinary forced heart lead stays low","hand":["AH","2H"],"player":1,"trick":[],"history":[],"expected":"2H"},
+  {"name":"short high spade is worse than a low heart while queen is out","hand":["AS","2H","7D"],"player":1,"trick":[[0,"KC"]],"history":[],"expected":"AS"},
+  {"name":"legal first-trick filter must be respected","hand":["QS","AH","7D"],"legal":["7D"],"player":1,"trick":[[0,"2C"]],"history":[],"expected":"7D"},
+  {"name":"empty legal set has no move","hand":[],"player":0,"trick":[],"history":[],"expected":null}
+]

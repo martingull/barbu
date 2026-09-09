@@ -316,7 +316,7 @@ export const referenceCatalog: GameReference[] = [
         title: "Focused local match",
         coreStatus: "Core",
         appStatus: "Playable",
-        note: "The match uses rotating pass directions, 2♣ opening, follow-suit legality, first-trick penalty restrictions, hearts-broken lead restrictions, trick winners, hearts, queen-of-spades scoring, shoot-the-moon scoring, and a 100-point target."
+        note: "The match uses rotating pass directions, 2♣ opening, follow-suit legality, first-trick penalty restrictions, hearts-broken lead restrictions, trick winners, hearts, queen-of-spades scoring, shoot-the-moon scoring, and a 100-point target. Computer players use their own cards and public play, with heuristic decisions rather than expert search."
       },
       {
         id: "passing",

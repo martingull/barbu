@@ -17,7 +17,6 @@ pub type HeartsHandState = TrickTakingHandState;
 pub type WhistHandState = TrickTakingHandState;
 pub type SpadesHandState = TrickTakingHandState;
 const HEARTS_TRUMP_SUIT: Suit = Suit::Hearts;
-const HEARTS_MOON_LEAD_THRESHOLD: i32 = 8;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TrickTakingHandState {
@@ -1074,222 +1073,21 @@ fn score_hearts_trick(_state: &TrickTakingHandState, cards: &[PlayedCard]) -> i3
 
 fn choose_hearts_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
     let legal = state.legal_cards_for_player(state.current_player);
-    let led_suit = state.led_suit();
-
-    if legal.is_empty() {
-        return None;
-    }
-
-    if led_suit.is_none() {
-        return choose_hearts_lead_card(state, &legal);
-    }
-
-    let follows_suit = legal.iter().all(|card| Some(card.suit) == led_suit);
-    let moon_candidate = hearts_moon_candidate(state);
-    let current_winner = if state.current_trick.is_empty() {
-        None
-    } else {
-        trick_winner_for_state(state, &state.current_trick)
-    };
-    let current_trick_is_loaded = hearts_trick_penalty(&state.current_trick) > 0;
-
-    if !follows_suit {
-        if let Some(candidate) = moon_candidate {
-            if state.current_player != candidate && current_winner == Some(candidate) {
-                return lowest_card_matching(&legal, |card| !is_hearts_penalty_card(card))
-                    .or_else(|| lowest_card(&legal));
-            }
-        }
-
-        return choose_hearts_void_discard(&legal, current_winner, current_trick_is_loaded);
-    }
-
-    if let Some(candidate) = moon_candidate {
-        if current_trick_is_loaded {
-            if state.current_player == candidate {
-                return lowest_winning_card(state, &legal).or_else(|| lowest_card(&legal));
-            }
-
-            if current_winner == Some(candidate) {
-                if let Some(card) = lowest_winning_card(state, &legal) {
-                    return Some(card);
-                }
-            }
-        }
-    }
-
-    if current_winner == Some(2) && !current_trick_is_loaded {
-        if let Some(card) = lowest_winning_non_penalty_card(state, &legal) {
-            return Some(card);
-        }
-    }
-
-    if let Some(card) = highest_non_winning_card(state, &legal) {
-        return Some(card);
-    }
-
-    lowest_card_matching(&legal, |card| !is_hearts_penalty_card(card))
-        .or_else(|| lowest_card(&legal))
-}
-
-fn choose_hearts_lead_card(state: &TrickTakingHandState, legal: &[Card]) -> Option<Card> {
-    if hearts_moon_lead_candidate(state, state.current_player) {
-        return highest_card_matching(legal, |card| card.suit == Suit::Hearts)
-            .or_else(|| {
-                highest_card_from_shortest_suit(legal, |card| !is_hearts_penalty_card(card))
-            })
-            .or_else(|| highest_card(legal));
-    }
-
-    highest_card_from_shortest_suit(legal, |card| {
-        !is_hearts_penalty_card(card)
-            && !is_dangerous_high_spade_lead(state, state.current_player, card)
+    crate::hearts::choose_hearts_card(&crate::hearts::HeartsPosition {
+        hand: &state.hands[state.current_player],
+        legal: &legal,
+        player: state.current_player,
+        trick: &state.current_trick,
+        history: &state.completed_tricks,
     })
-    .or_else(|| {
-        lowest_card_matching(legal, |card| {
-            !is_hearts_penalty_card(card)
-                && !is_dangerous_high_spade_lead(state, state.current_player, card)
-        })
-    })
-    .or_else(|| lowest_card_matching(legal, |card| card.suit == Suit::Hearts))
-    .or_else(|| lowest_card(legal))
-}
-
-fn is_dangerous_high_spade_lead(
-    state: &TrickTakingHandState,
-    player: PlayerIndex,
-    card: Card,
-) -> bool {
-    card.suit == Suit::Spades
-        && card.rank > Rank::Queen
-        && queen_spades_is_unresolved_for_player(state, player)
-}
-
-fn queen_spades_is_unresolved_for_player(
-    state: &TrickTakingHandState,
-    player: PlayerIndex,
-) -> bool {
-    let queen_spades = Card::new(Rank::Queen, Suit::Spades);
-
-    if state.hands[player].contains(&queen_spades) {
-        return false;
-    }
-
-    !state
-        .completed_tricks
-        .iter()
-        .flat_map(|trick| trick.cards.iter())
-        .chain(state.current_trick.iter())
-        .any(|played| played.card == queen_spades)
-}
-
-fn hearts_moon_lead_candidate(state: &TrickTakingHandState, player: PlayerIndex) -> bool {
-    hearts_moon_candidate(state) == Some(player)
-        && hearts_player_penalty_so_far(state, player) >= HEARTS_MOON_LEAD_THRESHOLD
-}
-
-fn hearts_player_penalty_so_far(state: &TrickTakingHandState, player: PlayerIndex) -> i32 {
-    state
-        .completed_tricks
-        .iter()
-        .filter(|trick| trick.winner == player)
-        .map(|trick| trick.penalty)
-        .sum()
-}
-
-fn choose_hearts_void_discard(
-    legal: &[Card],
-    current_winner: Option<PlayerIndex>,
-    current_trick_is_loaded: bool,
-) -> Option<Card> {
-    let queen_spades = Card::new(Rank::Queen, Suit::Spades);
-
-    if legal.contains(&queen_spades) {
-        if current_winner == Some(2) || current_trick_is_loaded {
-            return Some(queen_spades);
-        }
-
-        return highest_card_matching(legal, |card| card.suit == Suit::Hearts)
-            .or_else(|| highest_card_matching(legal, |card| card != queen_spades))
-            .or(Some(queen_spades));
-    }
-
-    highest_hearts_penalty_discard(legal).or_else(|| highest_card(legal))
-}
-
-fn highest_card_from_shortest_suit(
-    cards: &[Card],
-    predicate: impl Fn(Card) -> bool,
-) -> Option<Card> {
-    cards
-        .iter()
-        .copied()
-        .filter(|card| predicate(*card))
-        .min_by(|left, right| {
-            suit_count(cards, left.suit)
-                .cmp(&suit_count(cards, right.suit))
-                .then_with(|| right.rank.cmp(&left.rank))
-                .then_with(|| left.suit.short_name().cmp(right.suit.short_name()))
-        })
 }
 
 fn suit_count(cards: &[Card], suit: Suit) -> usize {
     cards.iter().filter(|card| card.suit == suit).count()
 }
 
-fn hearts_moon_candidate(state: &TrickTakingHandState) -> Option<PlayerIndex> {
-    let mut scores = [0, 0, 0, 0];
-
-    for trick in &state.completed_tricks {
-        scores[trick.winner] += trick.penalty;
-    }
-
-    let total: i32 = scores.iter().sum();
-
-    if total == 0 {
-        return None;
-    }
-
-    scores
-        .iter()
-        .enumerate()
-        .find_map(|(player, score)| (*score == total).then_some(player))
-}
-
-fn hearts_trick_penalty(cards: &[PlayedCard]) -> i32 {
-    cards
-        .iter()
-        .map(|played| hearts_penalty_weight(played.card))
-        .sum()
-}
-
-fn lowest_winning_card(state: &TrickTakingHandState, cards: &[Card]) -> Option<Card> {
-    lowest_card_matching(cards, |card| card_would_win_trick(state, card))
-}
-
-fn lowest_winning_non_penalty_card(state: &TrickTakingHandState, cards: &[Card]) -> Option<Card> {
-    lowest_card_matching(cards, |card| {
-        card_would_win_trick(state, card) && !is_hearts_penalty_card(card)
-    })
-}
-
 fn choose_hearts_pass_cards(hand: &[Card]) -> Vec<Card> {
-    let mut cards = hand.to_vec();
-    cards.sort_by_key(|card| {
-        let penalty_priority = if is_hearts_penalty_card(*card) { 3 } else { 0 };
-        let queen_spades_priority = if card.rank == Rank::Queen && card.suit == Suit::Spades {
-            2
-        } else {
-            0
-        };
-
-        (
-            penalty_priority + queen_spades_priority,
-            card.rank as u8,
-            card.suit.short_name(),
-        )
-    });
-    cards.into_iter().rev().take(3).collect()
+    crate::hearts::choose_hearts_pass(hand)
 }
 
 fn has_duplicate_cards(cards: &[Card]) -> bool {
@@ -1619,24 +1417,6 @@ fn is_king_of_hearts(card: Card) -> bool {
 
 fn is_hearts_penalty_card(card: Card) -> bool {
     card.suit == Suit::Hearts || (card.rank == Rank::Queen && card.suit == Suit::Spades)
-}
-
-fn hearts_penalty_weight(card: Card) -> i32 {
-    if card.rank == Rank::Queen && card.suit == Suit::Spades {
-        13
-    } else if card.suit == Suit::Hearts {
-        1
-    } else {
-        0
-    }
-}
-
-fn highest_hearts_penalty_discard(cards: &[Card]) -> Option<Card> {
-    cards
-        .iter()
-        .copied()
-        .filter(|card| is_hearts_penalty_card(*card))
-        .max_by_key(|card| (hearts_penalty_weight(*card), card.rank as u8))
 }
 
 fn card_would_win_trick(state: &TrickTakingHandState, card: Card) -> bool {
@@ -3000,12 +2780,12 @@ mod tests {
 
         assert_eq!(
             choose_hearts_opponent_card(&state),
-            Some(Card::new(Rank::King, Suit::Diamonds))
+            Some(Card::new(Rank::Nine, Suit::Clubs))
         );
     }
 
     #[test]
-    fn hearts_opponent_can_lead_ace_spades_after_queen_spades_is_known() {
+    fn hearts_opponent_avoids_known_spade_void_even_after_queen_is_played() {
         let state = HeartsHandState {
             id: "hearts-ace-spades-safe-after-queen".to_string(),
             hands: [
@@ -3036,7 +2816,7 @@ mod tests {
 
         assert_eq!(
             choose_hearts_opponent_card(&state),
-            Some(Card::new(Rank::Ace, Suit::Spades))
+            Some(Card::new(Rank::King, Suit::Diamonds))
         );
     }
 
@@ -3081,7 +2861,7 @@ mod tests {
             hands: [
                 Vec::new(),
                 vec![
-                    Card::new(Rank::Two, Suit::Hearts),
+                    Card::new(Rank::King, Suit::Hearts),
                     Card::new(Rank::Ace, Suit::Hearts),
                     Card::new(Rank::Nine, Suit::Spades),
                 ],
@@ -3093,7 +2873,7 @@ mod tests {
             completed_tricks: vec![CompletedTrick {
                 cards: vec![
                     PlayedCard::new(1, Card::new(Rank::Queen, Suit::Spades)),
-                    PlayedCard::new(2, Card::new(Rank::Ace, Suit::Hearts)),
+                    PlayedCard::new(2, Card::new(Rank::Three, Suit::Hearts)),
                     PlayedCard::new(3, Card::new(Rank::Seven, Suit::Diamonds)),
                     PlayedCard::new(0, Card::new(Rank::Six, Suit::Diamonds)),
                 ],
@@ -3182,7 +2962,7 @@ mod tests {
     }
 
     #[test]
-    fn hearts_opponent_moon_candidate_captures_loaded_trick() {
+    fn hearts_opponent_does_not_chase_moon_without_heart_control() {
         let state = HeartsHandState {
             id: "hearts-opponent-pursues-moon".to_string(),
             hands: [
@@ -3214,14 +2994,14 @@ mod tests {
 
         assert_eq!(
             choose_hearts_opponent_card(&state),
-            Some(Card::new(Rank::King, Suit::Clubs))
+            Some(Card::new(Rank::Two, Suit::Clubs))
         );
     }
 
     #[test]
-    fn hearts_opponent_takes_clean_trick_from_player_with_lowest_safe_winner() {
+    fn hearts_opponent_forced_to_win_early_preserves_higher_cards() {
         let state = HeartsHandState {
-            id: "hearts-pressure-player-clean-trick".to_string(),
+            id: "hearts-forced-early-winner".to_string(),
             hands: [
                 Vec::new(),
                 vec![
@@ -3233,7 +3013,7 @@ mod tests {
                 Vec::new(),
             ],
             current_player: 1,
-            current_trick: vec![PlayedCard::new(2, Card::new(Rank::Seven, Suit::Clubs))],
+            current_trick: vec![PlayedCard::new(0, Card::new(Rank::Seven, Suit::Clubs))],
             completed_tricks: Vec::new(),
             status: HandStatus::InProgress,
         };
@@ -3273,7 +3053,7 @@ mod tests {
     }
 
     #[test]
-    fn hearts_opponent_holds_queen_of_spades_on_clean_opponent_trick() {
+    fn hearts_opponent_dumps_queen_on_any_opponents_trick() {
         let state = HeartsHandState {
             id: "hearts-hold-queen-spades".to_string(),
             hands: [
@@ -3294,7 +3074,7 @@ mod tests {
 
         assert_eq!(
             choose_hearts_opponent_card(&state),
-            Some(Card::new(Rank::Ace, Suit::Hearts))
+            Some(Card::new(Rank::Queen, Suit::Spades))
         );
     }
 

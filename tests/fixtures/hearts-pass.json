@@ -1,0 +1,6 @@
+[
+  {"name":"retain low hearts and remove short high spades","hand":["2H","3H","4H","KS","AS","AD","2C","3C","4C","5C","6C","7C","8C"],"expected":["AS","KS","AD"]},
+  {"name":"pass an unguarded queen and high hearts","hand":["QS","AH","KH","2C","3C","4C","5C","6C","7C","8C","2D","3D","4D"],"expected":["QS","AH","KH"]},
+  {"name":"guarded queen can stay while high plain cards go","hand":["QS","2S","3S","4S","5S","AC","KC","AD","2H","3H","4H","5H","6H"],"expected":["AD","AC","KC"]},
+  {"name":"clear a short plain suit before passing low hearts","hand":["2C","3C","4C","2H","3H","4H","5H","6H","2S","3S","4S","5S","6S"],"expected":["4C","3C","2C"]}
+]

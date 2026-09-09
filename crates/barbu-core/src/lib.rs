@@ -4,6 +4,7 @@ pub mod contract_policy;
 pub mod domino;
 pub mod guided;
 pub mod hand;
+pub mod hearts;
 pub mod learning;
 pub mod practice;
 pub mod ruleset;

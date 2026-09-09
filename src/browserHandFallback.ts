@@ -1,4 +1,5 @@
 import { chooseWhistCard, whistPositionFromHand } from "./whistPolicy";
+import { chooseHeartsCard, chooseHeartsPass, heartsPositionFromHand } from "./heartsPolicy";
 import type {
   Card,
   BridgeAuctionCall,
@@ -34,7 +35,6 @@ const rankOrder: Record<Rank, number> = {
 };
 const suitOrder: Record<Suit, number> = { C: 0, D: 1, S: 2, H: 3 };
 const playerNames: Array<Seat> = ["Tutor", "Right", "You", "Left"];
-const heartsMoonLeadThreshold = 8;
 const bridgeVulnerabilityCycle: BridgeVulnerability[] = ["None", "NS", "EW", "Both"];
 
 export function startBrowserHeartsHand(seed: number): FullHandState {
@@ -642,6 +642,7 @@ export function hydrateFullHandState(state: FullHandState): FullHandState {
 function chooseOpponentCard(state: FullHandState) {
   if (state.contract === "Whist") return chooseWhistCard(whistPositionFromHand(state));
   const legal = legalCardsForState(state, state.currentPlayerIndex);
+  if (state.contract === "Hearts") return chooseHeartsCard(heartsPositionFromHand(state, legal));
   const led = ledSuit(state);
 
   if (!legal.length) {
@@ -660,9 +661,6 @@ function chooseOpponentCard(state: FullHandState) {
     }
     if (state.contract === "No Last Two") {
       return state.completedTricks.length >= 10 ? lowestCard(legal) : highestCard(legal);
-    }
-    if (state.contract === "Hearts") {
-      return chooseHeartsLeadCard(state, legal);
     }
     if (state.contract === "No Queens") {
       return lowestCard(legal.filter((card) => card.rank !== "Q")) ?? lowestCard(legal);
@@ -692,16 +690,6 @@ function chooseOpponentCard(state: FullHandState) {
     if (state.contract === "No Queens") {
       return highestCard(legal.filter((card) => card.rank === "Q")) ?? highestCard(legal);
     }
-    if (state.contract === "Hearts") {
-      const moonCandidate = heartsMoonCandidate(state);
-      const currentWinner = state.currentTrick.length ? trickWinnerForState(state, state.currentTrick) : undefined;
-
-      if (moonCandidate !== undefined && state.currentPlayerIndex !== moonCandidate && currentWinner === moonCandidate) {
-        return lowestCard(legal.filter((card) => !isPenaltyCard("Hearts", card))) ?? lowestCard(legal);
-      }
-
-      return chooseHeartsVoidDiscard(legal, currentWinner, heartsTrickPenalty(state.currentTrick) > 0);
-    }
     return highestCard(legal.filter((card) => isPenaltyCard(state.contract, card))) ?? highestCard(legal);
   }
 
@@ -725,36 +713,6 @@ function chooseOpponentCard(state: FullHandState) {
     return highestNonWinningQueen(state, legal) ?? highestNonWinningCard(state, legal) ?? lowestCard(legal);
   }
 
-  if (state.contract === "Hearts") {
-    const moonCandidate = heartsMoonCandidate(state);
-    const currentWinner = state.currentTrick.length ? trickWinnerForState(state, state.currentTrick) : undefined;
-    const currentTrickIsLoaded = heartsTrickPenalty(state.currentTrick) > 0;
-
-    if (moonCandidate !== undefined && currentTrickIsLoaded) {
-      if (state.currentPlayerIndex === moonCandidate) {
-        return lowestWinningCard(state, legal) ?? lowestCard(legal);
-      }
-
-      if (currentWinner === moonCandidate) {
-        const stopper = lowestWinningCard(state, legal);
-
-        if (stopper) {
-          return stopper;
-        }
-      }
-    }
-
-    if (currentWinner === 2 && !currentTrickIsLoaded) {
-      const pressureCard = lowestWinningNonPenaltyCard(state, legal);
-
-      if (pressureCard) {
-        return pressureCard;
-      }
-    }
-
-    return highestNonWinningCard(state, legal) ?? lowestCard(legal.filter((card) => !isPenaltyCard("Hearts", card))) ?? lowestCard(legal);
-  }
-
   if (state.contract === "No Last Two" && state.completedTricks.length >= 10) {
     return highestNonWinningCard(state, legal) ?? lowestCard(legal);
   }
@@ -768,7 +726,6 @@ function chooseOpponentCard(state: FullHandState) {
   }
 
   if (
-    state.contract === "Hearts" ||
     state.contract === "No Hearts" ||
     state.contract === "No Queens" ||
     state.contract === "King of Hearts"
@@ -1067,83 +1024,8 @@ function lowestWinningCard(state: FullHandState, cards: Card[]) {
   return lowestCard(cards.filter((card) => cardWouldWinTrick(state, card)));
 }
 
-function lowestWinningNonPenaltyCard(state: FullHandState, cards: Card[]) {
-  return lowestCard(cards.filter((card) => cardWouldWinTrick(state, card) && !isPenaltyCard("Hearts", card)));
-}
-
 function highestNonWinningQueen(state: FullHandState, cards: Card[]) {
   return highestCard(cards.filter((card) => card.rank === "Q" && !cardWouldWinTrick(state, card)));
-}
-
-function highestHeartsPenaltyDiscard(cards: Card[]) {
-  return cards
-    .filter((card) => isPenaltyCard("Hearts", card))
-    .sort((left, right) => heartsPenaltyWeight(left) - heartsPenaltyWeight(right) || compareByRankThenSuit(left, right))
-    .pop();
-}
-
-function chooseHeartsVoidDiscard(cards: Card[], currentWinner: number | undefined, currentTrickIsLoaded: boolean) {
-  const queenSpades = cards.find((card) => card.id === "QS");
-
-  if (queenSpades) {
-    if (currentWinner === 2 || currentTrickIsLoaded) {
-      return queenSpades;
-    }
-
-    return highestCard(cards.filter((card) => card.suit === "H")) ?? highestCard(cards.filter((card) => card.id !== "QS")) ?? queenSpades;
-  }
-
-  return highestHeartsPenaltyDiscard(cards) ?? highestCard(cards);
-}
-
-function chooseHeartsLeadCard(state: FullHandState, cards: Card[]) {
-  if (heartsMoonLeadCandidate(state, state.currentPlayerIndex)) {
-    return (
-      highestCard(cards.filter((card) => card.suit === "H")) ??
-      highestCardFromShortestSuit(cards.filter((card) => !isPenaltyCard("Hearts", card)), cards) ??
-      highestCard(cards)
-    );
-  }
-
-  return (
-    highestCardFromShortestSuit(
-      cards.filter((card) => !isPenaltyCard("Hearts", card) && !isDangerousHighSpadeLead(state, state.currentPlayerIndex, card)),
-      cards
-    ) ??
-    lowestCard(cards.filter((card) => !isPenaltyCard("Hearts", card) && !isDangerousHighSpadeLead(state, state.currentPlayerIndex, card))) ??
-    lowestCard(cards.filter((card) => card.suit === "H")) ??
-    lowestCard(cards)
-  );
-}
-
-function isDangerousHighSpadeLead(state: FullHandState, playerIndex: number, card: Card) {
-  return card.suit === "S" && rankOrder[card.rank as Rank] > rankOrder.Q && queenSpadesIsUnresolvedForPlayer(state, playerIndex);
-}
-
-function queenSpadesIsUnresolvedForPlayer(state: FullHandState, playerIndex: number) {
-  if (state.hands[playerIndex].some((card) => card.id === "QS")) {
-    return false;
-  }
-
-  return ![...state.completedTricks.flatMap((trick) => trick.cards), ...state.currentTrick].some((played) => played.card.id === "QS");
-}
-
-function heartsMoonLeadCandidate(state: FullHandState, playerIndex: number) {
-  return heartsMoonCandidate(state) === playerIndex && heartsPlayerPenaltySoFar(state, playerIndex) >= heartsMoonLeadThreshold;
-}
-
-function heartsPlayerPenaltySoFar(state: FullHandState, playerIndex: number) {
-  return state.completedTricks
-    .filter((trick) => trick.winnerIndex === playerIndex)
-    .reduce((total, trick) => total + trick.penalty, 0);
-}
-
-function highestCardFromShortestSuit(candidates: Card[], fullHand: Card[]) {
-  return candidates.slice().sort((left, right) => {
-    const suitPressure = suitCount(fullHand, left.suit) - suitCount(fullHand, right.suit);
-
-    return suitPressure || rankOrder[right.rank as Rank] - rankOrder[left.rank as Rank] || suitOrder[left.suit] - suitOrder[right.suit];
-  })[0];
 }
 
 function highestCardFromLongestSuit(candidates: Card[], fullHand: Card[]) {
@@ -1166,55 +1048,8 @@ function suitCount(cards: Card[], suit: Suit) {
   return cards.filter((card) => card.suit === suit).length;
 }
 
-function heartsPenaltyWeight(card: Card) {
-  if (card.rank === "Q" && card.suit === "S") {
-    return 13;
-  }
-  if (card.suit === "H") {
-    return 1;
-  }
-  return 0;
-}
-
-function heartsTrickPenalty(cards: TableCard[]) {
-  return cards.reduce((total, played) => total + heartsPenaltyWeight(played.card), 0);
-}
-
-function heartsMoonCandidate(state: FullHandState) {
-  const scores = [0, 0, 0, 0];
-
-  for (const trick of state.completedTricks) {
-    scores[trick.winnerIndex] += trick.penalty;
-  }
-
-  const total = scores.reduce((sum, score) => sum + score, 0);
-
-  if (total === 0) {
-    return undefined;
-  }
-
-  const playerIndex = scores.findIndex((score) => score === total);
-  return playerIndex >= 0 ? playerIndex : undefined;
-}
-
 function chooseHeartsPassCards(hand: Card[]) {
-  return hand
-    .slice()
-    .sort((left, right) => {
-      const leftPenalty = isPenaltyCard("Hearts", left) ? 3 : 0;
-      const rightPenalty = isPenaltyCard("Hearts", right) ? 3 : 0;
-      const leftQueenSpades = left.rank === "Q" && left.suit === "S" ? 2 : 0;
-      const rightQueenSpades = right.rank === "Q" && right.suit === "S" ? 2 : 0;
-
-      return (
-        leftPenalty +
-        leftQueenSpades -
-        (rightPenalty + rightQueenSpades) ||
-        rankOrder[left.rank as Rank] - rankOrder[right.rank as Rank] ||
-        suitOrder[left.suit] - suitOrder[right.suit]
-      );
-    })
-    .slice(-3);
+  return chooseHeartsPass(hand);
 }
 
 function recommendBrowserHeartsPassCards(hand: Card[]) {
