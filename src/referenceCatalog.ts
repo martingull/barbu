@@ -291,7 +291,7 @@ export const referenceCatalog: GameReference[] = [
         id: "scoring",
         title: "Scoring",
         body:
-          "Each heart is one penalty point and the queen of spades is thirteen penalty points. The trick winner receives all penalty cards in that trick. If one seat captures all 26 points in a hand, that seat shoots the moon and scores 0 while every other seat scores 26. Hands repeat until one seat reaches 100 points; low score wins the match.",
+          "Each heart is one penalty point and the queen of spades is thirteen penalty points. The trick winner receives all penalty cards in that trick. If one seat captures all 26 points in a hand, that seat shoots the moon and scores 0 while every other seat scores 26. Finish all thirteen tricks, then apply any moon score. If anyone has reached 100 or more points, the match ends and the lowest score wins; otherwise deal another hand.",
         facts: [
           { label: "Heart", value: "1 penalty point" },
           { label: "Queen of Spades", value: "13 penalty points" },
@@ -591,7 +591,7 @@ export const referenceCatalog: GameReference[] = [
         id: "scoring",
         title: "Scoring",
         body:
-          "A made bid scores ten points per bid book plus one point for each overtrick bag. A failed bid scores minus ten points per bid book. A nil bid scores 100 when that player takes no tricks and -100 when they take any trick. Every tenth accumulated bag costs 100 points. The local table plays to 500.",
+          "A made bid scores ten points per bid book plus one point for each overtrick bag. A failed bid scores minus ten points per bid book. A nil bid scores 100 when that player takes no tricks and -100 when they take any trick. Every tenth accumulated bag costs 100 points. After scoring all thirteen tricks, including nil and bag penalties, the match ends if a partnership has at least 500 points. The higher score wins; equal scores at or above 500 require another hand.",
         facts: [
           { label: "Made bid", value: "10 per bid book + bags" },
           { label: "Failed bid", value: "-10 per bid book" },

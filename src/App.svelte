@@ -1,4 +1,6 @@
 <script lang="ts">
+  import GameResult from "./GameResult.svelte";
+  import { spadesMatchComplete, spadesMatchTarget } from "./spadesScoring";
   import { whistFollowSuitDrillPool, whistTrumpOrDiscardDrillPool, whistThirdHandHighDrillPool, whistReturnPartnerSuitDrillPool, whistOpeningLeadLessonPool, whistOddTrickDrillPool } from "./whistLessons";
   import { invoke, isTauri } from "@tauri-apps/api/core";
   import {
@@ -606,7 +608,6 @@
   const heartsHandPenaltyTotal = 26;
   const heartsMatchTarget = 100;
   const whistMatchTarget = 5;
-  const spadesMatchTarget = 500;
   const seatByPlayerIndex: Record<number, Seat> = {
     0: "Tutor",
     1: "Right",
@@ -2420,14 +2421,14 @@
     };
   }
 
-  function bridgeScoreTotalsWith(result: BridgeHandResult | null) {
+  function bridgeScoreTotalsWith(result: BridgeHandResult | null, scores = bridgeMatchScores) {
     if (!result) {
-      return bridgeMatchScores;
+      return scores;
     }
 
     return {
-      ns: bridgeMatchScores.ns + (result.declarerSide === "NS" ? result.score : -result.score),
-      ew: bridgeMatchScores.ew + (result.declarerSide === "EW" ? result.score : -result.score)
+      ns: scores.ns + (result.declarerSide === "NS" ? result.score : -result.score),
+      ew: scores.ew + (result.declarerSide === "EW" ? result.score : -result.score)
     };
   }
 
@@ -2572,16 +2573,16 @@
     };
   }
 
-  function spadesHandResultFor(hand: FullHandState, handNumber = spadesHandResults.length + 1): SpadesHandResult {
+  function spadesHandResultFor(hand: FullHandState, handNumber = spadesHandResults.length + 1, bids = spadesBids, bags = spadesBagScores): SpadesHandResult {
     const partnershipTricks = whistPartnershipTrickCounts(hand.completedTricks);
     const seatTricks = seatTricksWonForTricks(hand.completedTricks);
-    const playerSide = spadesScoreForSide(seatTricks, spadesBids, spadesPlayerSideSeats, spadesBagScores.playerSide);
-    const opponentSide = spadesScoreForSide(seatTricks, spadesBids, spadesOpponentSideSeats, spadesBagScores.opponentSide);
+    const playerSide = spadesScoreForSide(seatTricks, bids, spadesPlayerSideSeats, bags.playerSide);
+    const opponentSide = spadesScoreForSide(seatTricks, bids, spadesOpponentSideSeats, bags.opponentSide);
 
     return {
       handNumber,
-      playerSideBid: spadesPartnershipBids.playerSide,
-      opponentSideBid: spadesPartnershipBids.opponentSide,
+      playerSideBid: spadesSideBid(bids, spadesPlayerSideSeats),
+      opponentSideBid: spadesSideBid(bids, spadesOpponentSideSeats),
       playerSideTricks: partnershipTricks.playerSide,
       opponentSideTricks: partnershipTricks.opponentSide,
       playerSideScore: playerSide.score,
@@ -2657,21 +2658,28 @@
       .join("; ");
   }
 
-  function whistMatchResultHeading() {
-    if (partnershipVisibleMatchScores.playerSide === partnershipVisibleMatchScores.opponentSide) {
-      return `${fullHand?.contract ?? "Partnership"} match tied`;
+  function spadesResultCopy(result: SpadesHandResult | null, scores: SpadesScoreState, complete: boolean) {
+    const matchScore = `${scores.playerSide} - ${scores.opponentSide}`;
+    if (complete) {
+      const playerWon = scores.playerSide > scores.opponentSide;
+      return {
+        heading: playerWon ? "Your partnership won the match" : "Opponents won the match",
+        summary: `${playerWon ? "You + Barbu" : "Left + Right"} reached ${Math.max(scores.playerSide, scores.opponentSide)} points. Final match score: ${matchScore}.`
+      };
     }
-
-    return partnershipVisibleMatchScores.playerSide > partnershipVisibleMatchScores.opponentSide
-      ? "Your partnership won"
-      : "Opponents won the match";
-  }
-
-  function whistMatchResultSummary() {
-    return `${partnershipMatchLeaderLabel} reached ${Math.max(
-      partnershipVisibleMatchScores.playerSide,
-      partnershipVisibleMatchScores.opponentSide
-    )} points. Final match score: ${partnershipMatchScoreLabel}.`;
+    if (!result) return { heading: "Spades hand complete", summary: "Play to 500 points." };
+    const nilText = spadesNilSummary(result.nilResults);
+    const penaltyText = [
+      result.playerSideBagPenalty ? `You + Barbu took a ${result.playerSideBagPenalty}-point bag penalty` : "",
+      result.opponentSideBagPenalty ? `Left + Right took a ${result.opponentSideBagPenalty}-point bag penalty` : ""
+    ].filter(Boolean).join("; ");
+    const tiedAtTarget = scores.playerSide === scores.opponentSide && scores.playerSide >= spadesMatchTarget;
+    return {
+      heading: tiedAtTarget ? "Spades match tied: play on"
+        : result.playerSideScore === result.opponentSideScore ? "Spades hand tied"
+        : result.playerSideScore > result.opponentSideScore ? "Your partnership scored the hand" : "Opponents scored the hand",
+      summary: `Bid ${result.playerSideBid}-${result.opponentSideBid}. You + Barbu won ${result.playerSideTricks} books for ${formatSignedScore(result.playerSideScore)}; Left + Right won ${result.opponentSideTricks} books for ${formatSignedScore(result.opponentSideScore)}. ${nilText ? `${nilText}. ` : ""}${penaltyText ? `${penaltyText}. ` : ""}Match score: ${matchScore}.${tiedAtTarget ? " Play another hand to break the tie." : ""}`
+    };
   }
 
   function rankValue(rank: string) {
@@ -3573,8 +3581,11 @@
   $: fullHandSeatPenalties = fullHand ? seatPenaltiesForTricks(fullHand.completedTricks) : emptySeatPenalties();
   $: fullHandSeatTrickCounts = fullHand ? seatTricksWonForTricks(fullHand.completedTricks) : emptySeatPenalties();
   $: whistResult = whistResultCopy(whistSettlement, whistPartnershipTricks, whistRubberActive ? "rubber" : "game");
-  $: fullHandResultTitle = fullHandIsWhistGame ? whistResult.heading : fullHand ? fullHandResultHeading(fullHand) : "";
-  $: fullHandResultSummary = fullHandIsWhistGame ? whistResult.summary : fullHand ? fullHandResultText(fullHand, partnershipMatchScoreLabel) : "";
+  $: heartsResult = heartsResultCopy(heartsMatchIsComplete, heartsStandings, heartsHighestScore,
+    heartsCurrentMoonShooter, heartsVisibleHandCount, fullHand?.playerPenalty ?? 0, heartsScorecardMeta.objective);
+  $: spadesResult = spadesResultCopy(currentSpadesHandResult, spadesVisibleMatchScores, spadesMatchIsComplete);
+  $: fullHandResultTitle = fullHandIsHeartsGame ? heartsResult.heading : fullHandIsWhistGame ? whistResult.heading : fullHandIsSpadesGame ? spadesResult.heading : fullHand ? fullHandResultHeading(fullHand) : "";
+  $: fullHandResultSummary = fullHandIsHeartsGame ? heartsResult.summary : fullHandIsWhistGame ? whistResult.summary : fullHandIsSpadesGame ? spadesResult.summary : fullHand ? fullHandResultText(fullHand, bridgeVisibleMatchScores) : "";
   $: fullHandBestTrick = fullHand ? fullHandBestTrickLabel(fullHand) : "";
   $: fullHandWorstTrick = fullHand ? fullHandWorstTrickLabel(fullHand) : "";
   $: fullHandIsHeartsGame = activeGameTable === "hearts" && fullHand?.contract === "Hearts" && !fullHandRunActive;
@@ -3631,9 +3642,9 @@
   $: bridgeContractTarget = bridgeVisibleContract.target;
   $: bridgeContractMade = bridgeDeclarerTricks >= bridgeContractTarget;
   $: currentBridgeHandResult = fullHandIsBridgeGame && fullHand?.status === "complete" ? bridgeHandResultFor(fullHand) : null;
-  $: bridgeVisibleMatchScores = bridgeScoreTotalsWith(currentBridgeHandResult);
+  $: bridgeVisibleMatchScores = bridgeScoreTotalsWith(currentBridgeHandResult, bridgeMatchScores);
   $: currentWhistHandResult = fullHandIsWhistGame && fullHand?.status === "complete" ? whistHandResultFor(fullHand) : null;
-  $: currentSpadesHandResult = fullHandIsSpadesGame && fullHand?.status === "complete" ? spadesHandResultFor(fullHand) : null;
+  $: currentSpadesHandResult = fullHandIsSpadesGame && fullHand?.status === "complete" ? spadesHandResultFor(fullHand, spadesHandResults.length + 1, spadesBids, spadesBagScores) : null;
   $: fullHandShowWhistMatchSummary =
     (fullHandIsWhistGame || fullHandIsSpadesGame) && !fullHandCardCountingActive;
   $: spadesBidsAdjustable =
@@ -3671,14 +3682,8 @@
   $: spadesMatchIsComplete =
     fullHandIsSpadesGame &&
     fullHand?.status === "complete" &&
-    Math.max(spadesVisibleMatchScores.playerSide, spadesVisibleMatchScores.opponentSide) >= spadesMatchTarget;
+    spadesMatchComplete(spadesVisibleMatchScores);
   $: partnershipMatchIsComplete = fullHandIsSpadesGame ? spadesMatchIsComplete : whistMatchIsComplete;
-  $: whistMatchLeaderLabel =
-    whistVisibleMatchScores.playerSide >= whistVisibleMatchScores.opponentSide ? "You + Barbu" : "Left + Right";
-  $: whistMatchScoreLabel = `${whistVisibleMatchScores.playerSide} - ${whistVisibleMatchScores.opponentSide}`;
-  $: partnershipMatchLeaderLabel =
-    partnershipVisibleMatchScores.playerSide >= partnershipVisibleMatchScores.opponentSide ? "You + Barbu" : "Left + Right";
-  $: partnershipMatchScoreLabel = `${partnershipVisibleMatchScores.playerSide} - ${partnershipVisibleMatchScores.opponentSide}`;
   $: heartsCurrentMoonShooter = fullHandIsHeartsGame ? heartsMoonShooter(fullHandSeatPenalties) : undefined;
   $: heartsCurrentMoonThreatSeat = fullHandIsHeartsGame ? heartsMoonThreatSeat(fullHandSeatPenalties) : undefined;
   $: heartsCurrentScoredSeatPenalties = fullHandIsHeartsGame
@@ -3701,20 +3706,22 @@
     ? addSeatPenalties(heartsSessionScores, heartsCurrentScoredSeatPenalties)
     : heartsSessionScores;
   $: heartsStandings = heartsScorecardStandings(heartsVisibleScores);
-  $: heartsLeader = heartsStandings[0];
   $: heartsHighestScore = scoreSeats
     .map((seat) => ({ seat, score: heartsVisibleScores[seat] }))
     .sort((left, right) => right.score - left.score)[0];
   $: heartsMatchIsComplete =
     fullHandIsHeartsGame && fullHand?.status === "complete" && Boolean(heartsHighestScore?.score >= heartsMatchTarget);
+  $: fullHandCompletion = fullHand?.status !== "complete" || fullHandCardCountingActive ? null
+    : fullHandIsHeartsGame && heartsMatchIsComplete ? "match"
+    : whistFullHandSource !== "play" ? null
+    : fullHandIsSpadesGame && spadesMatchIsComplete ? "match"
+    : fullHandIsWhistGame && whistSettlement.gameComplete ? whistRubberActive && whistSettlement.complete ? "rubber" : "game"
+    : fullHandIsBridgeGame ? "board" : null;
+  $: fullHandReplayAllowed = !fullHandCompletion || fullHandCompletion === "board";
   $: heartsPlayerStanding = heartsStandings.find((standing) => standing.seat === "You");
-  $: heartsLeaderLabel = heartsLeader
-    ? `${scoreSeatLabel(heartsLeader.seat)} ${heartsLeader.score} ${heartsLeader.score === 1 ? "point" : "points"}`
-    : "You 0 points";
   $: heartsPlayerPlaceLabel = heartsPlayerStanding ? formatOrdinal(heartsPlayerStanding.rank) : "1st";
-  $: heartsMatchSummary = heartsMatchIsComplete ? heartsMatchResultSummary() : "";
-  $: heartsBestHand = heartsPlayerHandResult("best");
-  $: heartsWorstHand = heartsPlayerHandResult("worst");
+  $: heartsBestHand = heartsPlayerHandResult("best", heartsVisibleHandResults);
+  $: heartsWorstHand = heartsPlayerHandResult("worst", heartsVisibleHandResults);
   $: heartsBestHandLabel = heartsBestHand ? heartsHandResultLabel(heartsBestHand) : "No hands yet";
   $: heartsWorstHandLabel = heartsWorstHand ? heartsHandResultLabel(heartsWorstHand) : "No hands yet";
   $: activeRunContract = fullHand?.contract ?? dominoHand?.contract;
@@ -3779,6 +3786,8 @@
     ? heartsMatchIsComplete
       ? "New match"
       : "Next hand"
+    : fullHandIsBridgeGame
+    ? "Next board"
     : fullHandIsPartnershipGame
     ? whistFullHandSource === "practice"
       ? "Try another"
@@ -4197,6 +4206,7 @@
     activeTableTabs.barbu = "play";
     appView = savedRun.view;
     savedPlayBarbuRun = savedRun;
+    persistSavedPlayBarbuRun(savedRun.view);
   }
 
   function loadSavedHeartsRun(): SavedHeartsRun | null {
@@ -4402,6 +4412,7 @@
     lastFullHandTapAt = 0;
     appView = savedRun.view;
     savedHeartsRun = savedRun;
+    persistSavedHeartsRun(savedRun.view);
   }
 
   function loadSavedWhistRun(): SavedWhistRun | null {
@@ -4555,6 +4566,7 @@
     lastFullHandTapAt = 0;
     appView = "fullHand";
     savedWhistRun = savedRun;
+    persistSavedWhistRun();
   }
 
   function loadSavedSpadesRun(): SavedSpadesRun | null {
@@ -4658,7 +4670,7 @@
     const matchIsComplete =
       fullHand.status === "complete" &&
       visibleResult !== null &&
-      Math.max(visibleResult.scores.playerSide, visibleResult.scores.opponentSide) >= spadesMatchTarget;
+      spadesMatchComplete(visibleResult.scores);
 
     if (matchIsComplete) {
       clearSavedSpadesRun();
@@ -4736,6 +4748,7 @@
     lastFullHandTapAt = 0;
     appView = "fullHand";
     savedSpadesRun = savedRun;
+    persistSavedSpadesRun();
   }
 
   function loadSavedBridgeRun(): SavedBridgeRun | null {
@@ -7455,6 +7468,7 @@
   }
 
   function replayFullHand() {
+    if (!fullHandReplayAllowed) return;
     if (fullHandIsWhistGame && whistDealPending) return;
     if (!fullHand) {
       return;
@@ -7724,35 +7738,39 @@
     return `${message}${heartsMoonThreatText()}`;
   }
 
-  function heartsMatchResultHeading() {
-    if (!heartsPlayerStanding) {
-      return "Hearts match complete";
+  function heartsResultCopy(
+    matchComplete: boolean,
+    standings: RunStanding[],
+    trigger: { seat: Seat; score: number } | undefined,
+    moonShooter: Seat | undefined,
+    handCount: number,
+    playerPenalty: number,
+    objective: string
+  ) {
+    const player = standings.find(standing => standing.seat === "You");
+    const winner = standings[0];
+    const winners = standings.filter(standing => standing.rank === 1);
+    const winnerLabel = winners.map(standing => scoreSeatLabel(standing.seat)).join(" and ");
+    const moonText = moonShooter ? heartsMoonResultText(moonShooter) : "";
+    if (!player || !winner) return { heading: "Hearts hand complete", summary: "Low score wins.", winnerLabel };
+    if (matchComplete && trigger) {
+      const heading = player.rank === 1
+        ? winners.length > 1 ? "You tied the match" : "You won Hearts"
+        : `You finished ${formatOrdinal(player.rank)}`;
+      const resultVerb = winners.length > 1 ? "tie" : winner.seat === "You" ? "win" : "wins";
+      const result = `${scoreSeatLabel(trigger.seat)} reached ${trigger.score} points. ${winnerLabel} ${resultVerb} with ${winner.score}. You finished ${formatOrdinal(player.rank)} after ${handCount} ${handCount === 1 ? "hand" : "hands"}.`;
+      return { heading, summary: moonText ? `${moonText} ${result}` : result, winnerLabel };
     }
-    if (heartsPlayerStanding.rank === 1) {
-      const tiedWinners = heartsStandings.filter((standing) => standing.rank === 1);
-      return tiedWinners.length > 1 ? "You tied the match" : "You won Hearts";
-    }
-
-    return `You finished ${formatOrdinal(heartsPlayerStanding.rank)}`;
+    const heading = moonShooter
+      ? moonShooter === "You" ? "You shot the moon" : `${scoreSeatLabel(moonShooter)} shot the moon`
+      : player.rank === 1
+        ? winners.length > 1 ? "You tied the table" : "You led the table"
+        : `You finished ${formatOrdinal(player.rank)}`;
+    return { heading, summary: moonText || `${objective}. You took ${formatPointCount(playerPenalty)}; ${scoreSeatLabel(winner.seat)} ${formatPointCount(winner.score)} leads the match.`, winnerLabel };
   }
 
-  function heartsMatchResultSummary() {
-    const winner = heartsStandings[0];
-    const trigger = heartsHighestScore;
-
-    if (!winner || !trigger) {
-      return "Hearts match complete. Low score wins.";
-    }
-
-    return `${scoreSeatLabel(trigger.seat)} reached ${trigger.score} points. ${scoreSeatLabel(winner.seat)} wins with ${
-      winner.score
-    }. You finished ${heartsPlayerPlaceLabel} after ${heartsVisibleHandCount} ${
-      heartsVisibleHandCount === 1 ? "hand" : "hands"
-    }.`;
-  }
-
-  function heartsPlayerHandResult(kind: "best" | "worst") {
-    const results = [...heartsVisibleHandResults];
+  function heartsPlayerHandResult(kind: "best" | "worst", handResults: HeartsHandResult[]) {
+    const results = [...handResults];
 
     if (!results.length) {
       return undefined;
@@ -8129,54 +8147,9 @@
   }
 
   function fullHandResultHeading(hand: FullHandState) {
-    if (fullHandIsPartnershipGame) {
-      if (fullHandIsBridgeGame) {
-        return bridgeContractMade ? `${bridgeContractLabel} made` : `${bridgeContractLabel} defeated`;
-      }
-      if (partnershipMatchIsComplete) {
-        return whistMatchResultHeading();
-      }
-      if (fullHandIsSpadesGame && currentSpadesHandResult) {
-        if (currentSpadesHandResult.playerSideScore > currentSpadesHandResult.opponentSideScore) {
-          return "Your partnership made the bid";
-        }
-        if (currentSpadesHandResult.playerSideScore === currentSpadesHandResult.opponentSideScore) {
-          return "Spades hand tied";
-        }
-
-        return "Opponents scored the hand";
-      }
-      if (whistPlayerSideOddTricks > whistOpponentSideOddTricks) {
-        return "Your partnership won";
-      }
-      if (whistPlayerSideOddTricks === whistOpponentSideOddTricks) {
-        return `${fullHand?.contract ?? "Partnership"} hand tied`;
-      }
-
-      return "Opponents won the hand";
-    }
-
-    if (activeGameTable === "hearts" && hand.contract === "Hearts") {
-      if (heartsMatchIsComplete) {
-        return heartsMatchResultHeading();
-      }
-      if (heartsCurrentMoonShooter) {
-        return heartsCurrentMoonShooter === "You"
-          ? "You shot the moon"
-          : `${scoreSeatLabel(heartsCurrentMoonShooter)} shot the moon`;
-      }
-
-      const player = heartsPlayerStanding;
-
-      if (!player) {
-        return "Hearts hand complete";
-      }
-      if (player.rank === 1) {
-        const tiedLeaders = heartsStandings.filter((standing) => standing.rank === 1);
-        return tiedLeaders.length > 1 ? "You tied the table" : "You led the table";
-      }
-
-      return `You finished ${formatOrdinal(player.rank)}`;
+    if (hand.bridgeContract) {
+      const result = bridgeHandResultFor(hand);
+      return `${hand.bridgeContract.label} ${result?.made ? "made" : "defeated"}`;
     }
 
     if (hand.contract === "Hearts Trumps") {
@@ -8191,57 +8164,14 @@
     return "Damage limited";
   }
 
-  function fullHandResultText(hand: FullHandState, currentWhistMatchScoreLabel = whistMatchScoreLabel) {
-    if (fullHandIsPartnershipGame) {
-      if (fullHandIsBridgeGame) {
-        const score = currentBridgeHandResult?.score ?? bridgeDuplicateScore(bridgeVisibleContract, bridgeDeclarerTricks);
-        return `Auction: ${bridgeAuctionSummary(hand.bridgeAuction ?? bridgeAuctionCalls)}. Contract: ${bridgeContractLabel} by ${bridgeSeatLabel(
-          bridgeVisibleContract.declarer
-        )}; ${bridgeSeatLabel(bridgeVisibleContract.dummy)} was dummy. ${bridgeOpeningLeadSummary(hand)} Declarer side won ${bridgeDeclarerTricks} tricks; defenders won ${bridgeDefenderTricks}. ${
-          bridgeContractMade
-            ? `Contract made for ${formatSignedScore(score)}.`
-            : `You needed ${bridgeContractTarget} tricks, so the defense defeated the contract.`
-        } Duplicate score: NS ${formatSignedScore(bridgeVisibleMatchScores.ns)}, EW ${formatSignedScore(bridgeVisibleMatchScores.ew)}.`;
-      }
-
-      if (partnershipMatchIsComplete) {
-        return whistMatchResultSummary();
-      }
-
-      if (fullHandIsSpadesGame && currentSpadesHandResult) {
-        const result = currentSpadesHandResult;
-        const nilText = spadesNilSummary(result.nilResults);
-        const penaltyText = [
-          result.playerSideBagPenalty ? `You + Barbu took a ${result.playerSideBagPenalty}-point bag penalty` : "",
-          result.opponentSideBagPenalty ? `Left + Right took a ${result.opponentSideBagPenalty}-point bag penalty` : ""
-        ]
-          .filter(Boolean)
-          .join("; ");
-        return `Bid ${result.playerSideBid}-${result.opponentSideBid}. You + Barbu won ${result.playerSideTricks} books for ${formatSignedScore(
-          result.playerSideScore
-        )}; Left + Right won ${result.opponentSideTricks} books for ${formatSignedScore(
-          result.opponentSideScore
-        )}. ${nilText ? `${nilText}. ` : ""}${penaltyText ? `${penaltyText}. ` : ""}Match score: ${currentWhistMatchScoreLabel}.`;
-      }
-
-      return `Trump was ${whistTrumpSuitLabel}. You + Barbu won ${whistPartnershipTricks.playerSide} tricks for ${whistPlayerSideOddTricks} odd ${
-        whistPlayerSideOddTricks === 1 ? "trick" : "tricks"
-      }; Left + Right won ${whistPartnershipTricks.opponentSide} tricks for ${whistOpponentSideOddTricks} odd ${
-        whistOpponentSideOddTricks === 1 ? "trick" : "tricks"
-      }. Match score: ${currentWhistMatchScoreLabel}.`;
-    }
-
-    if (activeGameTable === "hearts" && hand.contract === "Hearts") {
-      if (heartsMatchIsComplete) {
-        return heartsCurrentMoonShooter ? `${heartsMoonResultText(heartsCurrentMoonShooter)} ${heartsMatchSummary}` : heartsMatchSummary;
-      }
-      if (heartsCurrentMoonShooter) {
-        return heartsMoonResultText(heartsCurrentMoonShooter);
-      }
-
-      return `${heartsScorecardMeta.objective}. You took ${formatFullHandPenalty(
-        hand.playerPenalty
-      )}; ${heartsLeaderLabel} leads the hand.`;
+  function fullHandResultText(hand: FullHandState, bridgeScores: { ns: number; ew: number }) {
+    if (hand.bridgeContract) {
+      const result = bridgeHandResultFor(hand)!;
+      const contract = hand.bridgeContract;
+      return `Auction: ${bridgeAuctionSummary(hand.bridgeAuction ?? [])}. Contract: ${contract.label} by ${bridgeSeatLabel(contract.declarer)}; ${bridgeSeatLabel(contract.dummy)} was dummy. ${bridgeOpeningLeadSummary(hand)} Declarer side won ${result.tricks} tricks; defenders won ${result.defenders}. ${
+        result.made ? `Contract made for ${formatSignedScore(result.score)}.`
+          : `Declarer needed ${contract.target} tricks, so the defense defeated the contract.`
+      } Duplicate score: NS ${formatSignedScore(bridgeScores.ns)}, EW ${formatSignedScore(bridgeScores.ew)}.`;
     }
 
     if (hand.contract === "Hearts Trumps") {
@@ -11408,6 +11338,9 @@
 
       <section class="bridge-auction-screen" aria-label="Bridge auction">
         <section class="lesson-panel bridge-auction-panel" aria-label="Bridge bidding box">
+          {#if bridgeAuctionCurrentStatus.passedOut}
+            <GameResult game="Bridge" completion="board" title="Auction complete" summary="All four players passed. No contract was played and neither side scores." />
+          {:else}
           <div class="lesson-heading">
             <p class="eyebrow">Before dummy appears</p>
             <h2>{bridgeAuctionCurrentStatus.complete ? "Auction complete" : bridgeAuctionCurrentStatus.currentSeat === "You" ? "Choose your call" : "Auction in progress"}</h2>
@@ -11417,6 +11350,7 @@
             You are South. The auction uses basic natural bidding: five-card majors, better minor, 15-17 1NT, strong 2C,
             and weak twos. The final contract sets declarer, dummy, opening lead, vulnerability, and scoring.
           </p>
+          {/if}
 
           <div class="bridge-auction-metrics" aria-label="Bridge hand estimate">
             <div>
@@ -11858,12 +11792,7 @@
                 </div>
               </div>
             {:else if fullHandRunIsComplete}
-              <div class="lesson-heading">
-                <p class="eyebrow">Play Barbu</p>
-                <h2>{fullHandRunResultTitle}</h2>
-              </div>
-
-              <p class="result">{fullHandRunResultSummary}</p>
+              <GameResult game="Barbu" completion="session" title={fullHandRunResultTitle} summary={fullHandRunResultSummary} />
 
               <div class="full-hand-run-score" aria-label="Play Barbu score">
                 {#each fullHandRunStandings as standing}
@@ -11878,12 +11807,7 @@
 
               {@render runScorecard("Play Barbu results")}
             {:else}
-              <div class="lesson-heading">
-                <p class="eyebrow">Result</p>
-                <h2>{fullHandResultTitle}</h2>
-              </div>
-
-              <p class="result" aria-label={`${fullHand.contract} result summary`}>{fullHandResultSummary}</p>
+              <GameResult game={fullHand.contract} completion={fullHandCompletion} title={fullHandResultTitle} summary={fullHandResultSummary} />
 
               {#if fullHandIsHeartsGame}
                 <div class="hearts-result-stack" aria-label="Hearts hand score">
@@ -11907,7 +11831,7 @@
                   <div class="full-hand-result-tricks" aria-label="Hearts match summary">
                     <div>
                       <span>Winner</span>
-                      <strong>{heartsLeader ? scoreSeatLabel(heartsLeader.seat) : "You"}</strong>
+                      <strong>{heartsResult.winnerLabel}</strong>
                     </div>
                     <div>
                       <span>Your place</span>
@@ -12163,7 +12087,9 @@
                 <button class="secondary-action" onclick={() => void replayWeakestRunContract()} type="button">Replay weakest</button>
                 <button class="primary-action" onclick={startBarbuRun} type="button">New game</button>
               {:else}
-                <button class="secondary-action" onclick={() => void replayFullHand()} type="button">Replay</button>
+                {#if fullHandReplayAllowed}
+                  <button class="secondary-action" onclick={() => void replayFullHand()} type="button">Replay</button>
+                {/if}
                 <button class="primary-action" disabled={fullHandIsWhistGame && whistDealPending} onclick={() => void startNextFullHand()} type="button">{fullHandNextActionLabel}</button>
               {/if}
             {:else if fullHandIsReviewingTrick}
@@ -12289,12 +12215,7 @@
         {#snippet panel()}
           {#if dominoHand.status === "complete"}
             {#if fullHandRunIsComplete}
-              <div class="lesson-heading">
-                <p class="eyebrow">Play Barbu</p>
-                <h2>{fullHandRunResultTitle}</h2>
-              </div>
-
-              <p class="result">{fullHandRunResultSummary}</p>
+              <GameResult game="Barbu" completion="session" title={fullHandRunResultTitle} summary={fullHandRunResultSummary} />
 
               <div class="full-hand-run-score" aria-label="Play Barbu score">
                 {#each fullHandRunStandings as standing}
