@@ -428,21 +428,6 @@ pub fn bridge_suggest_call(
     let points = bridge_high_card_points(hand);
     let legal = bridge_legal_calls(calls, seat, dealer);
     let last_bid = bridge_last_bid(calls);
-    let partner_last_bid = calls.iter().rev().find_map(|call| match call.call {
-        BridgeCall::Bid(bid) if bridge_side_for_seat(call.seat) == bridge_side_for_seat(seat) => {
-            Some(bid)
-        }
-        _ => None,
-    });
-    let opponents_have_bid = calls.iter().any(|call| {
-        bridge_side_for_seat(call.seat) != bridge_side_for_seat(seat)
-            && matches!(call.call, BridgeCall::Bid(_))
-    });
-
-    if bridge_can_double(calls, seat, dealer) && points >= 16 {
-        return BridgeCall::Double;
-    }
-
     if last_bid.is_none() {
         return opening_bid_for_hand(hand)
             .filter(|bid| legal.contains(&BridgeCall::Bid(*bid)))
@@ -450,40 +435,345 @@ pub fn bridge_suggest_call(
             .unwrap_or(BridgeCall::Pass);
     }
 
-    if let Some(partner_bid) = partner_last_bid {
-        if points >= 10 {
-            let raise = if partner_bid.strain != BridgeStrain::NoTrump
-                && bridge_strain_count(hand, partner_bid.strain) >= 3
-            {
-                BridgeBid::new(
-                    (partner_bid.level + if points >= 13 { 2 } else { 1 }).min(4),
-                    partner_bid.strain,
-                )
-            } else if points >= 13 {
-                BridgeBid::new(3, BridgeStrain::NoTrump)
-            } else {
-                BridgeBid::new(2, BridgeStrain::NoTrump)
-            };
+    natural_response(hand, seat, calls, points, &legal)
+}
 
-            if let Some(raise) = raise {
-                if legal.contains(&BridgeCall::Bid(raise)) {
-                    return BridgeCall::Bid(raise);
-                }
-            }
+// Same agreements and priority order as src/bridgeBidding.ts. Shared fixtures
+// exercise both implementations, including seat rotations and interrupted auctions.
+fn natural_response(
+    hand: &[Card],
+    seat: PlayerIndex,
+    calls: &[BridgeAuctionCall],
+    points: u8,
+    legal: &[BridgeCall],
+) -> BridgeCall {
+    use BridgeStrain::{Clubs as C, Diamonds as D, Hearts as H, NoTrump as NT, Spades as S};
+    let suits = [S, H, D, C];
+    let count = |suit| bridge_strain_count(hand, suit);
+    let balanced = bridge_is_balanced(hand);
+    let suit = BridgeStrain::from_suit(bridge_longest_suit(hand));
+    let partner = (seat + 2) % 4;
+    let bids: Vec<_> = calls
+        .iter()
+        .enumerate()
+        .filter_map(|(index, call)| match call.call {
+            BridgeCall::Bid(bid) => Some((index, call.seat, bid)),
+            _ => None,
+        })
+        .collect();
+    let ours: Vec<_> = bids.iter().filter(|bid| bid.1 == seat).collect();
+    let partners: Vec<_> = bids.iter().filter(|bid| bid.1 == partner).collect();
+    let opponents: Vec<_> = bids
+        .iter()
+        .filter(|bid| bid.1 != seat && bid.1 != partner)
+        .collect();
+    let own = ours.last().copied();
+    let partner_bid = partners.last().copied();
+    let last = bids.last().unwrap().2;
+    let choose = |level, strain| {
+        let call = BridgeCall::Bid(BridgeBid { level, strain });
+        if legal.contains(&call) {
+            call
+        } else {
+            BridgeCall::Pass
         }
-
+    };
+    let game = |strain| {
+        if strain == NT {
+            3
+        } else if strain == H || strain == S {
+            4
+        } else {
+            5
+        }
+    };
+    let stopped = opponents.iter().all(|bid| {
+        hand.iter().any(|card| {
+            BridgeStrain::from_suit(card.suit) == bid.2.strain
+                && (card.rank == Rank::Ace
+                    || (card.rank == Rank::King && count(bid.2.strain) >= 2)
+                    || (card.rank == Rank::Queen && count(bid.2.strain) >= 3))
+        })
+    });
+    if legal.is_empty() {
         return BridgeCall::Pass;
     }
-
-    if opponents_have_bid && points >= 13 {
-        let strain = BridgeStrain::from_suit(bridge_longest_suit(hand));
-        if let Some(overcall) = all_bridge_bids().into_iter().find(|bid| {
-            bid.level <= 2 && bid.strain == strain && legal.contains(&BridgeCall::Bid(*bid))
-        }) {
-            return BridgeCall::Bid(overcall);
+    let partner_action = calls
+        .iter()
+        .rev()
+        .find(|call| call.seat == partner && call.call != BridgeCall::Pass);
+    if own.is_none()
+        && partner_bid.is_none()
+        && partner_action.is_some_and(|call| call.call == BridgeCall::Double)
+        && last.level <= 2
+    {
+        let mut unbid: Vec<_> = suits
+            .into_iter()
+            .filter(|suit| !opponents.iter().any(|bid| bid.2.strain == *suit))
+            .collect();
+        unbid.sort_by_key(|suit| std::cmp::Reverse(count(*suit)));
+        for suit in unbid {
+            if let Some(bid) = all_bridge_bids().into_iter().find(|bid| {
+                bid.strain == suit && bid.level <= 3 && legal.contains(&BridgeCall::Bid(*bid))
+            }) {
+                return BridgeCall::Bid(bid);
+            }
         }
     }
-
+    if own.is_none() {
+        if let Some((_, _, bid)) = partner_bid {
+            if partners[0].2
+                == (BridgeBid {
+                    level: 2,
+                    strain: C,
+                })
+            {
+                return choose(2, D);
+            }
+            if bid.strain == NT {
+                if bid.level >= 3 {
+                    return BridgeCall::Pass;
+                }
+                let base = if bid.level == 1 { 15 } else { 20 };
+                if let Some(major) = [S, H].into_iter().find(|major| count(*major) >= 6) {
+                    if points + base >= 25 {
+                        return choose(4, major);
+                    }
+                }
+                if points + base >= 25 && stopped {
+                    return choose(3, NT);
+                }
+                if bid.level == 1 && points >= 8 && stopped {
+                    return choose(2, NT);
+                }
+                if bid.level == 1 && count(suit) >= 5 && (suit == S || suit == H) {
+                    return choose(2, suit);
+                }
+                return BridgeCall::Pass;
+            }
+            if bid.level == 2 {
+                return if count(bid.strain) >= 3 && points >= 15 {
+                    choose(game(bid.strain), bid.strain)
+                } else {
+                    BridgeCall::Pass
+                };
+            }
+            if bid.level != 1 || points < 6 {
+                return BridgeCall::Pass;
+            }
+            if (bid.strain == H || bid.strain == S) && count(bid.strain) >= 3 {
+                return choose(
+                    if points >= 13 {
+                        4
+                    } else if points >= 10 {
+                        3
+                    } else {
+                        2
+                    },
+                    bid.strain,
+                );
+            }
+            let majors = if count(S) >= 5 && count(S) >= count(H) {
+                [S, H]
+            } else {
+                [H, S]
+            };
+            for major in majors {
+                if count(major) >= 4 && choose(1, major) != BridgeCall::Pass {
+                    return choose(1, major);
+                }
+            }
+            if points >= 10
+                && count(suit) >= 5
+                && suit != bid.strain
+                && choose(2, suit) != BridgeCall::Pass
+            {
+                return choose(2, suit);
+            }
+            if points >= 13 && balanced && stopped {
+                return choose(3, NT);
+            }
+            if points >= 10 && balanced && stopped {
+                return choose(2, NT);
+            }
+            if count(bid.strain) >= 5 {
+                return choose(if points >= 10 { 3 } else { 2 }, bid.strain);
+            }
+            return if stopped {
+                choose(1, NT)
+            } else {
+                BridgeCall::Pass
+            };
+        }
+    }
+    if let (Some((own_index, _, own)), Some((partner_index, _, bid))) = (own, partner_bid) {
+        if partner_index > own_index {
+            let opened = bids[0].1 == seat;
+            if opened
+                && ours.len() == 1
+                && *own
+                    == (BridgeBid {
+                        level: 2,
+                        strain: C,
+                    })
+                && *bid
+                    == (BridgeBid {
+                        level: 2,
+                        strain: D,
+                    })
+            {
+                return if balanced {
+                    choose(if points >= 25 { 3 } else { 2 }, NT)
+                } else {
+                    choose(if suit == H || suit == S { 2 } else { 3 }, suit)
+                };
+            }
+            if !opened
+                && partners[0].2
+                    == (BridgeBid {
+                        level: 2,
+                        strain: C,
+                    })
+            {
+                if bid.strain == NT {
+                    return if points >= 3 {
+                        choose(3, NT)
+                    } else {
+                        BridgeCall::Pass
+                    };
+                }
+                if count(bid.strain) >= 3 {
+                    return choose(game(bid.strain), bid.strain);
+                }
+                return choose(3, NT);
+            }
+            if bid.level >= game(bid.strain) {
+                return BridgeCall::Pass;
+            }
+            if own.strain == NT
+                && *bid
+                    == (BridgeBid {
+                        level: 2,
+                        strain: NT,
+                    })
+            {
+                return if points >= if opened { 17 } else { 12 } {
+                    choose(3, NT)
+                } else {
+                    BridgeCall::Pass
+                };
+            }
+            if own.strain == bid.strain {
+                let needed = if opened {
+                    if bid.level == 2 {
+                        19
+                    } else {
+                        15
+                    }
+                } else {
+                    13
+                };
+                return if points >= needed {
+                    choose(game(own.strain), own.strain)
+                } else {
+                    BridgeCall::Pass
+                };
+            }
+            if own.strain == NT {
+                return BridgeCall::Pass;
+            }
+            if opened
+                && *bid
+                    == (BridgeBid {
+                        level: 2,
+                        strain: NT,
+                    })
+            {
+                return if points >= 15 {
+                    choose(3, NT)
+                } else {
+                    BridgeCall::Pass
+                };
+            }
+            if (bid.strain == H || bid.strain == S)
+                && count(bid.strain) >= if opened { 4 } else { 3 }
+            {
+                return choose(
+                    if points >= if opened { 19 } else { 13 } {
+                        4
+                    } else if points >= if opened { 17 } else { 10 } {
+                        3
+                    } else {
+                        2
+                    },
+                    bid.strain,
+                );
+            }
+            if balanced && stopped {
+                return if opened {
+                    let rebid = choose(if points >= 18 { 2 } else { 1 }, NT);
+                    if rebid == BridgeCall::Pass {
+                        choose(2, own.strain)
+                    } else {
+                        rebid
+                    }
+                } else if points >= 13 {
+                    choose(3, NT)
+                } else if points >= 11 {
+                    choose(2, NT)
+                } else {
+                    BridgeCall::Pass
+                };
+            }
+            if count(own.strain) >= 6 {
+                return choose(2, own.strain);
+            }
+            if opened {
+                for second in suits {
+                    if second == own.strain || count(second) < 4 {
+                        continue;
+                    }
+                    if let Some(bid) = all_bridge_bids().into_iter().find(|bid| {
+                        bid.strain == second
+                            && bid.level <= 2
+                            && legal.contains(&BridgeCall::Bid(*bid))
+                    }) {
+                        if bid.level == 1 || second.order() < own.strain.order() || points >= 17 {
+                            return BridgeCall::Bid(bid);
+                        }
+                    }
+                }
+                return choose(2, own.strain);
+            }
+            return BridgeCall::Pass;
+        }
+    }
+    if own.is_none() && partner_bid.is_none() && !opponents.is_empty() {
+        if last.strain != NT
+            && last.level <= 2
+            && points >= 12
+            && count(last.strain) <= 2
+            && suits
+                .into_iter()
+                .filter(|suit| *suit != last.strain)
+                .all(|suit| count(suit) >= 3)
+            && legal.contains(&BridgeCall::Double)
+        {
+            return BridgeCall::Double;
+        }
+        if balanced && (15..=18).contains(&points) && stopped && choose(1, NT) != BridgeCall::Pass {
+            return choose(1, NT);
+        }
+        if count(suit) >= 5 && points >= 10 {
+            if let Some(bid) = all_bridge_bids().into_iter().find(|bid| {
+                bid.strain == suit
+                    && (bid.level == 1 || (bid.level == 2 && points >= 13))
+                    && legal.contains(&BridgeCall::Bid(*bid))
+            }) {
+                return BridgeCall::Bid(bid);
+            }
+        }
+    }
     BridgeCall::Pass
 }
 
@@ -524,7 +814,7 @@ fn opening_bid_for_hand(hand: &[Card]) -> Option<BridgeBid> {
             return BridgeBid::new(1, BridgeStrain::Spades);
         } else if hearts >= 5 {
             return BridgeBid::new(1, BridgeStrain::Hearts);
-        } else if diamonds >= clubs {
+        } else if diamonds > clubs || (diamonds == clubs && diamonds >= 4) {
             return BridgeBid::new(1, BridgeStrain::Diamonds);
         } else {
             return BridgeBid::new(1, BridgeStrain::Clubs);
@@ -693,7 +983,12 @@ fn bridge_is_balanced(cards: &[Card]) -> bool {
 fn bridge_longest_suit(cards: &[Card]) -> Suit {
     Suit::ALL
         .into_iter()
-        .max_by_key(|suit| (suit_count(cards, *suit), suit.sort_order()))
+        .max_by_key(|suit| {
+            (
+                suit_count(cards, *suit),
+                BridgeStrain::from_suit(*suit).order(),
+            )
+        })
         .unwrap_or(Suit::Clubs)
 }
 

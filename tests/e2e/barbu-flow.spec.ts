@@ -1372,6 +1372,10 @@ test("Bridge practice starts three short scripted decisions", async ({ page }) =
   await page.getByRole("button", { name: "Back to Bridge practice" }).click();
   await expect(page.getByRole("heading", { name: "Bridge table", exact: true })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Practice" })).toHaveAttribute("aria-selected", "true");
+  await page.getByLabel("Bridge practice drills").getByRole("button", { name: /^Defense/ }).click();
+  await expect(page.getByRole("heading", { name: "Bridge practice: defense" })).toBeVisible();
+  await completeVisibleDrillSession(page);
+  await expect(page.getByRole("heading", { name: "Session complete" })).toBeVisible();
 });
 
 test("Bridge bidding practice teaches the basic natural openings", async ({ page }) => {
@@ -1499,6 +1503,7 @@ test("Bridge passed-out auction can deal again", async ({ page }) => {
     ];
     const fullHand = {
       id: "bridge-passed-out-regression",
+      bridgeBoardNumber: 2,
       contract: "Bridge",
       hands: [[], [], southHand, []],
       currentPlayerIndex: 2,
@@ -1529,8 +1534,8 @@ test("Bridge passed-out auction can deal again", async ({ page }) => {
       JSON.stringify({
         version: 1,
         view: "bridgeAuction",
-        scores: { ns: 0, ew: 0 },
-        results: [],
+        scores: { ns: 90, ew: -90 },
+        results: [{ handNumber: 1, contract: "1NT", declarer: "You", declarerSide: "NS", vulnerability: "None", target: 7, tricks: 7, defenders: 6, score: 90, made: true }],
         fullHand,
         auctionCalls: fullHand.bridgeAuction,
         selectedCall: "Pass",
@@ -1553,6 +1558,21 @@ test("Bridge passed-out auction can deal again", async ({ page }) => {
   await page.getByRole("button", { name: "Deal again" }).click();
   await expect(page.getByRole("heading", { name: "Bridge auction" })).toBeVisible();
   await expect(page.getByLabel("Bridge bidding box")).toContainText(/Choose your call|Auction in progress|Auction complete/);
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("barbu.savedBridgeRun.v1")!));
+  expect(saved.scores).toEqual({ ns: 90, ew: -90 });
+  expect(saved.results).toHaveLength(2);
+  expect(saved.results[1]).toMatchObject({ passedOut: true, score: 0, handNumber: 2 });
+  expect(saved.fullHand).toMatchObject({ bridgeBoardNumber: 3, bridgeDealer: "You", bridgeVulnerability: "EW" });
+  expect(saved.results[1].declarer).toBeNull();
+  await page.reload();
+  await page.getByRole("button", { name: /Open Bridge/ }).click();
+  await page.getByRole("tab", { name: "Play" }).click();
+  await page.getByRole("button", { name: "Continue Bridge" }).click();
+  await page.getByRole("button", { name: "Pass", exact: true }).click();
+  await page.getByLabel("Bridge bidding box").getByRole("button", { name: "Table", exact: true }).click();
+  const resumed = await page.evaluate(() => JSON.parse(localStorage.getItem("barbu.savedBridgeRun.v1")!));
+  expect(resumed.results).toEqual(saved.results);
+  expect(resumed.scores).toEqual(saved.scores);
 });
 
 test("Bridge table does not duplicate the South dummy hand", async ({ page }) => {

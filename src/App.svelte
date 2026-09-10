@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { bridgeDeclarerDrillPool, bridgeDefenseDrillPool } from "./bridgePractice";
+  import { bridgeHighCardPoints, bridgeSuitCount, bridgeOpeningCall, suggestBridgeCall, explainBridgeCall } from "./bridgeBidding";
   import GameResult from "./GameResult.svelte";
   import { spadesMatchComplete, spadesMatchTarget } from "./spadesScoring";
   import { whistFollowSuitDrillPool, whistTrumpOrDiscardDrillPool, whistThirdHandHighDrillPool, whistReturnPartnerSuitDrillPool, whistOpeningLeadLessonPool, whistOddTrickDrillPool } from "./whistLessons";
@@ -250,10 +252,11 @@
   };
 
   type BridgeHandResult = {
+    passedOut?: boolean;
     handNumber: number;
     contract: string;
-    declarer: Seat;
-    declarerSide: "NS" | "EW";
+    declarer: Seat | null;
+    declarerSide: "NS" | "EW" | null;
     vulnerability: BridgeVulnerability;
     target: number;
     tricks: number;
@@ -1986,120 +1989,6 @@
   const spadesTrumpOrDiscardDrillPool = [spadesTrumpCutDrillStep, spadesTrumpPreserveDrillStep, spadesTrumpOvertrumpDrillStep];
   const spadesBidBooksDrillPool = [spadesBidAceDrillStep, spadesBidProtectedKingDrillStep, spadesBidNilDrillStep];
   const spadesAvoidBagsDrillPool = [spadesBagsDuckDrillStep, spadesBagsDiscardDrillStep, spadesBagsProtectNilDrillStep];
-  const bridgeFinesseDrillStep: DrillStep = {
-    scenarioId: "bridge-finesse-low-toward-honor",
-    contract: "Bridge",
-    title: "Lead toward the queen",
-    trick: {
-      title: "Try the finesse",
-      beforeResult: "Dummy can lead toward your QJ. Choose the small club from dummy to make East decide first.",
-      afterResult: "A low lead toward honors is the basic finesse shape in declarer play.",
-      emptyExplanation: "When an honor may be with East, lead low from dummy toward your touching honors.",
-      legalCardIds: ["3C"],
-      hand: [card("3", "C"), card("Q", "C"), card("J", "C"), card("7", "D")],
-      tableBeforeChoice: [],
-      tableAfterChoice: [
-        { seat: "Right", card: card("K", "C") },
-        { seat: "You", card: card("A", "C") },
-        { seat: "Left", card: card("5", "C") }
-      ],
-      pendingBySeat: { Tutor: "North Dummy", Right: "East", You: "South", Left: "West" },
-      playedExplanations: {
-        "3C": "Good. Low toward QJ keeps your honors useful and tests where the king sits.",
-        QC: "Risky. Playing the queen first gives up the finesse shape.",
-        JC: "Risky. The jack spends an honor before East has to commit.",
-        "7D": "Illegal. Dummy has clubs, so dummy must follow the suit you lead."
-      },
-      cardOutcomes: { "3C": "good", QC: "risky", JC: "risky", "7D": "illegal" },
-      cardReasons: { "3C": "followed_suit", QC: "won_clean_trick", JC: "won_clean_trick", "7D": "off_suit" }
-    }
-  };
-  const bridgeEstablishSuitDrillStep: DrillStep = {
-    scenarioId: "bridge-establish-long-suit",
-    contract: "Bridge",
-    title: "Establish the long suit",
-    trick: {
-      title: "Force out the ace",
-      beforeResult: "You need extra tricks in 1NT. Lead the king to drive out the ace and set up dummy's diamonds.",
-      afterResult: "Declarer often gives up one trick early to establish a long suit for later winners.",
-      emptyExplanation: "With KQJ10 opposite length, start the sequence and make the defenders spend the ace.",
-      legalCardIds: ["KD"],
-      hand: [card("K", "D"), card("Q", "D"), card("J", "D"), card("4", "S")],
-      tableBeforeChoice: [],
-      tableAfterChoice: [
-        { seat: "Left", card: card("A", "D") },
-        { seat: "Tutor", card: card("3", "D") },
-        { seat: "Right", card: card("7", "D") }
-      ],
-      pendingBySeat: { You: "South", Left: "West", Tutor: "North Dummy", Right: "East" },
-      playedExplanations: {
-        KD: "Good. The king starts the work of knocking out the ace so the suit can run later.",
-        QD: "Risky. The queen may also work, but standard sequencing starts with the king from this holding.",
-        JD: "Risky. The jack gives the defense a cheaper hold-up.",
-        "4S": "Legal, but it ignores the long diamond source of tricks."
-      },
-      cardOutcomes: { KD: "good", QD: "risky", JD: "risky", "4S": "risky" },
-      cardReasons: { KD: "won_clean_trick", QD: "won_clean_trick", JD: "won_clean_trick", "4S": "void_discard" }
-    }
-  };
-  const bridgeHoldUpDrillStep: DrillStep = {
-    scenarioId: "bridge-hold-up-notrump",
-    contract: "Bridge",
-    title: "Hold up once",
-    trick: {
-      title: "Break defender communication",
-      beforeResult: "West leads a long-suit king in 1NT. Duck the first round to make the defenders spend an entry.",
-      afterResult: "Holding up can cut communication between defenders in no-trump contracts.",
-      emptyExplanation: "In no trump, you do not always take the first winner. Sometimes you duck to exhaust one defender's suit.",
-      legalCardIds: ["4H", "AH"],
-      hand: [card("A", "H"), card("4", "H"), card("Q", "C"), card("8", "S")],
-      tableBeforeChoice: [{ seat: "Left", card: card("K", "H") }],
-      tableAfterChoice: [
-        { seat: "Tutor", card: card("7", "H") },
-        { seat: "Right", card: card("2", "H") }
-      ],
-      pendingBySeat: { You: "South", Tutor: "North Dummy", Right: "East" },
-      playedExplanations: {
-        "4H": "Good. Ducking once can leave the defense without an easy way back to the long hearts.",
-        AH: "Risky. Taking immediately may leave West's long hearts live if East still has an entry.",
-        QC: "Illegal. Hearts were led and you still have hearts.",
-        "8S": "Illegal. Hearts were led and you still have hearts."
-      },
-      cardOutcomes: { "4H": "good", AH: "risky", QC: "illegal", "8S": "illegal" },
-      cardReasons: { "4H": "followed_suit", AH: "won_clean_trick", QC: "off_suit", "8S": "off_suit" }
-    }
-  };
-  const bridgeOpeningLeadDrillStep: DrillStep = {
-    scenarioId: "bridge-defense-fourth-best",
-    contract: "Bridge",
-    title: "Lead fourth best",
-    trick: {
-      title: "Defend 1NT",
-      beforeResult: "Against 1NT, lead from your longest useful suit. Choose the fourth-best spade.",
-      afterResult: "A fourth-best lead from length is a standard no-trump defensive habit.",
-      emptyExplanation: "No-trump defense often starts by building tricks in the longest suit.",
-      legalCardIds: ["4S"],
-      hand: [card("K", "S"), card("J", "S"), card("8", "S"), card("4", "S"), card("Q", "D")],
-      tableBeforeChoice: [],
-      tableAfterChoice: [
-        { seat: "Tutor", card: card("2", "S") },
-        { seat: "Right", card: card("A", "S") },
-        { seat: "Left", card: card("6", "S") }
-      ],
-      pendingBySeat: { You: "South", Tutor: "North Dummy", Right: "East Declarer", Left: "West Partner" },
-      playedExplanations: {
-        "4S": "Good. Fourth best starts your long suit without spending the king.",
-        KS: "Risky. The king may give declarer a clear read and spend your stopper early.",
-        JS: "Risky. The jack is not the standard lead from this holding.",
-        "8S": "Risky. The eight muddies partner's count and attitude read.",
-        QD: "Legal, but it abandons your longest suit."
-      },
-      cardOutcomes: { "4S": "good", KS: "risky", JS: "risky", "8S": "risky", QD: "risky" },
-      cardReasons: { "4S": "won_clean_trick", KS: "won_clean_trick", JS: "won_clean_trick", "8S": "won_clean_trick", QD: "void_discard" }
-    }
-  };
-  const bridgeDeclarerDrillPool = [bridgeFinesseDrillStep, bridgeEstablishSuitDrillStep, bridgeHoldUpDrillStep];
-  const bridgeDefenseDrillPool = [bridgeOpeningLeadDrillStep, bridgeHoldUpDrillStep, bridgeEstablishSuitDrillStep];
   const catalogTableCards: Card[] = [
     { id: "catalog-queen-spades", rank: "Q", suit: "S", label: "QS" },
     { id: "catalog-king-hearts", rank: "K", suit: "H", label: "KH" },
@@ -2422,7 +2311,7 @@
   }
 
   function bridgeScoreTotalsWith(result: BridgeHandResult | null, scores = bridgeMatchScores) {
-    if (!result) {
+    if (!result || result.passedOut) {
       return scores;
     }
 
@@ -2702,36 +2591,11 @@
     return values[rank] ?? 0;
   }
 
-  function bridgeHighCardPoints(cards: Card[]) {
-    return cards.reduce((total, card) => {
-      if (card.rank === "A") return total + 4;
-      if (card.rank === "K") return total + 3;
-      if (card.rank === "Q") return total + 2;
-      if (card.rank === "J") return total + 1;
-      return total;
-    }, 0);
-  }
-
-  function bridgeSuitCount(cards: Card[], suit: Suit) {
-    return cards.filter((card) => card.suit === suit).length;
-  }
 
   function bridgeHandShapeLabel(cards: Card[]) {
     return displaySuitSequence.map((suit) => bridgeSuitCount(cards, suit)).join("-");
   }
 
-  function bridgeLongestSuit(cards: Card[]): Suit {
-    return (["S", "H", "D", "C"] as Suit[]).sort((left, right) => {
-      const countDelta = bridgeSuitCount(cards, right) - bridgeSuitCount(cards, left);
-      if (countDelta !== 0) return countDelta;
-      return bridgeStrainOrder.indexOf(right) - bridgeStrainOrder.indexOf(left);
-    })[0] ?? "C";
-  }
-
-  function bridgeIsBalanced(cards: Card[]) {
-    const counts = (["C", "D", "H", "S"] as Suit[]).map((suit) => bridgeSuitCount(cards, suit)).sort((left, right) => left - right);
-    return counts.join("-") === "3-3-3-4" || counts.join("-") === "2-3-4-4" || counts.join("-") === "2-3-3-5";
-  }
 
   function bridgeBidById(id: string) {
     return bridgeBidOptions.find((bid) => bid.id === id) ?? bridgeBidOptions[4];
@@ -2750,35 +2614,8 @@
   }
 
   function bridgeOpeningBidForHand(cards: Card[]) {
-    const points = bridgeHighCardPoints(cards);
-    const balanced = bridgeIsBalanced(cards);
-
-    if (points >= 22) {
-      return bridgeBidById("2C");
-    }
-    if (balanced && points >= 20 && points <= 21) {
-      return bridgeBidById("2NT");
-    }
-    if (balanced && points >= 15 && points <= 17) {
-      return bridgeBidById("1NT");
-    }
-    if (points >= 13) {
-      const spades = bridgeSuitCount(cards, "S");
-      const hearts = bridgeSuitCount(cards, "H");
-      const diamonds = bridgeSuitCount(cards, "D");
-      const clubs = bridgeSuitCount(cards, "C");
-
-      if (spades >= 5 && spades >= hearts) return bridgeBidById("1S");
-      if (hearts >= 5) return bridgeBidById("1H");
-      return bridgeBidById(diamonds >= clubs ? "1D" : "1C");
-    }
-
-    const longestSuit = bridgeLongestSuit(cards);
-    if (points >= 5 && points <= 11 && longestSuit !== "C" && bridgeSuitCount(cards, longestSuit) >= 6) {
-      return bridgeBidById(`2${longestSuit}`);
-    }
-
-    return null;
+    const call = bridgeOpeningCall(cards);
+    return call === "Pass" ? null : bridgeBidById(call);
   }
 
   function bridgeSuggestedBidForHand(cards: Card[]) {
@@ -2858,6 +2695,8 @@
   }
 
   function bridgeLegalCallOptions(calls = bridgeAuctionCalls, seat = bridgeAuctionStatus(calls).currentSeat): BridgeCallOption[] {
+    const status = bridgeAuctionStatus(calls);
+    if (status.complete || status.currentSeat !== seat) return [];
     const options: BridgeCallOption[] = ["Pass"];
 
     if (bridgeCanDouble(calls, seat)) {
@@ -2886,32 +2725,7 @@
   }
 
   function bridgeExplainCall(call: BridgeCallOption, calls = bridgeAuctionCalls) {
-    const bid = bridgeBidFromCall(call);
-
-    if (call === "Pass") {
-      return calls.some((pastCall) => Boolean(bridgeBidFromCall(pastCall.call)))
-        ? "No higher contract to suggest from this hand."
-        : "No opening bid from this hand.";
-    }
-    if (call === "Double") {
-      return "Shows strength after an opponent bid; often asks partner to choose a suit.";
-    }
-    if (call === "Redouble") {
-      return "Shows extra strength after the opponents double your side.";
-    }
-    if (!bid) {
-      return "";
-    }
-
-    if (bid.level === 1 && bid.strain === "NT") return "15-17 HCP with a balanced hand.";
-    if (bid.level === 2 && bid.strain === "NT") return "20-21 HCP with a balanced hand.";
-    if (bid.level === 2 && bid.strain === "C") return "22+ HCP or another very strong hand.";
-    if (bid.level === 2) return "Weak two: 5-11 HCP with a six-card suit.";
-    if (bid.level === 1 && (bid.strain === "H" || bid.strain === "S")) return "Opening bid with a five-card major.";
-    if (bid.level === 1) return "Opening bid in the better minor.";
-    if (bid.level === 3) return "Preemptive bid with a long suit.";
-
-    return "Natural contract suggestion.";
+    return explainBridgeCall(call, calls, bridgeAuctionStatus(calls).currentSeat);
   }
 
   function bridgeChooseAutoCall(hand: FullHandState, seat: Seat, calls: BridgeAuctionCall[]): BridgeCallOption {
@@ -2925,41 +2739,7 @@
   }
 
   function bridgeSuggestedCallForCards(cards: Card[], seat: Seat, calls: BridgeAuctionCall[]): BridgeCallOption {
-    const points = bridgeHighCardPoints(cards);
-    const legal = bridgeLegalCallOptions(calls, seat);
-    const lastBid = bridgeLastBidOption(calls);
-    const partnerLastBid = [...calls].reverse().find((call) => bridgeSideForSeat(call.seat) === bridgeSideForSeat(seat) && Boolean(bridgeBidFromCall(call.call)));
-    const opponentsHaveBid = calls.some((call) => bridgeSideForSeat(call.seat) !== bridgeSideForSeat(seat) && Boolean(bridgeBidFromCall(call.call)));
-
-    if (bridgeCanDouble(calls, seat) && points >= 16) {
-      return "Double";
-    }
-
-    if (!lastBid) {
-      const openingBid = bridgeOpeningBidForHand(cards);
-      if (openingBid && legal.includes(openingBid.id)) {
-        return openingBid.id;
-      }
-    }
-
-    if (partnerLastBid && points >= 10) {
-      const partnerBid = bridgeBidFromCall(partnerLastBid.call);
-      const raise = partnerBid && partnerBid.strain !== "NT" && bridgeSuitCount(cards, partnerBid.strain) >= 3
-        ? bridgeBidById(`${Math.min(4, partnerBid.level + (points >= 13 ? 2 : 1))}${partnerBid.strain}`)
-        : bridgeBidById(points >= 13 ? "3NT" : "2NT");
-      if (legal.includes(raise.id)) {
-        return raise.id;
-      }
-    }
-
-    if (opponentsHaveBid && points >= 13) {
-      const overcall = bridgeBidOptions.find((bid) => bid.level <= 2 && bid.strain === bridgeLongestSuit(cards) && legal.includes(bid.id));
-      if (overcall) {
-        return overcall.id;
-      }
-    }
-
-    return "Pass";
+    return suggestBridgeCall(cards, seat, calls, bridgeLegalCallOptions(calls, seat));
   }
 
   function bridgeAutoAdvanceAuction(calls: BridgeAuctionCall[], hand: FullHandState | null = fullHand) {
@@ -4833,8 +4613,9 @@
     return (
       Number.isInteger(candidate.handNumber) &&
       typeof candidate.contract === "string" &&
-      (candidate.declarer === "Tutor" || candidate.declarer === "Right" || candidate.declarer === "You" || candidate.declarer === "Left") &&
-      (candidate.declarerSide === "NS" || candidate.declarerSide === "EW") &&
+      (candidate.passedOut === true
+        ? candidate.declarer === null && candidate.declarerSide === null && candidate.score === 0 && candidate.target === 0
+        : (candidate.declarer === "Tutor" || candidate.declarer === "Right" || candidate.declarer === "You" || candidate.declarer === "Left") && (candidate.declarerSide === "NS" || candidate.declarerSide === "EW")) &&
       (candidate.vulnerability === "None" || candidate.vulnerability === "NS" || candidate.vulnerability === "EW" || candidate.vulnerability === "Both") &&
       Number.isInteger(candidate.target) &&
       Number.isInteger(candidate.tricks) &&
@@ -6349,7 +6130,7 @@
     const metadata = fullHandContractCommands[contract];
 
     if (contract === "Bridge") {
-      fullHand = startBrowserFullHand(contract, seed);
+      fullHand = startBrowserBridgeHand(seed, bridgeHandResults.length + 1);
       usingBrowserFullHand = true;
       appView = "fullHand";
       return;
@@ -6793,6 +6574,16 @@
     bridgeAuctionError = "";
     appView = "bridgeAuction";
     persistSavedBridgeRun("bridgeAuction");
+  }
+
+  async function advancePassedOutBridgeBoard() {
+    if (!fullHand || !bridgeAuctionStatus(bridgeAuctionCalls, bridgeDealerIndex(fullHand)).passedOut) return;
+    bridgeHandResults = [...bridgeHandResults, {
+      handNumber: fullHand.bridgeBoardNumber ?? bridgeHandResults.length + 1,
+      passedOut: true, contract: "Passed out", declarer: null, declarerSide: null,
+      vulnerability: bridgeVulnerabilityForHand(), target: 0, tricks: 0, defenders: 0, score: 0, made: false
+    }];
+    await startBridgeHand({ keepSession: true });
   }
 
   function selectBridgeAuctionBid(bidId: string) {
@@ -11487,7 +11278,7 @@
             <button
               class="primary-action"
               disabled={!bridgeAuctionCurrentStatus.passedOut && !bridgeAuctionReadyToPlay && bridgeAuctionCurrentStatus.currentSeat !== "You"}
-              onclick={bridgeAuctionCurrentStatus.passedOut ? () => void startBridgeHand() : confirmBridgeAuction}
+              onclick={bridgeAuctionCurrentStatus.passedOut ? () => void advancePassedOutBridgeBoard() : confirmBridgeAuction}
               type="button"
             >
               {bridgeAuctionActionLabel}

@@ -1,10 +1,10 @@
 import { chooseWhistCard, whistPositionFromHand } from "./whistPolicy";
+import { bridgeBoardConditions } from "./bridgeBoard";
 import { chooseHeartsCard, chooseHeartsPass, heartsPositionFromHand } from "./heartsPolicy";
 import type {
   Card,
   BridgeAuctionCall,
   BridgeContractState,
-  BridgeVulnerability,
   CompletedHandTrick,
   FullHandContract,
   FullHandState,
@@ -35,7 +35,6 @@ const rankOrder: Record<Rank, number> = {
 };
 const suitOrder: Record<Suit, number> = { C: 0, D: 1, S: 2, H: 3 };
 const playerNames: Array<Seat> = ["Tutor", "Right", "You", "Left"];
-const bridgeVulnerabilityCycle: BridgeVulnerability[] = ["None", "NS", "EW", "Both"];
 
 export function startBrowserHeartsHand(seed: number): FullHandState {
   return startBrowserFullHand("Hearts", seed, { startAtTwoOfClubs: true });
@@ -46,8 +45,10 @@ export function startBrowserWhistHand(seed: number, dealer?: number): FullHandSt
   return startBrowserWhistFamilyHand("Whist", seed, undefined, dealer);
 }
 
-export function startBrowserBridgeHand(seed: number): FullHandState {
-  return startBrowserWhistFamilyHand("Bridge", seed, null);
+export function startBrowserBridgeHand(seed: number, boardNumber = 1): FullHandState {
+  const board = bridgeBoardConditions(boardNumber);
+  const hand = startBrowserWhistFamilyHand("Bridge", seed, null, playerNames.indexOf(board.dealer));
+  return { ...hand, bridgeBoardNumber: boardNumber, bridgeVulnerability: board.vulnerability };
 }
 
 function startBrowserWhistFamilyHand(contract: "Whist" | "Spades" | "Bridge", seed: number, fixedTrump?: Suit | null, selectedDealer?: number): FullHandState {
@@ -61,7 +62,6 @@ function startBrowserWhistFamilyHand(contract: "Whist" | "Spades" | "Bridge", se
   hands.forEach((hand) => hand.sort(compareCards));
 
   const bridgeDealer = contract === "Bridge" ? playerNames[dealer] : undefined;
-  const bridgeVulnerability = contract === "Bridge" ? bridgeVulnerabilityCycle[seed % bridgeVulnerabilityCycle.length] : undefined;
 
   const initialState = hydrateFullHandState({
     id: `browser-${contract.toLowerCase()}-hand-${seed}-dealer-${dealer}-${trumpSuit}`,
@@ -83,7 +83,7 @@ function startBrowserWhistFamilyHand(contract: "Whist" | "Spades" | "Bridge", se
     whistDealer: contract === "Whist" ? dealer : undefined,
     whistTurnedTrump: contract === "Whist" ? deck[dealer + 48] : undefined,
     bridgeDealer,
-    bridgeVulnerability
+    bridgeVulnerability: contract === "Bridge" ? "None" : undefined
   });
 
   return contract === "Bridge" ? initialState : advanceToPlayerTurn(initialState);
@@ -746,47 +746,77 @@ function chooseBridgeLeadCard(state: FullHandState, legal: Card[]) {
   const currentSide = state.currentPlayerIndex % 2;
 
   if (currentSide === declarerSide) {
-    if (trump) {
+    const known = bridgeKnownCards(state);
+    const outstandingTrumps = trump ? 13 - known.filter(card => card.suit === trump).length : 0;
+    if (trump && outstandingTrumps > 0) {
       const trumpLead = highestCard(legal.filter((card) => card.suit === trump));
       if (trumpLead) {
         return trumpLead;
       }
     }
 
-    return highestCardFromLongestSuit(legal.filter((card) => card.suit !== trump), legal) ?? highestCard(legal);
+    const partner = state.hands[(state.currentPlayerIndex + 2) % 4];
+    // Lead toward an exposed honor combination instead of leading away from it.
+    for (const suit of suits) {
+      if (suit === trump) continue;
+      if (partner.some(card => card.suit === suit && card.rank === "A") && partner.some(card => card.suit === suit && card.rank === "Q") && !known.some(card => card.suit === suit && card.rank === "K")) {
+        const lead = lowestCard(legal.filter(card => card.suit === suit));
+        if (lead) return lead;
+      }
+    }
+    const winners = legal.filter(card => card.suit !== trump && bridgeIsMaster(state, card));
+    return highestCardFromLongestSuit(winners, legal) ?? highestCardFromLongestSuit(legal.filter(card => card.suit !== trump), legal) ?? highestCard(legal);
   }
 
-  return lowestCardFromLongestSuit(legal.filter((card) => card.suit !== trump), legal) ?? lowestCard(legal);
+  const plain = legal.filter(card => card.suit !== trump);
+  let candidates = plain.length ? plain : legal;
+  if (trump) {
+    const withoutUnsupportedAce = candidates.filter(card => !candidates.some(held => held.suit === card.suit && held.rank === "A") || candidates.some(held => held.suit === card.suit && held.rank === "K"));
+    if (withoutUnsupportedAce.length) candidates = withoutUnsupportedAce;
+  }
+  const longest = lowestCardFromLongestSuit(candidates, legal)!;
+  const holding = legal.filter(card => card.suit === longest.suit).sort((a, b) => rankOrder[b.rank as Rank] - rankOrder[a.rank as Rank]);
+  const sequence = holding.length >= (trump ? 2 : 3) && rankOrder[holding[0].rank as Rank] >= 12 && holding.slice(1, trump ? 2 : 3).every((card, index) => rankOrder[card.rank as Rank] === rankOrder[holding[0].rank as Rank] - index - 1);
+  if (sequence) return holding[0];
+  return !trump && holding.length >= 4 ? holding[3] : holding.at(-1);
+}
+
+function bridgeKnownCards(state: FullHandState): Card[] {
+  const own = state.hands[state.currentPlayerIndex];
+  const declarer = bridgeDeclarerIndex(state);
+  const visible = state.currentPlayerIndex % 2 === declarer % 2
+    ? state.hands[(state.currentPlayerIndex + 2) % 4]
+    : state.currentTrick.length || state.completedTricks.length ? state.hands[(declarer + 2) % 4] : [];
+  return [...own, ...visible, ...state.currentTrick.map(play => play.card), ...state.completedTricks.flatMap(trick => trick.cards.map(play => play.card))];
+}
+
+function bridgeIsMaster(state: FullHandState, card: Card) {
+  const known = bridgeKnownCards(state);
+  const dummy = (bridgeDeclarerIndex(state) + 2) % 4;
+  const opposingDummy = state.currentPlayerIndex % 2 !== dummy % 2 ? state.hands[dummy] : [];
+  return ranks.filter(rank => rankOrder[rank] > rankOrder[card.rank as Rank]).every(rank => known.some(known => known.suit === card.suit && known.rank === rank) && !opposingDummy.some(held => held.suit === card.suit && held.rank === rank));
 }
 
 function chooseBridgeFollowCard(state: FullHandState, legal: Card[]) {
-  const declarerSide = bridgeDeclarerIndex(state) % 2;
-  const currentSide = state.currentPlayerIndex % 2;
-
-  if (currentSide === declarerSide) {
-    return lowestWinningCard(state, legal) ?? lowestCard(legal);
-  }
-
   if (whistPartnerIsWinning(state)) {
     return lowestCard(legal);
   }
-
+  // Third hand high, but use the cheapest winner when playing last.
+  if (state.currentTrick.length === 2) {
+    const queen = legal.find(card => card.rank === "Q");
+    const declaring = state.currentPlayerIndex % 2 === bridgeDeclarerIndex(state) % 2;
+    if (declaring && queen && legal.some(card => card.rank === "A") && cardWouldWinTrick(state, queen) && !bridgeKnownCards(state).some(card => card.suit === queen.suit && card.rank === "K")) return queen;
+    return highestCard(legal.filter(card => cardWouldWinTrick(state, card))) ?? lowestCard(legal);
+  }
+  if (state.currentTrick.length === 1 && !legal.some(card => bridgeIsMaster(state, card))) return lowestCard(legal);
   return lowestWinningCard(state, legal) ?? lowestCard(legal);
 }
 
 function chooseBridgeVoidCard(state: FullHandState, legal: Card[]) {
   const trump = whistTrumpSuitFromState(state);
-  const declarerSide = bridgeDeclarerIndex(state) % 2;
-  const currentSide = state.currentPlayerIndex % 2;
   const lowestNonTrump = lowestCard(legal.filter((card) => card.suit !== trump)) ?? lowestCard(legal);
 
-  if (currentSide === declarerSide) {
-    return lowestCard(legal.filter((card) => trump && card.suit === trump && cardWouldWinTrick(state, card))) ?? lowestNonTrump;
-  }
-
-  if (whistPartnerIsWinning(state)) {
-    return lowestNonTrump;
-  }
+  if (whistPartnerIsWinning(state)) return lowestNonTrump;
 
   return (
     lowestCard(legal.filter((card) => trump && card.suit === trump && cardWouldWinTrick(state, card))) ??

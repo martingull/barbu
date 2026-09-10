@@ -734,11 +734,24 @@ export const referenceCatalog: GameReference[] = [
         id: "app-learning",
         title: "Learning Path",
         body:
-          "The Bridge path teaches declarer play, dummy handling, and defense through short decisions, plus a playable local hand with auction, vulnerability, dummy reveal, and duplicate scoring. Stronger bidding systems and duplicate movement remain later layers.",
+          "The Bridge path teaches declarer play, dummy handling, and defense through short decisions. Play uses Barbu Natural agreements, the standard sixteen-board dealer and vulnerability cycle, and duplicate contract scores. Passed-out boards score zero and advance the session. Matchpoint comparisons and IMP team results are not yet available.",
         facts: [
           { label: "Play", value: "Auction into scored contract hand" },
           { label: "Practice", value: "Short scripted decisions" },
-          { label: "Future", value: "Stronger systems and movement" }
+          { label: "Future", value: "Comparative duplicate results and advanced bidding" }
+        ]
+      },
+      {
+        id: "bidding-agreements",
+        title: "Barbu Natural Agreements",
+        body:
+          "Open a five-card major with 13+ high-card points; otherwise choose the better minor, preferring clubs with three cards in each minor. Balanced hands open 1NT with 15-17 or 2NT with 20-21. Strong 2 clubs shows 22+ and asks for 2 diamonds waiting. A subsequent 2NT rebid shows 22-24 and may be passed; a suit rebid keeps the partnership moving toward game. Weak two openings in diamonds, hearts, or spades show 5-11 points and six cards.",
+        facts: [
+          { label: "Over 1NT", value: "2NT invites with 8-9; 3NT shows 10+. Two of a major is a natural sign-off, not a transfer." },
+          { label: "Major raises", value: "Three-card support: raise to two with 6-9, three with 10-12, or game with 13+." },
+          { label: "New suits", value: "One-level responses show 6+ points and four cards; two-level responses show 10+ and length." },
+          { label: "Takeout", value: "Low-level doubles of suit openings need opening strength, shortness in the bid suit, and support for unbid suits." },
+          { label: "Not included", value: "Stayman, transfers, Blackwood, and a full competitive convention system. Barbu Natural is not SAYC." }
         ]
       }
     ],
@@ -778,7 +791,7 @@ export const referenceCatalog: GameReference[] = [
         title: "Auction and scoring",
         coreStatus: "Core",
         appStatus: "Playable",
-        note: "Pass, double, redouble, vulnerability, duplicate scoring, and simple rule-based opponent calls are active. Strong natural bidding agreements and duplicate movement remain future layers."
+        note: "Pass, double, redouble, standard board vulnerability, duplicate contract scoring, and Barbu Natural responses and rebids are active. Advanced conventions and comparative duplicate sessions remain future layers."
       }
     ],
     variants: [
@@ -786,7 +799,7 @@ export const referenceCatalog: GameReference[] = [
         id: "starter-boundary",
         title: "Current Boundary",
         note:
-          "The current table is playable club-style contract Bridge for local practice, but the bidding and cardplay AI are still simple heuristics rather than a full partnership system."
+          "The Bridge table offers local contract practice with documented natural agreements. Opponents use deterministic heuristics, not expert search: advanced competitive auctions, slam investigation, entry planning, and defensive signalling remain limited. Session totals are raw contract points, not matchpoints or IMPs."
       }
     ]
   }

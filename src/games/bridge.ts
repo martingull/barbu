@@ -124,7 +124,7 @@ export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAct
           id: "defense",
           label: "Defense",
           title: "Defense",
-          summary: "Practice opening leads, hold-up timing, and building defensive tricks.",
+          summary: "Practice opening leads, third-hand play, and preserving partner's winners.",
           action: "defense",
           group: "bridge-drills"
         }

@@ -178,6 +178,7 @@ export type FullHandState = {
   bridgeAuction?: BridgeAuctionCall[];
   bridgeContract?: BridgeContractState;
   bridgeDealer?: Seat;
+  bridgeBoardNumber?: number;
   bridgeVulnerability?: BridgeVulnerability;
 };
 
