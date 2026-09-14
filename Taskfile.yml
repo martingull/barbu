@@ -109,6 +109,21 @@ tasks:
       - task: ios:disable:script:sandbox
       - npm run tauri -- ios build {{.CLI_ARGS}}
 
+  ios:store:prepare:
+    desc: Prepare the generated iPhone-only project, opaque icons, and privacy manifest for the App Store
+    requires:
+      vars: [IOS_BUILD_NUMBER]
+    cmds:
+      - node scripts/prepare-ios-store.mjs {{.IOS_BUILD_NUMBER}}
+
+  ios:store:build:
+    desc: Archive and export a release-signed App Store IPA; requires an unused IOS_BUILD_NUMBER
+    requires:
+      vars: [IOS_BUILD_NUMBER]
+    cmds:
+      - task: ios:store:prepare
+      - npm run tauri -- ios build --target aarch64 --export-method app-store-connect --config src-tauri/gen/apple/appstore-config.json
+
   ios:install:device:
     desc: Build, install, and launch a self-contained iOS app on the default physical iPhone; override with `IOS_DEVICE_ID=...`
     vars:
