@@ -15,9 +15,11 @@ by no permission to create iOS App Store provisioning profiles. Confirm active
 Developer Program membership, the correct team/account in Xcode, and App Store
 Connect access before retrying. No build has been uploaded or submitted.
 
-Store screenshots, account declarations, art-license confirmation, and publishing
-the updated privacy page remain outstanding. Browser checks are not a substitute
-for the final uploaded-build TestFlight check below.
+Store screenshots, account declarations, and final TestFlight testing remain
+outstanding. The updated privacy page is publicly reachable. Martin confirmed
+that the card artwork was generated using ChatGPT; provenance is recorded in
+`THIRD_PARTY_NOTICES.md`. Browser checks are not a substitute for the final
+uploaded-build TestFlight check below.
 
 ## Build
 
@@ -61,8 +63,47 @@ and check App Store Connect's build warnings before selecting the build.
 - Check the privacy manifest against the release binary whenever dependencies
   change. The file-timestamp declaration (`C617.1`) covers bundled/private file
   metadata used by the Rust/Tauri runtime, not fingerprinting or external files.
-- Resolve the card-art provenance and dependency-license review still recorded
-  in `THIRD_PARTY_NOTICES.md` before making content-rights declarations.
+- Retain card-art generation records and complete the dependency-license review
+  recorded in `THIRD_PARTY_NOTICES.md` before making content-rights declarations.
+
+## Final TestFlight Check
+
+This is a release safety check, not a request to recruit a testing community.
+Martin can test through an internal group using an eligible App Store Connect
+account. Browser testing and direct Xcode installs do not exercise Apple's
+distribution of the exact submitted build.
+
+1. Resolve the Apple account/signing blocker above. Build and upload the updated
+   release using normal App Store distribution, not "TestFlight Internal Only"
+   (that upload option cannot be submitted to customers).
+2. Wait for build processing and resolve any export-compliance questions or
+   processing warnings in App Store Connect.
+3. Open Barbu > TestFlight > Internal Testing > +. Create a group, choose
+   Invite Testers to add your eligible account, then Add Builds to select the
+   uploaded version.
+4. Install Apple's TestFlight on your iPhone, accept the invitation, and install
+   Barbu. Confirm the version/build number matches the build selected above.
+   Back up any irreplaceable local progress before replacing a development copy;
+   do not uninstall it just to perform an upgrade check.
+5. Run the checks below. Record the build number, device/iOS version, and any
+   failures. Rebuild and repeat affected checks if a fix is needed, then select
+   the tested build for App Review.
+
+| Check | Expected result |
+| --- | --- |
+| Cold launch in airplane mode | Catalog and cards load without the Mac or a dev server. |
+| Catalog | Six working entries; no planned games, paid labels, or Pro tab. |
+| Each game: Learn, Practice, Play | A lesson and exercise complete; a hand starts and cards are selectable. |
+| Complete a hand and a game/session | Correct result appears and the next action remains reachable. |
+| Background, close, reopen | Saved play resumes without losing or duplicating cards. |
+| Small screen and landscape | Cards, feedback, and bottom actions remain reachable without overlap. |
+| Privacy link, online | The public policy opens successfully. |
+
+For this release, the six catalog entries are Hearts, Whist, Spades, Bridge,
+Barbu, and Card Counting I. Card Counting I has Learn and Play, not a separate
+Practice tab. Check its memory exercises through Play.
+
+[Apple's internal testing instructions](https://developer.apple.com/help/app-store-connect/test-a-beta-version/add-internal-testers)
 
 ## App Store Connect
 

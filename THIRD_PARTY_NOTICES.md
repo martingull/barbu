@@ -15,9 +15,10 @@ The app currently includes local playing-card images under:
 - `public/cards/PNG-cards-1.3/`
 - `public/cards/cards/`
 
-Before release, verify the upstream source and license for these card assets,
-preserve any required attribution, and replace the assets if their license is
-not compatible with a commercial mobile app.
+Martin confirmed on September 14, 2026 that the card artwork was generated using
+ChatGPT. Retain the original generations and any supplied source-image records
+with the product assets. This provenance note records the creator's confirmation;
+it is not an independent review of any third-party material supplied as input.
 
 ## Product Assets
 

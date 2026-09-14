@@ -508,6 +508,8 @@
 
   const catalogCategories = getCatalogCategories();
   const privacyPolicyUrl = "https://martingull.github.io/barbu/privacy-policy.html";
+  let privacyPolicyError = "";
+  let openingPrivacyPolicy = false;
   const barbuUi = registry.get("barbu")!;
   const heartsUi = registry.get("hearts")!;
   const whistUi = registry.get("whist")!;
@@ -3631,7 +3633,7 @@
     title: trumpCountClean === trumpCountAttempts && trumpCountAttempts > 0 ? "Clean warm-up" : "Warm-up complete",
     summary:
       trumpCountClean === trumpCountAttempts && trumpCountAttempts > 0
-        ? "You kept the heart count through the whole warm-up. That is the exact habit this pack is training."
+        ? "You kept the heart count through the whole warm-up. That is the exact habit these exercises train."
         : "You finished the warm-up. Take a breath, then run another set and keep the count alive for longer.",
     firstLabel: "Card counting",
     firstValue: `${trumpCountClean} of ${trumpCountAttempts}`,
@@ -4801,6 +4803,22 @@
 
   function openCatalog() {
     appView = "catalog";
+  }
+
+  async function openPrivacyPolicy(event: MouseEvent) {
+    if (!isTauri()) return;
+    event.preventDefault();
+    if (openingPrivacyPolicy) return;
+
+    openingPrivacyPolicy = true;
+    privacyPolicyError = "";
+    try {
+      await invoke("open_privacy_policy");
+    } catch {
+      privacyPolicyError = "Could not open your browser. Please try again.";
+    } finally {
+      openingPrivacyPolicy = false;
+    }
   }
 
   function openBarbuTable() {
@@ -9768,13 +9786,19 @@
     </section>
 
     <footer class="catalog-footer">
-      <a href={privacyPolicyUrl} rel="noreferrer" target="_blank">Privacy policy</a>
+      <a href={privacyPolicyUrl} rel="noopener noreferrer" target="_blank" onclick={openPrivacyPolicy} aria-busy={openingPrivacyPolicy}>Privacy policy</a>
+      {#if privacyPolicyError}
+        <p role="alert">
+          {privacyPolicyError}
+          <span class="privacy-policy-url">{privacyPolicyUrl}</span>
+        </p>
+      {/if}
     </footer>
   {:else if appView === "cardCountingTable"}
     <header class="topbar table-topbar" aria-label="Card Counting I table">
       <button class="back-button" onclick={openCatalog} type="button">Games</button>
       <div class="table-title">
-        <p class="eyebrow">Skill pack</p>
+        <p class="eyebrow">Card skills</p>
         <h1>Card Counting I</h1>
       </div>
       <div class="contract-status">
@@ -9841,7 +9865,7 @@
             <p>Start with Black Lady, then try trump, court-card, and danger-card tracking.</p>
           </div>
 
-          <section class="fixed-contract-practice" aria-label="Card Counting I pack">
+          <section class="fixed-contract-practice" aria-label="Card Counting I practice">
             {@render cardCountingExerciseGrid("Card Counting I exercises")}
           </section>
         </div>

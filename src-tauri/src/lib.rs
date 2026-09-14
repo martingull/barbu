@@ -1,4 +1,13 @@
 #[tauri::command]
+async fn open_privacy_policy(app: tauri::AppHandle) -> Result<(), String> {
+    use tauri_plugin_opener::OpenerExt;
+
+    app.opener()
+        .open_url("https://martingull.github.io/barbu/privacy-policy.html", None::<&str>)
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
 fn current_game() -> GameSummary {
     let lesson = barbu_core::barbu_learning_path();
 
@@ -908,7 +917,9 @@ fn player_index(player: &str) -> Result<barbu_core::PlayerIndex, String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_opener::Builder::new().open_js_links_on_click(false).build())
         .invoke_handler(tauri::generate_handler![
+            open_privacy_policy,
             apply_hearts_pass,
             bridge_legal_calls,
             bridge_suggest_call,

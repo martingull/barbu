@@ -595,23 +595,21 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByRole("heading", { name: "Choose a table" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "The Bridge Path" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Club Games" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Skill Packs & Solitaire" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Card Skills" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Hearts" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Barbu" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Open Card Counting I" })).toContainText("Pack");
+  await expect(page.getByRole("button", { name: "Open Card Counting I" })).toContainText("Free");
   await expect(page.getByRole("button", { name: "Open Card Counting I" })).toContainText("4 minigames");
-  await expect(page.getByRole("button", { name: "Card Counting II planned" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Card Counting II planned" })).toContainText("Pack");
-  await expect(page.getByRole("button", { name: "Card Counting II planned" })).toContainText("Bridge-oriented");
-  await expect(page.getByRole("button", { name: "Solitaire planned" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /planned/i })).toHaveCount(0);
+  await expect(page.locator(".game-card")).toHaveCount(6);
+  await expect(page.locator(".game-card:disabled")).toHaveCount(0);
+  await expect(page.locator(".game-access")).toHaveText(Array(6).fill("Free"));
+  await expect(page.getByLabel("Games")).not.toContainText(/Gin Rummy|Canasta|Card Counting II|Solitaire|Pack/);
   await expect(page.getByRole("button", { name: /Open Whist/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Open Spades/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Open Bridge/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Gin Rummy planned" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Canasta planned" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Open Whist/ })).toContainText("Free");
   await expect(page.getByRole("button", { name: /Open Spades/ })).toContainText("Free");
-  await expect(page.getByRole("button", { name: "Solitaire planned" })).toContainText("Pack");
   await expect(page.getByRole("heading", { name: "Varieties of play" })).toHaveCount(0);
   await expect(page.getByText("Barbu Learning Table")).toHaveCount(0);
   await expect
@@ -673,6 +671,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByLabel("Barbu table actions").getByRole("button", { name: "Play Barbu" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Practice" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Learn" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Pro", exact: true })).toHaveCount(0);
 
   await openBarbuTab(page, "Learn");
   await expect(page.getByRole("button", { name: /^1 Concept Meet the contract/ })).toBeVisible();
@@ -705,6 +704,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await page.getByRole("button", { name: "Games" }).click();
   await page.getByRole("button", { name: "Open Card Counting I" }).click();
   await expect(page.getByRole("heading", { name: "Card Counting I" })).toBeVisible();
+  await expect(page.getByLabel("Card Counting I table")).toContainText("Card skills");
   await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByLabel("Card Counting I exercises")).toContainText("Count trumps");
   await expect(page.getByLabel("Card Counting I exercises")).toContainText("Heart memory hand");

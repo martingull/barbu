@@ -109,7 +109,7 @@ export type PracticeGroup<Action extends string = string> = {
 
 export const monetizationPolicy = {
   model: "free-usage-then-unlock",
-  freeStarterIds: ["hearts", "barbu", "whist", "spades", "bridge"],
+  freeStarterIds: ["hearts", "barbu", "whist", "spades", "bridge", "card-counting"],
   paidUnlocks: ["individual-pack", "subscription"],
   meteredFreeUsage: {
     unitLimit: "tbd",
@@ -162,7 +162,7 @@ export type CatalogCategory = {
 };
 
 export function getCatalogCategories(): CatalogCategory[] {
-  return [
+  const categories: CatalogCategory[] = [
     {
       id: "bridge-path",
       title: "The Bridge Path",
@@ -242,16 +242,16 @@ export function getCatalogCategories(): CatalogCategory[] {
     },
     {
       id: "skill-packs",
-      title: "Skill Packs & Solitaire",
+      title: "Card Skills",
       summary: "Solo drills and memory trainers.",
       entries: [
         createCatalogEntry({
           id: "card-counting",
-          family: "Skill pack",
+          family: "Card skills",
           title: "Card Counting I",
           status: "Ready",
-          access: "Pack",
-          accessModel: "metered-pack",
+          access: "Free",
+          accessModel: "free-starter",
           summary: "4 minigames for real-hand memory: trumps, court cards, and danger cards."
         }),
         createCatalogEntry({
@@ -275,4 +275,11 @@ export function getCatalogCategories(): CatalogCategory[] {
       ]
     }
   ];
+
+  return categories
+    .map((category) => ({
+      ...category,
+      entries: category.entries.filter((entry) => entry.status === "Ready")
+    }))
+    .filter((category) => category.entries.length > 0);
 }
