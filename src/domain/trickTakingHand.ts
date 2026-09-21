@@ -48,22 +48,30 @@ export function startBrowserWhistHand(seed: number, dealer?: number): FullHandSt
 export function replayWhistHand(state: FullHandState): FullHandState {
   const dealer = state.whistDealer ?? Number(state.id.match(/-dealer-(\d+)-/)?.[1]);
   if (!Number.isInteger(dealer) || dealer < 0 || dealer > 3) throw new Error("Invalid Whist dealer");
+  return replayTrickTakingHand(state, (dealer + 1) % 4, { whistDealer: dealer });
+}
+
+export function replayHeartsHand(state: FullHandState): FullHandState {
+  return replayTrickTakingHand(state);
+}
+
+function replayTrickTakingHand(state: FullHandState, leader?: number, metadata: Partial<FullHandState> = {}): FullHandState {
   const hands = state.hands.map(hand => [...hand]);
   // Native and browser shuffles differ. Recover the actual deal, not just its seed.
   for (const play of [...state.completedTricks.flatMap(trick => trick.cards), ...state.currentTrick]) {
     const seat = playerNames.indexOf(play.seat);
-    if (seat < 0) throw new Error("Invalid Whist seat");
+    if (seat < 0) throw new Error(`Invalid ${state.contract} seat`);
     hands[seat].push(play.card);
   }
   if (hands.length !== 4 || hands.some(hand => hand.length !== 13) || new Set(hands.flat().map(card => card.id)).size !== 52) {
-    throw new Error("Cannot replay an incomplete Whist deal");
+    throw new Error(`Cannot replay an incomplete ${state.contract} deal`);
   }
   hands.forEach(hand => hand.sort(compareCards));
   return advanceToPlayerTurn({
     ...state,
+    ...metadata,
     hands,
-    whistDealer: dealer,
-    currentPlayerIndex: (dealer + 1) % 4,
+    currentPlayerIndex: leader ?? playerWithCard(hands, "2C") ?? 0,
     dummyLegalCardIds: undefined,
     currentTrick: [],
     completedTricks: [],

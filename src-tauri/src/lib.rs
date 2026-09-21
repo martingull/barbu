@@ -45,21 +45,9 @@ fn generate_hearts_practice_set(seed: u64, focus: Option<String>) -> PracticeDri
 }
 
 #[tauri::command]
-fn start_hand(
-    game_id: String,
-    contract: String,
-    seed: u64,
-    dealer: Option<usize>,
-) -> Result<FullHandDto, String> {
-    let ruleset = barbu_core::get_ruleset(&game_id, &contract);
-    let state = if game_id == "whist" && contract == "Whist" {
-        if dealer.is_some_and(|seat| seat >= 4) {
-            return Err("Invalid Whist dealer".to_string());
-        }
-        barbu_core::start_whist_hand_with_dealer(seed, dealer.unwrap_or((seed % 4) as usize))
-    } else {
-        ruleset.start_hand(seed)
-    };
+fn start_hand(game_id: String, contract: String, seed: u64) -> Result<FullHandDto, String> {
+    let ruleset = barbu_core::get_ruleset(&game_id, &contract)?;
+    let state = ruleset.start_hand(seed);
     Ok(FullHandDto::from_core(
         &state,
         &contract,
@@ -74,7 +62,7 @@ fn play_hand_card(
     state: FullHandDto,
     card_id: String,
 ) -> Result<FullHandDto, String> {
-    let ruleset = barbu_core::get_ruleset(&game_id, &contract);
+    let ruleset = barbu_core::get_ruleset(&game_id, &contract)?;
     let state_core = state.to_core()?;
     let card = card_from_label(&card_id)?;
     let next_state = ruleset.play_card(state_core, card)?;
@@ -83,28 +71,6 @@ fn play_hand_card(
         &contract,
         ruleset.score_type(),
     ))
-}
-
-#[tauri::command]
-fn start_hearts_passing_hand(seed: u64) -> FullHandDto {
-    let state = barbu_core::start_hearts_passing_hand(seed);
-    FullHandDto::from_core(&state, "Hearts", "point")
-}
-
-#[tauri::command]
-fn apply_hearts_pass(
-    state: FullHandDto,
-    card_ids: Vec<String>,
-    direction: Option<usize>,
-) -> Result<FullHandDto, String> {
-    let state = state.to_core()?;
-    let cards = card_ids
-        .iter()
-        .map(|card_id| card_from_label(card_id))
-        .collect::<Result<Vec<_>, _>>()?;
-    let next_state = barbu_core::apply_hearts_pass_direction(state, cards, direction.unwrap_or(1))?;
-
-    Ok(FullHandDto::from_core(&next_state, "Hearts", "point"))
 }
 
 #[tauri::command]
@@ -361,10 +327,6 @@ struct FullHandDto {
     trick_number: usize,
     status: String,
     prompt: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    whist_dealer: Option<usize>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    whist_turned_trump: Option<CardDto>,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -482,7 +444,6 @@ impl FullHandDto {
         contract: &str,
         penalty_name: &str,
     ) -> Self {
-        let whist_deal = barbu_core::whist_deal_info(state);
         Self {
             id: state.id.clone(),
             contract: contract.to_string(),
@@ -521,8 +482,6 @@ impl FullHandDto {
             trick_number: state.trick_number(),
             status: state.status.as_str().to_string(),
             prompt: hand_prompt(state, penalty_name),
-            whist_dealer: whist_deal.map(|(dealer, _)| dealer),
-            whist_turned_trump: whist_deal.map(|(_, card)| CardDto::from_core(card)),
         }
     }
 
@@ -804,55 +763,6 @@ fn hand_prompt(state: &barbu_core::TrickTakingHandState, penalty_name: &str) -> 
         );
     }
 
-    if state.id.starts_with("hearts-passing-hand-") {
-        return "Choose three cards to pass.".to_string();
-    }
-
-    if state.id.starts_with("hearts-hand-")
-        && state.completed_tricks.is_empty()
-        && state.current_trick.is_empty()
-    {
-        return "You hold 2C, so you must open the first trick with 2C.".to_string();
-    }
-
-    if state.id.starts_with("whist-hand-") {
-        let trump = state
-            .id
-            .rsplit('-')
-            .next()
-            .and_then(|label| label.chars().next())
-            .and_then(|label| match label {
-                'C' => Some("clubs"),
-                'D' => Some("diamonds"),
-                'H' => Some("hearts"),
-                'S' => Some("spades"),
-                _ => None,
-            })
-            .unwrap_or("the trump suit");
-
-        if state.status == barbu_core::HandStatus::Complete {
-            return format!("Whist hand complete. {trump} were trumps.");
-        }
-
-        if state.current_trick.is_empty() {
-            if state.completed_tricks.is_empty() {
-                return format!(
-                    "You are left of the dealer, so you lead first. Choose a suit that helps your side. {trump} are trumps."
-                );
-            }
-
-            return format!("You lead. Choose a suit that helps your side. {trump} are trumps.");
-        }
-
-        let led_suit = state
-            .current_trick
-            .first()
-            .map(|played| suit_name(played.card.suit))
-            .unwrap_or("the led suit");
-
-        return format!("{led_suit} were led. Follow suit if you can. Trump: {trump}.");
-    }
-
     if state.current_trick.is_empty() {
         return "You won the last trick. Lead any card to the next trick.".to_string();
     }
@@ -920,7 +830,6 @@ pub fn run() {
         .plugin(tauri_plugin_opener::Builder::new().open_js_links_on_click(false).build())
         .invoke_handler(tauri::generate_handler![
             open_privacy_policy,
-            apply_hearts_pass,
             bridge_legal_calls,
             bridge_suggest_call,
             current_game,
@@ -935,57 +844,88 @@ pub fn run() {
             start_hand,
             play_domino_card,
             start_domino_hand,
-            start_hearts_passing_hand,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Tauri application");
 }
 
 #[cfg(test)]
-mod whist_tests {
+mod tests {
     use super::*;
 
     #[test]
-    fn whist_typescript_migration_fixture_matches_native_commands() {
-        let mut hand = start_hand("whist".into(), "Whist".into(), 8, Some(3)).unwrap();
-        let initial_hand = serde_json::to_value(&hand).unwrap();
-        for _ in 0..3 {
-            let card_id = hand.legal_card_ids[0].clone();
-            hand = play_hand_card("whist".into(), "Whist".into(), hand, card_id).unwrap();
+    fn migrated_hands_are_rejected_by_native_commands() {
+        for (game, contract, fixture) in [
+            (
+                "hearts",
+                "Hearts",
+                include_str!("../../tests/fixtures/hearts-native-save.json"),
+            ),
+            (
+                "whist",
+                "Whist",
+                include_str!("../../tests/fixtures/whist-native-save.json"),
+            ),
+        ] {
+            let error = start_hand(game.into(), contract.into(), 8).err().unwrap();
+            assert!(error.contains("TypeScript engine"));
+            let fixture: serde_json::Value = serde_json::from_str(fixture).unwrap();
+            let saved = if game == "hearts" {
+                &fixture["cases"][0]["savedHand"]
+            } else {
+                &fixture["savedHand"]
+            };
+            let state: FullHandDto = serde_json::from_value(saved.clone()).unwrap();
+            let card_id = state.legal_card_ids[0].clone();
+            let error = play_hand_card(game.into(), contract.into(), state, card_id)
+                .err()
+                .unwrap();
+            assert!(error.contains("TypeScript engine"));
         }
-        let saved_hand = serde_json::to_value(&hand).unwrap();
-        let card_id = hand.legal_card_ids[0].clone();
-        let next = play_hand_card("whist".into(), "Whist".into(), hand, card_id.clone()).unwrap();
-        let fixture = serde_json::json!({
-            "initialHand": initial_hand,
-            "savedHand": saved_hand,
-            "cardId": card_id,
-            "nextHand": next,
-        });
-        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../tests/fixtures/whist-native-save.json");
-        if std::env::var("UPDATE_WHIST_MIGRATION_FIXTURE").as_deref() == Ok("1") {
-            std::fs::write(&path, serde_json::to_string_pretty(&fixture).unwrap() + "\n").unwrap();
-        }
-        let expected: serde_json::Value =
-            serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
-        assert_eq!(fixture, expected);
+        assert!(start_hand("barbu".into(), "Whist".into(), 8).is_err());
+        // A table can still host a different, unmigrated contract for practice.
+        assert!(start_hand("hearts".into(), "No Hearts".into(), 8).is_ok());
+        assert!(start_hand("unknown".into(), "unknown".into(), 8).is_err());
     }
 
     #[test]
-    fn whist_command_preserves_dealer_and_turned_card_through_legacy_dto() {
-        let dto = start_hand("whist".into(), "Whist".into(), 8, Some(1)).unwrap();
-        assert_eq!(dto.whist_dealer, Some(1));
-        let turned = dto.whist_turned_trump.as_ref().unwrap().id.clone();
-        assert!(dto.hands[1].iter().any(|card| card.id == turned));
-        let mut saved = serde_json::to_value(&dto).unwrap();
-        saved.as_object_mut().unwrap().remove("whistDealer");
-        saved.as_object_mut().unwrap().remove("whistTurnedTrump");
-        let legacy: FullHandDto = serde_json::from_value(saved).unwrap();
-        let restored = FullHandDto::from_core(&legacy.to_core().unwrap(), "Whist", "trick");
-        assert_eq!(restored.whist_dealer, Some(1));
-        assert_eq!(restored.whist_turned_trump.unwrap().id, turned);
-        assert!(start_hand("whist".into(), "Whist".into(), 8, Some(4)).is_err());
-        assert!(start_hand("hearts".into(), "Hearts".into(), 8, None).unwrap().whist_dealer.is_none());
+    fn remaining_native_hands_still_complete_through_command_adapters() {
+        for (game, contract) in [
+            ("barbu", "No Hearts"),
+            ("barbu", "No Queens"),
+            ("barbu", "King of Hearts"),
+            ("barbu", "No Last Two"),
+            ("barbu", "No Tricks"),
+            ("barbu", "Hearts Trumps"),
+            ("spades", "Spades"),
+        ] {
+            let mut state = start_hand(game.into(), contract.into(), 8).unwrap();
+            for _ in 0..13 {
+                // Exercise the serialization boundary used by installed builds.
+                state = serde_json::from_value(serde_json::to_value(&state).unwrap()).unwrap();
+                let card = state.legal_card_ids[0].clone();
+                state = play_hand_card(game.into(), contract.into(), state, card).unwrap();
+            }
+            assert_eq!(state.status, "complete", "{contract}");
+            assert_eq!(state.cards_remaining, 0, "{contract}");
+            assert_eq!(state.completed_tricks.len(), 13, "{contract}");
+        }
+    }
+
+    #[test]
+    fn hearts_practice_remains_available_without_native_full_hand_engine() {
+        for focus in [
+            None,
+            Some("first-trick"),
+            Some("queen-danger"),
+            Some("stop-moon"),
+        ] {
+            let set = generate_hearts_practice_set(8, focus.map(str::to_string));
+            let json = serde_json::to_value(set).unwrap();
+            assert!(!json["scenarios"].as_array().unwrap().is_empty());
+        }
+        let pass = serde_json::to_value(generate_hearts_pass_practice(8)).unwrap();
+        assert_eq!(pass["playerHand"].as_array().unwrap().len(), 13);
+        assert_eq!(pass["recommendedPass"].as_array().unwrap().len(), 3);
     }
 }

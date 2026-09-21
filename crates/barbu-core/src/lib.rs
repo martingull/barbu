@@ -4,12 +4,10 @@ pub mod contract_policy;
 pub mod domino;
 pub mod guided;
 pub mod hand;
-pub mod hearts;
 pub mod learning;
 pub mod practice;
 pub mod ruleset;
 pub mod trick;
-pub mod whist;
 
 pub use bridge::{
     bridge_auction_status, bridge_duplicate_score, bridge_finalize_contract,
@@ -27,16 +25,14 @@ pub use guided::{
     GuidedTrickResult, Seat,
 };
 pub use hand::{
-    apply_hearts_pass, apply_hearts_pass_direction, completed_trick_tactical_tags,
-    play_hearts_card, play_king_of_hearts_card, play_no_hearts_card, play_no_last_two_card,
-    play_no_queens_card, play_no_tricks_card, play_positive_tricks_card, play_spades_card,
-    play_trick_taking_card, play_whist_card, start_hearts_hand, start_hearts_passing_hand,
-    start_king_of_hearts_hand, start_no_hearts_hand, start_no_last_two_hand, start_no_queens_hand,
-    start_no_tricks_hand, start_positive_tricks_hand, start_spades_hand, start_trick_taking_hand,
-    start_whist_hand, start_whist_hand_with_dealer, whist_deal_info, CompletedTrick, HandStatus, HandTrickOutcome, HeartsHandState,
+    completed_trick_tactical_tags, play_king_of_hearts_card, play_no_hearts_card,
+    play_no_last_two_card, play_no_queens_card, play_no_tricks_card, play_positive_tricks_card,
+    play_spades_card, play_trick_taking_card, start_king_of_hearts_hand, start_no_hearts_hand,
+    start_no_last_two_hand, start_no_queens_hand, start_no_tricks_hand, start_positive_tricks_hand,
+    start_spades_hand, start_trick_taking_hand, CompletedTrick, HandStatus, HandTrickOutcome,
     KingOfHeartsHandState, NoHeartsHandState, NoLastTwoHandState, NoQueensHandState,
     NoTricksHandState, OpponentPolicyFn, PositiveTricksHandState, SpadesHandState, TrickScoreFn,
-    TrickTakingHandState, WhistHandState,
+    TrickTakingHandState,
 };
 pub use learning::{barbu_learning_path, ContractLesson, GameLesson, LessonStep};
 pub use practice::{

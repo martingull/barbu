@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { typescriptHandEngine, whistHandEngine } from "../../src/domain/handEngine";
+import { heartsHandEngine, typescriptHandEngine, whistHandEngine } from "../../src/domain/handEngine";
 import type { FullHandState } from "../../src/lessonTypes";
 import nativeFixture from "../fixtures/whist-native-save.json" with { type: "json" };
 
@@ -31,9 +31,10 @@ function gameplay(state: FullHandState) {
   };
 }
 
-test("only Whist opts into the shared engine prototype", () => {
+test("only migrated games opt into the shared engine prototype", () => {
   expect(typescriptHandEngine("Whist")).toBe(whistHandEngine);
-  for (const contract of ["Hearts", "Spades", "Bridge", "Domino", "No Hearts"] as const) {
+  expect(typescriptHandEngine("Hearts")).toBe(heartsHandEngine);
+  for (const contract of ["Spades", "Bridge", "Domino", "No Hearts"] as const) {
     expect(typescriptHandEngine(contract)).toBeUndefined();
   }
 });

@@ -26,11 +26,16 @@ chosen rules, scoring, and table conventions.
 | Persistence | `src/persistence/whistSave.ts` | Validate and restore saves through an adapter; preserve compatibility or explicitly migrate it. |
 | Learning content | `content/`, `src/lessons/`, per-game lesson modules | Use structured content and the same rules as full play. |
 
-The TypeScript domain examples describe the migrated Whist path. Other games
-still use Rust and existing browser routes; this document does not silently
-authorize migrating them. The metadata registry is not yet an engine/session
-factory. Whist is a reference implementation, not proof that every game can be
-added using configuration alone.
+Whist and Hearts now use these TypeScript domain boundaries. They share the
+hand-engine factory and registry, reviewed-hand transitions, storage factory,
+standard trick-hand save validation, and seat-score primitives. Game-specific
+session transitions and settlement remain explicit. Other games still use
+their existing routes; this document does not silently authorize migrating them.
+The Hearts and Whist Rust full-play implementations are removed. Their legacy
+native saves are frozen compatibility fixtures, not a reason to retain a second
+engine. Hearts generated practice remains native-backed and is a separate migration.
+The metadata registry remains separate from engine selection. These references
+do not imply that every game can be added using configuration alone.
 
 Share deck, deal, turn-order, legality, and trick mechanics where appropriate.
 Keep each game's objectives, opponent policy, bidding, scoring, and variants
@@ -61,7 +66,8 @@ replace copy-pasted screens with copy-pasted session or save implementations.
 8. Exercise catalog, Learn, Practice, Play, save/resume, and completion in browser
    tests. Check small-screen layouts and a physical-device upgrade before release.
 9. Record what is migrated, what remains native, and which limitations remain.
-   Remove legacy implementations only after their replacements are verified.
+   Remove legacy implementations and dispatch routes after their replacements
+   are verified. Keep golden fixtures; do not maintain two production engines.
 
 See [the prototype record](typescript-engine-prototype.md) for Whist's current
 scope and verification commands. Use this checklist as a review gate for future

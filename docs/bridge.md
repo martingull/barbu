@@ -36,7 +36,7 @@ computer partners do not understand unimplemented conventions.
 Both consume the same regression corpus in `tests/fixtures/bridge-bidding.json`.
 Tests rotate every fixture through all seats and reverse card ordering.
 
-Full-hand Bridge currently uses `src/browserHandFallback.ts` on browser and
+Full-hand Bridge currently uses `src/domain/trickTakingHand.ts` on browser and
 Tauri. Opponent choices use their own cards, the exposed dummy, and played-card
 history. Declarer may additionally use the other declaring hand. Defenders must
 not use partner's hidden cards. Tests check information independence, follow-suit

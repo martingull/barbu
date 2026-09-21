@@ -13,8 +13,6 @@ pub type KingOfHeartsHandState = TrickTakingHandState;
 pub type NoLastTwoHandState = TrickTakingHandState;
 pub type NoTricksHandState = TrickTakingHandState;
 pub type PositiveTricksHandState = TrickTakingHandState;
-pub type HeartsHandState = TrickTakingHandState;
-pub type WhistHandState = TrickTakingHandState;
 pub type SpadesHandState = TrickTakingHandState;
 const HEARTS_TRUMP_SUIT: Suit = Suit::Hearts;
 
@@ -118,106 +116,17 @@ pub fn completed_trick_tactical_tags(
                 tags.push("overtrumped");
             }
         }
-        Some(HandPolicy::Whist) => {
-            let player_card = trick
-                .cards
-                .iter()
-                .find(|played| played.player == 2)
-                .map(|played| played.card);
-            let partner_card = trick
-                .cards
-                .iter()
-                .find(|played| played.player == 0)
-                .map(|played| played.card);
-
-            if let Some(winner_card) = trick
-                .cards
-                .iter()
-                .find(|played| played.player == trick.winner)
-                .map(|played| played.card)
-            {
-                if winner_card.suit != led_suit(trick) {
-                    tags.push("trump_won");
-                }
-            }
-            if trick.winner == 0 || trick.winner == 2 {
-                tags.push("partner_trick");
-            } else {
-                tags.push("opponent_trick");
-            }
-            if trick.winner == 0 {
-                tags.push("partner_held");
-            }
-            if trick.cards.first().is_some_and(|played| played.player == 0)
-                && (trick.winner == 0 || trick.winner == 2)
-            {
-                tags.push("partner_supported");
-            }
-            if trick.cards.get(2).is_some_and(|played| played.player == 2)
-                && trick.cards.first().is_some_and(|played| played.player == 0)
-            {
-                tags.push("third_hand_high");
-            }
-            if trick.winner == 0
-                && player_card
-                    .zip(partner_card)
-                    .is_some_and(|(player_card, partner_card)| {
-                        player_card.suit == partner_card.suit
-                            && player_card.rank < partner_card.rank
-                    })
-            {
-                tags.push("avoided_overtake");
-            }
-        }
-        Some(HandPolicy::HeartsBlackLady)
-        | Some(HandPolicy::BarbuContract(BarbuContractPolicy::NoHearts))
+        Some(HandPolicy::BarbuContract(BarbuContractPolicy::NoHearts))
         | Some(HandPolicy::BarbuContract(BarbuContractPolicy::NoQueens))
         | Some(HandPolicy::BarbuContract(BarbuContractPolicy::KingOfHearts)) => {
             if trick.penalty > 0 {
                 tags.push("danger_card_moved");
-            }
-            if policy == Some(HandPolicy::HeartsBlackLady) {
-                if trick.cards.iter().any(|played| {
-                    played.card.rank == Rank::Queen && played.card.suit == Suit::Spades
-                }) {
-                    tags.push("queen_spades_moved");
-                }
-                if trick
-                    .cards
-                    .iter()
-                    .any(|played| played.card.suit == Suit::Hearts)
-                {
-                    tags.push("hearts_moved");
-                }
-                if trick.winner == 2
-                    && trick.penalty > 0
-                    && trick
-                        .cards
-                        .iter()
-                        .any(|played| played.player != 2 && played.card.suit != led_suit(trick))
-                {
-                    tags.push("opponent_loaded_player_trick");
-                }
-                if trick.winner == 2
-                    && trick.penalty > 0
-                    && trick.cards.first().is_some_and(|played| played.player != 2)
-                {
-                    tags.push("pressure_lead");
-                }
             }
         }
         _ => {}
     }
 
     tags
-}
-
-fn led_suit(trick: &CompletedTrick) -> Suit {
-    trick
-        .cards
-        .first()
-        .map(|played| played.card.suit)
-        .unwrap_or(Suit::Clubs)
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -243,10 +152,6 @@ impl TrickTakingHandState {
     pub fn legal_cards_for_player(&self, player: PlayerIndex) -> Vec<Card> {
         if self.status == HandStatus::Complete || self.current_player != player {
             return Vec::new();
-        }
-
-        if is_hearts_state(self) {
-            return legal_hearts_cards(self, player);
         }
 
         if is_spades_state(self) {
@@ -464,99 +369,9 @@ pub fn play_positive_tricks_card(
     )
 }
 
-pub fn start_hearts_hand(seed: u64) -> HeartsHandState {
-    let starting_player = find_two_of_clubs_player_for_seed(seed);
-    let state = start_trick_taking_hand(format!("hearts-hand-{seed}"), seed, starting_player);
-    advance_to_player_turn(state, 2, score_hearts_trick, choose_hearts_opponent_card)
-}
-
-pub fn start_hearts_passing_hand(seed: u64) -> HeartsHandState {
-    start_trick_taking_hand(format!("hearts-passing-hand-{seed}"), seed, 2)
-}
-
-pub fn apply_hearts_pass(
-    state: HeartsHandState,
-    player_cards: Vec<Card>,
-) -> Result<HeartsHandState, String> {
-    apply_hearts_pass_with_direction(state, player_cards, 1)
-}
-
-pub fn apply_hearts_pass_direction(
-    state: HeartsHandState,
-    player_cards: Vec<Card>,
-    direction: usize,
-) -> Result<HeartsHandState, String> {
-    apply_hearts_pass_with_direction(state, player_cards, direction)
-}
-
-pub fn play_hearts_card(
-    state: HeartsHandState,
-    player_card: Card,
-) -> Result<HeartsHandState, String> {
-    play_trick_taking_card(
-        state,
-        player_card,
-        2,
-        score_hearts_trick,
-        choose_hearts_opponent_card,
-    )
-}
-
-pub fn start_whist_hand(seed: u64) -> WhistHandState {
-    start_whist_hand_with_dealer(seed, whist_dealer_for_seed(seed))
-}
-
-pub fn start_whist_hand_with_dealer(seed: u64, dealer: PlayerIndex) -> WhistHandState {
-    assert!(dealer < 4, "Whist dealer must be a seat at the table");
-    let deck = shuffled_standard_deck(seed);
-    let leader = (dealer + 1) % 4;
-    let trump_card = deck[dealer + 48];
-    let mut hands = [Vec::new(), Vec::new(), Vec::new(), Vec::new()];
-
-    for (index, card) in deck.into_iter().enumerate() {
-        hands[index % 4].push(card);
-    }
-
-    for hand in &mut hands {
-        sort_hand(hand);
-    }
-
-    let state = WhistHandState {
-        id: format!(
-            "whist-hand-{seed}-dealer-{dealer}-{}",
-            trump_card.suit.short_name()
-        ),
-        hands,
-        current_player: leader,
-        current_trick: Vec::new(),
-        completed_tricks: Vec::new(),
-        status: HandStatus::InProgress,
-    };
-    advance_to_player_turn(state, 2, score_whist_trick, choose_whist_opponent_card)
-}
-
-/// Recover public deal metadata for both current and previously saved native hands.
-pub fn whist_deal_info(state: &TrickTakingHandState) -> Option<(PlayerIndex, Card)> {
-    let suffix = state.id.strip_prefix("whist-hand-")?;
-    let (seed, suffix) = suffix.split_once("-dealer-")?;
-    let (dealer, _) = suffix.split_once('-')?;
-    let dealer = dealer.parse::<usize>().ok().filter(|dealer| *dealer < 4)?;
-    Some((dealer, shuffled_standard_deck(seed.parse().ok()?)[dealer + 48]))
-}
-
-pub fn play_whist_card(state: WhistHandState, player_card: Card) -> Result<WhistHandState, String> {
-    play_trick_taking_card(
-        state,
-        player_card,
-        2,
-        score_whist_trick,
-        choose_whist_opponent_card,
-    )
-}
-
 pub fn start_spades_hand(seed: u64) -> SpadesHandState {
     let deck = shuffled_standard_deck(seed);
-    let dealer = whist_dealer_for_seed(seed);
+    let dealer = dealer_for_seed(seed);
     let leader = (dealer + 1) % 4;
     let mut hands = [Vec::new(), Vec::new(), Vec::new(), Vec::new()];
 
@@ -576,7 +391,12 @@ pub fn start_spades_hand(seed: u64) -> SpadesHandState {
         completed_tricks: Vec::new(),
         status: HandStatus::InProgress,
     };
-    advance_to_player_turn(state, 2, score_whist_trick, choose_spades_opponent_card)
+    advance_to_player_turn(
+        state,
+        2,
+        score_partnership_trick,
+        choose_spades_opponent_card,
+    )
 }
 
 pub fn play_spades_card(
@@ -587,71 +407,9 @@ pub fn play_spades_card(
         state,
         player_card,
         2,
-        score_whist_trick,
+        score_partnership_trick,
         choose_spades_opponent_card,
     )
-}
-
-fn apply_hearts_pass_with_direction(
-    mut state: HeartsHandState,
-    player_cards: Vec<Card>,
-    direction: usize,
-) -> Result<HeartsHandState, String> {
-    if state.status == HandStatus::Complete {
-        return Err("The hand is already complete.".to_string());
-    }
-    if !state.current_trick.is_empty() || !state.completed_tricks.is_empty() {
-        return Err("Cards can only be passed before the first trick.".to_string());
-    }
-    if direction == 0 || direction >= 4 {
-        return Err("Unsupported Hearts pass direction.".to_string());
-    }
-    if player_cards.len() != 3 {
-        return Err("Choose exactly three cards to pass.".to_string());
-    }
-    if has_duplicate_cards(&player_cards) {
-        return Err("Choose three different cards to pass.".to_string());
-    }
-    for card in &player_cards {
-        if !state.hands[2].contains(card) {
-            return Err(format!("{card} is not in your hand."));
-        }
-    }
-
-    let mut passed_cards: [Vec<Card>; 4] = [Vec::new(), Vec::new(), Vec::new(), Vec::new()];
-    passed_cards[2] = player_cards;
-
-    for (player, passed) in passed_cards.iter_mut().enumerate() {
-        if player != 2 {
-            *passed = choose_hearts_pass_cards(&state.hands[player]);
-        }
-    }
-
-    for (player, passed) in passed_cards.iter().enumerate() {
-        for card in passed {
-            remove_card_from_hand(&mut state.hands[player], *card)?;
-        }
-    }
-
-    for (player, passed) in passed_cards.iter().enumerate() {
-        let recipient = (player + direction) % 4;
-        state.hands[recipient].extend(passed.iter().copied());
-    }
-
-    for hand in &mut state.hands {
-        sort_hand(hand);
-    }
-
-    state.id = state.id.replace("hearts-passing-hand-", "hearts-hand-");
-    state.current_player = player_with_card(&state, Card::new(Rank::Two, Suit::Clubs))
-        .ok_or_else(|| "The two of clubs is missing from the Hearts hand.".to_string())?;
-
-    Ok(advance_to_player_turn(
-        state,
-        2,
-        score_hearts_trick,
-        choose_hearts_opponent_card,
-    ))
 }
 
 pub fn play_trick_taking_card(
@@ -759,8 +517,8 @@ fn trick_winner_for_state(
     if is_hearts_trumps_state(state) {
         return trump_trick_winner(played_cards, HEARTS_TRUMP_SUIT);
     }
-    if is_whist_state(state) {
-        return trump_trick_winner(played_cards, whist_trump_suit(state));
+    if is_spades_state(state) {
+        return trump_trick_winner(played_cards, Suit::Spades);
     }
 
     trick_winner(played_cards)
@@ -791,83 +549,12 @@ fn is_hearts_trumps_state(state: &TrickTakingHandState) -> bool {
     )
 }
 
-fn is_hearts_state(state: &TrickTakingHandState) -> bool {
-    matches!(state.policy(), Some(HandPolicy::HeartsBlackLady))
-}
-
-fn is_whist_state(state: &TrickTakingHandState) -> bool {
-    matches!(state.policy(), Some(HandPolicy::Whist | HandPolicy::Spades))
-}
-
 fn is_spades_state(state: &TrickTakingHandState) -> bool {
     matches!(state.policy(), Some(HandPolicy::Spades))
 }
 
-fn whist_trump_suit(state: &TrickTakingHandState) -> Suit {
-    whist_trump_suit_from_id(&state.id).unwrap_or(Suit::Spades)
-}
-
-fn whist_trump_suit_from_id(id: &str) -> Option<Suit> {
-    match id.rsplit('-').next()? {
-        "C" => Some(Suit::Clubs),
-        "D" => Some(Suit::Diamonds),
-        "H" => Some(Suit::Hearts),
-        "S" => Some(Suit::Spades),
-        _ => None,
-    }
-}
-
-fn whist_dealer_for_seed(seed: u64) -> PlayerIndex {
+fn dealer_for_seed(seed: u64) -> PlayerIndex {
     (seed as usize) % 4
-}
-
-fn legal_hearts_cards(state: &TrickTakingHandState, player: PlayerIndex) -> Vec<Card> {
-    let hand = &state.hands[player];
-    let basic_legal = legal_cards(hand, state.led_suit());
-
-    if basic_legal.is_empty() {
-        return basic_legal;
-    }
-
-    if state.completed_tricks.is_empty() && state.current_trick.is_empty() {
-        return basic_legal
-            .iter()
-            .copied()
-            .filter(|card| *card == Card::new(Rank::Two, Suit::Clubs))
-            .collect();
-    }
-
-    if state.current_trick.is_empty() {
-        if hearts_have_been_broken(state) {
-            return basic_legal;
-        }
-
-        let non_hearts: Vec<Card> = basic_legal
-            .iter()
-            .copied()
-            .filter(|card| card.suit != Suit::Hearts)
-            .collect();
-        return if non_hearts.is_empty() {
-            basic_legal
-        } else {
-            non_hearts
-        };
-    }
-
-    if state.completed_tricks.is_empty() {
-        let non_penalties: Vec<Card> = basic_legal
-            .iter()
-            .copied()
-            .filter(|card| !is_hearts_penalty_card(*card))
-            .collect();
-        return if non_penalties.is_empty() {
-            basic_legal
-        } else {
-            non_penalties
-        };
-    }
-
-    basic_legal
 }
 
 fn legal_spades_cards(state: &TrickTakingHandState, player: PlayerIndex) -> Vec<Card> {
@@ -898,27 +585,6 @@ fn spades_have_been_broken(state: &TrickTakingHandState) -> bool {
         .flat_map(|trick| trick.cards.iter())
         .chain(state.current_trick.iter())
         .any(|played| played.card.suit == Suit::Spades)
-}
-
-fn hearts_have_been_broken(state: &TrickTakingHandState) -> bool {
-    state
-        .completed_tricks
-        .iter()
-        .flat_map(|trick| trick.cards.iter())
-        .chain(state.current_trick.iter())
-        .any(|played| played.card.suit == Suit::Hearts)
-}
-
-fn player_with_card(state: &TrickTakingHandState, card: Card) -> Option<PlayerIndex> {
-    state
-        .hands
-        .iter()
-        .position(|hand| hand.iter().any(|held| *held == card))
-}
-
-fn find_two_of_clubs_player_for_seed(seed: u64) -> PlayerIndex {
-    let state = start_trick_taking_hand("hearts-start-preview".to_string(), seed, 0);
-    player_with_card(&state, Card::new(Rank::Two, Suit::Clubs)).unwrap_or(0)
 }
 
 fn choose_no_hearts_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
@@ -1056,55 +722,8 @@ fn score_no_hearts_hand_trick(_state: &TrickTakingHandState, cards: &[PlayedCard
     score_no_hearts_trick(cards)
 }
 
-fn score_hearts_trick(_state: &TrickTakingHandState, cards: &[PlayedCard]) -> i32 {
-    cards
-        .iter()
-        .map(|played| {
-            if played.card.suit == Suit::Hearts {
-                1
-            } else if played.card.rank == Rank::Queen && played.card.suit == Suit::Spades {
-                13
-            } else {
-                0
-            }
-        })
-        .sum()
-}
-
-fn choose_hearts_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
-    let legal = state.legal_cards_for_player(state.current_player);
-    crate::hearts::choose_hearts_card(&crate::hearts::HeartsPosition {
-        hand: &state.hands[state.current_player],
-        legal: &legal,
-        player: state.current_player,
-        trick: &state.current_trick,
-        history: &state.completed_tricks,
-    })
-}
-
 fn suit_count(cards: &[Card], suit: Suit) -> usize {
     cards.iter().filter(|card| card.suit == suit).count()
-}
-
-fn choose_hearts_pass_cards(hand: &[Card]) -> Vec<Card> {
-    crate::hearts::choose_hearts_pass(hand)
-}
-
-fn has_duplicate_cards(cards: &[Card]) -> bool {
-    cards
-        .iter()
-        .enumerate()
-        .any(|(index, card)| cards.iter().skip(index + 1).any(|other| other == card))
-}
-
-fn remove_card_from_hand(hand: &mut Vec<Card>, card: Card) -> Result<(), String> {
-    let index = hand
-        .iter()
-        .position(|held_card| *held_card == card)
-        .ok_or_else(|| format!("{card} is not in the hand."))?;
-
-    hand.remove(index);
-    Ok(())
 }
 
 fn score_no_queens_trick(_state: &TrickTakingHandState, cards: &[PlayedCard]) -> i32 {
@@ -1139,7 +758,7 @@ fn score_positive_tricks_trick(_state: &TrickTakingHandState, _cards: &[PlayedCa
     5
 }
 
-fn score_whist_trick(_state: &TrickTakingHandState, _cards: &[PlayedCard]) -> i32 {
+fn score_partnership_trick(_state: &TrickTakingHandState, _cards: &[PlayedCard]) -> i32 {
     1
 }
 
@@ -1170,17 +789,6 @@ fn choose_positive_tricks_opponent_card(state: &TrickTakingHandState) -> Option<
     lowest_card(&legal)
 }
 
-fn choose_whist_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
-    crate::whist::choose_whist_card(&crate::whist::WhistPosition {
-        hand: &state.hands[state.current_player],
-        player: state.current_player,
-        trump: whist_trump_suit(state),
-        trick: &state.current_trick,
-        history: &state.completed_tricks,
-        turned_trump: whist_deal_info(state),
-    })
-}
-
 fn choose_spades_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
     let legal = state.legal_cards_for_player(state.current_player);
     let led_suit = state.led_suit();
@@ -1198,36 +806,36 @@ fn choose_spades_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
     let current_winner = trick_winner_for_state(state, &state.current_trick);
     let partner = (state.current_player + 2) % 4;
     let partner_is_winning =
-        current_winner.is_some_and(|winner| whist_same_partnership(winner, state.current_player));
+        current_winner.is_some_and(|winner| same_partnership(winner, state.current_player));
     let follows_suit = legal.iter().all(|card| Some(card.suit) == led_suit);
 
     if context.current_player_nil {
-        return highest_card_matching(&legal, |card| !card_would_win_whist_trick(state, card))
+        return highest_card_matching(&legal, |card| !card_would_win_spades_trick(state, card))
             .or_else(|| lowest_card(&legal));
     }
 
     if context.partner_nil && current_winner == Some(partner) {
-        return lowest_card_matching(&legal, |card| card_would_win_whist_trick(state, card))
+        return lowest_card_matching(&legal, |card| card_would_win_spades_trick(state, card))
             .or_else(|| lowest_card(&legal));
     }
 
     if context.opponent_nil_winning {
         if follows_suit {
-            return highest_card_matching(&legal, |card| !card_would_win_whist_trick(state, card))
+            return highest_card_matching(&legal, |card| !card_would_win_spades_trick(state, card))
                 .or_else(|| lowest_card(&legal));
         }
         if let Some(card) = lowest_card_matching(&legal, |card| {
-            card.suit != Suit::Spades && !card_would_win_whist_trick(state, card)
+            card.suit != Suit::Spades && !card_would_win_spades_trick(state, card)
         }) {
             return Some(card);
         }
-        return lowest_card_matching(&legal, |card| !card_would_win_whist_trick(state, card))
+        return lowest_card_matching(&legal, |card| !card_would_win_spades_trick(state, card))
             .or_else(|| lowest_card(&legal));
     }
 
     if follows_suit {
         if context.side_has_contract {
-            return highest_card_matching(&legal, |card| !card_would_win_whist_trick(state, card))
+            return highest_card_matching(&legal, |card| !card_would_win_spades_trick(state, card))
                 .or_else(|| lowest_card(&legal));
         }
 
@@ -1235,7 +843,7 @@ fn choose_spades_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
             return lowest_card(&legal);
         }
 
-        return lowest_card_matching(&legal, |card| card_would_win_whist_trick(state, card))
+        return lowest_card_matching(&legal, |card| card_would_win_spades_trick(state, card))
             .or_else(|| lowest_card(&legal));
     }
 
@@ -1250,7 +858,7 @@ fn choose_spades_opponent_card(state: &TrickTakingHandState) -> Option<Card> {
     }
 
     lowest_card_matching(&legal, |card| {
-        card.suit == Suit::Spades && card_would_win_whist_trick(state, card)
+        card.suit == Suit::Spades && card_would_win_spades_trick(state, card)
     })
     .or_else(|| highest_card_matching(&legal, |card| card.suit != Suit::Spades))
     .or_else(|| lowest_card(&legal))
@@ -1277,7 +885,7 @@ impl SpadesPlayContext {
             current_player_nil: spades_estimated_bid_for_player(state, current_player) == 0,
             partner_nil: spades_estimated_bid_for_player(state, partner) == 0,
             opponent_nil_winning: current_winner.is_some_and(|winner| {
-                !whist_same_partnership(winner, current_player)
+                !same_partnership(winner, current_player)
                     && spades_estimated_bid_for_player(state, winner) == 0
             }),
             side_has_contract: side_bid > 0 && side_tricks >= side_bid,
@@ -1306,7 +914,7 @@ fn spades_lead_card(
     }
 
     let opponent_nil = (0..4).any(|player| {
-        !whist_same_partnership(player, state.current_player)
+        !same_partnership(player, state.current_player)
             && spades_estimated_bid_for_player(state, player) == 0
     });
     if opponent_nil {
@@ -1358,8 +966,7 @@ fn spades_estimated_bid_for_player(state: &TrickTakingHandState, player: PlayerI
         .count();
     let long_spades = spades.len().saturating_sub(3);
 
-    (non_spade_aces + protected_non_spade_kings + high_spades + long_spades)
-        .clamp(1, 13)
+    (non_spade_aces + protected_non_spade_kings + high_spades + long_spades).clamp(1, 13)
 }
 
 fn spades_bid_from_id(id: &str, player: PlayerIndex) -> Option<usize> {
@@ -1412,11 +1019,11 @@ fn spades_tricks_won_by_side(state: &TrickTakingHandState, player: PlayerIndex) 
     state
         .completed_tricks
         .iter()
-        .filter(|trick| whist_same_partnership(trick.winner, player))
+        .filter(|trick| same_partnership(trick.winner, player))
         .count()
 }
 
-fn whist_same_partnership(left: PlayerIndex, right: PlayerIndex) -> bool {
+fn same_partnership(left: PlayerIndex, right: PlayerIndex) -> bool {
     left % 2 == right % 2
 }
 
@@ -1424,16 +1031,12 @@ fn is_king_of_hearts(card: Card) -> bool {
     card.rank == Rank::King && card.suit == Suit::Hearts
 }
 
-fn is_hearts_penalty_card(card: Card) -> bool {
-    card.suit == Suit::Hearts || (card.rank == Rank::Queen && card.suit == Suit::Spades)
-}
-
 fn card_would_win_trick(state: &TrickTakingHandState, card: Card) -> bool {
     if is_hearts_trumps_state(state) {
         return card_would_win_trump_trick(state, card, HEARTS_TRUMP_SUIT);
     }
-    if is_whist_state(state) {
-        return card_would_win_whist_trick(state, card);
+    if is_spades_state(state) {
+        return card_would_win_spades_trick(state, card);
     }
 
     let Some(led_suit) = state.led_suit() else {
@@ -1456,8 +1059,8 @@ fn card_would_win_trick(state: &TrickTakingHandState, card: Card) -> bool {
     card.rank > current_winner.card.rank
 }
 
-fn card_would_win_whist_trick(state: &TrickTakingHandState, card: Card) -> bool {
-    card_would_win_trump_trick(state, card, whist_trump_suit(state))
+fn card_would_win_spades_trick(state: &TrickTakingHandState, card: Card) -> bool {
+    card_would_win_trump_trick(state, card, Suit::Spades)
 }
 
 fn card_would_win_trump_trick(state: &TrickTakingHandState, card: Card, trump_suit: Suit) -> bool {
@@ -1517,10 +1120,7 @@ fn highest_card_from_longest_suit(
         })
 }
 
-fn lowest_card_from_longest_suit(
-    cards: &[Card],
-    predicate: impl Fn(Card) -> bool,
-) -> Option<Card> {
+fn lowest_card_from_longest_suit(cards: &[Card], predicate: impl Fn(Card) -> bool) -> Option<Card> {
     cards
         .iter()
         .copied()
@@ -1611,12 +1211,7 @@ mod tests {
                     bids[(seat + rotation) % 4] = case["bids"][seat].as_u64().unwrap();
                 }
                 let mut hands = [Vec::new(), Vec::new(), Vec::new(), Vec::new()];
-                hands[player] = case["hand"]
-                    .as_array()
-                    .unwrap()
-                    .iter()
-                    .map(card)
-                    .collect();
+                hands[player] = case["hand"].as_array().unwrap().iter().map(card).collect();
                 let mut state = SpadesHandState {
                     id: format!(
                         "spades-hand-fixture-bids-{}.{}.{}.{}-S",
@@ -1646,7 +1241,9 @@ mod tests {
                         "{} rotation {rotation}",
                         case["name"]
                     );
-                    assert!(state.legal_cards_for_player(player).contains(&chosen.unwrap()));
+                    assert!(state
+                        .legal_cards_for_player(player)
+                        .contains(&chosen.unwrap()));
                     state.hands[player].reverse();
                 }
             }
@@ -1673,48 +1270,6 @@ mod tests {
         assert_eq!(state.current_player, 1);
         assert_eq!(state.current_trick.len(), 0);
         assert_eq!(state.completed_tricks.len(), 0);
-    }
-
-    #[test]
-    fn whist_hand_deals_with_trump_and_advances_to_player() {
-        let state = start_whist_hand(8);
-        let dealer = whist_dealer_for_seed(8);
-        let leader = (dealer + 1) % 4;
-        let trump_card = shuffled_standard_deck(8)[dealer + 48];
-
-        assert_eq!(
-            state.id,
-            format!(
-                "whist-hand-8-dealer-{dealer}-{}",
-                trump_card.suit.short_name()
-            )
-        );
-        assert_eq!(state.hands.iter().map(Vec::len).sum::<usize>(), 51);
-        assert_eq!(state.current_player, 2);
-        assert_eq!(state.current_trick.len(), 1);
-        assert_eq!(state.current_trick[0].player, leader);
-        assert_eq!(state.status, HandStatus::InProgress);
-    }
-
-    #[test]
-    fn whist_dealer_left_leads_when_player_is_left_of_dealer() {
-        let state = start_whist_hand(9);
-        let dealer = whist_dealer_for_seed(9);
-        let leader = (dealer + 1) % 4;
-        let trump_card = shuffled_standard_deck(9)[dealer + 48];
-
-        assert_eq!(dealer, 1);
-        assert_eq!(leader, 2);
-        assert_eq!(
-            state.id,
-            format!(
-                "whist-hand-9-dealer-{dealer}-{}",
-                trump_card.suit.short_name()
-            )
-        );
-        assert_eq!(state.current_player, 2);
-        assert!(state.current_trick.is_empty());
-        assert_eq!(state.hands.iter().map(Vec::len).sum::<usize>(), 52);
     }
 
     #[test]
@@ -1980,419 +1535,6 @@ mod tests {
     }
 
     #[test]
-    fn whist_player_must_follow_suit() {
-        let state = WhistHandState {
-            id: "whist-hand-test-S".to_string(),
-            hands: [
-                Vec::new(),
-                Vec::new(),
-                vec![
-                    Card::new(Rank::Two, Suit::Clubs),
-                    Card::new(Rank::Ace, Suit::Hearts),
-                    Card::new(Rank::King, Suit::Clubs),
-                ],
-                Vec::new(),
-            ],
-            current_player: 2,
-            current_trick: vec![PlayedCard::new(1, Card::new(Rank::Nine, Suit::Clubs))],
-            completed_tricks: Vec::new(),
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            state.legal_player_cards(),
-            vec![
-                Card::new(Rank::Two, Suit::Clubs),
-                Card::new(Rank::King, Suit::Clubs)
-            ]
-        );
-    }
-
-    #[test]
-    fn whist_trump_can_win_against_led_suit() {
-        let state = WhistHandState {
-            id: "whist-hand-test-S".to_string(),
-            hands: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
-            current_player: 2,
-            current_trick: Vec::new(),
-            completed_tricks: Vec::new(),
-            status: HandStatus::InProgress,
-        };
-        let trick = vec![
-            PlayedCard::new(1, Card::new(Rank::Ace, Suit::Hearts)),
-            PlayedCard::new(2, Card::new(Rank::Two, Suit::Spades)),
-            PlayedCard::new(3, Card::new(Rank::King, Suit::Hearts)),
-            PlayedCard::new(0, Card::new(Rank::Three, Suit::Hearts)),
-        ];
-
-        assert_eq!(trick_winner_for_state(&state, &trick), Some(2));
-    }
-
-    #[test]
-    fn whist_opponent_preserves_trump_when_partner_is_winning() {
-        let state = WhistHandState {
-            id: "whist-hand-test-S".to_string(),
-            hands: [
-                Vec::new(),
-                Vec::new(),
-                Vec::new(),
-                vec![
-                    Card::new(Rank::Two, Suit::Spades),
-                    Card::new(Rank::Nine, Suit::Diamonds),
-                ],
-            ],
-            current_player: 3,
-            current_trick: vec![
-                PlayedCard::new(1, Card::new(Rank::Ace, Suit::Clubs)),
-                PlayedCard::new(2, Card::new(Rank::King, Suit::Clubs)),
-                PlayedCard::new(0, Card::new(Rank::Queen, Suit::Clubs)),
-            ],
-            completed_tricks: Vec::new(),
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            choose_whist_opponent_card(&state),
-            Some(Card::new(Rank::Nine, Suit::Diamonds))
-        );
-    }
-
-    #[test]
-    fn whist_opponent_cuts_with_low_trump_when_opponents_are_winning() {
-        let state = WhistHandState {
-            id: "whist-hand-test-S".to_string(),
-            hands: [
-                Vec::new(),
-                Vec::new(),
-                Vec::new(),
-                vec![
-                    Card::new(Rank::Two, Suit::Spades),
-                    Card::new(Rank::Nine, Suit::Spades),
-                    Card::new(Rank::Queen, Suit::Diamonds),
-                ],
-            ],
-            current_player: 3,
-            current_trick: vec![
-                PlayedCard::new(1, Card::new(Rank::King, Suit::Clubs)),
-                PlayedCard::new(2, Card::new(Rank::Ace, Suit::Clubs)),
-                PlayedCard::new(0, Card::new(Rank::Queen, Suit::Clubs)),
-            ],
-            completed_tricks: Vec::new(),
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            choose_whist_opponent_card(&state),
-            Some(Card::new(Rank::Two, Suit::Spades))
-        );
-    }
-
-    #[test]
-    fn whist_opponent_follows_low_when_partner_is_winning() {
-        let state = WhistHandState {
-            id: "whist-hand-test-S".to_string(),
-            hands: [
-                Vec::new(),
-                Vec::new(),
-                Vec::new(),
-                vec![
-                    Card::new(Rank::Two, Suit::Clubs),
-                    Card::new(Rank::Queen, Suit::Clubs),
-                ],
-            ],
-            current_player: 3,
-            current_trick: vec![
-                PlayedCard::new(1, Card::new(Rank::Ace, Suit::Clubs)),
-                PlayedCard::new(2, Card::new(Rank::King, Suit::Clubs)),
-                PlayedCard::new(0, Card::new(Rank::Nine, Suit::Clubs)),
-            ],
-            completed_tricks: Vec::new(),
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            choose_whist_opponent_card(&state),
-            Some(Card::new(Rank::Two, Suit::Clubs))
-        );
-    }
-
-    #[test]
-    fn whist_opponent_follows_high_enough_when_opponents_are_winning() {
-        let state = WhistHandState {
-            id: "whist-hand-test-S".to_string(),
-            hands: [
-                Vec::new(),
-                Vec::new(),
-                Vec::new(),
-                vec![
-                    Card::new(Rank::Two, Suit::Clubs),
-                    Card::new(Rank::King, Suit::Clubs),
-                ],
-            ],
-            current_player: 3,
-            current_trick: vec![
-                PlayedCard::new(1, Card::new(Rank::Nine, Suit::Clubs)),
-                PlayedCard::new(2, Card::new(Rank::Queen, Suit::Clubs)),
-                PlayedCard::new(0, Card::new(Rank::Ten, Suit::Clubs)),
-            ],
-            completed_tricks: Vec::new(),
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            choose_whist_opponent_card(&state),
-            Some(Card::new(Rank::King, Suit::Clubs))
-        );
-    }
-
-    #[test]
-    fn whist_partner_returns_player_suit_when_leading() {
-        let state = WhistHandState {
-            id: "whist-hand-test-S".to_string(),
-            hands: [
-                vec![
-                    Card::new(Rank::Ace, Suit::Clubs),
-                    Card::new(Rank::Three, Suit::Diamonds),
-                    Card::new(Rank::Two, Suit::Spades),
-                ],
-                Vec::new(),
-                Vec::new(),
-                Vec::new(),
-            ],
-            current_player: 0,
-            current_trick: Vec::new(),
-            completed_tricks: vec![CompletedTrick {
-                cards: vec![
-                    PlayedCard::new(2, Card::new(Rank::King, Suit::Clubs)),
-                    PlayedCard::new(3, Card::new(Rank::Two, Suit::Clubs)),
-                    PlayedCard::new(0, Card::new(Rank::Ten, Suit::Clubs)),
-                    PlayedCard::new(1, Card::new(Rank::Four, Suit::Clubs)),
-                ],
-                winner: 2,
-                penalty: 1,
-            }],
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            choose_whist_opponent_card(&state),
-            Some(Card::new(Rank::Ace, Suit::Clubs))
-        );
-    }
-
-    #[test]
-    fn whist_partner_returns_trump_when_opponents_still_have_trumps() {
-        let state = WhistHandState {
-            id: "whist-hand-test-S".to_string(),
-            hands: [
-                vec![
-                    Card::new(Rank::Ace, Suit::Clubs),
-                    Card::new(Rank::Three, Suit::Diamonds),
-                    Card::new(Rank::Five, Suit::Spades),
-                ],
-                Vec::new(),
-                Vec::new(),
-                Vec::new(),
-            ],
-            current_player: 0,
-            current_trick: Vec::new(),
-            completed_tricks: vec![CompletedTrick {
-                cards: vec![
-                    PlayedCard::new(2, Card::new(Rank::King, Suit::Spades)),
-                    PlayedCard::new(3, Card::new(Rank::Two, Suit::Spades)),
-                    PlayedCard::new(0, Card::new(Rank::Ten, Suit::Spades)),
-                    PlayedCard::new(1, Card::new(Rank::Four, Suit::Spades)),
-                ],
-                winner: 2,
-                penalty: 1,
-            }],
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            choose_whist_opponent_card(&state),
-            Some(Card::new(Rank::Five, Suit::Spades))
-        );
-    }
-
-    #[test]
-    fn whist_completed_trick_tags_partner_support_and_overtake_avoidance() {
-        let trick = CompletedTrick {
-            cards: vec![
-                PlayedCard::new(0, Card::new(Rank::Ace, Suit::Clubs)),
-                PlayedCard::new(1, Card::new(Rank::Two, Suit::Clubs)),
-                PlayedCard::new(2, Card::new(Rank::King, Suit::Clubs)),
-                PlayedCard::new(3, Card::new(Rank::Three, Suit::Clubs)),
-            ],
-            winner: 0,
-            penalty: 1,
-        };
-
-        let tags = completed_trick_tactical_tags("Whist", 1, &trick);
-
-        assert!(tags.contains(&"partner_trick"));
-        assert!(tags.contains(&"partner_held"));
-        assert!(tags.contains(&"partner_supported"));
-        assert!(tags.contains(&"third_hand_high"));
-        assert!(tags.contains(&"avoided_overtake"));
-    }
-
-    #[test]
-    fn whist_completed_hand_has_odd_tricks_for_one_partnership() {
-        let mut state = start_whist_hand(8);
-
-        while state.status != HandStatus::Complete {
-            let card = state
-                .legal_player_cards()
-                .first()
-                .copied()
-                .expect("player should have a legal Whist card while the hand is in progress");
-            state = play_whist_card(state, card).expect("legal Whist card should play");
-        }
-
-        let player_side_tricks = state
-            .completed_tricks
-            .iter()
-            .filter(|trick| trick.winner == 0 || trick.winner == 2)
-            .count();
-        let opponent_side_tricks = state
-            .completed_tricks
-            .iter()
-            .filter(|trick| trick.winner == 1 || trick.winner == 3)
-            .count();
-
-        assert_eq!(state.completed_tricks.len(), 13);
-        assert_eq!(player_side_tricks + opponent_side_tricks, 13);
-        assert!(
-            player_side_tricks > 6 || opponent_side_tricks > 6,
-            "one Whist partnership should always score odd tricks in a completed 13-trick hand"
-        );
-    }
-
-    #[test]
-    fn hearts_first_trick_must_open_with_two_of_clubs() {
-        let state = HeartsHandState {
-            id: "hearts-hand-test".to_string(),
-            hands: [
-                Vec::new(),
-                Vec::new(),
-                vec![
-                    Card::new(Rank::Two, Suit::Clubs),
-                    Card::new(Rank::Ace, Suit::Hearts),
-                    Card::new(Rank::Queen, Suit::Spades),
-                ],
-                Vec::new(),
-            ],
-            current_player: 2,
-            current_trick: Vec::new(),
-            completed_tricks: Vec::new(),
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            state.legal_player_cards(),
-            vec![Card::new(Rank::Two, Suit::Clubs)]
-        );
-    }
-
-    #[test]
-    fn hearts_first_trick_blocks_penalties_when_void_and_safe_cards_exist() {
-        let state = HeartsHandState {
-            id: "hearts-hand-test".to_string(),
-            hands: [
-                Vec::new(),
-                Vec::new(),
-                vec![
-                    Card::new(Rank::Three, Suit::Diamonds),
-                    Card::new(Rank::Ace, Suit::Hearts),
-                    Card::new(Rank::Queen, Suit::Spades),
-                ],
-                Vec::new(),
-            ],
-            current_player: 2,
-            current_trick: vec![PlayedCard::new(0, Card::new(Rank::Two, Suit::Clubs))],
-            completed_tricks: Vec::new(),
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            state.legal_player_cards(),
-            vec![Card::new(Rank::Three, Suit::Diamonds)]
-        );
-    }
-
-    #[test]
-    fn hearts_cannot_be_led_before_broken_when_non_hearts_exist() {
-        let state = HeartsHandState {
-            id: "hearts-hand-test".to_string(),
-            hands: [
-                Vec::new(),
-                Vec::new(),
-                vec![
-                    Card::new(Rank::Two, Suit::Hearts),
-                    Card::new(Rank::Ace, Suit::Spades),
-                ],
-                Vec::new(),
-            ],
-            current_player: 2,
-            current_trick: Vec::new(),
-            completed_tricks: vec![CompletedTrick {
-                cards: vec![
-                    PlayedCard::new(0, Card::new(Rank::Two, Suit::Clubs)),
-                    PlayedCard::new(1, Card::new(Rank::Three, Suit::Clubs)),
-                    PlayedCard::new(2, Card::new(Rank::Four, Suit::Clubs)),
-                    PlayedCard::new(3, Card::new(Rank::Five, Suit::Clubs)),
-                ],
-                winner: 3,
-                penalty: 0,
-            }],
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            state.legal_player_cards(),
-            vec![Card::new(Rank::Ace, Suit::Spades)]
-        );
-    }
-
-    #[test]
-    fn hearts_can_be_led_after_hearts_are_broken() {
-        let state = HeartsHandState {
-            id: "hearts-hand-test".to_string(),
-            hands: [
-                Vec::new(),
-                Vec::new(),
-                vec![
-                    Card::new(Rank::Two, Suit::Hearts),
-                    Card::new(Rank::Ace, Suit::Spades),
-                ],
-                Vec::new(),
-            ],
-            current_player: 2,
-            current_trick: Vec::new(),
-            completed_tricks: vec![CompletedTrick {
-                cards: vec![
-                    PlayedCard::new(0, Card::new(Rank::Two, Suit::Clubs)),
-                    PlayedCard::new(1, Card::new(Rank::Three, Suit::Clubs)),
-                    PlayedCard::new(2, Card::new(Rank::Four, Suit::Hearts)),
-                    PlayedCard::new(3, Card::new(Rank::Five, Suit::Clubs)),
-                ],
-                winner: 3,
-                penalty: 1,
-            }],
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            state.legal_player_cards(),
-            vec![
-                Card::new(Rank::Two, Suit::Hearts),
-                Card::new(Rank::Ace, Suit::Spades)
-            ]
-        );
-    }
-
-    #[test]
     fn no_hearts_hand_rejects_illegal_off_suit_card() {
         let state = NoHeartsHandState {
             id: "test-hand".to_string(),
@@ -2516,28 +1658,6 @@ mod tests {
     }
 
     #[test]
-    fn hearts_tactical_tags_identify_queen_and_heart_pressure() {
-        let trick = CompletedTrick {
-            cards: vec![
-                PlayedCard::new(1, Card::new(Rank::King, Suit::Clubs)),
-                PlayedCard::new(2, Card::new(Rank::Ace, Suit::Clubs)),
-                PlayedCard::new(3, Card::new(Rank::Queen, Suit::Spades)),
-                PlayedCard::new(0, Card::new(Rank::Two, Suit::Hearts)),
-            ],
-            winner: 2,
-            penalty: 14,
-        };
-
-        let tags = completed_trick_tactical_tags("Hearts", 6, &trick);
-
-        assert!(tags.contains(&"danger_card_moved"));
-        assert!(tags.contains(&"queen_spades_moved"));
-        assert!(tags.contains(&"hearts_moved"));
-        assert!(tags.contains(&"opponent_loaded_player_trick"));
-        assert!(tags.contains(&"pressure_lead"));
-    }
-
-    #[test]
     fn opponent_leads_lowest_non_heart() {
         let state = NoHeartsHandState {
             id: "opponent-lead".to_string(),
@@ -2654,589 +1774,6 @@ mod tests {
         ];
 
         assert_eq!(score_no_hearts_hand_trick(&state, &trick), 10);
-    }
-
-    #[test]
-    fn hearts_hand_scores_hearts_and_queen_of_spades() {
-        let state = start_trick_taking_hand("score-hearts".to_string(), 3, 0);
-        let trick = vec![
-            PlayedCard::new(0, Card::new(Rank::Ace, Suit::Hearts)),
-            PlayedCard::new(1, Card::new(Rank::Queen, Suit::Spades)),
-            PlayedCard::new(2, Card::new(Rank::Two, Suit::Hearts)),
-            PlayedCard::new(3, Card::new(Rank::Four, Suit::Clubs)),
-        ];
-
-        assert_eq!(score_hearts_trick(&state, &trick), 15);
-    }
-
-    #[test]
-    fn hearts_passing_hand_starts_before_first_trick() {
-        let state = start_hearts_passing_hand(61);
-
-        assert_eq!(state.hands.iter().map(Vec::len).sum::<usize>(), 52);
-        assert_eq!(state.current_player, 2);
-        assert_eq!(state.current_trick.len(), 0);
-        assert_eq!(state.completed_tricks.len(), 0);
-        assert_eq!(state.legal_player_cards().len(), 13);
-    }
-
-    #[test]
-    fn hearts_pass_moves_three_player_cards_left_then_starts_play() {
-        let state = start_hearts_passing_hand(61);
-        let passed_cards = state.hands[2].iter().copied().take(3).collect::<Vec<_>>();
-        let left_before = state.hands[3].clone();
-        let next_state =
-            apply_hearts_pass(state, passed_cards.clone()).expect("three cards should pass");
-
-        for card in passed_cards {
-            assert!(!next_state.hands[2].contains(&card));
-            assert!(next_state.hands[3].contains(&card));
-        }
-
-        assert_eq!(next_state.hands[2].len(), 13);
-        assert_eq!(next_state.hands[3].len(), 13);
-        assert!(left_before
-            .iter()
-            .any(|card| !next_state.hands[3].contains(card)));
-        assert_eq!(next_state.current_player, 2);
-        assert!(!next_state.current_trick.is_empty());
-    }
-
-    #[test]
-    fn hearts_pass_can_move_right_or_across() {
-        fn player_still_controls_card(
-            state: &HeartsHandState,
-            player: PlayerIndex,
-            card: Card,
-        ) -> bool {
-            state.hands[player].contains(&card)
-                || state
-                    .current_trick
-                    .iter()
-                    .any(|played| played.player == player && played.card == card)
-        }
-
-        let right_state = start_hearts_passing_hand(61);
-        let right_cards = right_state.hands[2]
-            .iter()
-            .copied()
-            .take(3)
-            .collect::<Vec<_>>();
-        let right_next = apply_hearts_pass_direction(right_state, right_cards.clone(), 3)
-            .expect("three cards should pass right");
-
-        for card in right_cards {
-            assert!(!right_next.hands[2].contains(&card));
-            assert!(player_still_controls_card(&right_next, 1, card));
-        }
-
-        let across_state = start_hearts_passing_hand(62);
-        let across_cards = across_state.hands[2]
-            .iter()
-            .copied()
-            .take(3)
-            .collect::<Vec<_>>();
-        let across_next = apply_hearts_pass_direction(across_state, across_cards.clone(), 2)
-            .expect("three cards should pass across");
-
-        for card in across_cards {
-            assert!(!across_next.hands[2].contains(&card));
-            assert!(player_still_controls_card(&across_next, 0, card));
-        }
-    }
-
-    #[test]
-    fn hearts_pass_requires_three_distinct_player_cards() {
-        let state = start_hearts_passing_hand(61);
-        let one_card = state.hands[2][0];
-        let result = apply_hearts_pass(state.clone(), vec![one_card, one_card, one_card]);
-
-        assert!(result.is_err());
-
-        let result = apply_hearts_pass(state, vec![one_card]);
-
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn hearts_opponent_leads_high_from_short_safe_suit() {
-        let state = HeartsHandState {
-            id: "hearts-pressure-short-suit".to_string(),
-            hands: [
-                Vec::new(),
-                vec![
-                    Card::new(Rank::Two, Suit::Clubs),
-                    Card::new(Rank::King, Suit::Clubs),
-                    Card::new(Rank::Five, Suit::Diamonds),
-                    Card::new(Rank::Nine, Suit::Spades),
-                    Card::new(Rank::Ace, Suit::Hearts),
-                ],
-                Vec::new(),
-                Vec::new(),
-            ],
-            current_player: 1,
-            current_trick: Vec::new(),
-            completed_tricks: vec![CompletedTrick {
-                cards: vec![
-                    PlayedCard::new(0, Card::new(Rank::Two, Suit::Clubs)),
-                    PlayedCard::new(1, Card::new(Rank::Three, Suit::Clubs)),
-                    PlayedCard::new(2, Card::new(Rank::Four, Suit::Clubs)),
-                    PlayedCard::new(3, Card::new(Rank::Five, Suit::Clubs)),
-                ],
-                winner: 3,
-                penalty: 0,
-            }],
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            choose_hearts_opponent_card(&state),
-            Some(Card::new(Rank::Nine, Suit::Spades))
-        );
-    }
-
-    #[test]
-    fn hearts_opponent_avoids_high_heart_lead_without_moon_plan() {
-        let state = HeartsHandState {
-            id: "hearts-avoid-casual-ace-heart-lead".to_string(),
-            hands: [
-                Vec::new(),
-                vec![
-                    Card::new(Rank::Two, Suit::Hearts),
-                    Card::new(Rank::King, Suit::Hearts),
-                    Card::new(Rank::Nine, Suit::Spades),
-                ],
-                Vec::new(),
-                Vec::new(),
-            ],
-            current_player: 1,
-            current_trick: Vec::new(),
-            completed_tricks: vec![CompletedTrick {
-                cards: vec![
-                    PlayedCard::new(0, Card::new(Rank::Four, Suit::Diamonds)),
-                    PlayedCard::new(1, Card::new(Rank::Six, Suit::Diamonds)),
-                    PlayedCard::new(2, Card::new(Rank::Ace, Suit::Hearts)),
-                    PlayedCard::new(3, Card::new(Rank::Seven, Suit::Diamonds)),
-                ],
-                winner: 3,
-                penalty: 1,
-            }],
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            choose_hearts_opponent_card(&state),
-            Some(Card::new(Rank::Nine, Suit::Spades))
-        );
-    }
-
-    #[test]
-    fn hearts_opponent_avoids_ace_spades_lead_while_queen_spades_is_live() {
-        let state = HeartsHandState {
-            id: "hearts-avoid-ace-spades-lead-with-queen-live".to_string(),
-            hands: [
-                Vec::new(),
-                vec![
-                    Card::new(Rank::Ace, Suit::Spades),
-                    Card::new(Rank::King, Suit::Diamonds),
-                    Card::new(Rank::Nine, Suit::Clubs),
-                    Card::new(Rank::Two, Suit::Hearts),
-                ],
-                vec![Card::new(Rank::Queen, Suit::Spades)],
-                Vec::new(),
-            ],
-            current_player: 1,
-            current_trick: Vec::new(),
-            completed_tricks: vec![CompletedTrick {
-                cards: vec![
-                    PlayedCard::new(0, Card::new(Rank::Four, Suit::Diamonds)),
-                    PlayedCard::new(1, Card::new(Rank::Six, Suit::Diamonds)),
-                    PlayedCard::new(2, Card::new(Rank::Ace, Suit::Hearts)),
-                    PlayedCard::new(3, Card::new(Rank::Seven, Suit::Diamonds)),
-                ],
-                winner: 3,
-                penalty: 1,
-            }],
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            choose_hearts_opponent_card(&state),
-            Some(Card::new(Rank::Nine, Suit::Clubs))
-        );
-    }
-
-    #[test]
-    fn hearts_opponent_avoids_known_spade_void_even_after_queen_is_played() {
-        let state = HeartsHandState {
-            id: "hearts-ace-spades-safe-after-queen".to_string(),
-            hands: [
-                Vec::new(),
-                vec![
-                    Card::new(Rank::Ace, Suit::Spades),
-                    Card::new(Rank::King, Suit::Diamonds),
-                    Card::new(Rank::Nine, Suit::Clubs),
-                    Card::new(Rank::Two, Suit::Hearts),
-                ],
-                Vec::new(),
-                Vec::new(),
-            ],
-            current_player: 1,
-            current_trick: Vec::new(),
-            completed_tricks: vec![CompletedTrick {
-                cards: vec![
-                    PlayedCard::new(0, Card::new(Rank::Four, Suit::Spades)),
-                    PlayedCard::new(1, Card::new(Rank::Queen, Suit::Spades)),
-                    PlayedCard::new(2, Card::new(Rank::Ace, Suit::Hearts)),
-                    PlayedCard::new(3, Card::new(Rank::Seven, Suit::Spades)),
-                ],
-                winner: 3,
-                penalty: 14,
-            }],
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            choose_hearts_opponent_card(&state),
-            Some(Card::new(Rank::King, Suit::Diamonds))
-        );
-    }
-
-    #[test]
-    fn hearts_opponent_forced_to_lead_hearts_uses_lowest_heart_without_moon_plan() {
-        let state = HeartsHandState {
-            id: "hearts-forced-low-heart-lead".to_string(),
-            hands: [
-                Vec::new(),
-                vec![
-                    Card::new(Rank::Two, Suit::Hearts),
-                    Card::new(Rank::Ace, Suit::Hearts),
-                ],
-                Vec::new(),
-                Vec::new(),
-            ],
-            current_player: 1,
-            current_trick: Vec::new(),
-            completed_tricks: vec![CompletedTrick {
-                cards: vec![
-                    PlayedCard::new(0, Card::new(Rank::Four, Suit::Diamonds)),
-                    PlayedCard::new(1, Card::new(Rank::Six, Suit::Diamonds)),
-                    PlayedCard::new(2, Card::new(Rank::Ace, Suit::Hearts)),
-                    PlayedCard::new(3, Card::new(Rank::Seven, Suit::Diamonds)),
-                ],
-                winner: 3,
-                penalty: 1,
-            }],
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            choose_hearts_opponent_card(&state),
-            Some(Card::new(Rank::Two, Suit::Hearts))
-        );
-    }
-
-    #[test]
-    fn hearts_serious_moon_candidate_can_lead_high_heart() {
-        let state = HeartsHandState {
-            id: "hearts-moon-candidate-leads-high-heart".to_string(),
-            hands: [
-                Vec::new(),
-                vec![
-                    Card::new(Rank::King, Suit::Hearts),
-                    Card::new(Rank::Ace, Suit::Hearts),
-                    Card::new(Rank::Nine, Suit::Spades),
-                ],
-                Vec::new(),
-                Vec::new(),
-            ],
-            current_player: 1,
-            current_trick: Vec::new(),
-            completed_tricks: vec![CompletedTrick {
-                cards: vec![
-                    PlayedCard::new(1, Card::new(Rank::Queen, Suit::Spades)),
-                    PlayedCard::new(2, Card::new(Rank::Three, Suit::Hearts)),
-                    PlayedCard::new(3, Card::new(Rank::Seven, Suit::Diamonds)),
-                    PlayedCard::new(0, Card::new(Rank::Six, Suit::Diamonds)),
-                ],
-                winner: 1,
-                penalty: 14,
-            }],
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            choose_hearts_opponent_card(&state),
-            Some(Card::new(Rank::Ace, Suit::Hearts))
-        );
-    }
-
-    #[test]
-    fn hearts_opponent_void_avoids_feeding_player_moon_candidate() {
-        let state = HeartsHandState {
-            id: "hearts-stop-feeding-player-moon".to_string(),
-            hands: [
-                Vec::new(),
-                vec![
-                    Card::new(Rank::Queen, Suit::Spades),
-                    Card::new(Rank::Ace, Suit::Hearts),
-                    Card::new(Rank::Two, Suit::Diamonds),
-                ],
-                Vec::new(),
-                Vec::new(),
-            ],
-            current_player: 1,
-            current_trick: vec![PlayedCard::new(2, Card::new(Rank::Ace, Suit::Clubs))],
-            completed_tricks: vec![CompletedTrick {
-                cards: vec![
-                    PlayedCard::new(2, Card::new(Rank::King, Suit::Clubs)),
-                    PlayedCard::new(3, Card::new(Rank::Queen, Suit::Spades)),
-                    PlayedCard::new(0, Card::new(Rank::Two, Suit::Hearts)),
-                    PlayedCard::new(1, Card::new(Rank::Three, Suit::Hearts)),
-                ],
-                winner: 2,
-                penalty: 15,
-            }],
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            choose_hearts_opponent_card(&state),
-            Some(Card::new(Rank::Two, Suit::Diamonds))
-        );
-    }
-
-    #[test]
-    fn hearts_opponent_takes_loaded_trick_away_from_moon_candidate() {
-        let state = HeartsHandState {
-            id: "hearts-steal-loaded-player-moon".to_string(),
-            hands: [
-                Vec::new(),
-                vec![
-                    Card::new(Rank::Ace, Suit::Clubs),
-                    Card::new(Rank::Three, Suit::Clubs),
-                ],
-                Vec::new(),
-                Vec::new(),
-            ],
-            current_player: 1,
-            current_trick: vec![
-                PlayedCard::new(2, Card::new(Rank::King, Suit::Clubs)),
-                PlayedCard::new(3, Card::new(Rank::Two, Suit::Hearts)),
-            ],
-            completed_tricks: vec![CompletedTrick {
-                cards: vec![
-                    PlayedCard::new(2, Card::new(Rank::Queen, Suit::Clubs)),
-                    PlayedCard::new(3, Card::new(Rank::Queen, Suit::Spades)),
-                    PlayedCard::new(0, Card::new(Rank::Three, Suit::Hearts)),
-                    PlayedCard::new(1, Card::new(Rank::Four, Suit::Hearts)),
-                ],
-                winner: 2,
-                penalty: 15,
-            }],
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            choose_hearts_opponent_card(&state),
-            Some(Card::new(Rank::Ace, Suit::Clubs))
-        );
-    }
-
-    #[test]
-    fn hearts_opponent_does_not_chase_moon_without_heart_control() {
-        let state = HeartsHandState {
-            id: "hearts-opponent-pursues-moon".to_string(),
-            hands: [
-                Vec::new(),
-                vec![
-                    Card::new(Rank::King, Suit::Clubs),
-                    Card::new(Rank::Two, Suit::Clubs),
-                ],
-                Vec::new(),
-                Vec::new(),
-            ],
-            current_player: 1,
-            current_trick: vec![
-                PlayedCard::new(0, Card::new(Rank::Ten, Suit::Clubs)),
-                PlayedCard::new(2, Card::new(Rank::Two, Suit::Hearts)),
-            ],
-            completed_tricks: vec![CompletedTrick {
-                cards: vec![
-                    PlayedCard::new(1, Card::new(Rank::Queen, Suit::Clubs)),
-                    PlayedCard::new(2, Card::new(Rank::Queen, Suit::Spades)),
-                    PlayedCard::new(3, Card::new(Rank::Three, Suit::Hearts)),
-                    PlayedCard::new(0, Card::new(Rank::Four, Suit::Hearts)),
-                ],
-                winner: 1,
-                penalty: 15,
-            }],
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            choose_hearts_opponent_card(&state),
-            Some(Card::new(Rank::Two, Suit::Clubs))
-        );
-    }
-
-    #[test]
-    fn hearts_opponent_forced_to_win_early_preserves_higher_cards() {
-        let state = HeartsHandState {
-            id: "hearts-forced-early-winner".to_string(),
-            hands: [
-                Vec::new(),
-                vec![
-                    Card::new(Rank::Nine, Suit::Clubs),
-                    Card::new(Rank::Ace, Suit::Clubs),
-                    Card::new(Rank::Queen, Suit::Spades),
-                ],
-                Vec::new(),
-                Vec::new(),
-            ],
-            current_player: 1,
-            current_trick: vec![PlayedCard::new(0, Card::new(Rank::Seven, Suit::Clubs))],
-            completed_tricks: Vec::new(),
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            choose_hearts_opponent_card(&state),
-            Some(Card::new(Rank::Nine, Suit::Clubs))
-        );
-    }
-
-    #[test]
-    fn hearts_opponent_does_not_take_loaded_trick_from_player_without_moon_pressure() {
-        let state = HeartsHandState {
-            id: "hearts-avoid-player-loaded-trick".to_string(),
-            hands: [
-                Vec::new(),
-                vec![
-                    Card::new(Rank::Two, Suit::Clubs),
-                    Card::new(Rank::Nine, Suit::Clubs),
-                ],
-                Vec::new(),
-                Vec::new(),
-            ],
-            current_player: 1,
-            current_trick: vec![
-                PlayedCard::new(2, Card::new(Rank::Seven, Suit::Clubs)),
-                PlayedCard::new(3, Card::new(Rank::Two, Suit::Hearts)),
-            ],
-            completed_tricks: Vec::new(),
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            choose_hearts_opponent_card(&state),
-            Some(Card::new(Rank::Two, Suit::Clubs))
-        );
-    }
-
-    #[test]
-    fn hearts_opponent_dumps_queen_on_any_opponents_trick() {
-        let state = HeartsHandState {
-            id: "hearts-hold-queen-spades".to_string(),
-            hands: [
-                Vec::new(),
-                vec![
-                    Card::new(Rank::Queen, Suit::Spades),
-                    Card::new(Rank::Ace, Suit::Hearts),
-                    Card::new(Rank::King, Suit::Hearts),
-                ],
-                Vec::new(),
-                Vec::new(),
-            ],
-            current_player: 1,
-            current_trick: vec![PlayedCard::new(0, Card::new(Rank::Seven, Suit::Clubs))],
-            completed_tricks: Vec::new(),
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            choose_hearts_opponent_card(&state),
-            Some(Card::new(Rank::Queen, Suit::Spades))
-        );
-    }
-
-    #[test]
-    fn hearts_opponent_dumps_queen_of_spades_on_player_winning_trick() {
-        let state = HeartsHandState {
-            id: "hearts-dump-queen-spades-on-player".to_string(),
-            hands: [
-                Vec::new(),
-                vec![
-                    Card::new(Rank::Queen, Suit::Spades),
-                    Card::new(Rank::Ace, Suit::Hearts),
-                    Card::new(Rank::King, Suit::Hearts),
-                ],
-                Vec::new(),
-                Vec::new(),
-            ],
-            current_player: 1,
-            current_trick: vec![
-                PlayedCard::new(0, Card::new(Rank::Seven, Suit::Clubs)),
-                PlayedCard::new(2, Card::new(Rank::Ace, Suit::Clubs)),
-            ],
-            completed_tricks: Vec::new(),
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            choose_hearts_opponent_card(&state),
-            Some(Card::new(Rank::Queen, Suit::Spades))
-        );
-    }
-
-    #[test]
-    fn hearts_opponent_avoids_winning_with_queen_of_spades_when_possible() {
-        let state = HeartsHandState {
-            id: "hearts-avoid-queen-spades-win".to_string(),
-            hands: [
-                Vec::new(),
-                vec![
-                    Card::new(Rank::Queen, Suit::Spades),
-                    Card::new(Rank::King, Suit::Spades),
-                ],
-                Vec::new(),
-                Vec::new(),
-            ],
-            current_player: 1,
-            current_trick: vec![PlayedCard::new(0, Card::new(Rank::Jack, Suit::Spades))],
-            completed_tricks: Vec::new(),
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            choose_hearts_opponent_card(&state),
-            Some(Card::new(Rank::King, Suit::Spades))
-        );
-    }
-
-    #[test]
-    fn hearts_opponent_dumps_queen_of_spades_under_higher_spade() {
-        let state = HeartsHandState {
-            id: "hearts-dump-queen-under-ace".to_string(),
-            hands: [
-                Vec::new(),
-                vec![
-                    Card::new(Rank::Three, Suit::Spades),
-                    Card::new(Rank::Queen, Suit::Spades),
-                ],
-                Vec::new(),
-                Vec::new(),
-            ],
-            current_player: 1,
-            current_trick: vec![PlayedCard::new(0, Card::new(Rank::Ace, Suit::Spades))],
-            completed_tricks: Vec::new(),
-            status: HandStatus::InProgress,
-        };
-
-        assert_eq!(
-            choose_hearts_opponent_card(&state),
-            Some(Card::new(Rank::Queen, Suit::Spades))
-        );
     }
 
     #[test]
@@ -3598,20 +2135,6 @@ mod tests {
         assert_eq!(state.completed_tricks.len(), 13);
         assert_eq!(state.cards_remaining(), 0);
         assert_eq!(state.total_penalty(), 30);
-    }
-
-    #[test]
-    fn hearts_hand_can_be_completed_by_playing_first_legal_card() {
-        let mut state = start_hearts_hand(61);
-
-        while state.status == HandStatus::InProgress {
-            let legal_card = state.legal_player_cards()[0];
-            state = play_hearts_card(state, legal_card).expect("first legal card should play");
-        }
-
-        assert_eq!(state.completed_tricks.len(), 13);
-        assert_eq!(state.cards_remaining(), 0);
-        assert_eq!(state.total_penalty(), 26);
     }
 
     #[test]

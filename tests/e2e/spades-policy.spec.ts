@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import cases from "../fixtures/spades-nil-policy.json" with { type: "json" };
-import { chooseBrowserOpponentCardForState } from "../../src/browserHandFallback";
+import { chooseBrowserOpponentCardForState } from "../../src/domain/trickTakingHand";
 import type { Card, FullHandState, Seat, Suit } from "../../src/lessonTypes";
 
 const seats: Seat[] = ["Tutor", "Right", "You", "Left"];

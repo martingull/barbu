@@ -7,13 +7,15 @@
   import { whistFollowSuitDrillPool, whistTrumpOrDiscardDrillPool, whistThirdHandHighDrillPool, whistReturnPartnerSuitDrillPool, whistOpeningLeadLessonPool, whistOddTrickDrillPool } from "./whistLessons";
   import { invoke, isTauri } from "@tauri-apps/api/core";
   import { typescriptHandEngine } from "./domain/handEngine";
+  import { createHeartsSession, transitionHeartsSession, heartsSessionSettlement, heartsMoonShooter, heartsScoredSeatPenalties,
+    heartsHandPenaltyTotal, heartsMatchTarget, type HeartsHandResult, type HeartsPassDirection, type HeartsSession } from "./domain/heartsSession";
+  import { addSeatPenalties, emptySeatPenalties, seatPenaltiesForTricks } from "./domain/trickTakingScore";
+  import { createHeartsSaveStore, restoreHeartsSession, saveHeartsSession, savedHeartsRunSummary, type SavedHeartsRun } from "./persistence/heartsSave";
   import { createWhistSession, emptyWhistScore, transitionWhistSession, whistSessionSettlement, type WhistSession } from "./domain/whistSession";
   import { createWhistSaveStore, restoreWhistSession, saveWhistSession, savedWhistRunSummary, type SavedWhistRun } from "./persistence/whistSave";
   import {
     applyBrowserBridgeAuction,
-    applyBrowserHeartsPass,
     generateBrowserHeartsPassPractice,
-    playBrowserHeartsCard,
     playBrowserKingOfHeartsCard,
     playBrowserNoHeartsCard,
     playBrowserNoLastTwoCard,
@@ -23,8 +25,6 @@
     playBrowserBridgeCard,
     playBrowserSpadesCard,
     startBrowserBridgeHand,
-    startBrowserHeartsHand,
-    startBrowserHeartsPassingHand,
     startBrowserKingOfHeartsHand,
     startBrowserNoHeartsHand,
     startBrowserNoLastTwoHand,
@@ -32,7 +32,7 @@
     startBrowserNoTricksHand,
     startBrowserPositiveTricksHand,
     startBrowserSpadesHand
-  } from "./browserHandFallback";
+  } from "./domain/trickTakingHand";
   import { passBrowserDominoTurn, playBrowserDominoCard, startBrowserDominoHand } from "./browserDominoFallback";
   import { generateBrowserPlayBarbuDrillSteps } from "./browserDrillFallback";
   import BridgeTable from "./BridgeTable.svelte";
@@ -50,7 +50,7 @@
   import PracticePanel from "./PracticePanel.svelte";
   import ProTabPanel from "./ProTabPanel.svelte";
   import TablePlaySurface from "./TablePlaySurface.svelte";
-  import { fullHandContractCommands, fullHandContracts } from "./contractRegistry";
+  import { fullHandContracts } from "./contractRegistry";
   import { contractRunScore, contractScoreMeta, formatContractValue } from "./contractScoring";
   import { courseCatalog, courseTargetsGuidedLesson, type CourseContent, type CourseStage } from "./courseContent";
   import { guidedLessons } from "./lessons/catalog";
@@ -279,12 +279,6 @@
     seatPenalties: Record<Seat, number>;
   };
 
-  type HeartsHandResult = {
-    handNumber: number;
-    seatPenalties: Record<Seat, number>;
-    moonShooter?: Seat;
-  };
-
   type RunStanding = {
     rank: number;
     seat: Seat;
@@ -406,23 +400,6 @@
     savedAt: string;
   };
 
-  type HeartsPassDirection = "left" | "right" | "across" | "hold";
-
-  type SavedHeartsRun = {
-    version: 1;
-    view: "heartsPass" | "fullHand";
-    passDirection: HeartsPassDirection;
-    scores: Record<Seat, number>;
-    results: HeartsHandResult[];
-    heartsPassingHand: FullHandState | null;
-    fullHand: FullHandState | null;
-    heartsPassSelectedCardIds: string[];
-    fullHandReviewTrickCount: number;
-    usingBrowserHeartsPass: boolean;
-    usingBrowserFullHand: boolean;
-    savedAt: string;
-  };
-
   type SpadesBidState = {
     You: number;
     Tutor: number;
@@ -504,7 +481,7 @@
   const drillPatternMemoryStorageKey = "barbu.drillPatternMemory.v1";
   const playBarbuHistoryStorageKey = "barbu.playHistory.v1";
   const savedPlayBarbuRunStorageKey = "barbu.savedPlayRun.v1";
-  const savedHeartsRunStorageKey = "barbu.savedHeartsRun.v1";
+  const heartsSaveStore = createHeartsSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
   const whistSaveStore = createWhistSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
   const savedSpadesRunStorageKey = "barbu.savedSpadesRun.v1";
   const savedBridgeRunStorageKey = "barbu.savedBridgeRun.v1";
@@ -593,8 +570,6 @@
     isTrackedCard: (card) => card.rank === "Q"
   };
   const dominoOrderScores = [45, 20, 5, -5];
-  const heartsHandPenaltyTotal = 26;
-  const heartsMatchTarget = 100;
   const whistMatchTarget = 5;
   const seatByPlayerIndex: Record<number, Seat> = {
     0: "Tutor",
@@ -2016,12 +1991,12 @@
   let playBarbuHistory: PlayBarbuAttempt[] = loadPlayBarbuHistory();
   const defaultSpadesBidState: SpadesBidState = { You: 4, Tutor: 3, Left: 3, Right: 3 };
   let savedPlayBarbuRun: SavedPlayBarbuRun | null = loadSavedPlayBarbuRun();
-  let savedHeartsRun: SavedHeartsRun | null = loadSavedHeartsRun();
+  let savedHeartsRun: SavedHeartsRun | null = heartsSaveStore.load();
   let savedWhistRun: SavedWhistRun | null = whistSaveStore.load();
   let savedSpadesRun: SavedSpadesRun | null = loadSavedSpadesRun();
   let savedBridgeRun: SavedBridgeRun | null = loadSavedBridgeRun();
-  let heartsSessionScores: Record<Seat, number> = emptySeatPenalties();
-  let heartsHandResults: HeartsHandResult[] = [];
+  let heartsSession: HeartsSession | null = null;
+  let heartsDealPending = false;
   let whistSession: WhistSession | null = null;
   let whistSessionMode: WhistSessionMode = "game";
   let whistDealPending = false;
@@ -2067,7 +2042,6 @@
   let dominoError = "";
   let fullHandReviewTrickCount = 0;
   let usingBrowserFullHand = false;
-  let usingBrowserHeartsPass = false;
   let usingBrowserDomino = false;
   let lastFullHandTapCardId = "";
   let lastFullHandTapAt = 0;
@@ -3426,33 +3400,28 @@
     fullHand?.status === "complete" &&
     spadesMatchComplete(spadesVisibleMatchScores);
   $: partnershipMatchIsComplete = fullHandIsSpadesGame ? spadesMatchIsComplete : whistMatchIsComplete;
+  $: heartsSessionForDisplay = activeGameTable === "hearts" && !fullHandCardCountingMode && !fullHandRunActive
+    && heartsSession && (heartsSession.phase === "passing" ? heartsPassingHand : fullHand) === heartsSession.fullHand ? heartsSession : null;
+  $: heartsHandResults = heartsSessionForDisplay?.results ?? [];
+  $: heartsMatchSettlement = heartsSessionForDisplay ? heartsSessionSettlement(heartsSessionForDisplay) : null;
   $: heartsCurrentMoonShooter = fullHandIsHeartsGame ? heartsMoonShooter(fullHandSeatPenalties) : undefined;
   $: heartsCurrentMoonThreatSeat = fullHandIsHeartsGame ? heartsMoonThreatSeat(fullHandSeatPenalties) : undefined;
   $: heartsCurrentScoredSeatPenalties = fullHandIsHeartsGame
     ? heartsScoredSeatPenalties(fullHandSeatPenalties)
     : emptySeatPenalties();
-  $: currentHeartsHandResult =
-    fullHandIsHeartsGame && fullHand?.status === "complete"
-      ? ({
-          handNumber: heartsHandResults.length + 1,
-          seatPenalties: heartsCurrentScoredSeatPenalties,
-          moonShooter: heartsCurrentMoonShooter
-        } satisfies HeartsHandResult)
-      : null;
+  $: currentHeartsHandResult = heartsMatchSettlement?.result ?? null;
   $: heartsVisibleHandResults = currentHeartsHandResult
     ? [...heartsHandResults, currentHeartsHandResult]
     : heartsHandResults;
   $: heartsVisibleHandCount = heartsVisibleHandResults.length;
   $: heartsScorecardMeta = heartsUi.table.scorecard;
-  $: heartsVisibleScores = fullHandIsHeartsGame
-    ? addSeatPenalties(heartsSessionScores, heartsCurrentScoredSeatPenalties)
-    : heartsSessionScores;
+  $: heartsVisibleScores = heartsMatchSettlement?.scores ?? heartsCurrentScoredSeatPenalties;
   $: heartsStandings = heartsScorecardStandings(heartsVisibleScores);
   $: heartsHighestScore = scoreSeats
     .map((seat) => ({ seat, score: heartsVisibleScores[seat] }))
     .sort((left, right) => right.score - left.score)[0];
   $: heartsMatchIsComplete =
-    fullHandIsHeartsGame && fullHand?.status === "complete" && Boolean(heartsHighestScore?.score >= heartsMatchTarget);
+    fullHandIsHeartsGame && Boolean(heartsMatchSettlement?.complete);
   $: fullHandCompletion = fullHand?.status !== "complete" || fullHandCardCountingActive ? null
     : fullHandIsHeartsGame && heartsMatchIsComplete ? "match"
     : whistFullHandSource !== "play" ? null
@@ -3951,89 +3920,6 @@
     persistSavedPlayBarbuRun(savedRun.view);
   }
 
-  function loadSavedHeartsRun(): SavedHeartsRun | null {
-    if (typeof localStorage === "undefined") {
-      return null;
-    }
-
-    try {
-      return normalizeSavedHeartsRun(JSON.parse(localStorage.getItem(savedHeartsRunStorageKey) ?? "null"));
-    } catch {
-      return null;
-    }
-  }
-
-  function normalizeSavedHeartsRun(savedRun: unknown): SavedHeartsRun | null {
-    if (!savedRun || typeof savedRun !== "object") {
-      return null;
-    }
-
-    const candidate = savedRun as Partial<SavedHeartsRun>;
-    const view = candidate.view === "fullHand" || candidate.view === "heartsPass" ? candidate.view : "heartsPass";
-    const heartsPassingHand = candidate.heartsPassingHand?.contract === "Hearts" ? candidate.heartsPassingHand : null;
-    const savedFullHand = candidate.fullHand?.contract === "Hearts" ? candidate.fullHand : null;
-
-    if (candidate.version !== 1 || (view === "heartsPass" && !heartsPassingHand) || (view === "fullHand" && !savedFullHand)) {
-      return null;
-    }
-
-    return {
-      version: 1,
-      view,
-      passDirection: normalizeHeartsPassDirection(candidate.passDirection),
-      scores: normalizeSeatScoreMap(candidate.scores),
-      results: Array.isArray(candidate.results) ? candidate.results.filter(isHeartsHandResult) : [],
-      heartsPassingHand,
-      fullHand: savedFullHand,
-      heartsPassSelectedCardIds: Array.isArray(candidate.heartsPassSelectedCardIds)
-        ? candidate.heartsPassSelectedCardIds.filter((cardId): cardId is string => typeof cardId === "string")
-        : [],
-      fullHandReviewTrickCount:
-        Number.isInteger(candidate.fullHandReviewTrickCount) && candidate.fullHandReviewTrickCount >= 0
-          ? candidate.fullHandReviewTrickCount
-          : 0,
-      usingBrowserHeartsPass: Boolean(candidate.usingBrowserHeartsPass),
-      usingBrowserFullHand: Boolean(candidate.usingBrowserFullHand),
-      savedAt: typeof candidate.savedAt === "string" ? candidate.savedAt : new Date().toISOString()
-    };
-  }
-
-  function normalizeSeatScoreMap(scores: unknown): Record<Seat, number> {
-    if (!scores || typeof scores !== "object") {
-      return emptySeatPenalties();
-    }
-
-    const candidate = scores as Partial<Record<Seat, number>>;
-    return {
-      Tutor: Number.isFinite(candidate.Tutor) ? Number(candidate.Tutor) : 0,
-      Right: Number.isFinite(candidate.Right) ? Number(candidate.Right) : 0,
-      You: Number.isFinite(candidate.You) ? Number(candidate.You) : 0,
-      Left: Number.isFinite(candidate.Left) ? Number(candidate.Left) : 0
-    };
-  }
-
-  function isHeartsHandResult(result: unknown): result is HeartsHandResult {
-    if (!result || typeof result !== "object") {
-      return false;
-    }
-
-    const candidate = result as Partial<HeartsHandResult>;
-    return Number.isInteger(candidate.handNumber) && typeof candidate.seatPenalties === "object";
-  }
-
-  function normalizeHeartsPassDirection(direction: unknown): HeartsPassDirection {
-    return direction === "right" || direction === "across" || direction === "hold" ? direction : "left";
-  }
-
-  function heartsPassDirectionForHand(handNumber: number): HeartsPassDirection {
-    const rotation = ["left", "right", "across", "hold"] satisfies HeartsPassDirection[];
-    return rotation[(Math.max(1, handNumber) - 1) % rotation.length] ?? "left";
-  }
-
-  function heartsPassTauriDirection(direction: HeartsPassDirection) {
-    return direction === "right" ? 3 : direction === "across" ? 2 : 1;
-  }
-
   function heartsPassDirectionLabel(direction: HeartsPassDirection) {
     return direction === "hold" ? "No pass" : `Pass ${direction}`;
   }
@@ -4058,103 +3944,55 @@
     return "Right";
   }
 
-  function persistSavedHeartsRun(view: SavedHeartsRun["view"] = savedHeartsView()) {
-    const isHeartsFullHand = activeGameTable === "hearts" && fullHand?.contract === "Hearts" && !fullHandRunActive;
-    const currentHandScores = isHeartsFullHand
-      ? heartsScoredSeatPenalties(seatPenaltiesForTricks(fullHand.completedTricks))
-      : emptySeatPenalties();
-    const visibleScores = isHeartsFullHand ? addSeatPenalties(heartsSessionScores, currentHandScores) : heartsSessionScores;
-    const highestScore = Math.max(...scoreSeats.map((seat) => visibleScores[seat] ?? 0));
-    const matchIsComplete = isHeartsFullHand && fullHand?.status === "complete" && highestScore >= heartsMatchTarget;
-
-    if (matchIsComplete) {
-      clearSavedHeartsRun();
-      return;
-    }
-
-    if (view === "heartsPass" && !heartsPassingHand) {
-      return;
-    }
-
-    if (view === "fullHand" && !isHeartsFullHand) {
-      return;
-    }
-
-    const nextSavedRun: SavedHeartsRun = {
-      version: 1,
-      view,
-      passDirection: heartsPassDirection,
-      scores: heartsSessionScores,
-      results: heartsHandResults,
-      heartsPassingHand,
-      fullHand: isHeartsFullHand ? fullHand : null,
-      heartsPassSelectedCardIds,
-      fullHandReviewTrickCount,
-      usingBrowserHeartsPass,
-      usingBrowserFullHand,
-      savedAt: new Date().toISOString()
-    };
-
-    savedHeartsRun = nextSavedRun;
-
-    if (typeof localStorage !== "undefined") {
-      localStorage.setItem(savedHeartsRunStorageKey, JSON.stringify(nextSavedRun));
-    }
+  function isHeartsSessionActive() {
+    return activeGameTable === "hearts" && !fullHandRunActive && !fullHandCardCountingMode && heartsSession !== null
+      && (heartsSession.phase === "passing" ? heartsPassingHand : fullHand) === heartsSession.fullHand;
   }
 
-  function clearSavedHeartsRun() {
-    savedHeartsRun = null;
-
-    if (typeof localStorage !== "undefined") {
-      localStorage.removeItem(savedHeartsRunStorageKey);
-    }
+  function setHeartsSession(session: HeartsSession) {
+    heartsSession = session;
+    heartsPassingHand = session.phase === "passing" ? session.fullHand : null;
+    fullHand = session.phase === "playing" ? session.fullHand : null;
+    heartsPassSelectedCardIds = session.selectedPassCardIds;
+    heartsPassDirection = session.passDirection;
+    fullHandReviewTrickCount = session.fullHandReviewTrickCount;
   }
 
-  function savedHeartsView(): SavedHeartsRun["view"] {
-    return appView === "fullHand" ? "fullHand" : "heartsPass";
-  }
-
-  function savedHeartsRunSummary(savedRun: SavedHeartsRun) {
-    if (savedRun.fullHand) {
-      return savedRun.fullHand.status === "complete"
-        ? `Hand ${savedRun.results.length + 1} complete`
-        : `Hand ${savedRun.results.length + 1}, trick ${savedRun.fullHand.trickNumber}`;
-    }
-
-    return `Hand ${savedRun.results.length + 1}, ${heartsPassDirectionLabel(savedRun.passDirection).toLowerCase()}, ${
-      savedRun.heartsPassSelectedCardIds.length
-    } of 3 selected`;
-  }
-
-  function continueSavedHeartsRun() {
-    const savedRun = savedHeartsRun ?? loadSavedHeartsRun();
-
-    if (!savedRun) {
-      return;
-    }
-
+  function openHeartsSession(session: HeartsSession) {
     activeGameTable = "hearts";
     activeTableTabs.hearts = "play";
     fullHandRunActive = false;
     fullHandRunResults = [];
+    fullHandCardCountingMode = false;
     dominoHand = null;
-    heartsSessionScores = savedRun.scores;
-    heartsHandResults = savedRun.results;
-    heartsPassingHand = savedRun.heartsPassingHand;
-    fullHand = savedRun.fullHand;
-    heartsPassSelectedCardIds = savedRun.heartsPassSelectedCardIds;
-    heartsPassDirection = savedRun.passDirection;
-    fullHandReviewTrickCount = savedRun.fullHandReviewTrickCount;
-    usingBrowserHeartsPass = savedRun.usingBrowserHeartsPass || !hasTauriRuntime();
-    usingBrowserFullHand = savedRun.usingBrowserFullHand || !hasTauriRuntime();
+    spadesPlayStarted = true;
+    setHeartsSession(session);
+    usingBrowserFullHand = true;
     heartsPassError = "";
     fullHandSelectedCardId = "";
+    dummySelectedCardId = "";
     fullHandError = "";
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
-    appView = savedRun.view;
-    savedHeartsRun = savedRun;
-    persistSavedHeartsRun(savedRun.view);
+    appView = session.phase === "passing" ? "heartsPass" : "fullHand";
+  }
+
+  function persistSavedHeartsRun() {
+    if (!isHeartsSessionActive() || !heartsSession) return;
+    savedHeartsRun = saveHeartsSession(heartsSession, new Date().toISOString());
+    try {
+      heartsSaveStore.write(savedHeartsRun);
+    } catch {
+      if (heartsSession.phase === "passing") heartsPassError = "Progress could not be saved on this device.";
+      else fullHandError = "Progress could not be saved on this device.";
+    }
+  }
+
+  function continueSavedHeartsRun() {
+    const saved = savedHeartsRun ?? heartsSaveStore.load();
+    if (!saved) return;
+    openHeartsSession(restoreHeartsSession(saved));
+    persistSavedHeartsRun();
   }
 
   function isWhistSessionHand() {
@@ -5896,9 +5734,6 @@
   function startBrowserFullHand(contract: FullHandContract, seed: number, dealer?: number) {
     const engine = typescriptHandEngine(contract);
     if (engine) return engine.start({ seed, dealer });
-    if (contract === "Hearts") {
-      return startBrowserHeartsHand(seed);
-    }
     if (contract === "Spades") {
       return startBrowserSpadesHand(seed);
     }
@@ -5944,9 +5779,6 @@
   function playBrowserFullHand(state: FullHandState, cardId: string) {
     const engine = typescriptHandEngine(state.contract);
     if (engine) return engine.transition(state, { type: "play-card", cardId });
-    if (state.contract === "Hearts") {
-      return playBrowserHeartsCard(state, cardId);
-    }
     if (state.contract === "Spades") {
       return playBrowserSpadesCard(state, cardId);
     }
@@ -5980,6 +5812,7 @@
 
     fullHandCardCountingMode = options.cardCounting === true;
     if (contract === "Whist") whistSession = null;
+    if (contract === "Hearts") heartsSession = null;
     fullHandCardCountingAnswer = null;
     fullHandCardCountingChecked = false;
     fullHandCardCountingQuestionsAsked = 0;
@@ -5999,8 +5832,6 @@
     fullHandReviewTrickCount = 0;
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
-    const metadata = fullHandContractCommands[contract];
-
     const engine = typescriptHandEngine(contract);
     if (engine) {
       fullHand = engine.start({ seed, dealer: options.dealer });
@@ -6017,10 +5848,9 @@
     }
 
     try {
-      fullHand = await invoke<FullHandState>(metadata.startCommand, {
+      fullHand = await invoke<FullHandState>("start_hand", {
         seed,
         gameId: activeGameTable,
-        dealer: options.dealer,
         contract
       });
       usingBrowserFullHand = false;
@@ -6036,60 +5866,20 @@
   }
 
   async function startHeartsPassingPhase(options: { keepSession?: boolean } = {}) {
-    activeGameTable = "hearts";
-    fullHandRunActive = false;
-    fullHandRunResults = [];
-    fullHand = null;
-    dominoHand = null;
-    if (!options.keepSession) {
-      heartsSessionScores = emptySeatPenalties();
-      heartsHandResults = [];
-    }
-    heartsPassSelectedCardIds = [];
-    heartsPassError = "";
-    fullHandSelectedCardId = "";
-    fullHandError = "";
-    fullHandReviewTrickCount = 0;
-    lastFullHandTapCardId = "";
-    lastFullHandTapAt = 0;
-
-    const seed = usePracticeSeed();
-    heartsPassDirection = heartsPassDirectionForHand(heartsHandResults.length + 1);
-
-    if (heartsPassDirection === "hold") {
-      heartsPassingHand = null;
-      usingBrowserHeartsPass = false;
-      await startHeartsNoPassHand(seed);
-      return;
-    }
-
+    if (heartsDealPending) return;
+    heartsDealPending = true;
     try {
-      heartsPassingHand = await invoke<FullHandState>("start_hearts_passing_hand", {
-        seed
-      });
-      usingBrowserHeartsPass = false;
-    } catch {
-      heartsPassingHand = startBrowserHeartsPassingHand(seed);
-      usingBrowserHeartsPass = true;
+      const session = options.keepSession && heartsSession
+        ? transitionHeartsSession(heartsSession, { type: "next-hand", seed: usePracticeSeed() })
+        : createHeartsSession(usePracticeSeed());
+      openHeartsSession(session);
+      persistSavedHeartsRun();
+      await tick();
+    } catch (error) {
+      fullHandError = error instanceof Error ? error.message : "That hand could not be dealt.";
+    } finally {
+      heartsDealPending = false;
     }
-
-    appView = "heartsPass";
-    persistSavedHeartsRun("heartsPass");
-  }
-
-  async function startHeartsNoPassHand(seed: number) {
-    try {
-      fullHand = await invoke<FullHandState>("start_hearts_hand", {
-        seed
-      });
-      usingBrowserFullHand = false;
-    } catch {
-      fullHand = startBrowserHeartsHand(seed);
-      usingBrowserFullHand = true;
-    }
-
-    appView = "fullHand";
-    persistSavedHeartsRun("fullHand");
   }
 
   async function startDominoHand(options: { keepRun?: boolean } = {}) {
@@ -6134,69 +5924,30 @@
   }
 
   function toggleHeartsPassCard(card: Card) {
+    if (!isHeartsSessionActive() || !heartsSession || heartsSession.phase !== "passing") return;
     heartsPassError = "";
-
-    if (heartsPassSelectedCardIds.includes(card.id)) {
-      heartsPassSelectedCardIds = heartsPassSelectedCardIds.filter((cardId) => cardId !== card.id);
-      persistSavedHeartsRun("heartsPass");
-      return;
-    }
-
-    if (heartsPassSelectedCardIds.length >= 3) {
+    const next = transitionHeartsSession(heartsSession, { type: "select-pass", cardId: card.id });
+    if (next === heartsSession && heartsPassSelectedCardIds.length >= 3) {
       heartsPassError = "Remove one card before choosing another.";
       return;
     }
-
-    heartsPassSelectedCardIds = [...heartsPassSelectedCardIds, card.id];
-    persistSavedHeartsRun("heartsPass");
+    setHeartsSession(next);
+    persistSavedHeartsRun();
   }
 
-  async function confirmHeartsPass() {
-    if (!heartsPassingHand) {
-      return;
-    }
-
+  function confirmHeartsPass() {
+    if (!isHeartsSessionActive() || !heartsSession || heartsSession.phase !== "passing") return;
     if (heartsPassSelectedCardIds.length !== 3) {
       heartsPassError = "Choose exactly three cards to pass.";
       return;
     }
-
-    try {
-      fullHand = usingBrowserHeartsPass
-        ? applyBrowserHeartsPass(heartsPassingHand, heartsPassSelectedCardIds, heartsPassTauriDirection(heartsPassDirection))
-        : await invoke<FullHandState>("apply_hearts_pass", {
-            state: heartsPassingHand,
-            cardIds: heartsPassSelectedCardIds,
-            direction: heartsPassTauriDirection(heartsPassDirection)
-          });
-      usingBrowserFullHand = usingBrowserHeartsPass;
-      heartsPassingHand = null;
-      heartsPassSelectedCardIds = [];
-      heartsPassError = "";
-      fullHandSelectedCardId = "";
-      fullHandReviewTrickCount = 0;
-      lastFullHandTapCardId = "";
-      lastFullHandTapAt = 0;
-      appView = "fullHand";
-      persistSavedHeartsRun("fullHand");
-    } catch (error) {
-      if (!usingBrowserHeartsPass) {
-        fullHand = applyBrowserHeartsPass(
-          heartsPassingHand,
-          heartsPassSelectedCardIds,
-          heartsPassTauriDirection(heartsPassDirection)
-        );
-        usingBrowserFullHand = true;
-        heartsPassingHand = null;
-        heartsPassSelectedCardIds = [];
-        heartsPassError = "";
-        appView = "fullHand";
-        persistSavedHeartsRun("fullHand");
-        return;
-      }
-
-      heartsPassError = typeof error === "string" ? error : "Those cards could not be passed.";
+    const next = transitionHeartsSession(heartsSession, { type: "pass" });
+    if (next === heartsSession) {
+      heartsPassError = "Those cards could not be passed.";
+      return;
     }
+    openHeartsSession(next);
+    persistSavedHeartsRun();
   }
 
   async function selectFullHandCard(card: Card) {
@@ -6250,8 +6001,10 @@
     fullHandError = "";
     const completedTrickCount = fullHand.completedTricks.length;
 
-    if (usingBrowserFullHand) {
-      if (isWhistSessionHand() && whistSession) {
+    if (usingBrowserFullHand || typescriptHandEngine(fullHand.contract)) {
+      if (isHeartsSessionActive() && heartsSession) {
+        setHeartsSession(transitionHeartsSession(heartsSession, { type: "play-card", cardId: targetId }));
+      } else if (isWhistSessionHand() && whistSession) {
         setWhistSession(transitionWhistSession(whistSession, { type: "play-card", cardId: targetId }));
       } else {
         updateFullHandAfterPlayerPlay(playBrowserFullHand(fullHand, targetId), completedTrickCount);
@@ -6262,7 +6015,7 @@
       lastFullHandTapCardId = "";
       lastFullHandTapAt = 0;
       persistSavedPlayBarbuRun("fullHand");
-      persistSavedHeartsRun("fullHand");
+      persistSavedHeartsRun();
       persistSavedWhistRun();
       persistSavedSpadesRun();
       persistSavedBridgeRun();
@@ -6270,7 +6023,7 @@
     }
 
     try {
-      const nextFullHand = await invoke<FullHandState>(fullHandContractCommands[fullHand.contract].playCommand, {
+      const nextFullHand = await invoke<FullHandState>("play_hand_card", {
         state: fullHand,
         cardId: targetId,
         gameId: activeGameTable,
@@ -6283,7 +6036,7 @@
       lastFullHandTapCardId = "";
       lastFullHandTapAt = 0;
       persistSavedPlayBarbuRun("fullHand");
-      persistSavedHeartsRun("fullHand");
+      persistSavedHeartsRun();
       persistSavedWhistRun();
       persistSavedSpadesRun();
       persistSavedBridgeRun();
@@ -6305,7 +6058,9 @@
       return;
     }
 
-    if (isWhistSessionHand() && whistSession) {
+    if (isHeartsSessionActive() && heartsSession) {
+      setHeartsSession(transitionHeartsSession(heartsSession, { type: "next-trick" }));
+    } else if (isWhistSessionHand() && whistSession) {
       setWhistSession(transitionWhistSession(whistSession, { type: "next-trick" }));
     } else {
       fullHandReviewTrickCount = 0;
@@ -6315,7 +6070,7 @@
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
     persistSavedPlayBarbuRun("fullHand");
-    persistSavedHeartsRun("fullHand");
+    persistSavedHeartsRun();
     persistSavedWhistRun();
     persistSavedSpadesRun();
     persistSavedBridgeRun();
@@ -7029,23 +6784,10 @@
       return;
     }
 
-    if (fullHandIsHeartsGame) {
-      if (heartsMatchIsComplete) {
-        clearSavedHeartsRun();
-        startHeartsHand();
-        return;
-      }
-
-      heartsHandResults = [
-        ...heartsHandResults,
-        {
-          handNumber: heartsHandResults.length + 1,
-          seatPenalties: heartsCurrentScoredSeatPenalties,
-          moonShooter: heartsCurrentMoonShooter
-        }
-      ];
-      heartsSessionScores = addSeatPenalties(heartsSessionScores, heartsCurrentScoredSeatPenalties);
-      void startHeartsPassingPhase({ keepSession: true });
+    if (isHeartsSessionActive() && heartsSession) {
+      if (heartsDealPending) return;
+      if (heartsSessionSettlement(heartsSession).complete) startHeartsHand();
+      else void startHeartsPassingPhase({ keepSession: true });
       return;
     }
 
@@ -7137,8 +6879,10 @@
       return;
     }
 
-    if (fullHandIsHeartsGame) {
-      void startHeartsPassingPhase({ keepSession: true });
+    if (isHeartsSessionActive() && heartsSession) {
+      if (heartsDealPending) return;
+      openHeartsSession(transitionHeartsSession(heartsSession, { type: "replay" }));
+      persistSavedHeartsRun();
       return;
     }
 
@@ -7223,38 +6967,6 @@
     };
   }
 
-  function emptySeatPenalties(): Record<Seat, number> {
-    return {
-      Tutor: 0,
-      Right: 0,
-      You: 0,
-      Left: 0
-    };
-  }
-
-  function addSeatPenalties(left: Record<Seat, number>, right: Record<Seat, number>) {
-    return {
-      Tutor: left.Tutor + right.Tutor,
-      Right: left.Right + right.Right,
-      You: left.You + right.You,
-      Left: left.Left + right.Left
-    };
-  }
-
-  function seatPenaltiesForTricks(tricks: CompletedHandTrick[]) {
-    const totals = emptySeatPenalties();
-
-    for (const trick of tricks) {
-      const seat = seatByPlayerIndex[trick.winnerIndex];
-
-      if (seat) {
-        totals[seat] += trick.penalty;
-      }
-    }
-
-    return totals;
-  }
-
   function seatTricksWonForTricks(tricks: CompletedHandTrick[]) {
     const totals = emptySeatPenalties();
 
@@ -7335,16 +7047,6 @@
     });
   }
 
-  function heartsMoonShooter(rawSeatPenalties: Record<Seat, number>) {
-    const total = scoreSeats.reduce((sum, seat) => sum + (rawSeatPenalties[seat] ?? 0), 0);
-
-    if (total !== heartsHandPenaltyTotal) {
-      return undefined;
-    }
-
-    return scoreSeats.find((seat) => rawSeatPenalties[seat] === heartsHandPenaltyTotal);
-  }
-
   function heartsMoonThreatSeat(rawSeatPenalties: Record<Seat, number>) {
     const total = scoreSeats.reduce((sum, seat) => sum + (rawSeatPenalties[seat] ?? 0), 0);
 
@@ -7353,22 +7055,6 @@
     }
 
     return scoreSeats.find((seat) => rawSeatPenalties[seat] === total);
-  }
-
-  function heartsScoredSeatPenalties(rawSeatPenalties: Record<Seat, number>) {
-    const shooter = heartsMoonShooter(rawSeatPenalties);
-
-    if (!shooter) {
-      return rawSeatPenalties;
-    }
-
-    return scoreSeats.reduce(
-      (scores, seat) => ({
-        ...scores,
-        [seat]: seat === shooter ? 0 : heartsHandPenaltyTotal
-      }),
-      emptySeatPenalties()
-    );
   }
 
   function heartsMoonResultText(shooter: Seat) {

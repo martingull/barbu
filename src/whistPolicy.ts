@@ -14,7 +14,7 @@ const ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]
 const rank = (card: Card) => ranks.indexOf(card.rank) + 2;
 const low = (cards: Card[]) => [...cards].sort((a, b) => rank(a) - rank(b) || suits.indexOf(a.suit) - suits.indexOf(b.suit))[0];
 
-// Keep this public-information policy in step with crates/barbu-core/src/whist.rs.
+// Shared browser/native policy using only the acting hand and public information.
 export function chooseWhistCard(p: WhistPosition): Card | undefined {
   const seen = (card: Card) => [...p.trick, ...p.history.flat()].some(play => play.card.id === card.id);
   const outside = (suit: Suit) => ranks.map(r => ({ id: `${r}${suit}`, rank: r, suit, label: `${r}${suit}` }))

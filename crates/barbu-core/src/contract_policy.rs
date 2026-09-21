@@ -4,23 +4,11 @@ use crate::trick::{legal_cards, trick_winner, PlayedCard, PlayerIndex};
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum HandPolicy {
     BarbuContract(BarbuContractPolicy),
-    HeartsBlackLady,
-    HeartsBlackLadyPassing,
-    Whist,
     Spades,
 }
 
 impl HandPolicy {
     pub fn from_hand_id(id: &str) -> Option<Self> {
-        if id.starts_with("hearts-hand-") {
-            return Some(Self::HeartsBlackLady);
-        }
-        if id.starts_with("hearts-passing-hand-") {
-            return Some(Self::HeartsBlackLadyPassing);
-        }
-        if id.starts_with("whist-hand-") {
-            return Some(Self::Whist);
-        }
         if id.starts_with("spades-hand-") {
             return Some(Self::Spades);
         }
@@ -29,12 +17,6 @@ impl HandPolicy {
     }
 
     pub fn from_contract_name(contract: &str) -> Option<Self> {
-        if contract == "Hearts" {
-            return Some(Self::HeartsBlackLady);
-        }
-        if contract == "Whist" {
-            return Some(Self::Whist);
-        }
         if contract == "Spades" {
             return Some(Self::Spades);
         }
@@ -248,10 +230,7 @@ mod tests {
 
     #[test]
     fn hand_policy_distinguishes_hearts_from_hearts_trumps() {
-        assert_eq!(
-            HandPolicy::from_contract_name("Hearts"),
-            Some(HandPolicy::HeartsBlackLady)
-        );
+        assert_eq!(HandPolicy::from_contract_name("Hearts"), None);
         assert_eq!(
             HandPolicy::from_contract_name("Hearts Trumps"),
             Some(HandPolicy::BarbuContract(BarbuContractPolicy::HeartsTrumps))
@@ -264,14 +243,8 @@ mod tests {
             HandPolicy::from_hand_id("no-queens-hand-7"),
             Some(HandPolicy::BarbuContract(BarbuContractPolicy::NoQueens))
         );
-        assert_eq!(
-            HandPolicy::from_hand_id("hearts-hand-7"),
-            Some(HandPolicy::HeartsBlackLady)
-        );
-        assert_eq!(
-            HandPolicy::from_hand_id("hearts-passing-hand-7"),
-            Some(HandPolicy::HeartsBlackLadyPassing)
-        );
+        assert_eq!(HandPolicy::from_hand_id("hearts-hand-7"), None);
+        assert_eq!(HandPolicy::from_hand_id("hearts-passing-hand-7"), None);
         assert_eq!(
             HandPolicy::from_hand_id("hearts-trumps-hand-7"),
             Some(HandPolicy::BarbuContract(BarbuContractPolicy::HeartsTrumps))

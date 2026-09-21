@@ -1,6 +1,7 @@
 import type { FullHandState, Suit } from "../lessonTypes";
 import { settleWhistHand, whistOddTricksForSide, type WhistPartnershipTricks, type WhistSessionMode } from "../whistScoring";
 import { whistHandEngine } from "./handEngine";
+import { transitionReviewedHand, type ReviewedHandEvent } from "./reviewedHand";
 
 export type WhistHandResult = {
   handNumber: number;
@@ -19,8 +20,7 @@ export type WhistSession = {
 };
 
 export type WhistSessionEvent =
-  | { type: "play-card"; cardId: string }
-  | { type: "next-trick" }
+  | ReviewedHandEvent
   | { type: "replay" }
   | { type: "next-hand"; seed: number };
 
@@ -56,16 +56,9 @@ export function whistSessionComplete(session: WhistSession) {
 export function transitionWhistSession(session: WhistSession, event: WhistSessionEvent): WhistSession {
   const hand = session.fullHand;
   switch (event.type) {
-    case "play-card": {
-      if (session.fullHandReviewTrickCount > 0 || hand.status === "complete") return session;
-      const next = whistHandEngine.transition(hand, event);
-      if (next === hand) return session;
-      return { ...session, fullHand: next,
-        fullHandReviewTrickCount: next.status === "in_progress" && next.completedTricks.length > hand.completedTricks.length
-          ? next.completedTricks.length : 0 };
-    }
+    case "play-card":
     case "next-trick":
-      return session.fullHandReviewTrickCount > 0 ? { ...session, fullHandReviewTrickCount: 0 } : session;
+      return transitionReviewedHand(session, event, whistHandEngine);
     case "replay":
       if (hand.status === "complete" && whistSessionSettlement(session).gameComplete) return session;
       return { ...session, fullHand: whistHandEngine.transition(hand, event), fullHandReviewTrickCount: 0 };

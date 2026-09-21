@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { Locator, Page } from "@playwright/test";
-import { chooseBrowserOpponentCardForState } from "../../src/browserHandFallback";
+import { chooseBrowserOpponentCardForState } from "../../src/domain/trickTakingHand";
 import type { Card, FullHandState } from "../../src/lessonTypes";
 import { whistOddProgress } from "../../src/whistScoring";
 

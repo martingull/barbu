@@ -1,72 +1,90 @@
-# TypeScript Engine Prototype
+# TypeScript Engine Migration
 
 Branch: `prototype/typescript-game-engine`.
 
-The [shared club-game architecture](game-architecture.md) remains the design
-requirement throughout this migration. Whist establishes a reference boundary;
-future games should reuse factories and shared behavior rather than copy its
-implementation wholesale.
+The [shared club-game architecture](game-architecture.md) remains the product
+requirement. Reuse factories, shared mechanics and presentation, with explicit
+game-specific rules and opponent policy. This is not a mobile-shell migration.
 
-## First Slice: Whist Hands
+## Current Runtime Ownership
 
-The experiment is one runtime-independent game engine, not an Expo migration.
-Svelte, CSS, Tauri, application identifiers, and storage keys remain unchanged.
-The pre-existing beta version/release-documentation changes are preserved; no
-store package has been rebuilt or published for this prototype.
+| Area | Implementation |
+| --- | --- |
+| Hearts and Whist full play, opponents, sessions and saves | TypeScript on browser and native builds |
+| Hearts generated practice | Rust generators on native builds; existing browser fallback |
+| Whist authored Learn and Practice | Shared TypeScript content and policy |
+| Barbu and Spades full play | Existing native commands and TypeScript fallback |
+| Bridge | Existing TypeScript hand play plus native/fallback bidding helpers |
+| Packaging and native integrations | Tauri/Rust shell |
 
-- `src/domain/handEngine.ts`: shared start/transition interface, with Whist as
-  the only opted-in game. Actions currently cover playing a card and replaying.
-- `src/domain/trickTakingHand.ts`: existing TypeScript hand implementation moved
-  into the domain layer, without duplicating it. Historical Browser-prefixed
-  names remain during migration.
-- `src/browserHandFallback.ts`: compatibility exports for existing consumers.
-- `src/App.svelte`: selects the shared engine for Whist, including native builds
-  and native-created saved hands. Other games retain their existing routing.
-- `tests/domain/`: directly exercises the engine without a browser or Tauri.
+There is no hosted gameplay backend. TypeScript runs locally in the browser or
+phone WebView; Rust runs locally inside the native build. Svelte only presents
+the domain state and dispatches actions.
 
-Transitions are synchronous and do not mutate the previous state. Illegal card
-choices leave the hand unchanged. The UI still owns card selection and rendering.
+## Shared Boundaries
 
-## Second Slice: Whist Sessions And Saves
+- `src/domain/handEngine.ts`: start/transition interface, factory and selection
+  registry. Only Hearts and Whist are explicitly migrated. Hearts adds passing.
+- `src/domain/trickTakingHand.ts`: shared hand mechanics and the existing
+  TypeScript implementations. Historical Browser-prefixed names remain; they
+  do not mean a second implementation exists for migrated games.
+- `src/domain/heartsSession.ts` and `whistSession.ts`: passing/dealer rotation,
+  scores, match completion, replay and hand history outside Svelte.
+- `src/domain/reviewedHand.ts`: shared play/review gates.
+- `src/persistence/`: game-specific save validation and restoration on top of
+  shared hand validation and storage factories.
 
-- `src/domain/whistSession.ts`: immutable events for playing, trick review,
-  replay, and advancing hands. The session owns scores, rubber games, hand
-  history, and dealer rotation, using the existing scoring functions.
-- `src/persistence/whistSave.ts`: validates and restores legacy saves, recomputes
-  derived hand fields, and isolates storage access from the domain.
-- `src/App.svelte`: opens sessions, dispatches events, and presents their state.
-  Practice and card-counting exercises do not update the saved match.
+Transitions do not mutate their inputs or call UI, storage or Tauri APIs.
+Settlement and the next deal occur in one event to prevent double scoring.
+Practice and memory exercises do not overwrite a saved match.
+Table factories, catalog registration and presentation remain unchanged.
 
-Settlement and the next deal happen in a single transition, so repeated
-next-hand events cannot score a hand twice. Completed matches remove the save.
-Failed storage writes surface an error without stopping the current session;
-that in-memory progress will not survive a reload until saving succeeds.
+## Deduplication Completed
 
-## Save And Replay Compatibility
+The Rust Hearts and Whist full-hand implementations, opponent policies,
+Whist settlement, ruleset registration and Hearts passing commands are removed.
+The remaining generic native commands explicitly reject migrated games rather
+than silently choosing another ruleset. Spades retains its needed partnership
+and trump mechanics without misleading Whist-specific helper names.
 
-Keep the `barbu.savedWhistRun.v1` schema and `usingBrowserFullHand` field for now.
-Whist resumes through TypeScript regardless of that legacy routing flag, then
-persists it as true. Scores, rubber mode, games won, cards, and hand IDs survive.
+The native practice generators do not depend on these removed engines, so no
+practice pool was replaced or reduced. Migrating generated practice remains
+explicitly separate work, including its evaluation rules and browser fallback.
 
-Rust and browser shuffles are different. Replay reconstructs each seat's original
-13 cards from the remaining hands and recorded tricks instead of reshuffling
-the saved seed. This also avoids depending on the word size of a native build.
-Older saves without the turned-card metadata do not invent that missing card.
-Corrupt/incomplete deals are not valid replay inputs.
+The redundant frontend command-name table and the `browserHandFallback.ts`
+re-export wrapper are removed. Consumers use the domain module directly.
+Pure Hearts/Whist policy, scoring and deal audits now run once in
+`tests/domain` rather than once per browser viewport.
 
-`tests/fixtures/whist-native-save.json` is generated by the actual Rust Tauri
-commands. The Rust test verifies that it still matches native output; TypeScript
-tests verify continuation and replay against it. Presentation prompts/tags are
-not compared as exact strings. This single fixture is a migration check, not
-proof of complete policy equivalence.
+## Saves And Golden Fixtures
 
-Regenerate only after deliberately reviewing changes to the native baseline:
+Existing keys and version-1 schemas remain:
+`barbu.savedWhistRun.v1` and `barbu.savedHeartsRun.v1`.
+Legacy native saves resume through TypeScript regardless of their old routing
+flag. Saves preserve scores, cards, hand IDs, pass selection and trick review.
+Whist saves without a session mode default to a single game.
 
-```sh
-UPDATE_WHIST_MIGRATION_FIXTURE=1 cargo test -p barbu-app whist_typescript_migration_fixture_matches_native_commands
-```
+The old native shuffle differs from TypeScript. Replay reconstructs the actual
+deal from remaining cards and recorded tricks instead of regenerating from a
+seed. Hearts replay starts the same post-pass deal at 2C; it does not repeat
+passing or settle the discarded attempt. Missing legacy turned-card metadata
+is not invented from a different shuffle.
 
-## Verify And Try
+`tests/fixtures/whist-native-save.json` and `hearts-native-save.json` are frozen
+snapshots captured from the former native commands. Their generation tests
+passed immediately before removing the native engines on 2026-09-21. Keep these
+as compatibility evidence; do not regenerate them from TypeScript to make a
+failing compatibility test pass. Earlier engine code is available in git history.
+The Hearts fixture covers all three passing directions plus hold.
+
+Policy and scoring golden fixtures remain too. They are regression cases,
+not proof of expert opponent strength or exhaustive policy equivalence.
+Failed storage writes report an error while keeping the current session playable;
+in-memory progress cannot survive a reload until saving succeeds.
+
+## Verification And Device Status
+
+Run:
 
 ```sh
 task domain:test
@@ -74,32 +92,34 @@ task core:test
 task tauri:test
 task build
 task ui:test
+task tauri:check
 ```
 
-Domain coverage includes 256 seeded deals across all dealers, follow-suit
-legality, card conservation, immutable transitions, completed-hand behavior,
-native-save continuation/replay, session settlement, dealer rotation, rubber
-completion, legacy save normalization, and storage failures. Browser tests simulate a native runtime
-and assert that Whist does not invoke native commands. Existing tests cover
-the shared native policy/scoring fixtures, lessons, rubber completion, and saves.
+Domain tests cover golden positions, hidden-hand independence, complete deals,
+legality, card conservation, moon scoring, rubber completion, saved native hands,
+replay, invalid saves and storage failures. Browser tests simulate native
+runtime presence and verify that Hearts/Whist full play never invoke Rust.
+Native adapter tests reject migrated games and complete the remaining contracts;
+native Hearts practice is checked separately.
 
-Open the browser development server, then Whist > Play > Play Whist. Play cards,
-reload, and Continue Whist. Finish a non-final hand and Replay: the same cards
-should return. Repeat with Rubber selected. No visual redesign is intended.
-Browser simulation does not replace a physical-device build/upgrade check.
+Whist was installed on iPhone 16 on 2026-09-21 and the user confirmed it works.
+The subsequent Hearts build was installed, but its automatic launch was blocked
+by the screen lock. This deduplication change still needs a fresh device build
+and physical smoke check before release. No store package has been published.
 
-On 2026-09-21, the prototype was installed on the connected iPhone 16 and the
-user reported that it works. This is a user-reported device smoke check, not a
-claim that every migration or saved-game edge case was tested on the phone.
+Try browser mode: Hearts or Whist > Play, play cards, reload, then Continue.
+Replay should preserve the deal; Next hand should settle it only once.
+Also check Hearts > Practice. Browser testing is not a native-generator or
+physical-device test.
 
-## Next Decisions
+## Next Migration Work
 
-1. Expand native/TypeScript comparison coverage before removing native Whist.
-2. Migrate other games individually, including generated practice rather than
-   quietly substituting smaller authored pools.
-3. Evaluate a different mobile shell only after the engine boundary is proven.
+1. Migrate generated Hearts practice and its evaluation without reducing variety,
+   then remove its native/fallback duplication.
+2. Migrate Spades, then Bridge, one at a time using these shared boundaries.
+3. Remove each obsolete engine and dispatch route after verifying its replacement;
+   retain regression fixtures rather than permanent parallel engines.
+4. Evaluate another mobile shell separately, only if it brings a clear benefit.
 
-Rust production code is not removed. Generated practice and other native game
-routes still need it, as does Tauri packaging. This prototype establishes a
-testable migration boundary; it is not yet a net simplification of the whole
-repository or an approved replacement for the closed-beta build.
+Rust remains required for the current shell, practice and unmigrated games.
+The full-play cleanup is complete for Hearts and Whist, not for the whole catalog.

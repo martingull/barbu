@@ -7,6 +7,7 @@ async function mockNativeRuntime(page: Page) {
   await page.addInitScript(() => {
     Object.assign(window, {
       isTauri: true,
+      structuredClone: undefined,
       nativeCommands: [] as string[],
       __TAURI_INTERNALS__: {
         invoke: async (command: string) => {

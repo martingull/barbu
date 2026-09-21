@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { startBrowserWhistHand, playBrowserWhistCard, startBrowserSpadesHand, playBrowserSpadesCard,
-  startBrowserBridgeHand, applyBrowserBridgeAuction, playBrowserBridgeCard } from "../../src/browserHandFallback";
+  startBrowserBridgeHand, applyBrowserBridgeAuction, playBrowserBridgeCard } from "../../src/domain/trickTakingHand";
 import { startBrowserDominoHand, playBrowserDominoCard, passBrowserDominoTurn } from "../../src/browserDominoFallback";
 import { fullHandContracts } from "../../src/contractRegistry";
 import type { FullHandState } from "../../src/lessonTypes";

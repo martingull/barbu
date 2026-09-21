@@ -1,10 +1,9 @@
 use crate::cards::Card;
 use crate::hand::{
-    play_hearts_card, play_king_of_hearts_card, play_no_hearts_card, play_no_last_two_card,
-    play_no_queens_card, play_no_tricks_card, play_positive_tricks_card, play_spades_card,
-    play_whist_card, start_hearts_hand, start_king_of_hearts_hand, start_no_hearts_hand,
-    start_no_last_two_hand, start_no_queens_hand, start_no_tricks_hand, start_positive_tricks_hand,
-    start_spades_hand, start_whist_hand, TrickTakingHandState,
+    play_king_of_hearts_card, play_no_hearts_card, play_no_last_two_card, play_no_queens_card,
+    play_no_tricks_card, play_positive_tricks_card, play_spades_card, start_king_of_hearts_hand,
+    start_no_hearts_hand, start_no_last_two_hand, start_no_queens_hand, start_no_tricks_hand,
+    start_positive_tricks_hand, start_spades_hand, TrickTakingHandState,
 };
 
 pub trait Ruleset {
@@ -15,40 +14,6 @@ pub trait Ruleset {
         card: Card,
     ) -> Result<TrickTakingHandState, String>;
     fn score_type(&self) -> &'static str;
-}
-
-pub struct HeartsRuleset;
-impl Ruleset for HeartsRuleset {
-    fn start_hand(&self, seed: u64) -> TrickTakingHandState {
-        start_hearts_hand(seed)
-    }
-    fn play_card(
-        &self,
-        state: TrickTakingHandState,
-        card: Card,
-    ) -> Result<TrickTakingHandState, String> {
-        play_hearts_card(state, card)
-    }
-    fn score_type(&self) -> &'static str {
-        "point"
-    }
-}
-
-pub struct WhistRuleset;
-impl Ruleset for WhistRuleset {
-    fn start_hand(&self, seed: u64) -> TrickTakingHandState {
-        start_whist_hand(seed)
-    }
-    fn play_card(
-        &self,
-        state: TrickTakingHandState,
-        card: Card,
-    ) -> Result<TrickTakingHandState, String> {
-        play_whist_card(state, card)
-    }
-    fn score_type(&self) -> &'static str {
-        "trick"
-    }
 }
 
 pub struct SpadesRuleset;
@@ -170,20 +135,17 @@ impl Ruleset for HeartsTrumpsRuleset {
     }
 }
 
-pub fn get_ruleset(_game_id: &str, contract: &str) -> Box<dyn Ruleset> {
+// Migrated games must never silently fall back to a different native ruleset.
+pub fn get_ruleset(_game_id: &str, contract: &str) -> Result<Box<dyn Ruleset>, String> {
     match contract {
-        "Hearts" => Box::new(HeartsRuleset),
-        "Whist" => Box::new(WhistRuleset),
-        "Spades" => Box::new(SpadesRuleset),
-        "No Hearts" => Box::new(NoHeartsRuleset),
-        "No Queens" => Box::new(NoQueensRuleset),
-        "King of Hearts" => Box::new(KingOfHeartsRuleset),
-        "No Last Two" => Box::new(NoLastTwoRuleset),
-        "No Tricks" => Box::new(NoTricksRuleset),
-        "Hearts Trumps" => Box::new(HeartsTrumpsRuleset),
-        _ => panic!(
-            "Unknown contract or not a TrickTaking ruleset: {}",
-            contract
-        ),
+        "Hearts" | "Whist" => Err(format!("{contract} hand play uses the TypeScript engine")),
+        "Spades" => Ok(Box::new(SpadesRuleset)),
+        "No Hearts" => Ok(Box::new(NoHeartsRuleset)),
+        "No Queens" => Ok(Box::new(NoQueensRuleset)),
+        "King of Hearts" => Ok(Box::new(KingOfHeartsRuleset)),
+        "No Last Two" => Ok(Box::new(NoLastTwoRuleset)),
+        "No Tricks" => Ok(Box::new(NoTricksRuleset)),
+        "Hearts Trumps" => Ok(Box::new(HeartsTrumpsRuleset)),
+        _ => Err(format!("Unsupported native hand contract: {contract}")),
     }
 }

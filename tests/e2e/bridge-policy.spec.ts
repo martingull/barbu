@@ -3,7 +3,7 @@ import fixtures from "../fixtures/bridge-bidding.json" with { type: "json" };
 import { suggestBridgeCall, explainBridgeCall, parseBridgeBid } from "../../src/bridgeBidding";
 import { bridgeBoardConditions } from "../../src/bridgeBoard";
 import { bridgeDeclarerDrillPool, bridgeDefenseDrillPool } from "../../src/bridgePractice";
-import { startBrowserBridgeHand, chooseBrowserOpponentCardForState, applyBrowserBridgeAuction, playBrowserBridgeCard } from "../../src/browserHandFallback";
+import { startBrowserBridgeHand, chooseBrowserOpponentCardForState, applyBrowserBridgeAuction, playBrowserBridgeCard } from "../../src/domain/trickTakingHand";
 import type { BridgeAuctionCall, Card, FullHandState, Seat, Suit } from "../../src/lessonTypes";
 
 const seats: Seat[] = ["Tutor", "Right", "You", "Left"];

@@ -45,35 +45,44 @@ Keep learner-facing outcome labels simple: `good`, `risky`, `penalty`, and `ille
 
 ## Stack
 
-- Rust workspace for deterministic game logic.
-- `crates/barbu-core` for cards, rules, scoring, lesson primitives, generated practice, and tests.
+- TypeScript domain engine under `src/domain` for migrated game play (Hearts and Whist).
+- `crates/barbu-core` for remaining native game logic, generated practice, and shared Rust primitives.
 - Tauri 2 app shell under `src-tauri`.
 - Svelte + TypeScript frontend under `src`.
 - Structured local game content under `content`.
 
-Keep game logic independent of the UI. The frontend may present and explain rules, but rule validation, scoring, trick resolution, and reusable lesson state should live in Rust where practical.
+Keep game logic independent of the UI. Rule validation, scoring, trick resolution,
+and reusable lesson state belong in the game's domain engine, never in Svelte.
+The migration target is one TypeScript implementation shared by browser and native
+builds, not permanent Rust/TypeScript mirrors. Keep existing native routes until
+their specific migration is verified; Tauri remains the native shell.
 
 ## Architecture
 
 ### TypeScript Engine Prototype
 
-On the `prototype/typescript-game-engine` branch, Whist hand play is the explicit
-exception to the Rust-first policy. Route it through `src/domain/handEngine.ts`
-on both browser and native builds. Whist match progression belongs in
-`src/domain/whistSession.ts`, with save compatibility and storage access in
-`src/persistence/whistSave.ts`. Keep domain transitions free of UI, storage,
-and Tauri dependencies. Retain the Rust implementation as a comparison baseline;
-do not migrate other games implicitly. See `docs/typescript-engine-prototype.md`
+On the `prototype/typescript-game-engine` branch, Whist and Hearts hand play are
+explicit exceptions to the Rust-first policy. Route both through
+`src/domain/handEngine.ts` on browser and native builds. Match progression belongs
+in `src/domain/whistSession.ts` and `src/domain/heartsSession.ts`, with save
+compatibility in their corresponding `src/persistence/` adapters. Reuse the
+engine factory, reviewed-hand transitions, save-store factory, and standard
+trick-hand validation. Hearts generated practice remains native-backed with its
+existing browser fallback; it has not been migrated. Keep domain transitions free of UI, storage,
+and Tauri dependencies. Hearts and Whist native full-hand engines, policies,
+settlement, and command routes have been removed. Keep the frozen native-save
+fixtures for compatibility tests, not a second production implementation.
+Do not migrate other games implicitly. See `docs/typescript-engine-prototype.md`
 for scope, compatibility checks, and remaining work. Run `task domain:test` after
 engine changes, in addition to the existing verification commands.
 
 ### Shared Foundations
 
-- Put reusable card and rules code in `crates/barbu-core`.
+- Put shared TypeScript gameplay in `src/domain`; remaining native mechanics stay in `crates/barbu-core` until migrated.
 - Share low-level card-table mechanics across games: deck, deal, turn order, follow-suit legality, trick winner, played-card memory, scoring primitives, and compact table presentation.
 - Keep game policy separate by game or contract. Barbu contract policy, Hearts/Black Lady avoidance policy, Domino layout policy, and future Whist/Bridge policies should call shared primitives but make their own decisions about winning, ducking, dumping danger cards, preserving trumps, or taking control.
 - When improving opponents, first identify the game objective being optimized. Barbu may need contract-specific reward or avoidance behavior; Hearts normally needs penalty avoidance, queen-of-spades danger management, and moon-defense behavior.
-- Put generated practice logic in Rust, not in the Svelte component layer.
+- Existing generated practice remains in Rust. Migrate its generation and evaluation explicitly into the domain layer, not into Svelte or smaller authored pools.
 - Model the Barbu/King-of-Cards teaching persona as content or lesson metadata where possible, not as scattered hardcoded strings.
 - Keep guided lessons in catalog-like modules so more games and families can be added without rewriting the interaction surface.
 - Keep Tauri command handlers thin; they should adapt app requests to core APIs.

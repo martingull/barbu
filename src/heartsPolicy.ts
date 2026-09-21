@@ -16,7 +16,7 @@ const penalty = (card: Card) => card.id === "QS" ? 13 : card.suit === "H" ? 1 : 
 const low = (cards: Card[]) => [...cards].sort((a, b) => rank(a) - rank(b) || suit(a) - suit(b))[0];
 const high = (cards: Card[]) => [...cards].sort((a, b) => rank(b) - rank(a) || suit(b) - suit(a))[0];
 
-// Mirror crates/barbu-core/src/hearts.rs; both policies use the same fixtures.
+// Shared browser/native policy, checked against golden tactical fixtures.
 export function chooseHeartsCard(p: HeartsPosition): Card | undefined {
   const seen = (id: string) => [...p.history.flatMap(t => t.cards), ...p.trick].some(play => play.card.id === id);
   const queenOutside = !p.hand.some(card => card.id === "QS") && !seen("QS");

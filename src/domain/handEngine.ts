@@ -1,5 +1,6 @@
 import type { FullHandContract, FullHandState } from "../lessonTypes";
-import { playBrowserWhistCard, replayWhistHand, startBrowserWhistHand } from "./trickTakingHand";
+import { applyBrowserHeartsPass, playBrowserHeartsCard, replayHeartsHand, startBrowserHeartsHand, startBrowserHeartsPassingHand,
+  playBrowserWhistCard, replayWhistHand, startBrowserWhistHand } from "./trickTakingHand";
 
 export type HandStartOptions = { seed: number; dealer?: number };
 export type HandAction = { type: "play-card"; cardId: string } | { type: "replay" };
@@ -10,15 +11,31 @@ export interface HandEngine {
   transition(state: FullHandState, action: HandAction): FullHandState;
 }
 
-export const whistHandEngine: HandEngine = {
-  start: ({ seed, dealer }) => startBrowserWhistHand(seed, dealer),
-  transition(state, action) {
-    if (state.contract !== "Whist") throw new Error("Expected a Whist hand");
-    return action.type === "replay" ? replayWhistHand(state) : playBrowserWhistCard(state, action.cardId);
+function createHandEngine(contract: FullHandContract, start: HandEngine["start"],
+  play: (state: FullHandState, cardId: string) => FullHandState,
+  replay: (state: FullHandState) => FullHandState): HandEngine {
+  return { start, transition(state, action) {
+    if (state.contract !== contract) throw new Error(`Expected a ${contract} hand`);
+    return action.type === "replay" ? replay(state) : play(state, action.cardId);
+  } };
+}
+
+export const whistHandEngine = createHandEngine("Whist",
+  ({ seed, dealer }) => startBrowserWhistHand(seed, dealer), playBrowserWhistCard, replayWhistHand);
+
+export const heartsHandEngine = {
+  ...createHandEngine("Hearts", ({ seed }) => startBrowserHeartsHand(seed), playBrowserHeartsCard, replayHeartsHand),
+  startPassing: startBrowserHeartsPassingHand,
+  pass(state: FullHandState, cardIds: string[], direction: number) {
+    if (state.contract !== "Hearts") throw new Error("Expected a Hearts hand");
+    if (cardIds.length !== 3 || !Number.isInteger(direction)) return state;
+    return applyBrowserHeartsPass(state, cardIds, direction);
   }
 };
 
+const engines: Partial<Record<FullHandContract, HandEngine>> = { Whist: whistHandEngine, Hearts: heartsHandEngine };
+
 // Only migrated games belong here; the remaining native/fallback routes stay intact.
 export function typescriptHandEngine(contract: FullHandContract): HandEngine | undefined {
-  return contract === "Whist" ? whistHandEngine : undefined;
+  return engines[contract];
 }
