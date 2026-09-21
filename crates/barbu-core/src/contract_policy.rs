@@ -4,23 +4,14 @@ use crate::trick::{legal_cards, trick_winner, PlayedCard, PlayerIndex};
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum HandPolicy {
     BarbuContract(BarbuContractPolicy),
-    Spades,
 }
 
 impl HandPolicy {
     pub fn from_hand_id(id: &str) -> Option<Self> {
-        if id.starts_with("spades-hand-") {
-            return Some(Self::Spades);
-        }
-
         BarbuContractPolicy::from_hand_id(id).map(Self::BarbuContract)
     }
 
     pub fn from_contract_name(contract: &str) -> Option<Self> {
-        if contract == "Spades" {
-            return Some(Self::Spades);
-        }
-
         BarbuContractPolicy::from_contract_name(contract).map(Self::BarbuContract)
     }
 }

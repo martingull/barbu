@@ -3,7 +3,12 @@
   import { bridgeDeclarerDrillPool, bridgeDefenseDrillPool } from "./bridgePractice";
   import { bridgeHighCardPoints, bridgeSuitCount, bridgeOpeningCall, suggestBridgeCall, explainBridgeCall } from "./bridgeBidding";
   import GameResult from "./GameResult.svelte";
-  import { spadesMatchComplete, spadesMatchTarget } from "./spadesScoring";
+  import { spadesMatchComplete, spadesMatchTarget, spadesSideBid, spadesHandResultFor, addSpadesMatchResult,
+    spadesPlayerSideSeats, spadesOpponentSideSeats, type SpadesHandResult, type SpadesScoreState } from "./spadesScoring";
+  import { defaultSpadesBidState, suggestedSpadesBidsForHand, type SpadesBidState } from "./domain/spadesBidding";
+  import { createSpadesSession, transitionSpadesSession, type SpadesSession } from "./domain/spadesSession";
+  import { createSpadesSaveStore, saveSpadesSession, restoreSpadesSession, type SavedSpadesRun } from "./persistence/spadesSave";
+  import { spadesFollowSuitDrillPool, spadesTrumpOrDiscardDrillPool, spadesBidBooksDrillPool, spadesAvoidBagsDrillPool } from "./spadesLessons";
   import { whistFollowSuitDrillPool, whistTrumpOrDiscardDrillPool, whistThirdHandHighDrillPool, whistReturnPartnerSuitDrillPool, whistOpeningLeadLessonPool, whistOddTrickDrillPool } from "./whistLessons";
   import { invoke, isTauri } from "@tauri-apps/api/core";
   import { typescriptHandEngine } from "./domain/handEngine";
@@ -23,15 +28,13 @@
     playBrowserNoTricksCard,
     playBrowserPositiveTricksCard,
     playBrowserBridgeCard,
-    playBrowserSpadesCard,
     startBrowserBridgeHand,
     startBrowserKingOfHeartsHand,
     startBrowserNoHeartsHand,
     startBrowserNoLastTwoHand,
     startBrowserNoQueensHand,
     startBrowserNoTricksHand,
-    startBrowserPositiveTricksHand,
-    startBrowserSpadesHand
+    startBrowserPositiveTricksHand
   } from "./domain/trickTakingHand";
   import { passBrowserDominoTurn, playBrowserDominoCard, startBrowserDominoHand } from "./browserDominoFallback";
   import { generateBrowserPlayBarbuDrillSteps } from "./browserDrillFallback";
@@ -400,33 +403,6 @@
     savedAt: string;
   };
 
-  type SpadesBidState = {
-    You: number;
-    Tutor: number;
-    Left: number;
-    Right: number;
-  };
-
-  type SpadesScoreState = {
-    playerSide: number;
-    opponentSide: number;
-  };
-
-  type SpadesHandResult = {
-    handNumber: number;
-    playerSideBid: number;
-    opponentSideBid: number;
-    playerSideTricks: number;
-    opponentSideTricks: number;
-    playerSideScore: number;
-    opponentSideScore: number;
-    playerSideBags: number;
-    opponentSideBags: number;
-    playerSideBagPenalty: number;
-    opponentSideBagPenalty: number;
-    nilResults: Array<{ seat: Seat; bid: number; tricks: number; score: number }>;
-  };
-
   type WhistOpeningLeadPracticeDeal = {
     id: string;
     trumpSuit: Suit;
@@ -438,20 +414,6 @@
   };
 
   const whistOpeningLeadPracticeMaxRounds = 3;
-
-  type SavedSpadesRun = {
-    version: 1;
-    scores: SpadesScoreState;
-    bags: SpadesScoreState;
-    bids: SpadesBidState;
-    results: SpadesHandResult[];
-    fullHand: FullHandState;
-    fullHandReviewTrickCount: number;
-    usingBrowserFullHand: boolean;
-    playStarted: boolean;
-    openingPanel: "table" | "bid";
-    savedAt: string;
-  };
 
   type SavedBridgeRun = {
     version: 1;
@@ -483,14 +445,13 @@
   const savedPlayBarbuRunStorageKey = "barbu.savedPlayRun.v1";
   const heartsSaveStore = createHeartsSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
   const whistSaveStore = createWhistSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
-  const savedSpadesRunStorageKey = "barbu.savedSpadesRun.v1";
+  const spadesSaveStore = createSpadesSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
   const savedBridgeRunStorageKey = "barbu.savedBridgeRun.v1";
   const maxStoredDrillPatterns = 6;
   const maxStoredPlayBarbuAttempts = 8;
   const scoreSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
   const spadesBidSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
-  const spadesPlayerSideSeats: Seat[] = ["You", "Tutor"];
-  const spadesOpponentSideSeats: Seat[] = ["Left", "Right"];
+
   const countingTrickSeats: Seat[] = ["Tutor", "Right", "You", "Left"];
   const realisticTrumpTotalTricks = 13;
   const realisticTrumpCheckpoints = [3, 7, 11];
@@ -795,454 +756,7 @@
     trick: lesson.tricks[0]
   }));
   const fixedDrillLessons = guidedLessons.filter((lesson) => lesson.contract !== "Domino");
-  const spadesFollowSuitDrillStep: DrillStep = {
-    scenarioId: "spades-follow-suit-clubs",
-    contract: "Spades",
-    title: "Follow suit",
-    trick: {
-      title: "Follow before trump",
-      beforeResult: "Left led clubs. You still have clubs, even though you also hold spades.",
-      afterResult: "In Spades, fixed trump does not override the follow-suit rule.",
-      emptyExplanation: "Clubs were led. Choose a legal club before thinking about trump.",
-      legalCardIds: ["3C", "AC"],
-      hand: [
-        { id: "3C", rank: "3", suit: "C", label: "3C" },
-        { id: "AC", rank: "A", suit: "C", label: "AC" },
-        { id: "8S", rank: "8", suit: "S", label: "8S" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Left", card: { id: "9C", rank: "9", suit: "C", label: "9C" } },
-        { seat: "Tutor", card: { id: "KC", rank: "K", suit: "C", label: "KC" } }
-      ],
-      tableAfterChoice: [{ seat: "Right", card: { id: "5C", rank: "5", suit: "C", label: "5C" } }],
-      pendingBySeat: { You: "follow clubs", Right: "follows" },
-      playedExplanations: {
-        "3C": "3C is good. You follow clubs and avoid spending a spade illegally.",
-        AC: "AC follows suit and wins, but first notice that clubs are the legal suit.",
-        "8S": "8S is illegal while you still have clubs."
-      },
-      cardOutcomes: {
-        "3C": "good",
-        AC: "risky"
-      },
-      cardReasons: {
-        "3C": "followed_suit",
-        AC: "won_clean_trick"
-      }
-    }
-  };
-  const spadesFollowSuitDuckDrillStep: DrillStep = {
-    scenarioId: "spades-follow-suit-duck",
-    contract: "Spades",
-    title: "Follow suit",
-    trick: {
-      title: "Follow low when partner is safe",
-      beforeResult: "Barbu is your partner and is winning with KD. Diamonds were led, and you have diamonds.",
-      afterResult: "Following suit can still preserve strength when partner already controls the trick.",
-      emptyExplanation: "Diamonds were led. Follow diamonds without overtaking partner.",
-      legalCardIds: ["4D", "AD"],
-      hand: [
-        { id: "4D", rank: "4", suit: "D", label: "4D" },
-        { id: "AD", rank: "A", suit: "D", label: "AD" },
-        { id: "QS", rank: "Q", suit: "S", label: "QS" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Left", card: { id: "9D", rank: "9", suit: "D", label: "9D" } },
-        { seat: "Tutor", card: { id: "KD", rank: "K", suit: "D", label: "KD" } }
-      ],
-      tableAfterChoice: [{ seat: "Right", card: { id: "7D", rank: "7", suit: "D", label: "7D" } }],
-      pendingBySeat: { You: "follow diamonds", Right: "follows" },
-      playedExplanations: {
-        "4D": "4D is good. You follow suit and let partner keep the trick.",
-        AD: "AD is legal, but it overtakes Barbu and spends a winner your side may need later.",
-        QS: "QS is illegal while you still have diamonds."
-      },
-      cardOutcomes: {
-        "4D": "good",
-        AD: "risky"
-      },
-      cardReasons: {
-        "4D": "followed_suit",
-        AD: "won_clean_trick"
-      }
-    }
-  };
-  const spadesFollowSuitCoverDrillStep: DrillStep = {
-    scenarioId: "spades-follow-suit-cover",
-    contract: "Spades",
-    title: "Follow suit",
-    trick: {
-      title: "Cover the opponent",
-      beforeResult: "Hearts were led. Right is winning with QH, and you can follow hearts.",
-      afterResult: "A follow-suit card can still win a needed book when it beats the opponent.",
-      emptyExplanation: "Hearts were led. Follow hearts and decide whether your side needs to win.",
-      legalCardIds: ["4H", "KH"],
-      hand: [
-        { id: "4H", rank: "4", suit: "H", label: "4H" },
-        { id: "KH", rank: "K", suit: "H", label: "KH" },
-        { id: "6S", rank: "6", suit: "S", label: "6S" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Left", card: { id: "9H", rank: "9", suit: "H", label: "9H" } },
-        { seat: "Tutor", card: { id: "3H", rank: "3", suit: "H", label: "3H" } },
-        { seat: "Right", card: { id: "QH", rank: "Q", suit: "H", label: "QH" } }
-      ],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "last to play" },
-      playedExplanations: {
-        "4H": "4H follows suit, but it lets Right win the book.",
-        KH: "KH follows suit and covers Right, taking the book for your side.",
-        "6S": "6S is illegal while you still have hearts."
-      },
-      cardOutcomes: {
-        "4H": "risky",
-        KH: "good"
-      },
-      cardReasons: {
-        "4H": "followed_suit",
-        KH: "won_clean_trick"
-      }
-    }
-  };
-  const spadesTrumpCutDrillStep: DrillStep = {
-    scenarioId: "spades-trump-cut",
-    contract: "Spades",
-    title: "Trump or discard",
-    trick: {
-      title: "Cut with the low spade",
-      beforeResult: "Hearts were led. You are void in hearts, and Right is winning with AH.",
-      afterResult: "Any spade beats a plain-suit card. Use the lowest spade that wins.",
-      emptyExplanation: "You are void in hearts. Choose whether to cut the trick.",
-      legalCardIds: ["4S", "QS", "7D"],
-      hand: [
-        { id: "4S", rank: "4", suit: "S", label: "4S" },
-        { id: "QS", rank: "Q", suit: "S", label: "QS" },
-        { id: "7D", rank: "7", suit: "D", label: "7D" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Left", card: { id: "9H", rank: "9", suit: "H", label: "9H" } },
-        { seat: "Tutor", card: { id: "3H", rank: "3", suit: "H", label: "3H" } },
-        { seat: "Right", card: { id: "AH", rank: "A", suit: "H", label: "AH" } }
-      ],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "void: cut or discard" },
-      playedExplanations: {
-        "4S": "4S is good. The low spade cuts the heart trick and saves QS.",
-        QS: "QS wins too, but it spends a higher spade than needed.",
-        "7D": "7D is legal, but it gives up a book your side can win."
-      },
-      cardOutcomes: {
-        "4S": "good",
-        QS: "risky",
-        "7D": "risky"
-      },
-      cardReasons: {
-        "4S": "won_clean_trick",
-        QS: "won_clean_trick",
-        "7D": "void_discard"
-      }
-    }
-  };
-  const spadesTrumpPreserveDrillStep: DrillStep = {
-    scenarioId: "spades-trump-preserve",
-    contract: "Spades",
-    title: "Trump or discard",
-    trick: {
-      title: "Discard when partner is winning",
-      beforeResult: "Clubs were led. You are void in clubs, and Barbu is already winning with AC.",
-      afterResult: "When partner has the book, throwing a side card can preserve spade control.",
-      emptyExplanation: "You are void in clubs. Decide whether this trick needs a spade.",
-      legalCardIds: ["5S", "JS", "8D"],
-      hand: [
-        { id: "5S", rank: "5", suit: "S", label: "5S" },
-        { id: "JS", rank: "J", suit: "S", label: "JS" },
-        { id: "8D", rank: "8", suit: "D", label: "8D" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Left", card: { id: "KC", rank: "K", suit: "C", label: "KC" } },
-        { seat: "Tutor", card: { id: "AC", rank: "A", suit: "C", label: "AC" } },
-        { seat: "Right", card: { id: "6C", rank: "6", suit: "C", label: "6C" } }
-      ],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "void: partner winning" },
-      playedExplanations: {
-        "5S": "5S is legal, but it steals a trick partner already had.",
-        JS: "JS is an even more expensive spade while partner is already winning.",
-        "8D": "8D is good. You discard and keep spades for a later fight."
-      },
-      cardOutcomes: {
-        "5S": "risky",
-        JS: "risky",
-        "8D": "good"
-      },
-      cardReasons: {
-        "5S": "won_clean_trick",
-        JS: "won_clean_trick",
-        "8D": "void_discard"
-      }
-    }
-  };
-  const spadesTrumpOvertrumpDrillStep: DrillStep = {
-    scenarioId: "spades-trump-overtrump",
-    contract: "Spades",
-    title: "Trump or discard",
-    trick: {
-      title: "Overtrump the opponent",
-      beforeResult: "Diamonds were led. You are void, and Right has cut with 7S.",
-      afterResult: "If an opponent has already trumped, a higher spade can win the book back.",
-      emptyExplanation: "Beat Right's spade if taking this book helps your bid.",
-      legalCardIds: ["9S", "KS", "5H"],
-      hand: [
-        { id: "9S", rank: "9", suit: "S", label: "9S" },
-        { id: "KS", rank: "K", suit: "S", label: "KS" },
-        { id: "5H", rank: "5", suit: "H", label: "5H" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Left", card: { id: "QD", rank: "Q", suit: "D", label: "QD" } },
-        { seat: "Tutor", card: { id: "4D", rank: "4", suit: "D", label: "4D" } },
-        { seat: "Right", card: { id: "7S", rank: "7", suit: "S", label: "7S" } }
-      ],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "void: overtrump" },
-      playedExplanations: {
-        "9S": "9S is good. It overtrumps Right and is enough to win.",
-        KS: "KS wins, but 9S already did the job.",
-        "5H": "5H is legal, but it lets Right's spade win."
-      },
-      cardOutcomes: {
-        "9S": "good",
-        KS: "risky",
-        "5H": "risky"
-      },
-      cardReasons: {
-        "9S": "won_clean_trick",
-        KS: "won_clean_trick",
-        "5H": "void_discard"
-      }
-    }
-  };
-  const spadesBidAceDrillStep: DrillStep = {
-    scenarioId: "spades-bid-count-ace",
-    contract: "Spades",
-    title: "Bid books",
-    trick: {
-      title: "Count a likely winner",
-      beforeResult: "Before bidding, identify the card that most clearly belongs in your book estimate.",
-      afterResult: "Aces are the first cards to count when estimating a Spades bid.",
-      emptyExplanation: "Choose the card you should count most confidently as a book.",
-      legalCardIds: ["AS", "7D", "4C"],
-      hand: [
-        { id: "AS", rank: "A", suit: "S", label: "AS" },
-        { id: "7D", rank: "7", suit: "D", label: "7D" },
-        { id: "4C", rank: "4", suit: "C", label: "4C" }
-      ],
-      tableBeforeChoice: [],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "estimate bid" },
-      playedExplanations: {
-        AS: "AS is good. A high spade is a strong likely book.",
-        "7D": "7D is not a card you should count as a likely book.",
-        "4C": "4C is useful as a low exit, not as a bid winner."
-      },
-      cardOutcomes: {
-        AS: "good",
-        "7D": "risky",
-        "4C": "risky"
-      },
-      cardReasons: {
-        AS: "won_clean_trick",
-        "7D": "off_suit",
-        "4C": "off_suit"
-      }
-    }
-  };
-  const spadesBidProtectedKingDrillStep: DrillStep = {
-    scenarioId: "spades-bid-protected-king",
-    contract: "Spades",
-    title: "Bid books",
-    trick: {
-      title: "Prefer protected strength",
-      beforeResult: "Before bidding, compare the kings. One has small cards behind it; one is lonely.",
-      afterResult: "A protected king is safer to count than a singleton king.",
-      emptyExplanation: "Choose the card that deserves more credit in the bid estimate.",
-      legalCardIds: ["KH", "KC", "5H"],
-      hand: [
-        { id: "KH", rank: "K", suit: "H", label: "KH" },
-        { id: "5H", rank: "5", suit: "H", label: "5H" },
-        { id: "KC", rank: "K", suit: "C", label: "KC" }
-      ],
-      tableBeforeChoice: [],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "estimate bid" },
-      playedExplanations: {
-        KH: "KH is good. The small heart means this king is protected by suit length.",
-        KC: "KC is a king, but as a lonely club it is easier to lose or be forced out.",
-        "5H": "5H helps protect KH, but the king is the card you count."
-      },
-      cardOutcomes: {
-        KH: "good",
-        KC: "risky",
-        "5H": "risky"
-      },
-      cardReasons: {
-        KH: "won_clean_trick",
-        KC: "off_suit",
-        "5H": "off_suit"
-      }
-    }
-  };
-  const spadesBidNilDrillStep: DrillStep = {
-    scenarioId: "spades-bid-nil-danger",
-    contract: "Spades",
-    title: "Bid books",
-    trick: {
-      title: "Do not call nil with a clear winner",
-      beforeResult: "You are checking whether nil is realistic. One card makes nil dangerous.",
-      afterResult: "Nil means you must win zero tricks, so obvious winners argue against nil.",
-      emptyExplanation: "Choose the card that makes a nil bid unsafe.",
-      legalCardIds: ["QS", "3C", "6D"],
-      hand: [
-        { id: "QS", rank: "Q", suit: "S", label: "QS" },
-        { id: "3C", rank: "3", suit: "C", label: "3C" },
-        { id: "6D", rank: "6", suit: "D", label: "6D" }
-      ],
-      tableBeforeChoice: [],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "nil check" },
-      playedExplanations: {
-        QS: "QS is good. A high spade can be hard to duck, so nil is risky.",
-        "3C": "3C is the kind of low card that helps a nil plan.",
-        "6D": "6D is not the main nil danger here."
-      },
-      cardOutcomes: {
-        QS: "good",
-        "3C": "risky",
-        "6D": "risky"
-      },
-      cardReasons: {
-        QS: "won_clean_trick",
-        "3C": "off_suit",
-        "6D": "off_suit"
-      }
-    }
-  };
-  const spadesBagsDuckDrillStep: DrillStep = {
-    scenarioId: "spades-bags-duck-after-bid",
-    contract: "Spades",
-    title: "Avoid bags",
-    trick: {
-      title: "Duck after making the bid",
-      beforeResult: "Your side bid five and already has five books. Clubs were led, and Right is winning.",
-      afterResult: "After making the bid, another unnecessary book becomes a bag.",
-      emptyExplanation: "Follow clubs without creating an extra bag if you can.",
-      legalCardIds: ["4C", "AC"],
-      hand: [
-        { id: "4C", rank: "4", suit: "C", label: "4C" },
-        { id: "AC", rank: "A", suit: "C", label: "AC" },
-        { id: "8S", rank: "8", suit: "S", label: "8S" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Left", card: { id: "9C", rank: "9", suit: "C", label: "9C" } },
-        { seat: "Tutor", card: { id: "2C", rank: "2", suit: "C", label: "2C" } },
-        { seat: "Right", card: { id: "KC", rank: "K", suit: "C", label: "KC" } }
-      ],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "avoid bag" },
-      playedExplanations: {
-        "4C": "4C is good. You follow suit and let Right keep the trick.",
-        AC: "AC wins an extra book after your side has made the bid. That is a bag.",
-        "8S": "8S is illegal while you still have clubs."
-      },
-      cardOutcomes: {
-        "4C": "good",
-        AC: "risky"
-      },
-      cardReasons: {
-        "4C": "followed_suit",
-        AC: "won_clean_trick"
-      }
-    }
-  };
-  const spadesBagsDiscardDrillStep: DrillStep = {
-    scenarioId: "spades-bags-discard",
-    contract: "Spades",
-    title: "Avoid bags",
-    trick: {
-      title: "Throw away instead of trumping",
-      beforeResult: "Your side has made its bid. You are void in diamonds, and Left is winning.",
-      afterResult: "When the contract is safe, discarding can avoid another bag.",
-      emptyExplanation: "You are void in diamonds. Avoid taking an extra book.",
-      legalCardIds: ["6S", "JS", "4H"],
-      hand: [
-        { id: "6S", rank: "6", suit: "S", label: "6S" },
-        { id: "JS", rank: "J", suit: "S", label: "JS" },
-        { id: "4H", rank: "4", suit: "H", label: "4H" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Left", card: { id: "AD", rank: "A", suit: "D", label: "AD" } },
-        { seat: "Tutor", card: { id: "3D", rank: "3", suit: "D", label: "3D" } },
-        { seat: "Right", card: { id: "9D", rank: "9", suit: "D", label: "9D" } }
-      ],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "void: avoid bag" },
-      playedExplanations: {
-        "6S": "6S wins an extra book your side does not need.",
-        JS: "JS wins the same unnecessary bag and spends a stronger spade.",
-        "4H": "4H is good. You discard and avoid taking another book."
-      },
-      cardOutcomes: {
-        "6S": "risky",
-        JS: "risky",
-        "4H": "good"
-      },
-      cardReasons: {
-        "6S": "won_clean_trick",
-        JS: "won_clean_trick",
-        "4H": "void_discard"
-      }
-    }
-  };
-  const spadesBagsProtectNilDrillStep: DrillStep = {
-    scenarioId: "spades-bags-protect-nil",
-    contract: "Spades",
-    title: "Avoid bags",
-    trick: {
-      title: "Bag pressure versus nil protection",
-      beforeResult: "Barbu bid nil and is currently winning with 9H. You can overtake in hearts.",
-      afterResult: "Sometimes you accept a possible extra book to protect partner's nil bonus.",
-      emptyExplanation: "Hearts were led. Protect Barbu's nil if you can.",
-      legalCardIds: ["KH", "4H"],
-      hand: [
-        { id: "KH", rank: "K", suit: "H", label: "KH" },
-        { id: "4H", rank: "4", suit: "H", label: "4H" },
-        { id: "7S", rank: "7", suit: "S", label: "7S" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Left", card: { id: "6H", rank: "6", suit: "H", label: "6H" } },
-        { seat: "Tutor", card: { id: "9H", rank: "9", suit: "H", label: "9H" } },
-        { seat: "Right", card: { id: "8H", rank: "8", suit: "H", label: "8H" } }
-      ],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "protect nil" },
-      playedExplanations: {
-        KH: "KH is good. You take the trick away from Barbu and protect the nil.",
-        "4H": "4H avoids a possible bag, but Barbu would win a trick and miss nil.",
-        "7S": "7S is illegal while you still have hearts."
-      },
-      cardOutcomes: {
-        KH: "good",
-        "4H": "penalty"
-      },
-      cardReasons: {
-        KH: "won_clean_trick",
-        "4H": "followed_suit"
-      }
-    }
-  };
-  const spadesFollowSuitDrillPool = [spadesFollowSuitDrillStep, spadesFollowSuitDuckDrillStep, spadesFollowSuitCoverDrillStep];
-  const spadesTrumpOrDiscardDrillPool = [spadesTrumpCutDrillStep, spadesTrumpPreserveDrillStep, spadesTrumpOvertrumpDrillStep];
-  const spadesBidBooksDrillPool = [spadesBidAceDrillStep, spadesBidProtectedKingDrillStep, spadesBidNilDrillStep];
-  const spadesAvoidBagsDrillPool = [spadesBagsDuckDrillStep, spadesBagsDiscardDrillStep, spadesBagsProtectNilDrillStep];
+
   const catalogTableCards: Card[] = [
     { id: "catalog-queen-spades", rank: "Q", suit: "S", label: "QS" },
     { id: "catalog-king-hearts", rank: "K", suit: "H", label: "KH" },
@@ -1283,11 +797,13 @@
   let activeGameTable: ActiveGameTable = "barbu";
   let completedPathSteps: Record<string, boolean> = loadCourseProgress();
   let playBarbuHistory: PlayBarbuAttempt[] = loadPlayBarbuHistory();
-  const defaultSpadesBidState: SpadesBidState = { You: 4, Tutor: 3, Left: 3, Right: 3 };
+
   let savedPlayBarbuRun: SavedPlayBarbuRun | null = loadSavedPlayBarbuRun();
   let savedHeartsRun: SavedHeartsRun | null = heartsSaveStore.load();
   let savedWhistRun: SavedWhistRun | null = whistSaveStore.load();
-  let savedSpadesRun: SavedSpadesRun | null = loadSavedSpadesRun();
+  let savedSpadesRun: SavedSpadesRun | null = spadesSaveStore.load();
+  let spadesSession: SpadesSession | null = null;
+  let spadesDealPending = false;
   let savedBridgeRun: SavedBridgeRun | null = loadSavedBridgeRun();
   let heartsSession: HeartsSession | null = null;
   let heartsDealPending = false;
@@ -1587,175 +1103,13 @@
     return `${bridgeSeatLabel(openingLead.seat)} led ${formatCardLabel(openingLead.card)}.`;
   }
 
-  function defaultSpadesBids(handNumber: number): SpadesBidState {
-    return { ...defaultSpadesBidState };
-  }
-
-  function cardsBySuit(cards: Card[]) {
-    return cards.reduce(
-      (groups, card) => {
-        groups[card.suit] = [...groups[card.suit], card];
-        return groups;
-      },
-      { C: [], D: [], H: [], S: [] } as Record<Suit, Card[]>
-    );
-  }
-
-  function shouldSuggestSpadesNil(cards: Card[]) {
-    const suitGroups = cardsBySuit(cards);
-    const spades = suitGroups.S;
-    const hasAce = cards.some((card) => card.rank === "A");
-    const hasHighSpade = spades.some((card) => rankValue(card.rank) >= rankValue("Q"));
-    const hasProtectedKing = cards.some(
-      (card) => card.suit !== "S" && card.rank === "K" && suitGroups[card.suit].length >= 2
-    );
-    const highCardCount = cards.filter((card) => rankValue(card.rank) >= rankValue("J")).length;
-
-    return !hasAce && !hasHighSpade && !hasProtectedKing && highCardCount <= 2 && spades.length <= 3;
-  }
-
-  function suggestedSpadesBidForCards(cards: Card[]) {
-    if (shouldSuggestSpadesNil(cards)) {
-      return 0;
-    }
-
-    const suitGroups = cardsBySuit(cards);
-    const nonSpadeAces = cards.filter((card) => card.suit !== "S" && card.rank === "A").length;
-    const protectedNonSpadeKings = cards.filter(
-      (card) => card.suit !== "S" && card.rank === "K" && suitGroups[card.suit].length >= 2
-    ).length;
-    const highSpades = suitGroups.S.filter((card) => rankValue(card.rank) >= rankValue("Q")).length;
-    const longSpades = Math.max(0, suitGroups.S.length - 3);
-    const estimate = nonSpadeAces + protectedNonSpadeKings + highSpades + longSpades;
-
-    return spadesClampBid(Math.max(1, estimate));
-  }
-
-  function suggestedSpadesBidsForHand(hand: FullHandState | null): SpadesBidState {
-    if (!hand) {
-      return defaultSpadesBids(1);
-    }
-
-    return {
-      You: suggestedSpadesBidForCards(hand.hands[playerIndexBySeat.You] ?? []),
-      Tutor: suggestedSpadesBidForCards(hand.hands[playerIndexBySeat.Tutor] ?? []),
-      Left: suggestedSpadesBidForCards(hand.hands[playerIndexBySeat.Left] ?? []),
-      Right: suggestedSpadesBidForCards(hand.hands[playerIndexBySeat.Right] ?? [])
-    };
-  }
-
-  function spadesSideBid(bids: SpadesBidState, seats: Seat[]) {
-    return seats.reduce((total, seat) => total + (bids[seat] > 0 ? bids[seat] : 0), 0);
-  }
-
-  function spadesSideTricks(tricks: Record<Seat, number>, seats: Seat[]) {
-    return seats.reduce((total, seat) => total + tricks[seat], 0);
-  }
-
-  function spadesNilResultsForSide(tricks: Record<Seat, number>, bids: SpadesBidState, seats: Seat[]) {
-    return seats
-      .filter((seat) => bids[seat] === 0)
-      .map((seat) => {
-        const seatTricks = tricks[seat];
-        return {
-          seat,
-          bid: bids[seat],
-          tricks: seatTricks,
-          score: seatTricks === 0 ? 100 : -100
-        };
-      });
-  }
-
-  function spadesScoreForSide(
-    tricks: Record<Seat, number>,
-    bids: SpadesBidState,
-    seats: Seat[],
-    currentBags: number
-  ) {
-    const bid = spadesSideBid(bids, seats);
-    const sideTricks = spadesSideTricks(tricks, seats);
-    const nilResults = spadesNilResultsForSide(tricks, bids, seats);
-    const nilScore = nilResults.reduce((total, result) => total + result.score, 0);
-
-    if (sideTricks < bid) {
-      return { score: -10 * bid + nilScore, bags: 0, bagPenalty: 0, nilResults };
-    }
-
-    const handBags = Math.max(0, sideTricks - bid);
-    const totalBags = currentBags + handBags;
-    const bagPenalty = Math.floor(totalBags / 10) * 100;
-    const remainingBags = totalBags % 10;
-
-    return {
-      score: bid * 10 + handBags + nilScore - bagPenalty,
-      bags: remainingBags - currentBags,
-      bagPenalty,
-      nilResults
-    };
-  }
-
-  function spadesHandResultFor(hand: FullHandState, handNumber = spadesHandResults.length + 1, bids = spadesBids, bags = spadesBagScores): SpadesHandResult {
-    const partnershipTricks = whistPartnershipTrickCounts(hand.completedTricks);
-    const seatTricks = seatTricksWonForTricks(hand.completedTricks);
-    const playerSide = spadesScoreForSide(seatTricks, bids, spadesPlayerSideSeats, bags.playerSide);
-    const opponentSide = spadesScoreForSide(seatTricks, bids, spadesOpponentSideSeats, bags.opponentSide);
-
-    return {
-      handNumber,
-      playerSideBid: spadesSideBid(bids, spadesPlayerSideSeats),
-      opponentSideBid: spadesSideBid(bids, spadesOpponentSideSeats),
-      playerSideTricks: partnershipTricks.playerSide,
-      opponentSideTricks: partnershipTricks.opponentSide,
-      playerSideScore: playerSide.score,
-      opponentSideScore: opponentSide.score,
-      playerSideBags: playerSide.bags,
-      opponentSideBags: opponentSide.bags,
-      playerSideBagPenalty: playerSide.bagPenalty,
-      opponentSideBagPenalty: opponentSide.bagPenalty,
-      nilResults: [...playerSide.nilResults, ...opponentSide.nilResults]
-    };
-  }
-
-  function addSpadesMatchResult(
-    scores: SpadesScoreState,
-    bags: SpadesScoreState,
-    result: SpadesHandResult
-  ) {
-    return {
-      scores: {
-        playerSide: scores.playerSide + result.playerSideScore,
-        opponentSide: scores.opponentSide + result.opponentSideScore
-      },
-      bags: {
-        playerSide: bags.playerSide + result.playerSideBags,
-        opponentSide: bags.opponentSide + result.opponentSideBags
-      }
-    };
-  }
-
   function spadesBidLabel(bids = spadesBids) {
     return `${spadesSideBid(bids, spadesPlayerSideSeats)}-${spadesSideBid(bids, spadesOpponentSideSeats)}`;
   }
 
-  function spadesHandIdWithBids(id: string, bids = spadesBids) {
-    const cleanId = id.replace(/-bids-[0-9.]+(?=-S$)/, "");
-    const playerIndexBids = [bids.Tutor, bids.Right, bids.You, bids.Left].map(spadesClampBid).join(".");
-
-    return cleanId.endsWith("-S")
-      ? cleanId.replace(/-S$/, `-bids-${playerIndexBids}-S`)
-      : `${cleanId}-bids-${playerIndexBids}-S`;
-  }
-
-  function spadesClampBid(value: number) {
-    const asNumber = Number.isFinite(value) ? value : 0;
-    return Math.max(0, Math.min(13, asNumber));
-  }
-
   function setSpadesSeatBid(seat: Seat, value: number) {
-    spadesBids = {
-      ...spadesBids,
-      [seat]: spadesClampBid(value)
-    };
+    if (seat !== "You" || !isSpadesSessionHand() || !spadesSession) return;
+    setSpadesSession(transitionSpadesSession(spadesSession, { type: "set-bid", bid: value }));
     persistSavedSpadesRun();
   }
 
@@ -1823,11 +1177,9 @@
     return values[rank] ?? 0;
   }
 
-
   function bridgeHandShapeLabel(cards: Card[]) {
     return displaySuitSequence.map((suit) => bridgeSuitCount(cards, suit)).join("-");
   }
-
 
   function bridgeBidById(id: string) {
     return bridgeBidOptions.find((bid) => bid.id === id) ?? bridgeBidOptions[4];
@@ -3337,140 +2689,50 @@
     persistSavedWhistRun();
   }
 
-  function loadSavedSpadesRun(): SavedSpadesRun | null {
-    if (typeof localStorage === "undefined") {
-      return null;
-    }
-
-    try {
-      return normalizeSavedSpadesRun(JSON.parse(localStorage.getItem(savedSpadesRunStorageKey) ?? "null"));
-    } catch {
-      return null;
-    }
+  function isSpadesSessionHand() {
+    return activeGameTable === "spades" && whistFullHandSource === "play" && !fullHandCardCountingMode
+      && !fullHandRunActive && spadesSession !== null && fullHand === spadesSession.fullHand;
   }
 
-  function normalizeSavedSpadesRun(savedRun: unknown): SavedSpadesRun | null {
-    if (!savedRun || typeof savedRun !== "object") {
-      return null;
-    }
-
-    const candidate = savedRun as Partial<SavedSpadesRun>;
-    const savedFullHand = candidate.fullHand?.contract === "Spades" ? candidate.fullHand : null;
-
-    if (candidate.version !== 1 || !savedFullHand) {
-      return null;
-    }
-
-    return {
-      version: 1,
-      scores: normalizeSpadesScoreMap(candidate.scores),
-      bags: normalizeSpadesScoreMap(candidate.bags),
-      bids: normalizeSpadesBidState(candidate.bids),
-      results: Array.isArray(candidate.results) ? candidate.results.filter(isSpadesHandResult) : [],
-      fullHand: savedFullHand,
-      fullHandReviewTrickCount:
-        Number.isInteger(candidate.fullHandReviewTrickCount) && candidate.fullHandReviewTrickCount >= 0
-          ? candidate.fullHandReviewTrickCount
-          : 0,
-      usingBrowserFullHand: Boolean(candidate.usingBrowserFullHand),
-      playStarted: Boolean(candidate.playStarted),
-      openingPanel: candidate.openingPanel === "bid" ? "bid" : "table",
-      savedAt: typeof candidate.savedAt === "string" ? candidate.savedAt : new Date().toISOString()
-    };
+  function setSpadesSession(session: SpadesSession) {
+    spadesSession = session;
+    fullHand = session.fullHand;
+    fullHandReviewTrickCount = session.fullHandReviewTrickCount;
+    spadesMatchScores = session.scores;
+    spadesBagScores = session.bags;
+    spadesBids = session.bids;
+    spadesHandResults = session.results;
+    spadesPlayStarted = session.playStarted;
+    spadesOpeningPanel = session.openingPanel;
   }
 
-  function normalizeSpadesScoreMap(scores: unknown): SpadesScoreState {
-    if (!scores || typeof scores !== "object") {
-      return { playerSide: 0, opponentSide: 0 };
-    }
-
-    const candidate = scores as Partial<SpadesScoreState>;
-    return {
-      playerSide: Number.isFinite(candidate.playerSide) ? Number(candidate.playerSide) : 0,
-      opponentSide: Number.isFinite(candidate.opponentSide) ? Number(candidate.opponentSide) : 0
-    };
+  function openSpadesSession(session: SpadesSession) {
+    activeGameTable = "spades";
+    activeTableTabs.spades = "play";
+    whistFullHandSource = "play";
+    fullHandRunActive = false;
+    fullHandRunResults = [];
+    fullHandCardCountingMode = false;
+    dominoHand = null;
+    heartsPassingHand = null;
+    usingBrowserFullHand = true;
+    fullHandSelectedCardId = "";
+    dummySelectedCardId = "";
+    fullHandError = "";
+    lastFullHandTapCardId = "";
+    lastFullHandTapAt = 0;
+    setSpadesSession(session);
+    appView = "fullHand";
   }
 
-  function normalizeSpadesBidState(bids: unknown): SpadesBidState {
-    if (!bids || typeof bids !== "object") {
-      return { ...defaultSpadesBidState };
-    }
-
-    const candidate = bids as Partial<SpadesBidState>;
-    return {
-      You: spadesClampBid(candidate.You ?? defaultSpadesBidState.You),
-      Tutor: spadesClampBid(candidate.Tutor ?? defaultSpadesBidState.Tutor),
-      Left: spadesClampBid(candidate.Left ?? defaultSpadesBidState.Left),
-      Right: spadesClampBid(candidate.Right ?? defaultSpadesBidState.Right)
-    };
-  }
-
-  function isSpadesHandResult(result: unknown): result is SpadesHandResult {
-    if (!result || typeof result !== "object") {
-      return false;
-    }
-
-    const candidate = result as Partial<SpadesHandResult>;
-    return (
-      Number.isInteger(candidate.handNumber) &&
-      Number.isInteger(candidate.playerSideBid) &&
-      Number.isInteger(candidate.opponentSideBid) &&
-      Number.isInteger(candidate.playerSideTricks) &&
-      Number.isInteger(candidate.opponentSideTricks) &&
-      Number.isFinite(candidate.playerSideScore) &&
-      Number.isFinite(candidate.opponentSideScore) &&
-      Number.isInteger(candidate.playerSideBags) &&
-      Number.isInteger(candidate.opponentSideBags) &&
-      Number.isInteger(candidate.playerSideBagPenalty) &&
-      Number.isInteger(candidate.opponentSideBagPenalty)
-    );
-  }
 
   function persistSavedSpadesRun() {
-    const isSpadesFullHand = activeGameTable === "spades" && fullHand?.contract === "Spades" && !fullHandRunActive;
-
-    if (whistFullHandSource !== "play" || !isSpadesFullHand || !fullHand) {
-      return;
-    }
-
-    const currentResult = fullHand.status === "complete" ? spadesHandResultFor(fullHand) : null;
-    const visibleResult = currentResult ? addSpadesMatchResult(spadesMatchScores, spadesBagScores, currentResult) : null;
-    const matchIsComplete =
-      fullHand.status === "complete" &&
-      visibleResult !== null &&
-      spadesMatchComplete(visibleResult.scores);
-
-    if (matchIsComplete) {
-      clearSavedSpadesRun();
-      return;
-    }
-
-    const nextSavedRun: SavedSpadesRun = {
-      version: 1,
-      scores: spadesMatchScores,
-      bags: spadesBagScores,
-      bids: spadesBids,
-      results: spadesHandResults,
-      fullHand,
-      fullHandReviewTrickCount,
-      usingBrowserFullHand,
-      playStarted: spadesPlayStarted,
-      openingPanel: spadesOpeningPanel,
-      savedAt: new Date().toISOString()
-    };
-
-    savedSpadesRun = nextSavedRun;
-
-    if (typeof localStorage !== "undefined") {
-      localStorage.setItem(savedSpadesRunStorageKey, JSON.stringify(nextSavedRun));
-    }
-  }
-
-  function clearSavedSpadesRun() {
-    savedSpadesRun = null;
-
-    if (typeof localStorage !== "undefined") {
-      localStorage.removeItem(savedSpadesRunStorageKey);
+    if (!isSpadesSessionHand() || !spadesSession) return;
+    savedSpadesRun = saveSpadesSession(spadesSession, new Date().toISOString());
+    try {
+      spadesSaveStore.write(savedSpadesRun);
+    } catch {
+      fullHandError = "Progress could not be saved on this device.";
     }
   }
 
@@ -3488,34 +2750,9 @@
   }
 
   function continueSavedSpadesRun() {
-    const savedRun = savedSpadesRun ?? loadSavedSpadesRun();
-
-    if (!savedRun) {
-      return;
-    }
-
-    activeGameTable = "spades";
-    activeTableTabs.spades = "play";
-    whistFullHandSource = "play";
-    fullHandRunActive = false;
-    fullHandRunResults = [];
-    dominoHand = null;
-    heartsPassingHand = null;
-    spadesMatchScores = savedRun.scores;
-    spadesBagScores = savedRun.bags;
-    spadesBids = savedRun.bids;
-    spadesHandResults = savedRun.results;
-    spadesPlayStarted = savedRun.playStarted;
-    spadesOpeningPanel = savedRun.openingPanel;
-    fullHand = savedRun.fullHand;
-    fullHandReviewTrickCount = savedRun.fullHandReviewTrickCount;
-    usingBrowserFullHand = savedRun.usingBrowserFullHand || !hasTauriRuntime();
-    fullHandSelectedCardId = "";
-    fullHandError = "";
-    lastFullHandTapCardId = "";
-    lastFullHandTapAt = 0;
-    appView = "fullHand";
-    savedSpadesRun = savedRun;
+    const saved = savedSpadesRun ?? spadesSaveStore.load();
+    if (!saved) return;
+    openSpadesSession(restoreSpadesSession(saved));
     persistSavedSpadesRun();
   }
 
@@ -4165,7 +3402,6 @@
 
   const realisticWhistCheckpoints = [3, 7, 10];
   const whistMemoryConfig = { seedOffset: 51 };
-
 
   function emptyCountingHands(): Record<Seat, Card[]> {
     return {
@@ -5027,9 +4263,6 @@
   function startBrowserFullHand(contract: FullHandContract, seed: number, dealer?: number) {
     const engine = typescriptHandEngine(contract);
     if (engine) return engine.start({ seed, dealer });
-    if (contract === "Spades") {
-      return startBrowserSpadesHand(seed);
-    }
     if (contract === "Bridge") {
       return startBrowserBridgeHand(seed);
     }
@@ -5072,9 +4305,6 @@
   function playBrowserFullHand(state: FullHandState, cardId: string) {
     const engine = typescriptHandEngine(state.contract);
     if (engine) return engine.transition(state, { type: "play-card", cardId });
-    if (state.contract === "Spades") {
-      return playBrowserSpadesCard(state, cardId);
-    }
     if (state.contract === "Bridge") {
       return playBrowserBridgeCard(state, cardId);
     }
@@ -5105,6 +4335,7 @@
 
     fullHandCardCountingMode = options.cardCounting === true;
     if (contract === "Whist") whistSession = null;
+    if (contract === "Spades") spadesSession = null;
     if (contract === "Hearts") heartsSession = null;
     fullHandCardCountingAnswer = null;
     fullHandCardCountingChecked = false;
@@ -5297,6 +4528,8 @@
     if (usingBrowserFullHand || typescriptHandEngine(fullHand.contract)) {
       if (isHeartsSessionActive() && heartsSession) {
         setHeartsSession(transitionHeartsSession(heartsSession, { type: "play-card", cardId: targetId }));
+      } else if (isSpadesSessionHand() && spadesSession) {
+        setSpadesSession(transitionSpadesSession(spadesSession, { type: "play-card", cardId: targetId }));
       } else if (isWhistSessionHand() && whistSession) {
         setWhistSession(transitionWhistSession(whistSession, { type: "play-card", cardId: targetId }));
       } else {
@@ -5353,6 +4586,8 @@
 
     if (isHeartsSessionActive() && heartsSession) {
       setHeartsSession(transitionHeartsSession(heartsSession, { type: "next-trick" }));
+    } else if (isSpadesSessionHand() && spadesSession) {
+      setSpadesSession(transitionSpadesSession(spadesSession, { type: "next-trick" }));
     } else if (isWhistSessionHand() && whistSession) {
       setWhistSession(transitionWhistSession(whistSession, { type: "next-trick" }));
     } else {
@@ -5406,30 +4641,16 @@
   }
 
   function toggleSpadesOpeningPanel() {
-    if (!spadesOpeningDecisionActive) {
-      return;
-    }
-
-    spadesOpeningPanel = spadesOpeningPanel === "bid" ? "table" : "bid";
+    if (!isSpadesSessionHand() || !spadesSession) return;
+    setSpadesSession(transitionSpadesSession(spadesSession, { type: "toggle-bids" }));
     fullHandSelectedCardId = "";
     fullHandError = "";
     persistSavedSpadesRun();
   }
 
   function startSpadesOpeningPlay() {
-    if (!spadesOpeningDecisionActive || !spadesBidReady) {
-      return;
-    }
-
-    if (fullHand?.contract === "Spades") {
-      fullHand = {
-        ...fullHand,
-        id: spadesHandIdWithBids(fullHand.id)
-      };
-    }
-
-    spadesPlayStarted = true;
-    spadesOpeningPanel = "table";
+    if (!isSpadesSessionHand() || !spadesSession) return;
+    setSpadesSession(transitionSpadesSession(spadesSession, { type: "start-play" }));
     fullHandSelectedCardId = "";
     fullHandError = "";
     lastFullHandTapCardId = "";
@@ -5465,24 +4686,20 @@
   }
 
   async function startSpadesHand(options: { keepSession?: boolean } = {}) {
-    if (!spadesBidReady) {
-      return;
+    if (spadesDealPending) return;
+    spadesDealPending = true;
+    try {
+      const next = options.keepSession && spadesSession
+        ? transitionSpadesSession(spadesSession, { type: "next-hand", seed: usePracticeSeed() })
+        : createSpadesSession(usePracticeSeed());
+      openSpadesSession(next);
+      persistSavedSpadesRun();
+      await tick();
+    } catch (error) {
+      fullHandError = error instanceof Error ? error.message : "That hand could not be dealt.";
+    } finally {
+      spadesDealPending = false;
     }
-
-    activeGameTable = "spades";
-    activeTableTabs.spades = "play";
-    whistFullHandSource = "play";
-    spadesPlayStarted = false;
-    spadesOpeningPanel = "table";
-    if (!options.keepSession) {
-      spadesMatchScores = { playerSide: 0, opponentSide: 0 };
-      spadesBagScores = { playerSide: 0, opponentSide: 0 };
-      spadesHandResults = [];
-      clearSavedSpadesRun();
-    }
-    await startFullHand("Spades");
-    spadesBids = suggestedSpadesBidsForHand(fullHand);
-    persistSavedSpadesRun();
   }
 
   async function startBridgeHand(options: { keepSession?: boolean } = {}) {
@@ -5581,7 +4798,7 @@
     activePathStepId = pathStepId;
     spadesPlayStarted = true;
     spadesOpeningPanel = "table";
-    spadesBids = defaultSpadesBids(1);
+    spadesBids = { ...defaultSpadesBidState };
     spadesMatchScores = { playerSide: 0, opponentSide: 0 };
     spadesBagScores = { playerSide: 0, opponentSide: 0 };
     spadesHandResults = [];
@@ -6072,6 +5289,7 @@
   }
 
   function startNextFullHand() {
+    if (fullHandIsSpadesGame && spadesDealPending) return;
     if (fullHandIsWhistGame && whistDealPending) return;
     if (!fullHand) {
       return;
@@ -6127,13 +5345,7 @@
       }
 
       if (fullHandIsSpadesGame) {
-        if (currentSpadesHandResult) {
-          const updated = addSpadesMatchResult(spadesMatchScores, spadesBagScores, currentSpadesHandResult);
-          spadesHandResults = [...spadesHandResults, currentSpadesHandResult];
-          spadesMatchScores = updated.scores;
-          spadesBagScores = updated.bags;
-        }
-        startSpadesHand({ keepSession: true });
+        void startSpadesHand({ keepSession: true });
         return;
       }
 
@@ -6166,6 +5378,7 @@
   }
 
   function replayFullHand() {
+    if (fullHandIsSpadesGame && spadesDealPending) return;
     if (!fullHandReplayAllowed) return;
     if (fullHandIsWhistGame && whistDealPending) return;
     if (!fullHand) {
@@ -6179,6 +5392,11 @@
       return;
     }
 
+    if (isSpadesSessionHand() && spadesSession) {
+      openSpadesSession(transitionSpadesSession(spadesSession, { type: "replay" }));
+      persistSavedSpadesRun();
+      return;
+    }
     if (isWhistSessionHand() && whistSession) {
       openWhistSession(transitionWhistSession(whistSession, { type: "replay" }));
       persistSavedWhistRun();

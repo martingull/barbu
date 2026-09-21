@@ -1158,48 +1158,49 @@ test("Bridge compact play keeps table hands readable on short screens", async ({
   }
 });
 
-test("shared compact play stack fits Barbu, Whist, and Spades on constrained screens", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "galaxy-s9", "Viewport matrix for older phone and narrow browser sizes.");
+for (const gameName of ["Barbu", "Whist", "Spades"]) {
+  test(`shared compact play stack fits ${gameName} on constrained screens`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "galaxy-s9", "Viewport matrix for older phone and narrow browser sizes.");
 
-  const games: {
-    name: string;
-    handSelector: string;
-    start: () => Promise<void>;
-  }[] = [
-    {
-      name: "barbu",
-      handSelector: ".full-hand-cards",
-      start: async () => {
-        await page.getByRole("button", { name: /Barbu/ }).click();
-        await openBarbuTab(page, "Play");
-        await page.getByRole("button", { name: "Play Barbu" }).click();
-        await page.getByRole("button", { name: "Start hand" }).click({ force: true });
-        await expect(page.getByRole("heading", { name: "No Hearts hand" })).toBeVisible();
+    const games: {
+      name: string;
+      handSelector: string;
+      start: () => Promise<void>;
+    }[] = [
+      {
+        name: "barbu",
+        handSelector: ".full-hand-cards",
+        start: async () => {
+          await page.getByRole("button", { name: /Barbu/ }).click();
+          await openBarbuTab(page, "Play");
+          await page.getByRole("button", { name: "Play Barbu" }).click();
+          await page.getByRole("button", { name: "Start hand" }).click({ force: true });
+          await expect(page.getByRole("heading", { name: "No Hearts hand" })).toBeVisible();
+        }
+      },
+      {
+        name: "whist",
+        handSelector: ".full-hand-cards",
+        start: async () => {
+          await page.getByRole("button", { name: /Open Whist/ }).click();
+          await page.getByRole("tab", { name: "Play" }).click();
+          await page.getByRole("button", { name: "Play Whist" }).click();
+          await expect(page.getByRole("heading", { name: "Whist hand" })).toBeVisible();
+        }
+      },
+      {
+        name: "spades",
+        handSelector: ".full-hand-cards",
+        start: async () => {
+          await page.getByRole("button", { name: /Open Spades/ }).click();
+          await page.getByRole("tab", { name: "Play" }).click();
+          await page.getByRole("button", { name: "Play Spades" }).click();
+          await expect(page.getByRole("heading", { name: "Spades hand" })).toBeVisible();
+        }
       }
-    },
-    {
-      name: "whist",
-      handSelector: ".full-hand-cards",
-      start: async () => {
-        await page.getByRole("button", { name: /Open Whist/ }).click();
-        await page.getByRole("tab", { name: "Play" }).click();
-        await page.getByRole("button", { name: "Play Whist" }).click();
-        await expect(page.getByRole("heading", { name: "Whist hand" })).toBeVisible();
-      }
-    },
-    {
-      name: "spades",
-      handSelector: ".full-hand-cards",
-      start: async () => {
-        await page.getByRole("button", { name: /Open Spades/ }).click();
-        await page.getByRole("tab", { name: "Play" }).click();
-        await page.getByRole("button", { name: "Play Spades" }).click();
-        await expect(page.getByRole("heading", { name: "Spades hand" })).toBeVisible();
-      }
-    }
-  ];
+    ];
 
-  for (const game of games) {
+    const game = games.find(game => game.name === gameName.toLowerCase())!;
     for (const viewport of compactLayoutViewports) {
       await test.step(`${game.name}-${viewport.name}`, async () => {
         await page.setViewportSize({ width: viewport.width, height: viewport.height });
@@ -1214,8 +1215,9 @@ test("shared compact play stack fits Barbu, Whist, and Spades on constrained scr
         await expectHandCardsDoNotOverlap(page, game.handSelector);
       });
     }
-  }
-});
+  });
+}
+
 
 test("shared play keeps wrapped feedback below the board when the viewport changes", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "galaxy-s9", "Live resize and enlarged text regression.");

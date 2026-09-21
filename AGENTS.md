@@ -45,7 +45,7 @@ Keep learner-facing outcome labels simple: `good`, `risky`, `penalty`, and `ille
 
 ## Stack
 
-- TypeScript domain engine under `src/domain` for migrated game play (Hearts and Whist).
+- TypeScript domain engine under `src/domain` for migrated game play (Hearts, Whist and Spades).
 - `crates/barbu-core` for remaining native game logic, generated practice, and shared Rust primitives.
 - Tauri 2 app shell under `src-tauri`.
 - Svelte + TypeScript frontend under `src`.
@@ -61,19 +61,22 @@ their specific migration is verified; Tauri remains the native shell.
 
 ### TypeScript Engine Prototype
 
-On the `prototype/typescript-game-engine` branch, Whist and Hearts hand play are
-explicit exceptions to the Rust-first policy. Route both through
+On the `prototype/typescript-game-engine` branch, Whist, Hearts and Spades hand play are
+explicit exceptions to the Rust-first policy. Route them through
 `src/domain/handEngine.ts` on browser and native builds. Match progression belongs
-in `src/domain/whistSession.ts` and `src/domain/heartsSession.ts`, with save
+in `src/domain/whistSession.ts`, `src/domain/heartsSession.ts` and `src/domain/spadesSession.ts`, with save
 compatibility in their corresponding `src/persistence/` adapters. Reuse the
 engine factory, reviewed-hand transitions, save-store factory, and standard
 trick-hand validation. Hearts generated practice now uses `src/domain/heartsPractice.ts`
 and `content/hearts-practice.json` on both runtimes, sharing legality and points with
 full play. Its native generators and Svelte fallback pools are removed.
 Keep domain transitions free of UI, storage,
-and Tauri dependencies. Hearts and Whist native full-hand engines, policies,
+and Tauri dependencies. Hearts, Whist and Spades native full-hand engines, policies,
 settlement, and command routes have been removed. Keep the frozen native-save
 fixtures for compatibility tests, not a second production implementation.
+Spades uses one bidding heuristic in `src/domain/spadesBidding.ts`, explicit locked
+bids, and the existing twelve authored exercises in `src/spadesLessons.ts`.
+Keep opponents from playing opening cards before the player locks the bids.
 Do not migrate other games implicitly. See `docs/typescript-engine-prototype.md`
 for scope, compatibility checks, and remaining work. Run `task domain:test` after
 engine changes, in addition to the existing verification commands.

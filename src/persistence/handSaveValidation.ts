@@ -11,7 +11,7 @@ export const card = (value: unknown): value is Card => record(value) && typeof v
 const play = (value: unknown): value is TableCard => record(value) && seat(value.seat) && card(value.card);
 
 // Standard four-seat, 52-card trick hands only; passing requires additional phase validation.
-export function isSavedTrickHand(value: unknown, contract: "Hearts" | "Whist"): value is FullHandState {
+export function isSavedTrickHand(value: unknown, contract: "Hearts" | "Whist" | "Spades", bidding = false): value is FullHandState {
   if (!record(value) || value.contract !== contract || typeof value.id !== "string"
     || !natural(value.currentPlayerIndex) || value.currentPlayerIndex > 3
     || !["in_progress", "complete"].includes(String(value.status))
@@ -23,7 +23,7 @@ export function isSavedTrickHand(value: unknown, contract: "Hearts" | "Whist"): 
       && trick.cards.length === 4 && trick.cards.every(play)
       && new Set(trick.cards.map(item => item.seat)).size === 4
       && natural(trick.winnerIndex) && trick.winnerIndex < 4 && trick.winner === seats[trick.winnerIndex]
-      && trick.penalty === (contract === "Whist" ? 1 : trick.cards.reduce((sum, item) =>
+      && trick.penalty === (contract !== "Hearts" ? 1 : trick.cards.reduce((sum, item) =>
         sum + (item.card.suit === "H" ? 1 : item.card.id === "QS" ? 13 : 0), 0)))) return false;
   const played: TableCard[] = [...value.currentTrick, ...value.completedTricks.flatMap(trick => trick.cards)];
   const cards: Card[] = [...value.hands.flat(), ...played.map(item => item.card)];
@@ -32,7 +32,7 @@ export function isSavedTrickHand(value: unknown, contract: "Hearts" | "Whist"): 
   if (!value.hands.every((hand, index) => hand.length + played.filter(item => item.seat === seats[index]).length === 13)) return false;
   return value.status === "complete"
     ? value.completedTricks.length === 13 && value.currentTrick.length === 0
-    : value.completedTricks.length < 13 && value.currentPlayerIndex === 2 && value.hands[2].length > 0;
+    : value.completedTricks.length < 13 && (value.currentPlayerIndex === 2 || bidding && value.completedTricks.length === 0 && value.currentTrick.length === 0) && value.hands[2].length > 0;
 }
 
 export function normalizedReviewCount(value: unknown, hand: FullHandState) {

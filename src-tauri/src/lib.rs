@@ -818,12 +818,19 @@ mod tests {
                 "Whist",
                 include_str!("../../tests/fixtures/whist-native-save.json"),
             ),
+            (
+                "spades",
+                "Spades",
+                include_str!("../../tests/fixtures/spades-native-hand.json"),
+            ),
         ] {
             let error = start_hand(game.into(), contract.into(), 8).err().unwrap();
             assert!(error.contains("TypeScript engine"));
             let fixture: serde_json::Value = serde_json::from_str(fixture).unwrap();
             let saved = if game == "hearts" {
                 &fixture["cases"][0]["savedHand"]
+            } else if game == "spades" {
+                &fixture[0]["initialHand"]
             } else {
                 &fixture["savedHand"]
             };
@@ -849,7 +856,6 @@ mod tests {
             ("barbu", "No Last Two"),
             ("barbu", "No Tricks"),
             ("barbu", "Hearts Trumps"),
-            ("spades", "Spades"),
         ] {
             let mut state = start_hand(game.into(), contract.into(), 8).unwrap();
             for _ in 0..13 {

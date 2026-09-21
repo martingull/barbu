@@ -26,16 +26,18 @@ chosen rules, scoring, and table conventions.
 | Persistence | `src/persistence/whistSave.ts` | Validate and restore saves through an adapter; preserve compatibility or explicitly migrate it. |
 | Learning content | `content/`, `src/lessons/`, per-game lesson modules | Use structured content and the same rules as full play. |
 
-Whist and Hearts now use these TypeScript domain boundaries. They share the
+Whist, Hearts and Spades now use these TypeScript domain boundaries. They share the
 hand-engine factory and registry, reviewed-hand transitions, storage factory,
 standard trick-hand save validation, and seat-score primitives. Game-specific
 session transitions and settlement remain explicit. Other games still use
 their existing routes; this document does not silently authorize migrating them.
-The Hearts and Whist Rust full-play implementations are removed. Their legacy
+The Hearts, Whist and Spades Rust full-play implementations are removed. Their legacy
 native saves are frozen compatibility fixtures, not a reason to retain a second
 engine. Hearts practice uses `src/domain/heartsPractice.ts` with structured templates
 in `content/hearts-practice.json`. Its legality and points reuse full-play rules;
 frozen native outputs verify all 18 decisions and both passing patterns.
+Spades uses the same hand, review and save factories, with bidding and settlement
+in domain modules and its twelve authored decisions in `src/spadesLessons.ts`.
 The metadata registry remains separate from engine selection. These references
 do not imply that every game can be added using configuration alone.
 

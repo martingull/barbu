@@ -1,9 +1,9 @@
 use crate::cards::Card;
 use crate::hand::{
     play_king_of_hearts_card, play_no_hearts_card, play_no_last_two_card, play_no_queens_card,
-    play_no_tricks_card, play_positive_tricks_card, play_spades_card, start_king_of_hearts_hand,
+    play_no_tricks_card, play_positive_tricks_card, start_king_of_hearts_hand,
     start_no_hearts_hand, start_no_last_two_hand, start_no_queens_hand, start_no_tricks_hand,
-    start_positive_tricks_hand, start_spades_hand, TrickTakingHandState,
+    start_positive_tricks_hand, TrickTakingHandState,
 };
 
 pub trait Ruleset {
@@ -14,23 +14,6 @@ pub trait Ruleset {
         card: Card,
     ) -> Result<TrickTakingHandState, String>;
     fn score_type(&self) -> &'static str;
-}
-
-pub struct SpadesRuleset;
-impl Ruleset for SpadesRuleset {
-    fn start_hand(&self, seed: u64) -> TrickTakingHandState {
-        start_spades_hand(seed)
-    }
-    fn play_card(
-        &self,
-        state: TrickTakingHandState,
-        card: Card,
-    ) -> Result<TrickTakingHandState, String> {
-        play_spades_card(state, card)
-    }
-    fn score_type(&self) -> &'static str {
-        "trick"
-    }
 }
 
 pub struct NoHeartsRuleset;
@@ -138,8 +121,10 @@ impl Ruleset for HeartsTrumpsRuleset {
 // Migrated games must never silently fall back to a different native ruleset.
 pub fn get_ruleset(_game_id: &str, contract: &str) -> Result<Box<dyn Ruleset>, String> {
     match contract {
-        "Hearts" | "Whist" => Err(format!("{contract} hand play uses the TypeScript engine")),
-        "Spades" => Ok(Box::new(SpadesRuleset)),
+        "Hearts" | "Whist" | "Spades" => {
+            Err(format!("{contract} hand play uses the TypeScript engine"))
+        }
+
         "No Hearts" => Ok(Box::new(NoHeartsRuleset)),
         "No Queens" => Ok(Box::new(NoQueensRuleset)),
         "King of Hearts" => Ok(Box::new(KingOfHeartsRuleset)),

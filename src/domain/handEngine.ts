@@ -1,6 +1,7 @@
-import type { FullHandContract, FullHandState } from "../lessonTypes";
+import type { FullHandContract, FullHandState, Seat } from "../lessonTypes";
 import { applyBrowserHeartsPass, playBrowserHeartsCard, replayHeartsHand, startBrowserHeartsHand, startBrowserHeartsPassingHand,
-  playBrowserWhistCard, replayWhistHand, startBrowserWhistHand } from "./trickTakingHand";
+  playBrowserWhistCard, replayWhistHand, startBrowserWhistHand,
+  playBrowserSpadesCard, replaySpadesHand, startBrowserSpadesHand, startSpadesBiddingHand, beginSpadesHand } from "./trickTakingHand";
 
 export type HandStartOptions = { seed: number; dealer?: number };
 export type HandAction = { type: "play-card"; cardId: string } | { type: "replay" };
@@ -33,7 +34,16 @@ export const heartsHandEngine = {
   }
 };
 
-const engines: Partial<Record<FullHandContract, HandEngine>> = { Whist: whistHandEngine, Hearts: heartsHandEngine };
+export const spadesHandEngine = {
+  ...createHandEngine("Spades", ({ seed }) => startBrowserSpadesHand(seed), playBrowserSpadesCard, replaySpadesHand),
+  startBidding: startSpadesBiddingHand,
+  begin(state: FullHandState, bids: Record<Seat, number>) {
+    if (state.contract !== "Spades") throw new Error("Expected a Spades hand");
+    return beginSpadesHand(state, bids);
+  }
+};
+
+const engines: Partial<Record<FullHandContract, HandEngine>> = { Whist: whistHandEngine, Hearts: heartsHandEngine, Spades: spadesHandEngine };
 
 // Only migrated games belong here; the remaining native/fallback routes stay intact.
 export function typescriptHandEngine(contract: FullHandContract): HandEngine | undefined {

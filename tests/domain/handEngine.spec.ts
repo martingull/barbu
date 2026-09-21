@@ -34,7 +34,7 @@ function gameplay(state: FullHandState) {
 test("only migrated games opt into the shared engine prototype", () => {
   expect(typescriptHandEngine("Whist")).toBe(whistHandEngine);
   expect(typescriptHandEngine("Hearts")).toBe(heartsHandEngine);
-  for (const contract of ["Spades", "Bridge", "Domino", "No Hearts"] as const) {
+  for (const contract of ["Bridge", "Domino", "No Hearts"] as const) {
     expect(typescriptHandEngine(contract)).toBeUndefined();
   }
 });

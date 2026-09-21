@@ -1,4 +1,5 @@
 import { legalCards, trickWinner } from "./trickTakingRules";
+import { originalSpadesCards, spadesBidFromId, suggestedSpadesBidForCards } from "./spadesBidding";
 import { heartsPoints, legalHeartsCards } from "./heartsRules";
 import { chooseWhistCard, whistPositionFromHand } from "../whistPolicy";
 import { bridgeBoardConditions } from "../bridgeBoard";
@@ -92,7 +93,7 @@ export function startBrowserBridgeHand(seed: number, boardNumber = 1): FullHandS
   return { ...hand, bridgeBoardNumber: boardNumber, bridgeVulnerability: board.vulnerability };
 }
 
-function startBrowserWhistFamilyHand(contract: "Whist" | "Spades" | "Bridge", seed: number, fixedTrump?: Suit | null, selectedDealer?: number): FullHandState {
+function startBrowserWhistFamilyHand(contract: "Whist" | "Spades" | "Bridge", seed: number, fixedTrump?: Suit | null, selectedDealer?: number, deferPlay = false): FullHandState {
   const deck = shuffledDeck(seed);
   const dealer = selectedDealer ?? whistDealerForSeed(seed);
   const leader = contract === "Bridge" ? dealer : (dealer + 1) % 4;
@@ -127,7 +128,7 @@ function startBrowserWhistFamilyHand(contract: "Whist" | "Spades" | "Bridge", se
     bridgeVulnerability: contract === "Bridge" ? "None" : undefined
   });
 
-  return contract === "Bridge" ? initialState : advanceToPlayerTurn(initialState);
+  return contract === "Bridge" || deferPlay ? initialState : advanceToPlayerTurn(initialState);
 }
 
 export function applyBrowserBridgeAuction(
@@ -175,6 +176,24 @@ export function applyBrowserBridgeAuction(
 
 export function startBrowserSpadesHand(seed: number): FullHandState {
   return startBrowserWhistFamilyHand("Spades", seed, "S");
+}
+
+export function startSpadesBiddingHand(seed: number): FullHandState {
+  return startBrowserWhistFamilyHand("Spades", seed, "S", undefined, true);
+}
+
+export function beginSpadesHand(state: FullHandState, bids: Record<Seat, number>): FullHandState {
+  return advanceToPlayerTurn({ ...cloneState(state), spadesBids: { ...bids } });
+}
+
+export function replaySpadesHand(state: FullHandState): FullHandState {
+  const dealer = Number(state.id.match(/-dealer-([0-3])-/)?.[1]);
+  // Older hand IDs may omit the dealer; the first recorded play still identifies the opener.
+  const openingSeat = state.completedTricks[0]?.cards[0]?.seat ?? state.currentTrick[0]?.seat;
+  const leader = Number.isInteger(dealer) ? (dealer + 1) % 4
+    : openingSeat ? playerNames.indexOf(openingSeat) : state.currentPlayerIndex;
+  if (!Number.isInteger(leader) || leader < 0 || leader > 3) throw new Error("Invalid Spades opening leader");
+  return replayTrickTakingHand(state, leader);
 }
 
 export function startBrowserHeartsPassingHand(seed: number): FullHandState {
@@ -913,74 +932,8 @@ function spadesPlayContext(state: FullHandState) {
 }
 
 function spadesEstimatedBidForPlayer(state: FullHandState, playerIndex: number) {
-  const lockedBid = spadesBidFromId(state.id, playerIndex);
-  if (lockedBid !== undefined) {
-    return lockedBid;
-  }
-
-  const cards = spadesReconstructedHand(state, playerIndex);
-
-  if (shouldSuggestSpadesNil(cards)) {
-    return 0;
-  }
-
-  const suitGroups = cardsBySuit(cards);
-  const nonSpadeAces = cards.filter((card) => card.suit !== "S" && card.rank === "A").length;
-  const protectedNonSpadeKings = cards.filter(
-    (card) => card.suit !== "S" && card.rank === "K" && suitGroups[card.suit].length >= 2
-  ).length;
-  const highSpades = suitGroups.S.filter((card) => rankOrder[card.rank as Rank] >= rankOrder.Q).length;
-  const longSpades = Math.max(0, suitGroups.S.length - 3);
-
-  return Math.max(1, Math.min(13, nonSpadeAces + protectedNonSpadeKings + highSpades + longSpades));
-}
-
-function spadesBidFromId(id: string, playerIndex: number) {
-  const encoded = id.split("-bids-")[1]?.split("-")[0];
-  const bidText = encoded?.split(".")[playerIndex];
-  const bid = bidText === undefined ? Number.NaN : Number(bidText);
-
-  return Number.isFinite(bid) ? Math.max(0, Math.min(13, bid)) : undefined;
-}
-
-function shouldSuggestSpadesNil(cards: Card[]) {
-  const suitGroups = cardsBySuit(cards);
-  const spades = suitGroups.S;
-  const hasAce = cards.some((card) => card.rank === "A");
-  const hasHighSpade = spades.some((card) => rankOrder[card.rank as Rank] >= rankOrder.Q);
-  const hasProtectedKing = cards.some((card) => card.suit !== "S" && card.rank === "K" && suitGroups[card.suit].length >= 2);
-  const highCardCount = cards.filter((card) => rankOrder[card.rank as Rank] >= rankOrder.J).length;
-
-  return !hasAce && !hasHighSpade && !hasProtectedKing && highCardCount <= 2 && spades.length <= 3;
-}
-
-function spadesReconstructedHand(state: FullHandState, playerIndex: number) {
-  const cards = [...(state.hands[playerIndex] ?? [])];
-
-  cards.push(
-    ...state.currentTrick
-      .filter((played) => playerNames.indexOf(played.seat) === playerIndex)
-      .map((played) => played.card)
-  );
-  for (const trick of state.completedTricks) {
-    cards.push(
-      ...trick.cards
-        .filter((played) => playerNames.indexOf(played.seat) === playerIndex)
-        .map((played) => played.card)
-    );
-  }
-
-  return cards;
-}
-
-function cardsBySuit(cards: Card[]) {
-  return cards.reduce(
-    (groups, card) => {
-      groups[card.suit] = [...groups[card.suit], card];
-      return groups;
-    },
-    { C: [], D: [], H: [], S: [] } as Record<Suit, Card[]>
-  );
+  return state.spadesBids?.[playerNames[playerIndex]] ?? spadesBidFromId(state.id, playerIndex)
+    ?? suggestedSpadesBidForCards(originalSpadesCards(state, playerNames[playerIndex]));
 }
 
 function whistPartnerIsWinning(state: FullHandState) {

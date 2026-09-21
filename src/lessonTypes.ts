@@ -170,6 +170,7 @@ export type FullHandState = {
   status: HandStatus;
   prompt: string;
   trumpSuit?: Suit | null;
+  spadesBids?: Record<Seat, number>;
   whistDealer?: number;
   whistTurnedTrump?: Card;
   dummySeat?: Seat;
