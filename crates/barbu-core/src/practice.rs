@@ -16,13 +16,6 @@ pub struct PracticeScenario {
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PracticeContractKind {
-    Hearts,
-    HeartsFirstTrick,
-    HeartsAvoidHearts,
-    HeartsQueenDanger,
-    HeartsBreakLead,
-    HeartsMoonDefense,
-    HeartsScoreReading,
     NoHearts,
     NoQueens,
     KingOfHearts,
@@ -81,16 +74,6 @@ pub struct PracticeDrillSet {
     pub scenarios: Vec<PracticeScenario>,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct HeartsPassScenario {
-    pub id: String,
-    pub title: String,
-    pub prompt: String,
-    pub player_hand: Vec<Card>,
-    pub recommended_pass: Vec<Card>,
-    pub explanation: String,
-}
-
 impl PracticeScenario {
     pub fn legal_player_cards(&self) -> Vec<Card> {
         if self.contract_kind == PracticeContractKind::Domino {
@@ -102,28 +85,11 @@ impl PracticeScenario {
                 .collect();
         }
 
-        if self.contract_kind == PracticeContractKind::HeartsScoreReading {
-            return self.player_hand.clone();
-        }
-
-        if self.contract_kind == PracticeContractKind::HeartsFirstTrick {
-            return legal_hearts_first_trick_cards(self);
-        }
-
-        if self.contract_kind == PracticeContractKind::HeartsBreakLead {
-            return legal_hearts_break_leads(self);
-        }
-
         legal_cards(&self.player_hand, Some(self.led_suit))
     }
 
     pub fn completed_trick(&self, player_card: Card) -> Option<Vec<PlayedCard>> {
-        if matches!(
-            self.contract_kind,
-            PracticeContractKind::Domino
-                | PracticeContractKind::HeartsBreakLead
-                | PracticeContractKind::HeartsScoreReading
-        ) {
+        if self.contract_kind == PracticeContractKind::Domino {
             return None;
         }
 
@@ -186,14 +152,6 @@ impl PracticeScenario {
             };
         }
 
-        if self.contract_kind == PracticeContractKind::HeartsBreakLead {
-            return hearts_break_lead_outcome(self, player_card, legal_cards);
-        }
-
-        if self.contract_kind == PracticeContractKind::HeartsScoreReading {
-            return hearts_score_reading_outcome(self, player_card, legal_cards);
-        }
-
         let completed_trick = self
             .completed_trick(player_card)
             .expect("legal card should complete the trick");
@@ -204,7 +162,7 @@ impl PracticeScenario {
 
         PracticeOutcome {
             player_card,
-            outcome_kind: practice_outcome_kind(self, player_card, winner, penalty),
+            outcome_kind: practice_outcome_kind(self.contract_kind, winner, penalty),
             reason: practice_outcome_reason(
                 self.contract_kind,
                 self.led_suit,
@@ -236,8 +194,6 @@ impl PracticeScenario {
                         winner_name
                     )
                 }
-            } else if is_hearts_practice_kind(self.contract_kind) {
-                hearts_practice_explanation_for_scenario(self, player_card, winner, penalty)
             } else if self.contract_kind == PracticeContractKind::NoLastTwo
                 && penalty == 0
                 && winner != 2
@@ -301,56 +257,6 @@ pub struct PracticeOutcome {
     pub explanation: String,
 }
 
-impl HeartsPassScenario {
-    pub fn outcome_for(&self, selected_cards: &[Card]) -> HeartsPassOutcome {
-        let selected_unique = unique_cards(selected_cards);
-        let matched_cards = selected_unique
-            .iter()
-            .copied()
-            .filter(|card| self.recommended_pass.contains(card))
-            .collect::<Vec<_>>();
-        let selected_count = selected_unique.len();
-        let is_complete = selected_count == 3;
-        let is_exact = is_complete && matched_cards.len() == 3;
-        let explanation = if !is_complete {
-            "Choose exactly three cards before checking the pass.".to_string()
-        } else if is_exact {
-            format!(
-                "Strong pass. You moved {} out of your hand: the obvious danger cards leave before trick play.",
-                join_cards(&self.recommended_pass)
-            )
-        } else if !matched_cards.is_empty() {
-            format!(
-                "Good start: {} belong in the pass. Compare the rest with {}.",
-                join_cards(&matched_cards),
-                join_cards(&self.recommended_pass)
-            )
-        } else {
-            format!(
-                "Look for the biggest dangers first. This hand wants you to pass {}.",
-                join_cards(&self.recommended_pass)
-            )
-        };
-
-        HeartsPassOutcome {
-            selected_count,
-            matched_cards,
-            is_complete,
-            is_exact,
-            explanation,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct HeartsPassOutcome {
-    pub selected_count: usize,
-    pub matched_cards: Vec<Card>,
-    pub is_complete: bool,
-    pub is_exact: bool,
-    pub explanation: String,
-}
-
 pub fn generate_no_hearts_follow_suit(seed: u64) -> PracticeScenario {
     let mut rng = DeterministicRng::new(seed);
     let led_suits = [Suit::Clubs, Suit::Diamonds, Suit::Spades];
@@ -388,340 +294,6 @@ pub fn generate_no_hearts_follow_suit(seed: u64) -> PracticeScenario {
         table_before_choice: vec![PlayedCard::new(0, lead_card), PlayedCard::new(1, heart_card)],
         player_hand,
         table_after_choice: vec![PlayedCard::new(3, right_card)],
-    }
-}
-
-pub fn generate_hearts_pass_practice(seed: u64) -> HeartsPassScenario {
-    if seed % 2 == 1 {
-        let mut player_hand = vec![
-            Card::new(Rank::Two, Suit::Clubs),
-            Card::new(Rank::Three, Suit::Clubs),
-            Card::new(Rank::Four, Suit::Clubs),
-            Card::new(Rank::Five, Suit::Clubs),
-            Card::new(Rank::Six, Suit::Clubs),
-            Card::new(Rank::Seven, Suit::Clubs),
-            Card::new(Rank::Eight, Suit::Clubs),
-            Card::new(Rank::Queen, Suit::Spades),
-            Card::new(Rank::Ace, Suit::Hearts),
-            Card::new(Rank::King, Suit::Hearts),
-            Card::new(Rank::Two, Suit::Diamonds),
-            Card::new(Rank::Four, Suit::Diamonds),
-            Card::new(Rank::Nine, Suit::Spades),
-        ];
-        player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
-
-        return HeartsPassScenario {
-            id: format!("hearts-pass-long-clubs-{seed}"),
-            title: "Build a long suit".to_string(),
-            prompt:
-                "Choose three cards to pass while keeping the long club run together for later control."
-                    .to_string(),
-            player_hand,
-            recommended_pass: vec![
-                Card::new(Rank::Queen, Suit::Spades),
-                Card::new(Rank::Ace, Suit::Hearts),
-                Card::new(Rank::King, Suit::Hearts),
-            ],
-            explanation:
-                "This hand keeps 2C through 8C together. A long suit can become a planned exit route, so pass the danger cards without breaking the run."
-                    .to_string(),
-        };
-    }
-
-    let mut rng = DeterministicRng::new(seed);
-    let low_suit = choose_suit(&mut rng, &[Suit::Clubs, Suit::Diamonds]);
-    let side_suit = if low_suit == Suit::Clubs {
-        Suit::Diamonds
-    } else {
-        Suit::Clubs
-    };
-
-    let mut player_hand = vec![
-        Card::new(Rank::Queen, Suit::Spades),
-        Card::new(Rank::Ace, Suit::Hearts),
-        Card::new(Rank::King, Suit::Hearts),
-        Card::new(Rank::Ace, Suit::Spades),
-        Card::new(Rank::King, Suit::Spades),
-        Card::new(Rank::Two, Suit::Hearts),
-        Card::new(Rank::Three, Suit::Hearts),
-        Card::new(Rank::Two, low_suit),
-        Card::new(Rank::Four, low_suit),
-        Card::new(Rank::Six, low_suit),
-        Card::new(Rank::Three, side_suit),
-        Card::new(Rank::Five, side_suit),
-        Card::new(Rank::Seven, side_suit),
-    ];
-    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
-    let recommended_pass = recommend_hearts_pass_cards(&player_hand);
-
-    HeartsPassScenario {
-        id: format!("hearts-pass-{seed}"),
-        title: "Pass the danger cards".to_string(),
-        prompt:
-            "Choose three cards to pass. Start with Queen of Spades, high hearts, then dangerous high spades."
-                .to_string(),
-        player_hand,
-        recommended_pass,
-        explanation:
-            "Beginner pass rule: move the obvious danger cards before the hand starts. Later we can teach suit-shortening and table reads."
-                .to_string(),
-    }
-}
-
-pub fn generate_hearts_first_trick_practice(seed: u64) -> PracticeScenario {
-    match seed % 3 {
-        0 => generate_hearts_first_trick_follow_clubs(seed),
-        1 => generate_hearts_first_trick_duck_clubs(seed),
-        _ => generate_hearts_first_trick_void_safe_discard(seed),
-    }
-}
-
-pub fn generate_hearts_first_trick_follow_clubs(seed: u64) -> PracticeScenario {
-    let mut player_hand = vec![
-        Card::new(Rank::Three, Suit::Clubs),
-        Card::new(Rank::Queen, Suit::Spades),
-        Card::new(Rank::Five, Suit::Hearts),
-    ];
-    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
-
-    return PracticeScenario {
-            id: format!("hearts-first-trick-follow-clubs-{seed}"),
-            title: "First trick".to_string(),
-            contract: "Hearts".to_string(),
-            contract_kind: PracticeContractKind::HeartsFirstTrick,
-            led_suit: Suit::Clubs,
-            prompt:
-                "This is the first trick. Barbu led 2C, and you still have a club. Choose the legal play."
-                    .to_string(),
-            table_before_choice: vec![
-                PlayedCard::new(0, Card::new(Rank::Two, Suit::Clubs)),
-                PlayedCard::new(1, Card::new(Rank::Seven, Suit::Clubs)),
-            ],
-            player_hand,
-            table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Nine, Suit::Clubs))],
-        };
-}
-
-pub fn generate_hearts_first_trick_duck_clubs(seed: u64) -> PracticeScenario {
-    let mut player_hand = vec![
-        Card::new(Rank::Four, Suit::Clubs),
-        Card::new(Rank::Ace, Suit::Clubs),
-        Card::new(Rank::Six, Suit::Diamonds),
-    ];
-    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
-
-    PracticeScenario {
-        id: format!("hearts-first-trick-duck-clubs-{seed}"),
-        title: "First trick".to_string(),
-        contract: "Hearts".to_string(),
-        contract_kind: PracticeContractKind::HeartsFirstTrick,
-        led_suit: Suit::Clubs,
-        prompt:
-            "The opening trick is clean so far. Follow clubs without taking control if you can."
-                .to_string(),
-        table_before_choice: vec![
-            PlayedCard::new(0, Card::new(Rank::Two, Suit::Clubs)),
-            PlayedCard::new(1, Card::new(Rank::King, Suit::Clubs)),
-        ],
-        player_hand,
-        table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Nine, Suit::Clubs))],
-    }
-}
-
-pub fn generate_hearts_first_trick_void_safe_discard(seed: u64) -> PracticeScenario {
-    let mut player_hand = vec![
-        Card::new(Rank::Eight, Suit::Diamonds),
-        Card::new(Rank::Five, Suit::Hearts),
-        Card::new(Rank::Queen, Suit::Spades),
-    ];
-    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
-
-    PracticeScenario {
-        id: format!("hearts-first-trick-void-safe-discard-{seed}"),
-        title: "First trick".to_string(),
-        contract: "Hearts".to_string(),
-        contract_kind: PracticeContractKind::HeartsFirstTrick,
-        led_suit: Suit::Clubs,
-        prompt:
-            "Clubs were led on the first trick, but you have no clubs. Choose the safe discard before dumping points."
-                .to_string(),
-        table_before_choice: vec![
-            PlayedCard::new(0, Card::new(Rank::Two, Suit::Clubs)),
-            PlayedCard::new(1, Card::new(Rank::King, Suit::Clubs)),
-        ],
-        player_hand,
-        table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Four, Suit::Clubs))],
-    }
-}
-
-pub fn generate_hearts_avoid_hearts_practice(seed: u64) -> PracticeScenario {
-    match seed % 3 {
-        0 => generate_hearts_avoid_heart_duck(seed),
-        1 => generate_hearts_void_discard(seed),
-        _ => generate_hearts_follow_low_heart(seed),
-    }
-}
-
-pub fn generate_hearts_avoid_heart_duck(seed: u64) -> PracticeScenario {
-    let mut player_hand = vec![
-        Card::new(Rank::Two, Suit::Clubs),
-        Card::new(Rank::Ace, Suit::Clubs),
-        Card::new(Rank::Seven, Suit::Diamonds),
-    ];
-    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
-
-    PracticeScenario {
-        id: format!("hearts-avoid-heart-duck-{seed}"),
-        title: "Avoid hearts".to_string(),
-        contract: "Hearts".to_string(),
-        contract_kind: PracticeContractKind::HeartsAvoidHearts,
-        led_suit: Suit::Clubs,
-        prompt:
-            "Clubs were led. Right is winning with KC, and Left may add a heart. Follow clubs without taking the point."
-                .to_string(),
-        table_before_choice: vec![
-            PlayedCard::new(0, Card::new(Rank::Nine, Suit::Clubs)),
-            PlayedCard::new(1, Card::new(Rank::King, Suit::Clubs)),
-        ],
-        player_hand,
-        table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Four, Suit::Hearts))],
-    }
-}
-
-pub fn generate_hearts_void_discard(seed: u64) -> PracticeScenario {
-    let mut player_hand = vec![
-        Card::new(Rank::Four, Suit::Clubs),
-        Card::new(Rank::Queen, Suit::Hearts),
-        Card::new(Rank::Eight, Suit::Spades),
-    ];
-    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
-
-    PracticeScenario {
-        id: format!("hearts-void-discard-{seed}"),
-        title: "Avoid hearts".to_string(),
-        contract: "Hearts".to_string(),
-        contract_kind: PracticeContractKind::HeartsAvoidHearts,
-        led_suit: Suit::Diamonds,
-        prompt: "Diamonds were led. You are void, and Right is already winning. Choose a discard."
-            .to_string(),
-        table_before_choice: vec![
-            PlayedCard::new(0, Card::new(Rank::Nine, Suit::Diamonds)),
-            PlayedCard::new(1, Card::new(Rank::Ace, Suit::Diamonds)),
-        ],
-        player_hand,
-        table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Five, Suit::Diamonds))],
-    }
-}
-
-pub fn generate_hearts_follow_low_heart(seed: u64) -> PracticeScenario {
-    let mut player_hand = vec![
-        Card::new(Rank::Three, Suit::Hearts),
-        Card::new(Rank::Ace, Suit::Hearts),
-        Card::new(Rank::Six, Suit::Clubs),
-    ];
-    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
-
-    PracticeScenario {
-        id: format!("hearts-follow-low-heart-{seed}"),
-        title: "Avoid hearts".to_string(),
-        contract: "Hearts".to_string(),
-        contract_kind: PracticeContractKind::HeartsAvoidHearts,
-        led_suit: Suit::Hearts,
-        prompt:
-            "Hearts were led. Right is winning with QH, and you must follow hearts. Stay under the winner if you can."
-                .to_string(),
-        table_before_choice: vec![
-            PlayedCard::new(0, Card::new(Rank::Nine, Suit::Hearts)),
-            PlayedCard::new(1, Card::new(Rank::Queen, Suit::Hearts)),
-        ],
-        player_hand,
-        table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Five, Suit::Hearts))],
-    }
-}
-
-pub fn generate_hearts_queen_danger_practice(seed: u64) -> PracticeScenario {
-    match seed % 3 {
-        0 => generate_hearts_queen_duck(seed),
-        1 => generate_hearts_queen_safe_dump(seed),
-        _ => generate_hearts_queen_dangerous_dump(seed),
-    }
-}
-
-pub fn generate_hearts_queen_duck(seed: u64) -> PracticeScenario {
-    let mut player_hand = vec![
-        Card::new(Rank::Two, Suit::Spades),
-        Card::new(Rank::Ace, Suit::Spades),
-        Card::new(Rank::Four, Suit::Hearts),
-    ];
-    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
-
-    PracticeScenario {
-        id: format!("hearts-queen-duck-{seed}"),
-        title: "Queen of Spades danger".to_string(),
-        contract: "Hearts".to_string(),
-        contract_kind: PracticeContractKind::HeartsQueenDanger,
-        led_suit: Suit::Spades,
-        prompt:
-            "Spades were led. Right has put the queen of spades into the trick. Follow spades without winning it."
-                .to_string(),
-        table_before_choice: vec![
-            PlayedCard::new(0, Card::new(Rank::Ten, Suit::Spades)),
-            PlayedCard::new(1, Card::new(Rank::Queen, Suit::Spades)),
-        ],
-        player_hand,
-        table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Seven, Suit::Spades))],
-    }
-}
-
-pub fn generate_hearts_queen_safe_dump(seed: u64) -> PracticeScenario {
-    let mut player_hand = vec![
-        Card::new(Rank::Queen, Suit::Spades),
-        Card::new(Rank::Six, Suit::Hearts),
-        Card::new(Rank::Nine, Suit::Diamonds),
-    ];
-    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
-
-    PracticeScenario {
-        id: format!("hearts-queen-safe-dump-{seed}"),
-        title: "Queen of Spades danger".to_string(),
-        contract: "Hearts".to_string(),
-        contract_kind: PracticeContractKind::HeartsQueenDanger,
-        led_suit: Suit::Clubs,
-        prompt:
-            "Clubs were led. You are void, and Barbu is already winning. This is a chance to move the queen of spades."
-                .to_string(),
-        table_before_choice: vec![
-            PlayedCard::new(0, Card::new(Rank::Ace, Suit::Clubs)),
-            PlayedCard::new(1, Card::new(Rank::Eight, Suit::Clubs)),
-        ],
-        player_hand,
-        table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Three, Suit::Clubs))],
-    }
-}
-
-pub fn generate_hearts_queen_dangerous_dump(seed: u64) -> PracticeScenario {
-    let mut player_hand = vec![
-        Card::new(Rank::Three, Suit::Spades),
-        Card::new(Rank::Queen, Suit::Spades),
-        Card::new(Rank::Six, Suit::Hearts),
-    ];
-    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
-
-    PracticeScenario {
-        id: format!("hearts-queen-dangerous-dump-{seed}"),
-        title: "Queen of Spades danger".to_string(),
-        contract: "Hearts".to_string(),
-        contract_kind: PracticeContractKind::HeartsQueenDanger,
-        led_suit: Suit::Spades,
-        prompt:
-            "Spades were led. You hold the queen of spades, but no higher spade is protecting you."
-                .to_string(),
-        table_before_choice: vec![
-            PlayedCard::new(0, Card::new(Rank::Nine, Suit::Spades)),
-            PlayedCard::new(1, Card::new(Rank::Jack, Suit::Spades)),
-        ],
-        player_hand,
-        table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Four, Suit::Spades))],
     }
 }
 
@@ -1884,7 +1456,6 @@ pub fn generate_domino_avoid_gap(seed: u64) -> PracticeScenario {
 }
 
 const DAILY_DRILL_POOL_ROUNDS: u64 = 4;
-const HEARTS_DRILL_POOL_ROUNDS: u64 = 3;
 
 type PracticeScenarioGenerator = fn(u64) -> PracticeScenario;
 
@@ -1932,39 +1503,6 @@ const PRACTICE_SCENARIO_TEMPLATES: [PracticeScenarioTemplate; 7] = [
     },
 ];
 
-const HEARTS_PRACTICE_SCENARIO_TEMPLATES: [PracticeScenarioTemplate; 6] = [
-    PracticeScenarioTemplate {
-        id: "first-trick",
-        contract_kind: PracticeContractKind::HeartsFirstTrick,
-        generate: generate_hearts_first_trick_practice,
-    },
-    PracticeScenarioTemplate {
-        id: "avoid-hearts",
-        contract_kind: PracticeContractKind::HeartsAvoidHearts,
-        generate: generate_hearts_avoid_hearts_practice,
-    },
-    PracticeScenarioTemplate {
-        id: "queen-danger",
-        contract_kind: PracticeContractKind::HeartsQueenDanger,
-        generate: generate_hearts_queen_danger_practice,
-    },
-    PracticeScenarioTemplate {
-        id: "break-hearts",
-        contract_kind: PracticeContractKind::HeartsBreakLead,
-        generate: generate_hearts_break_hearts_practice,
-    },
-    PracticeScenarioTemplate {
-        id: "stop-moon",
-        contract_kind: PracticeContractKind::HeartsMoonDefense,
-        generate: generate_hearts_stop_moon_practice,
-    },
-    PracticeScenarioTemplate {
-        id: "score-hand",
-        contract_kind: PracticeContractKind::HeartsScoreReading,
-        generate: generate_hearts_score_hand_practice,
-    },
-];
-
 pub fn generate_daily_drill_set(seed: u64) -> PracticeDrillSet {
     let mut scenarios = Vec::new();
 
@@ -1987,285 +1525,6 @@ pub fn generate_daily_drill_set(seed: u64) -> PracticeDrillSet {
     }
 }
 
-pub fn generate_hearts_break_hearts_practice(seed: u64) -> PracticeScenario {
-    match seed % 3 {
-        0 => generate_hearts_break_hearts_blocked(seed),
-        1 => generate_hearts_break_hearts_only_hearts(seed),
-        _ => generate_hearts_break_hearts_already_broken(seed),
-    }
-}
-
-pub fn generate_hearts_break_hearts_blocked(seed: u64) -> PracticeScenario {
-    let mut player_hand = vec![
-        Card::new(Rank::Two, Suit::Hearts),
-        Card::new(Rank::Nine, Suit::Clubs),
-        Card::new(Rank::Queen, Suit::Diamonds),
-        Card::new(Rank::Ace, Suit::Spades),
-    ];
-    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
-
-    PracticeScenario {
-        id: format!("hearts-break-hearts-blocked-{seed}"),
-        title: "Break hearts".to_string(),
-        contract: "Hearts".to_string(),
-        contract_kind: PracticeContractKind::HeartsBreakLead,
-        led_suit: Suit::Hearts,
-        prompt:
-            "You are on lead. Hearts have not been broken, and you still have non-hearts. Choose a legal lead."
-                .to_string(),
-        table_before_choice: vec![],
-        player_hand,
-        table_after_choice: vec![],
-    }
-}
-
-pub fn generate_hearts_break_hearts_only_hearts(seed: u64) -> PracticeScenario {
-    let mut player_hand = vec![
-        Card::new(Rank::Two, Suit::Hearts),
-        Card::new(Rank::Eight, Suit::Hearts),
-        Card::new(Rank::King, Suit::Hearts),
-    ];
-    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
-
-    PracticeScenario {
-        id: format!("hearts-break-hearts-only-hearts-{seed}"),
-        title: "Break hearts".to_string(),
-        contract: "Hearts".to_string(),
-        contract_kind: PracticeContractKind::HeartsBreakLead,
-        led_suit: Suit::Hearts,
-        prompt:
-            "You are on lead. Hearts have not been broken, but every card in your hand is a heart."
-                .to_string(),
-        table_before_choice: vec![],
-        player_hand,
-        table_after_choice: vec![],
-    }
-}
-
-pub fn generate_hearts_break_hearts_already_broken(seed: u64) -> PracticeScenario {
-    let mut player_hand = vec![
-        Card::new(Rank::Three, Suit::Hearts),
-        Card::new(Rank::Jack, Suit::Hearts),
-        Card::new(Rank::Six, Suit::Diamonds),
-        Card::new(Rank::Ten, Suit::Spades),
-    ];
-    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
-
-    PracticeScenario {
-        id: format!("hearts-break-hearts-already-broken-{seed}"),
-        title: "Break hearts".to_string(),
-        contract: "Hearts".to_string(),
-        contract_kind: PracticeContractKind::HeartsBreakLead,
-        led_suit: Suit::Hearts,
-        prompt:
-            "Hearts have already been broken. You may lead a heart, but a low exit is usually safer."
-                .to_string(),
-        table_before_choice: vec![],
-        player_hand,
-        table_after_choice: vec![],
-    }
-}
-
-pub fn generate_hearts_stop_moon_practice(seed: u64) -> PracticeScenario {
-    match seed % 3 {
-        0 => generate_hearts_stop_moon_loaded_club(seed),
-        1 => generate_hearts_stop_moon_queen_spades(seed),
-        _ => generate_hearts_stop_moon_small_heart(seed),
-    }
-}
-
-pub fn generate_hearts_stop_moon_loaded_club(seed: u64) -> PracticeScenario {
-    let mut player_hand = vec![
-        Card::new(Rank::Ace, Suit::Clubs),
-        Card::new(Rank::Two, Suit::Clubs),
-        Card::new(Rank::Five, Suit::Diamonds),
-    ];
-    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
-
-    PracticeScenario {
-        id: format!("hearts-stop-moon-loaded-club-{seed}"),
-        title: "Stop the moon".to_string(),
-        contract: "Hearts".to_string(),
-        contract_kind: PracticeContractKind::HeartsMoonDefense,
-        led_suit: Suit::Clubs,
-        prompt:
-            "Barbu has every point so far and is winning a loaded club trick. Decide whether to take the point away."
-                .to_string(),
-        table_before_choice: vec![
-            PlayedCard::new(0, Card::new(Rank::King, Suit::Clubs)),
-            PlayedCard::new(1, Card::new(Rank::Four, Suit::Hearts)),
-        ],
-        player_hand,
-        table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Eight, Suit::Clubs))],
-    }
-}
-
-pub fn generate_hearts_stop_moon_queen_spades(seed: u64) -> PracticeScenario {
-    let mut player_hand = vec![
-        Card::new(Rank::King, Suit::Spades),
-        Card::new(Rank::Three, Suit::Spades),
-        Card::new(Rank::Four, Suit::Diamonds),
-    ];
-    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
-
-    PracticeScenario {
-        id: format!("hearts-stop-moon-queen-spades-{seed}"),
-        title: "Stop the moon".to_string(),
-        contract: "Hearts".to_string(),
-        contract_kind: PracticeContractKind::HeartsMoonDefense,
-        led_suit: Suit::Spades,
-        prompt:
-            "Left is threatening to collect every point. The queen of spades is in this trick, and you can take it away."
-                .to_string(),
-        table_before_choice: vec![
-            PlayedCard::new(0, Card::new(Rank::Queen, Suit::Spades)),
-            PlayedCard::new(1, Card::new(Rank::Jack, Suit::Spades)),
-        ],
-        player_hand,
-        table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Seven, Suit::Spades))],
-    }
-}
-
-pub fn generate_hearts_stop_moon_small_heart(seed: u64) -> PracticeScenario {
-    let mut player_hand = vec![
-        Card::new(Rank::King, Suit::Hearts),
-        Card::new(Rank::Two, Suit::Hearts),
-        Card::new(Rank::Eight, Suit::Diamonds),
-    ];
-    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
-
-    PracticeScenario {
-        id: format!("hearts-stop-moon-small-heart-{seed}"),
-        title: "Stop the moon".to_string(),
-        contract: "Hearts".to_string(),
-        contract_kind: PracticeContractKind::HeartsMoonDefense,
-        led_suit: Suit::Hearts,
-        prompt:
-            "Barbu has all the points so far and is about to win another heart trick. Decide whether to take one point now."
-                .to_string(),
-        table_before_choice: vec![
-            PlayedCard::new(0, Card::new(Rank::Queen, Suit::Hearts)),
-            PlayedCard::new(1, Card::new(Rank::Seven, Suit::Hearts)),
-        ],
-        player_hand,
-        table_after_choice: vec![PlayedCard::new(3, Card::new(Rank::Four, Suit::Hearts))],
-    }
-}
-
-pub fn generate_hearts_score_hand_practice(seed: u64) -> PracticeScenario {
-    match seed % 3 {
-        0 => generate_hearts_score_queen_spades(seed),
-        1 => generate_hearts_score_heart_point(seed),
-        _ => generate_hearts_score_clean_card(seed),
-    }
-}
-
-pub fn generate_hearts_score_queen_spades(seed: u64) -> PracticeScenario {
-    let mut player_hand = vec![
-        Card::new(Rank::Queen, Suit::Spades),
-        Card::new(Rank::Seven, Suit::Hearts),
-        Card::new(Rank::Nine, Suit::Diamonds),
-        Card::new(Rank::King, Suit::Clubs),
-    ];
-    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
-
-    PracticeScenario {
-        id: format!("hearts-score-hand-queen-spades-{seed}"),
-        title: "Score a hand".to_string(),
-        contract: "Hearts".to_string(),
-        contract_kind: PracticeContractKind::HeartsScoreReading,
-        led_suit: Suit::Spades,
-        prompt: "This trick has several cards. Choose the 13-point danger card.".to_string(),
-        table_before_choice: vec![
-            PlayedCard::new(0, Card::new(Rank::Ace, Suit::Hearts)),
-            PlayedCard::new(1, Card::new(Rank::Three, Suit::Hearts)),
-            PlayedCard::new(3, Card::new(Rank::Ten, Suit::Spades)),
-        ],
-        player_hand,
-        table_after_choice: vec![],
-    }
-}
-
-pub fn generate_hearts_score_heart_point(seed: u64) -> PracticeScenario {
-    let mut player_hand = vec![
-        Card::new(Rank::Seven, Suit::Hearts),
-        Card::new(Rank::Queen, Suit::Spades),
-        Card::new(Rank::King, Suit::Clubs),
-    ];
-    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
-
-    PracticeScenario {
-        id: format!("hearts-score-hand-heart-point-{seed}"),
-        title: "Score a hand".to_string(),
-        contract: "Hearts".to_string(),
-        contract_kind: PracticeContractKind::HeartsScoreReading,
-        led_suit: Suit::Hearts,
-        prompt: "There is no queen of spades in this trick. Choose the one-point penalty card."
-            .to_string(),
-        table_before_choice: vec![
-            PlayedCard::new(0, Card::new(Rank::Nine, Suit::Clubs)),
-            PlayedCard::new(1, Card::new(Rank::Ace, Suit::Diamonds)),
-            PlayedCard::new(3, Card::new(Rank::Four, Suit::Spades)),
-        ],
-        player_hand,
-        table_after_choice: vec![],
-    }
-}
-
-pub fn generate_hearts_score_clean_card(seed: u64) -> PracticeScenario {
-    let mut player_hand = vec![
-        Card::new(Rank::Five, Suit::Diamonds),
-        Card::new(Rank::Nine, Suit::Hearts),
-        Card::new(Rank::Queen, Suit::Spades),
-    ];
-    player_hand.sort_by_key(|card| (card.suit.sort_order(), card.rank as u8));
-
-    PracticeScenario {
-        id: format!("hearts-score-hand-clean-card-{seed}"),
-        title: "Score a hand".to_string(),
-        contract: "Hearts".to_string(),
-        contract_kind: PracticeContractKind::HeartsScoreReading,
-        led_suit: Suit::Diamonds,
-        prompt: "Choose the clean card: the card that adds no Hearts penalty points.".to_string(),
-        table_before_choice: vec![
-            PlayedCard::new(0, Card::new(Rank::Two, Suit::Clubs)),
-            PlayedCard::new(1, Card::new(Rank::Eight, Suit::Spades)),
-            PlayedCard::new(3, Card::new(Rank::King, Suit::Diamonds)),
-        ],
-        player_hand,
-        table_after_choice: vec![],
-    }
-}
-
-pub fn generate_hearts_practice_set(seed: u64, focus: Option<&str>) -> PracticeDrillSet {
-    let mut scenarios = Vec::new();
-
-    for round in 0..HEARTS_DRILL_POOL_ROUNDS {
-        for (template_index, template) in HEARTS_PRACTICE_SCENARIO_TEMPLATES.iter().enumerate() {
-            if focus.is_some_and(|focus_id| focus_id != template.id) {
-                continue;
-            }
-
-            let scenario = (template.generate)(drill_pool_seed(seed, template_index as u64, round));
-            debug_assert_eq!(
-                scenario.contract_kind, template.contract_kind,
-                "{}",
-                template.id
-            );
-            scenarios.push(scenario);
-        }
-    }
-
-    PracticeDrillSet {
-        id: format!(
-            "hearts-practice-{}-{seed}",
-            focus.filter(|value| !value.is_empty()).unwrap_or("mixed")
-        ),
-        title: "Hearts practice".to_string(),
-        scenarios,
-    }
-}
-
 fn drill_pool_seed(seed: u64, contract_index: u64, round: u64) -> u64 {
     seed.saturating_mul(97)
         .saturating_add(contract_index)
@@ -2278,40 +1537,6 @@ fn choose(rng: &mut DeterministicRng, values: &[Rank]) -> Rank {
 
 fn choose_suit(rng: &mut DeterministicRng, values: &[Suit]) -> Suit {
     values[rng.next_usize(values.len())]
-}
-
-fn recommend_hearts_pass_cards(hand: &[Card]) -> Vec<Card> {
-    let mut cards = hand.to_vec();
-    cards.sort_by_key(|card| (hearts_pass_priority(*card), card.rank as u8));
-    cards.into_iter().rev().take(3).collect()
-}
-
-fn hearts_pass_priority(card: Card) -> i32 {
-    if card.rank == Rank::Queen && card.suit == Suit::Spades {
-        return 100;
-    }
-    if card.suit == Suit::Hearts && card.rank >= Rank::Queen {
-        return 80 + card.rank as i32;
-    }
-    if card.suit == Suit::Spades && card.rank >= Rank::King {
-        return 60 + card.rank as i32;
-    }
-    if card.suit == Suit::Hearts {
-        return 20 + card.rank as i32;
-    }
-    0
-}
-
-fn unique_cards(cards: &[Card]) -> Vec<Card> {
-    let mut unique = Vec::new();
-
-    for card in cards {
-        if !unique.contains(card) {
-            unique.push(*card);
-        }
-    }
-
-    unique
 }
 
 fn first_non_matching_suit(led_suit: Suit, excluded_suit: Suit) -> Suit {
@@ -2335,23 +1560,6 @@ fn join_cards(cards: &[Card]) -> String {
 
 fn score_practice_trick(scenario: &PracticeScenario, played_cards: &[PlayedCard]) -> i32 {
     match scenario.contract_kind {
-        PracticeContractKind::Hearts
-        | PracticeContractKind::HeartsFirstTrick
-        | PracticeContractKind::HeartsAvoidHearts
-        | PracticeContractKind::HeartsQueenDanger
-        | PracticeContractKind::HeartsMoonDefense => played_cards
-            .iter()
-            .map(|played| {
-                if played.card == Card::new(Rank::Queen, Suit::Spades) {
-                    13
-                } else if played.card.suit == Suit::Hearts {
-                    1
-                } else {
-                    0
-                }
-            })
-            .sum(),
-        PracticeContractKind::HeartsBreakLead | PracticeContractKind::HeartsScoreReading => 0,
         PracticeContractKind::NoHearts => score_no_hearts_trick(played_cards),
         PracticeContractKind::NoQueens => played_cards
             .iter()
@@ -2386,13 +1594,6 @@ fn score_practice_trick(scenario: &PracticeScenario, played_cards: &[PlayedCard]
 
 fn penalty_label(contract_kind: PracticeContractKind, penalty: i32) -> String {
     match contract_kind {
-        PracticeContractKind::Hearts
-        | PracticeContractKind::HeartsFirstTrick
-        | PracticeContractKind::HeartsAvoidHearts
-        | PracticeContractKind::HeartsQueenDanger
-        | PracticeContractKind::HeartsBreakLead
-        | PracticeContractKind::HeartsMoonDefense
-        | PracticeContractKind::HeartsScoreReading => format!("{penalty} Hearts penalty"),
         PracticeContractKind::NoHearts => format!("{penalty} heart penalty points"),
         PracticeContractKind::NoQueens => format!("{penalty} queen penalty points"),
         PracticeContractKind::KingOfHearts => "20 king of hearts penalty points".to_string(),
@@ -2401,117 +1602,6 @@ fn penalty_label(contract_kind: PracticeContractKind, penalty: i32) -> String {
         PracticeContractKind::HeartsTrumps => format!("{penalty} trick points"),
         PracticeContractKind::Domino => "0 points".to_string(),
     }
-}
-
-fn hearts_practice_explanation(
-    player_card: Card,
-    led_suit: Suit,
-    winner: PlayerIndex,
-    penalty: i32,
-) -> String {
-    let winner_name = player_name(winner);
-
-    if !matches!(player_card.suit, Suit::Hearts | Suit::Spades) && penalty == 0 {
-        return format!(
-            "{player_card} follows {}. {winner_name} wins the trick, and no Hearts penalty was added.",
-            suit_name(led_suit)
-        );
-    }
-
-    if winner == 2 && penalty > 0 {
-        return format!(
-            "{player_card} follows {}. You win the trick and take {penalty} Hearts penalty points.",
-            suit_name(led_suit)
-        );
-    }
-
-    if player_card == Card::new(Rank::Queen, Suit::Spades) && winner != 2 {
-        return format!(
-            "Queen of Spades leaves your hand. {winner_name} wins the trick and takes the 13-point danger card."
-        );
-    }
-
-    if player_card.suit == Suit::Hearts && winner != 2 {
-        return format!(
-            "{player_card} moves a heart point away from you. {winner_name} wins the trick and takes {penalty} Hearts penalty points."
-        );
-    }
-
-    if winner == 2 {
-        return format!(
-            "{player_card} takes control. That is legal, but winning clean tricks in Hearts can put you on lead."
-        );
-    }
-
-    format!(
-        "{player_card} is legal. {winner_name} wins the trick and takes {penalty} Hearts penalty points."
-    )
-}
-
-fn hearts_practice_explanation_for_scenario(
-    scenario: &PracticeScenario,
-    player_card: Card,
-    winner: PlayerIndex,
-    penalty: i32,
-) -> String {
-    let winner_name = player_name(winner);
-
-    if scenario.contract_kind == PracticeContractKind::HeartsFirstTrick {
-        if penalty == 0 && winner != 2 {
-            return format!("{player_card} keeps the first trick clean and avoids taking control.");
-        }
-        return hearts_practice_explanation(player_card, scenario.led_suit, winner, penalty);
-    }
-
-    if scenario.contract_kind == PracticeContractKind::HeartsAvoidHearts
-        && player_card.suit != Suit::Hearts
-        && player_card.suit != scenario.led_suit
-        && scenario
-            .player_hand
-            .iter()
-            .any(|card| card.suit == Suit::Hearts)
-    {
-        return format!(
-            "{player_card} is legal, but you missed a chance to move a heart while {winner_name} controls the trick."
-        );
-    }
-
-    if scenario.contract_kind == PracticeContractKind::HeartsQueenDanger
-        && scenario
-            .player_hand
-            .contains(&Card::new(Rank::Queen, Suit::Spades))
-        && player_card != Card::new(Rank::Queen, Suit::Spades)
-        && player_card.suit != scenario.led_suit
-    {
-        return format!(
-            "{player_card} is legal, but the queen of spades stays in your hand. Use the void turn to move it when someone else is winning."
-        );
-    }
-
-    if scenario.contract_kind == PracticeContractKind::HeartsMoonDefense {
-        if winner == 2 && penalty > 0 {
-            return format!(
-                "{player_card} takes {penalty} points away from the moon threat. That is good defense even though points normally hurt."
-            );
-        }
-
-        return format!(
-            "{player_card} lets {winner_name} keep control of the loaded trick. That can feed a moon attempt."
-        );
-    }
-
-    hearts_practice_explanation(player_card, scenario.led_suit, winner, penalty)
-}
-
-fn is_hearts_practice_kind(contract_kind: PracticeContractKind) -> bool {
-    matches!(
-        contract_kind,
-        PracticeContractKind::Hearts
-            | PracticeContractKind::HeartsFirstTrick
-            | PracticeContractKind::HeartsAvoidHearts
-            | PracticeContractKind::HeartsQueenDanger
-            | PracticeContractKind::HeartsMoonDefense
-    )
 }
 
 fn practice_trick_winner(
@@ -2539,59 +1629,10 @@ fn hearts_trumps_practice_winner(played_cards: &[PlayedCard]) -> Option<PlayerIn
 }
 
 fn practice_outcome_kind(
-    scenario: &PracticeScenario,
-    player_card: Card,
+    contract_kind: PracticeContractKind,
     winner: PlayerIndex,
     penalty: i32,
 ) -> PracticeOutcomeKind {
-    let contract_kind = scenario.contract_kind;
-
-    if contract_kind == PracticeContractKind::HeartsMoonDefense {
-        return if winner == 2 && penalty > 0 {
-            PracticeOutcomeKind::Good
-        } else {
-            PracticeOutcomeKind::Risky
-        };
-    }
-
-    if contract_kind == PracticeContractKind::HeartsAvoidHearts {
-        if winner == 2 && penalty > 0 {
-            return PracticeOutcomeKind::Penalty;
-        }
-        if winner == 2 {
-            return PracticeOutcomeKind::Risky;
-        }
-        if player_card.suit == Suit::Hearts {
-            return PracticeOutcomeKind::Good;
-        }
-        if player_card.suit != scenario.led_suit
-            && scenario
-                .player_hand
-                .iter()
-                .any(|card| card.suit == Suit::Hearts)
-        {
-            return PracticeOutcomeKind::Risky;
-        }
-        return PracticeOutcomeKind::Good;
-    }
-
-    if contract_kind == PracticeContractKind::HeartsQueenDanger {
-        let queen = Card::new(Rank::Queen, Suit::Spades);
-        if winner == 2 && penalty > 0 {
-            return PracticeOutcomeKind::Penalty;
-        }
-        if player_card == queen && winner != 2 {
-            return PracticeOutcomeKind::Good;
-        }
-        if scenario.player_hand.contains(&queen)
-            && player_card != queen
-            && player_card.suit != scenario.led_suit
-        {
-            return PracticeOutcomeKind::Risky;
-        }
-        return PracticeOutcomeKind::Good;
-    }
-
     if contract_kind == PracticeContractKind::HeartsTrumps {
         return if winner == 2 {
             PracticeOutcomeKind::Good
@@ -2616,18 +1657,6 @@ fn practice_outcome_reason(
     winner: PlayerIndex,
     penalty: i32,
 ) -> PracticeOutcomeReason {
-    if contract_kind == PracticeContractKind::HeartsMoonDefense {
-        return if winner == 2 && penalty > 0 {
-            PracticeOutcomeReason::CapturedPenalty
-        } else if winner != 2 && penalty > 0 {
-            PracticeOutcomeReason::AvoidedPenalty
-        } else if winner == 2 {
-            PracticeOutcomeReason::WonCleanTrick
-        } else {
-            PracticeOutcomeReason::FollowedSuit
-        };
-    }
-
     if contract_kind == PracticeContractKind::HeartsTrumps {
         return if winner == 2 {
             PracticeOutcomeReason::WonCleanTrick
@@ -2648,152 +1677,6 @@ fn practice_outcome_reason(
         PracticeOutcomeReason::VoidDiscard
     } else {
         PracticeOutcomeReason::FollowedSuit
-    }
-}
-
-fn legal_hearts_first_trick_cards(scenario: &PracticeScenario) -> Vec<Card> {
-    let suit_cards = legal_cards(&scenario.player_hand, Some(scenario.led_suit));
-
-    if suit_cards.iter().any(|card| card.suit == scenario.led_suit) {
-        return suit_cards;
-    }
-
-    let safe_discards = suit_cards
-        .iter()
-        .copied()
-        .filter(|card| card.suit != Suit::Hearts && *card != Card::new(Rank::Queen, Suit::Spades))
-        .collect::<Vec<_>>();
-
-    if safe_discards.is_empty() {
-        suit_cards
-    } else {
-        safe_discards
-    }
-}
-
-fn legal_hearts_break_leads(scenario: &PracticeScenario) -> Vec<Card> {
-    let hearts_are_open = scenario.id.contains("already-broken");
-    let only_hearts = scenario
-        .player_hand
-        .iter()
-        .all(|card| card.suit == Suit::Hearts);
-
-    scenario
-        .player_hand
-        .iter()
-        .copied()
-        .filter(|card| hearts_are_open || only_hearts || card.suit != Suit::Hearts)
-        .collect()
-}
-
-fn hearts_break_lead_outcome(
-    scenario: &PracticeScenario,
-    player_card: Card,
-    legal_cards: Vec<Card>,
-) -> PracticeOutcome {
-    if !legal_cards.contains(&player_card) {
-        return PracticeOutcome {
-            player_card,
-            outcome_kind: PracticeOutcomeKind::Illegal,
-            reason: PracticeOutcomeReason::OffSuit,
-            is_legal: false,
-            legal_cards,
-            winner: None,
-            penalty: None,
-            completed_trick: None,
-            explanation: format!(
-                "{player_card} is not legal yet. Hearts have not been broken and you still have another suit."
-            ),
-        };
-    }
-
-    let only_hearts = scenario
-        .player_hand
-        .iter()
-        .all(|card| card.suit == Suit::Hearts);
-    let outcome_kind = if player_card.suit == Suit::Hearts && player_card.rank > Rank::Eight {
-        PracticeOutcomeKind::Risky
-    } else {
-        PracticeOutcomeKind::Good
-    };
-    let explanation = if player_card.suit == Suit::Hearts && only_hearts {
-        format!("{player_card} is legal because every card in your hand is a heart.")
-    } else if player_card.suit == Suit::Hearts {
-        format!("{player_card} is legal because hearts are already broken, but low hearts are safer exits.")
-    } else {
-        format!("{player_card} is legal. Lead a non-heart until hearts have been broken.")
-    };
-
-    PracticeOutcome {
-        player_card,
-        outcome_kind,
-        reason: PracticeOutcomeReason::FollowedSuit,
-        is_legal: true,
-        legal_cards,
-        winner: None,
-        penalty: Some(0),
-        completed_trick: None,
-        explanation,
-    }
-}
-
-fn hearts_score_reading_outcome(
-    scenario: &PracticeScenario,
-    player_card: Card,
-    legal_cards: Vec<Card>,
-) -> PracticeOutcome {
-    let target_queen = scenario.id.contains("queen-spades");
-    let target_heart = scenario.id.contains("heart-point");
-    let target_clean = scenario.id.contains("clean-card");
-    let is_queen = player_card == Card::new(Rank::Queen, Suit::Spades);
-    let is_heart = player_card.suit == Suit::Hearts;
-    let is_clean = !is_queen && !is_heart;
-    let is_target =
-        (target_queen && is_queen) || (target_heart && is_heart) || (target_clean && is_clean);
-    let outcome_kind = if is_target {
-        PracticeOutcomeKind::Good
-    } else if is_queen || is_heart {
-        PracticeOutcomeKind::Risky
-    } else {
-        PracticeOutcomeKind::Penalty
-    };
-    let explanation = if target_queen && is_queen {
-        "Queen of Spades is the 13-point danger card.".to_string()
-    } else if target_heart && is_heart {
-        format!("{player_card} is a heart, so it adds one penalty point.")
-    } else if target_clean && is_clean {
-        format!("{player_card} is clean: it is neither a heart nor the queen of spades.")
-    } else if is_queen {
-        "Queen of Spades is worth 13, but that is not the target card for this question."
-            .to_string()
-    } else if is_heart {
-        format!("{player_card} is a one-point heart, but that is not the target card for this question.")
-    } else {
-        format!("{player_card} does not score in Hearts.")
-    };
-
-    PracticeOutcome {
-        player_card,
-        outcome_kind,
-        reason: if is_target {
-            PracticeOutcomeReason::AvoidedPenalty
-        } else if is_queen || is_heart {
-            PracticeOutcomeReason::CapturedPenalty
-        } else {
-            PracticeOutcomeReason::WonCleanTrick
-        },
-        is_legal: true,
-        legal_cards,
-        winner: None,
-        penalty: Some(if is_queen {
-            13
-        } else if is_heart {
-            1
-        } else {
-            0
-        }),
-        completed_trick: None,
-        explanation,
     }
 }
 
@@ -2928,116 +1811,6 @@ mod tests {
     }
 
     #[test]
-    fn hearts_practice_set_contains_core_generated_families() {
-        let drill_set = generate_hearts_practice_set(13, None);
-
-        assert_eq!(drill_set.scenarios.len(), 18);
-        assert!(drill_set
-            .scenarios
-            .iter()
-            .all(|scenario| scenario.contract == "Hearts"));
-        assert!(drill_set
-            .scenarios
-            .iter()
-            .any(|scenario| scenario.id.starts_with("hearts-first-trick")));
-        assert!(drill_set
-            .scenarios
-            .iter()
-            .any(|scenario| scenario.id.starts_with("hearts-avoid")));
-        assert!(drill_set
-            .scenarios
-            .iter()
-            .any(|scenario| scenario.id.starts_with("hearts-queen")));
-        assert!(drill_set
-            .scenarios
-            .iter()
-            .any(|scenario| scenario.id.starts_with("hearts-break")));
-        assert!(drill_set
-            .scenarios
-            .iter()
-            .any(|scenario| scenario.id.starts_with("hearts-stop-moon")));
-        assert!(drill_set
-            .scenarios
-            .iter()
-            .any(|scenario| scenario.id.starts_with("hearts-score-hand")));
-    }
-
-    #[test]
-    fn hearts_practice_set_can_focus_one_family() {
-        let drill_set = generate_hearts_practice_set(13, Some("queen-danger"));
-
-        assert_eq!(drill_set.scenarios.len(), 3);
-        assert!(drill_set
-            .scenarios
-            .iter()
-            .all(|scenario| scenario.id.starts_with("hearts-queen")));
-    }
-
-    #[test]
-    fn generated_hearts_queen_danger_penalizes_capturing_black_lady() {
-        let scenario = generate_hearts_queen_duck(12);
-        let ace = Card::new(Rank::Ace, Suit::Spades);
-        let low_spade = Card::new(Rank::Two, Suit::Spades);
-
-        assert_eq!(
-            scenario.outcome_for(ace).outcome_kind,
-            PracticeOutcomeKind::Penalty
-        );
-        assert_eq!(
-            scenario.outcome_for(low_spade).outcome_kind,
-            PracticeOutcomeKind::Good
-        );
-    }
-
-    #[test]
-    fn generated_hearts_break_hearts_blocks_early_heart_leads() {
-        let scenario = generate_hearts_break_hearts_blocked(12);
-        let heart = Card::new(Rank::Two, Suit::Hearts);
-        let club = Card::new(Rank::Nine, Suit::Clubs);
-
-        assert_eq!(
-            scenario.outcome_for(heart).outcome_kind,
-            PracticeOutcomeKind::Illegal
-        );
-        assert_eq!(
-            scenario.outcome_for(club).outcome_kind,
-            PracticeOutcomeKind::Good
-        );
-    }
-
-    #[test]
-    fn generated_hearts_stop_moon_rewards_taking_points() {
-        let scenario = generate_hearts_stop_moon_loaded_club(12);
-        let ace = Card::new(Rank::Ace, Suit::Clubs);
-        let low = Card::new(Rank::Two, Suit::Clubs);
-
-        assert_eq!(
-            scenario.outcome_for(ace).outcome_kind,
-            PracticeOutcomeKind::Good
-        );
-        assert_eq!(
-            scenario.outcome_for(low).outcome_kind,
-            PracticeOutcomeKind::Risky
-        );
-    }
-
-    #[test]
-    fn generated_hearts_score_reading_marks_the_target_card() {
-        let queen_scenario = generate_hearts_score_queen_spades(12);
-        let queen = Card::new(Rank::Queen, Suit::Spades);
-        let heart = Card::new(Rank::Seven, Suit::Hearts);
-
-        assert_eq!(
-            queen_scenario.outcome_for(queen).outcome_kind,
-            PracticeOutcomeKind::Good
-        );
-        assert_eq!(
-            queen_scenario.outcome_for(heart).outcome_kind,
-            PracticeOutcomeKind::Risky
-        );
-    }
-
-    #[test]
     fn daily_drill_set_varies_scenario_patterns_by_seed() {
         let first_set = generate_daily_drill_set(13);
         let next_set = generate_daily_drill_set(14);
@@ -3072,71 +1845,6 @@ mod tests {
         id.rsplit_once('-')
             .map(|(pattern, _)| pattern.to_string())
             .unwrap_or_else(|| id.to_string())
-    }
-
-    #[test]
-    fn hearts_pass_practice_recommends_obvious_danger_cards() {
-        let scenario = generate_hearts_pass_practice(12);
-
-        assert_eq!(scenario.player_hand.len(), 13);
-        assert_eq!(
-            scenario.recommended_pass,
-            vec![
-                Card::new(Rank::Queen, Suit::Spades),
-                Card::new(Rank::Ace, Suit::Hearts),
-                Card::new(Rank::King, Suit::Hearts),
-            ]
-        );
-    }
-
-    #[test]
-    fn hearts_pass_practice_can_preserve_long_suit() {
-        let scenario = generate_hearts_pass_practice(11);
-
-        assert_eq!(scenario.title, "Build a long suit");
-        assert!(scenario.prompt.contains("long club run"));
-        assert!(scenario
-            .player_hand
-            .contains(&Card::new(Rank::Two, Suit::Clubs)));
-        assert!(scenario
-            .player_hand
-            .contains(&Card::new(Rank::Eight, Suit::Clubs)));
-        assert_eq!(
-            scenario.recommended_pass,
-            vec![
-                Card::new(Rank::Queen, Suit::Spades),
-                Card::new(Rank::Ace, Suit::Hearts),
-                Card::new(Rank::King, Suit::Hearts),
-            ]
-        );
-    }
-
-    #[test]
-    fn hearts_pass_outcome_marks_exact_pass() {
-        let scenario = generate_hearts_pass_practice(11);
-        let outcome = scenario.outcome_for(&scenario.recommended_pass);
-
-        assert!(outcome.is_complete);
-        assert!(outcome.is_exact);
-        assert_eq!(outcome.matched_cards.len(), 3);
-    }
-
-    #[test]
-    fn hearts_pass_outcome_marks_partial_pass() {
-        let scenario = generate_hearts_pass_practice(11);
-        let selected = vec![
-            Card::new(Rank::Queen, Suit::Spades),
-            Card::new(Rank::Two, Suit::Clubs),
-            Card::new(Rank::Three, Suit::Diamonds),
-        ];
-        let outcome = scenario.outcome_for(&selected);
-
-        assert!(outcome.is_complete);
-        assert!(!outcome.is_exact);
-        assert_eq!(
-            outcome.matched_cards,
-            vec![Card::new(Rank::Queen, Suit::Spades)]
-        );
     }
 
     #[test]

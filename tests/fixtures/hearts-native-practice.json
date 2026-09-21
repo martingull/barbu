@@ -1,0 +1,331 @@
+{
+  "scenarios": [
+    {
+      "contract": "Hearts",
+      "id": "hearts-first-trick-follow-clubs",
+      "ledSuit": "C",
+      "legalCardIds": ["3C"],
+      "outcomes": [
+        {"cardId":"3C","completedTrick":[["Tutor","2C"],["Right","7C"],["You","3C"],["Left","9C"]],"explanation":"3C keeps the first trick clean and avoids taking control.","isLegal":true,"outcomeKind":"good","penalty":0,"reason":"followed_suit","winner":"Left"},
+        {"cardId":"QS","completedTrick":null,"explanation":"QS is not legal because clubs were led and you still hold 3C.","isLegal":false,"outcomeKind":"illegal","penalty":null,"reason":"off_suit","winner":null},
+        {"cardId":"5H","completedTrick":null,"explanation":"5H is not legal because clubs were led and you still hold 3C.","isLegal":false,"outcomeKind":"illegal","penalty":null,"reason":"off_suit","winner":null}
+      ],
+      "playerHand": ["3C","QS","5H"],
+      "prompt": "This is the first trick. Barbu led 2C, and you still have a club. Choose the legal play.",
+      "tableAfterChoice": [["Left","9C"]],
+      "tableBeforeChoice": [["Tutor","2C"],["Right","7C"]],
+      "title": "First trick"
+    },
+    {
+      "contract": "Hearts",
+      "id": "hearts-void-discard",
+      "ledSuit": "D",
+      "legalCardIds": ["4C","8S","QH"],
+      "outcomes": [
+        {"cardId":"4C","completedTrick":[["Tutor","9D"],["Right","AD"],["You","4C"],["Left","5D"]],"explanation":"4C is legal, but you missed a chance to move a heart while Right controls the trick.","isLegal":true,"outcomeKind":"risky","penalty":0,"reason":"void_discard","winner":"Right"},
+        {"cardId":"8S","completedTrick":[["Tutor","9D"],["Right","AD"],["You","8S"],["Left","5D"]],"explanation":"8S is legal, but you missed a chance to move a heart while Right controls the trick.","isLegal":true,"outcomeKind":"risky","penalty":0,"reason":"void_discard","winner":"Right"},
+        {"cardId":"QH","completedTrick":[["Tutor","9D"],["Right","AD"],["You","QH"],["Left","5D"]],"explanation":"QH moves a heart point away from you. Right wins the trick and takes 1 Hearts penalty points.","isLegal":true,"outcomeKind":"good","penalty":1,"reason":"avoided_penalty","winner":"Right"}
+      ],
+      "playerHand": ["4C","8S","QH"],
+      "prompt": "Diamonds were led. You are void, and Right is already winning. Choose a discard.",
+      "tableAfterChoice": [["Left","5D"]],
+      "tableBeforeChoice": [["Tutor","9D"],["Right","AD"]],
+      "title": "Avoid hearts"
+    },
+    {
+      "contract": "Hearts",
+      "id": "hearts-queen-dangerous-dump",
+      "ledSuit": "S",
+      "legalCardIds": ["3S","QS"],
+      "outcomes": [
+        {"cardId":"3S","completedTrick":[["Tutor","9S"],["Right","JS"],["You","3S"],["Left","4S"]],"explanation":"3S is legal. Right wins the trick and takes 0 Hearts penalty points.","isLegal":true,"outcomeKind":"good","penalty":0,"reason":"followed_suit","winner":"Right"},
+        {"cardId":"QS","completedTrick":[["Tutor","9S"],["Right","JS"],["You","QS"],["Left","4S"]],"explanation":"QS follows spades. You win the trick and take 13 Hearts penalty points.","isLegal":true,"outcomeKind":"penalty","penalty":13,"reason":"captured_penalty","winner":"You"},
+        {"cardId":"6H","completedTrick":null,"explanation":"6H is not legal because spades were led and you still hold 3S or QS.","isLegal":false,"outcomeKind":"illegal","penalty":null,"reason":"off_suit","winner":null}
+      ],
+      "playerHand": ["3S","QS","6H"],
+      "prompt": "Spades were led. You hold the queen of spades, but no higher spade is protecting you.",
+      "tableAfterChoice": [["Left","4S"]],
+      "tableBeforeChoice": [["Tutor","9S"],["Right","JS"]],
+      "title": "Queen of Spades danger"
+    },
+    {
+      "contract": "Hearts",
+      "id": "hearts-break-hearts-blocked",
+      "ledSuit": "H",
+      "legalCardIds": ["9C","QD","AS"],
+      "outcomes": [
+        {"cardId":"9C","completedTrick":null,"explanation":"9C is legal. Lead a non-heart until hearts have been broken.","isLegal":true,"outcomeKind":"good","penalty":0,"reason":"followed_suit","winner":null},
+        {"cardId":"QD","completedTrick":null,"explanation":"QD is legal. Lead a non-heart until hearts have been broken.","isLegal":true,"outcomeKind":"good","penalty":0,"reason":"followed_suit","winner":null},
+        {"cardId":"AS","completedTrick":null,"explanation":"AS is legal. Lead a non-heart until hearts have been broken.","isLegal":true,"outcomeKind":"good","penalty":0,"reason":"followed_suit","winner":null},
+        {"cardId":"2H","completedTrick":null,"explanation":"2H is not legal because hearts were led and you still hold 9C or QD or AS.","isLegal":false,"outcomeKind":"illegal","penalty":null,"reason":"off_suit","winner":null}
+      ],
+      "playerHand": ["9C","QD","AS","2H"],
+      "prompt": "You are on lead. Hearts have not been broken, and you still have non-hearts. Choose a legal lead.",
+      "tableAfterChoice": [],
+      "tableBeforeChoice": [],
+      "title": "Break hearts"
+    },
+    {
+      "contract": "Hearts",
+      "id": "hearts-stop-moon-queen-spades",
+      "ledSuit": "S",
+      "legalCardIds": ["3S","KS"],
+      "outcomes": [
+        {"cardId":"4D","completedTrick":null,"explanation":"4D is not legal because spades were led and you still hold 3S or KS.","isLegal":false,"outcomeKind":"illegal","penalty":null,"reason":"off_suit","winner":null},
+        {"cardId":"3S","completedTrick":[["Tutor","QS"],["Right","JS"],["You","3S"],["Left","7S"]],"explanation":"3S lets Tutor keep control of the loaded trick. That can feed a moon attempt.","isLegal":true,"outcomeKind":"risky","penalty":13,"reason":"avoided_penalty","winner":"Tutor"},
+        {"cardId":"KS","completedTrick":[["Tutor","QS"],["Right","JS"],["You","KS"],["Left","7S"]],"explanation":"KS takes 13 points away from the moon threat. That is good defense even though points normally hurt.","isLegal":true,"outcomeKind":"good","penalty":13,"reason":"captured_penalty","winner":"You"}
+      ],
+      "playerHand": ["4D","3S","KS"],
+      "prompt": "Left is threatening to collect every point. The queen of spades is in this trick, and you can take it away.",
+      "tableAfterChoice": [["Left","7S"]],
+      "tableBeforeChoice": [["Tutor","QS"],["Right","JS"]],
+      "title": "Stop the moon"
+    },
+    {
+      "contract": "Hearts",
+      "id": "hearts-score-hand-clean-card",
+      "ledSuit": "D",
+      "legalCardIds": ["5D","QS","9H"],
+      "outcomes": [
+        {"cardId":"5D","completedTrick":null,"explanation":"5D is clean: it is neither a heart nor the queen of spades.","isLegal":true,"outcomeKind":"good","penalty":0,"reason":"avoided_penalty","winner":null},
+        {"cardId":"QS","completedTrick":null,"explanation":"Queen of Spades is worth 13, but that is not the target card for this question.","isLegal":true,"outcomeKind":"risky","penalty":13,"reason":"captured_penalty","winner":null},
+        {"cardId":"9H","completedTrick":null,"explanation":"9H is a one-point heart, but that is not the target card for this question.","isLegal":true,"outcomeKind":"risky","penalty":1,"reason":"captured_penalty","winner":null}
+      ],
+      "playerHand": ["5D","QS","9H"],
+      "prompt": "Choose the clean card: the card that adds no Hearts penalty points.",
+      "tableAfterChoice": [],
+      "tableBeforeChoice": [["Tutor","2C"],["Right","8S"],["Left","KD"]],
+      "title": "Score a hand"
+    },
+    {
+      "contract": "Hearts",
+      "id": "hearts-first-trick-duck-clubs",
+      "ledSuit": "C",
+      "legalCardIds": ["4C","AC"],
+      "outcomes": [
+        {"cardId":"4C","completedTrick":[["Tutor","2C"],["Right","KC"],["You","4C"],["Left","9C"]],"explanation":"4C keeps the first trick clean and avoids taking control.","isLegal":true,"outcomeKind":"good","penalty":0,"reason":"followed_suit","winner":"Right"},
+        {"cardId":"AC","completedTrick":[["Tutor","2C"],["Right","KC"],["You","AC"],["Left","9C"]],"explanation":"AC follows clubs. You wins the trick, and no Hearts penalty was added.","isLegal":true,"outcomeKind":"risky","penalty":0,"reason":"won_clean_trick","winner":"You"},
+        {"cardId":"6D","completedTrick":null,"explanation":"6D is not legal because clubs were led and you still hold 4C or AC.","isLegal":false,"outcomeKind":"illegal","penalty":null,"reason":"off_suit","winner":null}
+      ],
+      "playerHand": ["4C","AC","6D"],
+      "prompt": "The opening trick is clean so far. Follow clubs without taking control if you can.",
+      "tableAfterChoice": [["Left","9C"]],
+      "tableBeforeChoice": [["Tutor","2C"],["Right","KC"]],
+      "title": "First trick"
+    },
+    {
+      "contract": "Hearts",
+      "id": "hearts-follow-low-heart",
+      "ledSuit": "H",
+      "legalCardIds": ["3H","AH"],
+      "outcomes": [
+        {"cardId":"6C","completedTrick":null,"explanation":"6C is not legal because hearts were led and you still hold 3H or AH.","isLegal":false,"outcomeKind":"illegal","penalty":null,"reason":"off_suit","winner":null},
+        {"cardId":"3H","completedTrick":[["Tutor","9H"],["Right","QH"],["You","3H"],["Left","5H"]],"explanation":"3H moves a heart point away from you. Right wins the trick and takes 4 Hearts penalty points.","isLegal":true,"outcomeKind":"good","penalty":4,"reason":"avoided_penalty","winner":"Right"},
+        {"cardId":"AH","completedTrick":[["Tutor","9H"],["Right","QH"],["You","AH"],["Left","5H"]],"explanation":"AH follows hearts. You win the trick and take 4 Hearts penalty points.","isLegal":true,"outcomeKind":"penalty","penalty":4,"reason":"captured_penalty","winner":"You"}
+      ],
+      "playerHand": ["6C","3H","AH"],
+      "prompt": "Hearts were led. Right is winning with QH, and you must follow hearts. Stay under the winner if you can.",
+      "tableAfterChoice": [["Left","5H"]],
+      "tableBeforeChoice": [["Tutor","9H"],["Right","QH"]],
+      "title": "Avoid hearts"
+    },
+    {
+      "contract": "Hearts",
+      "id": "hearts-queen-duck",
+      "ledSuit": "S",
+      "legalCardIds": ["2S","AS"],
+      "outcomes": [
+        {"cardId":"2S","completedTrick":[["Tutor","10S"],["Right","QS"],["You","2S"],["Left","7S"]],"explanation":"2S is legal. Right wins the trick and takes 13 Hearts penalty points.","isLegal":true,"outcomeKind":"good","penalty":13,"reason":"avoided_penalty","winner":"Right"},
+        {"cardId":"AS","completedTrick":[["Tutor","10S"],["Right","QS"],["You","AS"],["Left","7S"]],"explanation":"AS follows spades. You win the trick and take 13 Hearts penalty points.","isLegal":true,"outcomeKind":"penalty","penalty":13,"reason":"captured_penalty","winner":"You"},
+        {"cardId":"4H","completedTrick":null,"explanation":"4H is not legal because spades were led and you still hold 2S or AS.","isLegal":false,"outcomeKind":"illegal","penalty":null,"reason":"off_suit","winner":null}
+      ],
+      "playerHand": ["2S","AS","4H"],
+      "prompt": "Spades were led. Right has put the queen of spades into the trick. Follow spades without winning it.",
+      "tableAfterChoice": [["Left","7S"]],
+      "tableBeforeChoice": [["Tutor","10S"],["Right","QS"]],
+      "title": "Queen of Spades danger"
+    },
+    {
+      "contract": "Hearts",
+      "id": "hearts-break-hearts-only-hearts",
+      "ledSuit": "H",
+      "legalCardIds": ["2H","8H","KH"],
+      "outcomes": [
+        {"cardId":"2H","completedTrick":null,"explanation":"2H is legal because every card in your hand is a heart.","isLegal":true,"outcomeKind":"good","penalty":0,"reason":"followed_suit","winner":null},
+        {"cardId":"8H","completedTrick":null,"explanation":"8H is legal because every card in your hand is a heart.","isLegal":true,"outcomeKind":"good","penalty":0,"reason":"followed_suit","winner":null},
+        {"cardId":"KH","completedTrick":null,"explanation":"KH is legal because every card in your hand is a heart.","isLegal":true,"outcomeKind":"risky","penalty":0,"reason":"followed_suit","winner":null}
+      ],
+      "playerHand": ["2H","8H","KH"],
+      "prompt": "You are on lead. Hearts have not been broken, but every card in your hand is a heart.",
+      "tableAfterChoice": [],
+      "tableBeforeChoice": [],
+      "title": "Break hearts"
+    },
+    {
+      "contract": "Hearts",
+      "id": "hearts-stop-moon-small-heart",
+      "ledSuit": "H",
+      "legalCardIds": ["2H","KH"],
+      "outcomes": [
+        {"cardId":"8D","completedTrick":null,"explanation":"8D is not legal because hearts were led and you still hold 2H or KH.","isLegal":false,"outcomeKind":"illegal","penalty":null,"reason":"off_suit","winner":null},
+        {"cardId":"2H","completedTrick":[["Tutor","QH"],["Right","7H"],["You","2H"],["Left","4H"]],"explanation":"2H lets Tutor keep control of the loaded trick. That can feed a moon attempt.","isLegal":true,"outcomeKind":"risky","penalty":4,"reason":"avoided_penalty","winner":"Tutor"},
+        {"cardId":"KH","completedTrick":[["Tutor","QH"],["Right","7H"],["You","KH"],["Left","4H"]],"explanation":"KH takes 4 points away from the moon threat. That is good defense even though points normally hurt.","isLegal":true,"outcomeKind":"good","penalty":4,"reason":"captured_penalty","winner":"You"}
+      ],
+      "playerHand": ["8D","2H","KH"],
+      "prompt": "Barbu has all the points so far and is about to win another heart trick. Decide whether to take one point now.",
+      "tableAfterChoice": [["Left","4H"]],
+      "tableBeforeChoice": [["Tutor","QH"],["Right","7H"]],
+      "title": "Stop the moon"
+    },
+    {
+      "contract": "Hearts",
+      "id": "hearts-score-hand-queen-spades",
+      "ledSuit": "S",
+      "legalCardIds": ["KC","9D","QS","7H"],
+      "outcomes": [
+        {"cardId":"KC","completedTrick":null,"explanation":"KC does not score in Hearts.","isLegal":true,"outcomeKind":"penalty","penalty":0,"reason":"won_clean_trick","winner":null},
+        {"cardId":"9D","completedTrick":null,"explanation":"9D does not score in Hearts.","isLegal":true,"outcomeKind":"penalty","penalty":0,"reason":"won_clean_trick","winner":null},
+        {"cardId":"QS","completedTrick":null,"explanation":"Queen of Spades is the 13-point danger card.","isLegal":true,"outcomeKind":"good","penalty":13,"reason":"avoided_penalty","winner":null},
+        {"cardId":"7H","completedTrick":null,"explanation":"7H is a one-point heart, but that is not the target card for this question.","isLegal":true,"outcomeKind":"risky","penalty":1,"reason":"captured_penalty","winner":null}
+      ],
+      "playerHand": ["KC","9D","QS","7H"],
+      "prompt": "This trick has several cards. Choose the 13-point danger card.",
+      "tableAfterChoice": [],
+      "tableBeforeChoice": [["Tutor","AH"],["Right","3H"],["Left","10S"]],
+      "title": "Score a hand"
+    },
+    {
+      "contract": "Hearts",
+      "id": "hearts-first-trick-void-safe-discard",
+      "ledSuit": "C",
+      "legalCardIds": ["8D"],
+      "outcomes": [
+        {"cardId":"8D","completedTrick":[["Tutor","2C"],["Right","KC"],["You","8D"],["Left","4C"]],"explanation":"8D keeps the first trick clean and avoids taking control.","isLegal":true,"outcomeKind":"good","penalty":0,"reason":"void_discard","winner":"Right"},
+        {"cardId":"QS","completedTrick":null,"explanation":"QS is not legal because clubs were led and you still hold 8D.","isLegal":false,"outcomeKind":"illegal","penalty":null,"reason":"off_suit","winner":null},
+        {"cardId":"5H","completedTrick":null,"explanation":"5H is not legal because clubs were led and you still hold 8D.","isLegal":false,"outcomeKind":"illegal","penalty":null,"reason":"off_suit","winner":null}
+      ],
+      "playerHand": ["8D","QS","5H"],
+      "prompt": "Clubs were led on the first trick, but you have no clubs. Choose the safe discard before dumping points.",
+      "tableAfterChoice": [["Left","4C"]],
+      "tableBeforeChoice": [["Tutor","2C"],["Right","KC"]],
+      "title": "First trick"
+    },
+    {
+      "contract": "Hearts",
+      "id": "hearts-avoid-heart-duck",
+      "ledSuit": "C",
+      "legalCardIds": ["2C","AC"],
+      "outcomes": [
+        {"cardId":"2C","completedTrick":[["Tutor","9C"],["Right","KC"],["You","2C"],["Left","4H"]],"explanation":"2C is legal. Right wins the trick and takes 1 Hearts penalty points.","isLegal":true,"outcomeKind":"good","penalty":1,"reason":"avoided_penalty","winner":"Right"},
+        {"cardId":"AC","completedTrick":[["Tutor","9C"],["Right","KC"],["You","AC"],["Left","4H"]],"explanation":"AC follows clubs. You win the trick and take 1 Hearts penalty points.","isLegal":true,"outcomeKind":"penalty","penalty":1,"reason":"captured_penalty","winner":"You"},
+        {"cardId":"7D","completedTrick":null,"explanation":"7D is not legal because clubs were led and you still hold 2C or AC.","isLegal":false,"outcomeKind":"illegal","penalty":null,"reason":"off_suit","winner":null}
+      ],
+      "playerHand": ["2C","AC","7D"],
+      "prompt": "Clubs were led. Right is winning with KC, and Left may add a heart. Follow clubs without taking the point.",
+      "tableAfterChoice": [["Left","4H"]],
+      "tableBeforeChoice": [["Tutor","9C"],["Right","KC"]],
+      "title": "Avoid hearts"
+    },
+    {
+      "contract": "Hearts",
+      "id": "hearts-queen-safe-dump",
+      "ledSuit": "C",
+      "legalCardIds": ["9D","QS","6H"],
+      "outcomes": [
+        {"cardId":"9D","completedTrick":[["Tutor","AC"],["Right","8C"],["You","9D"],["Left","3C"]],"explanation":"9D is legal, but the queen of spades stays in your hand. Use the void turn to move it when someone else is winning.","isLegal":true,"outcomeKind":"risky","penalty":0,"reason":"void_discard","winner":"Tutor"},
+        {"cardId":"QS","completedTrick":[["Tutor","AC"],["Right","8C"],["You","QS"],["Left","3C"]],"explanation":"Queen of Spades leaves your hand. Tutor wins the trick and takes the 13-point danger card.","isLegal":true,"outcomeKind":"good","penalty":13,"reason":"avoided_penalty","winner":"Tutor"},
+        {"cardId":"6H","completedTrick":[["Tutor","AC"],["Right","8C"],["You","6H"],["Left","3C"]],"explanation":"6H is legal, but the queen of spades stays in your hand. Use the void turn to move it when someone else is winning.","isLegal":true,"outcomeKind":"risky","penalty":1,"reason":"avoided_penalty","winner":"Tutor"}
+      ],
+      "playerHand": ["9D","QS","6H"],
+      "prompt": "Clubs were led. You are void, and Barbu is already winning. This is a chance to move the queen of spades.",
+      "tableAfterChoice": [["Left","3C"]],
+      "tableBeforeChoice": [["Tutor","AC"],["Right","8C"]],
+      "title": "Queen of Spades danger"
+    },
+    {
+      "contract": "Hearts",
+      "id": "hearts-break-hearts-already-broken",
+      "ledSuit": "H",
+      "legalCardIds": ["6D","10S","3H","JH"],
+      "outcomes": [
+        {"cardId":"6D","completedTrick":null,"explanation":"6D is legal. Lead a non-heart until hearts have been broken.","isLegal":true,"outcomeKind":"good","penalty":0,"reason":"followed_suit","winner":null},
+        {"cardId":"10S","completedTrick":null,"explanation":"10S is legal. Lead a non-heart until hearts have been broken.","isLegal":true,"outcomeKind":"good","penalty":0,"reason":"followed_suit","winner":null},
+        {"cardId":"3H","completedTrick":null,"explanation":"3H is legal because hearts are already broken, but low hearts are safer exits.","isLegal":true,"outcomeKind":"good","penalty":0,"reason":"followed_suit","winner":null},
+        {"cardId":"JH","completedTrick":null,"explanation":"JH is legal because hearts are already broken, but low hearts are safer exits.","isLegal":true,"outcomeKind":"risky","penalty":0,"reason":"followed_suit","winner":null}
+      ],
+      "playerHand": ["6D","10S","3H","JH"],
+      "prompt": "Hearts have already been broken. You may lead a heart, but a low exit is usually safer.",
+      "tableAfterChoice": [],
+      "tableBeforeChoice": [],
+      "title": "Break hearts"
+    },
+    {
+      "contract": "Hearts",
+      "id": "hearts-stop-moon-loaded-club",
+      "ledSuit": "C",
+      "legalCardIds": ["2C","AC"],
+      "outcomes": [
+        {"cardId":"2C","completedTrick":[["Tutor","KC"],["Right","4H"],["You","2C"],["Left","8C"]],"explanation":"2C lets Tutor keep control of the loaded trick. That can feed a moon attempt.","isLegal":true,"outcomeKind":"risky","penalty":1,"reason":"avoided_penalty","winner":"Tutor"},
+        {"cardId":"AC","completedTrick":[["Tutor","KC"],["Right","4H"],["You","AC"],["Left","8C"]],"explanation":"AC takes 1 points away from the moon threat. That is good defense even though points normally hurt.","isLegal":true,"outcomeKind":"good","penalty":1,"reason":"captured_penalty","winner":"You"},
+        {"cardId":"5D","completedTrick":null,"explanation":"5D is not legal because clubs were led and you still hold 2C or AC.","isLegal":false,"outcomeKind":"illegal","penalty":null,"reason":"off_suit","winner":null}
+      ],
+      "playerHand": ["2C","AC","5D"],
+      "prompt": "Barbu has every point so far and is winning a loaded club trick. Decide whether to take the point away.",
+      "tableAfterChoice": [["Left","8C"]],
+      "tableBeforeChoice": [["Tutor","KC"],["Right","4H"]],
+      "title": "Stop the moon"
+    },
+    {
+      "contract": "Hearts",
+      "id": "hearts-score-hand-heart-point",
+      "ledSuit": "H",
+      "legalCardIds": ["KC","QS","7H"],
+      "outcomes": [
+        {"cardId":"KC","completedTrick":null,"explanation":"KC does not score in Hearts.","isLegal":true,"outcomeKind":"penalty","penalty":0,"reason":"won_clean_trick","winner":null},
+        {"cardId":"QS","completedTrick":null,"explanation":"Queen of Spades is worth 13, but that is not the target card for this question.","isLegal":true,"outcomeKind":"risky","penalty":13,"reason":"captured_penalty","winner":null},
+        {"cardId":"7H","completedTrick":null,"explanation":"7H is a heart, so it adds one penalty point.","isLegal":true,"outcomeKind":"good","penalty":1,"reason":"avoided_penalty","winner":null}
+      ],
+      "playerHand": ["KC","QS","7H"],
+      "prompt": "There is no queen of spades in this trick. Choose the one-point penalty card.",
+      "tableAfterChoice": [],
+      "tableBeforeChoice": [["Tutor","9C"],["Right","AD"],["Left","4S"]],
+      "title": "Score a hand"
+    }
+  ],
+  "sets": [
+    {
+      "id": "hearts-practice-mixed-0",
+      "title": "Hearts practice",
+      "scenarioIds": ["hearts-first-trick-follow-clubs-0","hearts-void-discard-1","hearts-queen-dangerous-dump-2","hearts-break-hearts-blocked-3","hearts-stop-moon-queen-spades-4","hearts-score-hand-clean-card-5","hearts-first-trick-duck-clubs-7","hearts-follow-low-heart-8","hearts-queen-duck-9","hearts-break-hearts-only-hearts-10","hearts-stop-moon-small-heart-11","hearts-score-hand-queen-spades-12","hearts-first-trick-void-safe-discard-14","hearts-avoid-heart-duck-15","hearts-queen-safe-dump-16","hearts-break-hearts-already-broken-17","hearts-stop-moon-loaded-club-18","hearts-score-hand-heart-point-19"]
+    },
+    {
+      "id": "hearts-practice-mixed-1",
+      "title": "Hearts practice",
+      "scenarioIds": ["hearts-first-trick-duck-clubs-97","hearts-follow-low-heart-98","hearts-queen-duck-99","hearts-break-hearts-only-hearts-100","hearts-stop-moon-small-heart-101","hearts-score-hand-queen-spades-102","hearts-first-trick-void-safe-discard-104","hearts-avoid-heart-duck-105","hearts-queen-safe-dump-106","hearts-break-hearts-already-broken-107","hearts-stop-moon-loaded-club-108","hearts-score-hand-heart-point-109","hearts-first-trick-follow-clubs-111","hearts-void-discard-112","hearts-queen-dangerous-dump-113","hearts-break-hearts-blocked-114","hearts-stop-moon-queen-spades-115","hearts-score-hand-clean-card-116"]
+    },
+    {
+      "id": "hearts-practice-mixed-2",
+      "title": "Hearts practice",
+      "scenarioIds": ["hearts-first-trick-void-safe-discard-194","hearts-avoid-heart-duck-195","hearts-queen-safe-dump-196","hearts-break-hearts-already-broken-197","hearts-stop-moon-loaded-club-198","hearts-score-hand-heart-point-199","hearts-first-trick-follow-clubs-201","hearts-void-discard-202","hearts-queen-dangerous-dump-203","hearts-break-hearts-blocked-204","hearts-stop-moon-queen-spades-205","hearts-score-hand-clean-card-206","hearts-first-trick-duck-clubs-208","hearts-follow-low-heart-209","hearts-queen-duck-210","hearts-break-hearts-only-hearts-211","hearts-stop-moon-small-heart-212","hearts-score-hand-queen-spades-213"]
+    }
+  ],
+  "passes": [
+    {
+      "explanation": "Beginner pass rule: move the obvious danger cards before the hand starts. Later we can teach suit-shortening and table reads.",
+      "id": "hearts-pass",
+      "playerHand": ["2C","4C","6C","3D","5D","7D","QS","KS","AS","2H","3H","KH","AH"],
+      "prompt": "Choose three cards to pass. Start with Queen of Spades, high hearts, then dangerous high spades.",
+      "recommendedPass": ["QS","AH","KH"],
+      "title": "Pass the danger cards"
+    },
+    {
+      "explanation": "This hand keeps 2C through 8C together. A long suit can become a planned exit route, so pass the danger cards without breaking the run.",
+      "id": "hearts-pass-long-clubs",
+      "playerHand": ["2C","3C","4C","5C","6C","7C","8C","2D","4D","9S","QS","KH","AH"],
+      "prompt": "Choose three cards to pass while keeping the long club run together for later control.",
+      "recommendedPass": ["QS","AH","KH"],
+      "title": "Build a long suit"
+    }
+  ],
+  "passCases": ["hearts-pass-0","hearts-pass-long-clubs-1","hearts-pass-2","hearts-pass-long-clubs-3"]
+}

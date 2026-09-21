@@ -1,3 +1,5 @@
+import { legalCards, trickWinner } from "./trickTakingRules";
+import { heartsPoints, legalHeartsCards } from "./heartsRules";
 import { chooseWhistCard, whistPositionFromHand } from "../whistPolicy";
 import { bridgeBoardConditions } from "../bridgeBoard";
 import { chooseHeartsCard, chooseHeartsPass, heartsPositionFromHand } from "../heartsPolicy";
@@ -8,7 +10,6 @@ import type {
   CompletedHandTrick,
   FullHandContract,
   FullHandState,
-  HeartsPassScenario,
   Seat,
   Suit,
   TableCard
@@ -174,66 +175,6 @@ export function applyBrowserBridgeAuction(
 
 export function startBrowserSpadesHand(seed: number): FullHandState {
   return startBrowserWhistFamilyHand("Spades", seed, "S");
-}
-
-export function generateBrowserHeartsPassPractice(seed: number): HeartsPassScenario {
-  if (seed % 2 === 1) {
-    const playerHand = [
-      card("2", "C"),
-      card("3", "C"),
-      card("4", "C"),
-      card("5", "C"),
-      card("6", "C"),
-      card("7", "C"),
-      card("8", "C"),
-      card("Q", "S"),
-      card("A", "H"),
-      card("K", "H"),
-      card("2", "D"),
-      card("4", "D"),
-      card("9", "S")
-    ].sort(compareCards);
-
-    return {
-      id: `browser-hearts-pass-long-clubs-${seed}`,
-      title: "Build a long suit",
-      prompt:
-        "Choose three cards to pass while keeping the long club run together for later control.",
-      playerHand,
-      recommendedPass: [card("Q", "S"), card("A", "H"), card("K", "H")],
-      explanation:
-        "This hand keeps 2C through 8C together. A long suit can become a planned exit route, so pass the danger cards without breaking the run."
-    };
-  }
-
-  const lowSuit = seed % 2 === 0 ? "C" : "D";
-  const sideSuit = lowSuit === "C" ? "D" : "C";
-  const playerHand = [
-    card("Q", "S"),
-    card("A", "H"),
-    card("K", "H"),
-    card("A", "S"),
-    card("K", "S"),
-    card("2", "H"),
-    card("3", "H"),
-    card("2", lowSuit),
-    card("4", lowSuit),
-    card("6", lowSuit),
-    card("3", sideSuit),
-    card("5", sideSuit),
-    card("7", sideSuit)
-  ].sort(compareCards);
-
-  return {
-    id: `browser-hearts-pass-${seed}`,
-    title: "Pass the danger cards",
-    prompt:
-      "Choose three cards to pass. Start with Queen of Spades, high hearts, then dangerous high spades.",
-    playerHand,
-    recommendedPass: recommendBrowserHeartsPassCards(playerHand),
-    explanation:
-      "Beginner pass rule: move the obvious danger cards before the hand starts. Later we can teach suit-shortening and table reads."
-  };
 }
 
 export function startBrowserHeartsPassingHand(seed: number): FullHandState {
@@ -1121,30 +1062,6 @@ function chooseHeartsPassCards(hand: Card[]) {
   return chooseHeartsPass(hand);
 }
 
-function recommendBrowserHeartsPassCards(hand: Card[]) {
-  return hand
-    .slice()
-    .sort((left, right) => heartsPassPriority(left) - heartsPassPriority(right) || compareByRankThenSuit(left, right))
-    .slice(-3)
-    .reverse();
-}
-
-function heartsPassPriority(card: Card) {
-  if (card.rank === "Q" && card.suit === "S") {
-    return 100;
-  }
-  if (card.suit === "H" && rankOrder[card.rank as Rank] >= rankOrder.Q) {
-    return 80 + rankOrder[card.rank as Rank];
-  }
-  if (card.suit === "S" && rankOrder[card.rank as Rank] >= rankOrder.K) {
-    return 60 + rankOrder[card.rank as Rank];
-  }
-  if (card.suit === "H") {
-    return 20 + rankOrder[card.rank as Rank];
-  }
-  return 0;
-}
-
 function removeCardFromHand(hand: Card[], card: Card) {
   const index = hand.findIndex((heldCard) => heldCard.id === card.id);
 
@@ -1183,15 +1100,7 @@ function scoreTrick(state: FullHandState, cards: TableCard[]) {
     return cards.filter((played) => isKingOfHearts(played.card)).length * 20;
   }
   if (state.contract === "Hearts") {
-    return cards.reduce((total, played) => {
-      if (played.card.suit === "H") {
-        return total + 1;
-      }
-      if (played.card.rank === "Q" && played.card.suit === "S") {
-        return total + 13;
-      }
-      return total;
-    }, 0);
+    return cards.reduce((total, played) => total + heartsPoints(played.card), 0);
   }
 
   return cards
@@ -1213,7 +1122,7 @@ function isPenaltyCard(contract: FullHandContract, card: Card) {
     return isKingOfHearts(card);
   }
   if (contract === "Hearts") {
-    return card.suit === "H" || (card.rank === "Q" && card.suit === "S");
+    return heartsPoints(card) > 0;
   }
 
   return card.suit === "H";
@@ -1223,15 +1132,6 @@ function isKingOfHearts(card: Card) {
   return card.rank === "K" && card.suit === "H";
 }
 
-function legalCards(hand: Card[], led: Suit | undefined) {
-  if (!led) {
-    return hand;
-  }
-
-  const suitedCards = hand.filter((card) => card.suit === led);
-  return suitedCards.length ? suitedCards : hand;
-}
-
 function legalCardsForState(state: FullHandState, playerIndex: number) {
   const basicLegal = legalCards(state.hands[playerIndex], ledSuit(state));
 
@@ -1239,29 +1139,8 @@ function legalCardsForState(state: FullHandState, playerIndex: number) {
     return legalSpadesCardsForState(state, basicLegal);
   }
 
-  if (state.contract !== "Hearts" || !basicLegal.length) {
-    return basicLegal;
-  }
-
-  if (!state.completedTricks.length && !state.currentTrick.length) {
-    return basicLegal.filter((card) => card.id === "2C");
-  }
-
-  if (!state.currentTrick.length) {
-    if (heartsHaveBeenBroken(state)) {
-      return basicLegal;
-    }
-
-    const nonHearts = basicLegal.filter((card) => card.suit !== "H");
-    return nonHearts.length ? nonHearts : basicLegal;
-  }
-
-  if (!state.completedTricks.length) {
-    const nonPenalties = basicLegal.filter((card) => !isPenaltyCard("Hearts", card));
-    return nonPenalties.length ? nonPenalties : basicLegal;
-  }
-
-  return basicLegal;
+  if (state.contract !== "Hearts" || !basicLegal.length) return basicLegal;
+  return legalHeartsCards(state.hands[playerIndex], ledSuit(state), !state.completedTricks.length, heartsHaveBeenBroken(state));
 }
 
 function legalSpadesCardsForState(state: FullHandState, basicLegal: Card[]) {
@@ -1295,29 +1174,10 @@ function ledSuit(state: FullHandState): Suit | undefined {
 }
 
 function trickWinnerForState(state: FullHandState, cards: TableCard[]) {
-  if (state.contract === "Hearts Trumps" || state.contract === "Whist" || state.contract === "Spades" || state.contract === "Bridge") {
-    const trumpSuit = (state.contract === "Whist" || state.contract === "Spades" || state.contract === "Bridge") ? whistTrumpSuitFromState(state) : "H";
-    const trumpWinner = cards
-      .filter((played) => played.card.suit === trumpSuit)
-      .reduce<TableCard | undefined>(
-        (winner, played) =>
-          !winner || rankOrder[played.card.rank as Rank] > rankOrder[winner.card.rank as Rank] ? played : winner,
-        undefined
-      );
-
-    if (trumpWinner) {
-      return playerNames.indexOf(trumpWinner.seat);
-    }
-  }
-
-  const led = cards[0].card.suit;
-  const winner = cards
-    .filter((played) => played.card.suit === led)
-    .reduce((currentWinner, played) =>
-      rankOrder[played.card.rank as Rank] > rankOrder[currentWinner.card.rank as Rank] ? played : currentWinner
-    );
-
-  return playerNames.indexOf(winner.seat);
+  const trump = state.contract === "Hearts Trumps" ? "H"
+    : state.contract === "Whist" || state.contract === "Spades" || state.contract === "Bridge"
+      ? whistTrumpSuitFromState(state) : undefined;
+  return playerNames.indexOf(trickWinner(cards, trump)!.seat);
 }
 
 function promptForState(state: FullHandState, playerPenalty: number) {

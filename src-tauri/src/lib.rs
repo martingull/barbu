@@ -33,18 +33,6 @@ fn generate_daily_drill_set(seed: u64) -> PracticeDrillSetDto {
 }
 
 #[tauri::command]
-fn generate_hearts_pass_practice(seed: u64) -> HeartsPassScenarioDto {
-    let scenario = barbu_core::generate_hearts_pass_practice(seed);
-    HeartsPassScenarioDto::from_core(&scenario)
-}
-
-#[tauri::command]
-fn generate_hearts_practice_set(seed: u64, focus: Option<String>) -> PracticeDrillSetDto {
-    let drill_set = barbu_core::generate_hearts_practice_set(seed, focus.as_deref());
-    PracticeDrillSetDto::from_core(&drill_set)
-}
-
-#[tauri::command]
 fn start_hand(game_id: String, contract: String, seed: u64) -> Result<FullHandDto, String> {
     let ruleset = barbu_core::get_ruleset(&game_id, &contract)?;
     let state = ruleset.start_hand(seed);
@@ -238,40 +226,6 @@ impl PracticeScenarioDto {
                 .copied()
                 .map(|card| PracticeOutcomeDto::from_core(scenario.outcome_for(card)))
                 .collect(),
-        }
-    }
-}
-
-#[derive(serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-struct HeartsPassScenarioDto {
-    id: String,
-    title: String,
-    prompt: String,
-    player_hand: Vec<CardDto>,
-    recommended_pass: Vec<CardDto>,
-    explanation: String,
-}
-
-impl HeartsPassScenarioDto {
-    fn from_core(scenario: &barbu_core::HeartsPassScenario) -> Self {
-        Self {
-            id: scenario.id.clone(),
-            title: scenario.title.clone(),
-            prompt: scenario.prompt.clone(),
-            player_hand: scenario
-                .player_hand
-                .iter()
-                .copied()
-                .map(CardDto::from_core)
-                .collect(),
-            recommended_pass: scenario
-                .recommended_pass
-                .iter()
-                .copied()
-                .map(CardDto::from_core)
-                .collect(),
-            explanation: scenario.explanation.clone(),
         }
     }
 }
@@ -835,8 +789,6 @@ pub fn run() {
             current_game,
             finalize_bridge_contract,
             generate_daily_drill_set,
-            generate_hearts_pass_practice,
-            generate_hearts_practice_set,
             generate_no_hearts_follow_suit,
             pass_domino_turn,
             play_hand_card,
@@ -910,22 +862,5 @@ mod tests {
             assert_eq!(state.cards_remaining, 0, "{contract}");
             assert_eq!(state.completed_tricks.len(), 13, "{contract}");
         }
-    }
-
-    #[test]
-    fn hearts_practice_remains_available_without_native_full_hand_engine() {
-        for focus in [
-            None,
-            Some("first-trick"),
-            Some("queen-danger"),
-            Some("stop-moon"),
-        ] {
-            let set = generate_hearts_practice_set(8, focus.map(str::to_string));
-            let json = serde_json::to_value(set).unwrap();
-            assert!(!json["scenarios"].as_array().unwrap().is_empty());
-        }
-        let pass = serde_json::to_value(generate_hearts_pass_practice(8)).unwrap();
-        assert_eq!(pass["playerHand"].as_array().unwrap().len(), 13);
-        assert_eq!(pass["recommendedPass"].as_array().unwrap().len(), 3);
     }
 }

@@ -1,0 +1,538 @@
+{
+  "topics": [
+    {
+      "topic": "first-trick",
+      "scenarios": [
+        {
+          "id": "hearts-first-trick-follow-clubs",
+          "title": "First trick",
+          "prompt": "This is the first trick. Barbu led 2C, and you still have a club. Choose the legal play.",
+          "ledSuit": "C",
+          "hand": [
+            "3C",
+            "QS",
+            "5H"
+          ],
+          "before": [
+            [
+              "Tutor",
+              "2C"
+            ],
+            [
+              "Right",
+              "7C"
+            ]
+          ],
+          "after": [
+            [
+              "Left",
+              "9C"
+            ]
+          ]
+        },
+        {
+          "id": "hearts-first-trick-duck-clubs",
+          "title": "First trick",
+          "prompt": "The opening trick is clean so far. Follow clubs without taking control if you can.",
+          "ledSuit": "C",
+          "hand": [
+            "4C",
+            "AC",
+            "6D"
+          ],
+          "before": [
+            [
+              "Tutor",
+              "2C"
+            ],
+            [
+              "Right",
+              "KC"
+            ]
+          ],
+          "after": [
+            [
+              "Left",
+              "9C"
+            ]
+          ]
+        },
+        {
+          "id": "hearts-first-trick-void-safe-discard",
+          "title": "First trick",
+          "prompt": "Clubs were led on the first trick, but you have no clubs. Choose the safe discard before dumping points.",
+          "ledSuit": "C",
+          "hand": [
+            "8D",
+            "QS",
+            "5H"
+          ],
+          "before": [
+            [
+              "Tutor",
+              "2C"
+            ],
+            [
+              "Right",
+              "KC"
+            ]
+          ],
+          "after": [
+            [
+              "Left",
+              "4C"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "topic": "avoid-hearts",
+      "scenarios": [
+        {
+          "id": "hearts-avoid-heart-duck",
+          "title": "Avoid hearts",
+          "prompt": "Clubs were led. Right is winning with KC, and Left may add a heart. Follow clubs without taking the point.",
+          "ledSuit": "C",
+          "hand": [
+            "2C",
+            "AC",
+            "7D"
+          ],
+          "before": [
+            [
+              "Tutor",
+              "9C"
+            ],
+            [
+              "Right",
+              "KC"
+            ]
+          ],
+          "after": [
+            [
+              "Left",
+              "4H"
+            ]
+          ]
+        },
+        {
+          "id": "hearts-void-discard",
+          "title": "Avoid hearts",
+          "prompt": "Diamonds were led. You are void, and Right is already winning. Choose a discard.",
+          "ledSuit": "D",
+          "hand": [
+            "4C",
+            "8S",
+            "QH"
+          ],
+          "before": [
+            [
+              "Tutor",
+              "9D"
+            ],
+            [
+              "Right",
+              "AD"
+            ]
+          ],
+          "after": [
+            [
+              "Left",
+              "5D"
+            ]
+          ]
+        },
+        {
+          "id": "hearts-follow-low-heart",
+          "title": "Avoid hearts",
+          "prompt": "Hearts were led. Right is winning with QH, and you must follow hearts. Stay under the winner if you can.",
+          "ledSuit": "H",
+          "hand": [
+            "6C",
+            "3H",
+            "AH"
+          ],
+          "before": [
+            [
+              "Tutor",
+              "9H"
+            ],
+            [
+              "Right",
+              "QH"
+            ]
+          ],
+          "after": [
+            [
+              "Left",
+              "5H"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "topic": "queen-danger",
+      "scenarios": [
+        {
+          "id": "hearts-queen-duck",
+          "title": "Queen of Spades danger",
+          "prompt": "Spades were led. Right has put the queen of spades into the trick. Follow spades without winning it.",
+          "ledSuit": "S",
+          "hand": [
+            "2S",
+            "AS",
+            "4H"
+          ],
+          "before": [
+            [
+              "Tutor",
+              "10S"
+            ],
+            [
+              "Right",
+              "QS"
+            ]
+          ],
+          "after": [
+            [
+              "Left",
+              "7S"
+            ]
+          ]
+        },
+        {
+          "id": "hearts-queen-safe-dump",
+          "title": "Queen of Spades danger",
+          "prompt": "Clubs were led. You are void, and Barbu is already winning. This is a chance to move the queen of spades.",
+          "ledSuit": "C",
+          "hand": [
+            "9D",
+            "QS",
+            "6H"
+          ],
+          "before": [
+            [
+              "Tutor",
+              "AC"
+            ],
+            [
+              "Right",
+              "8C"
+            ]
+          ],
+          "after": [
+            [
+              "Left",
+              "3C"
+            ]
+          ]
+        },
+        {
+          "id": "hearts-queen-dangerous-dump",
+          "title": "Queen of Spades danger",
+          "prompt": "Spades were led. You hold the queen of spades, but no higher spade is protecting you.",
+          "ledSuit": "S",
+          "hand": [
+            "3S",
+            "QS",
+            "6H"
+          ],
+          "before": [
+            [
+              "Tutor",
+              "9S"
+            ],
+            [
+              "Right",
+              "JS"
+            ]
+          ],
+          "after": [
+            [
+              "Left",
+              "4S"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "topic": "break-hearts",
+      "scenarios": [
+        {
+          "id": "hearts-break-hearts-blocked",
+          "title": "Break hearts",
+          "prompt": "You are on lead. Hearts have not been broken, and you still have non-hearts. Choose a legal lead.",
+          "ledSuit": "H",
+          "heartsBroken": false,
+          "hand": [
+            "9C",
+            "QD",
+            "AS",
+            "2H"
+          ],
+          "before": [],
+          "after": []
+        },
+        {
+          "id": "hearts-break-hearts-only-hearts",
+          "title": "Break hearts",
+          "prompt": "You are on lead. Hearts have not been broken, but every card in your hand is a heart.",
+          "ledSuit": "H",
+          "heartsBroken": false,
+          "hand": [
+            "2H",
+            "8H",
+            "KH"
+          ],
+          "before": [],
+          "after": []
+        },
+        {
+          "id": "hearts-break-hearts-already-broken",
+          "title": "Break hearts",
+          "prompt": "Hearts have already been broken. You may lead a heart, but a low exit is usually safer.",
+          "ledSuit": "H",
+          "heartsBroken": true,
+          "hand": [
+            "6D",
+            "10S",
+            "3H",
+            "JH"
+          ],
+          "before": [],
+          "after": []
+        }
+      ]
+    },
+    {
+      "topic": "stop-moon",
+      "scenarios": [
+        {
+          "id": "hearts-stop-moon-loaded-club",
+          "title": "Stop the moon",
+          "prompt": "Barbu has every point so far and is winning a loaded club trick. Decide whether to take the point away.",
+          "ledSuit": "C",
+          "hand": [
+            "2C",
+            "AC",
+            "5D"
+          ],
+          "before": [
+            [
+              "Tutor",
+              "KC"
+            ],
+            [
+              "Right",
+              "4H"
+            ]
+          ],
+          "after": [
+            [
+              "Left",
+              "8C"
+            ]
+          ]
+        },
+        {
+          "id": "hearts-stop-moon-queen-spades",
+          "title": "Stop the moon",
+          "prompt": "Left is threatening to collect every point. The queen of spades is in this trick, and you can take it away.",
+          "ledSuit": "S",
+          "hand": [
+            "4D",
+            "3S",
+            "KS"
+          ],
+          "before": [
+            [
+              "Tutor",
+              "QS"
+            ],
+            [
+              "Right",
+              "JS"
+            ]
+          ],
+          "after": [
+            [
+              "Left",
+              "7S"
+            ]
+          ]
+        },
+        {
+          "id": "hearts-stop-moon-small-heart",
+          "title": "Stop the moon",
+          "prompt": "Barbu has all the points so far and is about to win another heart trick. Decide whether to take one point now.",
+          "ledSuit": "H",
+          "hand": [
+            "8D",
+            "2H",
+            "KH"
+          ],
+          "before": [
+            [
+              "Tutor",
+              "QH"
+            ],
+            [
+              "Right",
+              "7H"
+            ]
+          ],
+          "after": [
+            [
+              "Left",
+              "4H"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "topic": "score-hand",
+      "scenarios": [
+        {
+          "id": "hearts-score-hand-queen-spades",
+          "title": "Score a hand",
+          "prompt": "This trick has several cards. Choose the 13-point danger card.",
+          "ledSuit": "S",
+          "targetPoints": 13,
+          "hand": [
+            "KC",
+            "9D",
+            "QS",
+            "7H"
+          ],
+          "before": [
+            [
+              "Tutor",
+              "AH"
+            ],
+            [
+              "Right",
+              "3H"
+            ],
+            [
+              "Left",
+              "10S"
+            ]
+          ],
+          "after": []
+        },
+        {
+          "id": "hearts-score-hand-heart-point",
+          "title": "Score a hand",
+          "prompt": "There is no queen of spades in this trick. Choose the one-point penalty card.",
+          "ledSuit": "H",
+          "targetPoints": 1,
+          "hand": [
+            "KC",
+            "QS",
+            "7H"
+          ],
+          "before": [
+            [
+              "Tutor",
+              "9C"
+            ],
+            [
+              "Right",
+              "AD"
+            ],
+            [
+              "Left",
+              "4S"
+            ]
+          ],
+          "after": []
+        },
+        {
+          "id": "hearts-score-hand-clean-card",
+          "title": "Score a hand",
+          "prompt": "Choose the clean card: the card that adds no Hearts penalty points.",
+          "ledSuit": "D",
+          "targetPoints": 0,
+          "hand": [
+            "5D",
+            "QS",
+            "9H"
+          ],
+          "before": [
+            [
+              "Tutor",
+              "2C"
+            ],
+            [
+              "Right",
+              "8S"
+            ],
+            [
+              "Left",
+              "KD"
+            ]
+          ],
+          "after": []
+        }
+      ]
+    }
+  ],
+  "passes": [
+    {
+      "explanation": "Beginner pass rule: move the obvious danger cards before the hand starts. Later we can teach suit-shortening and table reads.",
+      "id": "hearts-pass",
+      "playerHand": [
+        "2C",
+        "4C",
+        "6C",
+        "3D",
+        "5D",
+        "7D",
+        "QS",
+        "KS",
+        "AS",
+        "2H",
+        "3H",
+        "KH",
+        "AH"
+      ],
+      "prompt": "Choose three cards to pass. Start with Queen of Spades, high hearts, then dangerous high spades.",
+      "recommendedPass": [
+        "QS",
+        "AH",
+        "KH"
+      ],
+      "title": "Pass the danger cards"
+    },
+    {
+      "explanation": "This hand keeps 2C through 8C together. A long suit can become a planned exit route, so pass the danger cards without breaking the run.",
+      "id": "hearts-pass-long-clubs",
+      "playerHand": [
+        "2C",
+        "3C",
+        "4C",
+        "5C",
+        "6C",
+        "7C",
+        "8C",
+        "2D",
+        "4D",
+        "9S",
+        "QS",
+        "KH",
+        "AH"
+      ],
+      "prompt": "Choose three cards to pass while keeping the long club run together for later control.",
+      "recommendedPass": [
+        "QS",
+        "AH",
+        "KH"
+      ],
+      "title": "Build a long suit"
+    }
+  ]
+}

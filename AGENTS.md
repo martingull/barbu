@@ -67,8 +67,10 @@ explicit exceptions to the Rust-first policy. Route both through
 in `src/domain/whistSession.ts` and `src/domain/heartsSession.ts`, with save
 compatibility in their corresponding `src/persistence/` adapters. Reuse the
 engine factory, reviewed-hand transitions, save-store factory, and standard
-trick-hand validation. Hearts generated practice remains native-backed with its
-existing browser fallback; it has not been migrated. Keep domain transitions free of UI, storage,
+trick-hand validation. Hearts generated practice now uses `src/domain/heartsPractice.ts`
+and `content/hearts-practice.json` on both runtimes, sharing legality and points with
+full play. Its native generators and Svelte fallback pools are removed.
+Keep domain transitions free of UI, storage,
 and Tauri dependencies. Hearts and Whist native full-hand engines, policies,
 settlement, and command routes have been removed. Keep the frozen native-save
 fixtures for compatibility tests, not a second production implementation.
@@ -82,7 +84,7 @@ engine changes, in addition to the existing verification commands.
 - Share low-level card-table mechanics across games: deck, deal, turn order, follow-suit legality, trick winner, played-card memory, scoring primitives, and compact table presentation.
 - Keep game policy separate by game or contract. Barbu contract policy, Hearts/Black Lady avoidance policy, Domino layout policy, and future Whist/Bridge policies should call shared primitives but make their own decisions about winning, ducking, dumping danger cards, preserving trumps, or taking control.
 - When improving opponents, first identify the game objective being optimized. Barbu may need contract-specific reward or avoidance behavior; Hearts normally needs penalty avoidance, queen-of-spades danger management, and moon-defense behavior.
-- Existing generated practice remains in Rust. Migrate its generation and evaluation explicitly into the domain layer, not into Svelte or smaller authored pools.
+- Remaining Barbu generated practice stays in Rust. Migrate its generation and evaluation explicitly into the domain layer, not into Svelte or smaller authored pools; Hearts demonstrates the content/template and shared-rules pattern.
 - Model the Barbu/King-of-Cards teaching persona as content or lesson metadata where possible, not as scattered hardcoded strings.
 - Keep guided lessons in catalog-like modules so more games and families can be added without rewriting the interaction surface.
 - Keep Tauri command handlers thin; they should adapt app requests to core APIs.

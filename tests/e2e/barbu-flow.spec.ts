@@ -1908,7 +1908,7 @@ test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testI
   await expect(page.getByLabel("Drill decision")).toContainText("Hearts");
   await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
   await expect(page.getByLabel("Drill decision")).toContainText(
-    /Duck the heart point|Discard without adding points|Follow low in hearts/
+    /Follow clubs without taking the point|You are void, and Right is already winning|Stay under the winner if you can/
   );
 
   await page.getByLabel("Drill decision").getByRole("button", { name: "Table" }).click();
@@ -2079,7 +2079,7 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Break hearts" }).click();
   await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
   await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
-  await expect(page.getByLabel("Drill decision")).toContainText(/Can you lead a heart\?|Only hearts remain|Hearts are open/);
+  await expect(page.getByLabel("Drill decision")).toContainText(/Hearts have not been broken|Hearts have already been broken/);
   await completeQuickDrillDecision(page);
   await expect(page.getByLabel("Drill decision")).toContainText(/Good|Risky|Illegal/);
   await page.getByRole("button", { name: "Table" }).first().click();
@@ -2087,13 +2087,13 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Stop the moon" }).click();
   await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
   await expect(page.getByLabel("Drill decision")).toContainText(
-    /Break the moon threat|Take Queen of Spades away|Take one point now/
+    /Barbu has every point so far|Left is threatening to collect every point|Barbu has all the points so far/
   );
   // Click the highest club to take the trick
   await page.locator(".drill-hand .hand-card.legal").last().tap();
   await checkDrillAnswer(page);
   await expect(page.getByLabel("Drill decision")).toContainText("Good");
-  await expect(page.getByLabel("Drill decision")).toContainText("moon defense");
+  await expect(page.getByLabel("Drill decision")).toContainText("away from the moon threat");
   await page.getByRole("button", { name: "Table" }).first().click();
 
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Queen of Spades danger" }).click();
@@ -2119,18 +2119,18 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
 
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Score a hand" }).click();
   await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
-  await expect(page.getByLabel("Drill decision")).toContainText(/Find the 13-point card|Find the one-point card|Find the clean card/);
+  await expect(page.getByLabel("Drill decision")).toContainText(/Choose the 13-point danger card|Choose the one-point penalty card|Choose the clean card/);
   const scoreHandText = await page.getByLabel("Drill decision").textContent();
-  if (scoreHandText?.includes("13-point card")) {
+  if (scoreHandText?.includes("13-point danger card")) {
     await page.getByRole("button", { name: "Q S" }).click();
-  } else if (scoreHandText?.includes("one-point card")) {
+  } else if (scoreHandText?.includes("one-point penalty card")) {
     await page.getByRole("button", { name: "7 H" }).click();
   } else {
     await page.getByRole("button", { name: "5 D" }).click();
   }
   await page.getByRole("button", { name: "Check" }).click();
   await expect(page.getByLabel("Drill decision")).toContainText("Good");
-  await expect(page.getByLabel("Drill decision")).toContainText(/13-point danger card|7♥ is good|clean card/);
+  await expect(page.getByLabel("Drill decision")).toContainText(/13-point danger card|adds one penalty point|is clean/);
 });
 
 test("Hearts practice result returns to the Hearts table", async ({ page }) => {

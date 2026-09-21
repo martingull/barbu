@@ -33,7 +33,9 @@ session transitions and settlement remain explicit. Other games still use
 their existing routes; this document does not silently authorize migrating them.
 The Hearts and Whist Rust full-play implementations are removed. Their legacy
 native saves are frozen compatibility fixtures, not a reason to retain a second
-engine. Hearts generated practice remains native-backed and is a separate migration.
+engine. Hearts practice uses `src/domain/heartsPractice.ts` with structured templates
+in `content/hearts-practice.json`. Its legality and points reuse full-play rules;
+frozen native outputs verify all 18 decisions and both passing patterns.
 The metadata registry remains separate from engine selection. These references
 do not imply that every game can be added using configuration alone.
 

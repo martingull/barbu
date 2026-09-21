@@ -11,7 +11,7 @@ game-specific rules and opponent policy. This is not a mobile-shell migration.
 | Area | Implementation |
 | --- | --- |
 | Hearts and Whist full play, opponents, sessions and saves | TypeScript on browser and native builds |
-| Hearts generated practice | Rust generators on native builds; existing browser fallback |
+| Hearts generated practice | Shared TypeScript generator/evaluation and structured content |
 | Whist authored Learn and Practice | Shared TypeScript content and policy |
 | Barbu and Spades full play | Existing native commands and TypeScript fallback |
 | Bridge | Existing TypeScript hand play plus native/fallback bidding helpers |
@@ -31,6 +31,10 @@ the domain state and dispatches actions.
 - `src/domain/heartsSession.ts` and `whistSession.ts`: passing/dealer rotation,
   scores, match completion, replay and hand history outside Svelte.
 - `src/domain/reviewedHand.ts`: shared play/review gates.
+- `src/domain/trickTakingRules.ts` and `heartsRules.ts`: follow-suit, trick winner,
+  Hearts first-trick/lead restrictions and card points shared by play and practice.
+- `src/domain/heartsPractice.ts`: seeded template selection and decision/pass
+  evaluation. `content/hearts-practice.json` owns the scripted cards and prompts.
 - `src/persistence/`: game-specific save validation and restoration on top of
   shared hand validation and storage factories.
 
@@ -47,9 +51,11 @@ The remaining generic native commands explicitly reject migrated games rather
 than silently choosing another ruleset. Spades retains its needed partnership
 and trump mechanics without misleading Whist-specific helper names.
 
-The native practice generators do not depend on these removed engines, so no
-practice pool was replaced or reduced. Migrating generated practice remains
-explicitly separate work, including its evaluation rules and browser fallback.
+Hearts native practice generators, evaluators, commands, passing DTO, and Svelte
+fallback pools are removed too. All six topics retain three scripted decisions,
+and passing retains both danger-card and long-suit patterns. Quick drill selects
+one decision per explicit topic, no longer depending on inconsistent ID prefixes.
+Barbu practice (including No Hearts and Hearts Trumps) remains native-backed.
 
 The redundant frontend command-name table and the `browserHandFallback.ts`
 re-export wrapper are removed. Consumers use the domain module directly.
@@ -77,6 +83,25 @@ as compatibility evidence; do not regenerate them from TypeScript to make a
 failing compatibility test pass. Earlier engine code is available in git history.
 The Hearts fixture covers all three passing directions plus hold.
 
+`tests/fixtures/hearts-native-practice.json` was captured from the native commands
+on 2026-09-21 before their removal. It covers three mixed seeds and four passing
+seeds. Domain tests compare every card, legal choice, outcome, reason, winner,
+point value, and completed trick. Only two misleading illegal-play explanations
+intentionally differ: an unbroken-heart lead and a first-trick penalty discard
+when a safe discard remains. Do not regenerate this fixture from TypeScript.
+
+The practice fixture stores its 18 distinct scenarios and two passing hands once,
+using card IDs instead of repeated card objects. Captured seed-order references
+and the test-only `tests/fixtures/heartsPracticeFixture.ts` decoder reconstruct
+all original outputs without invoking production rules. This reduced the fixture
+from 8,086 lines / 226 KB to 331 lines / 25 KB without losing comparison coverage.
+
+Migration parity is not a teaching-quality check. Pass three currently has two
+introductory hands with the same QS/AH/KH recommendation and exact-match grading.
+It does not yet teach a range of passing decisions or assess reasonable alternative
+passes. A separate curriculum improvement should use distinct decisions and
+explanations tied to hand shape and passing context, with behavior-focused tests.
+
 Policy and scoring golden fixtures remain too. They are regression cases,
 not proof of expert opponent strength or exhaustive policy equivalence.
 Failed storage writes report an error while keeping the current session playable;
@@ -98,9 +123,10 @@ task tauri:check
 Domain tests cover golden positions, hidden-hand independence, complete deals,
 legality, card conservation, moon scoring, rubber completion, saved native hands,
 replay, invalid saves and storage failures. Browser tests simulate native
-runtime presence and verify that Hearts/Whist full play never invoke Rust.
-Native adapter tests reject migrated games and complete the remaining contracts;
-native Hearts practice is checked separately.
+runtime presence and verify that Hearts/Whist full play and Hearts practice never
+invoke Rust. Each Hearts practice topic completes all three decisions in both
+browser and simulated-native modes. Native adapter tests reject migrated games
+and complete the remaining contracts.
 
 Whist was installed on iPhone 16 on 2026-09-21 and the user confirmed it works.
 The subsequent Hearts build was installed, but its automatic launch was blocked
@@ -109,17 +135,18 @@ and physical smoke check before release. No store package has been published.
 
 Try browser mode: Hearts or Whist > Play, play cards, reload, then Continue.
 Replay should preserve the deal; Next hand should settle it only once.
-Also check Hearts > Practice. Browser testing is not a native-generator or
-physical-device test.
+Also check Hearts > Practice > each topic, including Pass three and Quick drill.
+Browser mode now exercises the same Hearts practice logic as the installed build;
+it is still not a physical-device packaging test.
 
 ## Next Migration Work
 
-1. Migrate generated Hearts practice and its evaluation without reducing variety,
-   then remove its native/fallback duplication.
-2. Migrate Spades, then Bridge, one at a time using these shared boundaries.
+1. Migrate Spades play, bidding, session settlement and saves using these boundaries.
+2. Migrate Bridge, then Barbu/Domino, one at a time. Keep Domino's layout state
+   separate from trick-taking hands.
 3. Remove each obsolete engine and dispatch route after verifying its replacement;
    retain regression fixtures rather than permanent parallel engines.
 4. Evaluate another mobile shell separately, only if it brings a clear benefit.
 
-Rust remains required for the current shell, practice and unmigrated games.
-The full-play cleanup is complete for Hearts and Whist, not for the whole catalog.
+Rust remains required for the current shell, Barbu practice and unmigrated games.
+The gameplay/practice cleanup is complete for Hearts and Whist, not for the whole catalog.
