@@ -1410,6 +1410,13 @@
     fullHandIsBridgeGame && isBridgeDummyTurn
       ? `${bridgeSeatLabel(bridgeDummySeat)} dummy hand`
       : "South Bridge hand";
+  $: bridgeActiveHandLabel = `${bridgeSeatLabel(isBridgeDummyTurn ? bridgeDummySeat : "You")} · ${
+    isBridgeDummyTurn || bridgeDummySeat === "You" ? "Dummy" : bridgeUserSideDeclares ? "Declarer" : "Defender"
+  }`;
+  $: bridgeLedSuit = fullHand?.currentTrick[0]?.card.suit;
+  $: bridgePlayPrompt = bridgeLedSuit
+    ? `Led: ${suitNames[bridgeLedSuit]}. Follow suit if you can.`
+    : fullHand?.completedTricks.length === 0 ? "Make the opening lead." : "Lead any card.";
   $: whistOpeningLeadPracticeActive = fullHandIsWhistGame && whistFullHandSource === "practice" && activeWhistPracticeFocus === "lead";
   $: whistOpeningLeadPracticeReview =
     whistOpeningLeadPracticeActive &&
@@ -8695,16 +8702,12 @@
           <BridgeTable
             ariaLabel={`${fullHand.contract} hand table`}
             dummyHand={fullHand.dummyHand}
-            dummyLegalCardIds={fullHand.dummyLegalCardIds}
-            dummySelectedCardId={dummySelectedCardId}
+            playerHand={fullHand.playerHand}
             dummySeat={bridgeDummySeat}
-            dummySeatLabel={`${bridgeSeatLabel(bridgeDummySeat)} Dummy`}
             declarerSeat={bridgeDeclarerSeat}
             isDummyTurn={isBridgeDummyTurn}
             isReviewing={fullHandIsReviewingTrick}
-            onSelectDummy={selectDummyCard}
             pendingBySeat={fullHandPendingBySeat}
-            playerRoleLabel={`South ${bridgeUserSideDeclares ? "Declarer" : "Defender"}`}
             tableCards={fullHandVisibleTableCards}
           />
         {/snippet}
@@ -9128,13 +9131,16 @@
               />
             {/if}
           {:else}
-            <div class:bridge-dummy-turn-feedback={isBridgeDummyTurn}>
+            <div class:bridge-dummy-turn-feedback={isBridgeDummyTurn} class:bridge-play-feedback={fullHandIsBridgeGame}>
               <ExerciseFeedback
                 eyebrow="Your turn"
                 title={isBridgeDummyTurn ? "Play from dummy" : fullHandIsBridgeGame ? (bridgeUserSideDeclares ? "Play as declarer" : "Defend the contract") : "Choose your card"}
-                result={isBridgeDummyTurn ? `You are declarer. Choose a card from ${bridgeSeatLabel(bridgeDummySeat)}'s exposed hand.` : fullHand.prompt}
+                result={fullHandIsBridgeGame ? bridgePlayPrompt : fullHand.prompt}
                 error={fullHandError}
               />
+              {#if fullHandIsBridgeGame}
+                <div class="bridge-active-hand-label">{bridgeActiveHandLabel}</div>
+              {/if}
             </div>
 
             {#if fullHandIsBridgeGame}

@@ -22,6 +22,19 @@
   flex: none;
 }
 
+.app-shell.fixed-play-screen .table-play-surface.flow-play.bridge-play-surface {
+  --flow-panel-space: 106px;
+}
+
+.flow-play .bridge-play-feedback {
+  /* Keep the short turn prompt and hand label stable when control changes seats. */
+  min-height: 44px;
+}
+
+.app-shell.fixed-play-screen .flow-play.bridge-play-surface .bridge-current-hand-row {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play .full-hand-summary {
   gap: 3px;
   padding: 2px 0 5px;

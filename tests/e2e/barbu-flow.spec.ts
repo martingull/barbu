@@ -1075,7 +1075,7 @@ test("Bridge play starts from a rotating auction into a scored contract hand", a
   await expect(page.getByLabel("Bridge hand table")).toContainText("South");
   await expect(page.getByLabel("Bridge hand table")).toContainText("West");
   await expect(page.getByLabel("Bridge hand table")).not.toContainText(/\bLeft\b|\bRight\b/);
-  await expect(page.getByLabel("Visible dummy cards")).toBeVisible();
+  await expect(page.getByLabel("Visible reference hand")).toBeVisible();
   await expect(page.getByLabel("Current trick")).toBeVisible();
   await expectBridgeTableHandsUseSevenCardRows(page);
   await expectBridgeTrickSlotsDoNotOverlap(page);
@@ -1083,7 +1083,7 @@ test("Bridge play starts from a rotating auction into a scored contract hand", a
     await expect(page.locator(".bridge-thumb-hand .full-hand-card.legal").first()).toBeVisible();
     await page.locator(".bridge-thumb-hand .full-hand-card.legal").first().dblclick();
   }
-  await expect(page.getByLabel("Dummy hand", { exact: true })).toBeVisible();
+  await expect(page.locator(".bridge-table-hand")).toBeVisible();
   if ((await page.getByRole("button", { name: "Next trick" }).count()) > 0) {
     await page.getByRole("button", { name: "Next trick" }).click();
   }
@@ -1143,7 +1143,7 @@ test("Bridge compact play keeps table hands readable on short screens", async ({
       const legalCard = page.locator(".bridge-thumb-hand .full-hand-card.legal").first();
       if ((await legalCard.count()) > 0) {
         await legalCard.dblclick({ force: true });
-        await expect(page.getByLabel("Dummy hand", { exact: true })).toBeVisible();
+        await expect(page.locator(".bridge-table-hand")).toBeVisible();
         await expect(page.locator(".bridge-dummy-turn-feedback .lesson-heading")).toBeHidden();
         await expectBridgeTableHandsUseSevenCardRows(page);
         await expectBridgeTrickSlotsDoNotOverlap(page);
@@ -1318,7 +1318,7 @@ test("Bridge table hand rows do not shift after cards are played", async ({ page
   if ((await page.getByLabel("Dummy hidden").count()) > 0) {
     await page.locator(".bridge-thumb-hand .full-hand-card.legal").first().dblclick();
   }
-  await expect(page.getByLabel("Dummy hand", { exact: true })).toBeVisible();
+  await expect(page.locator(".bridge-table-hand")).toBeVisible();
   if (await page.getByRole("button", { name: "Next trick" }).isVisible().catch(() => false)) {
     await page.getByRole("button", { name: "Next trick" }).click();
   }
@@ -1548,10 +1548,10 @@ test("Bridge table does not duplicate the South dummy hand", async ({ page }) =>
   await expect(page.getByLabel("Current hand")).not.toContainText("Score");
   await expect(page.getByLabel("Bridge score")).toContainText("Score");
   await expect(page.getByLabel("North hand hidden")).toBeVisible();
-  await expect(page.getByLabel("Dummy hand", { exact: true })).toHaveCount(0);
+  await expect(page.locator(".bridge-table-hand")).toHaveCount(0);
   await expect(page.getByLabel("South dummy hand")).toBeVisible();
   await expect(page.locator(".bridge-thumb-hand .hand-card")).toHaveCount(13);
-  await expect(page.locator(".bridge-dummy-action-hand .hand-card")).toHaveCount(0);
+  await expect(page.locator(".bridge-seat-north .hand-card")).toHaveCount(0);
 });
 
 test("Bridge exposed dummy row names the actual dummy seat", async ({ page }) => {
@@ -1568,7 +1568,7 @@ test("Bridge exposed dummy row names the actual dummy seat", async ({ page }) =>
 
   await expect(page.getByRole("heading", { name: "Bridge hand" })).toBeVisible();
   await expect(page.locator(".bridge-seat-label").first()).toHaveText("East Dummy");
-  await expect(page.getByLabel("Dummy hand", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("East Dummy hand", { exact: true })).toBeVisible();
   await expect(page.locator(".bridge-felt .cardholder-label > span")).toHaveText(["North", "West", "East", "South"]);
   await expect(page.locator(".bridge-felt .cardholder-label > small")).toHaveText(["Def.", "Decl.", "Dummy", "Def."]);
 });

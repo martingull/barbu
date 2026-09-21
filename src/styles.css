@@ -3001,10 +3001,12 @@ strong[aria-label="Whist dealer"] {
 
 .bridge-auction-screen {
   display: grid;
+  min-width: 0;
   gap: 12px;
 }
 
 .bridge-auction-panel {
+  min-width: 0;
   min-height: 0;
   padding: 0;
   border: 0;
@@ -3055,8 +3057,18 @@ strong[aria-label="Whist dealer"] {
 }
 
 .bridge-auction-hand.full-hand-cards {
-  grid-template-columns: repeat(7, minmax(42px, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 6px;
+}
+
+.bridge-active-hand-label {
+  color: #f5f1cf;
+  font-size: 0.65rem;
+  font-weight: 900;
+  line-height: 14px;
+  padding-top: 4px;
+  text-align: center;
+  text-transform: uppercase;
 }
 
 .bridge-call-grid,

@@ -1,7 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 import { bridgeLegacyCases } from "../fixtures/bridgeLegacy";
-import { transitionBridgeSession, bridgeSessionSettlement } from "../../src/domain/bridgeSession";
+import { createBridgeSession, transitionBridgeSession, bridgeSessionSettlement } from "../../src/domain/bridgeSession";
 import { saveBridgeSession, restoreBridgeSession } from "../../src/persistence/bridgeSave";
+import { trickTakingSeats } from "../../src/domain/trickTakingScore";
+import { sortCardsForDisplay } from "../../src/cardOrdering";
+import { formatCardLabel } from "../../src/cardDisplay";
 
 const key = "barbu.savedBridgeRun.v1";
 const saved = (page: Page) => page.evaluate(key => JSON.parse(localStorage.getItem(key)!), key);
@@ -24,6 +27,69 @@ async function mockNative(page: Page) {
     } }
   }));
 }
+
+test("Bridge keeps distinct visible hands and only the thumb hand is playable", async ({ page }, info) => {
+  for (let declarer = 0; declarer < 4; declarer++) {
+    const initial = createBridgeSession(12, declarer + 1);
+    initial.auctionCalls = ["2S", "Pass", "Pass", "Pass"].map((call, i) => ({ seat: trickTakingSeats[(declarer + i) % 4], call }));
+    const session = transitionBridgeSession(initial, { type: "start-play" });
+    await resume(page, saveBridgeSession(session, "layout"));
+    if (declarer === 1) {
+      // South's opening lead exposes West's dummy without exposing either defender.
+      await page.locator(".bridge-thumb-hand .legal").first().dblclick();
+    }
+    let sawDummy = false;
+    let sawDeclarer = false;
+    let tableBox: { y: number; height: number } | null = null;
+    for (let turn = 0; turn < (declarer === 2 ? 8 : 1); turn++) {
+      if (await page.getByRole("button", { name: "Next trick", exact: true }).isVisible()) {
+        await page.getByRole("button", { name: "Next trick", exact: true }).click();
+      }
+      const { fullHand: hand } = await saved(page);
+      const dummyTurn = declarer % 2 === 0 && hand.currentPlayer === hand.bridgeContract.dummy;
+      const active = dummyTurn ? hand.dummyHand : hand.playerHand;
+      const reference = declarer === 0 ? [] : dummyTurn ? hand.playerHand : hand.dummyHand;
+      expect(await page.locator(".bridge-thumb-hand button").evaluateAll(nodes => nodes.map(node => node.getAttribute("aria-label")))).toEqual(
+        sortCardsForDisplay(active).map(card => `${card.rank} ${card.suit}`));
+      expect(await page.locator(".bridge-table-hand img").evaluateAll(nodes => nodes.map(node => node.getAttribute("alt")))).toEqual(
+        sortCardsForDisplay(reference ?? []).map(formatCardLabel));
+      await expect(page.locator(".bridge-seat-north button, .bridge-seat-north .legal, .bridge-seat-north .illegal, .bridge-seat-north .selected")).toHaveCount(0);
+      await expect(page.locator(".bridge-active-hand-label")).toHaveText(declarer === 0 ? "South · Dummy" : declarer === 2 ? dummyTurn ? "North · Dummy" : "South · Declarer" : "South · Defender");
+      if (declarer === 2) {
+        await expect(page.locator(".bridge-seat-label")).toHaveText(dummyTurn ? "South Declarer" : "North Dummy");
+        sawDummy ||= dummyTurn;
+        sawDeclarer ||= !dummyTurn;
+        const box = await page.locator(".bridge-table").boundingBox();
+        expect(box).not.toBeNull();
+        if (tableBox) {
+          expect(Math.abs(box!.y - tableBox.y)).toBeLessThanOrEqual(1);
+          expect(Math.abs(box!.height - tableBox.height)).toBeLessThanOrEqual(1);
+        }
+        tableBox = box;
+        if (turn < 2) await page.screenshot({ path: info.outputPath(`bridge-active-${dummyTurn ? "dummy" : "declarer"}.png`), fullPage: true });
+        await page.locator(".bridge-thumb-hand .legal").first().click();
+        await expect(page.locator(".bridge-thumb-hand [aria-pressed=true]")).toHaveCount(1);
+        await page.getByRole("button", { name: "Play card", exact: true }).click();
+      }
+    }
+    if (declarer === 2) expect(sawDummy && sawDeclarer).toBe(true);
+  }
+});
+
+test("Bridge auction fits narrow and desktop widths without horizontal scrolling", async ({ page }, info) => {
+  await page.goto("/");
+  await openBridge(page);
+  await page.getByRole("button", { name: "Play Bridge", exact: true }).click();
+  for (const width of [320, 360, 393, 1365]) {
+    await page.setViewportSize({ width, height: 740 });
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await expect.poll(() => page.locator(".bridge-auction-hand .hand-card").evaluateAll(nodes => nodes.every(node => {
+      const box = node.getBoundingClientRect();
+      return box.left >= 0 && box.right <= innerWidth;
+    }))).toBe(true);
+    await page.screenshot({ path: info.outputPath(`bridge-auction-${width}.png`), fullPage: true });
+  }
+});
 
 test("Bridge auctions and card play use TypeScript even inside the native shell", async ({ page }, info) => {
   await mockNative(page);

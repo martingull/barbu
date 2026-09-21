@@ -1,39 +1,30 @@
 <script lang="ts">
-  import CardChoiceHand from "./CardChoiceHand.svelte";
+  import CardFace from "./CardFace.svelte";
   import CardTable from "./CardTable.svelte";
+  import { sortCardsForDisplay } from "./cardOrdering";
   import type { Card, Seat, TableCard } from "./lessonTypes";
-
-  type CardClassFlags = Record<string, boolean | undefined>;
 
   type Props = {
     ariaLabel?: string;
     dummyHand?: Card[];
-    dummyLegalCardIds?: string[];
-    dummySelectedCardId?: string;
+    playerHand?: Card[];
     dummySeat?: Seat;
-    dummySeatLabel?: string;
     declarerSeat?: Seat;
     isDummyTurn?: boolean;
     isReviewing?: boolean;
-    onSelectDummy?: (card: Card) => void | Promise<void>;
     pendingBySeat?: Partial<Record<Seat, string>>;
-    playerRoleLabel?: string;
     tableCards: TableCard[];
   };
 
   let {
     ariaLabel = "Bridge table",
     dummyHand = [],
-    dummyLegalCardIds = [],
-    dummySelectedCardId = "",
+    playerHand = [],
     dummySeat = "Tutor",
-    dummySeatLabel = "Dummy",
     declarerSeat = "You",
     isDummyTurn = false,
     isReviewing = false,
-    onSelectDummy,
     pendingBySeat = {},
-    playerRoleLabel = "Declarer",
     tableCards
   }: Props = $props();
 
@@ -43,9 +34,10 @@
     You: "South",
     Left: "West"
   };
-  const dummyLegalSet = $derived(new Set(dummyLegalCardIds));
-  const showNorthHand = $derived(dummySeat !== "You");
-  const northHandLabel = $derived(showNorthHand ? dummySeatLabel : seatRoleLabel("Tutor"));
+  // Keep the other visible hand above the table, never a second copy of the active hand.
+  const showDeclarerHand = $derived(isDummyTurn && !isReviewing && dummySeat === "Tutor");
+  const referenceSeat = $derived(showDeclarerHand ? "You" : dummySeat === "You" ? "Tutor" : dummySeat);
+  const referenceCards = $derived(showDeclarerHand ? playerHand : dummySeat === "You" ? [] : dummyHand);
   const bridgeTableSeatLabels: Record<Seat, string> = $derived({
     Tutor: compassLabel("Tutor"),
     Left: compassLabel("Left"),
@@ -68,7 +60,7 @@
       return "Declarer";
     }
 
-    return seat === "You" ? (playerRoleLabel.includes("Declarer") ? "Declarer" : "Defender") : "Defender";
+    return "Defender";
   }
 
   function seatRoleLabel(seat: Seat) {
@@ -91,36 +83,20 @@
     return "Def.";
   }
 
-  function dummyCardClasses(card: Card): CardClassFlags {
-    const canPlay = isDummyTurn && !isReviewing;
-    const isLegal = canPlay && dummyLegalSet.has(card.id);
-
-    return {
-      heart: card.suit === "H",
-      legal: isLegal,
-      illegal: canPlay && !isLegal,
-      selected: dummySelectedCardId === card.id
-    };
-  }
-
 </script>
 
 <section class="bridge-table" aria-label={ariaLabel}>
-  <div class="bridge-seat bridge-seat-north" aria-label="Visible dummy cards">
-    <span class="bridge-seat-label">{northHandLabel}</span>
-    {#if showNorthHand && dummyHand.length}
-      <CardChoiceHand
-        cards={dummyHand}
-        ariaLabel="Dummy hand"
-        className="hand full-hand-cards bridge-table-hand bridge-dummy-action-hand"
-        cardClassName="card hand-card full-hand-card bridge-mini-card"
-        getCardClasses={dummyCardClasses}
-        isPressed={(card) => dummySelectedCardId === card.id}
-        onSelect={(card) => {
-          if (isDummyTurn && !isReviewing) void onSelectDummy?.(card);
-        }}
-      />
-    {:else if showNorthHand}
+  <div class="bridge-seat bridge-seat-north" aria-label="Visible reference hand">
+    <span class="bridge-seat-label">{seatRoleLabel(referenceSeat)}</span>
+    {#if referenceCards.length}
+      <div class="hand full-hand-cards bridge-table-hand" aria-label={`${seatRoleLabel(referenceSeat)} hand`}>
+        {#each sortCardsForDisplay(referenceCards) as card (card.id)}
+          <span class="card hand-card full-hand-card bridge-mini-card">
+            <CardFace {card} />
+          </span>
+        {/each}
+      </div>
+    {:else if dummySeat !== "You"}
       <div class="bridge-dummy-hidden" aria-label="Dummy hidden">Dummy appears after the opening lead.</div>
     {:else}
       <div class="bridge-dummy-hidden" aria-label="North hand hidden">Declarer's hand stays hidden.</div>
@@ -250,12 +226,7 @@
   .bridge-table :global(.bridge-table-hand .hand-card) {
     width: var(--bridge-mini-card-width);
     min-width: 0;
-  }
-
-  .bridge-table :global(.bridge-table-hand .hand-card.legal) {
-    box-shadow:
-      0 0 0 2px rgba(245, 241, 207, 0.95),
-      0 8px 16px rgba(4, 18, 11, 0.22);
+    cursor: default;
   }
 
   @media (max-width: 700px) {
