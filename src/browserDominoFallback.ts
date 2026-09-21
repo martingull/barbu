@@ -1,4 +1,5 @@
 import type { Card, DominoHandState, Seat, Suit } from "./lessonTypes";
+import { isLegalDominoPlacement } from "./domain/dominoRules";
 
 type Rank = "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "J" | "Q" | "K" | "A";
 
@@ -207,16 +208,7 @@ function isLegalDominoCard(state: DominoHandState, card: Card) {
 }
 
 function isLegalDominoCardOnLayout(layout: Card[][], startRank: Rank, card: Card) {
-  const lane = layout[suitOrder[card.suit]];
-
-  if (!lane.length) {
-    return card.rank === startRank;
-  }
-
-  const low = Math.min(...lane.map((played) => rankOrder[played.rank as Rank]));
-  const high = Math.max(...lane.map((played) => rankOrder[played.rank as Rank]));
-  const rank = rankOrder[card.rank as Rank];
-  return rank === low - 1 || rank === high + 1;
+  return isLegalDominoPlacement(layout[suitOrder[card.suit]], card, startRank);
 }
 
 function dominoSeatScores(outOrder: Array<Seat | "Unknown">) {

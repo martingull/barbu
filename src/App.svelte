@@ -26,22 +26,10 @@
   import { createHeartsSaveStore, restoreHeartsSession, saveHeartsSession, savedHeartsRunSummary, type SavedHeartsRun } from "./persistence/heartsSave";
   import { createWhistSession, emptyWhistScore, transitionWhistSession, whistSessionSettlement, type WhistSession } from "./domain/whistSession";
   import { createWhistSaveStore, restoreWhistSession, saveWhistSession, savedWhistRunSummary, type SavedWhistRun } from "./persistence/whistSave";
-  import {
-    playBrowserKingOfHeartsCard,
-    playBrowserNoHeartsCard,
-    playBrowserNoLastTwoCard,
-    playBrowserNoQueensCard,
-    playBrowserNoTricksCard,
-    playBrowserPositiveTricksCard,
-    startBrowserKingOfHeartsHand,
-    startBrowserNoHeartsHand,
-    startBrowserNoLastTwoHand,
-    startBrowserNoQueensHand,
-    startBrowserNoTricksHand,
-    startBrowserPositiveTricksHand
-  } from "./domain/trickTakingHand";
+  import { normalizeBarbuHand } from "./persistence/barbuHandSave";
+  import { normalizedReviewCount } from "./persistence/handSaveValidation";
   import { passBrowserDominoTurn, playBrowserDominoCard, startBrowserDominoHand } from "./browserDominoFallback";
-  import { generateBrowserPlayBarbuDrillSteps } from "./browserDrillFallback";
+  import { generateBarbuPracticeSet } from "./domain/barbuPractice";
   import BridgeTable from "./BridgeTable.svelte";
   import CardChoiceHand from "./CardChoiceHand.svelte";
   import CardFace from "./CardFace.svelte";
@@ -81,7 +69,6 @@
     DominoHandState,
     FullHandContract,
     FullHandState,
-    GeneratedDrillSet,
     GeneratedPracticeScenario,
     GuidedCardOutcome,
     GuidedTrick,
@@ -645,8 +632,6 @@
   $: spadesBidError = "";
   $: spadesBidReady = true;
   $: spadesCurrentBidLabel = spadesBidLabel(spadesBids);
-  let usingGeneratedPractice = false;
-  let generatedPracticeError = "";
   let fullHand: FullHandState | null = null;
   let heartsPassingHand: FullHandState | null = null;
   let heartsPassPractice: HeartsPassScenario | null = null;
@@ -665,7 +650,6 @@
   let heartsPassError = "";
   let dominoError = "";
   let fullHandReviewTrickCount = 0;
-  let usingBrowserFullHand = false;
   let usingBrowserDomino = false;
   let lastFullHandTapCardId = "";
   let lastFullHandTapAt = 0;
@@ -987,9 +971,9 @@
   }
 
   $: selectedLesson = guidedLessons.find((lesson) => lesson.id === selectedLessonId) ?? guidedLessons[0];
-  $: familyLabel = usingGeneratedPractice ? "Hearts" : selectedLesson.family;
-  $: gameLabel = usingGeneratedPractice ? "Generated practice" : selectedLesson.game;
-  $: contractLabel = usingGeneratedPractice ? "No Hearts" : selectedLesson.contract;
+  $: familyLabel = selectedLesson.family;
+  $: gameLabel = selectedLesson.game;
+  $: contractLabel = selectedLesson.contract;
   $: currentTrick = activeTricks[trickIndex];
   $: legalCardIds = new Set(currentTrick.legalCardIds);
   $: hand = currentTrick.hand;
@@ -1001,7 +985,7 @@
     : currentTrick.tableBeforeChoice;
   $: currentLessonIsDomino = contractLabel === "Domino";
   $: completedDominoLessonLayout = buildDominoDrillLayout(completedTable);
-  $: explanation = generatedPracticeError || buildExplanation(selectedCard, playedCard);
+  $: explanation = buildExplanation(selectedCard, playedCard);
   $: resultText = playedCard ? currentTrick.afterResult : currentTrick.beforeResult;
   $: isLastTrick = trickIndex === activeTricks.length - 1;
   $: playablePathSteps = barbuUi.learnSteps.filter((step) => step.action !== "planned");
@@ -1884,7 +1868,7 @@
       candidate.view === "fullHand" || candidate.view === "dominoHand" || candidate.view === "runContractIntro"
         ? candidate.view
         : "runContractIntro";
-    const fullHand = candidate.fullHand && isFullHandContract(candidate.fullHand.contract) ? candidate.fullHand : null;
+    const fullHand = normalizeBarbuHand(candidate.fullHand);
     const dominoHand = candidate.dominoHand?.contract === "Domino" ? candidate.dominoHand : null;
 
     if ((view === "fullHand" && !fullHand) || (view === "dominoHand" && !dominoHand)) {
@@ -1899,11 +1883,8 @@
       results: Array.isArray(candidate.results) ? candidate.results.filter(isFullHandRunResult) : [],
       fullHand,
       dominoHand,
-      fullHandReviewTrickCount:
-        Number.isInteger(candidate.fullHandReviewTrickCount) && candidate.fullHandReviewTrickCount >= 0
-          ? candidate.fullHandReviewTrickCount
-          : 0,
-      usingBrowserFullHand: Boolean(candidate.usingBrowserFullHand),
+      fullHandReviewTrickCount: fullHand ? normalizedReviewCount(candidate.fullHandReviewTrickCount, fullHand) : 0,
+      usingBrowserFullHand: true,
       usingBrowserDomino: Boolean(candidate.usingBrowserDomino),
       savedAt: typeof candidate.savedAt === "string" ? candidate.savedAt : new Date().toISOString()
     };
@@ -1941,7 +1922,7 @@
       fullHand,
       dominoHand,
       fullHandReviewTrickCount,
-      usingBrowserFullHand,
+      usingBrowserFullHand: true,
       usingBrowserDomino,
       savedAt: new Date().toISOString()
     };
@@ -1995,7 +1976,6 @@
     fullHand = savedRun.fullHand;
     dominoHand = savedRun.dominoHand;
     fullHandReviewTrickCount = savedRun.fullHandReviewTrickCount;
-    usingBrowserFullHand = savedRun.usingBrowserFullHand || !hasTauriRuntime();
     usingBrowserDomino = savedRun.usingBrowserDomino || !hasTauriRuntime();
     fullHandSelectedCardId = "";
     dominoSelectedCardId = "";
@@ -2058,7 +2038,6 @@
     dominoHand = null;
     spadesPlayStarted = true;
     setHeartsSession(session);
-    usingBrowserFullHand = true;
     heartsPassError = "";
     fullHandSelectedCardId = "";
     dummySelectedCardId = "";
@@ -2109,7 +2088,6 @@
     heartsPassingHand = null;
     spadesPlayStarted = true;
     setWhistSession(session);
-    usingBrowserFullHand = true;
     fullHandSelectedCardId = "";
     dummySelectedCardId = "";
     fullHandError = "";
@@ -2161,7 +2139,6 @@
     fullHandCardCountingMode = false;
     dominoHand = null;
     heartsPassingHand = null;
-    usingBrowserFullHand = true;
     fullHandSelectedCardId = "";
     dummySelectedCardId = "";
     fullHandError = "";
@@ -2227,7 +2204,6 @@
     fullHandCardCountingMode = false;
     dominoHand = null;
     heartsPassingHand = null;
-    usingBrowserFullHand = true;
     spadesPlayStarted = true;
     fullHandSelectedCardId = "";
     dummySelectedCardId = "";
@@ -3597,28 +3573,6 @@
     openBarbuTable();
   }
 
-  function startBrowserFullHand(contract: FullHandContract, seed: number, dealer?: number) {
-    const engine = typescriptHandEngine(contract);
-    if (engine) return engine.start({ seed, dealer });
-    if (contract === "No Queens") {
-      return startBrowserNoQueensHand(seed);
-    }
-    if (contract === "King of Hearts") {
-      return startBrowserKingOfHeartsHand(seed);
-    }
-    if (contract === "No Last Two") {
-      return startBrowserNoLastTwoHand(seed);
-    }
-    if (contract === "No Tricks") {
-      return startBrowserNoTricksHand(seed);
-    }
-    if (contract === "Hearts Trumps") {
-      return startBrowserPositiveTricksHand(seed);
-    }
-
-    return startBrowserNoHeartsHand(seed);
-  }
-
   function hasTauriRuntime() {
     return typeof window !== "undefined" && isTauri();
   }
@@ -3634,28 +3588,6 @@
 
   function isInvokeTimeoutError(error: unknown) {
     return error instanceof Error && error.message.startsWith("Timed out calling");
-  }
-
-  function playBrowserFullHand(state: FullHandState, cardId: string) {
-    const engine = typescriptHandEngine(state.contract);
-    if (engine) return engine.transition(state, { type: "play-card", cardId });
-    if (state.contract === "No Queens") {
-      return playBrowserNoQueensCard(state, cardId);
-    }
-    if (state.contract === "King of Hearts") {
-      return playBrowserKingOfHeartsCard(state, cardId);
-    }
-    if (state.contract === "No Last Two") {
-      return playBrowserNoLastTwoCard(state, cardId);
-    }
-    if (state.contract === "No Tricks") {
-      return playBrowserNoTricksCard(state, cardId);
-    }
-    if (state.contract === "Hearts Trumps") {
-      return playBrowserPositiveTricksCard(state, cardId);
-    }
-
-    return playBrowserNoHeartsCard(state, cardId);
   }
 
   async function startFullHand(contract: FullHandContract, options: { cardCounting?: boolean; keepRun?: boolean; seed?: number; dealer?: number } = {}) {
@@ -3689,24 +3621,8 @@
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
     const engine = typescriptHandEngine(contract);
-    if (engine) {
-      fullHand = engine.start({ seed, dealer: options.dealer });
-      usingBrowserFullHand = true;
-      appView = "fullHand";
-      return;
-    }
-
-    try {
-      fullHand = await invoke<FullHandState>("start_hand", {
-        seed,
-        gameId: activeGameTable,
-        contract
-      });
-      usingBrowserFullHand = false;
-    } catch {
-      fullHand = startBrowserFullHand(contract, seed, options.dealer);
-      usingBrowserFullHand = true;
-    }
+    if (!engine) throw new Error(`Unsupported hand: ${contract}`);
+    fullHand = engine.start({ seed, dealer: options.dealer });
 
     appView = "fullHand";
     if (options.keepRun && fullHandRunActive) {
@@ -3850,7 +3766,7 @@
     fullHandError = "";
     const completedTrickCount = fullHand.completedTricks.length;
 
-    if (usingBrowserFullHand || typescriptHandEngine(fullHand.contract)) {
+    try {
       if (isHeartsSessionActive() && heartsSession) {
         setHeartsSession(transitionHeartsSession(heartsSession, { type: "play-card", cardId: targetId }));
       } else if (isBridgeSessionHand() && bridgeSession) {
@@ -3860,7 +3776,9 @@
       } else if (isWhistSessionHand() && whistSession) {
         setWhistSession(transitionWhistSession(whistSession, { type: "play-card", cardId: targetId }));
       } else {
-        updateFullHandAfterPlayerPlay(playBrowserFullHand(fullHand, targetId), completedTrickCount);
+        const engine = typescriptHandEngine(fullHand.contract);
+        if (!engine) throw new Error(`Unsupported hand: ${fullHand.contract}`);
+        updateFullHandAfterPlayerPlay(engine.transition(fullHand, { type: "play-card", cardId: targetId }), completedTrickCount);
       }
       recordCompletedFullHandRunResult(fullHand);
       fullHandSelectedCardId = "";
@@ -3872,29 +3790,8 @@
       persistSavedWhistRun();
       persistSavedSpadesRun();
       persistSavedBridgeRun();
-      return;
-    }
-
-    try {
-      const nextFullHand = await invoke<FullHandState>("play_hand_card", {
-        state: fullHand,
-        cardId: targetId,
-        gameId: activeGameTable,
-        contract: fullHand.contract
-      });
-      updateFullHandAfterPlayerPlay(nextFullHand, completedTrickCount);
-      recordCompletedFullHandRunResult(fullHand);
-      fullHandSelectedCardId = "";
-      dummySelectedCardId = "";
-      lastFullHandTapCardId = "";
-      lastFullHandTapAt = 0;
-      persistSavedPlayBarbuRun("fullHand");
-      persistSavedHeartsRun();
-      persistSavedWhistRun();
-      persistSavedSpadesRun();
-      persistSavedBridgeRun();
     } catch (error) {
-      fullHandError = typeof error === "string" ? error : "That card could not be played.";
+      fullHandError = typeof error === "string" ? error : error instanceof Error ? error.message : "That card could not be played.";
     }
   }
 
@@ -4115,7 +4012,6 @@
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
     fullHand = buildWhistOpeningLeadPracticeHand(round);
-    usingBrowserFullHand = true;
     appView = "fullHand";
   }
 
@@ -4717,11 +4613,21 @@
 
     if (fullHandRunActive) {
       fullHandRunResults = fullHandRunResults.filter((result) => result.contract !== fullHand?.contract);
-      void startFullHand(fullHand.contract, { keepRun: true });
-      return;
     }
-
-    void startFullHand(fullHand.contract);
+    const engine = typescriptHandEngine(fullHand.contract);
+    if (!engine) return;
+    fullHand = engine.transition(fullHand, { type: "replay" });
+    fullHandCardCountingAnswer = null;
+    fullHandCardCountingChecked = false;
+    fullHandCardCountingQuestionsAsked = 0;
+    fullHandCardCountingClean = 0;
+    fullHandReviewTrickCount = 0;
+    fullHandSelectedCardId = "";
+    dummySelectedCardId = "";
+    fullHandError = "";
+    lastFullHandTapCardId = "";
+    lastFullHandTapAt = 0;
+    persistSavedPlayBarbuRun("fullHand");
   }
 
   function replayWeakestRunContract() {
@@ -5564,41 +5470,11 @@
     appView = "drill";
   }
 
-  async function loadGeneratedDrillCandidates(focusContract = "") {
+  function loadGeneratedDrillSessionSteps(focusContract = "") {
     const seed = usePracticeSeed();
-
-    try {
-      const drillSet = await invoke<GeneratedDrillSet>("generate_daily_drill_set", {
-        seed
-      });
-
-      const candidates = drillSet.scenarios
-        .map(drillStepFromGeneratedScenario)
-        .filter((step) => !focusContract || step.contract === focusContract);
-
-      if (candidates.length > 0) {
-        return { candidates, seed };
-      }
-    } catch {
-      const candidates = generateBrowserPlayBarbuDrillSteps(seed).filter(
-        (step) => !focusContract || step.contract === focusContract
-      );
-
-      if (candidates.length > 0) {
-        return { candidates, seed };
-      }
-    }
-
-    const fallbackCandidates = drillSteps.filter((step) => !focusContract || step.contract === focusContract);
-
-    return {
-      candidates: fallbackCandidates.length > 0 ? fallbackCandidates : [drillSteps[0]],
-      seed
-    };
-  }
-
-  async function loadGeneratedDrillSessionSteps(focusContract = "") {
-    const { candidates, seed } = await loadGeneratedDrillCandidates(focusContract);
+    const candidates = generateBarbuPracticeSet(seed).scenarios
+      .map(drillStepFromGeneratedScenario)
+      .filter((step) => !focusContract || step.contract === focusContract);
 
     if (focusContract) {
       return orderPracticePool(candidates, seed);
@@ -6264,37 +6140,8 @@
 
     selectedLessonId = lesson.id;
     activeTricks = lesson.tricks;
-    usingGeneratedPractice = false;
-    generatedPracticeError = "";
     trickIndex = 0;
     resetTrick();
-  }
-
-  function showFixedLesson() {
-    activeTricks = selectedLesson.tricks;
-    usingGeneratedPractice = false;
-    generatedPracticeError = "";
-    trickIndex = 0;
-    resetTrick();
-  }
-
-  async function loadGeneratedDrill() {
-    generatedPracticeError = "";
-
-    try {
-      const scenario = await invoke<GeneratedPracticeScenario>("generate_no_hearts_follow_suit", {
-        seed: practiceSeed
-      });
-
-      practiceSeed += 1;
-      activeTricks = [guidedTrickFromGeneratedScenario(scenario)];
-      usingGeneratedPractice = true;
-      trickIndex = 0;
-      resetTrick();
-    } catch {
-      usingGeneratedPractice = true;
-      generatedPracticeError = "Generated drills need the Tauri runtime. Use the fixed lesson here, or run Barbu with Tauri.";
-    }
   }
 
   function nextTrick() {
@@ -9409,12 +9256,12 @@
       statusValue={`Decision ${currentDrillDecisionNumber} of ${activeDrillSteps.length}`}
       tableAriaLabel="Drill card table"
       pendingBySeat={currentDrillTrick.pendingBySeat}
-      showTable={!currentDrillIsDomino}
+      useCustomTable={currentDrillIsDomino}
       tableCards={currentDrillIsDomino ? [] : drillCompletedTable}
       panelAriaLabel="Drill decision"
       onBack={openActiveGameTable}
     >
-      {#snippet summary()}
+      {#snippet table()}
         {#if currentDrillIsDomino}
           <div class="domino-layout" aria-label="Domino drill layout">
             {#each drillDominoLayout as lane, index}
@@ -9757,10 +9604,7 @@
         />
 
         <div class="action-row">
-          {#if generatedPracticeError}
-            <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
-            <button class="primary-action" onclick={finishLesson} type="button">Mark practiced</button>
-          {:else if playedCard}
+          {#if playedCard}
             <button class="secondary-action" onclick={resetTrick} type="button">Reset</button>
             {#if isLastTrick}
               <button class="primary-action" onclick={finishLesson} type="button">Finish lesson</button>

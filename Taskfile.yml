@@ -47,7 +47,7 @@ tasks:
       - cargo check -p barbu-app
 
   tauri:test:
-    desc: Test native command adapters, migration guards, and retained practice routes
+    desc: Test retained native command adapters
     cmds:
       - cargo test -p barbu-app
 

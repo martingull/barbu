@@ -42,6 +42,14 @@ Bridge adds auction and duplicate-scoring domain modules, a board session, and a
 version-1 save adapter. Its native auction/scoring mirror is removed. Replay
 restores the actual deal and contract; Next board commits one result, including
 a zero-point passed-out board. Its authored decisions live in `src/bridgePractice.ts`.
+Barbu generated practice now follows the same domain/content split in
+`src/domain/barbuPractice.ts` and `content/barbu-practice.json`. Four seeded
+patterns per contract retain dynamic rank/suit choices. Scoring and Domino
+placement share TypeScript play primitives. Barbu's six trick-taking contracts now
+use the hand factory too, with a separate `barbuPolicy.ts` and a `barbuHandSave.ts`
+compatibility boundary. Their Rust engine and generic native hand commands are
+removed. Domino full hands and the seven-contract session/save orchestration are
+still pending migration; the latter remains in Svelte for now.
 The metadata registry remains separate from engine selection. These references
 do not imply that every game can be added using configuration alone.
 

@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { bridgeHandEngine, heartsHandEngine, spadesHandEngine, typescriptHandEngine, whistHandEngine } from "../../src/domain/handEngine";
 import type { FullHandState } from "../../src/lessonTypes";
+import { barbuTrickContracts } from "../../src/domain/barbuRules";
 import nativeFixture from "../fixtures/whist-native-save.json" with { type: "json" };
 
 function freeze<T>(value: T): T {
@@ -36,9 +37,8 @@ test("only migrated games opt into the shared engine prototype", () => {
   expect(typescriptHandEngine("Hearts")).toBe(heartsHandEngine);
   expect(typescriptHandEngine("Spades")).toBe(spadesHandEngine);
   expect(typescriptHandEngine("Bridge")).toBe(bridgeHandEngine);
-  for (const contract of ["Domino", "No Hearts"] as const) {
-    expect(typescriptHandEngine(contract)).toBeUndefined();
-  }
+  for (const contract of barbuTrickContracts) expect(typescriptHandEngine(contract)).toBeDefined();
+  expect(typescriptHandEngine("Domino")).toBeUndefined();
 });
 
 test("Whist deals are deterministic and reject invalid dealers", () => {

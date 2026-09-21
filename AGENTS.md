@@ -45,8 +45,8 @@ Keep learner-facing outcome labels simple: `good`, `risky`, `penalty`, and `ille
 
 ## Stack
 
-- TypeScript domain engine under `src/domain` for migrated game play (Hearts, Whist, Spades and Bridge).
-- `crates/barbu-core` for remaining native game logic, generated practice, and shared Rust primitives.
+- TypeScript domain engine under `src/domain` for all trick-taking hands (Barbu, Hearts, Whist, Spades and Bridge).
+- `crates/barbu-core` for remaining native Domino full-hand logic and shared Rust primitives.
 - Tauri 2 app shell under `src-tauri`.
 - Svelte + TypeScript frontend under `src`.
 - Structured local game content under `content`.
@@ -61,7 +61,7 @@ their specific migration is verified; Tauri remains the native shell.
 
 ### TypeScript Engine Prototype
 
-On the `prototype/typescript-game-engine` branch, Whist, Hearts, Spades and Bridge hand play are
+On the `prototype/typescript-game-engine` branch, Barbu trick-taking contracts, Whist, Hearts, Spades and Bridge hand play are
 explicit exceptions to the Rust-first policy. Route them through
 `src/domain/handEngine.ts` on browser and native builds. Match progression belongs
 in `src/domain/whistSession.ts`, `src/domain/heartsSession.ts`, `src/domain/spadesSession.ts` and `src/domain/bridgeSession.ts`, with save
@@ -83,6 +83,11 @@ in `bridgeScoring.ts`, and board progression in `bridgeSession.ts`. Its native
 auction/scoring commands and Rust duplicate are removed. Keep the existing
 Barbu Natural bidding policy and declarer/dummy control; migration is not a
 new bidding system or an expert-strength claim.
+Barbu's six trick-taking contracts use the same hand factory, `barbuPolicy.ts`
+and `barbuRules.ts`. Their native engines, ruleset dispatch and hand commands
+are removed. `barbuHandSave.ts` validates legacy hands; replay recovers the actual
+deal. Domino full hands and the seven-contract run/session remain separate
+migration work. Do not claim that all Barbu session state has left Svelte yet.
 Do not migrate other games implicitly. See `docs/typescript-engine-prototype.md`
 for scope, compatibility checks, and remaining work. Run `task domain:test` after
 engine changes, in addition to the existing verification commands.
@@ -93,7 +98,7 @@ engine changes, in addition to the existing verification commands.
 - Share low-level card-table mechanics across games: deck, deal, turn order, follow-suit legality, trick winner, played-card memory, scoring primitives, and compact table presentation.
 - Keep game policy separate by game or contract. Barbu contract policy, Hearts/Black Lady avoidance policy, Domino layout policy, and future Whist/Bridge policies should call shared primitives but make their own decisions about winning, ducking, dumping danger cards, preserving trumps, or taking control.
 - When improving opponents, first identify the game objective being optimized. Barbu may need contract-specific reward or avoidance behavior; Hearts normally needs penalty avoidance, queen-of-spades danger management, and moon-defense behavior.
-- Remaining Barbu generated practice stays in Rust. Migrate its generation and evaluation explicitly into the domain layer, not into Svelte or smaller authored pools; Hearts demonstrates the content/template and shared-rules pattern.
+- Barbu generated practice uses `src/domain/barbuPractice.ts` and `content/barbu-practice.json` on both runtimes. Preserve four seeded patterns per contract and dynamic card choices; do not replace them with smaller authored pools. Barbu scoring and Domino placement reuse `barbuRules.ts` and `dominoRules.ts`. Native practice commands and the browser generator mirror are removed; only full Domino hands retain a native engine.
 - Model the Barbu/King-of-Cards teaching persona as content or lesson metadata where possible, not as scattered hardcoded strings.
 - Keep guided lessons in catalog-like modules so more games and families can be added without rewriting the interaction surface.
 - Keep Tauri command handlers thin; they should adapt app requests to core APIs.
@@ -169,7 +174,7 @@ task verify
 
 For UI-only changes, `npm run build` plus `task ui:test` is usually the minimum. For rules or scoring changes, run the core Rust tests.
 
-Rust-backed generated drills and full-hand commands require the Tauri runtime. Browser-only localhost can test authored lessons, frontend rendering, and browser fallback flows; use `task tauri:dev` when verifying Tauri command behavior.
+Generated practice and all trick-taking hands now run in TypeScript on both runtimes. Remaining native Domino full-hand commands require Tauri; browser mode still uses its fallback engine. Use `task tauri:dev` when verifying retained Tauri command behavior.
 
 Every implemented feature should end with a short "Try it yourself" note in the final handoff. Include the exact app path or buttons to press, what the user should expect to see, and whether browser dev mode is enough or Tauri/iOS is needed.
 
@@ -196,6 +201,6 @@ Preferred automation path:
 
 - Rust unit tests for rules, scoring, generation, and outcome explanations.
 - Browser interaction tests for authored lesson flows, including iPhone XR smoke coverage through Playwright.
-- Tauri command tests for generated scenarios.
+- Domain tests and frozen native fixtures for migrated generated practice; Tauri command tests for retained native hands.
 - iOS simulator smoke tests before TestFlight.
 - StoreKit sandbox tests once paid features are introduced.

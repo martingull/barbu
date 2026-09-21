@@ -1,0 +1,237 @@
+{
+  "topics": [
+    { "contract": "No Hearts", "scenarios": [
+      {
+        "id": "no-hearts-follow-suit", "title": "Follow suit with a heart at risk", "ledSuit": "{suit}",
+        "draws": { "suit": ["C", "D", "S"], "lead": ["7", "8", "9", "10"], "heart": ["4", "5", "6", "7"], "low": ["2", "3", "4", "5"], "high": ["J", "Q", "K"], "offRank": ["9", "10", "J", "Q"] },
+        "otherSuits": { "off": ["{suit}", "H"] },
+        "hand": ["{low}{suit}", "{high}{suit}", "8H", "{offRank}{off}"],
+        "before": [["Tutor", "{lead}{suit}"], ["Right", "{heart}H"]], "after": [["Left", "A{suit}"]],
+        "prompt": "Tutor led {lead}{suit}. Right is void in {ledName} and discarded {heart}H. Choose a legal card."
+      },
+      {
+        "id": "no-hearts-void-discard", "title": "Discard while void in the led suit", "ledSuit": "{suit}",
+        "draws": { "suit": ["C", "D", "S"], "lead": ["6", "7", "8"], "right": ["9", "10", "J"], "heart": ["4", "5", "6"], "offRank": ["2", "3", "4"] },
+        "otherSuits": { "off": ["{suit}", "H"] },
+        "hand": ["{offRank}{off}", "Q{off}", "{heart}H", "8H"],
+        "before": [["Tutor", "{lead}{suit}"], ["Right", "{right}{suit}"]], "after": [["Left", "A{suit}"]],
+        "prompt": "Tutor led {lead}{suit}. Right followed {right}{suit}. You have no {ledName}. Choose a discard."
+      },
+      {
+        "id": "no-hearts-void-dump-danger", "title": "Dump hearts under a locked winner", "ledSuit": "{suit}",
+        "draws": { "suit": ["C", "D", "S"], "lead": ["6", "7", "8"], "tutor": ["10", "J", "Q"] },
+        "otherSuits": { "off": ["{suit}", "H"] },
+        "hand": ["AH", "QH", "2{off}", "K{off}"],
+        "before": [["Left", "{lead}{suit}"], ["Tutor", "{tutor}{suit}"], ["Right", "A{suit}"]], "after": [],
+        "prompt": "Left led {lead}{suit}. Tutor followed {tutor}{suit}. Right is winning with A{suit}. You have no {ledName}, so you can unload danger."
+      },
+      {
+        "id": "no-hearts-ace-duck", "title": "Duck the ace of hearts", "ledSuit": "H",
+        "draws": { "lead": ["8", "9"], "tutor": ["10", "J"], "right": ["3", "4", "5"] },
+        "hand": ["2H", "AH", "QS", "7C"],
+        "before": [["Left", "{lead}H"], ["Tutor", "{tutor}H"], ["Right", "{right}H"]], "after": [],
+        "prompt": "Left led {lead}H. Tutor followed {tutor}H. Right followed {right}H. Avoid taking the heart trick with AH."
+      }
+    ] },
+    { "contract": "No Queens", "scenarios": [
+      {
+        "id": "no-queens-capture", "title": "Duck the queen trick", "ledSuit": "{suit}",
+        "draws": { "suit": ["C", "D", "S"], "lead": ["5", "6", "7", "8"], "right": ["7", "8", "9", "10"], "low": ["2", "3", "4"], "high": ["K", "A"], "offRank": ["4", "5", "6", "7"] },
+        "otherSuits": { "off": ["{suit}", "H"] },
+        "hand": ["{low}{suit}", "{high}{suit}", "9H", "{offRank}{off}"],
+        "before": [["Left", "{lead}{suit}"], ["Tutor", "Q{suit}"], ["Right", "{right}{suit}"]], "after": [],
+        "prompt": "Left led {lead}{suit}. Tutor played Q{suit}. Right followed {right}{suit}. Choose without capturing the queen."
+      },
+      {
+        "id": "no-queens-void-discard", "title": "Discard when the queen is already loose", "ledSuit": "{suit}",
+        "draws": { "suit": ["C", "D", "S"], "lead": ["5", "6", "7"], "offRank": ["2", "3", "4"] },
+        "otherSuits": { "off": ["{suit}", "H"] },
+        "hand": ["{offRank}{off}", "K{off}", "QH", "8H"],
+        "before": [["Tutor", "{lead}{suit}"], ["Right", "Q{suit}"]], "after": [["Left", "A{suit}"]],
+        "prompt": "Tutor led {lead}{suit}. Right played Q{suit}. You are void in {ledName}. Choose a discard."
+      },
+      {
+        "id": "no-queens-void-dump-queen", "title": "Dump a queen under a locked winner", "ledSuit": "{suit}",
+        "draws": { "suit": ["C", "D", "S"], "lead": ["6", "7", "8"], "tutor": ["9", "10", "J"] },
+        "otherSuits": { "off": ["{suit}", "H"] },
+        "hand": ["QH", "Q{off}", "2{off}", "K{off}"],
+        "before": [["Left", "{lead}{suit}"], ["Tutor", "{tutor}{suit}"], ["Right", "A{suit}"]], "after": [],
+        "prompt": "Left led {lead}{suit}. Tutor followed {tutor}{suit}. Right is winning with A{suit}. You have no {ledName}, so a queen discard is safe for you."
+      },
+      {
+        "id": "no-queens-follow-under-ace", "title": "Shed a queen under the ace", "ledSuit": "{suit}",
+        "draws": { "suit": ["C", "D", "S"], "lead": ["6", "7", "8"], "right": ["3", "4", "5"] },
+        "otherSuits": { "off": ["{suit}", "H"] },
+        "hand": ["2{suit}", "Q{suit}", "9H", "K{off}"],
+        "before": [["Left", "{lead}{suit}"], ["Tutor", "A{suit}"], ["Right", "{right}{suit}"]], "after": [],
+        "prompt": "Left led {lead}{suit}. Tutor is already winning with A{suit}. Right followed {right}{suit}. If you must follow, a queen can be safe under the ace."
+      }
+    ] },
+    { "contract": "King of Hearts", "scenarios": [
+      {
+        "id": "king-of-hearts-capture", "title": "Stay under the king", "ledSuit": "H",
+        "draws": { "lead": ["9", "10", "J"], "low": ["2", "3", "4", "5"], "off": ["C", "D", "S"], "offRank": ["7", "8", "9", "10"] },
+        "hand": ["{low}H", "AH", "QS", "{offRank}{off}"],
+        "before": [["Tutor", "{lead}H"], ["Right", "KH"]], "after": [["Left", "QH"]],
+        "prompt": "Tutor led {lead}H. Right played KH, the contract card. Choose a heart without capturing it."
+      },
+      {
+        "id": "king-of-hearts-void-discard", "title": "Escape the king when you are void", "ledSuit": "H",
+        "draws": { "suit": ["C", "D", "S"], "lead": ["8", "9", "10"], "first": ["2", "3", "4"], "second": ["7", "8", "9"] },
+        "otherSuits": { "off": ["{suit}", "H"] },
+        "hand": ["{first}{suit}", "{second}{off}", "QS", "AC"],
+        "before": [["Tutor", "{lead}H"], ["Right", "KH"]], "after": [["Left", "AH"]],
+        "prompt": "Tutor led {lead}H. Right played KH. You have no hearts, so choose any discard."
+      },
+      {
+        "id": "king-of-hearts-void-dump-king", "title": "Dump Barbu under a locked winner", "ledSuit": "{suit}",
+        "draws": { "suit": ["C", "D", "S"], "lead": ["6", "7", "8"], "tutor": ["9", "10", "J"] },
+        "otherSuits": { "off": ["{suit}", "H"] },
+        "hand": ["KH", "QH", "2{off}", "K{off}"],
+        "before": [["Left", "{lead}{suit}"], ["Tutor", "{tutor}{suit}"], ["Right", "A{suit}"]], "after": [],
+        "prompt": "Left led {lead}{suit}. Tutor followed {tutor}{suit}. Right is winning with A{suit}. You are void in {ledName}, so KH can be unloaded safely."
+      },
+      {
+        "id": "king-of-hearts-follow-under-ace", "title": "Shed KH under the ace", "ledSuit": "H",
+        "draws": { "lead": ["8", "9"], "right": ["3", "4", "5"] },
+        "hand": ["2H", "KH", "QS", "7C"],
+        "before": [["Left", "{lead}H"], ["Tutor", "AH"], ["Right", "{right}H"]], "after": [],
+        "prompt": "Left led {lead}H. Tutor is already winning with AH. Right followed {right}H. KH can be shed when the ace is locked above it."
+      }
+    ] },
+    { "contract": "No Last Two", "scenarios": [
+      {
+        "id": "no-last-two-duck", "title": "Duck the twelfth trick", "ledSuit": "{suit}", "trickNumber": 12,
+        "draws": { "suit": ["C", "D", "S"], "lead": ["6", "7", "8"], "right": ["3", "4", "5"], "offRank": ["5", "6", "7"] },
+        "otherSuits": { "off": ["{suit}", "H"] },
+        "hand": ["2{suit}", "Q{suit}", "{offRank}{off}"],
+        "before": [["Left", "{lead}{suit}"], ["Tutor", "J{suit}"], ["Right", "{right}{suit}"]], "after": [],
+        "prompt": "This is trick 12. Left led {lead}{suit}. Tutor played J{suit}. Right followed {right}{suit}. Avoid winning the late trick."
+      },
+      {
+        "id": "no-last-two-forced-win", "title": "Forced late winner", "ledSuit": "{suit}", "trickNumber": 13,
+        "draws": { "suit": ["C", "D", "S"], "lead": ["4", "5", "6"], "tutor": ["7", "8", "9"] },
+        "otherSuits": { "off": ["{suit}", "H"] },
+        "hand": ["K{suit}", "3{off}"],
+        "before": [["Left", "{lead}{suit}"], ["Tutor", "{tutor}{suit}"], ["Right", "10{suit}"]], "after": [],
+        "prompt": "This is trick 13. Left led {lead}{suit}. Tutor played {tutor}{suit}. Right followed 10{suit}. Your only led-suit card is dangerous."
+      },
+      {
+        "id": "no-last-two-setup", "title": "Prepare for the final tricks", "ledSuit": "{suit}", "trickNumber": 11,
+        "draws": { "suit": ["C", "D", "S"], "lead": ["6", "7", "8"], "right": ["3", "4", "5"], "offRank": ["5", "6", "7"] },
+        "otherSuits": { "off": ["{suit}", "H"] },
+        "hand": ["2{suit}", "Q{suit}", "{offRank}{off}"],
+        "before": [["Left", "{lead}{suit}"], ["Tutor", "10{suit}"], ["Right", "{right}{suit}"]], "after": [],
+        "prompt": "This is trick 11. Left led {lead}{suit}. Tutor played 10{suit}. Right followed {right}{suit}. Avoid taking the lead into the final two tricks."
+      },
+      {
+        "id": "no-last-two-early-setup", "title": "Keep an exit before the finish", "ledSuit": "{suit}", "trickNumber": 10,
+        "draws": { "suit": ["C", "D", "S"], "lead": ["5", "6", "7"], "tutor": ["8", "9"] },
+        "otherSuits": { "off": ["{suit}", "H"] },
+        "hand": ["2{suit}", "K{suit}", "4{off}"],
+        "before": [["Left", "{lead}{suit}"], ["Tutor", "{tutor}{suit}"], ["Right", "J{suit}"]], "after": [],
+        "prompt": "This is trick 10. Left led {lead}{suit}. Tutor played {tutor}{suit}. Right is winning with J{suit}. Stay out of lead before the dangerous finish."
+      }
+    ] },
+    { "contract": "No Tricks", "scenarios": [
+      {
+        "id": "no-tricks-duck", "title": "Duck the trick", "ledSuit": "{suit}",
+        "draws": { "suit": ["C", "D", "S"], "lead": ["7", "8", "9"], "left": ["3", "4", "5"], "offRank": ["6", "7", "8"] },
+        "otherSuits": { "off": ["{suit}", "H"] },
+        "hand": ["2{suit}", "A{suit}", "{offRank}{off}"],
+        "before": [["Tutor", "{lead}{suit}"], ["Right", "K{suit}"]], "after": [["Left", "{left}{suit}"]],
+        "prompt": "Tutor led {lead}{suit}. Right followed with K{suit}. Avoid taking control of the trick."
+      },
+      {
+        "id": "no-tricks-forced-win", "title": "Forced trick winner", "ledSuit": "{suit}",
+        "draws": { "suit": ["C", "D", "S"], "lead": ["4", "5", "6"], "tutor": ["7", "8"] },
+        "otherSuits": { "off": ["{suit}", "H"] },
+        "hand": ["K{suit}", "3{off}"],
+        "before": [["Left", "{lead}{suit}"], ["Tutor", "{tutor}{suit}"], ["Right", "9{suit}"]], "after": [],
+        "prompt": "Left led {lead}{suit}. Tutor played {tutor}{suit}. Right followed 9{suit}. Your only led-suit card wins."
+      },
+      {
+        "id": "no-tricks-void-discard", "title": "Discard under a locked winner", "ledSuit": "{suit}",
+        "draws": { "suit": ["C", "D", "S"], "lead": ["6", "7", "8"], "tutor": ["10", "J", "Q"] },
+        "otherSuits": { "off": ["{suit}", "H"], "second": ["{suit}", "{off}"] },
+        "hand": ["2{off}", "K{off}", "4{second}", "Q{second}"],
+        "before": [["Left", "{lead}{suit}"], ["Tutor", "{tutor}{suit}"], ["Right", "A{suit}"]], "after": [],
+        "prompt": "Left led {lead}{suit}. Tutor followed {tutor}{suit}. Right is winning with A{suit}. You have no {ledName}, so any discard stays clear."
+      },
+      {
+        "id": "no-tricks-last-seat-duck", "title": "Duck from last seat", "ledSuit": "{suit}",
+        "draws": { "suit": ["C", "D", "S"], "lead": ["6", "7", "8"], "right": ["3", "4", "5"] },
+        "otherSuits": { "off": ["{suit}", "H"] },
+        "hand": ["2{suit}", "A{suit}", "9{off}"],
+        "before": [["Left", "{lead}{suit}"], ["Tutor", "Q{suit}"], ["Right", "{right}{suit}"]], "after": [],
+        "prompt": "Left led {lead}{suit}. Tutor is winning with Q{suit}. Right followed {right}{suit}. You can see the whole trick before choosing."
+      }
+    ] },
+    { "contract": "Hearts Trumps", "scenarios": [
+      {
+        "id": "hearts-trumps-cut", "title": "Find the trump trick", "ledSuit": "{suit}",
+        "draws": { "suit": ["C", "D", "S"], "lead": ["9", "10", "J"], "left": ["3", "4", "5"], "heart": ["4", "5", "6"], "low": ["2", "3"] },
+        "otherSuits": { "off": ["{suit}", "H"], "second": ["{suit}", "{off}", "H"] },
+        "hand": ["{heart}H", "7H", "{low}{off}", "K{second}"],
+        "before": [["Tutor", "{lead}{suit}"], ["Right", "A{suit}"]], "after": [["Left", "{left}{off}"]],
+        "prompt": "Tutor led {lead}{suit}. Right followed A{suit}. Hearts are trumps, and you have no {ledName}."
+      },
+      {
+        "id": "hearts-trumps-follow-win", "title": "Win while following suit", "ledSuit": "{suit}",
+        "draws": { "suit": ["C", "D", "S"], "lead": ["7", "8", "9"], "right": ["J", "Q"], "left": ["3", "4", "5"] },
+        "otherSuits": { "off": ["{suit}", "H"] },
+        "hand": ["2{suit}", "A{suit}", "7H", "K{off}"],
+        "before": [["Tutor", "{lead}{suit}"], ["Right", "{right}{suit}"]], "after": [["Left", "{left}{suit}"]],
+        "prompt": "Tutor led {lead}{suit}. Right followed {right}{suit}. You can follow {ledName} and still chase the trick."
+      },
+      {
+        "id": "hearts-trumps-overtrump", "title": "Overtrump for the trick", "ledSuit": "{suit}",
+        "draws": { "suit": ["C", "D", "S"], "lead": ["8", "9", "10"], "right": ["5", "6"], "left": ["3", "4"] },
+        "otherSuits": { "off": ["{suit}", "H"] },
+        "hand": ["3H", "QH", "4{off}", "K{off}"],
+        "before": [["Tutor", "{lead}{suit}"], ["Right", "{right}H"]], "after": [["Left", "{left}{suit}"]],
+        "prompt": "Tutor led {lead}{suit}. Right already trumped with {right}H. You are void in {ledName}, so choose whether to overtrump."
+      },
+      {
+        "id": "hearts-trumps-follow-before-trump", "title": "Follow before trumping", "ledSuit": "{suit}",
+        "draws": { "suit": ["C", "D", "S"], "lead": ["7", "8", "9"], "right": ["J", "Q"], "left": ["3", "4", "5"] },
+        "otherSuits": { "off": ["{suit}", "H"] },
+        "hand": ["2{suit}", "A{suit}", "6H", "K{off}"],
+        "before": [["Tutor", "{lead}{suit}"], ["Right", "{right}{suit}"]], "after": [["Left", "{left}{suit}"]],
+        "prompt": "Tutor led {lead}{suit}. Right followed {right}{suit}. Hearts are trumps, but you still hold {ledName} and must follow before trumping."
+      }
+    ] },
+    { "contract": "Domino", "scenarios": [
+      {
+        "id": "domino-placement", "title": "Place into the Domino layout", "ledSuit": "S",
+        "draws": { "low": ["5", "6"] },
+        "rankMaps": { "high": { "from": "low", "values": { "5": "6", "6": "8" } }, "legal": { "from": "low", "values": { "5": "4", "6": "9" } } },
+        "hand": ["7H", "{legal}S", "10C", "QD"],
+        "before": [["Tutor", "7S"], ["Right", "{low}S"], ["Left", "{high}S"]], "after": [],
+        "prompt": "Domino is open on spades from the current lane, and unopened suits need a seven. Choose a legal placement."
+      },
+      {
+        "id": "domino-two-lane-choice", "title": "Choose between open lanes", "ledSuit": "S",
+        "draws": { "low": ["5", "6"] },
+        "rankMaps": { "high": { "from": "low", "values": { "5": "6", "6": "8" } }, "legal": { "from": "low", "values": { "5": "4", "6": "9" } } },
+        "hand": ["{legal}S", "6H", "8H", "QD"],
+        "before": [["Tutor", "7S"], ["Right", "{low}S"], ["Left", "{high}S"], ["Tutor", "7H"]], "after": [],
+        "prompt": "Spades and hearts are both open. Choose a card that extends one current lane by one rank."
+      },
+      {
+        "id": "domino-open-new-suit", "title": "Open a new suit", "ledSuit": "{suit}",
+        "draws": { "suit": ["C", "D", "H"] }, "otherSuits": { "off": ["{suit}", "S"] },
+        "hand": ["7{suit}", "6S", "10{off}", "Q{off}"],
+        "before": [["Tutor", "7S"]], "after": [],
+        "prompt": "Only spades are open. A new suit must start with its seven; otherwise extend the spade lane by one rank."
+      },
+      {
+        "id": "domino-avoid-gap", "title": "Avoid jumping a lane", "ledSuit": "{suit}",
+        "draws": { "suit": ["C", "D", "H"] }, "otherSuits": { "off": ["{suit}", "S"] },
+        "hand": ["9{suit}", "10{suit}", "6S", "Q{off}"],
+        "before": [["Tutor", "7{suit}"], ["Right", "8{suit}"], ["Left", "7S"]], "after": [],
+        "prompt": "One suit is open through the eight, and spades are open from seven. Choose a card adjacent to an open lane; do not jump ranks."
+      }
+    ] }
+  ]
+}

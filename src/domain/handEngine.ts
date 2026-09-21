@@ -1,4 +1,6 @@
 import type { FullHandContract, FullHandState, Seat } from "../lessonTypes";
+import { barbuTrickContracts } from "./barbuRules";
+import { startBarbuHand, playBarbuCard, replayBarbuHand } from "./trickTakingHand";
 import { applyBrowserHeartsPass, playBrowserHeartsCard, replayHeartsHand, startBrowserHeartsHand, startBrowserHeartsPassingHand,
   playBrowserWhistCard, replayWhistHand, startBrowserWhistHand,
   playBrowserSpadesCard, replaySpadesHand, startBrowserSpadesHand, startSpadesBiddingHand, beginSpadesHand,
@@ -48,10 +50,12 @@ export const bridgeHandEngine = createHandEngine("Bridge",
   ({ seed, boardNumber }) => startBrowserBridgeHand(seed, boardNumber), playBrowserBridgeCard, replayBridgeHand);
 
 const engines: Partial<Record<FullHandContract, HandEngine>> = {
+  ...Object.fromEntries(barbuTrickContracts.map(contract => [contract,
+    createHandEngine(contract, ({ seed }) => startBarbuHand(contract, seed), playBarbuCard, replayBarbuHand)])),
   Whist: whistHandEngine, Hearts: heartsHandEngine, Spades: spadesHandEngine, Bridge: bridgeHandEngine
 };
 
-// Only migrated games belong here; the remaining native/fallback routes stay intact.
+// Domino has a layout engine rather than a trick-taking hand.
 export function typescriptHandEngine(contract: FullHandContract): HandEngine | undefined {
   return engines[contract];
 }

@@ -11,20 +11,23 @@ game-specific rules and opponent policy. This is not a mobile-shell migration.
 | Area | Implementation |
 | --- | --- |
 | Hearts, Whist, Spades and Bridge full play, opponents, sessions and saves | TypeScript on browser and native builds |
-| Hearts generated practice | Shared TypeScript generator/evaluation and structured content |
+| Hearts and Barbu generated practice | Shared TypeScript generators/evaluation and structured content |
 | Whist and Spades authored Learn and Practice | Shared TypeScript content and policy |
-| Barbu full play | Existing native commands and TypeScript fallback |
+| Barbu six trick-taking full hands and opponents | Shared TypeScript hand factory, rules and policy |
+| Barbu seven-contract run and saves | Existing Svelte orchestration; shared validation for migrated hands |
+| Domino full hands | Existing native commands and TypeScript fallback |
 | Bridge auction, duplicate scoring and authored practice | Shared TypeScript domain and content; native duplicate removed |
 | Packaging and native integrations | Tauri/Rust shell |
 
 There is no hosted gameplay backend. TypeScript runs locally in the browser or
-phone WebView; Rust runs locally inside the native build. Svelte only presents
-the domain state and dispatches actions.
+phone WebView; Rust runs locally inside the native build. Migrated sessions keep
+Svelte focused on presentation and action dispatch; Barbu's seven-contract run
+still has session orchestration in Svelte pending its next migration step.
 
 ## Shared Boundaries
 
 - `src/domain/handEngine.ts`: start/transition interface, factory and selection
-  registry. Hearts, Whist, Spades and Bridge are explicitly migrated. Hearts adds passing.
+  registry. All trick-taking contracts are migrated. Hearts adds passing.
 - `src/domain/trickTakingHand.ts`: shared hand mechanics and the existing
   TypeScript implementations. Historical Browser-prefixed names remain; they
   do not mean a second implementation exists for migrated games.
@@ -35,6 +38,9 @@ the domain state and dispatches actions.
   Hearts first-trick/lead restrictions and card points shared by play and practice.
 - `src/domain/heartsPractice.ts`: seeded template selection and decision/pass
   evaluation. `content/hearts-practice.json` owns the scripted cards and prompts.
+- `src/domain/barbuPractice.ts`: seeded rank/suit generation and decision evaluation
+  from `content/barbu-practice.json`; shares points and placement rules with
+  TypeScript hand play through `barbuRules.ts` and `dominoRules.ts`.
 - `src/persistence/`: game-specific save validation and restoration on top of
   shared hand validation and storage factories.
 
@@ -47,14 +53,16 @@ Table factories, catalog registration and presentation remain unchanged.
 
 The Rust Hearts, Whist and Spades full-hand implementations, opponent policies,
 Whist settlement, ruleset registration and Hearts passing commands are removed.
-The remaining generic native commands explicitly reject migrated games rather
-than silently choosing another ruleset. Remaining Barbu trump mechanics are kept.
+Barbu's six trick-taking engines, contract policies and ruleset dispatcher are
+also removed, along with the generic native hand commands and DTOs. Domino is
+the only remaining native full-hand engine.
 
 Hearts native practice generators, evaluators, commands, passing DTO, and Svelte
 fallback pools are removed too. All six topics retain three scripted decisions,
 and passing retains both danger-card and long-suit patterns. Quick drill selects
 one decision per explicit topic, no longer depending on inconsistent ID prefixes.
-Barbu practice (including No Hearts and Hearts Trumps) remains native-backed.
+Barbu practice (including No Hearts, Hearts Trumps and Domino decisions) is now
+TypeScript too; only full Domino hands still retain native gameplay routes.
 
 The redundant frontend command-name table and the `browserHandFallback.ts`
 re-export wrapper are removed. Consumers use the domain module directly.
@@ -65,7 +73,7 @@ Pure Hearts/Whist/Spades/Bridge policy, scoring and deal audits now run once in
 
 Existing keys and version-1 schemas remain:
 `barbu.savedWhistRun.v1`, `barbu.savedHeartsRun.v1`, `barbu.savedSpadesRun.v1` and
-`barbu.savedBridgeRun.v1`.
+`barbu.savedBridgeRun.v1`. Barbu retains `barbu.savedPlayRun.v1`.
 Legacy native saves resume through TypeScript regardless of their old routing
 flag. Saves preserve scores, cards, hand IDs, pass selection and trick review.
 Whist saves without a session mode default to a single game.
@@ -138,7 +146,7 @@ A new practice/play consistency check caught the existing 1NT exercise declaring
 16 HCP and 1NT answer correct without changing its shape or the bidding policy.
 
 The Rust Bridge module, DTOs, exports and four Tauri commands are removed.
-Generic native hand commands explicitly reject Bridge too. No second production
+Generic native hand commands have since been removed too. No second production
 auction/scoring engine is retained.
 
 `tests/fixtures/bridge-native-rules.json` was captured from Rust before deletion.
@@ -165,6 +173,61 @@ This preserves the existing basic bidding/cardplay system and raw duplicate
 points. It does not add conventions, expert play, matchpoint or IMP comparisons.
 See `docs/bridge.md` for the unchanged strength boundaries.
 
+## Barbu Practice Migration
+
+`content/barbu-practice.json` preserves the four existing patterns for each of
+the seven contracts. Ordered random draws, dependent suits and Domino lane
+ranks retain the native 64-bit generator. Pools still contain 28 decisions;
+Quick drill chooses one per contract and focused practice uses all four patterns.
+This is not a replacement with a smaller fixed authored pool, nor a new curriculum.
+
+`tests/fixtures/barbu-native-practice.json` was captured from native Tauri DTOs
+at `0aa6451` on 2026-09-21 before removing `practice.rs` and its command adapters.
+It retains readable seed-0 outputs for all 28 patterns, plus SHA-256 checks of
+eight complete seeded pools and eight standalone follow-suit scenarios, including
+large safe-integer seeds. Hash input is recursively key-sorted JSON excluding
+explanations. Do not regenerate expected results from TypeScript.
+Copy is compared separately across the 28 readable scenarios, with two explicit
+corrections: off-suit discards no longer claim to follow suit, and losing on-suit
+plays in Hearts Trumps no longer claim the player is void.
+
+The native generator, browser generator mirror, practice DTOs and commands are
+removed. An unused Svelte generated-lesson route and its Tauri-required error
+state were also deleted. Domino practice uses the shared custom-table slot so
+its progress row does not fall behind the bottom controls.
+
+No save schema or opponent policy changes were included in the practice migration.
+
+## Barbu Trick-Hand Migration
+
+All six trick contracts now register through `createHandEngine` and share the
+same TypeScript implementation on browser and native builds. `barbuPolicy.ts`
+owns contract-specific choices using only the acting hand and public play;
+`barbuRules.ts` supplies the same points used by generated practice. Native
+rank/suit policy tie-breaking is preserved independently of display ordering.
+This changes tied choices in the former browser fallback to match native play.
+
+`barbuHandSave.ts` reuses standard trick-hand validation, checks Barbu scores and
+winners, and rebuilds derived fields. Old native routing flags no longer select
+a different engine. Review state remains intact. Replay recovers the actual deal
+instead of redealing from a seed, and clears the replayed contract's run result.
+New run hands are saved immediately, before the first card is selected.
+Completed-hand prompts now use the final score rather than the previous trick's
+cached total.
+
+`tests/fixtures/barbu-native-hands.json` was captured from native commands before
+deleting `hand.rs`, `contract_policy.rs`, `ruleset.rs` and their Tauri adapters.
+It stores 18 compact initial/final hands (three seeds per contract), the 13 player
+choices for each, and SHA-256 digests of all intermediate states. The test-only
+decoder/projection lives in `tests/fixtures/barbuHandFixture.ts`. Hashes cover
+remaining cards, legal choices, turns, trick winners, scores, outcomes and tags,
+excluding copy, IDs and display ordering. Do not regenerate from TypeScript.
+
+Domino still uses native commands on installed builds and a browser fallback.
+Seven-contract progression and save orchestration still live in Svelte; migrating
+that session boundary is the next step, not something this hand migration claims.
+The fixed-order training-run product limitation remains unchanged.
+
 ## Verification And Device Status
 
 Run:
@@ -182,9 +245,10 @@ Domain tests cover golden positions, hidden-hand independence, complete deals,
 legality, card conservation, moon scoring, rubber completion, saved native hands,
 replay, invalid saves and storage failures. Browser tests simulate native
 runtime presence and verify that Hearts/Whist/Spades/Bridge full play and Hearts practice never
-invoke Rust. Each Hearts practice topic completes all three decisions in both
-browser and simulated-native modes. Native adapter tests reject migrated games
-and complete the remaining contracts.
+invoke Rust. Barbu practice tests cover all four decisions per focused contract
+and the mixed seven-contract drill in browser and simulated-native modes.
+Each Hearts practice topic completes all three decisions in both modes. Native
+adapter tests reject migrated games and complete the remaining contracts.
 
 Spades migration verification on 2026-09-21: 51 domain tests, 121 Rust tests,
 production build and native check passed. The full six-viewport browser run passed
@@ -203,6 +267,25 @@ skips across all six viewports. Screenshots were inspected on iPhone XR, iPhone 
 and compact Galaxy S9 layouts. This migration has not yet had a physical-device
 build or smoke check.
 
+Barbu practice migration verification on 2026-09-21: all 73 domain tests,
+69 remaining core tests, two native adapter tests, production build and native
+check passed. All 84 new practice browser checks passed across six phone profiles.
+The broader table/lesson suite had 410 passes, 30 project-specific skips and four
+initial-page-load timeouts in the WebKit Hearts Trumps hand check. Isolated reruns
+of that check passed on all six profiles with the original timeout. Screenshots
+confirmed the corrected Domino progress placement on Galaxy S9. No physical-device
+build or installation was performed for this pass.
+
+Barbu trick-hand migration verification on 2026-09-21: all 82 domain tests,
+16 remaining core tests, one native Domino adapter test, production build and
+native check passed. Native fixtures match all 234 player transitions across
+18 hands, including actual-deal replay. All 156 migration/table browser checks
+and 30 card-counting/memory checks passed across six phone profiles. These
+include mock-native runs that reject gameplay command calls, saved review/resume,
+and complete seven-contract runs. S9 review and iPhone 16 active-hand screenshots
+were inspected. The existing large-bundle build warning remains. No physical
+device build, installation or store upload was performed for this pass.
+
 Whist was installed on iPhone 16 on 2026-09-21 and the user confirmed it works.
 The subsequent Hearts build was installed, but its automatic launch was blocked
 by the screen lock. This deduplication change still needs a fresh device build
@@ -214,16 +297,22 @@ Replay should preserve the deal; Next hand/board should settle it only once.
 For Bridge, complete the auction, Start play, and reload during a dummy turn or
 trick review. Continue Bridge should restore that exact phase.
 Also check Hearts > Practice > each topic, including Pass three and Quick drill.
+For Barbu, use Practice > Quick drill or one of the fixed contract drills. The
+same generator now runs in browser and installed builds, including Domino decisions.
+Also use Barbu > Play > Play Barbu > Start hand, reload and Continue Play Barbu,
+then finish a hand and Replay. The same cards should return, with that attempt's
+score removed from the run total. All six trick-taking contracts use TypeScript.
 Browser mode now exercises the same Hearts practice logic as the installed build;
 it is still not a physical-device packaging test.
 
 ## Next Migration Work
 
-1. Migrate Barbu contracts/generated practice, then Domino. Keep Domino's layout state
-   separate from trick-taking hands.
+1. Migrate Domino full hands and Barbu's seven-contract session/save boundary.
+   Keep Domino's layout state separate from trick-taking hands, and reuse the
+   reviewed-hand and save-store factories rather than copying another session.
 2. Remove each obsolete engine and dispatch route after verifying its replacement;
    retain regression fixtures rather than permanent parallel engines.
 3. Evaluate another mobile shell separately, only if it brings a clear benefit.
 
-Rust remains required for the current shell, Barbu practice and unmigrated games.
+Rust remains required for the current shell and unmigrated Domino full hands.
 The gameplay/practice cleanup is complete for Hearts, Whist, Spades and Bridge, not for the whole catalog.

@@ -3,7 +3,10 @@ async fn open_privacy_policy(app: tauri::AppHandle) -> Result<(), String> {
     use tauri_plugin_opener::OpenerExt;
 
     app.opener()
-        .open_url("https://martingull.github.io/barbu/privacy-policy.html", None::<&str>)
+        .open_url(
+            "https://martingull.github.io/barbu/privacy-policy.html",
+            None::<&str>,
+        )
         .map_err(|error| error.to_string())
 }
 
@@ -18,47 +21,6 @@ fn current_game() -> GameSummary {
         players: lesson.players,
         contract_count: lesson.contracts.len(),
     }
-}
-
-#[tauri::command]
-fn generate_no_hearts_follow_suit(seed: u64) -> PracticeScenarioDto {
-    let scenario = barbu_core::generate_no_hearts_follow_suit(seed);
-    PracticeScenarioDto::from_core(&scenario)
-}
-
-#[tauri::command]
-fn generate_daily_drill_set(seed: u64) -> PracticeDrillSetDto {
-    let drill_set = barbu_core::generate_daily_drill_set(seed);
-    PracticeDrillSetDto::from_core(&drill_set)
-}
-
-#[tauri::command]
-fn start_hand(game_id: String, contract: String, seed: u64) -> Result<FullHandDto, String> {
-    let ruleset = barbu_core::get_ruleset(&game_id, &contract)?;
-    let state = ruleset.start_hand(seed);
-    Ok(FullHandDto::from_core(
-        &state,
-        &contract,
-        ruleset.score_type(),
-    ))
-}
-
-#[tauri::command]
-fn play_hand_card(
-    game_id: String,
-    contract: String,
-    state: FullHandDto,
-    card_id: String,
-) -> Result<FullHandDto, String> {
-    let ruleset = barbu_core::get_ruleset(&game_id, &contract)?;
-    let state_core = state.to_core()?;
-    let card = card_from_label(&card_id)?;
-    let next_state = ruleset.play_card(state_core, card)?;
-    Ok(FullHandDto::from_core(
-        &next_state,
-        &contract,
-        ruleset.score_type(),
-    ))
 }
 
 #[tauri::command]
@@ -91,137 +53,6 @@ struct GameSummary {
     family: &'static str,
     players: u8,
     contract_count: usize,
-}
-
-#[derive(serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-struct PracticeDrillSetDto {
-    id: String,
-    title: String,
-    scenarios: Vec<PracticeScenarioDto>,
-}
-
-impl PracticeDrillSetDto {
-    fn from_core(drill_set: &barbu_core::PracticeDrillSet) -> Self {
-        Self {
-            id: drill_set.id.clone(),
-            title: drill_set.title.clone(),
-            scenarios: drill_set
-                .scenarios
-                .iter()
-                .map(PracticeScenarioDto::from_core)
-                .collect(),
-        }
-    }
-}
-
-#[derive(serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-struct PracticeScenarioDto {
-    id: String,
-    title: String,
-    contract: String,
-    led_suit: String,
-    prompt: String,
-    table_before_choice: Vec<PlayedCardDto>,
-    player_hand: Vec<CardDto>,
-    table_after_choice: Vec<PlayedCardDto>,
-    legal_card_ids: Vec<String>,
-    outcomes: Vec<PracticeOutcomeDto>,
-}
-
-impl PracticeScenarioDto {
-    fn from_core(scenario: &barbu_core::PracticeScenario) -> Self {
-        Self {
-            id: scenario.id.clone(),
-            title: scenario.title.clone(),
-            contract: scenario.contract.clone(),
-            led_suit: scenario.led_suit.short_name().to_string(),
-            prompt: scenario.prompt.clone(),
-            table_before_choice: scenario
-                .table_before_choice
-                .iter()
-                .copied()
-                .map(PlayedCardDto::from_core)
-                .collect(),
-            player_hand: scenario
-                .player_hand
-                .iter()
-                .copied()
-                .map(CardDto::from_core)
-                .collect(),
-            table_after_choice: scenario
-                .table_after_choice
-                .iter()
-                .copied()
-                .map(PlayedCardDto::from_core)
-                .collect(),
-            legal_card_ids: scenario
-                .legal_player_cards()
-                .iter()
-                .map(ToString::to_string)
-                .collect(),
-            outcomes: scenario
-                .player_hand
-                .iter()
-                .copied()
-                .map(|card| PracticeOutcomeDto::from_core(scenario.outcome_for(card)))
-                .collect(),
-        }
-    }
-}
-
-#[derive(serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-struct PracticeOutcomeDto {
-    card_id: String,
-    outcome_kind: String,
-    reason: String,
-    is_legal: bool,
-    winner: Option<String>,
-    penalty: Option<i32>,
-    explanation: String,
-    completed_trick: Option<Vec<PlayedCardDto>>,
-}
-
-impl PracticeOutcomeDto {
-    fn from_core(outcome: barbu_core::PracticeOutcome) -> Self {
-        Self {
-            card_id: outcome.player_card.to_string(),
-            outcome_kind: outcome.outcome_kind.as_str().to_string(),
-            reason: outcome.reason.as_str().to_string(),
-            is_legal: outcome.is_legal,
-            winner: outcome.winner.map(player_name).map(str::to_string),
-            penalty: outcome.penalty,
-            explanation: outcome.explanation,
-            completed_trick: outcome.completed_trick.map(|played_cards| {
-                played_cards
-                    .into_iter()
-                    .map(PlayedCardDto::from_core)
-                    .collect()
-            }),
-        }
-    }
-}
-
-#[derive(serde::Deserialize, serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-struct FullHandDto {
-    id: String,
-    contract: String,
-    hands: Vec<Vec<CardDto>>,
-    current_player_index: usize,
-    current_player: String,
-    current_trick: Vec<PlayedCardDto>,
-    completed_tricks: Vec<CompletedTrickDto>,
-    player_hand: Vec<CardDto>,
-    legal_card_ids: Vec<String>,
-    player_penalty: i32,
-    total_penalty: i32,
-    cards_remaining: usize,
-    trick_number: usize,
-    status: String,
-    prompt: String,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -333,148 +164,6 @@ impl DominoHandDto {
     }
 }
 
-impl FullHandDto {
-    fn from_core(
-        state: &barbu_core::TrickTakingHandState,
-        contract: &str,
-        penalty_name: &str,
-    ) -> Self {
-        Self {
-            id: state.id.clone(),
-            contract: contract.to_string(),
-            hands: state
-                .hands
-                .iter()
-                .map(|hand| hand.iter().copied().map(CardDto::from_core).collect())
-                .collect(),
-            current_player_index: state.current_player,
-            current_player: player_name(state.current_player).to_string(),
-            current_trick: state
-                .current_trick
-                .iter()
-                .copied()
-                .map(PlayedCardDto::from_core)
-                .collect(),
-            completed_tricks: state
-                .completed_tricks
-                .iter()
-                .enumerate()
-                .map(|(index, trick)| CompletedTrickDto::from_core(trick, contract, index + 1))
-                .collect(),
-            player_hand: state.hands[2]
-                .iter()
-                .copied()
-                .map(CardDto::from_core)
-                .collect(),
-            legal_card_ids: state
-                .legal_player_cards()
-                .iter()
-                .map(ToString::to_string)
-                .collect(),
-            player_penalty: state.player_penalty(),
-            total_penalty: state.total_penalty(),
-            cards_remaining: state.cards_remaining(),
-            trick_number: state.trick_number(),
-            status: state.status.as_str().to_string(),
-            prompt: hand_prompt(state, penalty_name),
-        }
-    }
-
-    fn to_core(&self) -> Result<barbu_core::TrickTakingHandState, String> {
-        let hands = hands_from_dto(&self.hands)?;
-
-        Ok(barbu_core::TrickTakingHandState {
-            id: self.id.clone(),
-            hands,
-            current_player: self.current_player_index,
-            current_trick: self
-                .current_trick
-                .iter()
-                .map(PlayedCardDto::to_core)
-                .collect::<Result<Vec<_>, _>>()?,
-            completed_tricks: self
-                .completed_tricks
-                .iter()
-                .map(CompletedTrickDto::to_core)
-                .collect::<Result<Vec<_>, _>>()?,
-            status: match self.status.as_str() {
-                "in_progress" => barbu_core::HandStatus::InProgress,
-                "complete" => barbu_core::HandStatus::Complete,
-                _ => return Err(format!("Unknown hand status: {}", self.status)),
-            },
-        })
-    }
-}
-
-#[derive(serde::Deserialize, serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-struct CompletedTrickDto {
-    cards: Vec<PlayedCardDto>,
-    winner: String,
-    winner_index: usize,
-    penalty: i32,
-    outcome: String,
-    #[serde(default)]
-    tactical_tags: Vec<String>,
-}
-
-impl CompletedTrickDto {
-    fn from_core(trick: &barbu_core::CompletedTrick, contract: &str, trick_number: usize) -> Self {
-        Self {
-            cards: trick
-                .cards
-                .iter()
-                .copied()
-                .map(PlayedCardDto::from_core)
-                .collect(),
-            winner: player_name(trick.winner).to_string(),
-            winner_index: trick.winner,
-            penalty: trick.penalty,
-            outcome: trick.player_outcome().as_str().to_string(),
-            tactical_tags: barbu_core::completed_trick_tactical_tags(contract, trick_number, trick)
-                .into_iter()
-                .map(str::to_string)
-                .collect(),
-        }
-    }
-
-    fn to_core(&self) -> Result<barbu_core::CompletedTrick, String> {
-        Ok(barbu_core::CompletedTrick {
-            cards: self
-                .cards
-                .iter()
-                .map(PlayedCardDto::to_core)
-                .collect::<Result<Vec<_>, _>>()?,
-            winner: self.winner_index,
-            penalty: self.penalty,
-        })
-    }
-}
-
-#[derive(serde::Deserialize, serde::Serialize)]
-struct PlayedCardDto {
-    seat: String,
-    card: CardDto,
-}
-
-impl PlayedCardDto {
-    fn from_core(played: barbu_core::PlayedCard) -> Self {
-        Self {
-            seat: player_name(played.player).to_string(),
-            card: CardDto::from_core(played.card),
-        }
-    }
-}
-
-impl PlayedCardDto {
-    fn to_core(&self) -> Result<barbu_core::PlayedCard, String> {
-        Ok(barbu_core::PlayedCard::new(
-            player_index(&self.seat)?,
-            self.card.to_core()?,
-        ))
-    }
-}
-
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 struct CardDto {
     id: String,
@@ -554,34 +243,6 @@ fn rank_from_label(rank_label: &str) -> Result<barbu_core::Rank, String> {
     })
 }
 
-fn hand_prompt(state: &barbu_core::TrickTakingHandState, penalty_name: &str) -> String {
-    if state.status == barbu_core::HandStatus::Complete {
-        let plural = if state.player_penalty() == 1 {
-            penalty_name.to_string()
-        } else {
-            format!("{penalty_name}s")
-        };
-
-        return format!(
-            "Hand complete. You took {} {}.",
-            state.player_penalty(),
-            plural
-        );
-    }
-
-    if state.current_trick.is_empty() {
-        return "You won the last trick. Lead any card to the next trick.".to_string();
-    }
-
-    let led_suit = state
-        .current_trick
-        .first()
-        .map(|played| suit_name(played.card.suit))
-        .unwrap_or("the led suit");
-
-    format!("{} were led. Follow suit if you can.", led_suit)
-}
-
 fn domino_prompt(state: &barbu_core::DominoHandState) -> String {
     if state.status == barbu_core::DominoStatus::Complete {
         let scores = state.scores();
@@ -599,15 +260,6 @@ fn domino_prompt(state: &barbu_core::DominoHandState) -> String {
         "Play a {} to start a suit, or extend a suit by one rank.",
         state.start_rank.short_name()
     )
-}
-
-fn suit_name(suit: barbu_core::Suit) -> &'static str {
-    match suit {
-        barbu_core::Suit::Clubs => "Clubs",
-        barbu_core::Suit::Diamonds => "Diamonds",
-        barbu_core::Suit::Hearts => "Hearts",
-        barbu_core::Suit::Spades => "Spades",
-    }
 }
 
 fn player_name(player: barbu_core::PlayerIndex) -> &'static str {
@@ -633,15 +285,15 @@ fn player_index(player: &str) -> Result<barbu_core::PlayerIndex, String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .plugin(tauri_plugin_opener::Builder::new().open_js_links_on_click(false).build())
+        .plugin(
+            tauri_plugin_opener::Builder::new()
+                .open_js_links_on_click(false)
+                .build(),
+        )
         .invoke_handler(tauri::generate_handler![
             open_privacy_policy,
             current_game,
-            generate_daily_drill_set,
-            generate_no_hearts_follow_suit,
             pass_domino_turn,
-            play_hand_card,
-            start_hand,
             play_domino_card,
             start_domino_hand,
         ])
@@ -654,69 +306,25 @@ mod tests {
     use super::*;
 
     #[test]
-    fn migrated_hands_are_rejected_by_native_commands() {
-        for (game, contract, fixture) in [
-            (
-                "hearts",
-                "Hearts",
-                include_str!("../../tests/fixtures/hearts-native-save.json"),
-            ),
-            (
-                "whist",
-                "Whist",
-                include_str!("../../tests/fixtures/whist-native-save.json"),
-            ),
-            (
-                "spades",
-                "Spades",
-                include_str!("../../tests/fixtures/spades-native-hand.json"),
-            ),
-        ] {
-            let error = start_hand(game.into(), contract.into(), 8).err().unwrap();
-            assert!(error.contains("TypeScript engine"));
-            let fixture: serde_json::Value = serde_json::from_str(fixture).unwrap();
-            let saved = if game == "hearts" {
-                &fixture["cases"][0]["savedHand"]
-            } else if game == "spades" {
-                &fixture[0]["initialHand"]
-            } else {
-                &fixture["savedHand"]
-            };
-            let state: FullHandDto = serde_json::from_value(saved.clone()).unwrap();
-            let card_id = state.legal_card_ids[0].clone();
-            let error = play_hand_card(game.into(), contract.into(), state, card_id)
-                .err()
-                .unwrap();
-            assert!(error.contains("TypeScript engine"));
-        }
-        assert!(start_hand("barbu".into(), "Whist".into(), 8).is_err());
-        assert!(start_hand("bridge".into(), "Bridge".into(), 8)
-            .err().unwrap().contains("TypeScript engine"));
-        // A table can still host a different, unmigrated contract for practice.
-        assert!(start_hand("hearts".into(), "No Hearts".into(), 8).is_ok());
-        assert!(start_hand("unknown".into(), "unknown".into(), 8).is_err());
-    }
-
-    #[test]
-    fn remaining_native_hands_still_complete_through_command_adapters() {
-        for (game, contract) in [
-            ("barbu", "No Hearts"),
-            ("barbu", "No Queens"),
-            ("barbu", "King of Hearts"),
-            ("barbu", "No Last Two"),
-            ("barbu", "No Tricks"),
-            ("barbu", "Hearts Trumps"),
-        ] {
-            let mut state = start_hand(game.into(), contract.into(), 8).unwrap();
-            for _ in 0..13 {
-                // Exercise the serialization boundary used by installed builds.
+    fn domino_completes_through_serialized_command_adapters() {
+        for seed in [1, 8, 42] {
+            let mut state = start_domino_hand(seed);
+            for _ in 0..100 {
                 state = serde_json::from_value(serde_json::to_value(&state).unwrap()).unwrap();
-                let card = state.legal_card_ids[0].clone();
-                state = play_hand_card(game.into(), contract.into(), state, card).unwrap();
+                if state.status == "complete" {
+                    break;
+                }
+                state = if let Some(card) = state.legal_card_ids.first().cloned() {
+                    play_domino_card(state, card).unwrap()
+                } else {
+                    pass_domino_turn(state).unwrap()
+                };
             }
-            assert_eq!(state.status, "complete", "{contract}");
-            assert_eq!(state.cards_remaining, 0, "{contract}");
-            assert_eq!(state.completed_tricks.len(), 13, "{contract}");
+            assert_eq!(state.status, "complete");
+            assert_eq!(state.cards_remaining, 0);
+            assert!(state.layout.iter().all(|lane| lane.len() == 13));
+            state.scores.sort();
+            assert_eq!(state.scores, vec![-5, 5, 20, 45]);
         }
     }
 }

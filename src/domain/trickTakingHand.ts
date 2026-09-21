@@ -1,4 +1,6 @@
 import { legalCards, trickWinner } from "./trickTakingRules";
+import { chooseBarbuCard } from "./barbuPolicy";
+import { barbuTrickPoints, isBarbuTrickContract, type BarbuTrickContract } from "./barbuRules";
 import { originalSpadesCards, spadesBidFromId, suggestedSpadesBidForCards } from "./spadesBidding";
 import { heartsPoints, legalHeartsCards } from "./heartsRules";
 import { chooseWhistCard, whistPositionFromHand } from "../whistPolicy";
@@ -277,28 +279,13 @@ export function applyBrowserHeartsPass(state: FullHandState, cardIds: string[], 
   return advanceToPlayerTurn(nextState);
 }
 
-export function startBrowserNoHeartsHand(seed: number): FullHandState {
-  return startBrowserFullHand("No Hearts", seed);
+export function startBarbuHand(contract: BarbuTrickContract, seed: number): FullHandState {
+  if (!isBarbuTrickContract(contract) || !Number.isSafeInteger(seed) || seed < 0) throw new Error("Invalid Barbu deal");
+  return startBrowserFullHand(contract, seed);
 }
 
-export function startBrowserNoQueensHand(seed: number): FullHandState {
-  return startBrowserFullHand("No Queens", seed);
-}
-
-export function startBrowserKingOfHeartsHand(seed: number): FullHandState {
-  return startBrowserFullHand("King of Hearts", seed);
-}
-
-export function startBrowserNoLastTwoHand(seed: number): FullHandState {
-  return startBrowserFullHand("No Last Two", seed);
-}
-
-export function startBrowserNoTricksHand(seed: number): FullHandState {
-  return startBrowserFullHand("No Tricks", seed);
-}
-
-export function startBrowserPositiveTricksHand(seed: number): FullHandState {
-  return startBrowserFullHand("Hearts Trumps", seed);
+export function replayBarbuHand(state: FullHandState): FullHandState {
+  return replayTrickTakingHand(state, 0);
 }
 
 function startBrowserFullHand(
@@ -335,7 +322,7 @@ function startBrowserFullHand(
   );
 }
 
-export function playBrowserNoHeartsCard(state: FullHandState, cardId: string): FullHandState {
+export function playBarbuCard(state: FullHandState, cardId: string): FullHandState {
   return playBrowserFullHandCard(state, cardId);
 }
 
@@ -357,26 +344,6 @@ export function playBrowserBridgeCard(state: FullHandState, cardId: string): Ful
 }
 
 function playBrowserWhistFamilyCard(state: FullHandState, cardId: string): FullHandState {
-  return playBrowserFullHandCard(state, cardId);
-}
-
-export function playBrowserNoQueensCard(state: FullHandState, cardId: string): FullHandState {
-  return playBrowserFullHandCard(state, cardId);
-}
-
-export function playBrowserKingOfHeartsCard(state: FullHandState, cardId: string): FullHandState {
-  return playBrowserFullHandCard(state, cardId);
-}
-
-export function playBrowserNoLastTwoCard(state: FullHandState, cardId: string): FullHandState {
-  return playBrowserFullHandCard(state, cardId);
-}
-
-export function playBrowserNoTricksCard(state: FullHandState, cardId: string): FullHandState {
-  return playBrowserFullHandCard(state, cardId);
-}
-
-export function playBrowserPositiveTricksCard(state: FullHandState, cardId: string): FullHandState {
   return playBrowserFullHandCard(state, cardId);
 }
 
@@ -613,7 +580,7 @@ export function hydrateFullHandState(state: FullHandState): FullHandState {
       totalPenalty: state.completedTricks.reduce((total, trick) => total + trick.penalty, 0),
       cardsRemaining: state.hands.flat().length,
       trickNumber: Math.min(state.completedTricks.length + 1, 13),
-      prompt: promptForState(state, state.playerPenalty)
+      prompt: promptForState(state, state.completedTricks.filter(trick => trick.winnerIndex === 2).reduce((total, trick) => total + trick.penalty, 0))
     };
   }
 
@@ -647,99 +614,22 @@ export function hydrateFullHandState(state: FullHandState): FullHandState {
 }
 
 function chooseOpponentCard(state: FullHandState) {
+  if (isBarbuTrickContract(state.contract)) return chooseBarbuCard(state.contract, state.hands[state.currentPlayerIndex],
+    state.currentTrick, playerNames[state.currentPlayerIndex], state.completedTricks.length);
   if (state.contract === "Whist") return chooseWhistCard(whistPositionFromHand(state));
   const legal = legalCardsForState(state, state.currentPlayerIndex);
   if (state.contract === "Hearts") return chooseHeartsCard(heartsPositionFromHand(state, legal));
+  if (!legal.length) return undefined;
   const led = ledSuit(state);
-
-  if (!legal.length) {
-    return undefined;
-  }
-
-  if (!led) {
-    if (state.contract === "Bridge") {
-      return chooseBridgeLeadCard(state, legal);
-    }
-    if (state.contract === "Spades") {
-      return chooseSpadesLeadCard(state, legal);
-    }
-    if (state.contract === "Hearts Trumps") {
-      return highestCard(legal.filter((card) => card.suit === "H")) ?? highestCard(legal);
-    }
-    if (state.contract === "No Last Two") {
-      return state.completedTricks.length >= 10 ? lowestCard(legal) : highestCard(legal);
-    }
-    if (state.contract === "No Queens") {
-      return lowestCard(legal.filter((card) => card.rank !== "Q")) ?? lowestCard(legal);
-    }
-    return lowestCard(legal.filter((card) => !isPenaltyCard(state.contract, card))) ?? lowestCard(legal);
-  }
-
-  const followsSuit = legal.every((card) => card.suit === led);
-
-  if (!followsSuit) {
-    if (state.contract === "Bridge") {
-      return chooseBridgeVoidCard(state, legal);
-    }
-    if (state.contract === "Spades") {
-      return chooseSpadesVoidCard(state, legal);
-    }
-    if (state.contract === "Hearts Trumps") {
-      return (
-        lowestCard(legal.filter((card) => cardWouldWinTrick(state, card))) ??
-        lowestCard(legal.filter((card) => card.suit !== "H")) ??
-        lowestCard(legal)
-      );
-    }
-    if (state.contract === "No Tricks") {
-      return highestCard(legal);
-    }
-    if (state.contract === "No Queens") {
-      return highestCard(legal.filter((card) => card.rank === "Q")) ?? highestCard(legal);
-    }
-    return highestCard(legal.filter((card) => isPenaltyCard(state.contract, card))) ?? highestCard(legal);
-  }
-
   if (state.contract === "Bridge") {
-    return chooseBridgeFollowCard(state, legal);
+    return !led ? chooseBridgeLeadCard(state, legal)
+      : legal.every(card => card.suit === led) ? chooseBridgeFollowCard(state, legal) : chooseBridgeVoidCard(state, legal);
   }
-
   if (state.contract === "Spades") {
-    return chooseSpadesFollowCard(state, legal);
+    return !led ? chooseSpadesLeadCard(state, legal)
+      : legal.every(card => card.suit === led) ? chooseSpadesFollowCard(state, legal) : chooseSpadesVoidCard(state, legal);
   }
-
-  if (state.contract === "Hearts Trumps") {
-    return lowestCard(legal.filter((card) => cardWouldWinTrick(state, card))) ?? lowestCard(legal);
-  }
-
-  if (state.contract === "No Tricks") {
-    return highestNonWinningCard(state, legal) ?? lowestCard(legal);
-  }
-
-  if (state.contract === "No Queens") {
-    return highestNonWinningQueen(state, legal) ?? highestNonWinningCard(state, legal) ?? lowestCard(legal);
-  }
-
-  if (state.contract === "No Last Two" && state.completedTricks.length >= 10) {
-    return highestNonWinningCard(state, legal) ?? lowestCard(legal);
-  }
-
-  if (state.contract === "No Last Two") {
-    return highestCard(legal);
-  }
-
-  if (state.currentTrick.some((played) => isPenaltyCard(state.contract, played.card))) {
-    return highestNonWinningCard(state, legal) ?? lowestCard(legal);
-  }
-
-  if (
-    state.contract === "No Hearts" ||
-    state.contract === "King of Hearts"
-  ) {
-    return highestNonWinningCard(state, legal) ?? lowestCard(legal);
-  }
-
-  return lowestCard(legal);
+  throw new Error(`Unsupported trick-taking contract: ${state.contract}`);
 }
 
 export function chooseBrowserOpponentCardForState(state: FullHandState) {
@@ -986,16 +876,8 @@ function highestCard(cards: Card[]) {
   return cards.slice().sort(compareByRankThenSuit).pop();
 }
 
-function highestNonWinningCard(state: FullHandState, cards: Card[]) {
-  return highestCard(cards.filter((card) => !cardWouldWinTrick(state, card)));
-}
-
 function lowestWinningCard(state: FullHandState, cards: Card[]) {
   return lowestCard(cards.filter((card) => cardWouldWinTrick(state, card)));
-}
-
-function highestNonWinningQueen(state: FullHandState, cards: Card[]) {
-  return highestCard(cards.filter((card) => card.rank === "Q" && !cardWouldWinTrick(state, card)));
 }
 
 function highestCardFromLongestSuit(candidates: Card[], fullHand: Card[]) {
@@ -1038,58 +920,11 @@ function scoreTrick(state: FullHandState, cards: TableCard[]) {
   if (state.contract === "Whist" || state.contract === "Spades" || state.contract === "Bridge") {
     return 1;
   }
-  if (state.contract === "No Tricks") {
-    return 2;
-  }
-  if (state.contract === "Hearts Trumps") {
-    return 5;
-  }
-  if (state.contract === "No Last Two") {
-    if (state.completedTricks.length === 11) {
-      return 10;
-    }
-    if (state.completedTricks.length === 12) {
-      return 20;
-    }
-    return 0;
-  }
-  if (state.contract === "No Queens") {
-    return cards.filter((played) => played.card.rank === "Q").length * 6;
-  }
-  if (state.contract === "King of Hearts") {
-    return cards.filter((played) => isKingOfHearts(played.card)).length * 20;
-  }
   if (state.contract === "Hearts") {
     return cards.reduce((total, played) => total + heartsPoints(played.card), 0);
   }
 
-  return cards
-    .filter((played) => played.card.suit === "H")
-    .reduce((total, played) => total + (played.card.rank === "A" ? 6 : 2), 0);
-}
-
-function isPenaltyCard(contract: FullHandContract, card: Card) {
-  if (contract === "No Tricks" || contract === "Hearts Trumps" || contract === "Whist" || contract === "Spades" || contract === "Bridge") {
-    return false;
-  }
-  if (contract === "No Last Two") {
-    return false;
-  }
-  if (contract === "No Queens") {
-    return card.rank === "Q";
-  }
-  if (contract === "King of Hearts") {
-    return isKingOfHearts(card);
-  }
-  if (contract === "Hearts") {
-    return heartsPoints(card) > 0;
-  }
-
-  return card.suit === "H";
-}
-
-function isKingOfHearts(card: Card) {
-  return card.rank === "K" && card.suit === "H";
+  return barbuTrickPoints(state.contract as BarbuTrickContract, cards, state.completedTricks.length + 1);
 }
 
 function legalCardsForState(state: FullHandState, playerIndex: number) {
@@ -1289,42 +1124,4 @@ class DeterministicRng {
     this.state = (Math.imul(this.state, 1664525) + 1013904223) >>> 0;
     return this.state % upperBound;
   }
-}
-
-export function startBrowserHand(contract: string, seed: number, dealer?: number): FullHandState {
-    switch (contract) {
-        case "Hearts": return startBrowserHeartsHand(seed);
-        case "Whist":
-      return startBrowserWhistHand(seed, dealer);
-    case "Spades":
-      return startBrowserSpadesHand(seed);
-    case "Bridge":
-      return startBrowserBridgeHand(seed);
-    case "No Hearts": return startBrowserNoHeartsHand(seed);
-        case "No Queens": return startBrowserNoQueensHand(seed);
-        case "King of Hearts": return startBrowserKingOfHeartsHand(seed);
-        case "No Last Two": return startBrowserNoLastTwoHand(seed);
-        case "No Tricks": return startBrowserNoTricksHand(seed);
-        case "Hearts Trumps": return startBrowserPositiveTricksHand(seed);
-        default: throw new Error(`Unknown contract: ${contract}`);
-    }
-}
-
-export function playBrowserHandCard(contract: string, state: FullHandState, cardId: string): FullHandState {
-    switch (contract) {
-        case "Hearts": return playBrowserHeartsCard(state, cardId);
-        case "Whist":
-      return playBrowserWhistCard(state, cardId);
-    case "Spades":
-      return playBrowserSpadesCard(state, cardId);
-    case "Bridge":
-      return playBrowserBridgeCard(state, cardId);
-    case "No Hearts": return playBrowserNoHeartsCard(state, cardId);
-        case "No Queens": return playBrowserNoQueensCard(state, cardId);
-        case "King of Hearts": return playBrowserKingOfHeartsCard(state, cardId);
-        case "No Last Two": return playBrowserNoLastTwoCard(state, cardId);
-        case "No Tricks": return playBrowserNoTricksCard(state, cardId);
-        case "Hearts Trumps": return playBrowserPositiveTricksCard(state, cardId);
-        default: throw new Error(`Unknown contract: ${contract}`);
-    }
 }
