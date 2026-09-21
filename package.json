@@ -11,6 +11,7 @@
     "cards:process": "node scripts/process-cards.mjs",
     "prepare:ios": "npm run build:ios-assets",
     "test:e2e": "playwright test",
+    "test:domain": "tsc -p tsconfig.domain.json && playwright test --config playwright.domain.config.ts",
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",

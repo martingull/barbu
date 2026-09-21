@@ -20,6 +20,13 @@ This is intended as a real App Store product, not a throwaway learning project. 
 
 Use David Parlett's *The Penguin Book of Card Games* as the starting rules and description reference for supported games. When the app models a game, its rules, terminology, deal, play direction, scoring, and variants should start from Parlett unless a deliberate product variant is documented.
 
+The long-term product is a growing catalog of club-quality card games. Shared
+templates, factories, and consistent implementation boundaries are a product
+requirement, not a temporary refactoring preference. Preserve this requirement
+across language and mobile-shell changes. Read `docs/game-architecture.md` before
+adding a game or migrating another one; document deliberate rules variants and
+remaining simplifications instead of claiming universal club rules or parity.
+
 The app should teach games as structured knowledge and guided play, not as static rule pages. Use a hybrid learning model inspired by strong mobile chess tutors: short explanations, immediate card decisions, feedback tied to the decision, generated drills, and visible progression through mastery levels. Favor a progression like:
 
 1. Concepts
@@ -48,6 +55,20 @@ Keep game logic independent of the UI. The frontend may present and explain rule
 
 ## Architecture
 
+### TypeScript Engine Prototype
+
+On the `prototype/typescript-game-engine` branch, Whist hand play is the explicit
+exception to the Rust-first policy. Route it through `src/domain/handEngine.ts`
+on both browser and native builds. Whist match progression belongs in
+`src/domain/whistSession.ts`, with save compatibility and storage access in
+`src/persistence/whistSave.ts`. Keep domain transitions free of UI, storage,
+and Tauri dependencies. Retain the Rust implementation as a comparison baseline;
+do not migrate other games implicitly. See `docs/typescript-engine-prototype.md`
+for scope, compatibility checks, and remaining work. Run `task domain:test` after
+engine changes, in addition to the existing verification commands.
+
+### Shared Foundations
+
 - Put reusable card and rules code in `crates/barbu-core`.
 - Share low-level card-table mechanics across games: deck, deal, turn order, follow-suit legality, trick winner, played-card memory, scoring primitives, and compact table presentation.
 - Keep game policy separate by game or contract. Barbu contract policy, Hearts/Black Lady avoidance policy, Domino layout policy, and future Whist/Bridge policies should call shared primitives but make their own decisions about winning, ducking, dumping danger cards, preserving trumps, or taking control.
@@ -63,7 +84,10 @@ Keep game logic independent of the UI. The frontend may present and explain rule
 
 ## Frontend Table Pattern
 
-Use `src/tableFactory.ts` as the first stop when adding or changing a game table. The factory is the source of truth for:
+Start with `src/tableFactory.ts` and the definitions in `src/games/` when adding
+or changing a table. Use `GameDefinition` from `src/gameRegistry.ts`, construct
+table metadata with `createGameTableDefinition`, and register the definition in
+`src/games/index.ts`. Together these own:
 
 - catalog entries and free/pack access labels
 - the shared `Learn | Practice | Play | Pro` tab metadata
@@ -71,25 +95,26 @@ Use `src/tableFactory.ts` as the first stop when adding or changing a game table
 - learn path step metadata
 - practice entry and practice group metadata
 
-`src/App.svelte` should consume that metadata through the shared table shell before adding game-specific behavior. Barbu and Hearts currently demonstrate the intended split:
+`src/App.svelte` should consume that metadata through the shared table shell before adding game-specific behavior. The intended split is:
 
 - render the topbar and tab rail from `gameTableDefinitions` and `tableTabsFor`
 - render Learn with `LearnPanel`
 - render Practice with `PracticePanel`
-- keep Play bodies in `App.svelte` only when they need game-specific state, saved games, or full-hand actions
-- keep Pro bodies in `App.svelte` only when they launch paid AI/opponent-play or competitive-play affordances
+- reuse `PlayTabPanel` and shared card/table components for presentation
+- keep only route, selection, and action-dispatch glue in `App.svelte`; match progression and saved-game rules belong outside the component, as demonstrated by the Whist prototype
+- keep access decisions centralized; do not expose planned Pro features merely because their metadata exists
 
-When starting Whist, do not copy the Barbu or Hearts table markup wholesale. Add Whist metadata to `tableFactory.ts`, then add the smallest route/view glue in `App.svelte`:
+For each new game, follow the checklist in `docs/game-architecture.md`. Whist is
+the current reference for the TypeScript hand/session/save separation, not a
+complete generic game factory. Reuse shared interfaces and extract common
+behavior when a second game demonstrates the need; do not clone the whole Whist
+implementation or force non-trick-taking games into its hand model.
 
-1. add the Whist catalog/table id and `gameTableDefinitions.whist`
-2. add `whistLearnPathSteps` and `whistPracticeGroups`
-3. add active tab state and `openWhistTable`
-4. render Whist Learn through `LearnPanel`
-5. render Whist Practice through `PracticePanel`
-6. add only Whist-specific Play actions that cannot live in factory data
-7. add Playwright smoke coverage for catalog navigation, Learn, Practice, Play, and any Pro entry
-
-If a new table needs a visual layout already used by Barbu or Hearts, extract a shared Svelte component or snippet before adding another large inline branch. If the new behavior is game rules, scoring, generated practice, or opponent policy, prefer `crates/barbu-core` or a browser fallback module rather than embedding it in the table UI.
+If a new table needs an existing visual layout, use shared components before
+adding another large inline branch. Rules, scoring, generated practice, and
+opponent policy belong in the domain layer selected for that game's migration
+scope, never in Svelte. Existing native games remain on their current routes
+until explicitly migrated.
 
 ## UI Direction
 

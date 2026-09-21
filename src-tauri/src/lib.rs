@@ -946,6 +946,33 @@ mod whist_tests {
     use super::*;
 
     #[test]
+    fn whist_typescript_migration_fixture_matches_native_commands() {
+        let mut hand = start_hand("whist".into(), "Whist".into(), 8, Some(3)).unwrap();
+        let initial_hand = serde_json::to_value(&hand).unwrap();
+        for _ in 0..3 {
+            let card_id = hand.legal_card_ids[0].clone();
+            hand = play_hand_card("whist".into(), "Whist".into(), hand, card_id).unwrap();
+        }
+        let saved_hand = serde_json::to_value(&hand).unwrap();
+        let card_id = hand.legal_card_ids[0].clone();
+        let next = play_hand_card("whist".into(), "Whist".into(), hand, card_id.clone()).unwrap();
+        let fixture = serde_json::json!({
+            "initialHand": initial_hand,
+            "savedHand": saved_hand,
+            "cardId": card_id,
+            "nextHand": next,
+        });
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../tests/fixtures/whist-native-save.json");
+        if std::env::var("UPDATE_WHIST_MIGRATION_FIXTURE").as_deref() == Ok("1") {
+            std::fs::write(&path, serde_json::to_string_pretty(&fixture).unwrap() + "\n").unwrap();
+        }
+        let expected: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+        assert_eq!(fixture, expected);
+    }
+
+    #[test]
     fn whist_command_preserves_dealer_and_turned_card_through_legacy_dto() {
         let dto = start_hand("whist".into(), "Whist".into(), 8, Some(1)).unwrap();
         assert_eq!(dto.whist_dealer, Some(1));
