@@ -1,9 +1,10 @@
 import type { FullHandContract, FullHandState, Seat } from "../lessonTypes";
 import { applyBrowserHeartsPass, playBrowserHeartsCard, replayHeartsHand, startBrowserHeartsHand, startBrowserHeartsPassingHand,
   playBrowserWhistCard, replayWhistHand, startBrowserWhistHand,
-  playBrowserSpadesCard, replaySpadesHand, startBrowserSpadesHand, startSpadesBiddingHand, beginSpadesHand } from "./trickTakingHand";
+  playBrowserSpadesCard, replaySpadesHand, startBrowserSpadesHand, startSpadesBiddingHand, beginSpadesHand,
+  playBrowserBridgeCard, replayBridgeHand, startBrowserBridgeHand } from "./trickTakingHand";
 
-export type HandStartOptions = { seed: number; dealer?: number };
+export type HandStartOptions = { seed: number; dealer?: number; boardNumber?: number };
 export type HandAction = { type: "play-card"; cardId: string } | { type: "replay" };
 
 // No UI, storage or native calls. Transitions leave the previous state untouched.
@@ -43,7 +44,12 @@ export const spadesHandEngine = {
   }
 };
 
-const engines: Partial<Record<FullHandContract, HandEngine>> = { Whist: whistHandEngine, Hearts: heartsHandEngine, Spades: spadesHandEngine };
+export const bridgeHandEngine = createHandEngine("Bridge",
+  ({ seed, boardNumber }) => startBrowserBridgeHand(seed, boardNumber), playBrowserBridgeCard, replayBridgeHand);
+
+const engines: Partial<Record<FullHandContract, HandEngine>> = {
+  Whist: whistHandEngine, Hearts: heartsHandEngine, Spades: spadesHandEngine, Bridge: bridgeHandEngine
+};
 
 // Only migrated games belong here; the remaining native/fallback routes stay intact.
 export function typescriptHandEngine(contract: FullHandContract): HandEngine | undefined {

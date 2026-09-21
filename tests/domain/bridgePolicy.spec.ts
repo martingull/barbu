@@ -1,33 +1,23 @@
 import { test, expect } from "@playwright/test";
 import fixtures from "../fixtures/bridge-bidding.json" with { type: "json" };
-import { suggestBridgeCall, explainBridgeCall, parseBridgeBid } from "../../src/bridgeBidding";
+import { bridgeOpeningCall, suggestBridgeCall, explainBridgeCall } from "../../src/bridgeBidding";
+import { bridgeLegalCallOptions } from "../../src/domain/bridgeAuction";
 import { bridgeBoardConditions } from "../../src/bridgeBoard";
-import { bridgeDeclarerDrillPool, bridgeDefenseDrillPool } from "../../src/bridgePractice";
+import { bridgeBiddingPracticeSteps, bridgeDeclarerDrillPool, bridgeDefenseDrillPool } from "../../src/bridgePractice";
 import { startBrowserBridgeHand, chooseBrowserOpponentCardForState, applyBrowserBridgeAuction, playBrowserBridgeCard } from "../../src/domain/trickTakingHand";
 import type { BridgeAuctionCall, Card, FullHandState, Seat, Suit } from "../../src/lessonTypes";
 
 const seats: Seat[] = ["Tutor", "Right", "You", "Left"];
 const card = (id: string): Card => ({ id, rank: id.slice(0, -1), suit: id.at(-1) as Suit, label: id });
 const cards = (ids: string) => ids.split(" ").map(card);
-const order = (call: string) => { const bid = parseBridgeBid(call); return bid ? (bid.level - 1) * 5 + ["C", "D", "H", "S", "NT"].indexOf(bid.strain) : -1; };
-function legalCalls(calls: BridgeAuctionCall[], player: Seat) {
-  const lastAction = calls.findLastIndex(call => call.call !== "Pass");
-  if ((lastAction < 0 && calls.length >= 4) || (lastAction >= 0 && calls.length - lastAction > 3)) return [];
-  const lastBid = calls.findLastIndex(call => parseBridgeBid(call.call));
-  const modifier = calls.slice(lastBid + 1).find(call => ["Double", "Redouble"].includes(call.call));
-  const bids = Array.from({ length: 35 }, (_, index) => `${Math.floor(index / 5) + 1}${["C", "D", "H", "S", "NT"][index % 5]}`);
-  const opponentBid = lastBid >= 0 && seats.indexOf(calls[lastBid].seat) % 2 !== seats.indexOf(player) % 2;
-  return ["Pass", ...(opponentBid && !modifier ? ["Double"] : []), ...(!opponentBid && modifier?.call === "Double" ? ["Redouble"] : []), ...bids.filter(bid => order(bid) > (lastBid >= 0 ? order(calls[lastBid].call) : -1))];
-}
-
 test("Bridge bidding shares native decisions at every seat", () => {
   for (const fixture of fixtures.cases) for (let rotation = 0; rotation < 4; rotation++) {
     const dealer = (fixture.dealer + rotation) % 4;
     const calls = fixture.calls.map((call, index) => ({ seat: seats[(dealer + index) % 4], call }));
     const player = seats[(dealer + calls.length) % 4];
-    const hand = cards(fixtures.hands[fixture.hand]);
+    const hand = cards(fixtures.hands[fixture.hand as keyof typeof fixtures.hands]);
     for (let ordering = 0; ordering < 2; ordering++) {
-      expect(suggestBridgeCall(hand, player, calls, legalCalls(calls, player)), fixture.name).toBe(fixture.expected);
+      expect(suggestBridgeCall(hand, player, calls, bridgeLegalCallOptions(calls, player, dealer)), fixture.name).toBe(fixture.expected);
       hand.reverse();
     }
   }
@@ -55,6 +45,11 @@ test("Bridge boards follow the sixteen board schedule independently of seed", ()
 });
 
 test("Bridge practice legality and seat order are independent of tactical grading", () => {
+  expect(bridgeBiddingPracticeSteps).toHaveLength(3);
+  for (const step of bridgeBiddingPracticeSteps) {
+    expect(step.hand).toHaveLength(13);
+    expect(bridgeOpeningCall(step.hand)).toBe(step.correctCall);
+  }
   expect(bridgeDeclarerDrillPool).toHaveLength(3);
   expect(bridgeDefenseDrillPool).toHaveLength(3);
   for (const { trick } of [...bridgeDeclarerDrillPool, ...bridgeDefenseDrillPool]) {

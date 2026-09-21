@@ -11,7 +11,7 @@ export const card = (value: unknown): value is Card => record(value) && typeof v
 const play = (value: unknown): value is TableCard => record(value) && seat(value.seat) && card(value.card);
 
 // Standard four-seat, 52-card trick hands only; passing requires additional phase validation.
-export function isSavedTrickHand(value: unknown, contract: "Hearts" | "Whist" | "Spades", bidding = false): value is FullHandState {
+export function isSavedTrickHand(value: unknown, contract: "Hearts" | "Whist" | "Spades" | "Bridge", bidding = false): value is FullHandState {
   if (!record(value) || value.contract !== contract || typeof value.id !== "string"
     || !natural(value.currentPlayerIndex) || value.currentPlayerIndex > 3
     || !["in_progress", "complete"].includes(String(value.status))
@@ -30,9 +30,12 @@ export function isSavedTrickHand(value: unknown, contract: "Hearts" | "Whist" | 
   if (cards.length !== 52 || new Set(cards.map(item => item.id)).size !== 52) return false;
   if (new Set(value.currentTrick.map(item => item.seat)).size !== value.currentTrick.length) return false;
   if (!value.hands.every((hand, index) => hand.length + played.filter(item => item.seat === seats[index]).length === 13)) return false;
+  const controlledSeat = value.currentPlayerIndex === 2 || contract === "Bridge" && value.currentPlayerIndex === 0
+    && record(value.bridgeContract) && value.bridgeContract.declarer === "You" && value.bridgeContract.dummy === "Tutor";
   return value.status === "complete"
     ? value.completedTricks.length === 13 && value.currentTrick.length === 0
-    : value.completedTricks.length < 13 && (value.currentPlayerIndex === 2 || bidding && value.completedTricks.length === 0 && value.currentTrick.length === 0) && value.hands[2].length > 0;
+    : value.completedTricks.length < 13 && (controlledSeat || bidding && value.completedTricks.length === 0 && value.currentTrick.length === 0)
+      && value.hands[value.currentPlayerIndex].length > 0;
 }
 
 export function normalizedReviewCount(value: unknown, hand: FullHandState) {

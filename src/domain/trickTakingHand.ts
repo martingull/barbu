@@ -57,6 +57,12 @@ export function replayHeartsHand(state: FullHandState): FullHandState {
   return replayTrickTakingHand(state);
 }
 
+export function replayBridgeHand(state: FullHandState): FullHandState {
+  if (!state.bridgeContract) return state;
+  const declarer = playerNames.indexOf(state.bridgeContract.declarer);
+  return replayTrickTakingHand(state, (declarer + 1) % 4);
+}
+
 function replayTrickTakingHand(state: FullHandState, leader?: number, metadata: Partial<FullHandState> = {}): FullHandState {
   const hands = state.hands.map(hand => [...hand]);
   // Native and browser shuffles differ. Recover the actual deal, not just its seed.
@@ -346,6 +352,7 @@ export function playBrowserSpadesCard(state: FullHandState, cardId: string): Ful
 }
 
 export function playBrowserBridgeCard(state: FullHandState, cardId: string): FullHandState {
+  if (!state.bridgeContract) return state;
   return playBrowserWhistFamilyCard(state, cardId);
 }
 

@@ -2,7 +2,7 @@
 
 An iPhone-first card-game app for learning, practicing, and exploring classic card games.
 
-The project is structured around guided play, generated practice, and a curriculum moving from Hearts towards Bridge. Hearts, Whist and Spades use a shared local TypeScript engine; the remaining native game logic is being migrated from Rust. Svelte presents the games inside the Tauri shell. See the [migration record](docs/typescript-engine-prototype.md) for runtime ownership and verification.
+The project is structured around guided play, generated practice, and a curriculum moving from Hearts towards Bridge. Hearts, Whist, Spades and Bridge use a shared local TypeScript engine; the remaining native game logic is being migrated from Rust. Svelte presents the games inside the Tauri shell. See the [migration record](docs/typescript-engine-prototype.md) for runtime ownership and verification.
 
 ## Quick Start
 

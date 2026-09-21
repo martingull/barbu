@@ -2,6 +2,9 @@ import { expect, test } from "@playwright/test";
 import type { Locator, Page } from "@playwright/test";
 import { chooseBrowserOpponentCardForState } from "../../src/domain/trickTakingHand";
 import type { Card, FullHandState } from "../../src/lessonTypes";
+import { createBridgeSession, transitionBridgeSession } from "../../src/domain/bridgeSession";
+import { saveBridgeSession } from "../../src/persistence/bridgeSave";
+import { trickTakingSeats } from "../../src/domain/trickTakingScore";
 import { whistOddProgress } from "../../src/whistScoring";
 
 test.beforeEach(async ({ page }, testInfo) => {
@@ -1393,7 +1396,8 @@ test("Bridge bidding practice teaches the basic natural openings", async ({ page
   await expect(page.getByLabel("Your Bridge bidding practice hand").getByRole("button").nth(2)).toHaveAttribute("aria-label", "2 H");
   await expect(page.getByLabel("Your Bridge bidding practice hand").getByRole("button").nth(5)).toHaveAttribute("aria-label", "5 D");
   await expect(page.getByLabel("Your Bridge bidding practice hand").getByRole("button").nth(9)).toHaveAttribute("aria-label", "3 C");
-  for (const expected of ["Pass", "1NT", "1♠"]) {
+  for (const [expected, points] of [["Pass", 8], ["1NT", 16], ["1♠", 13]] as const) {
+    await expect(page.getByLabel("Bridge bidding estimate").locator("strong").first()).toHaveText(String(points));
     await page.getByLabel("Bridge bidding choices").getByRole("button", { name: expected }).click();
     await page.getByRole("button", { name: "Check answer" }).click();
     await expect(page.getByLabel("Bridge bidding exercise")).toContainText("Good");
@@ -1486,67 +1490,11 @@ test("Bridge play can resume a saved local board", async ({ page }) => {
 
 test("Bridge passed-out auction can deal again", async ({ page }) => {
   await gotoWithPracticeSeed(page, 31);
-  await page.evaluate(() => {
-    const card = (rank: string, suit: "C" | "D" | "H" | "S") => ({ id: `${rank}${suit}`, rank, suit, label: `${rank}${suit}` });
-    const southHand = [
-      card("3", "C"),
-      card("5", "C"),
-      card("10", "C"),
-      card("Q", "C"),
-      card("5", "D"),
-      card("7", "D"),
-      card("Q", "D"),
-      card("A", "D"),
-      card("7", "S"),
-      card("9", "S"),
-      card("2", "H"),
-      card("3", "H"),
-      card("10", "H")
-    ];
-    const fullHand = {
-      id: "bridge-passed-out-regression",
-      bridgeBoardNumber: 2,
-      contract: "Bridge",
-      hands: [[], [], southHand, []],
-      currentPlayerIndex: 2,
-      currentPlayer: "You",
-      currentTrick: [],
-      completedTricks: [],
-      playerHand: southHand,
-      legalCardIds: [],
-      playerPenalty: 0,
-      totalPenalty: 0,
-      cardsRemaining: 52,
-      trickNumber: 1,
-      status: "in_progress",
-      prompt: "The auction was passed out.",
-      trumpSuit: undefined,
-      bridgeAuction: [
-        { seat: "Right", call: "Pass" },
-        { seat: "You", call: "Pass" },
-        { seat: "Left", call: "Pass" },
-        { seat: "Tutor", call: "Pass" }
-      ],
-      bridgeDealer: "Right",
-      bridgeVulnerability: "NS"
-    };
-
-    localStorage.setItem(
-      "barbu.savedBridgeRun.v1",
-      JSON.stringify({
-        version: 1,
-        view: "bridgeAuction",
-        scores: { ns: 90, ew: -90 },
-        results: [{ handNumber: 1, contract: "1NT", declarer: "You", declarerSide: "NS", vulnerability: "None", target: 7, tricks: 7, defenders: 6, score: 90, made: true }],
-        fullHand,
-        auctionCalls: fullHand.bridgeAuction,
-        selectedCall: "Pass",
-        fullHandReviewTrickCount: 0,
-        usingBrowserFullHand: true,
-        savedAt: "2026-07-31T00:00:00.000Z"
-      })
-    );
-  });
+  const session = createBridgeSession(31, 2);
+  session.auctionCalls = ["Right", "You", "Left", "Tutor"].map(seat => ({ seat: seat as "Right" | "You" | "Left" | "Tutor", call: "Pass" }));
+  session.scores = { ns: 90, ew: -90 };
+  session.results = [{ handNumber: 1, contract: "1NT", declarer: "You", declarerSide: "NS", vulnerability: "None", target: 7, tricks: 7, defenders: 6, score: 90, made: true }];
+  await page.evaluate(saved => localStorage.setItem("barbu.savedBridgeRun.v1", JSON.stringify(saved)), saveBridgeSession(session, "legacy"));
 
   await page.reload();
   await page.getByRole("button", { name: /Open Bridge/ }).click();
@@ -1579,100 +1527,10 @@ test("Bridge passed-out auction can deal again", async ({ page }) => {
 
 test("Bridge table does not duplicate the South dummy hand", async ({ page }) => {
   await gotoWithPracticeSeed(page, 21);
-  await page.evaluate(() => {
-    const card = (rank: string, suit: "C" | "D" | "H" | "S") => ({ id: `${rank}${suit}`, rank, suit, label: `${rank}${suit}` });
-    const southHand = [
-      card("4", "C"),
-      card("7", "C"),
-      card("10", "C"),
-      card("Q", "C"),
-      card("2", "D"),
-      card("5", "D"),
-      card("9", "D"),
-      card("K", "D"),
-      card("3", "H"),
-      card("8", "H"),
-      card("J", "H"),
-      card("6", "S"),
-      card("A", "S")
-    ];
-    const fullHand = {
-      id: "bridge-south-dummy-regression",
-      contract: "Bridge",
-      hands: [
-        [card("A", "C"), card("K", "C"), card("2", "C"), card("3", "C"), card("4", "D"), card("6", "D"), card("8", "D"), card("10", "D"), card("2", "H"), card("4", "H"), card("6", "H"), card("8", "S"), card("10", "S")],
-        [card("5", "C"), card("6", "C"), card("8", "C"), card("9", "C"), card("J", "D"), card("Q", "D"), card("A", "D"), card("5", "H"), card("7", "H"), card("9", "H"), card("Q", "H"), card("2", "S"), card("3", "S")],
-        southHand,
-        [card("J", "C"), card("3", "D"), card("7", "D"), card("10", "H"), card("K", "H"), card("A", "H"), card("4", "S"), card("5", "S"), card("7", "S"), card("9", "S"), card("J", "S"), card("Q", "S"), card("K", "S")]
-      ],
-      currentPlayerIndex: 2,
-      currentPlayer: "You",
-      currentTrick: [],
-      completedTricks: [
-        {
-          cards: [
-            { seat: "Right", card: card("5", "C") },
-            { seat: "You", card: card("4", "C") },
-            { seat: "Left", card: card("J", "C") },
-            { seat: "Tutor", card: card("A", "C") }
-          ],
-          winner: "Tutor",
-          winnerIndex: 0,
-          penalty: 0,
-          outcome: "stayed_clear",
-          tacticalTags: ["partner_trick"]
-        }
-      ],
-      playerHand: southHand,
-      legalCardIds: ["4C", "7C", "10C", "QC"],
-      playerPenalty: 0,
-      totalPenalty: 0,
-      cardsRemaining: 52,
-      trickNumber: 2,
-      status: "in_progress",
-      prompt: "Dummy is on lead. Choose from South's exposed hand and plan the 4 Clubs winners.",
-      trumpSuit: "C",
-      dummySeat: "You",
-      dummyHand: southHand,
-      dummyLegalCardIds: ["4C", "7C", "10C", "QC"],
-      bridgeAuction: [
-        { seat: "Tutor", call: "4C" },
-        { seat: "Right", call: "Pass" },
-        { seat: "You", call: "Pass" },
-        { seat: "Left", call: "Pass" }
-      ],
-      bridgeContract: {
-        level: 4,
-        strain: "C",
-        label: "4 Clubs",
-        declarer: "Tutor",
-        dummy: "You",
-        target: 10,
-        vulnerability: "None",
-        declarerSide: "NS",
-        dealer: "Tutor",
-        openingLeader: "Right"
-      },
-      bridgeDealer: "Tutor",
-      bridgeVulnerability: "None"
-    };
-
-    localStorage.setItem(
-      "barbu.savedBridgeRun.v1",
-      JSON.stringify({
-        version: 1,
-        view: "fullHand",
-        scores: { ns: 0, ew: 0 },
-        results: [],
-        fullHand,
-        auctionCalls: fullHand.bridgeAuction,
-        selectedCall: "Pass",
-        fullHandReviewTrickCount: 0,
-        usingBrowserFullHand: true,
-        savedAt: "2026-07-28T00:00:00.000Z"
-      })
-    );
-  });
+  const initial = createBridgeSession(21, 1);
+  initial.auctionCalls = ["4C", "Pass", "Pass", "Pass"].map((call, i) => ({ seat: trickTakingSeats[i], call }));
+  const session = transitionBridgeSession(initial, { type: "start-play" });
+  await page.evaluate(saved => localStorage.setItem("barbu.savedBridgeRun.v1", JSON.stringify(saved)), saveBridgeSession(session, "legacy"));
 
   await page.reload();
   await page.getByRole("button", { name: /Open Bridge/ }).click();
@@ -1698,101 +1556,10 @@ test("Bridge table does not duplicate the South dummy hand", async ({ page }) =>
 
 test("Bridge exposed dummy row names the actual dummy seat", async ({ page }) => {
   await gotoWithPracticeSeed(page, 22);
-  await page.evaluate(() => {
-    const card = (rank: string, suit: "C" | "D" | "H" | "S") => ({ id: `${rank}${suit}`, rank, suit, label: `${rank}${suit}` });
-    const eastDummyHand = [
-      card("2", "C"),
-      card("4", "C"),
-      card("6", "C"),
-      card("8", "C"),
-      card("10", "C"),
-      card("2", "D"),
-      card("4", "D"),
-      card("6", "D"),
-      card("8", "D"),
-      card("2", "H"),
-      card("4", "H"),
-      card("2", "S"),
-      card("4", "S")
-    ];
-    const southHand = [
-      card("3", "C"),
-      card("5", "C"),
-      card("7", "C"),
-      card("9", "C"),
-      card("J", "C"),
-      card("3", "D"),
-      card("5", "D"),
-      card("7", "D"),
-      card("9", "D"),
-      card("3", "H"),
-      card("5", "H"),
-      card("3", "S"),
-      card("5", "S")
-    ];
-    const fullHand = {
-      id: "bridge-east-dummy-label-regression",
-      contract: "Bridge",
-      hands: [
-        [card("A", "C"), card("K", "C"), card("Q", "C"), card("A", "D"), card("K", "D"), card("Q", "D"), card("A", "H"), card("K", "H"), card("Q", "H"), card("A", "S"), card("K", "S"), card("Q", "S"), card("J", "S")],
-        eastDummyHand,
-        southHand,
-        [card("10", "D"), card("J", "D"), card("10", "H"), card("J", "H"), card("6", "H"), card("7", "H"), card("8", "H"), card("9", "H"), card("6", "S"), card("7", "S"), card("8", "S"), card("9", "S"), card("10", "S")]
-      ],
-      currentPlayerIndex: 2,
-      currentPlayer: "You",
-      currentTrick: [{ seat: "Left", card: card("10", "D") }],
-      completedTricks: [],
-      playerHand: southHand,
-      legalCardIds: ["3D", "5D", "7D", "9D"],
-      playerPenalty: 0,
-      totalPenalty: 0,
-      cardsRemaining: 51,
-      trickNumber: 1,
-      status: "in_progress",
-      prompt: "Diamonds were led. You are defending 1 Diamonds; follow suit if you can.",
-      trumpSuit: "D",
-      dummySeat: "Right",
-      dummyHand: eastDummyHand,
-      dummyLegalCardIds: [],
-      bridgeAuction: [
-        { seat: "Left", call: "1D" },
-        { seat: "Tutor", call: "Pass" },
-        { seat: "Right", call: "Pass" },
-        { seat: "You", call: "Pass" }
-      ],
-      bridgeContract: {
-        level: 1,
-        strain: "D",
-        label: "1 Diamonds",
-        declarer: "Left",
-        dummy: "Right",
-        target: 7,
-        vulnerability: "None",
-        declarerSide: "EW",
-        dealer: "Left",
-        openingLeader: "Tutor"
-      },
-      bridgeDealer: "Left",
-      bridgeVulnerability: "None"
-    };
-
-    localStorage.setItem(
-      "barbu.savedBridgeRun.v1",
-      JSON.stringify({
-        version: 1,
-        view: "fullHand",
-        scores: { ns: 0, ew: 0 },
-        results: [],
-        fullHand,
-        auctionCalls: fullHand.bridgeAuction,
-        selectedCall: "Pass",
-        fullHandReviewTrickCount: 0,
-        usingBrowserFullHand: true,
-        savedAt: "2026-08-12T00:00:00.000Z"
-      })
-    );
-  });
+  const initial = createBridgeSession(22, 4);
+  initial.auctionCalls = ["1D", "Pass", "Pass", "Pass"].map((call, i) => ({ seat: trickTakingSeats[(3 + i) % 4], call }));
+  const session = transitionBridgeSession(initial, { type: "start-play" });
+  await page.evaluate(saved => localStorage.setItem("barbu.savedBridgeRun.v1", JSON.stringify(saved)), saveBridgeSession(session, "legacy"));
 
   await page.reload();
   await page.getByRole("button", { name: /Open Bridge/ }).click();

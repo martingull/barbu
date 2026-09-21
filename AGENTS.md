@@ -45,7 +45,7 @@ Keep learner-facing outcome labels simple: `good`, `risky`, `penalty`, and `ille
 
 ## Stack
 
-- TypeScript domain engine under `src/domain` for migrated game play (Hearts, Whist and Spades).
+- TypeScript domain engine under `src/domain` for migrated game play (Hearts, Whist, Spades and Bridge).
 - `crates/barbu-core` for remaining native game logic, generated practice, and shared Rust primitives.
 - Tauri 2 app shell under `src-tauri`.
 - Svelte + TypeScript frontend under `src`.
@@ -61,10 +61,10 @@ their specific migration is verified; Tauri remains the native shell.
 
 ### TypeScript Engine Prototype
 
-On the `prototype/typescript-game-engine` branch, Whist, Hearts and Spades hand play are
+On the `prototype/typescript-game-engine` branch, Whist, Hearts, Spades and Bridge hand play are
 explicit exceptions to the Rust-first policy. Route them through
 `src/domain/handEngine.ts` on browser and native builds. Match progression belongs
-in `src/domain/whistSession.ts`, `src/domain/heartsSession.ts` and `src/domain/spadesSession.ts`, with save
+in `src/domain/whistSession.ts`, `src/domain/heartsSession.ts`, `src/domain/spadesSession.ts` and `src/domain/bridgeSession.ts`, with save
 compatibility in their corresponding `src/persistence/` adapters. Reuse the
 engine factory, reviewed-hand transitions, save-store factory, and standard
 trick-hand validation. Hearts generated practice now uses `src/domain/heartsPractice.ts`
@@ -77,6 +77,12 @@ fixtures for compatibility tests, not a second production implementation.
 Spades uses one bidding heuristic in `src/domain/spadesBidding.ts`, explicit locked
 bids, and the existing twelve authored exercises in `src/spadesLessons.ts`.
 Keep opponents from playing opening cards before the player locks the bids.
+Bridge reuses the same hand, reviewed-hand and save factories. Auction legality
+and contract formation live in `src/domain/bridgeAuction.ts`, duplicate scoring
+in `bridgeScoring.ts`, and board progression in `bridgeSession.ts`. Its native
+auction/scoring commands and Rust duplicate are removed. Keep the existing
+Barbu Natural bidding policy and declarer/dummy control; migration is not a
+new bidding system or an expert-strength claim.
 Do not migrate other games implicitly. See `docs/typescript-engine-prototype.md`
 for scope, compatibility checks, and remaining work. Run `task domain:test` after
 engine changes, in addition to the existing verification commands.

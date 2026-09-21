@@ -121,7 +121,7 @@ impl Ruleset for HeartsTrumpsRuleset {
 // Migrated games must never silently fall back to a different native ruleset.
 pub fn get_ruleset(_game_id: &str, contract: &str) -> Result<Box<dyn Ruleset>, String> {
     match contract {
-        "Hearts" | "Whist" | "Spades" => {
+        "Hearts" | "Whist" | "Spades" | "Bridge" => {
             Err(format!("{contract} hand play uses the TypeScript engine"))
         }
 
