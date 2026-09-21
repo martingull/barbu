@@ -57,6 +57,21 @@
   min-height: calc(var(--flow-card-width) * 5.6 + var(--flow-board-space));
 }
 
+.flow-play.domino-play-surface > .play-board-region {
+  container-type: inline-size;
+  flex-basis: auto;
+}
+
+.app-shell.fixed-play-screen .flow-play .play-board-region .hand-domino-layout {
+  height: 100%;
+  overflow: visible;
+}
+
+.flow-play .hand-domino-layout > div {
+  min-height: 64px;
+  overflow-wrap: anywhere;
+}
+
 .app-shell.fixed-play-screen .flow-play .play-board-region :is(.card-table, .table-tap-target) {
   grid-row: auto;
   height: 100%;

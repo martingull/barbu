@@ -3,7 +3,7 @@ import native from "../fixtures/barbu-native-practice.json" with { type: "json" 
 import { barbuPracticeTopics, generateBarbuPracticeSet, generateNoHeartsFollowSuit, type BarbuPracticeTopic } from "../../src/domain/barbuPractice";
 import { barbuTrickPoints } from "../../src/domain/barbuRules";
 import { typescriptHandEngine } from "../../src/domain/handEngine";
-import { passBrowserDominoTurn, playBrowserDominoCard, startBrowserDominoHand } from "../../src/browserDominoFallback";
+import { dominoHandEngine } from "../../src/domain/dominoHand";
 import { isLegalDominoPlacement } from "../../src/domain/dominoRules";
 import { legalCards, trickWinner } from "../../src/domain/trickTakingRules";
 import type { Card, FullHandContract, GeneratedPracticeScenario, TableCard } from "../../src/lessonTypes";
@@ -113,7 +113,7 @@ test("Barbu practice rejects invalid seeds and unknown focus contracts", () => {
   expect(() => generateBarbuPracticeSet(0, "unknown" as BarbuPracticeTopic)).toThrow();
 });
 
-test("shared practice rules preserve totals and completion in remaining browser hand engines", () => {
+test("shared practice rules preserve totals and completion in the hand engines", () => {
   for (const [contract, total] of Object.entries({ "No Hearts": 30, "No Queens": 24, "King of Hearts": 20, "No Last Two": 30, "No Tricks": 26, "Hearts Trumps": 65 })) {
     for (let seed = 0; seed < 16; seed++) {
       const engine = typescriptHandEngine(contract as FullHandContract)!;
@@ -125,9 +125,9 @@ test("shared practice rules preserve totals and completion in remaining browser 
     }
   }
   for (let seed = 0; seed < 4; seed++) {
-    let hand = startBrowserDominoHand(seed);
+    let hand = dominoHandEngine.start({ seed });
     for (let turn = 0; turn < 100 && hand.status !== "complete"; turn++) {
-      hand = hand.legalCardIds.length ? playBrowserDominoCard(hand, hand.legalCardIds[0]) : passBrowserDominoTurn(hand);
+      hand = dominoHandEngine.transition(hand, hand.legalCardIds.length ? { type: "play-card", cardId: hand.legalCardIds[0] } : { type: "pass" });
     }
     expect(hand.status).toBe("complete");
     expect(hand.layout.map(lane => lane.length)).toEqual([13, 13, 13, 13]);

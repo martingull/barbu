@@ -144,15 +144,6 @@ async function expectFeedbackAboveHand(page: Page, handSelector: string) {
   );
 }
 
-async function expectFeedbackClearOfHand(page: Page, handSelector: string) {
-  await expectNoVerticalCollision(
-    page,
-    ".table-play-surface.compact-play .table-play-panel .result, .table-play-surface.compact-play .table-play-panel .outcome, .table-play-surface.compact-play .table-play-panel .explanation",
-    handSelector,
-    24
-  );
-}
-
 async function expectCompactPlayStack(
   page: Page,
   handSelector: string,
@@ -556,7 +547,7 @@ async function playDominoDecision(page: Page) {
 
   if (await placeCard.isEnabled()) {
     await legalCard.click();
-    await expectFeedbackClearOfHand(page, ".domino-cards");
+    await expectFeedbackAboveHand(page, ".domino-cards");
     await placeCard.click();
     await expect.poll(async () => (await handRegion.innerText()) !== previousState).toBe(true);
     return;
@@ -564,7 +555,7 @@ async function playDominoDecision(page: Page) {
 
   if ((await legalCard.count()) > 0) {
     await legalCard.click();
-    await expectFeedbackClearOfHand(page, ".domino-cards");
+    await expectFeedbackAboveHand(page, ".domino-cards");
     await placeCard.click();
     await expect.poll(async () => (await handRegion.innerText()) !== previousState).toBe(true);
     return;

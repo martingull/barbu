@@ -15,7 +15,7 @@ game-specific rules and opponent policy. This is not a mobile-shell migration.
 | Whist and Spades authored Learn and Practice | Shared TypeScript content and policy |
 | Barbu six trick-taking full hands and opponents | Shared TypeScript hand factory, rules and policy |
 | Barbu seven-contract run and saves | Existing Svelte orchestration; shared validation for migrated hands |
-| Domino full hands | Existing native commands and TypeScript fallback |
+| Domino full hands | Shared TypeScript layout engine and save validation |
 | Bridge auction, duplicate scoring and authored practice | Shared TypeScript domain and content; native duplicate removed |
 | Packaging and native integrations | Tauri/Rust shell |
 
@@ -54,15 +54,15 @@ Table factories, catalog registration and presentation remain unchanged.
 The Rust Hearts, Whist and Spades full-hand implementations, opponent policies,
 Whist settlement, ruleset registration and Hearts passing commands are removed.
 Barbu's six trick-taking engines, contract policies and ruleset dispatcher are
-also removed, along with the generic native hand commands and DTOs. Domino is
-the only remaining native full-hand engine.
+also removed, along with the generic native hand commands and DTOs. Domino's
+native engine, command adapters and browser fallback have now been removed too.
 
 Hearts native practice generators, evaluators, commands, passing DTO, and Svelte
 fallback pools are removed too. All six topics retain three scripted decisions,
 and passing retains both danger-card and long-suit patterns. Quick drill selects
 one decision per explicit topic, no longer depending on inconsistent ID prefixes.
 Barbu practice (including No Hearts, Hearts Trumps and Domino decisions) is now
-TypeScript too; only full Domino hands still retain native gameplay routes.
+TypeScript too. No full-hand gameplay still uses native commands.
 
 The redundant frontend command-name table and the `browserHandFallback.ts`
 re-export wrapper are removed. Consumers use the domain module directly.
@@ -223,10 +223,37 @@ decoder/projection lives in `tests/fixtures/barbuHandFixture.ts`. Hashes cover
 remaining cards, legal choices, turns, trick winners, scores, outcomes and tags,
 excluding copy, IDs and display ordering. Do not regenerate from TypeScript.
 
-Domino still uses native commands on installed builds and a browser fallback.
 Seven-contract progression and save orchestration still live in Svelte; migrating
 that session boundary is the next step, not something this hand migration claims.
 The fixed-order training-run product limitation remains unchanged.
+
+## Domino Hand Migration
+
+`dominoHand.ts` owns immutable start, placement, pass and replay transitions.
+It shares placement legality with practice while retaining its own lane state,
+not forcing Domino into a trick-taking model. `dominoPolicy.ts` preserves the
+native lexicographic priorities, replacing the browser's weighted approximation.
+The existing policy still consults the next player's hidden hand; this migration
+does not claim public-information-only or expert opponents.
+
+`dominoSave.ts` validates all 52 cards, contiguous lanes, finish order and original
+ownership, then rebuilds cached legality, scores and prompts. New saves carry
+`initialHands`. Legacy native and browser IDs recover their respective original
+deals, so replay preserves the actual cards despite their different shuffles.
+The old browser shuffle remains only for save compatibility, not parallel play.
+Unknown or corrupt deals are rejected. The version-1 save key is unchanged.
+Final prompts now use the final score instead of the previous cached score.
+
+`tests/fixtures/domino-hands.json` freezes 12 native hands from `fdaf35e` before
+deletion: seeds 0, 1, 8 and 42 at starting ranks 7, 9 and A. Compact initial,
+mid-hand and final snapshots plus SHA-256 projections check every transition.
+Three old browser saves verify restore and replay compatibility. Do not regenerate
+expected values from the new engine. Separate property checks finish 96 deals.
+
+Domino now uses the shared flow table layout. Feedback sits after the suit lanes
+and before the hand instead of overlapping lanes through fixed viewport offsets.
+Browser checks cover restore, reload, pass, completion, replay and layout in both
+browser and simulated-native runtimes. Physical-device upgrade testing remains.
 
 ## Verification And Device Status
 
@@ -248,7 +275,7 @@ runtime presence and verify that Hearts/Whist/Spades/Bridge full play and Hearts
 invoke Rust. Barbu practice tests cover all four decisions per focused contract
 and the mixed seven-contract drill in browser and simulated-native modes.
 Each Hearts practice topic completes all three decisions in both modes. Native
-adapter tests reject migrated games and complete the remaining contracts.
+gameplay adapters are removed; remaining Rust tests cover legacy shared helpers.
 
 Spades migration verification on 2026-09-21: 51 domain tests, 121 Rust tests,
 production build and native check passed. The full six-viewport browser run passed
@@ -286,6 +313,16 @@ and complete seven-contract runs. S9 review and iPhone 16 active-hand screenshot
 were inspected. The existing large-bundle build warning remains. No physical
 device build, installation or store upload was performed for this pass.
 
+Domino migration verification on 2026-09-21: all 90 domain tests, 11 remaining
+Rust helper tests, production build and native check passed. The native test
+target builds but contains no command tests now that gameplay adapters are gone.
+All 90 focused browser checks passed across six phone profiles, including full
+seven-contract runs and simulated-native save upgrades. Layout checks also resize
+to 320x568 and desktop width. An initial run caught obsolete 24px Domino spacing
+assertions; these now enforce the shared 8px flow spacing alongside lane/message/
+hand/control collision checks. S9, XR and iPhone 16 screenshots were inspected.
+The existing large-bundle warning remains. No physical build or install was done.
+
 Whist was installed on iPhone 16 on 2026-09-21 and the user confirmed it works.
 The subsequent Hearts build was installed, but its automatic launch was blocked
 by the screen lock. This deduplication change still needs a fresh device build
@@ -302,17 +339,22 @@ same generator now runs in browser and installed builds, including Domino decisi
 Also use Barbu > Play > Play Barbu > Start hand, reload and Continue Play Barbu,
 then finish a hand and Replay. The same cards should return, with that attempt's
 score removed from the run total. All six trick-taking contracts use TypeScript.
+For Domino, use Barbu > Practice > Full hand practice > Domino. Place legal cards
+or Pass until the hand ends, then Replay: the original deal should return. In a
+Play Barbu run, reload mid-Domino and Continue Play Barbu to resume the same lanes.
 Browser mode now exercises the same Hearts practice logic as the installed build;
 it is still not a physical-device packaging test.
 
 ## Next Migration Work
 
-1. Migrate Domino full hands and Barbu's seven-contract session/save boundary.
+1. Migrate Barbu's seven-contract session/save boundary out of Svelte.
    Keep Domino's layout state separate from trick-taking hands, and reuse the
    reviewed-hand and save-store factories rather than copying another session.
-2. Remove each obsolete engine and dispatch route after verifying its replacement;
-   retain regression fixtures rather than permanent parallel engines.
+2. Audit remaining legacy Rust helpers/catalog metadata and remove unused code;
+   retain regression fixtures rather than permanent parallel engines. Verify
+   installed-save upgrades on physical iPhone and Android builds before release.
 3. Evaluate another mobile shell separately, only if it brings a clear benefit.
 
-Rust remains required for the current shell and unmigrated Domino full hands.
-The gameplay/practice cleanup is complete for Hearts, Whist, Spades and Bridge, not for the whole catalog.
+Rust remains required for the Tauri shell, not gameplay engines. Full-hand and
+practice engines are TypeScript; Barbu session orchestration is the remaining
+ownership cleanup before the catalog follows one consistent session structure.

@@ -48,8 +48,11 @@ patterns per contract retain dynamic rank/suit choices. Scoring and Domino
 placement share TypeScript play primitives. Barbu's six trick-taking contracts now
 use the hand factory too, with a separate `barbuPolicy.ts` and a `barbuHandSave.ts`
 compatibility boundary. Their Rust engine and generic native hand commands are
-removed. Domino full hands and the seven-contract session/save orchestration are
-still pending migration; the latter remains in Svelte for now.
+removed. Domino now uses `dominoHand.ts`, `dominoPolicy.ts` and `dominoSave.ts`,
+sharing the start/transition pattern but retaining its own layout state and
+placement rules. Native fixtures verify deal and policy compatibility; the
+Rust engine and browser fallback are removed. The seven-contract session/save
+orchestration still remains in Svelte, pending migration.
 The metadata registry remains separate from engine selection. These references
 do not imply that every game can be added using configuration alone.
 

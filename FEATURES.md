@@ -88,7 +88,7 @@ The intended monetization model is free starter tables first, then paid packs wi
 - Authored lessons for No Hearts, No Queens, and King of Hearts.
 - Structured outcome metadata for authored guided card choices.
 - Compact outcome labels for guided decisions.
-- Generated No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino Quick Drill set via the shared TypeScript domain engine and structured content on browser and native builds. Every Barbu practice contract retains four seeded scenario families with dynamic card choices, and focused replays run through the generated contract pool instead of a single repeated trick. The Rust/Tauri generator and browser mirror are removed. All six trick-taking full hands also use the shared TypeScript hand factory, preserving native saves and actual-deal replay. Domino full hands and the seven-contract session remain separate migration work.
+- Generated No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino Quick Drill set via the shared TypeScript domain engine and structured content on browser and native builds. Every Barbu practice contract retains four seeded scenario families with dynamic card choices, and focused replays run through the generated contract pool instead of a single repeated trick. The Rust/Tauri generator and browser mirror are removed. All six trick-taking full hands use the shared TypeScript hand factory. Domino also has one TypeScript layout engine, preserving native/browser saves and actual-deal replay. The seven-contract session remains separate migration work.
 - Generated practice quality pass started with safe-dump scenarios for No Hearts, No Queens, King of Hearts, and No Tricks that teach when a void player can unload danger under a locked winner.
 - Practice Scenario Pool v1 expands Quick Drill from a fixed generated roster into a larger deterministic pool, so mixed practice and weak-contract replays can draw from several scenario shapes.
 - Quick Drill has short-term pattern memory, so recent scenario shapes are avoided before falling back to the full pool.
@@ -268,7 +268,7 @@ Production readiness gaps:
 
 ### Barbu Opponent Policy Audit
 
-Originally audited against Rust; Barbu trick-taking choices now live in `src/domain/barbuPolicy.ts`, with compact native fixtures verifying continuation of 18 complete hands. Domino auto-play remains in `crates/barbu-core/src/domino.rs` and its browser fallback. The first remediation pass improved No Last Two setup play, Hearts Trumps trump preservation, Domino lane selection, and browser-fallback alignment for Barbu contract behavior. Migration preserves that policy, not an expert-strength claim.
+Originally audited against Rust; Barbu trick-taking choices now live in `src/domain/barbuPolicy.ts`, with compact native fixtures verifying continuation of 18 complete hands. Domino auto-play lives in `src/domain/dominoPolicy.ts`, with native fixtures for twelve full hands and three starting ranks. Its native priority ordering replaces the browser fallback's weighted approximation. The existing Domino policy reads the next player's hidden hand; migration preserves this known limitation, not an expert-strength or public-information claim. The first remediation pass improved No Last Two setup play, Hearts Trumps trump preservation and Domino lane selection.
 
 Shared baseline:
 

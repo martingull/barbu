@@ -189,6 +189,7 @@ export type DominoHandState = {
   id: string;
   contract: "Domino";
   hands: Card[][];
+  initialHands?: Card[][];
   currentPlayerIndex: number;
   currentPlayer: Seat | "Unknown";
   startRank?: string;

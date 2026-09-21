@@ -28,7 +28,8 @@
   import { createWhistSaveStore, restoreWhistSession, saveWhistSession, savedWhistRunSummary, type SavedWhistRun } from "./persistence/whistSave";
   import { normalizeBarbuHand } from "./persistence/barbuHandSave";
   import { normalizedReviewCount } from "./persistence/handSaveValidation";
-  import { passBrowserDominoTurn, playBrowserDominoCard, startBrowserDominoHand } from "./browserDominoFallback";
+  import { dominoHandEngine, type DominoAction } from "./domain/dominoHand";
+  import { normalizeDominoHand } from "./persistence/dominoSave";
   import { generateBarbuPracticeSet } from "./domain/barbuPractice";
   import BridgeTable from "./BridgeTable.svelte";
   import CardChoiceHand from "./CardChoiceHand.svelte";
@@ -650,7 +651,6 @@
   let heartsPassError = "";
   let dominoError = "";
   let fullHandReviewTrickCount = 0;
-  let usingBrowserDomino = false;
   let lastFullHandTapCardId = "";
   let lastFullHandTapAt = 0;
   let lastDominoTapCardId = "";
@@ -1869,7 +1869,7 @@
         ? candidate.view
         : "runContractIntro";
     const fullHand = normalizeBarbuHand(candidate.fullHand);
-    const dominoHand = candidate.dominoHand?.contract === "Domino" ? candidate.dominoHand : null;
+    const dominoHand = normalizeDominoHand(candidate.dominoHand);
 
     if ((view === "fullHand" && !fullHand) || (view === "dominoHand" && !dominoHand)) {
       return null;
@@ -1885,7 +1885,7 @@
       dominoHand,
       fullHandReviewTrickCount: fullHand ? normalizedReviewCount(candidate.fullHandReviewTrickCount, fullHand) : 0,
       usingBrowserFullHand: true,
-      usingBrowserDomino: Boolean(candidate.usingBrowserDomino),
+      usingBrowserDomino: true,
       savedAt: typeof candidate.savedAt === "string" ? candidate.savedAt : new Date().toISOString()
     };
   }
@@ -1923,7 +1923,7 @@
       dominoHand,
       fullHandReviewTrickCount,
       usingBrowserFullHand: true,
-      usingBrowserDomino,
+      usingBrowserDomino: true,
       savedAt: new Date().toISOString()
     };
 
@@ -1976,7 +1976,6 @@
     fullHand = savedRun.fullHand;
     dominoHand = savedRun.dominoHand;
     fullHandReviewTrickCount = savedRun.fullHandReviewTrickCount;
-    usingBrowserDomino = savedRun.usingBrowserDomino || !hasTauriRuntime();
     fullHandSelectedCardId = "";
     dominoSelectedCardId = "";
     fullHandError = "";
@@ -3573,23 +3572,6 @@
     openBarbuTable();
   }
 
-  function hasTauriRuntime() {
-    return typeof window !== "undefined" && isTauri();
-  }
-
-  function invokeWithTimeout<T>(command: string, args: Record<string, unknown>, timeoutMs = 900) {
-    return Promise.race<T>([
-      invoke<T>(command, args),
-      new Promise<T>((_, reject) => {
-        window.setTimeout(() => reject(new Error(`Timed out calling ${command}`)), timeoutMs);
-      })
-    ]);
-  }
-
-  function isInvokeTimeoutError(error: unknown) {
-    return error instanceof Error && error.message.startsWith("Timed out calling");
-  }
-
   async function startFullHand(contract: FullHandContract, options: { cardCounting?: boolean; keepRun?: boolean; seed?: number; dealer?: number } = {}) {
     if (contract === "Domino") {
       await startDominoHand(options);
@@ -3662,25 +3644,7 @@
     lastDominoTapCardId = "";
     lastDominoTapAt = 0;
 
-    if (!hasTauriRuntime()) {
-      dominoHand = startBrowserDominoHand(seed);
-      usingBrowserDomino = true;
-      appView = "dominoHand";
-      if (options.keepRun && fullHandRunActive) {
-        persistSavedPlayBarbuRun("dominoHand");
-      }
-      return;
-    }
-
-    try {
-      dominoHand = await invokeWithTimeout<DominoHandState>("start_domino_hand", {
-        seed
-      });
-      usingBrowserDomino = false;
-    } catch {
-      dominoHand = startBrowserDominoHand(seed);
-      usingBrowserDomino = true;
-    }
+    dominoHand = dominoHandEngine.start({ seed });
 
     appView = "dominoHand";
     if (options.keepRun && fullHandRunActive) {
@@ -4318,53 +4282,31 @@
     void startFullHand(pendingRunContract, { keepRun: true });
   }
 
-  async function playDominoSelectedCard(cardId = dominoSelectedCardId) {
-    if (!dominoHand || dominoHand.status === "complete" || !cardId || !dominoHand.legalCardIds.includes(cardId)) {
-      return;
-    }
-
-    const playedCard = dominoHand.playerHand.find((card) => card.id === cardId);
-    const moveReason = playedCard ? dominoMoveExplanation(dominoHand, playedCard) : "";
+  function applyDominoAction(action: DominoAction, reason = "") {
+    if (!dominoHand) return;
     dominoError = "";
-
-    if (usingBrowserDomino || !hasTauriRuntime()) {
-      dominoHand = playBrowserDominoCard(dominoHand, cardId);
-      usingBrowserDomino = true;
-      recordCompletedDominoRunResult(dominoHand);
-      dominoSelectedCardId = "";
-      lastDominoTapCardId = "";
-      lastDominoTapAt = 0;
-      dominoLastMoveReason = moveReason;
-      persistSavedPlayBarbuRun("dominoHand");
-      return;
-    }
-
     try {
-      dominoHand = await invokeWithTimeout<DominoHandState>("play_domino_card", {
-        state: dominoHand,
-        cardId
-      });
+      const next = dominoHandEngine.transition(dominoHand, action);
+      if (next === dominoHand) return;
+      dominoHand = next;
+      if (action.type === "replay" && fullHandRunActive) {
+        fullHandRunResults = fullHandRunResults.filter(result => result.contract !== "Domino");
+      }
       recordCompletedDominoRunResult(dominoHand);
       dominoSelectedCardId = "";
       lastDominoTapCardId = "";
       lastDominoTapAt = 0;
-      dominoLastMoveReason = moveReason;
+      dominoLastMoveReason = reason;
       persistSavedPlayBarbuRun("dominoHand");
     } catch (error) {
-      if (!isInvokeTimeoutError(error)) {
-        dominoError = typeof error === "string" ? error : "That card could not be placed.";
-        return;
-      }
-
-      dominoHand = playBrowserDominoCard(dominoHand, cardId);
-      usingBrowserDomino = true;
-      recordCompletedDominoRunResult(dominoHand);
-      dominoSelectedCardId = "";
-      lastDominoTapCardId = "";
-      lastDominoTapAt = 0;
-      dominoLastMoveReason = moveReason;
-      persistSavedPlayBarbuRun("dominoHand");
+      dominoError = error instanceof Error ? error.message : "That Domino action could not be completed.";
     }
+  }
+
+  function playDominoSelectedCard(cardId = dominoSelectedCardId) {
+    if (!dominoHand || dominoHand.status === "complete" || !dominoHand.legalCardIds.includes(cardId)) return;
+    const card = dominoHand.playerHand.find(card => card.id === cardId);
+    applyDominoAction({ type: "play-card", cardId }, card ? dominoMoveExplanation(dominoHand, card) : "");
   }
 
   async function selectDominoCard(card: Card) {
@@ -4393,47 +4335,8 @@
     void playDominoSelectedCard(cardId);
   }
 
-  async function passDomino() {
-    if (!dominoHand || dominoHand.status === "complete" || dominoHand.legalCardIds.length > 0) {
-      return;
-    }
-
-    dominoError = "";
-
-    if (usingBrowserDomino || !hasTauriRuntime()) {
-      dominoHand = passBrowserDominoTurn(dominoHand);
-      usingBrowserDomino = true;
-      recordCompletedDominoRunResult(dominoHand);
-      dominoLastMoveReason = "You passed because no card in your hand could start or extend a lane.";
-      lastDominoTapCardId = "";
-      lastDominoTapAt = 0;
-      persistSavedPlayBarbuRun("dominoHand");
-      return;
-    }
-
-    try {
-      dominoHand = await invokeWithTimeout<DominoHandState>("pass_domino_turn", {
-        state: dominoHand
-      });
-      recordCompletedDominoRunResult(dominoHand);
-      dominoLastMoveReason = "You passed because no card in your hand could start or extend a lane.";
-      lastDominoTapCardId = "";
-      lastDominoTapAt = 0;
-      persistSavedPlayBarbuRun("dominoHand");
-    } catch (error) {
-      if (!isInvokeTimeoutError(error)) {
-        dominoError = typeof error === "string" ? error : "You could not pass here.";
-        return;
-      }
-
-      dominoHand = passBrowserDominoTurn(dominoHand);
-      usingBrowserDomino = true;
-      recordCompletedDominoRunResult(dominoHand);
-      dominoLastMoveReason = "You passed because no card in your hand could start or extend a lane.";
-      lastDominoTapCardId = "";
-      lastDominoTapAt = 0;
-      persistSavedPlayBarbuRun("dominoHand");
-    }
+  function passDomino() {
+    applyDominoAction({ type: "pass" }, "You passed because no card in your hand could start or extend a lane.");
   }
 
   function startNextDominoHand() {
@@ -4461,17 +4364,7 @@
   }
 
   function replayDominoHand() {
-    if (!dominoHand) {
-      return;
-    }
-
-    if (fullHandRunActive) {
-      fullHandRunResults = fullHandRunResults.filter((result) => result.contract !== "Domino");
-      void startFullHand("Domino", { keepRun: true });
-      return;
-    }
-
-    void startFullHand("Domino");
+    applyDominoAction({ type: "replay" });
   }
 
   function startNextFullHand() {
@@ -9087,7 +8980,10 @@
         statusValue={`${formatSignedScore(dominoScoreMap.You)} points`}
         tableAriaLabel="Domino layout"
         tableCards={[]}
-        showTable={false}
+        flowLayout
+        useCustomTable
+        surfaceClassName="domino-play-surface"
+        showTable={dominoHand.status !== "complete"}
         panelAriaLabel="Domino hand decision"
         onBack={openBarbuTable}
       >
@@ -9135,17 +9031,17 @@
               {/each}
             </div>
           {/if}
+        {/snippet}
 
-          {#if !fullHandRunIsComplete && dominoHand.status !== "complete"}
-            <div class="domino-layout hand-domino-layout" aria-label="Domino layout">
-              {#each dominoHand.layout as lane, index}
-                <div>
-                  <span>{dominoSuitLabel(index)}</span>
-                  <strong>{dominoLaneText(lane, dominoStartRank(dominoHand))}</strong>
-                </div>
-              {/each}
-            </div>
-          {/if}
+        {#snippet table()}
+          <div class="domino-layout hand-domino-layout" aria-label="Domino layout">
+            {#each dominoHand.layout as lane, index}
+              <div>
+                <span>{dominoSuitLabel(index)}</span>
+                <strong>{dominoLaneText(lane, dominoStartRank(dominoHand))}</strong>
+              </div>
+            {/each}
+          </div>
         {/snippet}
 
         {#snippet panel()}

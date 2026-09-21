@@ -3933,12 +3933,8 @@ strong[aria-label="Whist dealer"] {
     overflow: hidden;
   }
 
-  .fixed-play-screen .table-play-surface.compact-play.table-hidden:has(.hand-domino-layout) {
-    grid-template-rows: auto auto minmax(0, 1fr);
-  }
-
   .fixed-play-screen
-    .table-play-surface.compact-play.table-hidden:not(:has(.hand-domino-layout)):not(:has(.trump-count-stage)) {
+    .table-play-surface.compact-play.table-hidden:not(:has(.trump-count-stage)) {
     grid-template-rows: auto minmax(0, 1fr);
   }
 
@@ -3949,7 +3945,6 @@ strong[aria-label="Whist dealer"] {
 
   .fixed-play-screen .table-play-surface.compact-play .card-table,
   .fixed-play-screen .table-play-surface.compact-play .table-tap-target,
-  .fixed-play-screen .table-play-surface.compact-play .hand-domino-layout,
   .fixed-play-screen .table-play-surface.compact-result:not(.table-hidden) .card-table,
   .fixed-play-screen .table-play-surface.compact-result:not(.table-hidden) .table-tap-target {
     grid-row: 2;
@@ -3971,7 +3966,7 @@ strong[aria-label="Whist dealer"] {
   }
 
   .fixed-play-screen
-    .table-play-surface.compact-play.table-hidden:not(:has(.hand-domino-layout)):not(:has(.trump-count-stage))
+    .table-play-surface.compact-play.table-hidden:not(:has(.trump-count-stage))
     .table-play-panel {
     grid-row: 2;
   }
@@ -4601,70 +4596,6 @@ strong[aria-label="Whist dealer"] {
     width: auto;
     z-index: 24;
     padding-top: 0;
-  }
-
-  .fixed-play-screen .table-play-surface.compact-play .domino-cards {
-    bottom: calc(
-      var(--play-action-bottom-gap, var(--app-thumb-bottom-gap)) +
-        var(--play-action-shell-height, 56px) + 16px
-    );
-  }
-
-  .fixed-play-screen .table-play-surface.compact-play .table-play-panel:has(.domino-cards) {
-    gap: 5px;
-  }
-
-  .fixed-play-screen .table-play-surface.compact-play.table-hidden:has(.hand-domino-layout):has(.domino-cards) {
-    --play-hand-height: 120px;
-    --play-feedback-bottom-gap: calc(
-      var(--play-action-bottom-gap, var(--app-thumb-bottom-gap)) +
-        var(--play-action-shell-height, 56px) + 16px + var(--play-hand-height) + 56px
-    );
-  }
-
-  .fixed-play-screen
-    .table-play-surface.compact-play.table-hidden:has(.hand-domino-layout):has(.domino-cards)
-    .table-play-panel:has(.outcome)
-    .result {
-    display: none;
-  }
-
-  .fixed-play-screen
-    .table-play-surface.compact-play:where(:not(.flow-play)).table-hidden:has(.hand-domino-layout):has(.domino-cards)
-    .table-play-panel
-    .explanation,
-  .fixed-play-screen
-    .table-play-surface.compact-play:where(:not(.flow-play)).table-hidden:has(.hand-domino-layout):has(.domino-cards)
-    .table-play-panel
-    .outcome {
-    position: fixed;
-    right: 16px;
-    bottom: var(--play-feedback-bottom-gap);
-    left: 16px;
-    z-index: 26;
-    display: flex;
-    align-items: center;
-    width: auto;
-    max-height: 34px;
-    overflow: hidden;
-    padding: 6px 8px;
-    font-size: 0.72rem;
-    line-height: 1.15;
-  }
-
-  .fixed-play-screen
-    .table-play-surface.compact-play.table-hidden:has(.hand-domino-layout):has(.domino-cards)
-    .table-play-panel:has(.explanation)
-    .result {
-    display: none;
-  }
-
-  .fixed-play-screen .table-play-surface.compact-play .table-play-panel:has(.domino-cards) .result,
-  .fixed-play-screen .table-play-surface.compact-play .table-play-panel:has(.domino-cards) .explanation,
-  .fixed-play-screen .table-play-surface.compact-play .table-play-panel:has(.domino-cards) .outcome {
-    padding: 6px 8px;
-    font-size: 0.74rem;
-    line-height: 1.2;
   }
 
   .table-play-surface.compact-play .hand-card.selected {

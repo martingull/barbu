@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { startBrowserWhistHand, playBrowserWhistCard, startBrowserSpadesHand, playBrowserSpadesCard,
   startBrowserBridgeHand, applyBrowserBridgeAuction, playBrowserBridgeCard } from "../../src/domain/trickTakingHand";
-import { startBrowserDominoHand, playBrowserDominoCard, passBrowserDominoTurn } from "../../src/browserDominoFallback";
+import { dominoHandEngine } from "../../src/domain/dominoHand";
 import { fullHandContracts } from "../../src/contractRegistry";
 import type { BridgeAuctionCall, FullHandState } from "../../src/lessonTypes";
 
@@ -195,11 +195,11 @@ test("Bridge completes a board, not a score-target match", async ({ page }) => {
 });
 
 test("Barbu ends after the seventh contract", async ({ page }) => {
-  let hand = startBrowserDominoHand(8);
+  let hand = dominoHandEngine.start({ seed: 8 });
   let before = hand;
   for (let i = 0; i < 52 && hand.status !== "complete"; i++) {
     before = hand;
-    hand = hand.legalCardIds.length ? playBrowserDominoCard(hand, hand.legalCardIds[0]) : passBrowserDominoTurn(hand);
+    hand = dominoHandEngine.transition(hand, hand.legalCardIds.length ? { type: "play-card", cardId: hand.legalCardIds[0] } : { type: "pass" });
   }
   expect(hand.status).toBe("complete");
   await resume(page, "Barbu", { view: "dominoHand", seed: 8, pendingContract: "Domino", dominoHand: before,
