@@ -46,7 +46,7 @@ Keep learner-facing outcome labels simple: `good`, `risky`, `penalty`, and `ille
 ## Stack
 
 - TypeScript domain engine under `src/domain` for all playable hands, including Domino.
-- `crates/barbu-core` retains legacy card/lesson helpers and catalog metadata pending cleanup; no full-hand engine remains there.
+- Rust is limited to the Tauri shell and native integrations; the unused `barbu-core` crate is removed.
 - Tauri 2 app shell under `src-tauri`.
 - Svelte + TypeScript frontend under `src`.
 - Structured local game content under `content`.
@@ -54,8 +54,8 @@ Keep learner-facing outcome labels simple: `good`, `risky`, `penalty`, and `ille
 Keep game logic independent of the UI. Rule validation, scoring, trick resolution,
 and reusable lesson state belong in the game's domain engine, never in Svelte.
 The migration target is one TypeScript implementation shared by browser and native
-builds, not permanent Rust/TypeScript mirrors. Keep existing native routes until
-their specific migration is verified; Tauri remains the native shell.
+builds, not permanent Rust/TypeScript mirrors. Tauri remains the native shell;
+do not reintroduce gameplay command routes or a second Rust rules engine.
 
 ## Architecture
 
@@ -97,20 +97,20 @@ contract progression, review, completion, replay and save validation live outsid
 Svelte. Reuse the reviewed-hand and storage factories; retain the version-1 save
 key and actual deals. This is still the fixed-order training format, not canonical
 dealer-selected Barbu settlement.
-Do not migrate other games implicitly. See `docs/typescript-engine-prototype.md`
+Register future games through the shared factories. See `docs/typescript-engine-prototype.md`
 for scope, compatibility checks, and remaining work. Run `task domain:test` after
 engine changes, in addition to the existing verification commands.
 
 ### Shared Foundations
 
-- Put shared TypeScript gameplay in `src/domain`; remaining native mechanics stay in `crates/barbu-core` until migrated.
+- Put shared TypeScript gameplay in `src/domain`; keep native platform integrations in `src-tauri`.
 - Share low-level card-table mechanics across games: deck, deal, turn order, follow-suit legality, trick winner, played-card memory, scoring primitives, and compact table presentation.
 - Keep game policy separate by game or contract. Barbu contract policy, Hearts/Black Lady avoidance policy, Domino layout policy, and future Whist/Bridge policies should call shared primitives but make their own decisions about winning, ducking, dumping danger cards, preserving trumps, or taking control.
 - When improving opponents, first identify the game objective being optimized. Barbu may need contract-specific reward or avoidance behavior; Hearts normally needs penalty avoidance, queen-of-spades danger management, and moon-defense behavior.
 - Barbu generated practice uses `src/domain/barbuPractice.ts` and `content/barbu-practice.json` on both runtimes. Preserve four seeded patterns per contract and dynamic card choices; do not replace them with smaller authored pools. Barbu scoring and Domino placement reuse `barbuRules.ts` and `dominoRules.ts`. Native practice commands and browser generator mirrors are removed; all full hands use TypeScript too.
 - Model the Barbu/King-of-Cards teaching persona as content or lesson metadata where possible, not as scattered hardcoded strings.
 - Keep guided lessons in catalog-like modules so more games and families can be added without rewriting the interaction surface.
-- Keep Tauri command handlers thin; they should adapt app requests to core APIs.
+- Keep Tauri command handlers thin and limited to native platform integrations.
 - Keep Svelte components focused on presentation and interaction.
 - Treat `content/` as structured source material for lessons and game metadata.
 - Do not hardcode large rule prose into UI components when it belongs in content or core lesson data.
@@ -174,7 +174,7 @@ Avoid purely decorative UI and avoid copying book text.
 Use `Taskfile.yml` as the canonical command surface. Run focused checks after changes:
 
 ```sh
-task core:test
+task domain:test
 task ui:test
 task build
 task tauri:check
@@ -182,8 +182,8 @@ task verify
 ```
 
 For UI-only changes, `npm run build` plus `task ui:test` is usually the minimum.
-For rules, scoring or session changes, run `task domain:test`. Run the core Rust
-tests when changing retained native helpers.
+For rules, scoring or session changes, run `task domain:test`. For shell changes,
+run `task tauri:check` and verify the affected native integration on a device.
 
 Generated practice and all full hands now run in TypeScript on both runtimes. Browser mode exercises the same gameplay engine as installed builds. Tauri/device checks are still required for native integrations, packaging and physical-screen behavior.
 
@@ -210,8 +210,8 @@ Manual game-play testing is useful for feel, but should not be the main safety n
 
 Preferred automation path:
 
-- Rust unit tests for rules, scoring, generation, and outcome explanations.
+- TypeScript domain tests for rules, scoring, generation, sessions, and outcome explanations.
 - Browser interaction tests for authored lesson flows, including iPhone XR smoke coverage through Playwright.
-- Domain tests and frozen native fixtures for migrated generated practice; Tauri command tests for retained native hands.
+- Keep frozen native fixtures as migration regression evidence, not a second engine.
 - iOS simulator smoke tests before TestFlight.
 - StoreKit sandbox tests once paid features are introduced.

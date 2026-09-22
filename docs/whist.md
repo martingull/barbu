@@ -50,8 +50,8 @@ the dealer clockwise, including between rubber games.
 Legacy native and current TypeScript shuffles differ. Frozen native-save
 snapshots check compatibility without retaining a second engine.
 
-Run `task domain:test`, `task core:test`, `task ui:test`, `task build`,
-`task tauri:check`, and `task tauri:test`. Browser testing does not replace a signed
+Run `task domain:test`, `task ui:test`, `task build`,
+and `task tauri:check`. Browser testing does not replace a signed
 device build and physical-device smoke test.
 
 ## Rules And Conventions

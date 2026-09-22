@@ -280,8 +280,6 @@ Run:
 
 ```sh
 task domain:test
-task core:test
-task tauri:test
 task build
 task ui:test
 task tauri:check
@@ -294,7 +292,8 @@ runtime presence and verify that Hearts/Whist/Spades/Bridge full play and Hearts
 invoke Rust. Barbu practice tests cover all four decisions per focused contract
 and the mixed seven-contract drill in browser and simulated-native modes.
 Each Hearts practice topic completes all three decisions in both modes. Native
-gameplay adapters are removed; remaining Rust tests cover legacy shared helpers.
+gameplay adapters and unused Rust helpers are removed. `task tauri:check` checks
+the native shell; physical-device tests must verify its platform integrations.
 
 Spades migration verification on 2026-09-21: 51 domain tests, 121 Rust tests,
 production build and native check passed. The full six-viewport browser run passed
@@ -373,14 +372,36 @@ Play Barbu run, reload mid-Domino and Continue Play Barbu to resume the same lan
 Browser mode now exercises the same Hearts practice logic as the installed build;
 it is still not a physical-device packaging test.
 
+## Rust Shell Cleanup
+
+The unused `crates/barbu-core` crate and `current_game` metadata command are
+removed. No frontend caller used that command; gameplay, lessons and catalog
+metadata already use TypeScript and structured content. Tauri retains startup,
+mobile entry points and the native privacy-policy opener. Unused direct serde
+dependencies are removed without upgrading third-party packages.
+
+The obsolete `core:test` and empty `tauri:test` tasks are removed. Use
+`domain:test` for gameplay regression coverage, `ui:test` for interaction and
+`tauri:check` for the native shell. Frozen native fixtures remain compatibility
+evidence; they do not require retaining a second production engine.
+
+Cleanup verification on 2026-09-22: all 95 domain tests and 18 privacy-policy
+browser checks passed across six phone profiles. Production frontend build,
+native shell check and offline locked native build passed, as did Rust formatting
+and the Taskfile verification dry run. Cargo metadata confirms the shell is the
+only workspace member. Privacy tests mock native invocation; they do not replace
+an installed-device opener check. Existing release-version edits were preserved.
+The existing large-bundle warning remains. No phone installation or store upload
+was performed for this cleanup.
+
 ## Next Migration Work
 
-1. Audit remaining legacy Rust helpers/catalog metadata and remove unused code;
-   retain regression fixtures rather than permanent parallel engines. Verify
-   installed-save upgrades on physical iPhone and Android builds before release.
-2. Evaluate another mobile shell separately, only if it brings a clear benefit.
+1. Verify installed-save upgrades and the privacy-policy opener on physical
+   iPhone and Android builds before release.
+2. Merge the verified migration and prepare updated store packages.
+3. Evaluate another mobile shell separately, only if it brings a clear benefit.
 
 Rust remains required for the Tauri shell, not gameplay engines. Full-hand and
 practice engines and gameplay sessions are TypeScript, with domain/persistence
-boundaries shared across the catalog. Remaining Rust cleanup and physical-device
-upgrade testing are not implied by browser verification.
+boundaries shared across the catalog. Rust cleanup is complete; physical-device
+upgrade testing is not implied by browser verification.

@@ -29,8 +29,7 @@ chosen rules, scoring, and table conventions.
 Whist, Hearts, Spades and Bridge now use these TypeScript domain boundaries. They share the
 hand-engine factory and registry, reviewed-hand transitions, storage factory,
 standard trick-hand save validation, and seat-score primitives. Game-specific
-session transitions and settlement remain explicit. Other games still use
-their existing routes; this document does not silently authorize migrating them.
+session transitions and settlement remain explicit.
 The Hearts, Whist and Spades Rust full-play implementations are removed. Their legacy
 native saves are frozen compatibility fixtures, not a reason to retain a second
 engine. Hearts practice uses `src/domain/heartsPractice.ts` with structured templates
@@ -55,6 +54,9 @@ Rust engine and browser fallback are removed. `barbuSession.ts` owns the fixed-o
 seven-contract progression, result recording, review and replay; `barbuSave.ts`
 validates and restores the existing version-1 run through the save-store factory.
 Svelte dispatches events and presents the resulting session, just as for Whist.
+The unused `barbu-core` crate and `current_game` metadata command are removed.
+Rust now owns only Tauri startup and the native privacy-policy opener. Future
+game rules belong in the shared TypeScript domain, not new native command routes.
 The metadata registry remains separate from engine selection. These references
 do not imply that every game can be added using configuration alone.
 
@@ -90,6 +92,6 @@ replace copy-pasted screens with copy-pasted session or save implementations.
    Remove legacy implementations and dispatch routes after their replacements
    are verified. Keep golden fixtures; do not maintain two production engines.
 
-See [the prototype record](typescript-engine-prototype.md) for Whist's current
+See [the prototype record](typescript-engine-prototype.md) for the migration's current
 scope and verification commands. Use this checklist as a review gate for future
 games, not as a requirement to build speculative abstractions in advance.

@@ -386,7 +386,7 @@ Dependencies before serious work:
 - Keep table screens compact and no-scroll where practical.
 - Prefer returning to the Barbu Table over adding many deep back paths.
 - Keep reference one tap away, but never make reference the main lesson.
-- Do not expose internal distinctions like browser fallback versus Rust hand unless debugging.
+- Do not expose internal distinctions like browser versus native runtime unless debugging.
 
 ## Visual Direction
 
@@ -408,6 +408,6 @@ Avoid:
 ## Implementation Notes
 
 - Shared game-table screens should continue using a generic table surface.
-- Rules, scoring, generated practice, and reusable hand state should stay in Rust where practical.
+- Rules, scoring, generated practice, and reusable hand state belong in the shared TypeScript domain, independent of Svelte.
 - Svelte should handle screen composition, interaction, and short learner-facing copy.
 - Future screen refactors should first group existing actions by intent before changing visual style.

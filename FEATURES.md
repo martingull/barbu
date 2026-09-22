@@ -44,7 +44,7 @@ The intended monetization model is free starter tables first, then paid packs wi
 - Spades table with the shared Learn, Practice, Play, and Pro structure; Play starts a local partnership hand using the Whist-family table with spades fixed as trump, simple side bids, made/failed bid scoring, visible bags, 10-bag penalties, and a score-to-500 shell. Nil bids are fully implemented. Blind nil remains a planned variant.
 - Hearts Passing Drill v1 teaches the beginner pass-three habit: identify the queen of spades, high hearts, and dangerous high spades before hand play begins.
 - Hearts Practice Scenario Pool v1 adds a small authored pool behind Quick Drill, varying first-trick restrictions, avoid-hearts, safe and dangerous queen-of-spades play, break-hearts, moon-defense, and score-reading decisions without expanding the Learn path. Pass-three practice now covers both danger-card passing and a long-suit preservation pattern.
-- Hearts Generated Practice v2B moves first-trick, avoid-hearts, queen-of-spades danger, break-hearts legality, stop-the-moon defense, and score-reading practice into Rust-backed generated scenario families while keeping the shared Svelte drill surface and browser fallback. Focused Hearts practice buttons now run through their small scenario pool once instead of showing a single repeated sample.
+- Hearts practice covers first-trick, avoid-hearts, queen-of-spades danger, break-hearts legality, stop-the-moon defense, and score-reading through shared TypeScript logic and structured templates on browser and native builds. Focused Hearts practice buttons run through their small scenario pool once instead of showing a single repeated sample.
 - Hearts opponent policy v1 has started: local opponents avoid queen-of-spades wins when possible, dump the queen of spades before hearts when void, dump the queen of spades safely under higher spades, lead from short safe suits to create pressure, and lead hearts once hearts are broken.
 - Hearts opponent policy now pressures the player on clean tricks: opponents can take a cheap non-penalty winner from the player to regain lead control, while still ducking tricks already loaded with hearts or the queen of spades unless moon defense requires intervention.
 - Phone play surfaces now suppress double-tap zoom, tap highlights, text selection, and iOS callouts on card/button controls so selecting a card does not break game flow.
@@ -92,7 +92,7 @@ The intended monetization model is free starter tables first, then paid packs wi
 - Generated practice quality pass started with safe-dump scenarios for No Hearts, No Queens, King of Hearts, and No Tricks that teach when a void player can unload danger under a locked winner.
 - Practice Scenario Pool v1 expands Quick Drill from a fixed generated roster into a larger deterministic pool, so mixed practice and weak-contract replays can draw from several scenario shapes.
 - Quick Drill has short-term pattern memory, so recent scenario shapes are avoided before falling back to the full pool.
-- Practice Template Model v1 has started with a Rust-side template roster that maps playable contracts to generator functions before a broader scenario-template DSL is justified.
+- Practice templates use the shared TypeScript domain and structured content to map playable contracts to scenario families before a broader scenario-template DSL is justified.
 - Browser generated fallback for Quick Drill when Tauri is unavailable.
 - Playwright smoke tests for catalog, Barbu table, lesson flow, generated fallback, course-complete behavior, and current Hearts/Barbu table navigation.
 - Individual Playwright full-hand smoke tests now cover every playable Barbu contract from the Play Barbu hand path: No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino.
@@ -175,7 +175,7 @@ This section is the short list for getting from the current app to something tha
    - Keep decision policy game-specific. Barbu is a contract game where each contract defines whether seats should win, duck, avoid cards, chase rewards, use trumps, or build Domino. Hearts is a trick-avoidance penalty game where seats normally avoid hearts and the queen of spades unless defending against or attempting a moon.
    - Do not improve Hearts opponents by copying Barbu "take control" behavior unless the move reduces penalty risk or serves a clear moon-defense purpose.
    - Do not improve Barbu opponents by assuming every contract is Hearts-style avoidance; Positive Tricks, Hearts Trumps, No Tricks, No Queens, No Last Two, King of Hearts, No Hearts, and Domino need different policy hooks.
-   - Near-term implementation task: identify the shared Rust primitives versus the Barbu contract-policy layer and the Hearts/Black Lady avoidance-policy layer before changing more opponent behavior.
+   - Before changing more opponent behavior, identify the shared TypeScript primitives versus the Barbu contract-policy layer and the Hearts/Black Lady avoidance-policy layer.
 
 1. Stabilize the active phone table
    - Keep Quick Drill, full-hand practice, Play Barbu, Hearts, Domino, and Pro mini-games on stable iPhone layouts.
@@ -212,7 +212,7 @@ This section is the short list for getting from the current app to something tha
 6. Documentation and verification gate
    - Keep README, FEATURES, SCREEN_PLAN, and AGENTS aligned with launch scope.
    - Every completed feature should include a "Try it yourself" path.
-   - Before calling the launch build ready, run core Rust tests, UI tests on phone profiles, Tauri check, and at least one physical-device smoke pass.
+   - Before calling the launch build ready, run TypeScript domain tests, UI tests on phone profiles, Tauri check, and at least one physical-device smoke pass.
 
 ## Barbu Contract Roadmap
 
@@ -275,7 +275,7 @@ Shared baseline:
 - Trick-taking contracts enforce follow-suit legality through shared hand state before opponent choice.
 - Opponents auto-play until the user's turn, so policy mistakes are visible immediately in phone play.
 - Current policies are contract-aware heuristics, not full inference engines. They do not yet remember inferred voids, count all remaining danger cards, or plan several tricks ahead.
-- Browser fallback logic should stay aligned, but the Rust core is the source of truth for production behavior.
+- One TypeScript domain implementation is the source of truth on browser and native builds; do not retain separate fallback policies.
 
 | Contract | Current opponent behavior | Production readiness | Next action |
 | --- | --- | --- | --- |
@@ -291,7 +291,7 @@ Policy extraction direction:
 
 - Keep Barbu contract policy separate from Hearts/Black Lady trick-avoidance policy. They share trick mechanics, but their objectives differ enough that a single "avoidance" brain creates confusing play.
 - Extract one contract at a time into policy-context functions, starting with No Hearts or No Last Two. Do not create a large generic opponent engine until at least Barbu, Hearts, and Whist have exposed the repeated shape.
-- Add focused Rust tests for each extracted policy before changing table feel. Manual phone play should validate flow, not be the only guardrail.
+- Add focused domain tests for each extracted policy before changing table feel. Manual phone play should validate flow, not be the only guardrail.
 
 ## Near-Term Roadmap
 
@@ -307,8 +307,8 @@ These are the next product increments that keep the app coherent.
    - Hearts Passing Drill v1 teaches the first pass-three heuristic.
    - Hearts Learn now gives a Barbu-like path through object, queen-of-spades danger, avoiding hearts, passing, score reading, and reference.
    - Hearts Practice covers pass-three, avoid-hearts, queen-of-spades danger, break-hearts, stop-the-moon, and score-a-hand entry points.
-   - Hearts generated practice v2B now backs first-trick, avoid-hearts, queen-of-spades danger, break-hearts legality, stop-the-moon defense, and score-reading drills from Rust so those families can vary like Barbu practice, and focused practice buttons now run their small pools once per session.
-   - Hearts micro-drills still use authored browser fallbacks, while Tauri/iOS uses Rust-backed generated scenario families.
+   - Hearts practice backs first-trick, avoid-hearts, queen-of-spades danger, break-hearts legality, stop-the-moon defense, and score-reading drills through structured templates, with three decisions per focused topic.
+   - Hearts micro-drills use the same TypeScript logic and content on browser and native builds; frozen native outputs verify all 18 decisions and both passing patterns.
    - Next: tune the generated Hearts scenario mix after phone testing and decide whether pass-three needs a larger generated pool.
 
 2. Drill Loop v2
@@ -325,14 +325,14 @@ These are the next product increments that keep the app coherent.
    - Short-term practice memory now avoids recently seen scenario patterns when the filtered pool has alternatives.
    - Practice Template Model v1 should continue gradually by extracting repeated table/hand construction patterns only after two or three more scenario families prove the shape.
    - Add more scenario families for each supported contract as testing reveals repetition. Barbu practice currently has four scenario families per playable contract, including late ducking, safe danger-card shedding, follow-before-trump, and Domino gap decisions.
-   - Keep commands thin and deterministic.
-   - Add Rust tests for every drill generator.
+   - Keep domain transitions deterministic and independent of UI and storage.
+   - Add TypeScript domain tests for every drill generator.
    - Current generated baseline covers the playable roster; remaining work is breadth and balancing rather than first coverage.
 
 4. Contract Score Model v2
    - Move point-value definitions into shared content/core metadata instead of duplicating them across UI and scoring code.
    - Frontend score metadata now separates avoidance, reward, and layout contracts for labels and run-score direction.
-   - Next: move the same model into Rust/content so hand scoring, generated practice, and UI labels share one source.
+   - Keep hand scoring, generated practice, and UI labels aligned through shared TypeScript domain/content metadata.
    - Next: fold Domino's order-out score table into the same shared model.
 
 5. Core Game And Variety Model v2
@@ -383,7 +383,7 @@ These are the next product increments that keep the app coherent.
    - Improve Barbu and table seats as training opponents before any real multiplayer work.
    - Focus on believable card-player habits: avoid obvious penalties, count endgame danger, preserve exits, use trumps sensibly, and pursue reward tricks when the contract asks for it.
    - Initial explicit overtrump behavior exists in Hearts Trumps and realistic Trump Count: when a seat is void in the led suit and a trump is already winning, it can play the lowest trump that beats it. Continue refining when seats should discard or conserve trumps according to the contract goal.
-   - No Queens now has an explicit avoidance-policy slice in the shared Rust contract-policy layer: avoid queen leads, duck queen-loaded tricks when possible, dump queens when void, and shed a queen under a locked winner instead of wasting another safe high card.
+   - No Queens has an explicit avoidance-policy slice in `src/domain/barbuPolicy.ts`: avoid queen leads, duck queen-loaded tricks when possible, dump queens when void, and shed a queen under a locked winner instead of wasting another safe high card.
    - Great card games are often played against real people, but better local opponents are the right bridge from solo learning to real table play.
 
 12. Reference Layer v1
@@ -423,7 +423,7 @@ These are the next product increments that keep the app coherent.
 - Rules, terminology, and play order should start from Parlett before local assumptions.
 - Keep core games distinct from varieties of play; varieties should document what changes from the core game.
 - Reference material should support the lesson path, not replace learn-by-doing.
-- Add game logic to Rust when it affects legality, scoring, outcomes, generation, or reusable lesson state.
+- Add game logic to the shared TypeScript domain when it affects legality, scoring, outcomes, generation, or reusable lesson state.
 - Keep Svelte focused on presentation and interaction.
 - Keep Barbu's voice concise. Personality should clarify, not distract.
 - Prefer one strong path over many disconnected screens.
@@ -434,8 +434,8 @@ Before adding a feature, answer:
 
 1. Does this help a beginner learn a card game faster?
 2. Does it fit the concept, example, guided play, practice, review loop?
-3. Does it belong in Rust, content, Tauri, or Svelte?
-4. Can it be tested with Rust tests or Playwright?
+3. Does it belong in the TypeScript domain, content, persistence, native integration, or Svelte?
+4. Can it be tested with domain tests, Playwright, or a native integration check?
 5. Is it needed before full Barbu hand practice?
 
 If the answer is unclear, put the idea in the parking lot.

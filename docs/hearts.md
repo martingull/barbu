@@ -52,7 +52,7 @@ not yet be described as expert or validated club-strength players.
 - The duplicate Rust full-hand engine and opponent policy have been removed.
 - Match progression: `src/domain/heartsSession.ts`; legacy save compatibility:
   `src/persistence/heartsSave.ts`. Replay restarts the actual post-pass deal.
-- Generated practice still uses Rust with the existing browser fallback.
+- Practice uses shared TypeScript domain logic and structured content on browser and native builds.
 - Shared tactical and passing cases: `tests/fixtures/hearts-*.json`.
 - Tactical cases rotate through every seat to catch seat-dependent behavior.
 - Domain tests audit 256 complete deals, covering every
@@ -62,6 +62,6 @@ not yet be described as expert or validated club-strength players.
 
 Legacy native saves use a different shuffle. Frozen native-save snapshots test
 continuation and replay without retaining the old Rust engine.
-Run `task domain:test`, `task core:test`, `task tauri:test`, `task ui:test`,
+Run `task domain:test`, `task ui:test`,
 `task build`, and `task tauri:check`.
 Browser coverage does not replace a signed physical-device smoke test.

@@ -66,7 +66,7 @@ feature. Do not advertise a complete club competition mode yet.
 
 ## Verification
 
-Run `task domain:test`, `task core:test`, `task build`, `task tauri:check`, and `task ui:test`.
+Run `task domain:test`, `task build`, `task tauri:check`, and `task ui:test`.
 Focused Bridge coverage: `npx playwright test --grep Bridge`.
 Browser mode exercises the same practice, auction, scoring and full-hand rules
 as installed builds. Frozen native parity runs in the domain tests. A fresh
