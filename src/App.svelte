@@ -26,10 +26,11 @@
   import { createHeartsSaveStore, restoreHeartsSession, saveHeartsSession, savedHeartsRunSummary, type SavedHeartsRun } from "./persistence/heartsSave";
   import { createWhistSession, emptyWhistScore, transitionWhistSession, whistSessionSettlement, type WhistSession } from "./domain/whistSession";
   import { createWhistSaveStore, restoreWhistSession, saveWhistSession, savedWhistRunSummary, type SavedWhistRun } from "./persistence/whistSave";
-  import { normalizeBarbuHand } from "./persistence/barbuHandSave";
-  import { normalizedReviewCount } from "./persistence/handSaveValidation";
+  import { createBarbuSession, transitionBarbuSession, barbuSessionComplete, barbuSeatTotals, dominoSeatScores,
+    type BarbuSession, type BarbuSessionEvent, type BarbuHandResult as FullHandRunResult } from "./domain/barbuSession";
+  import { createBarbuSaveStore, saveBarbuSession, restoreBarbuSession, savedPlayBarbuRunSummary,
+    type SavedPlayBarbuRun } from "./persistence/barbuSave";
   import { dominoHandEngine, type DominoAction } from "./domain/dominoHand";
-  import { normalizeDominoHand } from "./persistence/dominoSave";
   import { generateBarbuPracticeSet } from "./domain/barbuPractice";
   import BridgeTable from "./BridgeTable.svelte";
   import CardChoiceHand from "./CardChoiceHand.svelte";
@@ -214,13 +215,6 @@
   type SpadesLearnPathStep = LearnPathStep<SpadesLearnPathAction>;
   type BridgeLearnPathStep = LearnPathStep<BridgeLearnPathAction>;
 
-  type FullHandRunResult = {
-    contract: FullHandContract;
-    playerPenalty: number;
-    totalPenalty: number;
-    seatPenalties: Record<Seat, number>;
-  };
-
   type RunStanding = {
     rank: number;
     seat: Seat;
@@ -328,20 +322,6 @@
     | { kind: "boss_card"; prompt: string; answer: boolean; targetCard: Card }
     | { kind: "void_spotter"; prompt: string; answer: Seat; targetSuit: Suit };
 
-  type SavedPlayBarbuRun = {
-    version: 1;
-    seed: number;
-    view: "runContractIntro" | "fullHand" | "dominoHand";
-    pendingContract: FullHandContract;
-    results: FullHandRunResult[];
-    fullHand: FullHandState | null;
-    dominoHand: DominoHandState | null;
-    fullHandReviewTrickCount: number;
-    usingBrowserFullHand: boolean;
-    usingBrowserDomino: boolean;
-    savedAt: string;
-  };
-
   type WhistOpeningLeadPracticeDeal = {
     id: string;
     trumpSuit: Suit;
@@ -368,7 +348,7 @@
   const practiceSeedStorageKey = "barbu.practiceSeed.v1";
   const drillPatternMemoryStorageKey = "barbu.drillPatternMemory.v1";
   const playBarbuHistoryStorageKey = "barbu.playHistory.v1";
-  const savedPlayBarbuRunStorageKey = "barbu.savedPlayRun.v1";
+  const barbuSaveStore = createBarbuSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
   const heartsSaveStore = createHeartsSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
   const whistSaveStore = createWhistSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
   const spadesSaveStore = createSpadesSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
@@ -598,7 +578,9 @@
   let completedPathSteps: Record<string, boolean> = loadCourseProgress();
   let playBarbuHistory: PlayBarbuAttempt[] = loadPlayBarbuHistory();
 
-  let savedPlayBarbuRun: SavedPlayBarbuRun | null = loadSavedPlayBarbuRun();
+  let savedPlayBarbuRun: SavedPlayBarbuRun | null = barbuSaveStore.load();
+  let barbuSession: BarbuSession | null = null;
+  let barbuSaveError = "";
   let savedHeartsRun: SavedHeartsRun | null = heartsSaveStore.load();
   let savedWhistRun: SavedWhistRun | null = whistSaveStore.load();
   let savedSpadesRun: SavedSpadesRun | null = spadesSaveStore.load();
@@ -656,10 +638,9 @@
   let lastDominoTapCardId = "";
   let lastDominoTapAt = 0;
   let dominoLastMoveReason = "";
-  let fullHandRunActive = false;
-  let fullHandRunSeed = 0;
-  let fullHandRunResults: FullHandRunResult[] = [];
-  let pendingRunContract: FullHandContract = fullHandContracts[0];
+  $: fullHandRunActive = barbuSession !== null;
+  $: fullHandRunResults = barbuSession?.results ?? [];
+  $: pendingRunContract = barbuSession?.pendingContract ?? fullHandContracts[0];
   let trumpCountSeed = practiceSeed;
   let trumpCountRound = buildTrumpCountRound(trumpCountSeed);
   let trumpCountRevealIndex = 0;
@@ -699,18 +680,6 @@
     appView === "trumpCount" ||
     appView === "courtCount" ||
     appView === "trumpMemory";
-
-  function runSeatScores(results: FullHandRunResult[]) {
-    const totals = emptySeatPenalties();
-
-    for (const result of results) {
-      for (const seat of scoreSeats) {
-        totals[seat] += contractRunScore(result.contract, result.seatPenalties[seat] ?? 0);
-      }
-    }
-
-    return totals;
-  }
 
   function buildDominoDrillLayout(tableCards: TableCard[]) {
     const lanes: Card[][] = [[], [], [], []];
@@ -1520,14 +1489,14 @@
   $: fullHandRunOrderedResults = fullHandContracts
     .map((contract) => fullHandRunResults.find((result) => result.contract === contract))
     .filter((result): result is FullHandRunResult => Boolean(result));
-  $: fullHandRunSeatPenalties = runSeatPenalties(fullHandRunResults);
-  $: fullHandRunSeatScores = runSeatScores(fullHandRunResults);
+  $: fullHandRunSeatPenalties = barbuSeatTotals(fullHandRunResults, false);
+  $: fullHandRunSeatScores = barbuSeatTotals(fullHandRunResults);
   $: fullHandRunStandings = runStandings(fullHandRunSeatScores);
   $: fullHandRunPlayerStanding = fullHandRunStandings.find((standing) => standing.seat === "You");
   $: fullHandRunLeader = fullHandRunStandings[0];
   $: fullHandRunBestContract = runBestContract(fullHandRunOrderedResults);
   $: fullHandRunWeakestContract = runWeakestContract(fullHandRunOrderedResults);
-  $: fullHandRunIsComplete = fullHandRunActive && fullHandRunResults.length >= fullHandContracts.length;
+  $: fullHandRunIsComplete = barbuSession !== null && barbuSessionComplete(barbuSession);
   $: fullHandRunRemainingCount = Math.max(fullHandContracts.length - fullHandRunResults.length, 0);
   $: fullHandRunLeaderLabel = fullHandRunLeader
     ? `${scoreSeatLabel(fullHandRunLeader.seat)} ${formatSignedScore(fullHandRunLeader.score)}`
@@ -1841,153 +1810,60 @@
     }
   }
 
-  function loadSavedPlayBarbuRun(): SavedPlayBarbuRun | null {
-    if (typeof localStorage === "undefined") {
-      return null;
-    }
-
-    try {
-      return normalizeSavedPlayBarbuRun(JSON.parse(localStorage.getItem(savedPlayBarbuRunStorageKey) ?? "null"));
-    } catch {
-      return null;
-    }
+  function setBarbuSession(session: BarbuSession) {
+    barbuSession = session;
+    fullHand = session.fullHand;
+    dominoHand = session.dominoHand;
+    fullHandReviewTrickCount = session.fullHandReviewTrickCount;
   }
 
-  function normalizeSavedPlayBarbuRun(savedRun: unknown): SavedPlayBarbuRun | null {
-    if (!savedRun || typeof savedRun !== "object") {
-      return null;
-    }
-
-    const candidate = savedRun as Partial<SavedPlayBarbuRun>;
-
-    if (candidate.version !== 1 || !isFullHandContract(candidate.pendingContract)) {
-      return null;
-    }
-
-    const view =
-      candidate.view === "fullHand" || candidate.view === "dominoHand" || candidate.view === "runContractIntro"
-        ? candidate.view
-        : "runContractIntro";
-    const fullHand = normalizeBarbuHand(candidate.fullHand);
-    const dominoHand = normalizeDominoHand(candidate.dominoHand);
-
-    if ((view === "fullHand" && !fullHand) || (view === "dominoHand" && !dominoHand)) {
-      return null;
-    }
-
-    return {
-      version: 1,
-      seed: Number.isInteger(candidate.seed) && candidate.seed > 0 ? candidate.seed : 1,
-      view,
-      pendingContract: candidate.pendingContract,
-      results: Array.isArray(candidate.results) ? candidate.results.filter(isFullHandRunResult) : [],
-      fullHand,
-      dominoHand,
-      fullHandReviewTrickCount: fullHand ? normalizedReviewCount(candidate.fullHandReviewTrickCount, fullHand) : 0,
-      usingBrowserFullHand: true,
-      usingBrowserDomino: true,
-      savedAt: typeof candidate.savedAt === "string" ? candidate.savedAt : new Date().toISOString()
-    };
-  }
-
-  function isFullHandContract(contract: unknown): contract is FullHandContract {
-    return fullHandContracts.includes(contract as FullHandContract);
-  }
-
-  function isFullHandRunResult(result: unknown): result is FullHandRunResult {
-    if (!result || typeof result !== "object") {
-      return false;
-    }
-
-    const candidate = result as Partial<FullHandRunResult>;
-    return isFullHandContract(candidate.contract) && typeof candidate.seatPenalties === "object";
-  }
-
-  function persistSavedPlayBarbuRun(view: SavedPlayBarbuRun["view"] = savedPlayBarbuView()) {
-    if (!fullHandRunActive) {
-      return;
-    }
-
-    if (fullHandRunResults.length >= fullHandContracts.length) {
-      clearSavedPlayBarbuRun();
-      return;
-    }
-
-    const nextSavedRun: SavedPlayBarbuRun = {
-      version: 1,
-      seed: fullHandRunSeed || 1,
-      view,
-      pendingContract: pendingRunContract,
-      results: fullHandRunResults,
-      fullHand,
-      dominoHand,
-      fullHandReviewTrickCount,
-      usingBrowserFullHand: true,
-      usingBrowserDomino: true,
-      savedAt: new Date().toISOString()
-    };
-
-    savedPlayBarbuRun = nextSavedRun;
-
-    if (typeof localStorage !== "undefined") {
-      localStorage.setItem(savedPlayBarbuRunStorageKey, JSON.stringify(nextSavedRun));
-    }
-  }
-
-  function clearSavedPlayBarbuRun() {
-    savedPlayBarbuRun = null;
-
-    if (typeof localStorage !== "undefined") {
-      localStorage.removeItem(savedPlayBarbuRunStorageKey);
-    }
-  }
-
-  function savedPlayBarbuView(): SavedPlayBarbuRun["view"] {
-    if (appView === "fullHand" || appView === "dominoHand" || appView === "runContractIntro") {
-      return appView;
-    }
-
-    return "runContractIntro";
-  }
-
-  function savedPlayBarbuRunSummary(savedRun: SavedPlayBarbuRun) {
-    if (savedRun.fullHand) {
-      return `${savedRun.fullHand.contract}, trick ${savedRun.fullHand.trickNumber}`;
-    }
-
-    if (savedRun.dominoHand) {
-      return `Domino, ${savedRun.dominoHand.cardsRemaining} cards left`;
-    }
-
-    return `${savedRun.pendingContract}, ${savedRun.results.length} played`;
-  }
-
-  function continueSavedPlayBarbuRun() {
-    const savedRun = savedPlayBarbuRun ?? loadSavedPlayBarbuRun();
-
-    if (!savedRun) {
-      return;
-    }
-
-    fullHandRunActive = true;
-    fullHandRunSeed = savedRun.seed;
-    fullHandRunResults = savedRun.results;
-    pendingRunContract = savedRun.pendingContract;
-    fullHand = savedRun.fullHand;
-    dominoHand = savedRun.dominoHand;
-    fullHandReviewTrickCount = savedRun.fullHandReviewTrickCount;
+  function openBarbuSession(session: BarbuSession) {
+    activeGameTable = "barbu";
+    activeTableTabs.barbu = "play";
+    fullHandCardCountingMode = false;
+    heartsPassingHand = null;
+    setBarbuSession(session);
     fullHandSelectedCardId = "";
+    dummySelectedCardId = "";
     dominoSelectedCardId = "";
     fullHandError = "";
     dominoError = "";
+    dominoLastMoveReason = "";
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
     lastDominoTapCardId = "";
     lastDominoTapAt = 0;
-    activeTableTabs.barbu = "play";
-    appView = savedRun.view;
-    savedPlayBarbuRun = savedRun;
-    persistSavedPlayBarbuRun(savedRun.view);
+    appView = session.view;
+  }
+
+  function persistSavedPlayBarbuRun() {
+    if (!barbuSession) return;
+    savedPlayBarbuRun = saveBarbuSession(barbuSession, new Date().toISOString());
+    if (fullHandError === barbuSaveError) fullHandError = "";
+    if (dominoError === barbuSaveError) dominoError = "";
+    barbuSaveError = "";
+    try {
+      barbuSaveStore.write(savedPlayBarbuRun);
+    } catch {
+      barbuSaveError = "Progress could not be saved on this device.";
+      if (barbuSession.view === "dominoHand") dominoError = barbuSaveError;
+      else fullHandError = barbuSaveError;
+    }
+  }
+
+  function dispatchBarbuSession(event: BarbuSessionEvent) {
+    if (!barbuSession) return;
+    const next = transitionBarbuSession(barbuSession, event);
+    if (next === barbuSession) return;
+    openBarbuSession(next);
+    persistSavedPlayBarbuRun();
+  }
+
+  function continueSavedPlayBarbuRun() {
+    const saved = savedPlayBarbuRun ?? barbuSaveStore.load();
+    if (!saved) return;
+    openBarbuSession(restoreBarbuSession(saved));
+    persistSavedPlayBarbuRun();
   }
 
   function heartsPassDirectionLabel(direction: HeartsPassDirection) {
@@ -2031,8 +1907,7 @@
   function openHeartsSession(session: HeartsSession) {
     activeGameTable = "hearts";
     activeTableTabs.hearts = "play";
-    fullHandRunActive = false;
-    fullHandRunResults = [];
+    barbuSession = null;
     fullHandCardCountingMode = false;
     dominoHand = null;
     spadesPlayStarted = true;
@@ -2080,8 +1955,7 @@
     activeTableTabs.whist = "play";
     whistFullHandSource = "play";
     whistSessionMode = session.mode;
-    fullHandRunActive = false;
-    fullHandRunResults = [];
+    barbuSession = null;
     fullHandCardCountingMode = false;
     dominoHand = null;
     heartsPassingHand = null;
@@ -2133,8 +2007,7 @@
     activeGameTable = "spades";
     activeTableTabs.spades = "play";
     whistFullHandSource = "play";
-    fullHandRunActive = false;
-    fullHandRunResults = [];
+    barbuSession = null;
     fullHandCardCountingMode = false;
     dominoHand = null;
     heartsPassingHand = null;
@@ -2198,8 +2071,7 @@
     activeGameTable = "bridge";
     activeTableTabs.bridge = "play";
     whistFullHandSource = "play";
-    fullHandRunActive = false;
-    fullHandRunResults = [];
+    barbuSession = null;
     fullHandCardCountingMode = false;
     dominoHand = null;
     heartsPassingHand = null;
@@ -2270,13 +2142,6 @@
     }
 
     return seed;
-  }
-
-  function runSeedForContract(contract: FullHandContract) {
-    const contractIndex = fullHandContracts.indexOf(contract);
-    const seedBase = fullHandRunSeed > 0 ? fullHandRunSeed : usePracticeSeed();
-
-    return ((Math.imul(seedBase, 1_103_515_245) + Math.imul(contractIndex + 1, 12_345)) >>> 0) || 1;
   }
 
   function loadDrillPatternMemory() {
@@ -3572,9 +3437,9 @@
     openBarbuTable();
   }
 
-  async function startFullHand(contract: FullHandContract, options: { cardCounting?: boolean; keepRun?: boolean; seed?: number; dealer?: number } = {}) {
+  async function startFullHand(contract: FullHandContract, options: { cardCounting?: boolean; seed?: number; dealer?: number } = {}) {
     if (contract === "Domino") {
-      await startDominoHand(options);
+      await startDominoHand();
       return;
     }
 
@@ -3588,14 +3453,11 @@
     fullHandCardCountingQuestionsAsked = 0;
     fullHandCardCountingClean = 0;
 
-    if (!options.keepRun) {
-      fullHandRunActive = false;
-      fullHandRunResults = [];
-    }
+    barbuSession = null;
 
     dominoHand = null;
     heartsPassingHand = null;
-    const seed = options.seed ?? (options.keepRun && fullHandRunActive ? runSeedForContract(contract) : usePracticeSeed());
+    const seed = options.seed ?? usePracticeSeed();
     fullHandSelectedCardId = "";
     dummySelectedCardId = "";
     fullHandError = "";
@@ -3607,9 +3469,6 @@
     fullHand = engine.start({ seed, dealer: options.dealer });
 
     appView = "fullHand";
-    if (options.keepRun && fullHandRunActive) {
-      persistSavedPlayBarbuRun("fullHand");
-    }
   }
 
   async function startHeartsPassingPhase(options: { keepSession?: boolean } = {}) {
@@ -3629,13 +3488,9 @@
     }
   }
 
-  async function startDominoHand(options: { keepRun?: boolean } = {}) {
-    if (!options.keepRun) {
-      fullHandRunActive = false;
-      fullHandRunResults = [];
-    }
-
-    const seed = options.keepRun && fullHandRunActive ? runSeedForContract("Domino") : usePracticeSeed();
+  async function startDominoHand() {
+    barbuSession = null;
+    const seed = usePracticeSeed();
     fullHand = null;
     heartsPassingHand = null;
     dominoSelectedCardId = "";
@@ -3647,9 +3502,6 @@
     dominoHand = dominoHandEngine.start({ seed });
 
     appView = "dominoHand";
-    if (options.keepRun && fullHandRunActive) {
-      persistSavedPlayBarbuRun("dominoHand");
-    }
   }
 
   function toggleHeartsPassCard(card: Card) {
@@ -3739,17 +3591,18 @@
         setSpadesSession(transitionSpadesSession(spadesSession, { type: "play-card", cardId: targetId }));
       } else if (isWhistSessionHand() && whistSession) {
         setWhistSession(transitionWhistSession(whistSession, { type: "play-card", cardId: targetId }));
+      } else if (barbuSession) {
+        setBarbuSession(transitionBarbuSession(barbuSession, { type: "play-card", cardId: targetId }));
       } else {
         const engine = typescriptHandEngine(fullHand.contract);
         if (!engine) throw new Error(`Unsupported hand: ${fullHand.contract}`);
         updateFullHandAfterPlayerPlay(engine.transition(fullHand, { type: "play-card", cardId: targetId }), completedTrickCount);
       }
-      recordCompletedFullHandRunResult(fullHand);
       fullHandSelectedCardId = "";
       dummySelectedCardId = "";
       lastFullHandTapCardId = "";
       lastFullHandTapAt = 0;
-      persistSavedPlayBarbuRun("fullHand");
+      persistSavedPlayBarbuRun();
       persistSavedHeartsRun();
       persistSavedWhistRun();
       persistSavedSpadesRun();
@@ -3780,6 +3633,8 @@
       setSpadesSession(transitionSpadesSession(spadesSession, { type: "next-trick" }));
     } else if (isWhistSessionHand() && whistSession) {
       setWhistSession(transitionWhistSession(whistSession, { type: "next-trick" }));
+    } else if (barbuSession) {
+      setBarbuSession(transitionBarbuSession(barbuSession, { type: "next-trick" }));
     } else {
       fullHandReviewTrickCount = 0;
     }
@@ -3787,7 +3642,7 @@
     dummySelectedCardId = "";
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
-    persistSavedPlayBarbuRun("fullHand");
+    persistSavedPlayBarbuRun();
     persistSavedHeartsRun();
     persistSavedWhistRun();
     persistSavedSpadesRun();
@@ -3966,8 +3821,7 @@
     whistOpeningLeadPracticeRound = round;
     activePathStepId = pathStepId;
     whistSession = null;
-    fullHandRunActive = false;
-    fullHandRunResults = [];
+    barbuSession = null;
     dominoHand = null;
     heartsPassingHand = null;
     fullHandSelectedCardId = "";
@@ -4259,45 +4113,32 @@
   }
 
   function startBarbuRun() {
-    fullHandRunActive = true;
-    fullHandRunSeed = usePracticeSeed();
-    fullHandRunResults = [];
-    fullHand = null;
-    dominoHand = null;
-    openRunContractIntro(fullHandContracts[0]);
-  }
-
-  function openRunContractIntro(contract: FullHandContract) {
-    pendingRunContract = contract;
-    fullHand = null;
-    dominoHand = null;
-    fullHandReviewTrickCount = 0;
-    fullHandSelectedCardId = "";
-    dominoSelectedCardId = "";
-    appView = "runContractIntro";
-    persistSavedPlayBarbuRun("runContractIntro");
+    openBarbuSession(createBarbuSession(usePracticeSeed()));
+    persistSavedPlayBarbuRun();
   }
 
   function startPendingRunContract() {
-    void startFullHand(pendingRunContract, { keepRun: true });
+    dispatchBarbuSession({ type: "start-hand" });
   }
 
   function applyDominoAction(action: DominoAction, reason = "") {
     if (!dominoHand) return;
     dominoError = "";
     try {
-      const next = dominoHandEngine.transition(dominoHand, action);
-      if (next === dominoHand) return;
-      dominoHand = next;
-      if (action.type === "replay" && fullHandRunActive) {
-        fullHandRunResults = fullHandRunResults.filter(result => result.contract !== "Domino");
+      if (barbuSession) {
+        const next = transitionBarbuSession(barbuSession, action);
+        if (next === barbuSession) return;
+        setBarbuSession(next);
+      } else {
+        const next = dominoHandEngine.transition(dominoHand, action);
+        if (next === dominoHand) return;
+        dominoHand = next;
       }
-      recordCompletedDominoRunResult(dominoHand);
       dominoSelectedCardId = "";
       lastDominoTapCardId = "";
       lastDominoTapAt = 0;
       dominoLastMoveReason = reason;
-      persistSavedPlayBarbuRun("dominoHand");
+      persistSavedPlayBarbuRun();
     } catch (error) {
       dominoError = error instanceof Error ? error.message : "That Domino action could not be completed.";
     }
@@ -4344,17 +4185,8 @@
       return;
     }
 
-    if (fullHandRunActive) {
-      recordCompletedDominoRunResult(dominoHand);
-
-      if (fullHandRunIsComplete) {
-        startBarbuRun();
-        return;
-      }
-
-      const currentIndex = fullHandContracts.indexOf(dominoHand.contract);
-      const nextContract = fullHandContracts[(currentIndex + 1) % fullHandContracts.length] ?? "No Hearts";
-      openRunContractIntro(nextContract);
+    if (barbuSession) {
+      dispatchBarbuSession({ type: "next-contract" });
       return;
     }
 
@@ -4429,17 +4261,8 @@
       return;
     }
 
-    if (fullHandRunActive) {
-      recordCompletedFullHandRunResult(fullHand);
-
-      if (fullHandRunIsComplete) {
-        startBarbuRun();
-        return;
-      }
-
-      const currentIndex = fullHandContracts.indexOf(fullHand.contract);
-      const nextContract = fullHandContracts[(currentIndex + 1) % fullHandContracts.length] ?? "No Hearts";
-      openRunContractIntro(nextContract);
+    if (barbuSession) {
+      dispatchBarbuSession({ type: "next-contract" });
       return;
     }
 
@@ -4504,8 +4327,9 @@
       return;
     }
 
-    if (fullHandRunActive) {
-      fullHandRunResults = fullHandRunResults.filter((result) => result.contract !== fullHand?.contract);
+    if (barbuSession) {
+      dispatchBarbuSession({ type: "replay" });
+      return;
     }
     const engine = typescriptHandEngine(fullHand.contract);
     if (!engine) return;
@@ -4520,7 +4344,7 @@
     fullHandError = "";
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
-    persistSavedPlayBarbuRun("fullHand");
+    persistSavedPlayBarbuRun();
   }
 
   function replayWeakestRunContract() {
@@ -4531,45 +4355,6 @@
     void startFullHand(fullHandRunWeakestContract.contract);
   }
 
-  function recordCompletedFullHandRunResult(state: FullHandState | null) {
-    if (!fullHandRunActive || !state || state.status !== "complete") {
-      return;
-    }
-
-    const result: FullHandRunResult = {
-      contract: state.contract,
-      playerPenalty: state.playerPenalty,
-      totalPenalty: state.totalPenalty,
-      seatPenalties: seatPenaltiesForTricks(state.completedTricks)
-    };
-
-    fullHandRunResults = [...fullHandRunResults.filter((item) => item.contract !== state.contract), result];
-  }
-
-  function recordCompletedDominoRunResult(state: DominoHandState | null) {
-    if (!fullHandRunActive || !state || state.status !== "complete") {
-      return;
-    }
-
-    const result: FullHandRunResult = {
-      contract: "Domino",
-      playerPenalty: state.scores[2] ?? 0,
-      totalPenalty: state.scores.reduce((total, score) => total + score, 0),
-      seatPenalties: dominoSeatScores(state)
-    };
-
-    fullHandRunResults = [...fullHandRunResults.filter((item) => item.contract !== "Domino"), result];
-  }
-
-  function dominoSeatScores(state: DominoHandState): Record<Seat, number> {
-    return {
-      Tutor: state.scores[0] ?? 0,
-      Right: state.scores[1] ?? 0,
-      You: state.scores[2] ?? 0,
-      Left: state.scores[3] ?? 0
-    };
-  }
-
   function seatTricksWonForTricks(tricks: CompletedHandTrick[]) {
     const totals = emptySeatPenalties();
 
@@ -4578,18 +4363,6 @@
 
       if (seat) {
         totals[seat] += 1;
-      }
-    }
-
-    return totals;
-  }
-
-  function runSeatPenalties(results: FullHandRunResult[]) {
-    const totals = emptySeatPenalties();
-
-    for (const result of results) {
-      for (const seat of scoreSeats) {
-        totals[seat] += result.seatPenalties[seat] ?? 0;
       }
     }
 
@@ -7927,6 +7700,7 @@
       </div>
 
       <div class="run-intro-panel">
+        {#if barbuSaveError}<p class="error" role="alert">{barbuSaveError}</p>{/if}
         <div class="run-session-summary" aria-label="Play Barbu session summary">
           <div>
             <span>Leader</span>

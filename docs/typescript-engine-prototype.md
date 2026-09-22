@@ -14,15 +14,14 @@ game-specific rules and opponent policy. This is not a mobile-shell migration.
 | Hearts and Barbu generated practice | Shared TypeScript generators/evaluation and structured content |
 | Whist and Spades authored Learn and Practice | Shared TypeScript content and policy |
 | Barbu six trick-taking full hands and opponents | Shared TypeScript hand factory, rules and policy |
-| Barbu seven-contract run and saves | Existing Svelte orchestration; shared validation for migrated hands |
+| Barbu seven-contract run and saves | TypeScript session and save adapter using shared factories |
 | Domino full hands | Shared TypeScript layout engine and save validation |
 | Bridge auction, duplicate scoring and authored practice | Shared TypeScript domain and content; native duplicate removed |
 | Packaging and native integrations | Tauri/Rust shell |
 
 There is no hosted gameplay backend. TypeScript runs locally in the browser or
 phone WebView; Rust runs locally inside the native build. Migrated sessions keep
-Svelte focused on presentation and action dispatch; Barbu's seven-contract run
-still has session orchestration in Svelte pending its next migration step.
+Svelte focused on presentation and action dispatch, including Barbu's seven-contract run.
 
 ## Shared Boundaries
 
@@ -223,8 +222,8 @@ decoder/projection lives in `tests/fixtures/barbuHandFixture.ts`. Hashes cover
 remaining cards, legal choices, turns, trick winners, scores, outcomes and tags,
 excluding copy, IDs and display ordering. Do not regenerate from TypeScript.
 
-Seven-contract progression and save orchestration still live in Svelte; migrating
-that session boundary is the next step, not something this hand migration claims.
+The subsequent session migration below moves seven-contract progression and save
+orchestration out of Svelte; it is separate from the hand-engine migration.
 The fixed-order training-run product limitation remains unchanged.
 
 ## Domino Hand Migration
@@ -254,6 +253,26 @@ Domino now uses the shared flow table layout. Feedback sits after the suit lanes
 and before the hand instead of overlapping lanes through fixed viewport offsets.
 Browser checks cover restore, reload, pass, completion, replay and layout in both
 browser and simulated-native runtimes. Physical-device upgrade testing remains.
+
+## Barbu Session Migration
+
+`barbuSession.ts` owns the fixed-order run, deterministic per-contract seeds,
+review gates, result recording, replay and advancement. Trick contracts reuse
+`transitionReviewedHand`; Domino retains its lane engine. The last card records
+one result per contract. Replay removes only the current result and retains the
+deal. A finished seven-contract session rejects further gameplay events; New game
+creates a fresh session. This does not add dealer-selected contracts or doubling.
+
+`barbuSave.ts` reuses the storage factory and both hand validators. Version-1 saves
+retain their key and routing metadata for compatibility, but the flags no longer
+choose an engine. Restoration repairs derived hand caches and missing active-hand
+completion results, rejects duplicate/malformed results and mismatched contracts,
+and preserves review and intro phases. Practice does not overwrite the run.
+Svelte now holds one session reference, dispatches actions and handles presentation.
+Failed writes leave play available, report an error and retry on the next action.
+The same eight seeded sessions are tested through every save/restore transition;
+existing frozen hand fixtures provide compatibility evidence without new large
+snapshot files.
 
 ## Verification And Device Status
 
@@ -323,6 +342,15 @@ assertions; these now enforce the shared 8px flow spacing alongside lane/message
 hand/control collision checks. S9, XR and iPhone 16 screenshots were inspected.
 The existing large-bundle warning remains. No physical build or install was done.
 
+Barbu session migration verification on 2026-09-22: all 95 domain tests, 11 Rust
+helper tests, production build and native check passed. The initial broad S9 run
+passed 95 browser tests. The six-profile migration/completion suite passed 232
+checks with two S9 timeouts during a long runtime pause; both passed in isolation
+with unchanged limits. All six complete seven-contract browser runs then passed.
+Coverage includes storage-failure recovery and practice/save isolation. iPhone 16
+review screenshots were inspected. No physical build, installation or store
+upload was performed; the existing large-bundle warning remains.
+
 Whist was installed on iPhone 16 on 2026-09-21 and the user confirmed it works.
 The subsequent Hearts build was installed, but its automatic launch was blocked
 by the screen lock. This deduplication change still needs a fresh device build
@@ -347,14 +375,12 @@ it is still not a physical-device packaging test.
 
 ## Next Migration Work
 
-1. Migrate Barbu's seven-contract session/save boundary out of Svelte.
-   Keep Domino's layout state separate from trick-taking hands, and reuse the
-   reviewed-hand and save-store factories rather than copying another session.
-2. Audit remaining legacy Rust helpers/catalog metadata and remove unused code;
+1. Audit remaining legacy Rust helpers/catalog metadata and remove unused code;
    retain regression fixtures rather than permanent parallel engines. Verify
    installed-save upgrades on physical iPhone and Android builds before release.
-3. Evaluate another mobile shell separately, only if it brings a clear benefit.
+2. Evaluate another mobile shell separately, only if it brings a clear benefit.
 
 Rust remains required for the Tauri shell, not gameplay engines. Full-hand and
-practice engines are TypeScript; Barbu session orchestration is the remaining
-ownership cleanup before the catalog follows one consistent session structure.
+practice engines and gameplay sessions are TypeScript, with domain/persistence
+boundaries shared across the catalog. Remaining Rust cleanup and physical-device
+upgrade testing are not implied by browser verification.

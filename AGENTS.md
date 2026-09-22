@@ -61,8 +61,8 @@ their specific migration is verified; Tauri remains the native shell.
 
 ### TypeScript Engine Prototype
 
-On the `prototype/typescript-game-engine` branch, Barbu trick-taking contracts, Whist, Hearts, Spades and Bridge hand play are
-explicit exceptions to the Rust-first policy. Route them through
+On the `prototype/typescript-game-engine` branch, Barbu trick-taking contracts,
+Whist, Hearts, Spades and Bridge hand play all use TypeScript. Route them through
 `src/domain/handEngine.ts` on browser and native builds. Match progression belongs
 in `src/domain/whistSession.ts`, `src/domain/heartsSession.ts`, `src/domain/spadesSession.ts` and `src/domain/bridgeSession.ts`, with save
 compatibility in their corresponding `src/persistence/` adapters. Reuse the
@@ -92,8 +92,11 @@ Its Rust engine, command DTOs and browser fallback are removed. Replay metadata
 recovers old browser/native deals without retaining two gameplay implementations.
 The existing Domino policy still reads the next hand's hidden cards; migration
 preserves that limitation rather than claiming a public-information opponent.
-The seven-contract run/session remains migration work. Do not claim that all
-Barbu session state has left Svelte yet.
+The seven-contract training session uses `barbuSession.ts` and `barbuSave.ts`:
+contract progression, review, completion, replay and save validation live outside
+Svelte. Reuse the reviewed-hand and storage factories; retain the version-1 save
+key and actual deals. This is still the fixed-order training format, not canonical
+dealer-selected Barbu settlement.
 Do not migrate other games implicitly. See `docs/typescript-engine-prototype.md`
 for scope, compatibility checks, and remaining work. Run `task domain:test` after
 engine changes, in addition to the existing verification commands.
@@ -178,7 +181,9 @@ task tauri:check
 task verify
 ```
 
-For UI-only changes, `npm run build` plus `task ui:test` is usually the minimum. For rules or scoring changes, run the core Rust tests.
+For UI-only changes, `npm run build` plus `task ui:test` is usually the minimum.
+For rules, scoring or session changes, run `task domain:test`. Run the core Rust
+tests when changing retained native helpers.
 
 Generated practice and all full hands now run in TypeScript on both runtimes. Browser mode exercises the same gameplay engine as installed builds. Tauri/device checks are still required for native integrations, packaging and physical-screen behavior.
 

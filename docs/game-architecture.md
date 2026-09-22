@@ -51,8 +51,10 @@ compatibility boundary. Their Rust engine and generic native hand commands are
 removed. Domino now uses `dominoHand.ts`, `dominoPolicy.ts` and `dominoSave.ts`,
 sharing the start/transition pattern but retaining its own layout state and
 placement rules. Native fixtures verify deal and policy compatibility; the
-Rust engine and browser fallback are removed. The seven-contract session/save
-orchestration still remains in Svelte, pending migration.
+Rust engine and browser fallback are removed. `barbuSession.ts` owns the fixed-order
+seven-contract progression, result recording, review and replay; `barbuSave.ts`
+validates and restores the existing version-1 run through the save-store factory.
+Svelte dispatches events and presents the resulting session, just as for Whist.
 The metadata registry remains separate from engine selection. These references
 do not imply that every game can be added using configuration alone.
 
