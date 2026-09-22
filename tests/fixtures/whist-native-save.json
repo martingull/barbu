@@ -1,0 +1,1448 @@
+{
+  "cardId": "5C",
+  "initialHand": {
+    "cardsRemaining": 50,
+    "completedTricks": [],
+    "contract": "Whist",
+    "currentPlayer": "You",
+    "currentPlayerIndex": 2,
+    "currentTrick": [
+      {
+        "card": {
+          "id": "QS",
+          "label": "QS",
+          "rank": "Q",
+          "suit": "S"
+        },
+        "seat": "Tutor"
+      },
+      {
+        "card": {
+          "id": "KS",
+          "label": "KS",
+          "rank": "K",
+          "suit": "S"
+        },
+        "seat": "Right"
+      }
+    ],
+    "hands": [
+      [
+        {
+          "id": "3C",
+          "label": "3C",
+          "rank": "3",
+          "suit": "C"
+        },
+        {
+          "id": "KC",
+          "label": "KC",
+          "rank": "K",
+          "suit": "C"
+        },
+        {
+          "id": "2D",
+          "label": "2D",
+          "rank": "2",
+          "suit": "D"
+        },
+        {
+          "id": "3D",
+          "label": "3D",
+          "rank": "3",
+          "suit": "D"
+        },
+        {
+          "id": "4D",
+          "label": "4D",
+          "rank": "4",
+          "suit": "D"
+        },
+        {
+          "id": "JD",
+          "label": "JD",
+          "rank": "J",
+          "suit": "D"
+        },
+        {
+          "id": "4S",
+          "label": "4S",
+          "rank": "4",
+          "suit": "S"
+        },
+        {
+          "id": "5S",
+          "label": "5S",
+          "rank": "5",
+          "suit": "S"
+        },
+        {
+          "id": "JS",
+          "label": "JS",
+          "rank": "J",
+          "suit": "S"
+        },
+        {
+          "id": "5H",
+          "label": "5H",
+          "rank": "5",
+          "suit": "H"
+        },
+        {
+          "id": "9H",
+          "label": "9H",
+          "rank": "9",
+          "suit": "H"
+        },
+        {
+          "id": "10H",
+          "label": "10H",
+          "rank": "10",
+          "suit": "H"
+        }
+      ],
+      [
+        {
+          "id": "4C",
+          "label": "4C",
+          "rank": "4",
+          "suit": "C"
+        },
+        {
+          "id": "6C",
+          "label": "6C",
+          "rank": "6",
+          "suit": "C"
+        },
+        {
+          "id": "9C",
+          "label": "9C",
+          "rank": "9",
+          "suit": "C"
+        },
+        {
+          "id": "QC",
+          "label": "QC",
+          "rank": "Q",
+          "suit": "C"
+        },
+        {
+          "id": "7D",
+          "label": "7D",
+          "rank": "7",
+          "suit": "D"
+        },
+        {
+          "id": "8D",
+          "label": "8D",
+          "rank": "8",
+          "suit": "D"
+        },
+        {
+          "id": "9D",
+          "label": "9D",
+          "rank": "9",
+          "suit": "D"
+        },
+        {
+          "id": "10D",
+          "label": "10D",
+          "rank": "10",
+          "suit": "D"
+        },
+        {
+          "id": "6S",
+          "label": "6S",
+          "rank": "6",
+          "suit": "S"
+        },
+        {
+          "id": "AS",
+          "label": "AS",
+          "rank": "A",
+          "suit": "S"
+        },
+        {
+          "id": "8H",
+          "label": "8H",
+          "rank": "8",
+          "suit": "H"
+        },
+        {
+          "id": "JH",
+          "label": "JH",
+          "rank": "J",
+          "suit": "H"
+        }
+      ],
+      [
+        {
+          "id": "5C",
+          "label": "5C",
+          "rank": "5",
+          "suit": "C"
+        },
+        {
+          "id": "7C",
+          "label": "7C",
+          "rank": "7",
+          "suit": "C"
+        },
+        {
+          "id": "8C",
+          "label": "8C",
+          "rank": "8",
+          "suit": "C"
+        },
+        {
+          "id": "JC",
+          "label": "JC",
+          "rank": "J",
+          "suit": "C"
+        },
+        {
+          "id": "AC",
+          "label": "AC",
+          "rank": "A",
+          "suit": "C"
+        },
+        {
+          "id": "6D",
+          "label": "6D",
+          "rank": "6",
+          "suit": "D"
+        },
+        {
+          "id": "QD",
+          "label": "QD",
+          "rank": "Q",
+          "suit": "D"
+        },
+        {
+          "id": "7S",
+          "label": "7S",
+          "rank": "7",
+          "suit": "S"
+        },
+        {
+          "id": "9S",
+          "label": "9S",
+          "rank": "9",
+          "suit": "S"
+        },
+        {
+          "id": "10S",
+          "label": "10S",
+          "rank": "10",
+          "suit": "S"
+        },
+        {
+          "id": "2H",
+          "label": "2H",
+          "rank": "2",
+          "suit": "H"
+        },
+        {
+          "id": "QH",
+          "label": "QH",
+          "rank": "Q",
+          "suit": "H"
+        },
+        {
+          "id": "AH",
+          "label": "AH",
+          "rank": "A",
+          "suit": "H"
+        }
+      ],
+      [
+        {
+          "id": "2C",
+          "label": "2C",
+          "rank": "2",
+          "suit": "C"
+        },
+        {
+          "id": "10C",
+          "label": "10C",
+          "rank": "10",
+          "suit": "C"
+        },
+        {
+          "id": "5D",
+          "label": "5D",
+          "rank": "5",
+          "suit": "D"
+        },
+        {
+          "id": "KD",
+          "label": "KD",
+          "rank": "K",
+          "suit": "D"
+        },
+        {
+          "id": "AD",
+          "label": "AD",
+          "rank": "A",
+          "suit": "D"
+        },
+        {
+          "id": "2S",
+          "label": "2S",
+          "rank": "2",
+          "suit": "S"
+        },
+        {
+          "id": "3S",
+          "label": "3S",
+          "rank": "3",
+          "suit": "S"
+        },
+        {
+          "id": "8S",
+          "label": "8S",
+          "rank": "8",
+          "suit": "S"
+        },
+        {
+          "id": "3H",
+          "label": "3H",
+          "rank": "3",
+          "suit": "H"
+        },
+        {
+          "id": "4H",
+          "label": "4H",
+          "rank": "4",
+          "suit": "H"
+        },
+        {
+          "id": "6H",
+          "label": "6H",
+          "rank": "6",
+          "suit": "H"
+        },
+        {
+          "id": "7H",
+          "label": "7H",
+          "rank": "7",
+          "suit": "H"
+        },
+        {
+          "id": "KH",
+          "label": "KH",
+          "rank": "K",
+          "suit": "H"
+        }
+      ]
+    ],
+    "id": "whist-hand-8-dealer-3-C",
+    "legalCardIds": [
+      "7S",
+      "9S",
+      "10S"
+    ],
+    "playerHand": [
+      {
+        "id": "5C",
+        "label": "5C",
+        "rank": "5",
+        "suit": "C"
+      },
+      {
+        "id": "7C",
+        "label": "7C",
+        "rank": "7",
+        "suit": "C"
+      },
+      {
+        "id": "8C",
+        "label": "8C",
+        "rank": "8",
+        "suit": "C"
+      },
+      {
+        "id": "JC",
+        "label": "JC",
+        "rank": "J",
+        "suit": "C"
+      },
+      {
+        "id": "AC",
+        "label": "AC",
+        "rank": "A",
+        "suit": "C"
+      },
+      {
+        "id": "6D",
+        "label": "6D",
+        "rank": "6",
+        "suit": "D"
+      },
+      {
+        "id": "QD",
+        "label": "QD",
+        "rank": "Q",
+        "suit": "D"
+      },
+      {
+        "id": "7S",
+        "label": "7S",
+        "rank": "7",
+        "suit": "S"
+      },
+      {
+        "id": "9S",
+        "label": "9S",
+        "rank": "9",
+        "suit": "S"
+      },
+      {
+        "id": "10S",
+        "label": "10S",
+        "rank": "10",
+        "suit": "S"
+      },
+      {
+        "id": "2H",
+        "label": "2H",
+        "rank": "2",
+        "suit": "H"
+      },
+      {
+        "id": "QH",
+        "label": "QH",
+        "rank": "Q",
+        "suit": "H"
+      },
+      {
+        "id": "AH",
+        "label": "AH",
+        "rank": "A",
+        "suit": "H"
+      }
+    ],
+    "playerPenalty": 0,
+    "prompt": "Spades were led. Follow suit if you can. Trump: clubs.",
+    "status": "in_progress",
+    "totalPenalty": 0,
+    "trickNumber": 1,
+    "whistDealer": 3,
+    "whistTurnedTrump": {
+      "id": "2C",
+      "label": "2C",
+      "rank": "2",
+      "suit": "C"
+    }
+  },
+  "nextHand": {
+    "cardsRemaining": 36,
+    "completedTricks": [
+      {
+        "cards": [
+          {
+            "card": {
+              "id": "QS",
+              "label": "QS",
+              "rank": "Q",
+              "suit": "S"
+            },
+            "seat": "Tutor"
+          },
+          {
+            "card": {
+              "id": "KS",
+              "label": "KS",
+              "rank": "K",
+              "suit": "S"
+            },
+            "seat": "Right"
+          },
+          {
+            "card": {
+              "id": "7S",
+              "label": "7S",
+              "rank": "7",
+              "suit": "S"
+            },
+            "seat": "You"
+          },
+          {
+            "card": {
+              "id": "2S",
+              "label": "2S",
+              "rank": "2",
+              "suit": "S"
+            },
+            "seat": "Left"
+          }
+        ],
+        "outcome": "avoided_penalty",
+        "penalty": 1,
+        "tacticalTags": [
+          "followed_suit",
+          "opponent_trick",
+          "third_hand_high"
+        ],
+        "winner": "Right",
+        "winnerIndex": 1
+      },
+      {
+        "cards": [
+          {
+            "card": {
+              "id": "10D",
+              "label": "10D",
+              "rank": "10",
+              "suit": "D"
+            },
+            "seat": "Right"
+          },
+          {
+            "card": {
+              "id": "6D",
+              "label": "6D",
+              "rank": "6",
+              "suit": "D"
+            },
+            "seat": "You"
+          },
+          {
+            "card": {
+              "id": "KD",
+              "label": "KD",
+              "rank": "K",
+              "suit": "D"
+            },
+            "seat": "Left"
+          },
+          {
+            "card": {
+              "id": "2D",
+              "label": "2D",
+              "rank": "2",
+              "suit": "D"
+            },
+            "seat": "Tutor"
+          }
+        ],
+        "outcome": "avoided_penalty",
+        "penalty": 1,
+        "tacticalTags": [
+          "followed_suit",
+          "opponent_trick"
+        ],
+        "winner": "Left",
+        "winnerIndex": 3
+      },
+      {
+        "cards": [
+          {
+            "card": {
+              "id": "AD",
+              "label": "AD",
+              "rank": "A",
+              "suit": "D"
+            },
+            "seat": "Left"
+          },
+          {
+            "card": {
+              "id": "3D",
+              "label": "3D",
+              "rank": "3",
+              "suit": "D"
+            },
+            "seat": "Tutor"
+          },
+          {
+            "card": {
+              "id": "7D",
+              "label": "7D",
+              "rank": "7",
+              "suit": "D"
+            },
+            "seat": "Right"
+          },
+          {
+            "card": {
+              "id": "QD",
+              "label": "QD",
+              "rank": "Q",
+              "suit": "D"
+            },
+            "seat": "You"
+          }
+        ],
+        "outcome": "avoided_penalty",
+        "penalty": 1,
+        "tacticalTags": [
+          "followed_suit",
+          "opponent_trick"
+        ],
+        "winner": "Left",
+        "winnerIndex": 3
+      },
+      {
+        "cards": [
+          {
+            "card": {
+              "id": "5D",
+              "label": "5D",
+              "rank": "5",
+              "suit": "D"
+            },
+            "seat": "Left"
+          },
+          {
+            "card": {
+              "id": "4D",
+              "label": "4D",
+              "rank": "4",
+              "suit": "D"
+            },
+            "seat": "Tutor"
+          },
+          {
+            "card": {
+              "id": "8D",
+              "label": "8D",
+              "rank": "8",
+              "suit": "D"
+            },
+            "seat": "Right"
+          },
+          {
+            "card": {
+              "id": "5C",
+              "label": "5C",
+              "rank": "5",
+              "suit": "C"
+            },
+            "seat": "You"
+          }
+        ],
+        "outcome": "captured_penalty",
+        "penalty": 1,
+        "tacticalTags": [
+          "void_discard",
+          "trump_won",
+          "partner_trick"
+        ],
+        "winner": "You",
+        "winnerIndex": 2
+      }
+    ],
+    "contract": "Whist",
+    "currentPlayer": "You",
+    "currentPlayerIndex": 2,
+    "currentTrick": [],
+    "hands": [
+      [
+        {
+          "id": "3C",
+          "label": "3C",
+          "rank": "3",
+          "suit": "C"
+        },
+        {
+          "id": "KC",
+          "label": "KC",
+          "rank": "K",
+          "suit": "C"
+        },
+        {
+          "id": "JD",
+          "label": "JD",
+          "rank": "J",
+          "suit": "D"
+        },
+        {
+          "id": "4S",
+          "label": "4S",
+          "rank": "4",
+          "suit": "S"
+        },
+        {
+          "id": "5S",
+          "label": "5S",
+          "rank": "5",
+          "suit": "S"
+        },
+        {
+          "id": "JS",
+          "label": "JS",
+          "rank": "J",
+          "suit": "S"
+        },
+        {
+          "id": "5H",
+          "label": "5H",
+          "rank": "5",
+          "suit": "H"
+        },
+        {
+          "id": "9H",
+          "label": "9H",
+          "rank": "9",
+          "suit": "H"
+        },
+        {
+          "id": "10H",
+          "label": "10H",
+          "rank": "10",
+          "suit": "H"
+        }
+      ],
+      [
+        {
+          "id": "4C",
+          "label": "4C",
+          "rank": "4",
+          "suit": "C"
+        },
+        {
+          "id": "6C",
+          "label": "6C",
+          "rank": "6",
+          "suit": "C"
+        },
+        {
+          "id": "9C",
+          "label": "9C",
+          "rank": "9",
+          "suit": "C"
+        },
+        {
+          "id": "QC",
+          "label": "QC",
+          "rank": "Q",
+          "suit": "C"
+        },
+        {
+          "id": "9D",
+          "label": "9D",
+          "rank": "9",
+          "suit": "D"
+        },
+        {
+          "id": "6S",
+          "label": "6S",
+          "rank": "6",
+          "suit": "S"
+        },
+        {
+          "id": "AS",
+          "label": "AS",
+          "rank": "A",
+          "suit": "S"
+        },
+        {
+          "id": "8H",
+          "label": "8H",
+          "rank": "8",
+          "suit": "H"
+        },
+        {
+          "id": "JH",
+          "label": "JH",
+          "rank": "J",
+          "suit": "H"
+        }
+      ],
+      [
+        {
+          "id": "7C",
+          "label": "7C",
+          "rank": "7",
+          "suit": "C"
+        },
+        {
+          "id": "8C",
+          "label": "8C",
+          "rank": "8",
+          "suit": "C"
+        },
+        {
+          "id": "JC",
+          "label": "JC",
+          "rank": "J",
+          "suit": "C"
+        },
+        {
+          "id": "AC",
+          "label": "AC",
+          "rank": "A",
+          "suit": "C"
+        },
+        {
+          "id": "9S",
+          "label": "9S",
+          "rank": "9",
+          "suit": "S"
+        },
+        {
+          "id": "10S",
+          "label": "10S",
+          "rank": "10",
+          "suit": "S"
+        },
+        {
+          "id": "2H",
+          "label": "2H",
+          "rank": "2",
+          "suit": "H"
+        },
+        {
+          "id": "QH",
+          "label": "QH",
+          "rank": "Q",
+          "suit": "H"
+        },
+        {
+          "id": "AH",
+          "label": "AH",
+          "rank": "A",
+          "suit": "H"
+        }
+      ],
+      [
+        {
+          "id": "2C",
+          "label": "2C",
+          "rank": "2",
+          "suit": "C"
+        },
+        {
+          "id": "10C",
+          "label": "10C",
+          "rank": "10",
+          "suit": "C"
+        },
+        {
+          "id": "3S",
+          "label": "3S",
+          "rank": "3",
+          "suit": "S"
+        },
+        {
+          "id": "8S",
+          "label": "8S",
+          "rank": "8",
+          "suit": "S"
+        },
+        {
+          "id": "3H",
+          "label": "3H",
+          "rank": "3",
+          "suit": "H"
+        },
+        {
+          "id": "4H",
+          "label": "4H",
+          "rank": "4",
+          "suit": "H"
+        },
+        {
+          "id": "6H",
+          "label": "6H",
+          "rank": "6",
+          "suit": "H"
+        },
+        {
+          "id": "7H",
+          "label": "7H",
+          "rank": "7",
+          "suit": "H"
+        },
+        {
+          "id": "KH",
+          "label": "KH",
+          "rank": "K",
+          "suit": "H"
+        }
+      ]
+    ],
+    "id": "whist-hand-8-dealer-3-C",
+    "legalCardIds": [
+      "7C",
+      "8C",
+      "JC",
+      "AC",
+      "9S",
+      "10S",
+      "2H",
+      "QH",
+      "AH"
+    ],
+    "playerHand": [
+      {
+        "id": "7C",
+        "label": "7C",
+        "rank": "7",
+        "suit": "C"
+      },
+      {
+        "id": "8C",
+        "label": "8C",
+        "rank": "8",
+        "suit": "C"
+      },
+      {
+        "id": "JC",
+        "label": "JC",
+        "rank": "J",
+        "suit": "C"
+      },
+      {
+        "id": "AC",
+        "label": "AC",
+        "rank": "A",
+        "suit": "C"
+      },
+      {
+        "id": "9S",
+        "label": "9S",
+        "rank": "9",
+        "suit": "S"
+      },
+      {
+        "id": "10S",
+        "label": "10S",
+        "rank": "10",
+        "suit": "S"
+      },
+      {
+        "id": "2H",
+        "label": "2H",
+        "rank": "2",
+        "suit": "H"
+      },
+      {
+        "id": "QH",
+        "label": "QH",
+        "rank": "Q",
+        "suit": "H"
+      },
+      {
+        "id": "AH",
+        "label": "AH",
+        "rank": "A",
+        "suit": "H"
+      }
+    ],
+    "playerPenalty": 1,
+    "prompt": "You lead. Choose a suit that helps your side. clubs are trumps.",
+    "status": "in_progress",
+    "totalPenalty": 4,
+    "trickNumber": 5,
+    "whistDealer": 3,
+    "whistTurnedTrump": {
+      "id": "2C",
+      "label": "2C",
+      "rank": "2",
+      "suit": "C"
+    }
+  },
+  "savedHand": {
+    "cardsRemaining": 37,
+    "completedTricks": [
+      {
+        "cards": [
+          {
+            "card": {
+              "id": "QS",
+              "label": "QS",
+              "rank": "Q",
+              "suit": "S"
+            },
+            "seat": "Tutor"
+          },
+          {
+            "card": {
+              "id": "KS",
+              "label": "KS",
+              "rank": "K",
+              "suit": "S"
+            },
+            "seat": "Right"
+          },
+          {
+            "card": {
+              "id": "7S",
+              "label": "7S",
+              "rank": "7",
+              "suit": "S"
+            },
+            "seat": "You"
+          },
+          {
+            "card": {
+              "id": "2S",
+              "label": "2S",
+              "rank": "2",
+              "suit": "S"
+            },
+            "seat": "Left"
+          }
+        ],
+        "outcome": "avoided_penalty",
+        "penalty": 1,
+        "tacticalTags": [
+          "followed_suit",
+          "opponent_trick",
+          "third_hand_high"
+        ],
+        "winner": "Right",
+        "winnerIndex": 1
+      },
+      {
+        "cards": [
+          {
+            "card": {
+              "id": "10D",
+              "label": "10D",
+              "rank": "10",
+              "suit": "D"
+            },
+            "seat": "Right"
+          },
+          {
+            "card": {
+              "id": "6D",
+              "label": "6D",
+              "rank": "6",
+              "suit": "D"
+            },
+            "seat": "You"
+          },
+          {
+            "card": {
+              "id": "KD",
+              "label": "KD",
+              "rank": "K",
+              "suit": "D"
+            },
+            "seat": "Left"
+          },
+          {
+            "card": {
+              "id": "2D",
+              "label": "2D",
+              "rank": "2",
+              "suit": "D"
+            },
+            "seat": "Tutor"
+          }
+        ],
+        "outcome": "avoided_penalty",
+        "penalty": 1,
+        "tacticalTags": [
+          "followed_suit",
+          "opponent_trick"
+        ],
+        "winner": "Left",
+        "winnerIndex": 3
+      },
+      {
+        "cards": [
+          {
+            "card": {
+              "id": "AD",
+              "label": "AD",
+              "rank": "A",
+              "suit": "D"
+            },
+            "seat": "Left"
+          },
+          {
+            "card": {
+              "id": "3D",
+              "label": "3D",
+              "rank": "3",
+              "suit": "D"
+            },
+            "seat": "Tutor"
+          },
+          {
+            "card": {
+              "id": "7D",
+              "label": "7D",
+              "rank": "7",
+              "suit": "D"
+            },
+            "seat": "Right"
+          },
+          {
+            "card": {
+              "id": "QD",
+              "label": "QD",
+              "rank": "Q",
+              "suit": "D"
+            },
+            "seat": "You"
+          }
+        ],
+        "outcome": "avoided_penalty",
+        "penalty": 1,
+        "tacticalTags": [
+          "followed_suit",
+          "opponent_trick"
+        ],
+        "winner": "Left",
+        "winnerIndex": 3
+      }
+    ],
+    "contract": "Whist",
+    "currentPlayer": "You",
+    "currentPlayerIndex": 2,
+    "currentTrick": [
+      {
+        "card": {
+          "id": "5D",
+          "label": "5D",
+          "rank": "5",
+          "suit": "D"
+        },
+        "seat": "Left"
+      },
+      {
+        "card": {
+          "id": "4D",
+          "label": "4D",
+          "rank": "4",
+          "suit": "D"
+        },
+        "seat": "Tutor"
+      },
+      {
+        "card": {
+          "id": "8D",
+          "label": "8D",
+          "rank": "8",
+          "suit": "D"
+        },
+        "seat": "Right"
+      }
+    ],
+    "hands": [
+      [
+        {
+          "id": "3C",
+          "label": "3C",
+          "rank": "3",
+          "suit": "C"
+        },
+        {
+          "id": "KC",
+          "label": "KC",
+          "rank": "K",
+          "suit": "C"
+        },
+        {
+          "id": "JD",
+          "label": "JD",
+          "rank": "J",
+          "suit": "D"
+        },
+        {
+          "id": "4S",
+          "label": "4S",
+          "rank": "4",
+          "suit": "S"
+        },
+        {
+          "id": "5S",
+          "label": "5S",
+          "rank": "5",
+          "suit": "S"
+        },
+        {
+          "id": "JS",
+          "label": "JS",
+          "rank": "J",
+          "suit": "S"
+        },
+        {
+          "id": "5H",
+          "label": "5H",
+          "rank": "5",
+          "suit": "H"
+        },
+        {
+          "id": "9H",
+          "label": "9H",
+          "rank": "9",
+          "suit": "H"
+        },
+        {
+          "id": "10H",
+          "label": "10H",
+          "rank": "10",
+          "suit": "H"
+        }
+      ],
+      [
+        {
+          "id": "4C",
+          "label": "4C",
+          "rank": "4",
+          "suit": "C"
+        },
+        {
+          "id": "6C",
+          "label": "6C",
+          "rank": "6",
+          "suit": "C"
+        },
+        {
+          "id": "9C",
+          "label": "9C",
+          "rank": "9",
+          "suit": "C"
+        },
+        {
+          "id": "QC",
+          "label": "QC",
+          "rank": "Q",
+          "suit": "C"
+        },
+        {
+          "id": "9D",
+          "label": "9D",
+          "rank": "9",
+          "suit": "D"
+        },
+        {
+          "id": "6S",
+          "label": "6S",
+          "rank": "6",
+          "suit": "S"
+        },
+        {
+          "id": "AS",
+          "label": "AS",
+          "rank": "A",
+          "suit": "S"
+        },
+        {
+          "id": "8H",
+          "label": "8H",
+          "rank": "8",
+          "suit": "H"
+        },
+        {
+          "id": "JH",
+          "label": "JH",
+          "rank": "J",
+          "suit": "H"
+        }
+      ],
+      [
+        {
+          "id": "5C",
+          "label": "5C",
+          "rank": "5",
+          "suit": "C"
+        },
+        {
+          "id": "7C",
+          "label": "7C",
+          "rank": "7",
+          "suit": "C"
+        },
+        {
+          "id": "8C",
+          "label": "8C",
+          "rank": "8",
+          "suit": "C"
+        },
+        {
+          "id": "JC",
+          "label": "JC",
+          "rank": "J",
+          "suit": "C"
+        },
+        {
+          "id": "AC",
+          "label": "AC",
+          "rank": "A",
+          "suit": "C"
+        },
+        {
+          "id": "9S",
+          "label": "9S",
+          "rank": "9",
+          "suit": "S"
+        },
+        {
+          "id": "10S",
+          "label": "10S",
+          "rank": "10",
+          "suit": "S"
+        },
+        {
+          "id": "2H",
+          "label": "2H",
+          "rank": "2",
+          "suit": "H"
+        },
+        {
+          "id": "QH",
+          "label": "QH",
+          "rank": "Q",
+          "suit": "H"
+        },
+        {
+          "id": "AH",
+          "label": "AH",
+          "rank": "A",
+          "suit": "H"
+        }
+      ],
+      [
+        {
+          "id": "2C",
+          "label": "2C",
+          "rank": "2",
+          "suit": "C"
+        },
+        {
+          "id": "10C",
+          "label": "10C",
+          "rank": "10",
+          "suit": "C"
+        },
+        {
+          "id": "3S",
+          "label": "3S",
+          "rank": "3",
+          "suit": "S"
+        },
+        {
+          "id": "8S",
+          "label": "8S",
+          "rank": "8",
+          "suit": "S"
+        },
+        {
+          "id": "3H",
+          "label": "3H",
+          "rank": "3",
+          "suit": "H"
+        },
+        {
+          "id": "4H",
+          "label": "4H",
+          "rank": "4",
+          "suit": "H"
+        },
+        {
+          "id": "6H",
+          "label": "6H",
+          "rank": "6",
+          "suit": "H"
+        },
+        {
+          "id": "7H",
+          "label": "7H",
+          "rank": "7",
+          "suit": "H"
+        },
+        {
+          "id": "KH",
+          "label": "KH",
+          "rank": "K",
+          "suit": "H"
+        }
+      ]
+    ],
+    "id": "whist-hand-8-dealer-3-C",
+    "legalCardIds": [
+      "5C",
+      "7C",
+      "8C",
+      "JC",
+      "AC",
+      "9S",
+      "10S",
+      "2H",
+      "QH",
+      "AH"
+    ],
+    "playerHand": [
+      {
+        "id": "5C",
+        "label": "5C",
+        "rank": "5",
+        "suit": "C"
+      },
+      {
+        "id": "7C",
+        "label": "7C",
+        "rank": "7",
+        "suit": "C"
+      },
+      {
+        "id": "8C",
+        "label": "8C",
+        "rank": "8",
+        "suit": "C"
+      },
+      {
+        "id": "JC",
+        "label": "JC",
+        "rank": "J",
+        "suit": "C"
+      },
+      {
+        "id": "AC",
+        "label": "AC",
+        "rank": "A",
+        "suit": "C"
+      },
+      {
+        "id": "9S",
+        "label": "9S",
+        "rank": "9",
+        "suit": "S"
+      },
+      {
+        "id": "10S",
+        "label": "10S",
+        "rank": "10",
+        "suit": "S"
+      },
+      {
+        "id": "2H",
+        "label": "2H",
+        "rank": "2",
+        "suit": "H"
+      },
+      {
+        "id": "QH",
+        "label": "QH",
+        "rank": "Q",
+        "suit": "H"
+      },
+      {
+        "id": "AH",
+        "label": "AH",
+        "rank": "A",
+        "suit": "H"
+      }
+    ],
+    "playerPenalty": 0,
+    "prompt": "Diamonds were led. Follow suit if you can. Trump: clubs.",
+    "status": "in_progress",
+    "totalPenalty": 3,
+    "trickNumber": 4,
+    "whistDealer": 3,
+    "whistTurnedTrump": {
+      "id": "2C",
+      "label": "2C",
+      "rank": "2",
+      "suit": "C"
+    }
+  }
+}

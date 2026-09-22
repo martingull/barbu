@@ -1,9 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 import { startBrowserWhistHand, playBrowserWhistCard, startBrowserSpadesHand, playBrowserSpadesCard,
-  startBrowserBridgeHand, applyBrowserBridgeAuction, playBrowserBridgeCard } from "../../src/browserHandFallback";
-import { startBrowserDominoHand, playBrowserDominoCard, passBrowserDominoTurn } from "../../src/browserDominoFallback";
+  startBrowserBridgeHand, applyBrowserBridgeAuction, playBrowserBridgeCard } from "../../src/domain/trickTakingHand";
+import { dominoHandEngine } from "../../src/domain/dominoHand";
 import { fullHandContracts } from "../../src/contractRegistry";
-import type { FullHandState } from "../../src/lessonTypes";
+import type { BridgeAuctionCall, FullHandState } from "../../src/lessonTypes";
 
 type EndEvent = { game: string; scope: string; title: string; summary: string };
 declare global { interface Window { gameEnds: EndEvent[] } }
@@ -171,17 +171,21 @@ for (const madeNil of [true, false]) {
 }
 
 test("Bridge completes a board, not a score-target match", async ({ page }) => {
-  let hand = applyBrowserBridgeAuction(startBrowserBridgeHand(8), {
+  const auctionCalls: BridgeAuctionCall[] = [
+    { seat: "You", call: "1NT" }, { seat: "Left", call: "Pass" },
+    { seat: "Tutor", call: "Pass" }, { seat: "Right", call: "Pass" }
+  ];
+  let hand = applyBrowserBridgeAuction(startBrowserBridgeHand(8, 3), {
     level: 1, strain: "NT", label: "1 No Trump", declarer: "You", dummy: "Tutor", target: 7,
-    vulnerability: "None", declarerSide: "NS", openingLeader: "Left"
-  }, []);
+    vulnerability: "EW", declarerSide: "NS", dealer: "You", openingLeader: "Left"
+  }, auctionCalls);
   let before: FullHandState = hand;
   for (let i = 0; i < 26 && hand.status !== "complete"; i++) {
     before = hand;
     hand = playBrowserBridgeCard(hand, (hand.currentPlayer === "Tutor" ? hand.dummyLegalCardIds! : hand.legalCardIds)[0]);
   }
   expect(hand.status).toBe("complete");
-  await resume(page, "Bridge", { fullHand: before, view: "fullHand", scores: { ns: 1000, ew: -1000 }, auctionCalls: [] });
+  await resume(page, "Bridge", { fullHand: before, view: "fullHand", scores: { ns: 1000, ew: -1000 }, auctionCalls });
   await page.locator(".bridge-thumb-hand .hand-card.legal").first().click();
   await page.getByRole("button", { name: "Play card", exact: true }).click();
   await expectEnd(page, "Bridge", "board");
@@ -191,11 +195,11 @@ test("Bridge completes a board, not a score-target match", async ({ page }) => {
 });
 
 test("Barbu ends after the seventh contract", async ({ page }) => {
-  let hand = startBrowserDominoHand(8);
+  let hand = dominoHandEngine.start({ seed: 8 });
   let before = hand;
   for (let i = 0; i < 52 && hand.status !== "complete"; i++) {
     before = hand;
-    hand = hand.legalCardIds.length ? playBrowserDominoCard(hand, hand.legalCardIds[0]) : passBrowserDominoTurn(hand);
+    hand = dominoHandEngine.transition(hand, hand.legalCardIds.length ? { type: "play-card", cardId: hand.legalCardIds[0] } : { type: "pass" });
   }
   expect(hand.status).toBe("complete");
   await resume(page, "Barbu", { view: "dominoHand", seed: 8, pendingContract: "Domino", dominoHand: before,

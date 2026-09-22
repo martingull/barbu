@@ -1,7 +1,7 @@
 import type { BridgeAuctionCall, Card, Seat, Suit } from "./lessonTypes";
 
 // Barbu Natural: five-card majors, strong notrump, natural responses, 2D waiting.
-// Keep the decision order aligned with bridge_suggest_call and its shared fixtures.
+// Frozen native fixtures protect this policy during the TypeScript migration.
 const suits: Suit[] = ["S", "H", "D", "C"];
 const seats: Seat[] = ["Tutor", "Right", "You", "Left"];
 export const bridgeHighCardPoints = (cards: Card[]) => cards.reduce((n, card) => n + ({ A: 4, K: 3, Q: 2, J: 1 }[card.rank] ?? 0), 0);
@@ -10,7 +10,7 @@ export const bridgeIsBalanced = (cards: Card[]) => ["3-3-3-4", "2-3-4-4", "2-3-3
 const longest = (cards: Card[]) => [...suits].sort((a, b) => bridgeSuitCount(cards, b) - bridgeSuitCount(cards, a))[0];
 
 export function parseBridgeBid(call: string) {
-  const normalized = call.replace(/[♣♦♥♠]/g, suit => ({ "♣": "C", "♦": "D", "♥": "H", "♠": "S" }[suit]!)).replace(/\s+/g, "");
+  const normalized = call.trim().toUpperCase().replace(/NO TRUMPS?/g, "NT").replace(/CLUBS?/g, "C").replace(/DIAMONDS?/g, "D").replace(/HEARTS?/g, "H").replace(/SPADES?/g, "S").replace(/[♣♦♥♠]/g, suit => ({ "♣": "C", "♦": "D", "♥": "H", "♠": "S" }[suit]!)).replace(/\s+/g, "");
   const match = /^([1-7])(C|D|H|S|NT)$/.exec(normalized);
   return match ? { level: Number(match[1]), strain: match[2], id: normalized } : null;
 }

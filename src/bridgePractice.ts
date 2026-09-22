@@ -1,4 +1,6 @@
-import type { Card, GuidedTrick, Suit } from "./lessonTypes";
+import type { BridgeVulnerability, Seat, Card, GuidedTrick, Suit } from "./lessonTypes";
+
+import type { BridgeCallOption } from "./domain/bridgeAuction";
 
 type DrillStep = { scenarioId: string; contract: string; title: string; trick: GuidedTrick };
 const card = (rank: string, suit: Suit): Card => ({ id: rank + suit, rank, suit, label: rank + suit });
@@ -154,3 +156,108 @@ const bridgePartnerWinnerDrillStep: DrillStep = {
   }
 };
 export const bridgeDefenseDrillPool = [bridgeOpeningLeadDrillStep, bridgeThirdHandDrillStep, bridgePartnerWinnerDrillStep];
+
+type BridgeBiddingPracticeStep = {
+  id: string;
+  title: string;
+  prompt: string;
+  hand: Card[];
+  dealer: Seat;
+  vulnerability: BridgeVulnerability;
+  options: BridgeCallOption[];
+  correctCall: BridgeCallOption;
+  explanations: Partial<Record<BridgeCallOption, string>>;
+};
+
+export const bridgeBiddingPracticeSteps: BridgeBiddingPracticeStep[] = [
+  {
+    id: "bridge-bid-pass-light-balanced",
+    title: "Pass a light hand",
+    prompt: "You are South with 8 HCP and no six-card preempt. In basic natural bidding, do not open just because you like the shape.",
+    hand: [
+      card("3", "C"),
+      card("5", "C"),
+      card("10", "C"),
+      card("Q", "C"),
+      card("5", "D"),
+      card("7", "D"),
+      card("Q", "D"),
+      card("A", "D"),
+      card("7", "S"),
+      card("9", "S"),
+      card("2", "H"),
+      card("3", "H"),
+      card("10", "H")
+    ],
+    dealer: "You",
+    vulnerability: "NS",
+    options: ["Pass", "1C", "1D", "1NT"],
+    correctCall: "Pass",
+    explanations: {
+      Pass: "Good. 8 HCP balanced is below opening strength, so pass.",
+      "1C": "Risky. Better-minor openings still need opening strength.",
+      "1D": "Risky. Four diamonds does not make this an opening bid.",
+      "1NT": "1NT shows 15-17 balanced, not 8."
+    }
+  },
+  {
+    id: "bridge-bid-one-notrump",
+    title: "Open 1NT",
+    prompt: "You are South with 16 HCP and a balanced hand. Show the range immediately.",
+    hand: [
+      card("A", "C"),
+      card("Q", "C"),
+      card("4", "C"),
+      card("K", "D"),
+      card("8", "D"),
+      card("3", "D"),
+      card("Q", "H"),
+      card("9", "H"),
+      card("5", "H"),
+      card("A", "S"),
+      card("J", "S"),
+      card("6", "S"),
+      card("2", "S")
+    ],
+    dealer: "You",
+    vulnerability: "None",
+    options: ["Pass", "1C", "1S", "1NT"],
+    correctCall: "1NT",
+    explanations: {
+      Pass: "Too cautious. 16 HCP balanced is a normal opening hand.",
+      "1C": "Legal shape, but 1NT describes 15-17 balanced much better.",
+      "1S": "Do not open a four-card major in this system.",
+      "1NT": "Good. 15-17 balanced opens 1NT."
+    }
+  },
+  {
+    id: "bridge-bid-five-card-major",
+    title: "Open the five-card major",
+    prompt: "You are South with 13 HCP and five spades. In basic natural bidding, five-card majors come before a minor opening.",
+    hand: [
+      card("A", "S"),
+      card("K", "S"),
+      card("Q", "S"),
+      card("3", "S"),
+      card("2", "S"),
+      card("A", "H"),
+      card("4", "H"),
+      card("7", "D"),
+      card("6", "D"),
+      card("5", "D"),
+      card("8", "C"),
+      card("6", "C"),
+      card("2", "C")
+    ],
+    dealer: "You",
+    vulnerability: "EW",
+    options: ["Pass", "1C", "1NT", "1S"],
+    correctCall: "1S",
+    explanations: {
+      Pass: "Too cautious. 13 HCP with a five-card major opens.",
+      "1C": "The club suit is not the message. Show the five-card major first.",
+      "1NT": "1NT needs a balanced 15-17 HCP hand.",
+      "1S": "Good. With opening strength and five spades, open 1S."
+    }
+  }
+];

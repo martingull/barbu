@@ -1,7 +1,10 @@
 import { expect, test } from "@playwright/test";
 import type { Locator, Page } from "@playwright/test";
-import { chooseBrowserOpponentCardForState } from "../../src/browserHandFallback";
+import { chooseBrowserOpponentCardForState } from "../../src/domain/trickTakingHand";
 import type { Card, FullHandState } from "../../src/lessonTypes";
+import { createBridgeSession, transitionBridgeSession } from "../../src/domain/bridgeSession";
+import { saveBridgeSession } from "../../src/persistence/bridgeSave";
+import { trickTakingSeats } from "../../src/domain/trickTakingScore";
 import { whistOddProgress } from "../../src/whistScoring";
 
 test.beforeEach(async ({ page }, testInfo) => {
@@ -138,15 +141,6 @@ async function expectFeedbackAboveHand(page: Page, handSelector: string) {
     page,
     ".table-play-surface.compact-play .table-play-panel .result, .table-play-surface.compact-play .table-play-panel .outcome, .table-play-surface.compact-play .table-play-panel .explanation",
     handSelector
-  );
-}
-
-async function expectFeedbackClearOfHand(page: Page, handSelector: string) {
-  await expectNoVerticalCollision(
-    page,
-    ".table-play-surface.compact-play .table-play-panel .result, .table-play-surface.compact-play .table-play-panel .outcome, .table-play-surface.compact-play .table-play-panel .explanation",
-    handSelector,
-    24
   );
 }
 
@@ -553,7 +547,7 @@ async function playDominoDecision(page: Page) {
 
   if (await placeCard.isEnabled()) {
     await legalCard.click();
-    await expectFeedbackClearOfHand(page, ".domino-cards");
+    await expectFeedbackAboveHand(page, ".domino-cards");
     await placeCard.click();
     await expect.poll(async () => (await handRegion.innerText()) !== previousState).toBe(true);
     return;
@@ -561,7 +555,7 @@ async function playDominoDecision(page: Page) {
 
   if ((await legalCard.count()) > 0) {
     await legalCard.click();
-    await expectFeedbackClearOfHand(page, ".domino-cards");
+    await expectFeedbackAboveHand(page, ".domino-cards");
     await placeCard.click();
     await expect.poll(async () => (await handRegion.innerText()) !== previousState).toBe(true);
     return;
@@ -1072,7 +1066,7 @@ test("Bridge play starts from a rotating auction into a scored contract hand", a
   await expect(page.getByLabel("Bridge hand table")).toContainText("South");
   await expect(page.getByLabel("Bridge hand table")).toContainText("West");
   await expect(page.getByLabel("Bridge hand table")).not.toContainText(/\bLeft\b|\bRight\b/);
-  await expect(page.getByLabel("Visible dummy cards")).toBeVisible();
+  await expect(page.getByLabel("Visible reference hand")).toBeVisible();
   await expect(page.getByLabel("Current trick")).toBeVisible();
   await expectBridgeTableHandsUseSevenCardRows(page);
   await expectBridgeTrickSlotsDoNotOverlap(page);
@@ -1080,7 +1074,7 @@ test("Bridge play starts from a rotating auction into a scored contract hand", a
     await expect(page.locator(".bridge-thumb-hand .full-hand-card.legal").first()).toBeVisible();
     await page.locator(".bridge-thumb-hand .full-hand-card.legal").first().dblclick();
   }
-  await expect(page.getByLabel("Dummy hand", { exact: true })).toBeVisible();
+  await expect(page.locator(".bridge-table-hand")).toBeVisible();
   if ((await page.getByRole("button", { name: "Next trick" }).count()) > 0) {
     await page.getByRole("button", { name: "Next trick" }).click();
   }
@@ -1140,7 +1134,7 @@ test("Bridge compact play keeps table hands readable on short screens", async ({
       const legalCard = page.locator(".bridge-thumb-hand .full-hand-card.legal").first();
       if ((await legalCard.count()) > 0) {
         await legalCard.dblclick({ force: true });
-        await expect(page.getByLabel("Dummy hand", { exact: true })).toBeVisible();
+        await expect(page.locator(".bridge-table-hand")).toBeVisible();
         await expect(page.locator(".bridge-dummy-turn-feedback .lesson-heading")).toBeHidden();
         await expectBridgeTableHandsUseSevenCardRows(page);
         await expectBridgeTrickSlotsDoNotOverlap(page);
@@ -1158,48 +1152,49 @@ test("Bridge compact play keeps table hands readable on short screens", async ({
   }
 });
 
-test("shared compact play stack fits Barbu, Whist, and Spades on constrained screens", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "galaxy-s9", "Viewport matrix for older phone and narrow browser sizes.");
+for (const gameName of ["Barbu", "Whist", "Spades"]) {
+  test(`shared compact play stack fits ${gameName} on constrained screens`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "galaxy-s9", "Viewport matrix for older phone and narrow browser sizes.");
 
-  const games: {
-    name: string;
-    handSelector: string;
-    start: () => Promise<void>;
-  }[] = [
-    {
-      name: "barbu",
-      handSelector: ".full-hand-cards",
-      start: async () => {
-        await page.getByRole("button", { name: /Barbu/ }).click();
-        await openBarbuTab(page, "Play");
-        await page.getByRole("button", { name: "Play Barbu" }).click();
-        await page.getByRole("button", { name: "Start hand" }).click({ force: true });
-        await expect(page.getByRole("heading", { name: "No Hearts hand" })).toBeVisible();
+    const games: {
+      name: string;
+      handSelector: string;
+      start: () => Promise<void>;
+    }[] = [
+      {
+        name: "barbu",
+        handSelector: ".full-hand-cards",
+        start: async () => {
+          await page.getByRole("button", { name: /Barbu/ }).click();
+          await openBarbuTab(page, "Play");
+          await page.getByRole("button", { name: "Play Barbu" }).click();
+          await page.getByRole("button", { name: "Start hand" }).click({ force: true });
+          await expect(page.getByRole("heading", { name: "No Hearts hand" })).toBeVisible();
+        }
+      },
+      {
+        name: "whist",
+        handSelector: ".full-hand-cards",
+        start: async () => {
+          await page.getByRole("button", { name: /Open Whist/ }).click();
+          await page.getByRole("tab", { name: "Play" }).click();
+          await page.getByRole("button", { name: "Play Whist" }).click();
+          await expect(page.getByRole("heading", { name: "Whist hand" })).toBeVisible();
+        }
+      },
+      {
+        name: "spades",
+        handSelector: ".full-hand-cards",
+        start: async () => {
+          await page.getByRole("button", { name: /Open Spades/ }).click();
+          await page.getByRole("tab", { name: "Play" }).click();
+          await page.getByRole("button", { name: "Play Spades" }).click();
+          await expect(page.getByRole("heading", { name: "Spades hand" })).toBeVisible();
+        }
       }
-    },
-    {
-      name: "whist",
-      handSelector: ".full-hand-cards",
-      start: async () => {
-        await page.getByRole("button", { name: /Open Whist/ }).click();
-        await page.getByRole("tab", { name: "Play" }).click();
-        await page.getByRole("button", { name: "Play Whist" }).click();
-        await expect(page.getByRole("heading", { name: "Whist hand" })).toBeVisible();
-      }
-    },
-    {
-      name: "spades",
-      handSelector: ".full-hand-cards",
-      start: async () => {
-        await page.getByRole("button", { name: /Open Spades/ }).click();
-        await page.getByRole("tab", { name: "Play" }).click();
-        await page.getByRole("button", { name: "Play Spades" }).click();
-        await expect(page.getByRole("heading", { name: "Spades hand" })).toBeVisible();
-      }
-    }
-  ];
+    ];
 
-  for (const game of games) {
+    const game = games.find(game => game.name === gameName.toLowerCase())!;
     for (const viewport of compactLayoutViewports) {
       await test.step(`${game.name}-${viewport.name}`, async () => {
         await page.setViewportSize({ width: viewport.width, height: viewport.height });
@@ -1214,8 +1209,9 @@ test("shared compact play stack fits Barbu, Whist, and Spades on constrained scr
         await expectHandCardsDoNotOverlap(page, game.handSelector);
       });
     }
-  }
-});
+  });
+}
+
 
 test("shared play keeps wrapped feedback below the board when the viewport changes", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "galaxy-s9", "Live resize and enlarged text regression.");
@@ -1313,7 +1309,7 @@ test("Bridge table hand rows do not shift after cards are played", async ({ page
   if ((await page.getByLabel("Dummy hidden").count()) > 0) {
     await page.locator(".bridge-thumb-hand .full-hand-card.legal").first().dblclick();
   }
-  await expect(page.getByLabel("Dummy hand", { exact: true })).toBeVisible();
+  await expect(page.locator(".bridge-table-hand")).toBeVisible();
   if (await page.getByRole("button", { name: "Next trick" }).isVisible().catch(() => false)) {
     await page.getByRole("button", { name: "Next trick" }).click();
   }
@@ -1391,7 +1387,8 @@ test("Bridge bidding practice teaches the basic natural openings", async ({ page
   await expect(page.getByLabel("Your Bridge bidding practice hand").getByRole("button").nth(2)).toHaveAttribute("aria-label", "2 H");
   await expect(page.getByLabel("Your Bridge bidding practice hand").getByRole("button").nth(5)).toHaveAttribute("aria-label", "5 D");
   await expect(page.getByLabel("Your Bridge bidding practice hand").getByRole("button").nth(9)).toHaveAttribute("aria-label", "3 C");
-  for (const expected of ["Pass", "1NT", "1♠"]) {
+  for (const [expected, points] of [["Pass", 8], ["1NT", 16], ["1♠", 13]] as const) {
+    await expect(page.getByLabel("Bridge bidding estimate").locator("strong").first()).toHaveText(String(points));
     await page.getByLabel("Bridge bidding choices").getByRole("button", { name: expected }).click();
     await page.getByRole("button", { name: "Check answer" }).click();
     await expect(page.getByLabel("Bridge bidding exercise")).toContainText("Good");
@@ -1484,67 +1481,11 @@ test("Bridge play can resume a saved local board", async ({ page }) => {
 
 test("Bridge passed-out auction can deal again", async ({ page }) => {
   await gotoWithPracticeSeed(page, 31);
-  await page.evaluate(() => {
-    const card = (rank: string, suit: "C" | "D" | "H" | "S") => ({ id: `${rank}${suit}`, rank, suit, label: `${rank}${suit}` });
-    const southHand = [
-      card("3", "C"),
-      card("5", "C"),
-      card("10", "C"),
-      card("Q", "C"),
-      card("5", "D"),
-      card("7", "D"),
-      card("Q", "D"),
-      card("A", "D"),
-      card("7", "S"),
-      card("9", "S"),
-      card("2", "H"),
-      card("3", "H"),
-      card("10", "H")
-    ];
-    const fullHand = {
-      id: "bridge-passed-out-regression",
-      bridgeBoardNumber: 2,
-      contract: "Bridge",
-      hands: [[], [], southHand, []],
-      currentPlayerIndex: 2,
-      currentPlayer: "You",
-      currentTrick: [],
-      completedTricks: [],
-      playerHand: southHand,
-      legalCardIds: [],
-      playerPenalty: 0,
-      totalPenalty: 0,
-      cardsRemaining: 52,
-      trickNumber: 1,
-      status: "in_progress",
-      prompt: "The auction was passed out.",
-      trumpSuit: undefined,
-      bridgeAuction: [
-        { seat: "Right", call: "Pass" },
-        { seat: "You", call: "Pass" },
-        { seat: "Left", call: "Pass" },
-        { seat: "Tutor", call: "Pass" }
-      ],
-      bridgeDealer: "Right",
-      bridgeVulnerability: "NS"
-    };
-
-    localStorage.setItem(
-      "barbu.savedBridgeRun.v1",
-      JSON.stringify({
-        version: 1,
-        view: "bridgeAuction",
-        scores: { ns: 90, ew: -90 },
-        results: [{ handNumber: 1, contract: "1NT", declarer: "You", declarerSide: "NS", vulnerability: "None", target: 7, tricks: 7, defenders: 6, score: 90, made: true }],
-        fullHand,
-        auctionCalls: fullHand.bridgeAuction,
-        selectedCall: "Pass",
-        fullHandReviewTrickCount: 0,
-        usingBrowserFullHand: true,
-        savedAt: "2026-07-31T00:00:00.000Z"
-      })
-    );
-  });
+  const session = createBridgeSession(31, 2);
+  session.auctionCalls = ["Right", "You", "Left", "Tutor"].map(seat => ({ seat: seat as "Right" | "You" | "Left" | "Tutor", call: "Pass" }));
+  session.scores = { ns: 90, ew: -90 };
+  session.results = [{ handNumber: 1, contract: "1NT", declarer: "You", declarerSide: "NS", vulnerability: "None", target: 7, tricks: 7, defenders: 6, score: 90, made: true }];
+  await page.evaluate(saved => localStorage.setItem("barbu.savedBridgeRun.v1", JSON.stringify(saved)), saveBridgeSession(session, "legacy"));
 
   await page.reload();
   await page.getByRole("button", { name: /Open Bridge/ }).click();
@@ -1577,100 +1518,10 @@ test("Bridge passed-out auction can deal again", async ({ page }) => {
 
 test("Bridge table does not duplicate the South dummy hand", async ({ page }) => {
   await gotoWithPracticeSeed(page, 21);
-  await page.evaluate(() => {
-    const card = (rank: string, suit: "C" | "D" | "H" | "S") => ({ id: `${rank}${suit}`, rank, suit, label: `${rank}${suit}` });
-    const southHand = [
-      card("4", "C"),
-      card("7", "C"),
-      card("10", "C"),
-      card("Q", "C"),
-      card("2", "D"),
-      card("5", "D"),
-      card("9", "D"),
-      card("K", "D"),
-      card("3", "H"),
-      card("8", "H"),
-      card("J", "H"),
-      card("6", "S"),
-      card("A", "S")
-    ];
-    const fullHand = {
-      id: "bridge-south-dummy-regression",
-      contract: "Bridge",
-      hands: [
-        [card("A", "C"), card("K", "C"), card("2", "C"), card("3", "C"), card("4", "D"), card("6", "D"), card("8", "D"), card("10", "D"), card("2", "H"), card("4", "H"), card("6", "H"), card("8", "S"), card("10", "S")],
-        [card("5", "C"), card("6", "C"), card("8", "C"), card("9", "C"), card("J", "D"), card("Q", "D"), card("A", "D"), card("5", "H"), card("7", "H"), card("9", "H"), card("Q", "H"), card("2", "S"), card("3", "S")],
-        southHand,
-        [card("J", "C"), card("3", "D"), card("7", "D"), card("10", "H"), card("K", "H"), card("A", "H"), card("4", "S"), card("5", "S"), card("7", "S"), card("9", "S"), card("J", "S"), card("Q", "S"), card("K", "S")]
-      ],
-      currentPlayerIndex: 2,
-      currentPlayer: "You",
-      currentTrick: [],
-      completedTricks: [
-        {
-          cards: [
-            { seat: "Right", card: card("5", "C") },
-            { seat: "You", card: card("4", "C") },
-            { seat: "Left", card: card("J", "C") },
-            { seat: "Tutor", card: card("A", "C") }
-          ],
-          winner: "Tutor",
-          winnerIndex: 0,
-          penalty: 0,
-          outcome: "stayed_clear",
-          tacticalTags: ["partner_trick"]
-        }
-      ],
-      playerHand: southHand,
-      legalCardIds: ["4C", "7C", "10C", "QC"],
-      playerPenalty: 0,
-      totalPenalty: 0,
-      cardsRemaining: 52,
-      trickNumber: 2,
-      status: "in_progress",
-      prompt: "Dummy is on lead. Choose from South's exposed hand and plan the 4 Clubs winners.",
-      trumpSuit: "C",
-      dummySeat: "You",
-      dummyHand: southHand,
-      dummyLegalCardIds: ["4C", "7C", "10C", "QC"],
-      bridgeAuction: [
-        { seat: "Tutor", call: "4C" },
-        { seat: "Right", call: "Pass" },
-        { seat: "You", call: "Pass" },
-        { seat: "Left", call: "Pass" }
-      ],
-      bridgeContract: {
-        level: 4,
-        strain: "C",
-        label: "4 Clubs",
-        declarer: "Tutor",
-        dummy: "You",
-        target: 10,
-        vulnerability: "None",
-        declarerSide: "NS",
-        dealer: "Tutor",
-        openingLeader: "Right"
-      },
-      bridgeDealer: "Tutor",
-      bridgeVulnerability: "None"
-    };
-
-    localStorage.setItem(
-      "barbu.savedBridgeRun.v1",
-      JSON.stringify({
-        version: 1,
-        view: "fullHand",
-        scores: { ns: 0, ew: 0 },
-        results: [],
-        fullHand,
-        auctionCalls: fullHand.bridgeAuction,
-        selectedCall: "Pass",
-        fullHandReviewTrickCount: 0,
-        usingBrowserFullHand: true,
-        savedAt: "2026-07-28T00:00:00.000Z"
-      })
-    );
-  });
+  const initial = createBridgeSession(21, 1);
+  initial.auctionCalls = ["4C", "Pass", "Pass", "Pass"].map((call, i) => ({ seat: trickTakingSeats[i], call }));
+  const session = transitionBridgeSession(initial, { type: "start-play" });
+  await page.evaluate(saved => localStorage.setItem("barbu.savedBridgeRun.v1", JSON.stringify(saved)), saveBridgeSession(session, "legacy"));
 
   await page.reload();
   await page.getByRole("button", { name: /Open Bridge/ }).click();
@@ -1688,109 +1539,18 @@ test("Bridge table does not duplicate the South dummy hand", async ({ page }) =>
   await expect(page.getByLabel("Current hand")).not.toContainText("Score");
   await expect(page.getByLabel("Bridge score")).toContainText("Score");
   await expect(page.getByLabel("North hand hidden")).toBeVisible();
-  await expect(page.getByLabel("Dummy hand", { exact: true })).toHaveCount(0);
+  await expect(page.locator(".bridge-table-hand")).toHaveCount(0);
   await expect(page.getByLabel("South dummy hand")).toBeVisible();
   await expect(page.locator(".bridge-thumb-hand .hand-card")).toHaveCount(13);
-  await expect(page.locator(".bridge-dummy-action-hand .hand-card")).toHaveCount(0);
+  await expect(page.locator(".bridge-seat-north .hand-card")).toHaveCount(0);
 });
 
 test("Bridge exposed dummy row names the actual dummy seat", async ({ page }) => {
   await gotoWithPracticeSeed(page, 22);
-  await page.evaluate(() => {
-    const card = (rank: string, suit: "C" | "D" | "H" | "S") => ({ id: `${rank}${suit}`, rank, suit, label: `${rank}${suit}` });
-    const eastDummyHand = [
-      card("2", "C"),
-      card("4", "C"),
-      card("6", "C"),
-      card("8", "C"),
-      card("10", "C"),
-      card("2", "D"),
-      card("4", "D"),
-      card("6", "D"),
-      card("8", "D"),
-      card("2", "H"),
-      card("4", "H"),
-      card("2", "S"),
-      card("4", "S")
-    ];
-    const southHand = [
-      card("3", "C"),
-      card("5", "C"),
-      card("7", "C"),
-      card("9", "C"),
-      card("J", "C"),
-      card("3", "D"),
-      card("5", "D"),
-      card("7", "D"),
-      card("9", "D"),
-      card("3", "H"),
-      card("5", "H"),
-      card("3", "S"),
-      card("5", "S")
-    ];
-    const fullHand = {
-      id: "bridge-east-dummy-label-regression",
-      contract: "Bridge",
-      hands: [
-        [card("A", "C"), card("K", "C"), card("Q", "C"), card("A", "D"), card("K", "D"), card("Q", "D"), card("A", "H"), card("K", "H"), card("Q", "H"), card("A", "S"), card("K", "S"), card("Q", "S"), card("J", "S")],
-        eastDummyHand,
-        southHand,
-        [card("10", "D"), card("J", "D"), card("10", "H"), card("J", "H"), card("6", "H"), card("7", "H"), card("8", "H"), card("9", "H"), card("6", "S"), card("7", "S"), card("8", "S"), card("9", "S"), card("10", "S")]
-      ],
-      currentPlayerIndex: 2,
-      currentPlayer: "You",
-      currentTrick: [{ seat: "Left", card: card("10", "D") }],
-      completedTricks: [],
-      playerHand: southHand,
-      legalCardIds: ["3D", "5D", "7D", "9D"],
-      playerPenalty: 0,
-      totalPenalty: 0,
-      cardsRemaining: 51,
-      trickNumber: 1,
-      status: "in_progress",
-      prompt: "Diamonds were led. You are defending 1 Diamonds; follow suit if you can.",
-      trumpSuit: "D",
-      dummySeat: "Right",
-      dummyHand: eastDummyHand,
-      dummyLegalCardIds: [],
-      bridgeAuction: [
-        { seat: "Left", call: "1D" },
-        { seat: "Tutor", call: "Pass" },
-        { seat: "Right", call: "Pass" },
-        { seat: "You", call: "Pass" }
-      ],
-      bridgeContract: {
-        level: 1,
-        strain: "D",
-        label: "1 Diamonds",
-        declarer: "Left",
-        dummy: "Right",
-        target: 7,
-        vulnerability: "None",
-        declarerSide: "EW",
-        dealer: "Left",
-        openingLeader: "Tutor"
-      },
-      bridgeDealer: "Left",
-      bridgeVulnerability: "None"
-    };
-
-    localStorage.setItem(
-      "barbu.savedBridgeRun.v1",
-      JSON.stringify({
-        version: 1,
-        view: "fullHand",
-        scores: { ns: 0, ew: 0 },
-        results: [],
-        fullHand,
-        auctionCalls: fullHand.bridgeAuction,
-        selectedCall: "Pass",
-        fullHandReviewTrickCount: 0,
-        usingBrowserFullHand: true,
-        savedAt: "2026-08-12T00:00:00.000Z"
-      })
-    );
-  });
+  const initial = createBridgeSession(22, 4);
+  initial.auctionCalls = ["1D", "Pass", "Pass", "Pass"].map((call, i) => ({ seat: trickTakingSeats[(3 + i) % 4], call }));
+  const session = transitionBridgeSession(initial, { type: "start-play" });
+  await page.evaluate(saved => localStorage.setItem("barbu.savedBridgeRun.v1", JSON.stringify(saved)), saveBridgeSession(session, "legacy"));
 
   await page.reload();
   await page.getByRole("button", { name: /Open Bridge/ }).click();
@@ -1799,7 +1559,7 @@ test("Bridge exposed dummy row names the actual dummy seat", async ({ page }) =>
 
   await expect(page.getByRole("heading", { name: "Bridge hand" })).toBeVisible();
   await expect(page.locator(".bridge-seat-label").first()).toHaveText("East Dummy");
-  await expect(page.getByLabel("Dummy hand", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("East Dummy hand", { exact: true })).toBeVisible();
   await expect(page.locator(".bridge-felt .cardholder-label > span")).toHaveText(["North", "West", "East", "South"]);
   await expect(page.locator(".bridge-felt .cardholder-label > small")).toHaveText(["Def.", "Decl.", "Dummy", "Def."]);
 });
@@ -1908,7 +1668,7 @@ test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testI
   await expect(page.getByLabel("Drill decision")).toContainText("Hearts");
   await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
   await expect(page.getByLabel("Drill decision")).toContainText(
-    /Duck the heart point|Discard without adding points|Follow low in hearts/
+    /Follow clubs without taking the point|You are void, and Right is already winning|Stay under the winner if you can/
   );
 
   await page.getByLabel("Drill decision").getByRole("button", { name: "Table" }).click();
@@ -2079,7 +1839,7 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Break hearts" }).click();
   await expect(page.getByRole("heading", { name: "Quick drill" })).toBeVisible();
   await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
-  await expect(page.getByLabel("Drill decision")).toContainText(/Can you lead a heart\?|Only hearts remain|Hearts are open/);
+  await expect(page.getByLabel("Drill decision")).toContainText(/Hearts have not been broken|Hearts have already been broken/);
   await completeQuickDrillDecision(page);
   await expect(page.getByLabel("Drill decision")).toContainText(/Good|Risky|Illegal/);
   await page.getByRole("button", { name: "Table" }).first().click();
@@ -2087,13 +1847,13 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Stop the moon" }).click();
   await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
   await expect(page.getByLabel("Drill decision")).toContainText(
-    /Break the moon threat|Take Queen of Spades away|Take one point now/
+    /Barbu has every point so far|Left is threatening to collect every point|Barbu has all the points so far/
   );
   // Click the highest club to take the trick
   await page.locator(".drill-hand .hand-card.legal").last().tap();
   await checkDrillAnswer(page);
   await expect(page.getByLabel("Drill decision")).toContainText("Good");
-  await expect(page.getByLabel("Drill decision")).toContainText("moon defense");
+  await expect(page.getByLabel("Drill decision")).toContainText("away from the moon threat");
   await page.getByRole("button", { name: "Table" }).first().click();
 
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Queen of Spades danger" }).click();
@@ -2119,18 +1879,18 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
 
   await page.getByLabel("Hearts practice drills").getByRole("button", { name: "Score a hand" }).click();
   await expect(page.getByLabel("Drill progress")).toContainText("0 / 3 played");
-  await expect(page.getByLabel("Drill decision")).toContainText(/Find the 13-point card|Find the one-point card|Find the clean card/);
+  await expect(page.getByLabel("Drill decision")).toContainText(/Choose the 13-point danger card|Choose the one-point penalty card|Choose the clean card/);
   const scoreHandText = await page.getByLabel("Drill decision").textContent();
-  if (scoreHandText?.includes("13-point card")) {
+  if (scoreHandText?.includes("13-point danger card")) {
     await page.getByRole("button", { name: "Q S" }).click();
-  } else if (scoreHandText?.includes("one-point card")) {
+  } else if (scoreHandText?.includes("one-point penalty card")) {
     await page.getByRole("button", { name: "7 H" }).click();
   } else {
     await page.getByRole("button", { name: "5 D" }).click();
   }
   await page.getByRole("button", { name: "Check" }).click();
   await expect(page.getByLabel("Drill decision")).toContainText("Good");
-  await expect(page.getByLabel("Drill decision")).toContainText(/13-point danger card|7♥ is good|clean card/);
+  await expect(page.getByLabel("Drill decision")).toContainText(/13-point danger card|adds one penalty point|is clean/);
 });
 
 test("Hearts practice result returns to the Hearts table", async ({ page }) => {

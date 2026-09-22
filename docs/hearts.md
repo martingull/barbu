@@ -47,16 +47,21 @@ not yet be described as expert or validated club-strength players.
 
 ## Implementation And Verification
 
-- Native policy: `crates/barbu-core/src/hearts.rs`; integration: `hand.rs`.
-- Browser mirror: `src/heartsPolicy.ts`; integration: `browserHandFallback.ts`.
+- Shared browser/native gameplay: `src/heartsPolicy.ts`, `src/domain/handEngine.ts`,
+  and `src/domain/trickTakingHand.ts` on the TypeScript prototype branch.
+- The duplicate Rust full-hand engine and opponent policy have been removed.
+- Match progression: `src/domain/heartsSession.ts`; legacy save compatibility:
+  `src/persistence/heartsSave.ts`. Replay restarts the actual post-pass deal.
+- Practice uses shared TypeScript domain logic and structured content on browser and native builds.
 - Shared tactical and passing cases: `tests/fixtures/hearts-*.json`.
 - Tactical cases rotate through every seat to catch seat-dependent behavior.
-- Rust audits 512 complete deals and browser tests audit 256, covering every
+- Domain tests audit 256 complete deals, covering every
   pass direction, legality, trick winners, and conservation of cards and points.
 - Existing match tests cover the 100-point boundary, moon scoring, ties, saves,
   and completion announcements.
 
-Rust and browser shuffles differ. Identical positions in shared fixtures, not
-identical numeric deal seeds, are the cross-runtime policy comparison boundary.
-Run `task core:test`, `task ui:test`, `task build`, and `task tauri:check`.
+Legacy native saves use a different shuffle. Frozen native-save snapshots test
+continuation and replay without retaining the old Rust engine.
+Run `task domain:test`, `task ui:test`,
+`task build`, and `task tauri:check`.
 Browser coverage does not replace a signed physical-device smoke test.

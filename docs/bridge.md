@@ -31,12 +31,20 @@ computer partners do not understand unimplemented conventions.
 
 ## Implementation
 
-`src/bridgeBidding.ts` contains browser bidding and contextual explanations;
-`crates/barbu-core/src/bridge.rs` supplies native suggestions and contract rules.
-Both consume the same regression corpus in `tests/fixtures/bridge-bidding.json`.
-Tests rotate every fixture through all seats and reverse card ordering.
+`src/bridgeBidding.ts` contains Barbu Natural bidding and contextual explanations,
+shared by browser and installed builds. `src/domain/bridgeAuction.ts` owns legal
+calls and contract formation; `bridgeScoring.ts` owns duplicate scoring.
+`bridgeSession.ts` owns auction/play phases, trick review, replay and board
+settlement. `src/persistence/bridgeSave.ts` validates and restores version-1 saves
+through the shared save-store factory. The duplicate Rust Bridge module and
+Tauri commands are removed.
 
-Full-hand Bridge currently uses `src/browserHandFallback.ts` on browser and
+Frozen native bidding, auction and score fixtures protect compatibility. Tests
+rotate bidding fixtures through all seats and reverse card ordering. Legacy
+save fixtures protect declarer/dummy play and resume. Replay restores the same
+deal and contract without settling it; Next board adds its score once.
+
+Full-hand Bridge currently uses `src/domain/trickTakingHand.ts` on browser and
 Tauri. Opponent choices use their own cards, the exposed dummy, and played-card
 history. Declarer may additionally use the other declaring hand. Defenders must
 not use partner's hidden cards. Tests check information independence, follow-suit
@@ -58,7 +66,8 @@ feature. Do not advertise a complete club competition mode yet.
 
 ## Verification
 
-Run `task core:test`, `task build`, `task tauri:check`, and `task ui:test`.
+Run `task domain:test`, `task build`, `task tauri:check`, and `task ui:test`.
 Focused Bridge coverage: `npx playwright test --grep Bridge`.
-Browser mode is sufficient for practice, auction, and full-hand checks; native
-suggestion parity also runs in the Rust fixture tests.
+Browser mode exercises the same practice, auction, scoring and full-hand rules
+as installed builds. Frozen native parity runs in the domain tests. A fresh
+physical-device build and upgrade smoke test are still required before release.

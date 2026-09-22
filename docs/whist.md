@@ -27,31 +27,31 @@ remain necessary before making claims about opponent strength.
 
 ## Implementation And Verification
 
-- Rust policy and settlement: `crates/barbu-core/src/whist.rs`.
-- Browser policy mirror: `src/whistPolicy.ts`; session mirror: `src/whistScoring.ts`.
+- Shared browser/native policy: `src/whistPolicy.ts`; scoring: `src/whistScoring.ts`.
+- Hand/session engine: `src/domain/handEngine.ts` and `src/domain/whistSession.ts`.
+  The duplicate Rust hand engine, opponent policy, and settlement are removed.
 - Table metadata and learning path: `src/games/whist.ts` and the shared table factory.
 - Authored decisions: `src/whistLessons.ts`; concepts and examples: `src/courseContent.ts`.
   Learn covers the same clockwise deal/play, exposed trump, five-point games,
   honours-off scoring and optional rubber as Play. Tests check all 18 authored
   decisions against the public-information policy and complete all seven lessons.
 - Common tactical and scoring fixtures: `tests/fixtures/whist-*.json`.
-- Rust integration tests run the fixtures and 128 full deals. Browser tests run
-  the same fixtures, 64 full deals, hidden-hand independence, resume, game
-  boundaries, and responsive layout checks.
-- Tauri DTO tests check explicit dealer selection and old save compatibility.
+- Domain tests cover golden policy/scoring fixtures, seeded full deals,
+  hidden-hand independence, dealer metadata, native-save compatibility and replay.
+  Browser tests cover resume, game boundaries, lessons, and responsive layouts.
 
 The deal seed and dealer are independent on subsequent hands. Existing native
-hand IDs retain enough information to recover the turned card without changing
-the shared trick-taking state. New browser saves retain both public fields.
+hand IDs retain dealer information; saves with explicit turned-card metadata
+preserve it. Older saves without that card do not invent it from the new shuffle.
 Version-1 saves without a session mode resume as a single game. Replaying a hand
 does not settle it or rotate the dealer. Continuing settles once and advances
 the dealer clockwise, including between rubber games.
 
-Rust and browser shuffle algorithms are distinct. Identical policy positions,
-not identical numeric seeds, are the cross-runtime comparison boundary.
+Legacy native and current TypeScript shuffles differ. Frozen native-save
+snapshots check compatibility without retaining a second engine.
 
-Run `task core:test`, `task ui:test`, `task build`, `task tauri:check`, and
-`cargo test -p barbu-app whist_tests`. Browser testing does not replace a signed
+Run `task domain:test`, `task ui:test`, `task build`,
+and `task tauri:check`. Browser testing does not replace a signed
 device build and physical-device smoke test.
 
 ## Rules And Conventions

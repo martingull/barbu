@@ -31,10 +31,10 @@ tasks:
     cmds:
       - npm run test:e2e -- --grep "active game tables share|quick drill is a fixed|Hearts passing drill teaches|Hearts play starts|Hearts next hand carries|practice tab starts a full Domino|Perfect mode starts|Trump memory hand starts"
 
-  core:test:
-    desc: Run Rust tests for the card and rules engine
+  domain:test:
+    desc: Type-check and test the shared TypeScript engine without a browser
     cmds:
-      - cargo test --manifest-path crates/barbu-core/Cargo.toml
+      - npm run test:domain
 
   tauri:check:
     desc: Check the Tauri app crate
@@ -49,7 +49,7 @@ tasks:
   verify:
     desc: Run the current project verification suite
     deps:
-      - core:test
+      - domain:test
       - build
       - ui:test
       - tauri:check

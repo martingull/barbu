@@ -1,38 +1,37 @@
 <script lang="ts">
-  import { bridgeDeclarerDrillPool, bridgeDefenseDrillPool } from "./bridgePractice";
-  import { bridgeHighCardPoints, bridgeSuitCount, bridgeOpeningCall, suggestBridgeCall, explainBridgeCall } from "./bridgeBidding";
+  import { tick } from "svelte";
+  import { bridgeBiddingPracticeSteps, bridgeDeclarerDrillPool, bridgeDefenseDrillPool } from "./bridgePractice";
+  import { bridgeHighCardPoints, bridgeSuitCount, explainBridgeCall } from "./bridgeBidding";
+  import { bridgeBidOptions, bridgeSideForSeat, bridgeAuctionStatus, bridgeLegalCallOptions,
+    bridgeCallLabel, bridgeCallLongLabel, bridgeFinalizeContract, bridgeSuggestedCallForHand, type BridgeBidOption,
+    type BridgeCallOption } from "./domain/bridgeAuction";
+  import { bridgeDeclarerTrickCounts, bridgeHandResultFor, bridgeScoreTotalsWith,
+    type BridgeHandResult, type BridgeScoreState } from "./domain/bridgeScoring";
+  import { createBridgeSession, transitionBridgeSession, type BridgeSession } from "./domain/bridgeSession";
+  import { createBridgeSaveStore, saveBridgeSession, restoreBridgeSession, type SavedBridgeRun } from "./persistence/bridgeSave";
   import GameResult from "./GameResult.svelte";
-  import { spadesMatchComplete, spadesMatchTarget } from "./spadesScoring";
+  import { spadesMatchComplete, spadesMatchTarget, spadesSideBid, spadesHandResultFor, addSpadesMatchResult,
+    spadesPlayerSideSeats, spadesOpponentSideSeats, type SpadesHandResult, type SpadesScoreState } from "./spadesScoring";
+  import { defaultSpadesBidState, suggestedSpadesBidsForHand, type SpadesBidState } from "./domain/spadesBidding";
+  import { createSpadesSession, transitionSpadesSession, type SpadesSession } from "./domain/spadesSession";
+  import { createSpadesSaveStore, saveSpadesSession, restoreSpadesSession, type SavedSpadesRun } from "./persistence/spadesSave";
+  import { spadesFollowSuitDrillPool, spadesTrumpOrDiscardDrillPool, spadesBidBooksDrillPool, spadesAvoidBagsDrillPool } from "./spadesLessons";
   import { whistFollowSuitDrillPool, whistTrumpOrDiscardDrillPool, whistThirdHandHighDrillPool, whistReturnPartnerSuitDrillPool, whistOpeningLeadLessonPool, whistOddTrickDrillPool } from "./whistLessons";
   import { invoke, isTauri } from "@tauri-apps/api/core";
-  import {
-    applyBrowserBridgeAuction,
-    applyBrowserHeartsPass,
-    generateBrowserHeartsPassPractice,
-    playBrowserHeartsCard,
-    playBrowserKingOfHeartsCard,
-    playBrowserNoHeartsCard,
-    playBrowserNoLastTwoCard,
-    playBrowserNoQueensCard,
-    playBrowserNoTricksCard,
-    playBrowserPositiveTricksCard,
-    playBrowserBridgeCard,
-    playBrowserSpadesCard,
-    playBrowserWhistCard,
-    startBrowserBridgeHand,
-    startBrowserHeartsHand,
-    startBrowserHeartsPassingHand,
-    startBrowserKingOfHeartsHand,
-    startBrowserNoHeartsHand,
-    startBrowserNoLastTwoHand,
-    startBrowserNoQueensHand,
-    startBrowserNoTricksHand,
-    startBrowserPositiveTricksHand,
-    startBrowserSpadesHand,
-    startBrowserWhistHand
-  } from "./browserHandFallback";
-  import { passBrowserDominoTurn, playBrowserDominoCard, startBrowserDominoHand } from "./browserDominoFallback";
-  import { generateBrowserPlayBarbuDrillSteps } from "./browserDrillFallback";
+  import { typescriptHandEngine } from "./domain/handEngine";
+  import { generateHeartsPracticeSet, generateHeartsPassPractice, evaluateHeartsPass, heartsPracticeTopics, type HeartsPracticeFocus } from "./domain/heartsPractice";
+  import { createHeartsSession, transitionHeartsSession, heartsSessionSettlement, heartsMoonShooter, heartsScoredSeatPenalties,
+    heartsHandPenaltyTotal, heartsMatchTarget, type HeartsHandResult, type HeartsPassDirection, type HeartsSession } from "./domain/heartsSession";
+  import { addSeatPenalties, emptySeatPenalties, seatPenaltiesForTricks } from "./domain/trickTakingScore";
+  import { createHeartsSaveStore, restoreHeartsSession, saveHeartsSession, savedHeartsRunSummary, type SavedHeartsRun } from "./persistence/heartsSave";
+  import { createWhistSession, emptyWhistScore, transitionWhistSession, whistSessionSettlement, type WhistSession } from "./domain/whistSession";
+  import { createWhistSaveStore, restoreWhistSession, saveWhistSession, savedWhistRunSummary, type SavedWhistRun } from "./persistence/whistSave";
+  import { createBarbuSession, transitionBarbuSession, barbuSessionComplete, barbuSeatTotals, dominoSeatScores,
+    type BarbuSession, type BarbuSessionEvent, type BarbuHandResult as FullHandRunResult } from "./domain/barbuSession";
+  import { createBarbuSaveStore, saveBarbuSession, restoreBarbuSession, savedPlayBarbuRunSummary,
+    type SavedPlayBarbuRun } from "./persistence/barbuSave";
+  import { dominoHandEngine, type DominoAction } from "./domain/dominoHand";
+  import { generateBarbuPracticeSet } from "./domain/barbuPractice";
   import BridgeTable from "./BridgeTable.svelte";
   import CardChoiceHand from "./CardChoiceHand.svelte";
   import CardFace from "./CardFace.svelte";
@@ -48,12 +47,12 @@
   import PracticePanel from "./PracticePanel.svelte";
   import ProTabPanel from "./ProTabPanel.svelte";
   import TablePlaySurface from "./TablePlaySurface.svelte";
-  import { fullHandContractCommands, fullHandContracts } from "./contractRegistry";
+  import { fullHandContracts } from "./contractRegistry";
   import { contractRunScore, contractScoreMeta, formatContractValue } from "./contractScoring";
   import { courseCatalog, courseTargetsGuidedLesson, type CourseContent, type CourseStage } from "./courseContent";
   import { guidedLessons } from "./lessons/catalog";
   import { referenceCatalog } from "./referenceCatalog";
-  import { whistOddProgress, settleWhistHand, whistResultCopy, type WhistSessionMode } from "./whistScoring";
+  import { whistOddProgress, whistResultCopy, type WhistSessionMode } from "./whistScoring";
   import type { BarbuLearnPathAction } from "./games/barbu";
   import type { BridgeLearnPathAction, BridgePracticeAction } from "./games/bridge";
   import type { HeartsLearnPathAction } from "./games/hearts";
@@ -72,13 +71,11 @@
     DominoHandState,
     FullHandContract,
     FullHandState,
-    GeneratedDrillSet,
     GeneratedPracticeScenario,
     GuidedCardOutcome,
     GuidedTrick,
     BridgeAuctionCall,
     BridgeContractState,
-    BridgeStrain,
     BridgeVulnerability,
     HeartsPassScenario,
     PracticeReason,
@@ -167,18 +164,6 @@
     clean: boolean;
   };
 
-  type BridgeBiddingPracticeStep = {
-    id: string;
-    title: string;
-    prompt: string;
-    hand: Card[];
-    dealer: Seat;
-    vulnerability: BridgeVulnerability;
-    options: BridgeCallOption[];
-    correctCall: BridgeCallOption;
-    explanations: Partial<Record<BridgeCallOption, string>>;
-  };
-
   type BridgeBiddingPracticeResult = {
     id: string;
     selectedCall: BridgeCallOption;
@@ -229,59 +214,6 @@
   type WhistLearnPathStep = LearnPathStep<WhistLearnPathAction>;
   type SpadesLearnPathStep = LearnPathStep<SpadesLearnPathAction>;
   type BridgeLearnPathStep = LearnPathStep<BridgeLearnPathAction>;
-
-  type BridgeBidOption = {
-    id: string;
-    level: number;
-    strain: BridgeStrain;
-    label: string;
-    longLabel: string;
-    target: number;
-    order: number;
-  };
-
-  type BridgeCallOption = "Pass" | "Double" | "Redouble" | BridgeBidOption["id"];
-
-  type BridgeAuctionStatus = {
-    complete: boolean;
-    passedOut: boolean;
-    currentSeat: Seat;
-    lastBid?: BridgeAuctionCall;
-    doubled: boolean;
-    redoubled: boolean;
-  };
-
-  type BridgeHandResult = {
-    passedOut?: boolean;
-    handNumber: number;
-    contract: string;
-    declarer: Seat | null;
-    declarerSide: "NS" | "EW" | null;
-    vulnerability: BridgeVulnerability;
-    target: number;
-    tricks: number;
-    defenders: number;
-    score: number;
-    made: boolean;
-  };
-
-  type BridgeScoreState = {
-    ns: number;
-    ew: number;
-  };
-
-  type FullHandRunResult = {
-    contract: FullHandContract;
-    playerPenalty: number;
-    totalPenalty: number;
-    seatPenalties: Record<Seat, number>;
-  };
-
-  type HeartsHandResult = {
-    handNumber: number;
-    seatPenalties: Record<Seat, number>;
-    moonShooter?: Seat;
-  };
 
   type RunStanding = {
     rank: number;
@@ -390,71 +322,6 @@
     | { kind: "boss_card"; prompt: string; answer: boolean; targetCard: Card }
     | { kind: "void_spotter"; prompt: string; answer: Seat; targetSuit: Suit };
 
-  type SavedPlayBarbuRun = {
-    version: 1;
-    seed: number;
-    view: "runContractIntro" | "fullHand" | "dominoHand";
-    pendingContract: FullHandContract;
-    results: FullHandRunResult[];
-    fullHand: FullHandState | null;
-    dominoHand: DominoHandState | null;
-    fullHandReviewTrickCount: number;
-    usingBrowserFullHand: boolean;
-    usingBrowserDomino: boolean;
-    savedAt: string;
-  };
-
-  type HeartsPassDirection = "left" | "right" | "across" | "hold";
-
-  type SavedHeartsRun = {
-    version: 1;
-    view: "heartsPass" | "fullHand";
-    passDirection: HeartsPassDirection;
-    scores: Record<Seat, number>;
-    results: HeartsHandResult[];
-    heartsPassingHand: FullHandState | null;
-    fullHand: FullHandState | null;
-    heartsPassSelectedCardIds: string[];
-    fullHandReviewTrickCount: number;
-    usingBrowserHeartsPass: boolean;
-    usingBrowserFullHand: boolean;
-    savedAt: string;
-  };
-
-  type WhistHandResult = {
-    handNumber: number;
-    trumpSuit: Suit;
-    playerSideOddTricks: number;
-    opponentSideOddTricks: number;
-  };
-
-  type SpadesBidState = {
-    You: number;
-    Tutor: number;
-    Left: number;
-    Right: number;
-  };
-
-  type SpadesScoreState = {
-    playerSide: number;
-    opponentSide: number;
-  };
-
-  type SpadesHandResult = {
-    handNumber: number;
-    playerSideBid: number;
-    opponentSideBid: number;
-    playerSideTricks: number;
-    opponentSideTricks: number;
-    playerSideScore: number;
-    opponentSideScore: number;
-    playerSideBags: number;
-    opponentSideBags: number;
-    playerSideBagPenalty: number;
-    opponentSideBagPenalty: number;
-    nilResults: Array<{ seat: Seat; bid: number; tricks: number; score: number }>;
-  };
-
   type WhistOpeningLeadPracticeDeal = {
     id: string;
     trumpSuit: Suit;
@@ -466,45 +333,6 @@
   };
 
   const whistOpeningLeadPracticeMaxRounds = 3;
-
-  type SavedWhistRun = {
-    version: 1;
-    mode: WhistSessionMode;
-    games: { playerSide: number; opponentSide: number };
-    scores: { playerSide: number; opponentSide: number };
-    results: WhistHandResult[];
-    fullHand: FullHandState;
-    fullHandReviewTrickCount: number;
-    usingBrowserFullHand: boolean;
-    savedAt: string;
-  };
-
-  type SavedSpadesRun = {
-    version: 1;
-    scores: SpadesScoreState;
-    bags: SpadesScoreState;
-    bids: SpadesBidState;
-    results: SpadesHandResult[];
-    fullHand: FullHandState;
-    fullHandReviewTrickCount: number;
-    usingBrowserFullHand: boolean;
-    playStarted: boolean;
-    openingPanel: "table" | "bid";
-    savedAt: string;
-  };
-
-  type SavedBridgeRun = {
-    version: 1;
-    view: "bridgeAuction" | "fullHand";
-    scores: BridgeScoreState;
-    results: BridgeHandResult[];
-    fullHand: FullHandState;
-    auctionCalls: BridgeAuctionCall[];
-    selectedCall: BridgeCallOption;
-    fullHandReviewTrickCount: number;
-    usingBrowserFullHand: boolean;
-    savedAt: string;
-  };
 
   const catalogCategories = getCatalogCategories();
   const privacyPolicyUrl = "https://martingull.github.io/barbu/privacy-policy.html";
@@ -520,17 +348,16 @@
   const practiceSeedStorageKey = "barbu.practiceSeed.v1";
   const drillPatternMemoryStorageKey = "barbu.drillPatternMemory.v1";
   const playBarbuHistoryStorageKey = "barbu.playHistory.v1";
-  const savedPlayBarbuRunStorageKey = "barbu.savedPlayRun.v1";
-  const savedHeartsRunStorageKey = "barbu.savedHeartsRun.v1";
-  const savedWhistRunStorageKey = "barbu.savedWhistRun.v1";
-  const savedSpadesRunStorageKey = "barbu.savedSpadesRun.v1";
-  const savedBridgeRunStorageKey = "barbu.savedBridgeRun.v1";
+  const barbuSaveStore = createBarbuSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
+  const heartsSaveStore = createHeartsSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
+  const whistSaveStore = createWhistSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
+  const spadesSaveStore = createSpadesSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
+  const bridgeSaveStore = createBridgeSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
   const maxStoredDrillPatterns = 6;
   const maxStoredPlayBarbuAttempts = 8;
   const scoreSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
   const spadesBidSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
-  const spadesPlayerSideSeats: Seat[] = ["You", "Tutor"];
-  const spadesOpponentSideSeats: Seat[] = ["Left", "Right"];
+
   const countingTrickSeats: Seat[] = ["Tutor", "Right", "You", "Left"];
   const realisticTrumpTotalTricks = 13;
   const realisticTrumpCheckpoints = [3, 7, 11];
@@ -610,8 +437,6 @@
     isTrackedCard: (card) => card.rank === "Q"
   };
   const dominoOrderScores = [45, 20, 5, -5];
-  const heartsHandPenaltyTotal = 26;
-  const heartsMatchTarget = 100;
   const whistMatchTarget = 5;
   const seatByPlayerIndex: Record<number, Seat> = {
     0: "Tutor",
@@ -705,1292 +530,13 @@
     H: "hearts",
     S: "spades"
   };
-  const bridgeStrainOrder: BridgeStrain[] = ["C", "D", "H", "S", "NT"];
-  const bridgeStrainSymbols: Record<BridgeStrain, string> = {
-    C: "♣",
-    D: "♦",
-    H: "♥",
-    S: "♠",
-    NT: "NT"
-  };
-  const bridgeStrainNames: Record<BridgeStrain, string> = {
-    C: "Clubs",
-    D: "Diamonds",
-    H: "Hearts",
-    S: "Spades",
-    NT: "No Trump"
-  };
-  const bridgeBidOptions: BridgeBidOption[] = Array.from({ length: 7 }, (_, levelIndex) => {
-    const level = levelIndex + 1;
-    return bridgeStrainOrder.map((strain, strainIndex) => ({
-      id: `${level}${strain}`,
-      level,
-      strain,
-      label: `${level}${bridgeStrainSymbols[strain]}`,
-      longLabel: `${level} ${bridgeStrainNames[strain]}`,
-      target: level + 6,
-      order: levelIndex * bridgeStrainOrder.length + strainIndex
-    }));
-  }).flat();
-
-  function card(rank: string, suit: Suit): Card {
-    const label = `${rank}${suit}`;
-    return { id: label, rank, suit, label };
-  }
-
-  const bridgeBiddingPracticeSteps: BridgeBiddingPracticeStep[] = [
-    {
-      id: "bridge-bid-pass-light-balanced",
-      title: "Pass a light hand",
-      prompt: "You are South with 8 HCP and no six-card preempt. In basic natural bidding, do not open just because you like the shape.",
-      hand: [
-        card("3", "C"),
-        card("5", "C"),
-        card("10", "C"),
-        card("Q", "C"),
-        card("5", "D"),
-        card("7", "D"),
-        card("Q", "D"),
-        card("A", "D"),
-        card("7", "S"),
-        card("9", "S"),
-        card("2", "H"),
-        card("3", "H"),
-        card("10", "H")
-      ],
-      dealer: "You",
-      vulnerability: "NS",
-      options: ["Pass", "1C", "1D", "1NT"],
-      correctCall: "Pass",
-      explanations: {
-        Pass: "Good. 8 HCP balanced is below opening strength, so pass.",
-        "1C": "Risky. Better-minor openings still need opening strength.",
-        "1D": "Risky. Four diamonds does not make this an opening bid.",
-        "1NT": "1NT shows 15-17 balanced, not 8."
-      }
-    },
-    {
-      id: "bridge-bid-one-notrump",
-      title: "Open 1NT",
-      prompt: "You are South with 16 HCP and a balanced hand. Show the range immediately.",
-      hand: [
-        card("A", "C"),
-        card("7", "C"),
-        card("4", "C"),
-        card("K", "D"),
-        card("8", "D"),
-        card("3", "D"),
-        card("Q", "H"),
-        card("9", "H"),
-        card("5", "H"),
-        card("A", "S"),
-        card("J", "S"),
-        card("6", "S"),
-        card("2", "S")
-      ],
-      dealer: "You",
-      vulnerability: "None",
-      options: ["Pass", "1C", "1S", "1NT"],
-      correctCall: "1NT",
-      explanations: {
-        Pass: "Too cautious. 16 HCP balanced is a normal opening hand.",
-        "1C": "Legal shape, but 1NT describes 15-17 balanced much better.",
-        "1S": "Do not open a four-card major in this system.",
-        "1NT": "Good. 15-17 balanced opens 1NT."
-      }
-    },
-    {
-      id: "bridge-bid-five-card-major",
-      title: "Open the five-card major",
-      prompt: "You are South with 13 HCP and five spades. In basic natural bidding, five-card majors come before a minor opening.",
-      hand: [
-        card("A", "S"),
-        card("K", "S"),
-        card("Q", "S"),
-        card("3", "S"),
-        card("2", "S"),
-        card("A", "H"),
-        card("4", "H"),
-        card("7", "D"),
-        card("6", "D"),
-        card("5", "D"),
-        card("8", "C"),
-        card("6", "C"),
-        card("2", "C")
-      ],
-      dealer: "You",
-      vulnerability: "EW",
-      options: ["Pass", "1C", "1NT", "1S"],
-      correctCall: "1S",
-      explanations: {
-        Pass: "Too cautious. 13 HCP with a five-card major opens.",
-        "1C": "The club suit is not the message. Show the five-card major first.",
-        "1NT": "1NT needs a balanced 15-17 HCP hand.",
-        "1S": "Good. With opening strength and five spades, open 1S."
-      }
-    }
-  ];
-
   const drillSteps: DrillStep[] = guidedLessons.map((lesson) => ({
     contract: lesson.contract,
     title: lesson.title,
     trick: lesson.tricks[0]
   }));
   const fixedDrillLessons = guidedLessons.filter((lesson) => lesson.contract !== "Domino");
-  const heartsAvoidHeartsDrillStep: DrillStep = {
-    scenarioId: "hearts-avoid-heart-duck",
-    contract: "Hearts",
-    title: "Avoid hearts",
-    trick: {
-      title: "Duck the heart point",
-      beforeResult: "Clubs were led. Right is winning with KC, and you still have clubs.",
-      afterResult: "In Hearts, each heart you take is a penalty point. Follow clubs and let Right keep this trick.",
-      emptyExplanation: "Follow clubs without taking the heart.",
-      legalCardIds: ["2C", "AC"],
-      hand: [
-        { id: "2C", rank: "2", suit: "C", label: "2C" },
-        { id: "AC", rank: "A", suit: "C", label: "AC" },
-        { id: "7D", rank: "7", suit: "D", label: "7D" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Tutor", card: { id: "9C", rank: "9", suit: "C", label: "9C" } },
-        { seat: "Right", card: { id: "KC", rank: "K", suit: "C", label: "KC" } }
-      ],
-      tableAfterChoice: [{ seat: "Left", card: { id: "4H", rank: "4", suit: "H", label: "4H" } }],
-      pendingBySeat: { Left: "void: heart discard" },
-      playedExplanations: {
-        "2C": "2C is good. You follow clubs without taking the heart point.",
-        AC: "AC wins the trick and captures the heart point.",
-        "7D": "7D is off suit while you still have clubs."
-      },
-      cardOutcomes: {
-        "2C": "good",
-        AC: "penalty"
-      },
-      cardReasons: {
-        "2C": "avoided_penalty",
-        AC: "captured_penalty"
-      }
-    }
-  };
-  const heartsAvoidHeartVoidDumpDrillStep: DrillStep = {
-    scenarioId: "hearts-avoid-heart-void-dump",
-    contract: "Hearts",
-    title: "Avoid hearts",
-    trick: {
-      title: "Discard without adding points",
-      beforeResult: "Diamonds were led. You have no diamonds, and Right is already winning the trick.",
-      afterResult: "When you are void, a non-penalty discard keeps your score clean.",
-      emptyExplanation: "You cannot follow diamonds. Choose the discard that avoids adding heart points.",
-      legalCardIds: ["4C", "QH", "8S"],
-      hand: [
-        { id: "4C", rank: "4", suit: "C", label: "4C" },
-        { id: "QH", rank: "Q", suit: "H", label: "QH" },
-        { id: "8S", rank: "8", suit: "S", label: "8S" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Tutor", card: { id: "9D", rank: "9", suit: "D", label: "9D" } },
-        { seat: "Right", card: { id: "AD", rank: "A", suit: "D", label: "AD" } }
-      ],
-      tableAfterChoice: [{ seat: "Left", card: { id: "5D", rank: "5", suit: "D", label: "5D" } }],
-      pendingBySeat: { Left: "follow diamonds" },
-      playedExplanations: {
-        "4C": "4C is good. You are void, and it adds no penalty card to the trick.",
-        QH: "QH gives Right a heart point. Save that discard for a better moment if you can.",
-        "8S": "8S is also safe, but 4C keeps the spade suit intact for later."
-      },
-      cardOutcomes: {
-        "4C": "good",
-        QH: "penalty",
-        "8S": "risky"
-      },
-      cardReasons: {
-        "4C": "void_discard",
-        QH: "void_discard",
-        "8S": "void_discard"
-      }
-    }
-  };
-  const heartsAvoidHighHeartDrillStep: DrillStep = {
-    scenarioId: "hearts-avoid-high-heart-follow",
-    contract: "Hearts",
-    title: "Avoid hearts",
-    trick: {
-      title: "Follow low in hearts",
-      beforeResult: "Hearts were led. Right is winning with QH, and you must follow hearts.",
-      afterResult: "When you must follow the penalty suit, stay under the current winner if you can.",
-      emptyExplanation: "Choose the heart that follows suit without taking the trick.",
-      legalCardIds: ["3H", "AH"],
-      hand: [
-        { id: "3H", rank: "3", suit: "H", label: "3H" },
-        { id: "AH", rank: "A", suit: "H", label: "AH" },
-        { id: "6C", rank: "6", suit: "C", label: "6C" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Tutor", card: { id: "9H", rank: "9", suit: "H", label: "9H" } },
-        { seat: "Right", card: { id: "QH", rank: "Q", suit: "H", label: "QH" } }
-      ],
-      tableAfterChoice: [{ seat: "Left", card: { id: "5H", rank: "5", suit: "H", label: "5H" } }],
-      pendingBySeat: { Left: "follow hearts" },
-      playedExplanations: {
-        "3H": "3H is good. You follow hearts and stay under QH.",
-        AH: "AH wins the heart trick and collects the penalty cards.",
-        "6C": "6C is off suit while you still have hearts."
-      },
-      cardOutcomes: {
-        "3H": "good",
-        AH: "penalty"
-      },
-      cardReasons: {
-        "3H": "avoided_penalty",
-        AH: "captured_penalty"
-      }
-    }
-  };
-  const heartsFirstTrickRestrictionDrillStep: DrillStep = {
-    scenarioId: "hearts-first-trick-no-penalty-dump",
-    contract: "Hearts",
-    title: "First trick",
-    trick: {
-      title: "Follow clubs first",
-      beforeResult: "This is the first trick. Barbu led 2C, and you still have a club.",
-      afterResult: "On the opening trick, follow clubs when you can. Do not dump hearts or the queen of spades while a safe club is available.",
-      emptyExplanation: "Choose the legal first-trick play.",
-      legalCardIds: ["3C"],
-      hand: [
-        { id: "3C", rank: "3", suit: "C", label: "3C" },
-        { id: "QS", rank: "Q", suit: "S", label: "QS" },
-        { id: "5H", rank: "5", suit: "H", label: "5H" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Tutor", card: { id: "2C", rank: "2", suit: "C", label: "2C" } },
-        { seat: "Right", card: { id: "7C", rank: "7", suit: "C", label: "7C" } }
-      ],
-      tableAfterChoice: [{ seat: "Left", card: { id: "9C", rank: "9", suit: "C", label: "9C" } }],
-      pendingBySeat: { Left: "follow clubs" },
-      playedExplanations: {
-        "3C": "3C is good. You follow clubs on the opening trick.",
-        QS: "Queen of Spades cannot be dumped here because you still have a club.",
-        "5H": "5H cannot be dumped here because you still have a club."
-      },
-      cardOutcomes: {
-        "3C": "good"
-      },
-      cardReasons: {
-        "3C": "followed_suit"
-      }
-    }
-  };
-  const heartsFirstTrickVoidSafeDiscardDrillStep: DrillStep = {
-    scenarioId: "hearts-first-trick-void-safe-discard",
-    contract: "Hearts",
-    title: "First trick",
-    trick: {
-      title: "No clubs on the first trick",
-      beforeResult: "This is the first trick. Clubs were led, but you have no clubs.",
-      afterResult: "If you are void on the opening trick, prefer a non-penalty discard before throwing hearts or the queen of spades.",
-      emptyExplanation: "Choose the safest first-trick discard.",
-      legalCardIds: ["8D", "5H", "QS"],
-      hand: [
-        { id: "8D", rank: "8", suit: "D", label: "8D" },
-        { id: "5H", rank: "5", suit: "H", label: "5H" },
-        { id: "QS", rank: "Q", suit: "S", label: "QS" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Tutor", card: { id: "2C", rank: "2", suit: "C", label: "2C" } },
-        { seat: "Right", card: { id: "KC", rank: "K", suit: "C", label: "KC" } }
-      ],
-      tableAfterChoice: [{ seat: "Left", card: { id: "4C", rank: "4", suit: "C", label: "4C" } }],
-      pendingBySeat: { Left: "follow clubs" },
-      playedExplanations: {
-        "8D": "8D is good. It avoids adding a penalty on the first trick.",
-        "5H": "5H is legal because you are void, but it adds a heart point immediately.",
-        QS: "Queen of Spades is legal because you are void, but dumping 13 points on trick one is dangerous."
-      },
-      cardOutcomes: {
-        "8D": "good",
-        "5H": "risky",
-        QS: "penalty"
-      },
-      cardReasons: {
-        "8D": "void_discard",
-        "5H": "void_discard",
-        QS: "void_discard"
-      }
-    }
-  };
-  const heartsFirstTrickDuckClubsDrillStep: DrillStep = {
-    scenarioId: "hearts-first-trick-duck-clubs",
-    contract: "Hearts",
-    title: "First trick",
-    trick: {
-      title: "Stay low in clubs",
-      beforeResult: "This is the first trick. Clubs were led, and the current winner is KC.",
-      afterResult: "Following with a low club keeps the first trick cheap and avoids taking control too early.",
-      emptyExplanation: "Choose the club that follows suit without winning the trick.",
-      legalCardIds: ["4C", "AC"],
-      hand: [
-        { id: "4C", rank: "4", suit: "C", label: "4C" },
-        { id: "AC", rank: "A", suit: "C", label: "AC" },
-        { id: "6D", rank: "6", suit: "D", label: "6D" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Tutor", card: { id: "2C", rank: "2", suit: "C", label: "2C" } },
-        { seat: "Right", card: { id: "KC", rank: "K", suit: "C", label: "KC" } }
-      ],
-      tableAfterChoice: [{ seat: "Left", card: { id: "7C", rank: "7", suit: "C", label: "7C" } }],
-      pendingBySeat: { Left: "follow clubs" },
-      playedExplanations: {
-        "4C": "4C is good. You follow clubs and stay under KC.",
-        AC: "AC follows suit, but it wins the opening trick and puts you on lead.",
-        "6D": "6D is off suit while you still have clubs."
-      },
-      cardOutcomes: {
-        "4C": "good",
-        AC: "risky"
-      },
-      cardReasons: {
-        "4C": "followed_suit",
-        AC: "won_clean_trick"
-      }
-    }
-  };
-  const heartsBreakHeartsDrillStep: DrillStep = {
-    scenarioId: "hearts-break-hearts-lead",
-    contract: "Hearts",
-    title: "Break hearts",
-    trick: {
-      title: "Can you lead a heart?",
-      beforeResult: "You are on lead. Hearts have not been broken, and you still have non-hearts.",
-      afterResult: "A non-heart lead keeps the hand legal until a heart has been played.",
-      emptyExplanation: "Choose a legal opening lead. In this Hearts variant, hearts cannot be led before they are broken unless you only have hearts.",
-      legalCardIds: ["9C", "QD", "AS"],
-      hand: [
-        { id: "2H", rank: "2", suit: "H", label: "2H" },
-        { id: "9C", rank: "9", suit: "C", label: "9C" },
-        { id: "QD", rank: "Q", suit: "D", label: "QD" },
-        { id: "AS", rank: "A", suit: "S", label: "AS" }
-      ],
-      tableBeforeChoice: [],
-      tableAfterChoice: [],
-      pendingBySeat: { Tutor: "waiting", Left: "waiting", Right: "waiting" },
-      playedExplanations: {
-        "2H": "2H is not legal yet. Hearts have not been broken and you still have another suit.",
-        "9C": "9C is legal. You led a non-heart while hearts are still unbroken.",
-        QD: "QD is legal. Diamonds can be led before hearts are broken.",
-        AS: "AS is legal. Spades can be led before hearts are broken."
-      },
-      cardOutcomes: {
-        "9C": "good",
-        QD: "good",
-        AS: "good"
-      },
-      cardReasons: {
-        "9C": "followed_suit",
-        QD: "followed_suit",
-        AS: "followed_suit"
-      }
-    }
-  };
-  const heartsBreakHeartsOnlyHeartsDrillStep: DrillStep = {
-    scenarioId: "hearts-break-hearts-only-hearts",
-    contract: "Hearts",
-    title: "Break hearts",
-    trick: {
-      title: "Only hearts remain",
-      beforeResult: "You are on lead. Hearts have not been broken, but every card in your hand is a heart.",
-      afterResult: "If hearts are all you have, leading a heart is legal even before hearts have been broken.",
-      emptyExplanation: "Choose a legal lead when your hand contains only hearts.",
-      legalCardIds: ["2H", "8H", "KH"],
-      hand: [
-        { id: "2H", rank: "2", suit: "H", label: "2H" },
-        { id: "8H", rank: "8", suit: "H", label: "8H" },
-        { id: "KH", rank: "K", suit: "H", label: "KH" }
-      ],
-      tableBeforeChoice: [],
-      tableAfterChoice: [],
-      pendingBySeat: { Tutor: "waiting", Left: "waiting", Right: "waiting" },
-      playedExplanations: {
-        "2H": "2H is good. You only have hearts, so a heart lead is legal.",
-        "8H": "8H is legal, but the lower heart is usually safer.",
-        KH: "KH is legal, but it risks taking control with a penalty suit."
-      },
-      cardOutcomes: {
-        "2H": "good",
-        "8H": "risky",
-        KH: "risky"
-      },
-      cardReasons: {
-        "2H": "followed_suit",
-        "8H": "followed_suit",
-        KH: "followed_suit"
-      }
-    }
-  };
-  const heartsBreakHeartsAlreadyBrokenDrillStep: DrillStep = {
-    scenarioId: "hearts-break-hearts-already-broken",
-    contract: "Hearts",
-    title: "Break hearts",
-    trick: {
-      title: "Hearts are open",
-      beforeResult: "You are on lead. Hearts have already been broken.",
-      afterResult: "Once hearts are broken, a heart lead is legal. A low heart is usually the safer exit.",
-      emptyExplanation: "Choose a lead now that hearts are open.",
-      legalCardIds: ["3H", "JH", "6D", "10S"],
-      hand: [
-        { id: "3H", rank: "3", suit: "H", label: "3H" },
-        { id: "JH", rank: "J", suit: "H", label: "JH" },
-        { id: "6D", rank: "6", suit: "D", label: "6D" },
-        { id: "10S", rank: "10", suit: "S", label: "10S" }
-      ],
-      tableBeforeChoice: [],
-      tableAfterChoice: [],
-      pendingBySeat: { Tutor: "waiting", Left: "waiting", Right: "waiting" },
-      playedExplanations: {
-        "3H": "3H is good. Hearts are open, and the low heart is a safe exit.",
-        JH: "JH is legal, but leading a higher heart can give away control.",
-        "6D": "6D is legal. Non-hearts are still safe leads.",
-        "10S": "10S is legal, but watch whether the queen of spades is still live."
-      },
-      cardOutcomes: {
-        "3H": "good",
-        JH: "risky",
-        "6D": "good",
-        "10S": "risky"
-      },
-      cardReasons: {
-        "3H": "followed_suit",
-        JH: "followed_suit",
-        "6D": "followed_suit",
-        "10S": "won_clean_trick"
-      }
-    }
-  };
-  const heartsQueenDangerDrillStep: DrillStep = {
-    scenarioId: "hearts-black-lady-duck",
-    contract: "Hearts",
-    title: "Queen of Spades danger",
-    trick: {
-      title: "Duck the Queen of Spades",
-      beforeResult: "Spades were led. Right has put the queen of spades into the trick, and you still have spades.",
-      afterResult: "In Hearts, the queen of spades is the danger card: it is worth 13 penalty points.",
-      emptyExplanation: "Follow spades without winning the trick that contains the queen of spades.",
-      legalCardIds: ["2S", "AS"],
-      hand: [
-        { id: "2S", rank: "2", suit: "S", label: "2S" },
-        { id: "AS", rank: "A", suit: "S", label: "AS" },
-        { id: "4H", rank: "4", suit: "H", label: "4H" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Tutor", card: { id: "10S", rank: "10", suit: "S", label: "10S" } },
-        { seat: "Right", card: { id: "QS", rank: "Q", suit: "S", label: "QS" } }
-      ],
-      tableAfterChoice: [{ seat: "Left", card: { id: "7S", rank: "7", suit: "S", label: "7S" } }],
-      pendingBySeat: { Left: "follow spades" },
-      playedExplanations: {
-        "2S": "2S is good. You followed spades without taking the queen of spades.",
-        AS: "AS wins the trick and captures the queen of spades, which is 13 penalty points.",
-        "4H": "4H is off suit while you still have spades."
-      },
-      cardOutcomes: {
-        "2S": "good",
-        AS: "penalty"
-      },
-      cardReasons: {
-        "2S": "avoided_penalty",
-        AS: "captured_penalty"
-      }
-    }
-  };
-  const heartsQueenDumpDrillStep: DrillStep = {
-    scenarioId: "hearts-black-lady-dump",
-    contract: "Hearts",
-    title: "Queen of Spades danger",
-    trick: {
-      title: "Dump Queen of Spades safely",
-      beforeResult: "Clubs were led. You have no clubs, and Barbu is already winning this trick.",
-      afterResult: "When you are void, dumping the queen of spades under someone else's winner moves the 13-point danger away.",
-      emptyExplanation: "Choose the safest discard while you are void in clubs.",
-      legalCardIds: ["QS", "6H", "9D"],
-      hand: [
-        { id: "QS", rank: "Q", suit: "S", label: "QS" },
-        { id: "6H", rank: "6", suit: "H", label: "6H" },
-        { id: "9D", rank: "9", suit: "D", label: "9D" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Tutor", card: { id: "AC", rank: "A", suit: "C", label: "AC" } },
-        { seat: "Right", card: { id: "8C", rank: "8", suit: "C", label: "8C" } }
-      ],
-      tableAfterChoice: [{ seat: "Left", card: { id: "3C", rank: "3", suit: "C", label: "3C" } }],
-      pendingBySeat: { Left: "follow clubs" },
-      playedExplanations: {
-        QS: "Queen of Spades is good. You are void, and Barbu is winning, so the danger card leaves your hand.",
-        "6H": "6H gives away one point, but the queen of spades remains in your hand.",
-        "9D": "9D is safe now, but it misses the chance to unload the queen of spades."
-      },
-      cardOutcomes: {
-        QS: "good",
-        "6H": "risky",
-        "9D": "risky"
-      },
-      cardReasons: {
-        QS: "void_discard",
-        "6H": "void_discard",
-        "9D": "void_discard"
-      }
-    }
-  };
-  const heartsQueenDangerousDumpDrillStep: DrillStep = {
-    scenarioId: "hearts-black-lady-dangerous-dump",
-    contract: "Hearts",
-    title: "Queen of Spades danger",
-    trick: {
-      title: "Do not win Queen of Spades",
-      beforeResult: "Spades were led. You hold the queen of spades, and no higher spade is protecting you.",
-      afterResult: "Dumping the queen of spades is only safe when someone else is winning. Here, it would win the trick.",
-      emptyExplanation: "Follow spades without making the queen of spades take the trick.",
-      legalCardIds: ["3S", "QS"],
-      hand: [
-        { id: "3S", rank: "3", suit: "S", label: "3S" },
-        { id: "QS", rank: "Q", suit: "S", label: "QS" },
-        { id: "6H", rank: "6", suit: "H", label: "6H" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Tutor", card: { id: "9S", rank: "9", suit: "S", label: "9S" } },
-        { seat: "Right", card: { id: "JS", rank: "J", suit: "S", label: "JS" } }
-      ],
-      tableAfterChoice: [{ seat: "Left", card: { id: "4S", rank: "4", suit: "S", label: "4S" } }],
-      pendingBySeat: { Left: "follow spades" },
-      playedExplanations: {
-        "3S": "3S is good. You keep the queen of spades out of a trick you might win.",
-        QS: "Queen of Spades wins this trick and gives you 13 penalty points.",
-        "6H": "6H is off suit while you still have spades."
-      },
-      cardOutcomes: {
-        "3S": "good",
-        QS: "penalty"
-      },
-      cardReasons: {
-        "3S": "avoided_penalty",
-        QS: "captured_penalty"
-      }
-    }
-  };
-  const heartsStopMoonDrillStep: DrillStep = {
-    scenarioId: "hearts-stop-moon-loaded-trick",
-    contract: "Hearts",
-    title: "Stop the moon",
-    trick: {
-      title: "Break the moon threat",
-      beforeResult: "Barbu has every point so far and is winning this loaded club trick.",
-      afterResult: "Sometimes the right Hearts play is to take points so one player cannot shoot the moon.",
-      emptyExplanation: "Clubs were led. Choose whether to let Barbu keep collecting every point or take the loaded trick away.",
-      legalCardIds: ["AC", "2C"],
-      hand: [
-        { id: "AC", rank: "A", suit: "C", label: "AC" },
-        { id: "2C", rank: "2", suit: "C", label: "2C" },
-        { id: "5D", rank: "5", suit: "D", label: "5D" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Tutor", card: { id: "KC", rank: "K", suit: "C", label: "KC" } },
-        { seat: "Right", card: { id: "4H", rank: "4", suit: "H", label: "4H" } }
-      ],
-      tableAfterChoice: [{ seat: "Left", card: { id: "8C", rank: "8", suit: "C", label: "8C" } }],
-      pendingBySeat: { Left: "follow clubs" },
-      playedExplanations: {
-        AC: "AC is good moon defense because it takes the heart point away from Barbu.",
-        "2C": "2C follows suit, but it lets Barbu keep every point so far. That can feed a moon attempt.",
-        "5D": "5D is off suit while you still have clubs."
-      },
-      cardOutcomes: {
-        AC: "good",
-        "2C": "risky"
-      },
-      cardReasons: {
-        AC: "captured_penalty",
-        "2C": "avoided_penalty"
-      }
-    }
-  };
-  const heartsStopMoonQueenDrillStep: DrillStep = {
-    scenarioId: "hearts-stop-moon-queen-trick",
-    contract: "Hearts",
-    title: "Stop the moon",
-    trick: {
-      title: "Take Queen of Spades away",
-      beforeResult: "Left is trying to collect every point. Left is winning a spade trick that contains the queen of spades.",
-      afterResult: "Taking a painful trick can be correct if it prevents one player from taking all 26 points.",
-      emptyExplanation: "Spades were led. Decide whether to take the queen of spades to stop the moon.",
-      legalCardIds: ["KS", "3S"],
-      hand: [
-        { id: "KS", rank: "K", suit: "S", label: "KS" },
-        { id: "3S", rank: "3", suit: "S", label: "3S" },
-        { id: "4D", rank: "4", suit: "D", label: "4D" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Tutor", card: { id: "QS", rank: "Q", suit: "S", label: "QS" } },
-        { seat: "Left", card: { id: "AS", rank: "A", suit: "S", label: "AS" } }
-      ],
-      tableAfterChoice: [{ seat: "Right", card: { id: "7S", rank: "7", suit: "S", label: "7S" } }],
-      pendingBySeat: { Right: "follow spades" },
-      playedExplanations: {
-        KS: "KS is risky but correct moon defense if Left is threatening to collect every point.",
-        "3S": "3S ducks the queen of spades and lets Left keep the moon threat alive.",
-        "4D": "4D is off suit while you still have spades."
-      },
-      cardOutcomes: {
-        KS: "good",
-        "3S": "risky"
-      },
-      cardReasons: {
-        KS: "captured_penalty",
-        "3S": "avoided_penalty"
-      }
-    }
-  };
-  const heartsStopMoonSmallPointDrillStep: DrillStep = {
-    scenarioId: "hearts-stop-moon-small-heart",
-    contract: "Hearts",
-    title: "Stop the moon",
-    trick: {
-      title: "Take one point now",
-      beforeResult: "Barbu has all the points so far and is about to win another heart trick.",
-      afterResult: "Taking one heart can be correct if it breaks a moon attempt before the hand gets away.",
-      emptyExplanation: "Hearts were led. Decide whether to take one point to stop Barbu from collecting everything.",
-      legalCardIds: ["KH", "2H"],
-      hand: [
-        { id: "KH", rank: "K", suit: "H", label: "KH" },
-        { id: "2H", rank: "2", suit: "H", label: "2H" },
-        { id: "8D", rank: "8", suit: "D", label: "8D" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Tutor", card: { id: "QH", rank: "Q", suit: "H", label: "QH" } },
-        { seat: "Right", card: { id: "7H", rank: "7", suit: "H", label: "7H" } }
-      ],
-      tableAfterChoice: [{ seat: "Left", card: { id: "4H", rank: "4", suit: "H", label: "4H" } }],
-      pendingBySeat: { Left: "follow hearts" },
-      playedExplanations: {
-        KH: "KH is good moon defense here. You take a heart point so Barbu cannot keep every point.",
-        "2H": "2H follows suit, but it lets Barbu keep collecting all the points.",
-        "8D": "8D is off suit while you still have hearts."
-      },
-      cardOutcomes: {
-        KH: "good",
-        "2H": "risky"
-      },
-      cardReasons: {
-        KH: "captured_penalty",
-        "2H": "avoided_penalty"
-      }
-    }
-  };
-  const heartsScoreHandDrillStep: DrillStep = {
-    scenarioId: "hearts-score-hand-danger-card",
-    contract: "Hearts",
-    title: "Score a hand",
-    trick: {
-      title: "Find the 13-point card",
-      beforeResult: "This trick contains several cards, but one card explains most of the score.",
-      afterResult: "The queen of spades is worth 13 penalty points in the current Hearts variant.",
-      emptyExplanation: "Choose the card that makes this trick much more expensive than an ordinary heart trick.",
-      legalCardIds: ["QS", "7H", "9D", "KC"],
-      hand: [
-        { id: "QS", rank: "Q", suit: "S", label: "QS" },
-        { id: "7H", rank: "7", suit: "H", label: "7H" },
-        { id: "9D", rank: "9", suit: "D", label: "9D" },
-        { id: "KC", rank: "K", suit: "C", label: "KC" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Tutor", card: { id: "AH", rank: "A", suit: "H", label: "AH" } },
-        { seat: "Right", card: { id: "3H", rank: "3", suit: "H", label: "3H" } },
-        { seat: "Left", card: { id: "10S", rank: "10", suit: "S", label: "10S" } }
-      ],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "identify danger" },
-      playedExplanations: {
-        QS: "Queen of Spades is the 13-point danger card. Hearts add one point each, but that card changes the whole trick.",
-        "7H": "7H is a penalty card, but it is worth one point, not thirteen.",
-        "9D": "9D is not a penalty card in Hearts.",
-        KC: "KC is not a penalty card in Hearts."
-      },
-      cardOutcomes: {
-        QS: "good",
-        "7H": "risky",
-        "9D": "penalty",
-        KC: "penalty"
-      },
-      cardReasons: {
-        QS: "avoided_penalty",
-        "7H": "captured_penalty",
-        "9D": "won_clean_trick",
-        KC: "won_clean_trick"
-      }
-    }
-  };
-  const heartsScoreHeartPointDrillStep: DrillStep = {
-    scenarioId: "hearts-score-hand-heart-point",
-    contract: "Hearts",
-    title: "Score a hand",
-    trick: {
-      title: "Find the one-point card",
-      beforeResult: "This trick has ordinary cards and one heart. There is no queen of spades.",
-      afterResult: "Each heart is one penalty point. Queen of Spades is the 13-point card, but it is not in this trick.",
-      emptyExplanation: "Choose the card that adds one penalty point to the trick.",
-      legalCardIds: ["7H", "QS", "KC"],
-      hand: [
-        { id: "7H", rank: "7", suit: "H", label: "7H" },
-        { id: "QS", rank: "Q", suit: "S", label: "QS" },
-        { id: "KC", rank: "K", suit: "C", label: "KC" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Tutor", card: { id: "9C", rank: "9", suit: "C", label: "9C" } },
-        { seat: "Right", card: { id: "AD", rank: "A", suit: "D", label: "AD" } },
-        { seat: "Left", card: { id: "4S", rank: "4", suit: "S", label: "4S" } }
-      ],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "identify point card" },
-      playedExplanations: {
-        "7H": "7H is good. A heart is one penalty point.",
-        QS: "Queen of Spades is worth 13, but it is not in this trick.",
-        KC: "KC is not a penalty card in Hearts."
-      },
-      cardOutcomes: {
-        "7H": "good",
-        QS: "penalty",
-        KC: "penalty"
-      },
-      cardReasons: {
-        "7H": "captured_penalty",
-        QS: "captured_penalty",
-        KC: "won_clean_trick"
-      }
-    }
-  };
-  const heartsScoreCleanCardDrillStep: DrillStep = {
-    scenarioId: "hearts-score-hand-clean-card",
-    contract: "Hearts",
-    title: "Score a hand",
-    trick: {
-      title: "Find the clean card",
-      beforeResult: "This trick contains one heart and the queen of spades. One candidate card does not score.",
-      afterResult: "Clean cards are neither hearts nor the queen of spades.",
-      emptyExplanation: "Choose the card that adds no Hearts penalty points.",
-      legalCardIds: ["5D", "9H", "QS"],
-      hand: [
-        { id: "5D", rank: "5", suit: "D", label: "5D" },
-        { id: "9H", rank: "9", suit: "H", label: "9H" },
-        { id: "QS", rank: "Q", suit: "S", label: "QS" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Tutor", card: { id: "2C", rank: "2", suit: "C", label: "2C" } },
-        { seat: "Right", card: { id: "8S", rank: "8", suit: "S", label: "8S" } },
-        { seat: "Left", card: { id: "KD", rank: "K", suit: "D", label: "KD" } }
-      ],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "identify clean card" },
-      playedExplanations: {
-        "5D": "5D is good. It is a clean card with no Hearts penalty value.",
-        "9H": "9H is a heart, so it is worth one penalty point.",
-        QS: "Queen of Spades is the 13-point danger card."
-      },
-      cardOutcomes: {
-        "5D": "good",
-        "9H": "risky",
-        QS: "penalty"
-      },
-      cardReasons: {
-        "5D": "won_clean_trick",
-        "9H": "captured_penalty",
-        QS: "captured_penalty"
-      }
-    }
-  };
-  const heartsAvoidHeartsDrillPool = [
-    heartsAvoidHeartsDrillStep,
-    heartsAvoidHeartVoidDumpDrillStep,
-    heartsAvoidHighHeartDrillStep
-  ];
-  const heartsFirstTrickDrillPool = [
-    heartsFirstTrickRestrictionDrillStep,
-    heartsFirstTrickVoidSafeDiscardDrillStep,
-    heartsFirstTrickDuckClubsDrillStep
-  ];
-  const heartsQueenDangerDrillPool = [
-    heartsQueenDangerDrillStep,
-    heartsQueenDumpDrillStep,
-    heartsQueenDangerousDumpDrillStep
-  ];
-  const heartsBreakHeartsDrillPool = [
-    heartsBreakHeartsDrillStep,
-    heartsBreakHeartsOnlyHeartsDrillStep,
-    heartsBreakHeartsAlreadyBrokenDrillStep
-  ];
-  const heartsStopMoonDrillPool = [
-    heartsStopMoonDrillStep,
-    heartsStopMoonQueenDrillStep,
-    heartsStopMoonSmallPointDrillStep
-  ];
-  const heartsScoreHandDrillPool = [
-    heartsScoreHandDrillStep,
-    heartsScoreHeartPointDrillStep,
-    heartsScoreCleanCardDrillStep
-  ];
-  const heartsQuickDrillPools = [
-    heartsFirstTrickDrillPool,
-    heartsAvoidHeartsDrillPool,
-    heartsQueenDangerDrillPool,
-    heartsBreakHeartsDrillPool,
-    heartsStopMoonDrillPool,
-    heartsScoreHandDrillPool
-  ];
-  const spadesFollowSuitDrillStep: DrillStep = {
-    scenarioId: "spades-follow-suit-clubs",
-    contract: "Spades",
-    title: "Follow suit",
-    trick: {
-      title: "Follow before trump",
-      beforeResult: "Left led clubs. You still have clubs, even though you also hold spades.",
-      afterResult: "In Spades, fixed trump does not override the follow-suit rule.",
-      emptyExplanation: "Clubs were led. Choose a legal club before thinking about trump.",
-      legalCardIds: ["3C", "AC"],
-      hand: [
-        { id: "3C", rank: "3", suit: "C", label: "3C" },
-        { id: "AC", rank: "A", suit: "C", label: "AC" },
-        { id: "8S", rank: "8", suit: "S", label: "8S" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Left", card: { id: "9C", rank: "9", suit: "C", label: "9C" } },
-        { seat: "Tutor", card: { id: "KC", rank: "K", suit: "C", label: "KC" } }
-      ],
-      tableAfterChoice: [{ seat: "Right", card: { id: "5C", rank: "5", suit: "C", label: "5C" } }],
-      pendingBySeat: { You: "follow clubs", Right: "follows" },
-      playedExplanations: {
-        "3C": "3C is good. You follow clubs and avoid spending a spade illegally.",
-        AC: "AC follows suit and wins, but first notice that clubs are the legal suit.",
-        "8S": "8S is illegal while you still have clubs."
-      },
-      cardOutcomes: {
-        "3C": "good",
-        AC: "risky"
-      },
-      cardReasons: {
-        "3C": "followed_suit",
-        AC: "won_clean_trick"
-      }
-    }
-  };
-  const spadesFollowSuitDuckDrillStep: DrillStep = {
-    scenarioId: "spades-follow-suit-duck",
-    contract: "Spades",
-    title: "Follow suit",
-    trick: {
-      title: "Follow low when partner is safe",
-      beforeResult: "Barbu is your partner and is winning with KD. Diamonds were led, and you have diamonds.",
-      afterResult: "Following suit can still preserve strength when partner already controls the trick.",
-      emptyExplanation: "Diamonds were led. Follow diamonds without overtaking partner.",
-      legalCardIds: ["4D", "AD"],
-      hand: [
-        { id: "4D", rank: "4", suit: "D", label: "4D" },
-        { id: "AD", rank: "A", suit: "D", label: "AD" },
-        { id: "QS", rank: "Q", suit: "S", label: "QS" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Left", card: { id: "9D", rank: "9", suit: "D", label: "9D" } },
-        { seat: "Tutor", card: { id: "KD", rank: "K", suit: "D", label: "KD" } }
-      ],
-      tableAfterChoice: [{ seat: "Right", card: { id: "7D", rank: "7", suit: "D", label: "7D" } }],
-      pendingBySeat: { You: "follow diamonds", Right: "follows" },
-      playedExplanations: {
-        "4D": "4D is good. You follow suit and let partner keep the trick.",
-        AD: "AD is legal, but it overtakes Barbu and spends a winner your side may need later.",
-        QS: "QS is illegal while you still have diamonds."
-      },
-      cardOutcomes: {
-        "4D": "good",
-        AD: "risky"
-      },
-      cardReasons: {
-        "4D": "followed_suit",
-        AD: "won_clean_trick"
-      }
-    }
-  };
-  const spadesFollowSuitCoverDrillStep: DrillStep = {
-    scenarioId: "spades-follow-suit-cover",
-    contract: "Spades",
-    title: "Follow suit",
-    trick: {
-      title: "Cover the opponent",
-      beforeResult: "Hearts were led. Right is winning with QH, and you can follow hearts.",
-      afterResult: "A follow-suit card can still win a needed book when it beats the opponent.",
-      emptyExplanation: "Hearts were led. Follow hearts and decide whether your side needs to win.",
-      legalCardIds: ["4H", "KH"],
-      hand: [
-        { id: "4H", rank: "4", suit: "H", label: "4H" },
-        { id: "KH", rank: "K", suit: "H", label: "KH" },
-        { id: "6S", rank: "6", suit: "S", label: "6S" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Left", card: { id: "9H", rank: "9", suit: "H", label: "9H" } },
-        { seat: "Tutor", card: { id: "3H", rank: "3", suit: "H", label: "3H" } },
-        { seat: "Right", card: { id: "QH", rank: "Q", suit: "H", label: "QH" } }
-      ],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "last to play" },
-      playedExplanations: {
-        "4H": "4H follows suit, but it lets Right win the book.",
-        KH: "KH follows suit and covers Right, taking the book for your side.",
-        "6S": "6S is illegal while you still have hearts."
-      },
-      cardOutcomes: {
-        "4H": "risky",
-        KH: "good"
-      },
-      cardReasons: {
-        "4H": "followed_suit",
-        KH: "won_clean_trick"
-      }
-    }
-  };
-  const spadesTrumpCutDrillStep: DrillStep = {
-    scenarioId: "spades-trump-cut",
-    contract: "Spades",
-    title: "Trump or discard",
-    trick: {
-      title: "Cut with the low spade",
-      beforeResult: "Hearts were led. You are void in hearts, and Right is winning with AH.",
-      afterResult: "Any spade beats a plain-suit card. Use the lowest spade that wins.",
-      emptyExplanation: "You are void in hearts. Choose whether to cut the trick.",
-      legalCardIds: ["4S", "QS", "7D"],
-      hand: [
-        { id: "4S", rank: "4", suit: "S", label: "4S" },
-        { id: "QS", rank: "Q", suit: "S", label: "QS" },
-        { id: "7D", rank: "7", suit: "D", label: "7D" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Left", card: { id: "9H", rank: "9", suit: "H", label: "9H" } },
-        { seat: "Tutor", card: { id: "3H", rank: "3", suit: "H", label: "3H" } },
-        { seat: "Right", card: { id: "AH", rank: "A", suit: "H", label: "AH" } }
-      ],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "void: cut or discard" },
-      playedExplanations: {
-        "4S": "4S is good. The low spade cuts the heart trick and saves QS.",
-        QS: "QS wins too, but it spends a higher spade than needed.",
-        "7D": "7D is legal, but it gives up a book your side can win."
-      },
-      cardOutcomes: {
-        "4S": "good",
-        QS: "risky",
-        "7D": "risky"
-      },
-      cardReasons: {
-        "4S": "won_clean_trick",
-        QS: "won_clean_trick",
-        "7D": "void_discard"
-      }
-    }
-  };
-  const spadesTrumpPreserveDrillStep: DrillStep = {
-    scenarioId: "spades-trump-preserve",
-    contract: "Spades",
-    title: "Trump or discard",
-    trick: {
-      title: "Discard when partner is winning",
-      beforeResult: "Clubs were led. You are void in clubs, and Barbu is already winning with AC.",
-      afterResult: "When partner has the book, throwing a side card can preserve spade control.",
-      emptyExplanation: "You are void in clubs. Decide whether this trick needs a spade.",
-      legalCardIds: ["5S", "JS", "8D"],
-      hand: [
-        { id: "5S", rank: "5", suit: "S", label: "5S" },
-        { id: "JS", rank: "J", suit: "S", label: "JS" },
-        { id: "8D", rank: "8", suit: "D", label: "8D" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Left", card: { id: "KC", rank: "K", suit: "C", label: "KC" } },
-        { seat: "Tutor", card: { id: "AC", rank: "A", suit: "C", label: "AC" } },
-        { seat: "Right", card: { id: "6C", rank: "6", suit: "C", label: "6C" } }
-      ],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "void: partner winning" },
-      playedExplanations: {
-        "5S": "5S is legal, but it steals a trick partner already had.",
-        JS: "JS is an even more expensive spade while partner is already winning.",
-        "8D": "8D is good. You discard and keep spades for a later fight."
-      },
-      cardOutcomes: {
-        "5S": "risky",
-        JS: "risky",
-        "8D": "good"
-      },
-      cardReasons: {
-        "5S": "won_clean_trick",
-        JS: "won_clean_trick",
-        "8D": "void_discard"
-      }
-    }
-  };
-  const spadesTrumpOvertrumpDrillStep: DrillStep = {
-    scenarioId: "spades-trump-overtrump",
-    contract: "Spades",
-    title: "Trump or discard",
-    trick: {
-      title: "Overtrump the opponent",
-      beforeResult: "Diamonds were led. You are void, and Right has cut with 7S.",
-      afterResult: "If an opponent has already trumped, a higher spade can win the book back.",
-      emptyExplanation: "Beat Right's spade if taking this book helps your bid.",
-      legalCardIds: ["9S", "KS", "5H"],
-      hand: [
-        { id: "9S", rank: "9", suit: "S", label: "9S" },
-        { id: "KS", rank: "K", suit: "S", label: "KS" },
-        { id: "5H", rank: "5", suit: "H", label: "5H" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Left", card: { id: "QD", rank: "Q", suit: "D", label: "QD" } },
-        { seat: "Tutor", card: { id: "4D", rank: "4", suit: "D", label: "4D" } },
-        { seat: "Right", card: { id: "7S", rank: "7", suit: "S", label: "7S" } }
-      ],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "void: overtrump" },
-      playedExplanations: {
-        "9S": "9S is good. It overtrumps Right and is enough to win.",
-        KS: "KS wins, but 9S already did the job.",
-        "5H": "5H is legal, but it lets Right's spade win."
-      },
-      cardOutcomes: {
-        "9S": "good",
-        KS: "risky",
-        "5H": "risky"
-      },
-      cardReasons: {
-        "9S": "won_clean_trick",
-        KS: "won_clean_trick",
-        "5H": "void_discard"
-      }
-    }
-  };
-  const spadesBidAceDrillStep: DrillStep = {
-    scenarioId: "spades-bid-count-ace",
-    contract: "Spades",
-    title: "Bid books",
-    trick: {
-      title: "Count a likely winner",
-      beforeResult: "Before bidding, identify the card that most clearly belongs in your book estimate.",
-      afterResult: "Aces are the first cards to count when estimating a Spades bid.",
-      emptyExplanation: "Choose the card you should count most confidently as a book.",
-      legalCardIds: ["AS", "7D", "4C"],
-      hand: [
-        { id: "AS", rank: "A", suit: "S", label: "AS" },
-        { id: "7D", rank: "7", suit: "D", label: "7D" },
-        { id: "4C", rank: "4", suit: "C", label: "4C" }
-      ],
-      tableBeforeChoice: [],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "estimate bid" },
-      playedExplanations: {
-        AS: "AS is good. A high spade is a strong likely book.",
-        "7D": "7D is not a card you should count as a likely book.",
-        "4C": "4C is useful as a low exit, not as a bid winner."
-      },
-      cardOutcomes: {
-        AS: "good",
-        "7D": "risky",
-        "4C": "risky"
-      },
-      cardReasons: {
-        AS: "won_clean_trick",
-        "7D": "off_suit",
-        "4C": "off_suit"
-      }
-    }
-  };
-  const spadesBidProtectedKingDrillStep: DrillStep = {
-    scenarioId: "spades-bid-protected-king",
-    contract: "Spades",
-    title: "Bid books",
-    trick: {
-      title: "Prefer protected strength",
-      beforeResult: "Before bidding, compare the kings. One has small cards behind it; one is lonely.",
-      afterResult: "A protected king is safer to count than a singleton king.",
-      emptyExplanation: "Choose the card that deserves more credit in the bid estimate.",
-      legalCardIds: ["KH", "KC", "5H"],
-      hand: [
-        { id: "KH", rank: "K", suit: "H", label: "KH" },
-        { id: "5H", rank: "5", suit: "H", label: "5H" },
-        { id: "KC", rank: "K", suit: "C", label: "KC" }
-      ],
-      tableBeforeChoice: [],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "estimate bid" },
-      playedExplanations: {
-        KH: "KH is good. The small heart means this king is protected by suit length.",
-        KC: "KC is a king, but as a lonely club it is easier to lose or be forced out.",
-        "5H": "5H helps protect KH, but the king is the card you count."
-      },
-      cardOutcomes: {
-        KH: "good",
-        KC: "risky",
-        "5H": "risky"
-      },
-      cardReasons: {
-        KH: "won_clean_trick",
-        KC: "off_suit",
-        "5H": "off_suit"
-      }
-    }
-  };
-  const spadesBidNilDrillStep: DrillStep = {
-    scenarioId: "spades-bid-nil-danger",
-    contract: "Spades",
-    title: "Bid books",
-    trick: {
-      title: "Do not call nil with a clear winner",
-      beforeResult: "You are checking whether nil is realistic. One card makes nil dangerous.",
-      afterResult: "Nil means you must win zero tricks, so obvious winners argue against nil.",
-      emptyExplanation: "Choose the card that makes a nil bid unsafe.",
-      legalCardIds: ["QS", "3C", "6D"],
-      hand: [
-        { id: "QS", rank: "Q", suit: "S", label: "QS" },
-        { id: "3C", rank: "3", suit: "C", label: "3C" },
-        { id: "6D", rank: "6", suit: "D", label: "6D" }
-      ],
-      tableBeforeChoice: [],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "nil check" },
-      playedExplanations: {
-        QS: "QS is good. A high spade can be hard to duck, so nil is risky.",
-        "3C": "3C is the kind of low card that helps a nil plan.",
-        "6D": "6D is not the main nil danger here."
-      },
-      cardOutcomes: {
-        QS: "good",
-        "3C": "risky",
-        "6D": "risky"
-      },
-      cardReasons: {
-        QS: "won_clean_trick",
-        "3C": "off_suit",
-        "6D": "off_suit"
-      }
-    }
-  };
-  const spadesBagsDuckDrillStep: DrillStep = {
-    scenarioId: "spades-bags-duck-after-bid",
-    contract: "Spades",
-    title: "Avoid bags",
-    trick: {
-      title: "Duck after making the bid",
-      beforeResult: "Your side bid five and already has five books. Clubs were led, and Right is winning.",
-      afterResult: "After making the bid, another unnecessary book becomes a bag.",
-      emptyExplanation: "Follow clubs without creating an extra bag if you can.",
-      legalCardIds: ["4C", "AC"],
-      hand: [
-        { id: "4C", rank: "4", suit: "C", label: "4C" },
-        { id: "AC", rank: "A", suit: "C", label: "AC" },
-        { id: "8S", rank: "8", suit: "S", label: "8S" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Left", card: { id: "9C", rank: "9", suit: "C", label: "9C" } },
-        { seat: "Tutor", card: { id: "2C", rank: "2", suit: "C", label: "2C" } },
-        { seat: "Right", card: { id: "KC", rank: "K", suit: "C", label: "KC" } }
-      ],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "avoid bag" },
-      playedExplanations: {
-        "4C": "4C is good. You follow suit and let Right keep the trick.",
-        AC: "AC wins an extra book after your side has made the bid. That is a bag.",
-        "8S": "8S is illegal while you still have clubs."
-      },
-      cardOutcomes: {
-        "4C": "good",
-        AC: "risky"
-      },
-      cardReasons: {
-        "4C": "followed_suit",
-        AC: "won_clean_trick"
-      }
-    }
-  };
-  const spadesBagsDiscardDrillStep: DrillStep = {
-    scenarioId: "spades-bags-discard",
-    contract: "Spades",
-    title: "Avoid bags",
-    trick: {
-      title: "Throw away instead of trumping",
-      beforeResult: "Your side has made its bid. You are void in diamonds, and Left is winning.",
-      afterResult: "When the contract is safe, discarding can avoid another bag.",
-      emptyExplanation: "You are void in diamonds. Avoid taking an extra book.",
-      legalCardIds: ["6S", "JS", "4H"],
-      hand: [
-        { id: "6S", rank: "6", suit: "S", label: "6S" },
-        { id: "JS", rank: "J", suit: "S", label: "JS" },
-        { id: "4H", rank: "4", suit: "H", label: "4H" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Left", card: { id: "AD", rank: "A", suit: "D", label: "AD" } },
-        { seat: "Tutor", card: { id: "3D", rank: "3", suit: "D", label: "3D" } },
-        { seat: "Right", card: { id: "9D", rank: "9", suit: "D", label: "9D" } }
-      ],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "void: avoid bag" },
-      playedExplanations: {
-        "6S": "6S wins an extra book your side does not need.",
-        JS: "JS wins the same unnecessary bag and spends a stronger spade.",
-        "4H": "4H is good. You discard and avoid taking another book."
-      },
-      cardOutcomes: {
-        "6S": "risky",
-        JS: "risky",
-        "4H": "good"
-      },
-      cardReasons: {
-        "6S": "won_clean_trick",
-        JS: "won_clean_trick",
-        "4H": "void_discard"
-      }
-    }
-  };
-  const spadesBagsProtectNilDrillStep: DrillStep = {
-    scenarioId: "spades-bags-protect-nil",
-    contract: "Spades",
-    title: "Avoid bags",
-    trick: {
-      title: "Bag pressure versus nil protection",
-      beforeResult: "Barbu bid nil and is currently winning with 9H. You can overtake in hearts.",
-      afterResult: "Sometimes you accept a possible extra book to protect partner's nil bonus.",
-      emptyExplanation: "Hearts were led. Protect Barbu's nil if you can.",
-      legalCardIds: ["KH", "4H"],
-      hand: [
-        { id: "KH", rank: "K", suit: "H", label: "KH" },
-        { id: "4H", rank: "4", suit: "H", label: "4H" },
-        { id: "7S", rank: "7", suit: "S", label: "7S" }
-      ],
-      tableBeforeChoice: [
-        { seat: "Left", card: { id: "6H", rank: "6", suit: "H", label: "6H" } },
-        { seat: "Tutor", card: { id: "9H", rank: "9", suit: "H", label: "9H" } },
-        { seat: "Right", card: { id: "8H", rank: "8", suit: "H", label: "8H" } }
-      ],
-      tableAfterChoice: [],
-      pendingBySeat: { You: "protect nil" },
-      playedExplanations: {
-        KH: "KH is good. You take the trick away from Barbu and protect the nil.",
-        "4H": "4H avoids a possible bag, but Barbu would win a trick and miss nil.",
-        "7S": "7S is illegal while you still have hearts."
-      },
-      cardOutcomes: {
-        KH: "good",
-        "4H": "penalty"
-      },
-      cardReasons: {
-        KH: "won_clean_trick",
-        "4H": "followed_suit"
-      }
-    }
-  };
-  const spadesFollowSuitDrillPool = [spadesFollowSuitDrillStep, spadesFollowSuitDuckDrillStep, spadesFollowSuitCoverDrillStep];
-  const spadesTrumpOrDiscardDrillPool = [spadesTrumpCutDrillStep, spadesTrumpPreserveDrillStep, spadesTrumpOvertrumpDrillStep];
-  const spadesBidBooksDrillPool = [spadesBidAceDrillStep, spadesBidProtectedKingDrillStep, spadesBidNilDrillStep];
-  const spadesAvoidBagsDrillPool = [spadesBagsDuckDrillStep, spadesBagsDiscardDrillStep, spadesBagsProtectNilDrillStep];
+
   const catalogTableCards: Card[] = [
     { id: "catalog-queen-spades", rank: "Q", suit: "S", label: "QS" },
     { id: "catalog-king-hearts", rank: "K", suit: "H", label: "KH" },
@@ -2031,19 +577,23 @@
   let activeGameTable: ActiveGameTable = "barbu";
   let completedPathSteps: Record<string, boolean> = loadCourseProgress();
   let playBarbuHistory: PlayBarbuAttempt[] = loadPlayBarbuHistory();
-  const defaultSpadesBidState: SpadesBidState = { You: 4, Tutor: 3, Left: 3, Right: 3 };
-  let savedPlayBarbuRun: SavedPlayBarbuRun | null = loadSavedPlayBarbuRun();
-  let savedHeartsRun: SavedHeartsRun | null = loadSavedHeartsRun();
-  let savedWhistRun: SavedWhistRun | null = loadSavedWhistRun();
-  let savedSpadesRun: SavedSpadesRun | null = loadSavedSpadesRun();
-  let savedBridgeRun: SavedBridgeRun | null = loadSavedBridgeRun();
-  let heartsSessionScores: Record<Seat, number> = emptySeatPenalties();
-  let heartsHandResults: HeartsHandResult[] = [];
-  let whistMatchScores = { playerSide: 0, opponentSide: 0 };
+
+  let savedPlayBarbuRun: SavedPlayBarbuRun | null = barbuSaveStore.load();
+  let barbuSession: BarbuSession | null = null;
+  let barbuSaveError = "";
+  let savedHeartsRun: SavedHeartsRun | null = heartsSaveStore.load();
+  let savedWhistRun: SavedWhistRun | null = whistSaveStore.load();
+  let savedSpadesRun: SavedSpadesRun | null = spadesSaveStore.load();
+  let spadesSession: SpadesSession | null = null;
+  let spadesDealPending = false;
+  let savedBridgeRun = bridgeSaveStore.load();
+  let bridgeSession: BridgeSession | null = null;
+  let bridgeDealPending = false;
+  let heartsSession: HeartsSession | null = null;
+  let heartsDealPending = false;
+  let whistSession: WhistSession | null = null;
   let whistSessionMode: WhistSessionMode = "game";
   let whistDealPending = false;
-  let whistGames = { playerSide: 0, opponentSide: 0 };
-  let whistHandResults: WhistHandResult[] = [];
   let spadesBids: SpadesBidState = { ...defaultSpadesBidState };
   let spadesPlayStarted = true;
   let spadesOpeningPanel: "table" | "bid" = "table";
@@ -2065,8 +615,6 @@
   $: spadesBidError = "";
   $: spadesBidReady = true;
   $: spadesCurrentBidLabel = spadesBidLabel(spadesBids);
-  let usingGeneratedPractice = false;
-  let generatedPracticeError = "";
   let fullHand: FullHandState | null = null;
   let heartsPassingHand: FullHandState | null = null;
   let heartsPassPractice: HeartsPassScenario | null = null;
@@ -2085,18 +633,14 @@
   let heartsPassError = "";
   let dominoError = "";
   let fullHandReviewTrickCount = 0;
-  let usingBrowserFullHand = false;
-  let usingBrowserHeartsPass = false;
-  let usingBrowserDomino = false;
   let lastFullHandTapCardId = "";
   let lastFullHandTapAt = 0;
   let lastDominoTapCardId = "";
   let lastDominoTapAt = 0;
   let dominoLastMoveReason = "";
-  let fullHandRunActive = false;
-  let fullHandRunSeed = 0;
-  let fullHandRunResults: FullHandRunResult[] = [];
-  let pendingRunContract: FullHandContract = fullHandContracts[0];
+  $: fullHandRunActive = barbuSession !== null;
+  $: fullHandRunResults = barbuSession?.results ?? [];
+  $: pendingRunContract = barbuSession?.pendingContract ?? fullHandContracts[0];
   let trumpCountSeed = practiceSeed;
   let trumpCountRound = buildTrumpCountRound(trumpCountSeed);
   let trumpCountRevealIndex = 0;
@@ -2136,18 +680,6 @@
     appView === "trumpCount" ||
     appView === "courtCount" ||
     appView === "trumpMemory";
-
-  function runSeatScores(results: FullHandRunResult[]) {
-    const totals = emptySeatPenalties();
-
-    for (const result of results) {
-      for (const seat of scoreSeats) {
-        totals[seat] += contractRunScore(result.contract, result.seatPenalties[seat] ?? 0);
-      }
-    }
-
-    return totals;
-  }
 
   function buildDominoDrillLayout(tableCards: TableCard[]) {
     const lanes: Card[][] = [[], [], [], []];
@@ -2272,57 +804,6 @@
     );
   }
 
-  function bridgeDeclarerTrickCounts(hand: FullHandState | null) {
-    const contract = hand?.bridgeContract;
-    if (!hand || !contract) {
-      return { declarer: 0, defenders: 0 };
-    }
-
-    const declarerSide = playerIndexBySeat[contract.declarer] % 2;
-
-    return hand.completedTricks.reduce(
-      (totals, trick) => ({
-        declarer: totals.declarer + (trick.winnerIndex % 2 === declarerSide ? 1 : 0),
-        defenders: totals.defenders + (trick.winnerIndex % 2 === declarerSide ? 0 : 1)
-      }),
-      { declarer: 0, defenders: 0 }
-    );
-  }
-
-  function bridgeHandResultFor(hand: FullHandState, handNumber = bridgeHandResults.length + 1): BridgeHandResult | null {
-    const contract = hand.bridgeContract;
-    if (!contract) {
-      return null;
-    }
-
-    const counts = bridgeDeclarerTrickCounts(hand);
-    const score = bridgeDuplicateScore(contract, counts.declarer);
-
-    return {
-      handNumber,
-      contract: contract.label,
-      declarer: contract.declarer,
-      declarerSide: contract.declarerSide ?? bridgeSideForSeat(contract.declarer),
-      vulnerability: contract.vulnerability,
-      target: contract.target,
-      tricks: counts.declarer,
-      defenders: counts.defenders,
-      score,
-      made: counts.declarer >= contract.target
-    };
-  }
-
-  function bridgeScoreTotalsWith(result: BridgeHandResult | null, scores = bridgeMatchScores) {
-    if (!result || result.passedOut) {
-      return scores;
-    }
-
-    return {
-      ns: scores.ns + (result.declarerSide === "NS" ? result.score : -result.score),
-      ew: scores.ew + (result.declarerSide === "EW" ? result.score : -result.score)
-    };
-  }
-
   function bridgeAuctionSummary(calls: BridgeAuctionCall[] = fullHand?.bridgeAuction ?? bridgeAuctionCalls) {
     return calls.length
       ? calls.map((call) => `${bridgeSeatLabel(call.seat)} ${bridgeCallLongLabel(call.call as BridgeCallOption)}`).join(", ")
@@ -2338,194 +819,13 @@
     return `${bridgeSeatLabel(openingLead.seat)} led ${formatCardLabel(openingLead.card)}.`;
   }
 
-  function addWhistMatchResult(scores: { playerSide: number; opponentSide: number }, result: WhistHandResult) {
-    return {
-      playerSide: scores.playerSide + result.playerSideOddTricks,
-      opponentSide: scores.opponentSide + result.opponentSideOddTricks
-    };
-  }
-
-  function whistHandResultFor(hand: FullHandState, handNumber = whistHandResults.length + 1): WhistHandResult {
-    const partnershipTricks = whistPartnershipTrickCounts(hand.completedTricks);
-    const oddScore = whistOddProgress(partnershipTricks);
-
-    return {
-      handNumber,
-      trumpSuit: whistTrumpSuitFromHandId(hand.id),
-      playerSideOddTricks: oddScore.playerSideOddTricks,
-      opponentSideOddTricks: oddScore.opponentSideOddTricks
-    };
-  }
-
-  function defaultSpadesBids(handNumber: number): SpadesBidState {
-    return { ...defaultSpadesBidState };
-  }
-
-  function cardsBySuit(cards: Card[]) {
-    return cards.reduce(
-      (groups, card) => {
-        groups[card.suit] = [...groups[card.suit], card];
-        return groups;
-      },
-      { C: [], D: [], H: [], S: [] } as Record<Suit, Card[]>
-    );
-  }
-
-  function shouldSuggestSpadesNil(cards: Card[]) {
-    const suitGroups = cardsBySuit(cards);
-    const spades = suitGroups.S;
-    const hasAce = cards.some((card) => card.rank === "A");
-    const hasHighSpade = spades.some((card) => rankValue(card.rank) >= rankValue("Q"));
-    const hasProtectedKing = cards.some(
-      (card) => card.suit !== "S" && card.rank === "K" && suitGroups[card.suit].length >= 2
-    );
-    const highCardCount = cards.filter((card) => rankValue(card.rank) >= rankValue("J")).length;
-
-    return !hasAce && !hasHighSpade && !hasProtectedKing && highCardCount <= 2 && spades.length <= 3;
-  }
-
-  function suggestedSpadesBidForCards(cards: Card[]) {
-    if (shouldSuggestSpadesNil(cards)) {
-      return 0;
-    }
-
-    const suitGroups = cardsBySuit(cards);
-    const nonSpadeAces = cards.filter((card) => card.suit !== "S" && card.rank === "A").length;
-    const protectedNonSpadeKings = cards.filter(
-      (card) => card.suit !== "S" && card.rank === "K" && suitGroups[card.suit].length >= 2
-    ).length;
-    const highSpades = suitGroups.S.filter((card) => rankValue(card.rank) >= rankValue("Q")).length;
-    const longSpades = Math.max(0, suitGroups.S.length - 3);
-    const estimate = nonSpadeAces + protectedNonSpadeKings + highSpades + longSpades;
-
-    return spadesClampBid(Math.max(1, estimate));
-  }
-
-  function suggestedSpadesBidsForHand(hand: FullHandState | null): SpadesBidState {
-    if (!hand) {
-      return defaultSpadesBids(1);
-    }
-
-    return {
-      You: suggestedSpadesBidForCards(hand.hands[playerIndexBySeat.You] ?? []),
-      Tutor: suggestedSpadesBidForCards(hand.hands[playerIndexBySeat.Tutor] ?? []),
-      Left: suggestedSpadesBidForCards(hand.hands[playerIndexBySeat.Left] ?? []),
-      Right: suggestedSpadesBidForCards(hand.hands[playerIndexBySeat.Right] ?? [])
-    };
-  }
-
-  function spadesSideBid(bids: SpadesBidState, seats: Seat[]) {
-    return seats.reduce((total, seat) => total + (bids[seat] > 0 ? bids[seat] : 0), 0);
-  }
-
-  function spadesSideTricks(tricks: Record<Seat, number>, seats: Seat[]) {
-    return seats.reduce((total, seat) => total + tricks[seat], 0);
-  }
-
-  function spadesNilResultsForSide(tricks: Record<Seat, number>, bids: SpadesBidState, seats: Seat[]) {
-    return seats
-      .filter((seat) => bids[seat] === 0)
-      .map((seat) => {
-        const seatTricks = tricks[seat];
-        return {
-          seat,
-          bid: bids[seat],
-          tricks: seatTricks,
-          score: seatTricks === 0 ? 100 : -100
-        };
-      });
-  }
-
-  function spadesScoreForSide(
-    tricks: Record<Seat, number>,
-    bids: SpadesBidState,
-    seats: Seat[],
-    currentBags: number
-  ) {
-    const bid = spadesSideBid(bids, seats);
-    const sideTricks = spadesSideTricks(tricks, seats);
-    const nilResults = spadesNilResultsForSide(tricks, bids, seats);
-    const nilScore = nilResults.reduce((total, result) => total + result.score, 0);
-
-    if (sideTricks < bid) {
-      return { score: -10 * bid + nilScore, bags: 0, bagPenalty: 0, nilResults };
-    }
-
-    const handBags = Math.max(0, sideTricks - bid);
-    const totalBags = currentBags + handBags;
-    const bagPenalty = Math.floor(totalBags / 10) * 100;
-    const remainingBags = totalBags % 10;
-
-    return {
-      score: bid * 10 + handBags + nilScore - bagPenalty,
-      bags: remainingBags - currentBags,
-      bagPenalty,
-      nilResults
-    };
-  }
-
-  function spadesHandResultFor(hand: FullHandState, handNumber = spadesHandResults.length + 1, bids = spadesBids, bags = spadesBagScores): SpadesHandResult {
-    const partnershipTricks = whistPartnershipTrickCounts(hand.completedTricks);
-    const seatTricks = seatTricksWonForTricks(hand.completedTricks);
-    const playerSide = spadesScoreForSide(seatTricks, bids, spadesPlayerSideSeats, bags.playerSide);
-    const opponentSide = spadesScoreForSide(seatTricks, bids, spadesOpponentSideSeats, bags.opponentSide);
-
-    return {
-      handNumber,
-      playerSideBid: spadesSideBid(bids, spadesPlayerSideSeats),
-      opponentSideBid: spadesSideBid(bids, spadesOpponentSideSeats),
-      playerSideTricks: partnershipTricks.playerSide,
-      opponentSideTricks: partnershipTricks.opponentSide,
-      playerSideScore: playerSide.score,
-      opponentSideScore: opponentSide.score,
-      playerSideBags: playerSide.bags,
-      opponentSideBags: opponentSide.bags,
-      playerSideBagPenalty: playerSide.bagPenalty,
-      opponentSideBagPenalty: opponentSide.bagPenalty,
-      nilResults: [...playerSide.nilResults, ...opponentSide.nilResults]
-    };
-  }
-
-  function addSpadesMatchResult(
-    scores: SpadesScoreState,
-    bags: SpadesScoreState,
-    result: SpadesHandResult
-  ) {
-    return {
-      scores: {
-        playerSide: scores.playerSide + result.playerSideScore,
-        opponentSide: scores.opponentSide + result.opponentSideScore
-      },
-      bags: {
-        playerSide: bags.playerSide + result.playerSideBags,
-        opponentSide: bags.opponentSide + result.opponentSideBags
-      }
-    };
-  }
-
   function spadesBidLabel(bids = spadesBids) {
     return `${spadesSideBid(bids, spadesPlayerSideSeats)}-${spadesSideBid(bids, spadesOpponentSideSeats)}`;
   }
 
-  function spadesHandIdWithBids(id: string, bids = spadesBids) {
-    const cleanId = id.replace(/-bids-[0-9.]+(?=-S$)/, "");
-    const playerIndexBids = [bids.Tutor, bids.Right, bids.You, bids.Left].map(spadesClampBid).join(".");
-
-    return cleanId.endsWith("-S")
-      ? cleanId.replace(/-S$/, `-bids-${playerIndexBids}-S`)
-      : `${cleanId}-bids-${playerIndexBids}-S`;
-  }
-
-  function spadesClampBid(value: number) {
-    const asNumber = Number.isFinite(value) ? value : 0;
-    return Math.max(0, Math.min(13, asNumber));
-  }
-
   function setSpadesSeatBid(seat: Seat, value: number) {
-    spadesBids = {
-      ...spadesBids,
-      [seat]: spadesClampBid(value)
-    };
+    if (seat !== "You" || !isSpadesSessionHand() || !spadesSession) return;
+    setSpadesSession(transitionSpadesSession(spadesSession, { type: "set-bid", bid: value }));
     persistSavedSpadesRun();
   }
 
@@ -2593,41 +893,8 @@
     return values[rank] ?? 0;
   }
 
-
   function bridgeHandShapeLabel(cards: Card[]) {
     return displaySuitSequence.map((suit) => bridgeSuitCount(cards, suit)).join("-");
-  }
-
-
-  function bridgeBidById(id: string) {
-    return bridgeBidOptions.find((bid) => bid.id === id) ?? bridgeBidOptions[4];
-  }
-
-  function bridgeBidFromCall(call: string) {
-    const normalized = call.replace(/[♣♦♥♠]/g, (symbol) => {
-      if (symbol === "♣") return "C";
-      if (symbol === "♦") return "D";
-      if (symbol === "♥") return "H";
-      if (symbol === "♠") return "S";
-      return symbol;
-    }).replace(/\s+/g, "");
-
-    return bridgeBidOptions.find((bid) => bid.id === normalized || bid.label === call || bid.longLabel === call);
-  }
-
-  function bridgeOpeningBidForHand(cards: Card[]) {
-    const call = bridgeOpeningCall(cards);
-    return call === "Pass" ? null : bridgeBidById(call);
-  }
-
-  function bridgeSuggestedBidForHand(cards: Card[]) {
-    const openingBid = bridgeOpeningBidForHand(cards);
-
-    if (openingBid) {
-      return openingBid;
-    }
-
-    return bridgeBidById("1NT");
   }
 
   function bridgeDealerSeat(hand: FullHandState | null = fullHand): Seat {
@@ -2642,10 +909,6 @@
     return hand?.bridgeVulnerability ?? "None";
   }
 
-  function bridgeSideForSeat(seat: Seat): "NS" | "EW" {
-    return playerIndexBySeat[seat] % 2 === 0 ? "NS" : "EW";
-  }
-
   function bridgeSeatLabel(seat: Seat) {
     if (seat === "Tutor") return "North";
     if (seat === "You") return "South";
@@ -2657,219 +920,8 @@
     return side === "NS" ? "North-South" : "East-West";
   }
 
-  function bridgeAuctionStatus(calls: BridgeAuctionCall[], dealerIndex = bridgeDealerIndex()): BridgeAuctionStatus {
-    const currentSeat = seatByPlayerIndex[(dealerIndex + calls.length) % 4];
-    const lastBid = [...calls].reverse().find((call) => Boolean(bridgeBidFromCall(call.call)));
-    const callsAfterLastBid = lastBid ? calls.slice(calls.lastIndexOf(lastBid) + 1) : calls;
-    const passedOut = !lastBid && calls.length >= 4 && calls.slice(-4).every((call) => call.call === "Pass");
-    const complete = passedOut || Boolean(lastBid && callsAfterLastBid.length >= 3 && callsAfterLastBid.slice(-3).every((call) => call.call === "Pass"));
-    const doubled = lastBid ? callsAfterLastBid.some((call) => call.call === "X") : false;
-    const redoubled = lastBid ? callsAfterLastBid.some((call) => call.call === "XX") : false;
-
-    return { complete, passedOut, currentSeat, lastBid, doubled, redoubled };
-  }
-
-  function bridgeLastBidOption(calls = bridgeAuctionCalls) {
-    return bridgeBidFromCall([...calls].reverse().find((call) => Boolean(bridgeBidFromCall(call.call)))?.call ?? "");
-  }
-
-  function bridgeCanBid(option: BridgeBidOption, calls = bridgeAuctionCalls) {
-    const lastBid = bridgeLastBidOption(calls);
-    return !lastBid || option.order > lastBid.order;
-  }
-
-  function bridgeCanDouble(calls = bridgeAuctionCalls, seat = bridgeAuctionStatus(calls).currentSeat) {
-    const status = bridgeAuctionStatus(calls);
-    if (!status.lastBid || status.doubled || status.redoubled) {
-      return false;
-    }
-
-    return bridgeSideForSeat(status.lastBid.seat) !== bridgeSideForSeat(seat);
-  }
-
-  function bridgeCanRedouble(calls = bridgeAuctionCalls, seat = bridgeAuctionStatus(calls).currentSeat) {
-    const status = bridgeAuctionStatus(calls);
-    if (!status.lastBid || !status.doubled || status.redoubled) {
-      return false;
-    }
-
-    return bridgeSideForSeat(status.lastBid.seat) === bridgeSideForSeat(seat);
-  }
-
-  function bridgeLegalCallOptions(calls = bridgeAuctionCalls, seat = bridgeAuctionStatus(calls).currentSeat): BridgeCallOption[] {
-    const status = bridgeAuctionStatus(calls);
-    if (status.complete || status.currentSeat !== seat) return [];
-    const options: BridgeCallOption[] = ["Pass"];
-
-    if (bridgeCanDouble(calls, seat)) {
-      options.push("Double");
-    }
-    if (bridgeCanRedouble(calls, seat)) {
-      options.push("Redouble");
-    }
-
-    options.push(...bridgeBidOptions.filter((bid) => bridgeCanBid(bid, calls)).map((bid) => bid.id));
-    return options;
-  }
-
-  function bridgeCallLabel(call: BridgeCallOption) {
-    if (call === "Pass") return "Pass";
-    if (call === "Double") return "X";
-    if (call === "Redouble") return "XX";
-    return bridgeBidById(call).label;
-  }
-
-  function bridgeCallLongLabel(call: BridgeCallOption) {
-    if (call === "Pass") return "Pass";
-    if (call === "Double") return "Double";
-    if (call === "Redouble") return "Redouble";
-    return bridgeBidById(call).longLabel;
-  }
-
   function bridgeExplainCall(call: BridgeCallOption, calls = bridgeAuctionCalls) {
-    return explainBridgeCall(call, calls, bridgeAuctionStatus(calls).currentSeat);
-  }
-
-  function bridgeChooseAutoCall(hand: FullHandState, seat: Seat, calls: BridgeAuctionCall[]): BridgeCallOption {
-    const cards = hand.hands[playerIndexBySeat[seat]] ?? [];
-    return bridgeSuggestedCallForCards(cards, seat, calls);
-  }
-
-  function bridgeSuggestedCallForHand(hand: FullHandState | null, calls = bridgeAuctionCalls, seat: Seat = "You"): BridgeCallOption {
-    const cards = hand?.hands[playerIndexBySeat[seat]] ?? [];
-    return bridgeSuggestedCallForCards(cards, seat, calls);
-  }
-
-  function bridgeSuggestedCallForCards(cards: Card[], seat: Seat, calls: BridgeAuctionCall[]): BridgeCallOption {
-    return suggestBridgeCall(cards, seat, calls, bridgeLegalCallOptions(calls, seat));
-  }
-
-  function bridgeAutoAdvanceAuction(calls: BridgeAuctionCall[], hand: FullHandState | null = fullHand) {
-    if (!hand) {
-      return calls;
-    }
-
-    let nextCalls = [...calls];
-
-    while (!bridgeAuctionStatus(nextCalls, bridgeDealerIndex(hand)).complete) {
-      const seat = bridgeAuctionStatus(nextCalls, bridgeDealerIndex(hand)).currentSeat;
-      if (seat === "You") {
-        break;
-      }
-
-      const call = bridgeChooseAutoCall(hand, seat, nextCalls);
-      nextCalls = [...nextCalls, { seat, call: bridgeCallLabel(call) }];
-    }
-
-    return nextCalls;
-  }
-
-  async function bridgeApplyUserCall(call: BridgeCallOption) {
-    if (!fullHand) {
-      return;
-    }
-
-    const status = bridgeAuctionStatus(bridgeAuctionCalls, bridgeDealerIndex(fullHand));
-    if (status.complete || status.currentSeat !== "You") {
-      return;
-    }
-
-    if (!bridgeLegalCallOptions(bridgeAuctionCalls, "You").includes(call)) {
-      bridgeAuctionError = "That call is not legal in the current auction.";
-      return;
-    }
-
-    const nextCalls = bridgeAutoAdvanceAuction([...bridgeAuctionCalls, { seat: "You", call: bridgeCallLabel(call) }], fullHand);
-    bridgeAuctionCalls = nextCalls;
-    bridgeAuctionSelectedCall = await bridgeSuggestedLegalUserCallWithCore(fullHand, bridgeAuctionCalls, "You");
-    bridgeAuctionSelectedBidId = bridgeAuctionSelectedCall === "Pass" || bridgeAuctionSelectedCall === "Double" || bridgeAuctionSelectedCall === "Redouble" ? bridgeAuctionSelectedBidId : bridgeAuctionSelectedCall;
-    bridgeAuctionError = "";
-    persistSavedBridgeRun("bridgeAuction");
-  }
-
-  function bridgeSuggestedLegalUserCall() {
-    const legal = bridgeLegalCallOptions(bridgeAuctionCalls, "You");
-    const suggested = bridgeSuggestedCallForHand(fullHand, bridgeAuctionCalls, "You");
-
-    if (legal.includes(suggested)) {
-      return suggested;
-    }
-
-    return "Pass";
-  }
-
-  async function bridgeSuggestedLegalUserCallWithCore(hand: FullHandState | null = fullHand, calls = bridgeAuctionCalls, seat: Seat = "You") {
-    const fallback = bridgeSuggestedCallForHand(hand, calls, seat);
-
-    if (!hasTauriRuntime() || !hand) {
-      return fallback;
-    }
-
-    try {
-      const suggestion = await invoke<string>("bridge_suggest_call", {
-        cards: hand.hands[playerIndexBySeat[seat]] ?? [],
-        seat,
-        calls,
-        dealer: bridgeDealerSeat(hand)
-      });
-      const normalized = normalizeBridgeCallOption(suggestion);
-      const legal = bridgeLegalCallOptions(calls, seat);
-
-      return legal.includes(normalized) ? normalized : fallback;
-    } catch {
-      return fallback;
-    }
-  }
-
-  async function bridgeFinalizeContractWithCore(calls = bridgeAuctionCalls, hand: FullHandState | null = fullHand) {
-    const fallback = bridgeFinalizeContract(calls, hand);
-
-    if (!hasTauriRuntime() || !hand) {
-      return fallback;
-    }
-
-    try {
-      return (await invoke<BridgeContractState | null>("finalize_bridge_contract", {
-        calls,
-        dealer: bridgeDealerSeat(hand),
-        vulnerability: bridgeVulnerabilityForHand(hand)
-      })) ?? fallback;
-    } catch {
-      return fallback;
-    }
-  }
-
-  function bridgeFinalizeContract(calls = bridgeAuctionCalls, hand: FullHandState | null = fullHand): BridgeContractState | null {
-    const lastBidCall = [...calls].reverse().find((call) => Boolean(bridgeBidFromCall(call.call)));
-    const bid = bridgeBidFromCall(lastBidCall?.call ?? "");
-
-    if (!lastBidCall || !bid || !hand) {
-      return null;
-    }
-
-    const declarerSide = bridgeSideForSeat(lastBidCall.seat);
-    const firstStrainBid = calls.find((call) => bridgeSideForSeat(call.seat) === declarerSide && bridgeBidFromCall(call.call)?.strain === bid.strain);
-    const declarer = firstStrainBid?.seat ?? lastBidCall.seat;
-    const declarerIndex = playerIndexBySeat[declarer];
-    const dummy = seatByPlayerIndex[(declarerIndex + 2) % 4];
-    const openingLeader = seatByPlayerIndex[(declarerIndex + 1) % 4];
-    const status = bridgeAuctionStatus(calls, bridgeDealerIndex(hand));
-    const suffix = status.redoubled ? " redoubled" : status.doubled ? " doubled" : "";
-
-    return {
-      level: bid.level,
-      strain: bid.strain,
-      label: `${bid.longLabel}${suffix}`,
-      declarer,
-      dummy,
-      target: bid.target,
-      vulnerability: bridgeVulnerabilityForHand(hand),
-      doubled: status.doubled,
-      redoubled: status.redoubled,
-      declarerSide,
-      dealer: bridgeDealerSeat(hand),
-      openingLeader
-    };
+    return explainBridgeCall(call, calls, bridgeAuctionStatus(calls, bridgeDealerIndex()).currentSeat);
   }
 
   function bridgeContractFromBid(bid: BridgeBidOption): BridgeContractState {
@@ -2887,87 +939,10 @@
     };
   }
 
-  function bridgeAuctionForBid(bid: BridgeBidOption): BridgeAuctionCall[] {
-    return [
-      { seat: "You", call: bid.label },
-      { seat: "Left", call: "Pass" },
-      { seat: "Tutor", call: "Pass" },
-      { seat: "Right", call: "Pass" }
-    ];
-  }
-
-  function bridgeContractTrickPoints(contract: BridgeContractState) {
-    const base = contract.strain === "C" || contract.strain === "D" ? 20 : 30;
-    const noTrumpBonus = contract.strain === "NT" ? 10 : 0;
-    const undoubled = contract.level * base + noTrumpBonus;
-
-    return undoubled * (contract.redoubled ? 4 : contract.doubled ? 2 : 1);
-  }
-
-  function bridgeOvertrickPoints(contract: BridgeContractState, overtricks: number) {
-    if (overtricks <= 0) {
-      return 0;
-    }
-
-    const vulnerable = bridgeContractIsVulnerable(contract);
-
-    if (contract.redoubled) {
-      return overtricks * (vulnerable ? 400 : 200);
-    }
-    if (contract.doubled) {
-      return overtricks * (vulnerable ? 200 : 100);
-    }
-
-    return overtricks * (contract.strain === "C" || contract.strain === "D" ? 20 : 30);
-  }
-
-  function bridgeUndertrickPenalty(contract: BridgeContractState, undertricks: number) {
-    if (undertricks <= 0) {
-      return 0;
-    }
-
-    const vulnerable = bridgeContractIsVulnerable(contract);
-
-    if (!contract.doubled && !contract.redoubled) {
-      return undertricks * (vulnerable ? 100 : 50);
-    }
-
-    const doubledPenalty = Array.from({ length: undertricks }, (_, index) => {
-      if (vulnerable) {
-        return index === 0 ? 200 : 300;
-      }
-
-      if (index === 0) return 100;
-      if (index <= 2) return 200;
-      return 300;
-    }).reduce((total, value) => total + value, 0);
-
-    return contract.redoubled ? doubledPenalty * 2 : doubledPenalty;
-  }
-
-  function bridgeContractIsVulnerable(contract: BridgeContractState) {
-    return contract.vulnerability === "Both" || contract.vulnerability === contract.declarerSide;
-  }
-
-  function bridgeDuplicateScore(contract: BridgeContractState, declarerTricks: number) {
-    const overtricks = declarerTricks - contract.target;
-
-    if (overtricks < 0) {
-      return -bridgeUndertrickPenalty(contract, Math.abs(overtricks));
-    }
-
-    const contractPoints = bridgeContractTrickPoints(contract);
-    const gameBonus = contractPoints >= 100 ? (bridgeContractIsVulnerable(contract) ? 500 : 300) : 50;
-    const slamBonus = contract.level === 6 ? (bridgeContractIsVulnerable(contract) ? 750 : 500) : contract.level === 7 ? (bridgeContractIsVulnerable(contract) ? 1500 : 1000) : 0;
-    const insult = contract.redoubled ? 100 : contract.doubled ? 50 : 0;
-
-    return contractPoints + gameBonus + slamBonus + insult + bridgeOvertrickPoints(contract, overtricks);
-  }
-
   $: selectedLesson = guidedLessons.find((lesson) => lesson.id === selectedLessonId) ?? guidedLessons[0];
-  $: familyLabel = usingGeneratedPractice ? "Hearts" : selectedLesson.family;
-  $: gameLabel = usingGeneratedPractice ? "Generated practice" : selectedLesson.game;
-  $: contractLabel = usingGeneratedPractice ? "No Hearts" : selectedLesson.contract;
+  $: familyLabel = selectedLesson.family;
+  $: gameLabel = selectedLesson.game;
+  $: contractLabel = selectedLesson.contract;
   $: currentTrick = activeTricks[trickIndex];
   $: legalCardIds = new Set(currentTrick.legalCardIds);
   $: hand = currentTrick.hand;
@@ -2979,7 +954,7 @@
     : currentTrick.tableBeforeChoice;
   $: currentLessonIsDomino = contractLabel === "Domino";
   $: completedDominoLessonLayout = buildDominoDrillLayout(completedTable);
-  $: explanation = generatedPracticeError || buildExplanation(selectedCard, playedCard);
+  $: explanation = buildExplanation(selectedCard, playedCard);
   $: resultText = playedCard ? currentTrick.afterResult : currentTrick.beforeResult;
   $: isLastTrick = trickIndex === activeTricks.length - 1;
   $: playablePathSteps = barbuUi.learnSteps.filter((step) => step.action !== "planned");
@@ -3154,11 +1129,10 @@
   $: heartsPassPracticeSelectedCards =
     heartsPassPractice?.playerHand.filter((card) => heartsPassPracticeSelectedCardIds.includes(card.id)) ?? [];
   $: heartsPassPracticeRecommendedIds = new Set(heartsPassPractice?.recommendedPass.map((card) => card.id) ?? []);
-  $: heartsPassPracticeMatchCount = heartsPassPracticeSelectedCardIds.filter((cardId) =>
-    heartsPassPracticeRecommendedIds.has(cardId)
-  ).length;
-  $: heartsPassPracticeCanCheck = heartsPassPracticeSelectedCardIds.length === 3;
-  $: heartsPassPracticeExact = heartsPassPracticeCanCheck && heartsPassPracticeMatchCount === 3;
+  $: heartsPassPracticeOutcome = heartsPassPractice ? evaluateHeartsPass(heartsPassPractice, heartsPassPracticeSelectedCardIds) : null;
+  $: heartsPassPracticeMatchCount = heartsPassPracticeOutcome?.matchedCards.length ?? 0;
+  $: heartsPassPracticeCanCheck = heartsPassPracticeOutcome?.isComplete ?? false;
+  $: heartsPassPracticeExact = heartsPassPracticeOutcome?.isExact ?? false;
   $: heartsPassPracticeIsLastStep = heartsPassPracticeStepIndex >= heartsPassPracticeTotalSteps - 1;
   $: fullHandLastCompletedTrick = fullHand?.completedTricks[fullHand.completedTricks.length - 1];
   $: fullHandReviewTrick =
@@ -3389,6 +1363,13 @@
     fullHandIsBridgeGame && isBridgeDummyTurn
       ? `${bridgeSeatLabel(bridgeDummySeat)} dummy hand`
       : "South Bridge hand";
+  $: bridgeActiveHandLabel = `${bridgeSeatLabel(isBridgeDummyTurn ? bridgeDummySeat : "You")} · ${
+    isBridgeDummyTurn || bridgeDummySeat === "You" ? "Dummy" : bridgeUserSideDeclares ? "Declarer" : "Defender"
+  }`;
+  $: bridgeLedSuit = fullHand?.currentTrick[0]?.card.suit;
+  $: bridgePlayPrompt = bridgeLedSuit
+    ? `Led: ${suitNames[bridgeLedSuit]}. Follow suit if you can.`
+    : fullHand?.completedTricks.length === 0 ? "Make the opening lead." : "Lead any card.";
   $: whistOpeningLeadPracticeActive = fullHandIsWhistGame && whistFullHandSource === "practice" && activeWhistPracticeFocus === "lead";
   $: whistOpeningLeadPracticeReview =
     whistOpeningLeadPracticeActive &&
@@ -3409,12 +1390,11 @@
   $: whistOddProgressLabel = whistOddScore.label;
   $: whistOddProgressValue = whistOddScore.value;
   $: bridgeAuctionCurrentStatus = bridgeAuctionStatus(bridgeAuctionCalls, bridgeDealerIndex(fullHand));
-  $: bridgeAuctionLegalCalls = bridgeLegalCallOptions(bridgeAuctionCalls, bridgeAuctionCurrentStatus.currentSeat);
+  $: bridgeAuctionLegalCalls = bridgeLegalCallOptions(bridgeAuctionCalls, bridgeAuctionCurrentStatus.currentSeat, bridgeDealerIndex(fullHand));
   $: bridgeAuctionReadyToPlay = bridgeAuctionCurrentStatus.complete && !bridgeAuctionCurrentStatus.passedOut;
   $: bridgeAuctionActionLabel = bridgeAuctionReadyToPlay ? "Start play" : bridgeAuctionCurrentStatus.passedOut ? "Deal again" : "Make call";
   $: bridgeSelectedBid = bridgeBidOptions.find((bid) => bid.id === bridgeAuctionSelectedBidId) ?? bridgeBidOptions[4];
   $: bridgeAuctionSelectedCallExplanation = bridgeExplainCall(bridgeAuctionSelectedCall, bridgeAuctionCalls);
-  $: bridgeSuggestedBid = bridgeSuggestedBidForHand(fullHand?.playerHand ?? []);
   $: bridgeSuggestedCall = bridgeSuggestedCallForHand(fullHand, bridgeAuctionCalls, "You");
   $: bridgeVisibleContract = fullHand?.bridgeContract ?? bridgeFinalizeContract(bridgeAuctionCalls, fullHand) ?? bridgeContractFromBid(bridgeSelectedBid);
   $: bridgeContractLabel = bridgeVisibleContract.label;
@@ -3423,9 +1403,8 @@
   $: bridgeDefenderTricks = bridgeTrickCounts.defenders;
   $: bridgeContractTarget = bridgeVisibleContract.target;
   $: bridgeContractMade = bridgeDeclarerTricks >= bridgeContractTarget;
-  $: currentBridgeHandResult = fullHandIsBridgeGame && fullHand?.status === "complete" ? bridgeHandResultFor(fullHand) : null;
+  $: currentBridgeHandResult = fullHandIsBridgeGame && fullHand?.status === "complete" ? bridgeHandResultFor(fullHand, fullHand.bridgeBoardNumber ?? bridgeHandResults.length + 1) : null;
   $: bridgeVisibleMatchScores = bridgeScoreTotalsWith(currentBridgeHandResult, bridgeMatchScores);
-  $: currentWhistHandResult = fullHandIsWhistGame && fullHand?.status === "complete" ? whistHandResultFor(fullHand) : null;
   $: currentSpadesHandResult = fullHandIsSpadesGame && fullHand?.status === "complete" ? spadesHandResultFor(fullHand, spadesHandResults.length + 1, spadesBids, spadesBagScores) : null;
   $: fullHandShowWhistMatchSummary =
     (fullHandIsWhistGame || fullHandIsSpadesGame) && !fullHandCardCountingActive;
@@ -3436,15 +1415,14 @@
     fullHand?.status === "in_progress" &&
     fullHand?.completedTricks.length === 0;
   $: spadesOpeningDecisionActive = spadesBidsAdjustable;
-  $: whistVisibleMatchScores = currentWhistHandResult
-    ? addWhistMatchResult(whistMatchScores, currentWhistHandResult)
-    : whistMatchScores;
-  $: whistSettlement = settleWhistHand(whistMatchScores, whistRubberActive ? whistGames : { playerSide: 0, opponentSide: 0 }, {
-    playerSide: currentWhistHandResult?.playerSideOddTricks ?? 0,
-    opponentSide: currentWhistHandResult?.opponentSideOddTricks ?? 0
-  }, whistRubberActive ? "rubber" : "game");
-  $: whistVisibleHandCount = whistHandResults.length + (currentWhistHandResult ? 1 : 0);
-  $: whistRubberActive = fullHandIsWhistGame && whistFullHandSource === "play" && whistSessionMode === "rubber";
+  $: whistSessionForDisplay = fullHandIsWhistGame && whistFullHandSource === "play" && !fullHandCardCountingActive
+    && whistSession?.fullHand === fullHand ? whistSession : null;
+  $: whistSettlement = whistSessionSettlement(whistSessionForDisplay ?? {
+    fullHand: fullHandIsWhistGame ? fullHand : null, scores: emptyWhistScore(), games: emptyWhistScore(), mode: "game"
+  });
+  $: whistVisibleMatchScores = whistSettlement.points;
+  $: whistVisibleHandCount = (whistSessionForDisplay?.results.length ?? 0) + (fullHandIsWhistGame && fullHand?.status === "complete" ? 1 : 0);
+  $: whistRubberActive = whistSessionForDisplay?.mode === "rubber";
   $: whistTurnedCardVisible = fullHandIsWhistGame && fullHand?.whistTurnedTrump
     && fullHand.completedTricks.length === 0
     && !fullHand.currentTrick.some(play => play.seat === ["Tutor", "Right", "You", "Left"][fullHand.whistDealer ?? -1]);
@@ -3466,33 +1444,28 @@
     fullHand?.status === "complete" &&
     spadesMatchComplete(spadesVisibleMatchScores);
   $: partnershipMatchIsComplete = fullHandIsSpadesGame ? spadesMatchIsComplete : whistMatchIsComplete;
+  $: heartsSessionForDisplay = activeGameTable === "hearts" && !fullHandCardCountingMode && !fullHandRunActive
+    && heartsSession && (heartsSession.phase === "passing" ? heartsPassingHand : fullHand) === heartsSession.fullHand ? heartsSession : null;
+  $: heartsHandResults = heartsSessionForDisplay?.results ?? [];
+  $: heartsMatchSettlement = heartsSessionForDisplay ? heartsSessionSettlement(heartsSessionForDisplay) : null;
   $: heartsCurrentMoonShooter = fullHandIsHeartsGame ? heartsMoonShooter(fullHandSeatPenalties) : undefined;
   $: heartsCurrentMoonThreatSeat = fullHandIsHeartsGame ? heartsMoonThreatSeat(fullHandSeatPenalties) : undefined;
   $: heartsCurrentScoredSeatPenalties = fullHandIsHeartsGame
     ? heartsScoredSeatPenalties(fullHandSeatPenalties)
     : emptySeatPenalties();
-  $: currentHeartsHandResult =
-    fullHandIsHeartsGame && fullHand?.status === "complete"
-      ? ({
-          handNumber: heartsHandResults.length + 1,
-          seatPenalties: heartsCurrentScoredSeatPenalties,
-          moonShooter: heartsCurrentMoonShooter
-        } satisfies HeartsHandResult)
-      : null;
+  $: currentHeartsHandResult = heartsMatchSettlement?.result ?? null;
   $: heartsVisibleHandResults = currentHeartsHandResult
     ? [...heartsHandResults, currentHeartsHandResult]
     : heartsHandResults;
   $: heartsVisibleHandCount = heartsVisibleHandResults.length;
   $: heartsScorecardMeta = heartsUi.table.scorecard;
-  $: heartsVisibleScores = fullHandIsHeartsGame
-    ? addSeatPenalties(heartsSessionScores, heartsCurrentScoredSeatPenalties)
-    : heartsSessionScores;
+  $: heartsVisibleScores = heartsMatchSettlement?.scores ?? heartsCurrentScoredSeatPenalties;
   $: heartsStandings = heartsScorecardStandings(heartsVisibleScores);
   $: heartsHighestScore = scoreSeats
     .map((seat) => ({ seat, score: heartsVisibleScores[seat] }))
     .sort((left, right) => right.score - left.score)[0];
   $: heartsMatchIsComplete =
-    fullHandIsHeartsGame && fullHand?.status === "complete" && Boolean(heartsHighestScore?.score >= heartsMatchTarget);
+    fullHandIsHeartsGame && Boolean(heartsMatchSettlement?.complete);
   $: fullHandCompletion = fullHand?.status !== "complete" || fullHandCardCountingActive ? null
     : fullHandIsHeartsGame && heartsMatchIsComplete ? "match"
     : whistFullHandSource !== "play" ? null
@@ -3516,14 +1489,14 @@
   $: fullHandRunOrderedResults = fullHandContracts
     .map((contract) => fullHandRunResults.find((result) => result.contract === contract))
     .filter((result): result is FullHandRunResult => Boolean(result));
-  $: fullHandRunSeatPenalties = runSeatPenalties(fullHandRunResults);
-  $: fullHandRunSeatScores = runSeatScores(fullHandRunResults);
+  $: fullHandRunSeatPenalties = barbuSeatTotals(fullHandRunResults, false);
+  $: fullHandRunSeatScores = barbuSeatTotals(fullHandRunResults);
   $: fullHandRunStandings = runStandings(fullHandRunSeatScores);
   $: fullHandRunPlayerStanding = fullHandRunStandings.find((standing) => standing.seat === "You");
   $: fullHandRunLeader = fullHandRunStandings[0];
   $: fullHandRunBestContract = runBestContract(fullHandRunOrderedResults);
   $: fullHandRunWeakestContract = runWeakestContract(fullHandRunOrderedResults);
-  $: fullHandRunIsComplete = fullHandRunActive && fullHandRunResults.length >= fullHandContracts.length;
+  $: fullHandRunIsComplete = barbuSession !== null && barbuSessionComplete(barbuSession);
   $: fullHandRunRemainingCount = Math.max(fullHandContracts.length - fullHandRunResults.length, 0);
   $: fullHandRunLeaderLabel = fullHandRunLeader
     ? `${scoreSeatLabel(fullHandRunLeader.seat)} ${formatSignedScore(fullHandRunLeader.score)}`
@@ -3837,241 +1810,60 @@
     }
   }
 
-  function loadSavedPlayBarbuRun(): SavedPlayBarbuRun | null {
-    if (typeof localStorage === "undefined") {
-      return null;
-    }
-
-    try {
-      return normalizeSavedPlayBarbuRun(JSON.parse(localStorage.getItem(savedPlayBarbuRunStorageKey) ?? "null"));
-    } catch {
-      return null;
-    }
+  function setBarbuSession(session: BarbuSession) {
+    barbuSession = session;
+    fullHand = session.fullHand;
+    dominoHand = session.dominoHand;
+    fullHandReviewTrickCount = session.fullHandReviewTrickCount;
   }
 
-  function normalizeSavedPlayBarbuRun(savedRun: unknown): SavedPlayBarbuRun | null {
-    if (!savedRun || typeof savedRun !== "object") {
-      return null;
-    }
-
-    const candidate = savedRun as Partial<SavedPlayBarbuRun>;
-
-    if (candidate.version !== 1 || !isFullHandContract(candidate.pendingContract)) {
-      return null;
-    }
-
-    const view =
-      candidate.view === "fullHand" || candidate.view === "dominoHand" || candidate.view === "runContractIntro"
-        ? candidate.view
-        : "runContractIntro";
-    const fullHand = candidate.fullHand && isFullHandContract(candidate.fullHand.contract) ? candidate.fullHand : null;
-    const dominoHand = candidate.dominoHand?.contract === "Domino" ? candidate.dominoHand : null;
-
-    if ((view === "fullHand" && !fullHand) || (view === "dominoHand" && !dominoHand)) {
-      return null;
-    }
-
-    return {
-      version: 1,
-      seed: Number.isInteger(candidate.seed) && candidate.seed > 0 ? candidate.seed : 1,
-      view,
-      pendingContract: candidate.pendingContract,
-      results: Array.isArray(candidate.results) ? candidate.results.filter(isFullHandRunResult) : [],
-      fullHand,
-      dominoHand,
-      fullHandReviewTrickCount:
-        Number.isInteger(candidate.fullHandReviewTrickCount) && candidate.fullHandReviewTrickCount >= 0
-          ? candidate.fullHandReviewTrickCount
-          : 0,
-      usingBrowserFullHand: Boolean(candidate.usingBrowserFullHand),
-      usingBrowserDomino: Boolean(candidate.usingBrowserDomino),
-      savedAt: typeof candidate.savedAt === "string" ? candidate.savedAt : new Date().toISOString()
-    };
-  }
-
-  function isFullHandContract(contract: unknown): contract is FullHandContract {
-    return fullHandContracts.includes(contract as FullHandContract);
-  }
-
-  function isFullHandRunResult(result: unknown): result is FullHandRunResult {
-    if (!result || typeof result !== "object") {
-      return false;
-    }
-
-    const candidate = result as Partial<FullHandRunResult>;
-    return isFullHandContract(candidate.contract) && typeof candidate.seatPenalties === "object";
-  }
-
-  function persistSavedPlayBarbuRun(view: SavedPlayBarbuRun["view"] = savedPlayBarbuView()) {
-    if (!fullHandRunActive) {
-      return;
-    }
-
-    if (fullHandRunResults.length >= fullHandContracts.length) {
-      clearSavedPlayBarbuRun();
-      return;
-    }
-
-    const nextSavedRun: SavedPlayBarbuRun = {
-      version: 1,
-      seed: fullHandRunSeed || 1,
-      view,
-      pendingContract: pendingRunContract,
-      results: fullHandRunResults,
-      fullHand,
-      dominoHand,
-      fullHandReviewTrickCount,
-      usingBrowserFullHand,
-      usingBrowserDomino,
-      savedAt: new Date().toISOString()
-    };
-
-    savedPlayBarbuRun = nextSavedRun;
-
-    if (typeof localStorage !== "undefined") {
-      localStorage.setItem(savedPlayBarbuRunStorageKey, JSON.stringify(nextSavedRun));
-    }
-  }
-
-  function clearSavedPlayBarbuRun() {
-    savedPlayBarbuRun = null;
-
-    if (typeof localStorage !== "undefined") {
-      localStorage.removeItem(savedPlayBarbuRunStorageKey);
-    }
-  }
-
-  function savedPlayBarbuView(): SavedPlayBarbuRun["view"] {
-    if (appView === "fullHand" || appView === "dominoHand" || appView === "runContractIntro") {
-      return appView;
-    }
-
-    return "runContractIntro";
-  }
-
-  function savedPlayBarbuRunSummary(savedRun: SavedPlayBarbuRun) {
-    if (savedRun.fullHand) {
-      return `${savedRun.fullHand.contract}, trick ${savedRun.fullHand.trickNumber}`;
-    }
-
-    if (savedRun.dominoHand) {
-      return `Domino, ${savedRun.dominoHand.cardsRemaining} cards left`;
-    }
-
-    return `${savedRun.pendingContract}, ${savedRun.results.length} played`;
-  }
-
-  function continueSavedPlayBarbuRun() {
-    const savedRun = savedPlayBarbuRun ?? loadSavedPlayBarbuRun();
-
-    if (!savedRun) {
-      return;
-    }
-
-    fullHandRunActive = true;
-    fullHandRunSeed = savedRun.seed;
-    fullHandRunResults = savedRun.results;
-    pendingRunContract = savedRun.pendingContract;
-    fullHand = savedRun.fullHand;
-    dominoHand = savedRun.dominoHand;
-    fullHandReviewTrickCount = savedRun.fullHandReviewTrickCount;
-    usingBrowserFullHand = savedRun.usingBrowserFullHand || !hasTauriRuntime();
-    usingBrowserDomino = savedRun.usingBrowserDomino || !hasTauriRuntime();
+  function openBarbuSession(session: BarbuSession) {
+    activeGameTable = "barbu";
+    activeTableTabs.barbu = "play";
+    fullHandCardCountingMode = false;
+    heartsPassingHand = null;
+    setBarbuSession(session);
     fullHandSelectedCardId = "";
+    dummySelectedCardId = "";
     dominoSelectedCardId = "";
     fullHandError = "";
     dominoError = "";
+    dominoLastMoveReason = "";
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
     lastDominoTapCardId = "";
     lastDominoTapAt = 0;
-    activeTableTabs.barbu = "play";
-    appView = savedRun.view;
-    savedPlayBarbuRun = savedRun;
-    persistSavedPlayBarbuRun(savedRun.view);
+    appView = session.view;
   }
 
-  function loadSavedHeartsRun(): SavedHeartsRun | null {
-    if (typeof localStorage === "undefined") {
-      return null;
-    }
-
+  function persistSavedPlayBarbuRun() {
+    if (!barbuSession) return;
+    savedPlayBarbuRun = saveBarbuSession(barbuSession, new Date().toISOString());
+    if (fullHandError === barbuSaveError) fullHandError = "";
+    if (dominoError === barbuSaveError) dominoError = "";
+    barbuSaveError = "";
     try {
-      return normalizeSavedHeartsRun(JSON.parse(localStorage.getItem(savedHeartsRunStorageKey) ?? "null"));
+      barbuSaveStore.write(savedPlayBarbuRun);
     } catch {
-      return null;
+      barbuSaveError = "Progress could not be saved on this device.";
+      if (barbuSession.view === "dominoHand") dominoError = barbuSaveError;
+      else fullHandError = barbuSaveError;
     }
   }
 
-  function normalizeSavedHeartsRun(savedRun: unknown): SavedHeartsRun | null {
-    if (!savedRun || typeof savedRun !== "object") {
-      return null;
-    }
-
-    const candidate = savedRun as Partial<SavedHeartsRun>;
-    const view = candidate.view === "fullHand" || candidate.view === "heartsPass" ? candidate.view : "heartsPass";
-    const heartsPassingHand = candidate.heartsPassingHand?.contract === "Hearts" ? candidate.heartsPassingHand : null;
-    const savedFullHand = candidate.fullHand?.contract === "Hearts" ? candidate.fullHand : null;
-
-    if (candidate.version !== 1 || (view === "heartsPass" && !heartsPassingHand) || (view === "fullHand" && !savedFullHand)) {
-      return null;
-    }
-
-    return {
-      version: 1,
-      view,
-      passDirection: normalizeHeartsPassDirection(candidate.passDirection),
-      scores: normalizeSeatScoreMap(candidate.scores),
-      results: Array.isArray(candidate.results) ? candidate.results.filter(isHeartsHandResult) : [],
-      heartsPassingHand,
-      fullHand: savedFullHand,
-      heartsPassSelectedCardIds: Array.isArray(candidate.heartsPassSelectedCardIds)
-        ? candidate.heartsPassSelectedCardIds.filter((cardId): cardId is string => typeof cardId === "string")
-        : [],
-      fullHandReviewTrickCount:
-        Number.isInteger(candidate.fullHandReviewTrickCount) && candidate.fullHandReviewTrickCount >= 0
-          ? candidate.fullHandReviewTrickCount
-          : 0,
-      usingBrowserHeartsPass: Boolean(candidate.usingBrowserHeartsPass),
-      usingBrowserFullHand: Boolean(candidate.usingBrowserFullHand),
-      savedAt: typeof candidate.savedAt === "string" ? candidate.savedAt : new Date().toISOString()
-    };
+  function dispatchBarbuSession(event: BarbuSessionEvent) {
+    if (!barbuSession) return;
+    const next = transitionBarbuSession(barbuSession, event);
+    if (next === barbuSession) return;
+    openBarbuSession(next);
+    persistSavedPlayBarbuRun();
   }
 
-  function normalizeSeatScoreMap(scores: unknown): Record<Seat, number> {
-    if (!scores || typeof scores !== "object") {
-      return emptySeatPenalties();
-    }
-
-    const candidate = scores as Partial<Record<Seat, number>>;
-    return {
-      Tutor: Number.isFinite(candidate.Tutor) ? Number(candidate.Tutor) : 0,
-      Right: Number.isFinite(candidate.Right) ? Number(candidate.Right) : 0,
-      You: Number.isFinite(candidate.You) ? Number(candidate.You) : 0,
-      Left: Number.isFinite(candidate.Left) ? Number(candidate.Left) : 0
-    };
-  }
-
-  function isHeartsHandResult(result: unknown): result is HeartsHandResult {
-    if (!result || typeof result !== "object") {
-      return false;
-    }
-
-    const candidate = result as Partial<HeartsHandResult>;
-    return Number.isInteger(candidate.handNumber) && typeof candidate.seatPenalties === "object";
-  }
-
-  function normalizeHeartsPassDirection(direction: unknown): HeartsPassDirection {
-    return direction === "right" || direction === "across" || direction === "hold" ? direction : "left";
-  }
-
-  function heartsPassDirectionForHand(handNumber: number): HeartsPassDirection {
-    const rotation = ["left", "right", "across", "hold"] satisfies HeartsPassDirection[];
-    return rotation[(Math.max(1, handNumber) - 1) % rotation.length] ?? "left";
-  }
-
-  function heartsPassTauriDirection(direction: HeartsPassDirection) {
-    return direction === "right" ? 3 : direction === "across" ? 2 : 1;
+  function continueSavedPlayBarbuRun() {
+    const saved = savedPlayBarbuRun ?? barbuSaveStore.load();
+    if (!saved) return;
+    openBarbuSession(restoreBarbuSession(saved));
+    persistSavedPlayBarbuRun();
   }
 
   function heartsPassDirectionLabel(direction: HeartsPassDirection) {
@@ -4098,393 +1890,144 @@
     return "Right";
   }
 
-  function persistSavedHeartsRun(view: SavedHeartsRun["view"] = savedHeartsView()) {
-    const isHeartsFullHand = activeGameTable === "hearts" && fullHand?.contract === "Hearts" && !fullHandRunActive;
-    const currentHandScores = isHeartsFullHand
-      ? heartsScoredSeatPenalties(seatPenaltiesForTricks(fullHand.completedTricks))
-      : emptySeatPenalties();
-    const visibleScores = isHeartsFullHand ? addSeatPenalties(heartsSessionScores, currentHandScores) : heartsSessionScores;
-    const highestScore = Math.max(...scoreSeats.map((seat) => visibleScores[seat] ?? 0));
-    const matchIsComplete = isHeartsFullHand && fullHand?.status === "complete" && highestScore >= heartsMatchTarget;
-
-    if (matchIsComplete) {
-      clearSavedHeartsRun();
-      return;
-    }
-
-    if (view === "heartsPass" && !heartsPassingHand) {
-      return;
-    }
-
-    if (view === "fullHand" && !isHeartsFullHand) {
-      return;
-    }
-
-    const nextSavedRun: SavedHeartsRun = {
-      version: 1,
-      view,
-      passDirection: heartsPassDirection,
-      scores: heartsSessionScores,
-      results: heartsHandResults,
-      heartsPassingHand,
-      fullHand: isHeartsFullHand ? fullHand : null,
-      heartsPassSelectedCardIds,
-      fullHandReviewTrickCount,
-      usingBrowserHeartsPass,
-      usingBrowserFullHand,
-      savedAt: new Date().toISOString()
-    };
-
-    savedHeartsRun = nextSavedRun;
-
-    if (typeof localStorage !== "undefined") {
-      localStorage.setItem(savedHeartsRunStorageKey, JSON.stringify(nextSavedRun));
-    }
+  function isHeartsSessionActive() {
+    return activeGameTable === "hearts" && !fullHandRunActive && !fullHandCardCountingMode && heartsSession !== null
+      && (heartsSession.phase === "passing" ? heartsPassingHand : fullHand) === heartsSession.fullHand;
   }
 
-  function clearSavedHeartsRun() {
-    savedHeartsRun = null;
-
-    if (typeof localStorage !== "undefined") {
-      localStorage.removeItem(savedHeartsRunStorageKey);
-    }
+  function setHeartsSession(session: HeartsSession) {
+    heartsSession = session;
+    heartsPassingHand = session.phase === "passing" ? session.fullHand : null;
+    fullHand = session.phase === "playing" ? session.fullHand : null;
+    heartsPassSelectedCardIds = session.selectedPassCardIds;
+    heartsPassDirection = session.passDirection;
+    fullHandReviewTrickCount = session.fullHandReviewTrickCount;
   }
 
-  function savedHeartsView(): SavedHeartsRun["view"] {
-    return appView === "fullHand" ? "fullHand" : "heartsPass";
-  }
-
-  function savedHeartsRunSummary(savedRun: SavedHeartsRun) {
-    if (savedRun.fullHand) {
-      return savedRun.fullHand.status === "complete"
-        ? `Hand ${savedRun.results.length + 1} complete`
-        : `Hand ${savedRun.results.length + 1}, trick ${savedRun.fullHand.trickNumber}`;
-    }
-
-    return `Hand ${savedRun.results.length + 1}, ${heartsPassDirectionLabel(savedRun.passDirection).toLowerCase()}, ${
-      savedRun.heartsPassSelectedCardIds.length
-    } of 3 selected`;
-  }
-
-  function continueSavedHeartsRun() {
-    const savedRun = savedHeartsRun ?? loadSavedHeartsRun();
-
-    if (!savedRun) {
-      return;
-    }
-
+  function openHeartsSession(session: HeartsSession) {
     activeGameTable = "hearts";
     activeTableTabs.hearts = "play";
-    fullHandRunActive = false;
-    fullHandRunResults = [];
+    barbuSession = null;
+    fullHandCardCountingMode = false;
     dominoHand = null;
-    heartsSessionScores = savedRun.scores;
-    heartsHandResults = savedRun.results;
-    heartsPassingHand = savedRun.heartsPassingHand;
-    fullHand = savedRun.fullHand;
-    heartsPassSelectedCardIds = savedRun.heartsPassSelectedCardIds;
-    heartsPassDirection = savedRun.passDirection;
-    fullHandReviewTrickCount = savedRun.fullHandReviewTrickCount;
-    usingBrowserHeartsPass = savedRun.usingBrowserHeartsPass || !hasTauriRuntime();
-    usingBrowserFullHand = savedRun.usingBrowserFullHand || !hasTauriRuntime();
+    spadesPlayStarted = true;
+    setHeartsSession(session);
     heartsPassError = "";
     fullHandSelectedCardId = "";
+    dummySelectedCardId = "";
     fullHandError = "";
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
-    appView = savedRun.view;
-    savedHeartsRun = savedRun;
-    persistSavedHeartsRun(savedRun.view);
+    appView = session.phase === "passing" ? "heartsPass" : "fullHand";
   }
 
-  function loadSavedWhistRun(): SavedWhistRun | null {
-    if (typeof localStorage === "undefined") {
-      return null;
-    }
-
+  function persistSavedHeartsRun() {
+    if (!isHeartsSessionActive() || !heartsSession) return;
+    savedHeartsRun = saveHeartsSession(heartsSession, new Date().toISOString());
     try {
-      return normalizeSavedWhistRun(JSON.parse(localStorage.getItem(savedWhistRunStorageKey) ?? "null"));
+      heartsSaveStore.write(savedHeartsRun);
     } catch {
-      return null;
+      if (heartsSession.phase === "passing") heartsPassError = "Progress could not be saved on this device.";
+      else fullHandError = "Progress could not be saved on this device.";
     }
   }
 
-  function normalizeSavedWhistRun(savedRun: unknown): SavedWhistRun | null {
-    if (!savedRun || typeof savedRun !== "object") {
-      return null;
-    }
-
-    const candidate = savedRun as Partial<SavedWhistRun>;
-    const savedFullHand = candidate.fullHand?.contract === "Whist" ? candidate.fullHand : null;
-
-    if (candidate.version !== 1 || !savedFullHand) {
-      return null;
-    }
-
-    return {
-      version: 1,
-      scores: normalizeWhistScoreMap(candidate.scores),
-      mode: candidate.mode === "rubber" ? "rubber" : "game",
-      games: normalizeWhistScoreMap(candidate.games),
-      results: Array.isArray(candidate.results) ? candidate.results.filter(isWhistHandResult) : [],
-      fullHand: savedFullHand,
-      fullHandReviewTrickCount:
-        Number.isInteger(candidate.fullHandReviewTrickCount) && candidate.fullHandReviewTrickCount >= 0
-          ? candidate.fullHandReviewTrickCount
-          : 0,
-      usingBrowserFullHand: Boolean(candidate.usingBrowserFullHand),
-      savedAt: typeof candidate.savedAt === "string" ? candidate.savedAt : new Date().toISOString()
-    };
+  function continueSavedHeartsRun() {
+    const saved = savedHeartsRun ?? heartsSaveStore.load();
+    if (!saved) return;
+    openHeartsSession(restoreHeartsSession(saved));
+    persistSavedHeartsRun();
   }
 
-  function normalizeWhistScoreMap(scores: unknown) {
-    if (!scores || typeof scores !== "object") {
-      return { playerSide: 0, opponentSide: 0 };
-    }
-
-    const candidate = scores as Partial<{ playerSide: number; opponentSide: number }>;
-    return {
-      playerSide: Number.isInteger(candidate.playerSide) && candidate.playerSide! >= 0 ? Number(candidate.playerSide) : 0,
-      opponentSide: Number.isInteger(candidate.opponentSide) && candidate.opponentSide! >= 0 ? Number(candidate.opponentSide) : 0
-    };
+  function isWhistSessionHand() {
+    return activeGameTable === "whist" && whistFullHandSource === "play" && !fullHandCardCountingMode
+      && !fullHandRunActive && whistSession !== null && fullHand === whistSession.fullHand;
   }
 
-  function isWhistHandResult(result: unknown): result is WhistHandResult {
-    if (!result || typeof result !== "object") {
-      return false;
-    }
-
-    const candidate = result as Partial<WhistHandResult>;
-    return (
-      Number.isInteger(candidate.handNumber) &&
-      (candidate.trumpSuit === "C" || candidate.trumpSuit === "D" || candidate.trumpSuit === "H" || candidate.trumpSuit === "S") &&
-      Number.isInteger(candidate.playerSideOddTricks) &&
-      Number.isInteger(candidate.opponentSideOddTricks)
-    );
+  function setWhistSession(session: WhistSession) {
+    whistSession = session;
+    fullHand = session.fullHand;
+    fullHandReviewTrickCount = session.fullHandReviewTrickCount;
   }
 
-  function persistSavedWhistRun() {
-    const isWhistFullHand = activeGameTable === "whist" && fullHand?.contract === "Whist" && !fullHandRunActive;
-
-    if (whistFullHandSource !== "play" || !isWhistFullHand || !fullHand) {
-      return;
-    }
-
-    const currentResult = fullHand.status === "complete" ? whistHandResultFor(fullHand) : null;
-    const settlement = settleWhistHand(whistMatchScores, whistGames, {
-      playerSide: currentResult?.playerSideOddTricks ?? 0,
-      opponentSide: currentResult?.opponentSideOddTricks ?? 0
-    }, whistSessionMode);
-    const matchIsComplete = fullHand.status === "complete" && settlement.complete;
-
-    if (matchIsComplete) {
-      clearSavedWhistRun();
-      return;
-    }
-
-    const nextSavedRun: SavedWhistRun = {
-      version: 1,
-      scores: whistMatchScores,
-      mode: whistSessionMode,
-      games: whistGames,
-      results: whistHandResults,
-      fullHand,
-      fullHandReviewTrickCount,
-      usingBrowserFullHand,
-      savedAt: new Date().toISOString()
-    };
-
-    savedWhistRun = nextSavedRun;
-
-    if (typeof localStorage !== "undefined") {
-      localStorage.setItem(savedWhistRunStorageKey, JSON.stringify(nextSavedRun));
-    }
-  }
-
-  function clearSavedWhistRun() {
-    savedWhistRun = null;
-
-    if (typeof localStorage !== "undefined") {
-      localStorage.removeItem(savedWhistRunStorageKey);
-    }
-  }
-
-  function savedWhistRunSummary(savedRun: SavedWhistRun) {
-    const handNumber = savedRun.results.length + 1;
-    const result = savedRun.fullHand.status === "complete" ? whistHandResultFor(savedRun.fullHand) : null;
-    const score = result ? addWhistMatchResult(savedRun.scores, result) : savedRun.scores;
-    const matchScore = `${score.playerSide} - ${score.opponentSide}`;
-    const format = savedRun.mode === "rubber" ? `Rubber, games ${savedRun.games.playerSide}-${savedRun.games.opponentSide}. ` : "";
-
-    return savedRun.fullHand.status === "complete"
-      ? `${format}Hand ${handNumber} complete, game ${matchScore}`
-      : `${format}Hand ${handNumber}, trick ${savedRun.fullHand.trickNumber}, game ${matchScore}`;
-  }
-
-  function continueSavedWhistRun() {
-    const savedRun = savedWhistRun ?? loadSavedWhistRun();
-
-    if (!savedRun) {
-      return;
-    }
-
+  function openWhistSession(session: WhistSession) {
     activeGameTable = "whist";
     activeTableTabs.whist = "play";
     whistFullHandSource = "play";
-    fullHandRunActive = false;
-    fullHandRunResults = [];
+    whistSessionMode = session.mode;
+    barbuSession = null;
+    fullHandCardCountingMode = false;
     dominoHand = null;
     heartsPassingHand = null;
-    whistMatchScores = savedRun.scores;
-    whistSessionMode = savedRun.mode;
-    whistGames = savedRun.games;
-    whistHandResults = savedRun.results;
-    fullHand = savedRun.fullHand;
-    fullHandReviewTrickCount = savedRun.fullHandReviewTrickCount;
-    usingBrowserFullHand = savedRun.usingBrowserFullHand || !hasTauriRuntime();
+    spadesPlayStarted = true;
+    setWhistSession(session);
     fullHandSelectedCardId = "";
+    dummySelectedCardId = "";
     fullHandError = "";
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
     appView = "fullHand";
-    savedWhistRun = savedRun;
+  }
+
+  function persistSavedWhistRun() {
+    if (!isWhistSessionHand() || !whistSession) return;
+    savedWhistRun = saveWhistSession(whistSession, new Date().toISOString());
+    try {
+      whistSaveStore.write(savedWhistRun);
+    } catch {
+      fullHandError = "Progress could not be saved on this device.";
+    }
+  }
+
+  function continueSavedWhistRun() {
+    const saved = savedWhistRun ?? whistSaveStore.load();
+    if (!saved) return;
+    openWhistSession(restoreWhistSession(saved));
     persistSavedWhistRun();
   }
 
-  function loadSavedSpadesRun(): SavedSpadesRun | null {
-    if (typeof localStorage === "undefined") {
-      return null;
-    }
-
-    try {
-      return normalizeSavedSpadesRun(JSON.parse(localStorage.getItem(savedSpadesRunStorageKey) ?? "null"));
-    } catch {
-      return null;
-    }
+  function isSpadesSessionHand() {
+    return activeGameTable === "spades" && whistFullHandSource === "play" && !fullHandCardCountingMode
+      && !fullHandRunActive && spadesSession !== null && fullHand === spadesSession.fullHand;
   }
 
-  function normalizeSavedSpadesRun(savedRun: unknown): SavedSpadesRun | null {
-    if (!savedRun || typeof savedRun !== "object") {
-      return null;
-    }
-
-    const candidate = savedRun as Partial<SavedSpadesRun>;
-    const savedFullHand = candidate.fullHand?.contract === "Spades" ? candidate.fullHand : null;
-
-    if (candidate.version !== 1 || !savedFullHand) {
-      return null;
-    }
-
-    return {
-      version: 1,
-      scores: normalizeSpadesScoreMap(candidate.scores),
-      bags: normalizeSpadesScoreMap(candidate.bags),
-      bids: normalizeSpadesBidState(candidate.bids),
-      results: Array.isArray(candidate.results) ? candidate.results.filter(isSpadesHandResult) : [],
-      fullHand: savedFullHand,
-      fullHandReviewTrickCount:
-        Number.isInteger(candidate.fullHandReviewTrickCount) && candidate.fullHandReviewTrickCount >= 0
-          ? candidate.fullHandReviewTrickCount
-          : 0,
-      usingBrowserFullHand: Boolean(candidate.usingBrowserFullHand),
-      playStarted: Boolean(candidate.playStarted),
-      openingPanel: candidate.openingPanel === "bid" ? "bid" : "table",
-      savedAt: typeof candidate.savedAt === "string" ? candidate.savedAt : new Date().toISOString()
-    };
+  function setSpadesSession(session: SpadesSession) {
+    spadesSession = session;
+    fullHand = session.fullHand;
+    fullHandReviewTrickCount = session.fullHandReviewTrickCount;
+    spadesMatchScores = session.scores;
+    spadesBagScores = session.bags;
+    spadesBids = session.bids;
+    spadesHandResults = session.results;
+    spadesPlayStarted = session.playStarted;
+    spadesOpeningPanel = session.openingPanel;
   }
 
-  function normalizeSpadesScoreMap(scores: unknown): SpadesScoreState {
-    if (!scores || typeof scores !== "object") {
-      return { playerSide: 0, opponentSide: 0 };
-    }
-
-    const candidate = scores as Partial<SpadesScoreState>;
-    return {
-      playerSide: Number.isFinite(candidate.playerSide) ? Number(candidate.playerSide) : 0,
-      opponentSide: Number.isFinite(candidate.opponentSide) ? Number(candidate.opponentSide) : 0
-    };
+  function openSpadesSession(session: SpadesSession) {
+    activeGameTable = "spades";
+    activeTableTabs.spades = "play";
+    whistFullHandSource = "play";
+    barbuSession = null;
+    fullHandCardCountingMode = false;
+    dominoHand = null;
+    heartsPassingHand = null;
+    fullHandSelectedCardId = "";
+    dummySelectedCardId = "";
+    fullHandError = "";
+    lastFullHandTapCardId = "";
+    lastFullHandTapAt = 0;
+    setSpadesSession(session);
+    appView = "fullHand";
   }
 
-  function normalizeSpadesBidState(bids: unknown): SpadesBidState {
-    if (!bids || typeof bids !== "object") {
-      return { ...defaultSpadesBidState };
-    }
-
-    const candidate = bids as Partial<SpadesBidState>;
-    return {
-      You: spadesClampBid(candidate.You ?? defaultSpadesBidState.You),
-      Tutor: spadesClampBid(candidate.Tutor ?? defaultSpadesBidState.Tutor),
-      Left: spadesClampBid(candidate.Left ?? defaultSpadesBidState.Left),
-      Right: spadesClampBid(candidate.Right ?? defaultSpadesBidState.Right)
-    };
-  }
-
-  function isSpadesHandResult(result: unknown): result is SpadesHandResult {
-    if (!result || typeof result !== "object") {
-      return false;
-    }
-
-    const candidate = result as Partial<SpadesHandResult>;
-    return (
-      Number.isInteger(candidate.handNumber) &&
-      Number.isInteger(candidate.playerSideBid) &&
-      Number.isInteger(candidate.opponentSideBid) &&
-      Number.isInteger(candidate.playerSideTricks) &&
-      Number.isInteger(candidate.opponentSideTricks) &&
-      Number.isFinite(candidate.playerSideScore) &&
-      Number.isFinite(candidate.opponentSideScore) &&
-      Number.isInteger(candidate.playerSideBags) &&
-      Number.isInteger(candidate.opponentSideBags) &&
-      Number.isInteger(candidate.playerSideBagPenalty) &&
-      Number.isInteger(candidate.opponentSideBagPenalty)
-    );
-  }
 
   function persistSavedSpadesRun() {
-    const isSpadesFullHand = activeGameTable === "spades" && fullHand?.contract === "Spades" && !fullHandRunActive;
-
-    if (whistFullHandSource !== "play" || !isSpadesFullHand || !fullHand) {
-      return;
-    }
-
-    const currentResult = fullHand.status === "complete" ? spadesHandResultFor(fullHand) : null;
-    const visibleResult = currentResult ? addSpadesMatchResult(spadesMatchScores, spadesBagScores, currentResult) : null;
-    const matchIsComplete =
-      fullHand.status === "complete" &&
-      visibleResult !== null &&
-      spadesMatchComplete(visibleResult.scores);
-
-    if (matchIsComplete) {
-      clearSavedSpadesRun();
-      return;
-    }
-
-    const nextSavedRun: SavedSpadesRun = {
-      version: 1,
-      scores: spadesMatchScores,
-      bags: spadesBagScores,
-      bids: spadesBids,
-      results: spadesHandResults,
-      fullHand,
-      fullHandReviewTrickCount,
-      usingBrowserFullHand,
-      playStarted: spadesPlayStarted,
-      openingPanel: spadesOpeningPanel,
-      savedAt: new Date().toISOString()
-    };
-
-    savedSpadesRun = nextSavedRun;
-
-    if (typeof localStorage !== "undefined") {
-      localStorage.setItem(savedSpadesRunStorageKey, JSON.stringify(nextSavedRun));
-    }
-  }
-
-  function clearSavedSpadesRun() {
-    savedSpadesRun = null;
-
-    if (typeof localStorage !== "undefined") {
-      localStorage.removeItem(savedSpadesRunStorageKey);
+    if (!isSpadesSessionHand() || !spadesSession) return;
+    savedSpadesRun = saveSpadesSession(spadesSession, new Date().toISOString());
+    try {
+      spadesSaveStore.write(savedSpadesRun);
+    } catch {
+      fullHandError = "Progress could not be saved on this device.";
     }
   }
 
@@ -4502,168 +2045,60 @@
   }
 
   function continueSavedSpadesRun() {
-    const savedRun = savedSpadesRun ?? loadSavedSpadesRun();
-
-    if (!savedRun) {
-      return;
-    }
-
-    activeGameTable = "spades";
-    activeTableTabs.spades = "play";
-    whistFullHandSource = "play";
-    fullHandRunActive = false;
-    fullHandRunResults = [];
-    dominoHand = null;
-    heartsPassingHand = null;
-    spadesMatchScores = savedRun.scores;
-    spadesBagScores = savedRun.bags;
-    spadesBids = savedRun.bids;
-    spadesHandResults = savedRun.results;
-    spadesPlayStarted = savedRun.playStarted;
-    spadesOpeningPanel = savedRun.openingPanel;
-    fullHand = savedRun.fullHand;
-    fullHandReviewTrickCount = savedRun.fullHandReviewTrickCount;
-    usingBrowserFullHand = savedRun.usingBrowserFullHand || !hasTauriRuntime();
-    fullHandSelectedCardId = "";
-    fullHandError = "";
-    lastFullHandTapCardId = "";
-    lastFullHandTapAt = 0;
-    appView = "fullHand";
-    savedSpadesRun = savedRun;
+    const saved = savedSpadesRun ?? spadesSaveStore.load();
+    if (!saved) return;
+    openSpadesSession(restoreSpadesSession(saved));
     persistSavedSpadesRun();
   }
 
-  function loadSavedBridgeRun(): SavedBridgeRun | null {
-    if (typeof localStorage === "undefined") {
-      return null;
-    }
+  function isBridgeSessionHand() {
+    return activeGameTable === "bridge" && whistFullHandSource === "play" && !fullHandCardCountingMode
+      && !fullHandRunActive && bridgeSession !== null && fullHand === bridgeSession.fullHand;
+  }
 
+  function setBridgeSession(session: BridgeSession) {
+    bridgeSession = session;
+    fullHand = session.fullHand;
+    fullHandReviewTrickCount = session.fullHandReviewTrickCount;
+    bridgeMatchScores = session.scores;
+    bridgeHandResults = session.results;
+    bridgeAuctionCalls = session.auctionCalls;
+    bridgeAuctionSelectedCall = session.selectedCall;
+    if (bridgeBidOptions.some(bid => bid.id === session.selectedCall)) bridgeAuctionSelectedBidId = session.selectedCall;
+  }
+
+  function openBridgeSession(session: BridgeSession) {
+    activeGameTable = "bridge";
+    activeTableTabs.bridge = "play";
+    whistFullHandSource = "play";
+    barbuSession = null;
+    fullHandCardCountingMode = false;
+    dominoHand = null;
+    heartsPassingHand = null;
+    spadesPlayStarted = true;
+    fullHandSelectedCardId = "";
+    dummySelectedCardId = "";
+    fullHandError = "";
+    bridgeAuctionError = "";
+    lastFullHandTapCardId = "";
+    lastFullHandTapAt = 0;
+    setBridgeSession(session);
+    appView = session.view;
+  }
+
+  function persistSavedBridgeRun() {
+    if (!isBridgeSessionHand() || !bridgeSession) return;
+    savedBridgeRun = saveBridgeSession(bridgeSession, new Date().toISOString());
     try {
-      return normalizeSavedBridgeRun(JSON.parse(localStorage.getItem(savedBridgeRunStorageKey) ?? "null"));
+      bridgeSaveStore.write(savedBridgeRun);
     } catch {
-      return null;
-    }
-  }
-
-  function normalizeSavedBridgeRun(savedRun: unknown): SavedBridgeRun | null {
-    if (!savedRun || typeof savedRun !== "object") {
-      return null;
-    }
-
-    const candidate = savedRun as Partial<SavedBridgeRun>;
-    const savedFullHand = candidate.fullHand?.contract === "Bridge" ? candidate.fullHand : null;
-
-    if (candidate.version !== 1 || !savedFullHand) {
-      return null;
-    }
-
-    return {
-      version: 1,
-      view: candidate.view === "bridgeAuction" ? "bridgeAuction" : "fullHand",
-      scores: normalizeBridgeScoreMap(candidate.scores),
-      results: Array.isArray(candidate.results) ? candidate.results.filter(isBridgeHandResult) : [],
-      fullHand: savedFullHand,
-      auctionCalls: Array.isArray(candidate.auctionCalls) ? candidate.auctionCalls.filter(isBridgeAuctionCall) : [],
-      selectedCall: normalizeBridgeCallOption(candidate.selectedCall),
-      fullHandReviewTrickCount:
-        Number.isInteger(candidate.fullHandReviewTrickCount) && candidate.fullHandReviewTrickCount >= 0
-          ? candidate.fullHandReviewTrickCount
-          : 0,
-      usingBrowserFullHand: Boolean(candidate.usingBrowserFullHand),
-      savedAt: typeof candidate.savedAt === "string" ? candidate.savedAt : new Date().toISOString()
-    };
-  }
-
-  function normalizeBridgeScoreMap(scores: unknown): BridgeScoreState {
-    if (!scores || typeof scores !== "object") {
-      return { ns: 0, ew: 0 };
-    }
-
-    const candidate = scores as Partial<BridgeScoreState>;
-    return {
-      ns: Number.isFinite(candidate.ns) ? Number(candidate.ns) : 0,
-      ew: Number.isFinite(candidate.ew) ? Number(candidate.ew) : 0
-    };
-  }
-
-  function isBridgeAuctionCall(call: unknown): call is BridgeAuctionCall {
-    if (!call || typeof call !== "object") {
-      return false;
-    }
-
-    const candidate = call as Partial<BridgeAuctionCall>;
-    return (
-      (candidate.seat === "Tutor" || candidate.seat === "Right" || candidate.seat === "You" || candidate.seat === "Left") &&
-      typeof candidate.call === "string"
-    );
-  }
-
-  function normalizeBridgeCallOption(call: unknown): BridgeCallOption {
-    if (call === "Pass" || call === "Double" || call === "Redouble") {
-      return call;
-    }
-
-    return typeof call === "string" && bridgeBidOptions.some((bid) => bid.id === call) ? call : "Pass";
-  }
-
-  function isBridgeHandResult(result: unknown): result is BridgeHandResult {
-    if (!result || typeof result !== "object") {
-      return false;
-    }
-
-    const candidate = result as Partial<BridgeHandResult>;
-    return (
-      Number.isInteger(candidate.handNumber) &&
-      typeof candidate.contract === "string" &&
-      (candidate.passedOut === true
-        ? candidate.declarer === null && candidate.declarerSide === null && candidate.score === 0 && candidate.target === 0
-        : (candidate.declarer === "Tutor" || candidate.declarer === "Right" || candidate.declarer === "You" || candidate.declarer === "Left") && (candidate.declarerSide === "NS" || candidate.declarerSide === "EW")) &&
-      (candidate.vulnerability === "None" || candidate.vulnerability === "NS" || candidate.vulnerability === "EW" || candidate.vulnerability === "Both") &&
-      Number.isInteger(candidate.target) &&
-      Number.isInteger(candidate.tricks) &&
-      Number.isInteger(candidate.defenders) &&
-      Number.isFinite(candidate.score) &&
-      typeof candidate.made === "boolean"
-    );
-  }
-
-  function persistSavedBridgeRun(view: SavedBridgeRun["view"] = appView === "bridgeAuction" ? "bridgeAuction" : "fullHand") {
-    const isBridgeFullHand = activeGameTable === "bridge" && fullHand?.contract === "Bridge" && !fullHandRunActive;
-
-    if (whistFullHandSource !== "play" || !isBridgeFullHand || !fullHand) {
-      return;
-    }
-
-    const nextSavedRun: SavedBridgeRun = {
-      version: 1,
-      view,
-      scores: bridgeMatchScores,
-      results: bridgeHandResults,
-      fullHand,
-      auctionCalls: bridgeAuctionCalls,
-      selectedCall: bridgeAuctionSelectedCall,
-      fullHandReviewTrickCount,
-      usingBrowserFullHand,
-      savedAt: new Date().toISOString()
-    };
-
-    savedBridgeRun = nextSavedRun;
-
-    if (typeof localStorage !== "undefined") {
-      localStorage.setItem(savedBridgeRunStorageKey, JSON.stringify(nextSavedRun));
-    }
-  }
-
-  function clearSavedBridgeRun() {
-    savedBridgeRun = null;
-
-    if (typeof localStorage !== "undefined") {
-      localStorage.removeItem(savedBridgeRunStorageKey);
+      if (bridgeSession.view === "bridgeAuction") bridgeAuctionError = "Progress could not be saved on this device.";
+      else fullHandError = "Progress could not be saved on this device.";
     }
   }
 
   function savedBridgeRunSummary(savedRun: SavedBridgeRun) {
-    const handNumber = savedRun.results.length + 1;
+    const handNumber = savedRun.fullHand.bridgeBoardNumber ?? savedRun.results.length + 1;
     const score = `NS ${formatSignedScore(savedRun.scores.ns)}, EW ${formatSignedScore(savedRun.scores.ew)}`;
     const finalContract = savedRun.fullHand.bridgeContract?.label;
 
@@ -4677,38 +2112,10 @@
   }
 
   function continueSavedBridgeRun() {
-    const savedRun = savedBridgeRun ?? loadSavedBridgeRun();
-
-    if (!savedRun) {
-      return;
-    }
-
-    activeGameTable = "bridge";
-    activeTableTabs.bridge = "play";
-    whistFullHandSource = "play";
-    fullHandRunActive = false;
-    fullHandRunResults = [];
-    dominoHand = null;
-    heartsPassingHand = null;
-    bridgeMatchScores = savedRun.scores;
-    bridgeHandResults = savedRun.results;
-    bridgeAuctionCalls = savedRun.auctionCalls;
-    bridgeAuctionSelectedCall = savedRun.selectedCall;
-    bridgeAuctionSelectedBidId =
-      savedRun.selectedCall === "Pass" || savedRun.selectedCall === "Double" || savedRun.selectedCall === "Redouble"
-        ? bridgeSuggestedBidForHand(savedRun.fullHand.playerHand).id
-        : savedRun.selectedCall;
-    fullHand = savedRun.fullHand;
-    fullHandReviewTrickCount = savedRun.fullHandReviewTrickCount;
-    usingBrowserFullHand = true;
-    fullHandSelectedCardId = "";
-    dummySelectedCardId = "";
-    bridgeAuctionError = "";
-    fullHandError = "";
-    lastFullHandTapCardId = "";
-    lastFullHandTapAt = 0;
-    appView = savedRun.view;
-    savedBridgeRun = savedRun;
+    const saved = savedBridgeRun ?? bridgeSaveStore.load();
+    if (!saved) return;
+    openBridgeSession(restoreBridgeSession(saved));
+    persistSavedBridgeRun();
   }
 
   function loadPracticeSeed() {
@@ -4735,13 +2142,6 @@
     }
 
     return seed;
-  }
-
-  function runSeedForContract(contract: FullHandContract) {
-    const contractIndex = fullHandContracts.indexOf(contract);
-    const seedBase = fullHandRunSeed > 0 ? fullHandRunSeed : usePracticeSeed();
-
-    return ((Math.imul(seedBase, 1_103_515_245) + Math.imul(contractIndex + 1, 12_345)) >>> 0) || 1;
   }
 
   function loadDrillPatternMemory() {
@@ -5179,7 +2579,6 @@
 
   const realisticWhistCheckpoints = [3, 7, 10];
   const whistMemoryConfig = { seedOffset: 51 };
-
 
   function emptyCountingHands(): Record<Seat, Card[]> {
     return {
@@ -6038,205 +3437,60 @@
     openBarbuTable();
   }
 
-  function startBrowserFullHand(contract: FullHandContract, seed: number, dealer?: number) {
-    if (contract === "Hearts") {
-      return startBrowserHeartsHand(seed);
-    }
-    if (contract === "Whist") {
-      return startBrowserWhistHand(seed, dealer);
-    }
-    if (contract === "Spades") {
-      return startBrowserSpadesHand(seed);
-    }
-    if (contract === "Bridge") {
-      return startBrowserBridgeHand(seed);
-    }
-    if (contract === "No Queens") {
-      return startBrowserNoQueensHand(seed);
-    }
-    if (contract === "King of Hearts") {
-      return startBrowserKingOfHeartsHand(seed);
-    }
-    if (contract === "No Last Two") {
-      return startBrowserNoLastTwoHand(seed);
-    }
-    if (contract === "No Tricks") {
-      return startBrowserNoTricksHand(seed);
-    }
-    if (contract === "Hearts Trumps") {
-      return startBrowserPositiveTricksHand(seed);
-    }
-
-    return startBrowserNoHeartsHand(seed);
-  }
-
-  function hasTauriRuntime() {
-    return typeof window !== "undefined" && isTauri();
-  }
-
-  function invokeWithTimeout<T>(command: string, args: Record<string, unknown>, timeoutMs = 900) {
-    return Promise.race<T>([
-      invoke<T>(command, args),
-      new Promise<T>((_, reject) => {
-        window.setTimeout(() => reject(new Error(`Timed out calling ${command}`)), timeoutMs);
-      })
-    ]);
-  }
-
-  function isInvokeTimeoutError(error: unknown) {
-    return error instanceof Error && error.message.startsWith("Timed out calling");
-  }
-
-  function playBrowserFullHand(state: FullHandState, cardId: string) {
-    if (state.contract === "Hearts") {
-      return playBrowserHeartsCard(state, cardId);
-    }
-    if (state.contract === "Whist") {
-      return playBrowserWhistCard(state, cardId);
-    }
-    if (state.contract === "Spades") {
-      return playBrowserSpadesCard(state, cardId);
-    }
-    if (state.contract === "Bridge") {
-      return playBrowserBridgeCard(state, cardId);
-    }
-    if (state.contract === "No Queens") {
-      return playBrowserNoQueensCard(state, cardId);
-    }
-    if (state.contract === "King of Hearts") {
-      return playBrowserKingOfHeartsCard(state, cardId);
-    }
-    if (state.contract === "No Last Two") {
-      return playBrowserNoLastTwoCard(state, cardId);
-    }
-    if (state.contract === "No Tricks") {
-      return playBrowserNoTricksCard(state, cardId);
-    }
-    if (state.contract === "Hearts Trumps") {
-      return playBrowserPositiveTricksCard(state, cardId);
-    }
-
-    return playBrowserNoHeartsCard(state, cardId);
-  }
-
-  async function startFullHand(contract: FullHandContract, options: { cardCounting?: boolean; keepRun?: boolean; seed?: number; dealer?: number } = {}) {
+  async function startFullHand(contract: FullHandContract, options: { cardCounting?: boolean; seed?: number; dealer?: number } = {}) {
     if (contract === "Domino") {
-      await startDominoHand(options);
+      await startDominoHand();
       return;
     }
 
     fullHandCardCountingMode = options.cardCounting === true;
+    if (contract === "Whist") whistSession = null;
+    if (contract === "Spades") spadesSession = null;
+    if (contract === "Hearts") heartsSession = null;
+    if (contract === "Bridge") bridgeSession = null;
     fullHandCardCountingAnswer = null;
     fullHandCardCountingChecked = false;
     fullHandCardCountingQuestionsAsked = 0;
     fullHandCardCountingClean = 0;
 
-    if (!options.keepRun) {
-      fullHandRunActive = false;
-      fullHandRunResults = [];
-    }
+    barbuSession = null;
 
     dominoHand = null;
     heartsPassingHand = null;
-    const seed = options.seed ?? (options.keepRun && fullHandRunActive ? runSeedForContract(contract) : usePracticeSeed());
+    const seed = options.seed ?? usePracticeSeed();
     fullHandSelectedCardId = "";
     dummySelectedCardId = "";
     fullHandError = "";
     fullHandReviewTrickCount = 0;
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
-    const metadata = fullHandContractCommands[contract];
-
-    if (contract === "Bridge") {
-      fullHand = startBrowserBridgeHand(seed, bridgeHandResults.length + 1);
-      usingBrowserFullHand = true;
-      appView = "fullHand";
-      return;
-    }
-
-    try {
-      fullHand = await invoke<FullHandState>(metadata.startCommand, {
-        seed,
-        gameId: activeGameTable,
-        dealer: options.dealer,
-        contract
-      });
-      usingBrowserFullHand = false;
-    } catch {
-      fullHand = startBrowserFullHand(contract, seed, options.dealer);
-      usingBrowserFullHand = true;
-    }
+    const engine = typescriptHandEngine(contract);
+    if (!engine) throw new Error(`Unsupported hand: ${contract}`);
+    fullHand = engine.start({ seed, dealer: options.dealer });
 
     appView = "fullHand";
-    if (options.keepRun && fullHandRunActive) {
-      persistSavedPlayBarbuRun("fullHand");
-    }
   }
 
   async function startHeartsPassingPhase(options: { keepSession?: boolean } = {}) {
-    activeGameTable = "hearts";
-    fullHandRunActive = false;
-    fullHandRunResults = [];
-    fullHand = null;
-    dominoHand = null;
-    if (!options.keepSession) {
-      heartsSessionScores = emptySeatPenalties();
-      heartsHandResults = [];
+    if (heartsDealPending) return;
+    heartsDealPending = true;
+    try {
+      const session = options.keepSession && heartsSession
+        ? transitionHeartsSession(heartsSession, { type: "next-hand", seed: usePracticeSeed() })
+        : createHeartsSession(usePracticeSeed());
+      openHeartsSession(session);
+      persistSavedHeartsRun();
+      await tick();
+    } catch (error) {
+      fullHandError = error instanceof Error ? error.message : "That hand could not be dealt.";
+    } finally {
+      heartsDealPending = false;
     }
-    heartsPassSelectedCardIds = [];
-    heartsPassError = "";
-    fullHandSelectedCardId = "";
-    fullHandError = "";
-    fullHandReviewTrickCount = 0;
-    lastFullHandTapCardId = "";
-    lastFullHandTapAt = 0;
+  }
 
+  async function startDominoHand() {
+    barbuSession = null;
     const seed = usePracticeSeed();
-    heartsPassDirection = heartsPassDirectionForHand(heartsHandResults.length + 1);
-
-    if (heartsPassDirection === "hold") {
-      heartsPassingHand = null;
-      usingBrowserHeartsPass = false;
-      await startHeartsNoPassHand(seed);
-      return;
-    }
-
-    try {
-      heartsPassingHand = await invoke<FullHandState>("start_hearts_passing_hand", {
-        seed
-      });
-      usingBrowserHeartsPass = false;
-    } catch {
-      heartsPassingHand = startBrowserHeartsPassingHand(seed);
-      usingBrowserHeartsPass = true;
-    }
-
-    appView = "heartsPass";
-    persistSavedHeartsRun("heartsPass");
-  }
-
-  async function startHeartsNoPassHand(seed: number) {
-    try {
-      fullHand = await invoke<FullHandState>("start_hearts_hand", {
-        seed
-      });
-      usingBrowserFullHand = false;
-    } catch {
-      fullHand = startBrowserHeartsHand(seed);
-      usingBrowserFullHand = true;
-    }
-
-    appView = "fullHand";
-    persistSavedHeartsRun("fullHand");
-  }
-
-  async function startDominoHand(options: { keepRun?: boolean } = {}) {
-    if (!options.keepRun) {
-      fullHandRunActive = false;
-      fullHandRunResults = [];
-    }
-
-    const seed = options.keepRun && fullHandRunActive ? runSeedForContract("Domino") : usePracticeSeed();
     fullHand = null;
     heartsPassingHand = null;
     dominoSelectedCardId = "";
@@ -6245,96 +3499,36 @@
     lastDominoTapCardId = "";
     lastDominoTapAt = 0;
 
-    if (!hasTauriRuntime()) {
-      dominoHand = startBrowserDominoHand(seed);
-      usingBrowserDomino = true;
-      appView = "dominoHand";
-      if (options.keepRun && fullHandRunActive) {
-        persistSavedPlayBarbuRun("dominoHand");
-      }
-      return;
-    }
-
-    try {
-      dominoHand = await invokeWithTimeout<DominoHandState>("start_domino_hand", {
-        seed
-      });
-      usingBrowserDomino = false;
-    } catch {
-      dominoHand = startBrowserDominoHand(seed);
-      usingBrowserDomino = true;
-    }
+    dominoHand = dominoHandEngine.start({ seed });
 
     appView = "dominoHand";
-    if (options.keepRun && fullHandRunActive) {
-      persistSavedPlayBarbuRun("dominoHand");
-    }
   }
 
   function toggleHeartsPassCard(card: Card) {
+    if (!isHeartsSessionActive() || !heartsSession || heartsSession.phase !== "passing") return;
     heartsPassError = "";
-
-    if (heartsPassSelectedCardIds.includes(card.id)) {
-      heartsPassSelectedCardIds = heartsPassSelectedCardIds.filter((cardId) => cardId !== card.id);
-      persistSavedHeartsRun("heartsPass");
-      return;
-    }
-
-    if (heartsPassSelectedCardIds.length >= 3) {
+    const next = transitionHeartsSession(heartsSession, { type: "select-pass", cardId: card.id });
+    if (next === heartsSession && heartsPassSelectedCardIds.length >= 3) {
       heartsPassError = "Remove one card before choosing another.";
       return;
     }
-
-    heartsPassSelectedCardIds = [...heartsPassSelectedCardIds, card.id];
-    persistSavedHeartsRun("heartsPass");
+    setHeartsSession(next);
+    persistSavedHeartsRun();
   }
 
-  async function confirmHeartsPass() {
-    if (!heartsPassingHand) {
-      return;
-    }
-
+  function confirmHeartsPass() {
+    if (!isHeartsSessionActive() || !heartsSession || heartsSession.phase !== "passing") return;
     if (heartsPassSelectedCardIds.length !== 3) {
       heartsPassError = "Choose exactly three cards to pass.";
       return;
     }
-
-    try {
-      fullHand = usingBrowserHeartsPass
-        ? applyBrowserHeartsPass(heartsPassingHand, heartsPassSelectedCardIds, heartsPassTauriDirection(heartsPassDirection))
-        : await invoke<FullHandState>("apply_hearts_pass", {
-            state: heartsPassingHand,
-            cardIds: heartsPassSelectedCardIds,
-            direction: heartsPassTauriDirection(heartsPassDirection)
-          });
-      usingBrowserFullHand = usingBrowserHeartsPass;
-      heartsPassingHand = null;
-      heartsPassSelectedCardIds = [];
-      heartsPassError = "";
-      fullHandSelectedCardId = "";
-      fullHandReviewTrickCount = 0;
-      lastFullHandTapCardId = "";
-      lastFullHandTapAt = 0;
-      appView = "fullHand";
-      persistSavedHeartsRun("fullHand");
-    } catch (error) {
-      if (!usingBrowserHeartsPass) {
-        fullHand = applyBrowserHeartsPass(
-          heartsPassingHand,
-          heartsPassSelectedCardIds,
-          heartsPassTauriDirection(heartsPassDirection)
-        );
-        usingBrowserFullHand = true;
-        heartsPassingHand = null;
-        heartsPassSelectedCardIds = [];
-        heartsPassError = "";
-        appView = "fullHand";
-        persistSavedHeartsRun("fullHand");
-        return;
-      }
-
-      heartsPassError = typeof error === "string" ? error : "Those cards could not be passed.";
+    const next = transitionHeartsSession(heartsSession, { type: "pass" });
+    if (next === heartsSession) {
+      heartsPassError = "Those cards could not be passed.";
+      return;
     }
+    openHeartsSession(next);
+    persistSavedHeartsRun();
   }
 
   async function selectFullHandCard(card: Card) {
@@ -6388,41 +3582,33 @@
     fullHandError = "";
     const completedTrickCount = fullHand.completedTricks.length;
 
-    if (usingBrowserFullHand) {
-      updateFullHandAfterPlayerPlay(playBrowserFullHand(fullHand, targetId), completedTrickCount);
-      recordCompletedFullHandRunResult(fullHand);
-      fullHandSelectedCardId = "";
-      dummySelectedCardId = "";
-      lastFullHandTapCardId = "";
-      lastFullHandTapAt = 0;
-      persistSavedPlayBarbuRun("fullHand");
-      persistSavedHeartsRun("fullHand");
-      persistSavedWhistRun();
-      persistSavedSpadesRun();
-      persistSavedBridgeRun();
-      return;
-    }
-
     try {
-      const nextFullHand = await invoke<FullHandState>(fullHandContractCommands[fullHand.contract].playCommand, {
-        state: fullHand,
-        cardId: targetId,
-        gameId: activeGameTable,
-        contract: fullHand.contract
-      });
-      updateFullHandAfterPlayerPlay(nextFullHand, completedTrickCount);
-      recordCompletedFullHandRunResult(fullHand);
+      if (isHeartsSessionActive() && heartsSession) {
+        setHeartsSession(transitionHeartsSession(heartsSession, { type: "play-card", cardId: targetId }));
+      } else if (isBridgeSessionHand() && bridgeSession) {
+        setBridgeSession(transitionBridgeSession(bridgeSession, { type: "play-card", cardId: targetId }));
+      } else if (isSpadesSessionHand() && spadesSession) {
+        setSpadesSession(transitionSpadesSession(spadesSession, { type: "play-card", cardId: targetId }));
+      } else if (isWhistSessionHand() && whistSession) {
+        setWhistSession(transitionWhistSession(whistSession, { type: "play-card", cardId: targetId }));
+      } else if (barbuSession) {
+        setBarbuSession(transitionBarbuSession(barbuSession, { type: "play-card", cardId: targetId }));
+      } else {
+        const engine = typescriptHandEngine(fullHand.contract);
+        if (!engine) throw new Error(`Unsupported hand: ${fullHand.contract}`);
+        updateFullHandAfterPlayerPlay(engine.transition(fullHand, { type: "play-card", cardId: targetId }), completedTrickCount);
+      }
       fullHandSelectedCardId = "";
       dummySelectedCardId = "";
       lastFullHandTapCardId = "";
       lastFullHandTapAt = 0;
-      persistSavedPlayBarbuRun("fullHand");
-      persistSavedHeartsRun("fullHand");
+      persistSavedPlayBarbuRun();
+      persistSavedHeartsRun();
       persistSavedWhistRun();
       persistSavedSpadesRun();
       persistSavedBridgeRun();
     } catch (error) {
-      fullHandError = typeof error === "string" ? error : "That card could not be played.";
+      fullHandError = typeof error === "string" ? error : error instanceof Error ? error.message : "That card could not be played.";
     }
   }
 
@@ -6439,13 +3625,25 @@
       return;
     }
 
-    fullHandReviewTrickCount = 0;
+    if (isHeartsSessionActive() && heartsSession) {
+      setHeartsSession(transitionHeartsSession(heartsSession, { type: "next-trick" }));
+    } else if (isBridgeSessionHand() && bridgeSession) {
+      setBridgeSession(transitionBridgeSession(bridgeSession, { type: "next-trick" }));
+    } else if (isSpadesSessionHand() && spadesSession) {
+      setSpadesSession(transitionSpadesSession(spadesSession, { type: "next-trick" }));
+    } else if (isWhistSessionHand() && whistSession) {
+      setWhistSession(transitionWhistSession(whistSession, { type: "next-trick" }));
+    } else if (barbuSession) {
+      setBarbuSession(transitionBarbuSession(barbuSession, { type: "next-trick" }));
+    } else {
+      fullHandReviewTrickCount = 0;
+    }
     fullHandSelectedCardId = "";
     dummySelectedCardId = "";
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
-    persistSavedPlayBarbuRun("fullHand");
-    persistSavedHeartsRun("fullHand");
+    persistSavedPlayBarbuRun();
+    persistSavedHeartsRun();
     persistSavedWhistRun();
     persistSavedSpadesRun();
     persistSavedBridgeRun();
@@ -6488,30 +3686,16 @@
   }
 
   function toggleSpadesOpeningPanel() {
-    if (!spadesOpeningDecisionActive) {
-      return;
-    }
-
-    spadesOpeningPanel = spadesOpeningPanel === "bid" ? "table" : "bid";
+    if (!isSpadesSessionHand() || !spadesSession) return;
+    setSpadesSession(transitionSpadesSession(spadesSession, { type: "toggle-bids" }));
     fullHandSelectedCardId = "";
     fullHandError = "";
     persistSavedSpadesRun();
   }
 
   function startSpadesOpeningPlay() {
-    if (!spadesOpeningDecisionActive || !spadesBidReady) {
-      return;
-    }
-
-    if (fullHand?.contract === "Spades") {
-      fullHand = {
-        ...fullHand,
-        id: spadesHandIdWithBids(fullHand.id)
-      };
-    }
-
-    spadesPlayStarted = true;
-    spadesOpeningPanel = "table";
+    if (!isSpadesSessionHand() || !spadesSession) return;
+    setSpadesSession(transitionSpadesSession(spadesSession, { type: "start-play" }));
     fullHandSelectedCardId = "";
     fullHandError = "";
     lastFullHandTapCardId = "";
@@ -6532,126 +3716,77 @@
   async function startWhistHand(options: { keepSession?: boolean } = {}) {
     if (whistDealPending) return;
     whistDealPending = true;
-    const previousDealer = fullHand?.whistDealer ?? Number(fullHand?.id.match(/-dealer-([0-3])-/)?.[1]);
-    const dealer = options.keepSession && Number.isInteger(previousDealer) ? (previousDealer + 1) % 4 : undefined;
-    activeGameTable = "whist";
-    activeTableTabs.whist = "play";
-    whistFullHandSource = "play";
-    spadesPlayStarted = true;
-    if (!options.keepSession) {
-      whistMatchScores = { playerSide: 0, opponentSide: 0 };
-      whistGames = { playerSide: 0, opponentSide: 0 };
-      whistHandResults = [];
-      clearSavedWhistRun();
-    }
     try {
-      await startFullHand("Whist", { dealer });
+      const next = options.keepSession && whistSession
+        ? transitionWhistSession(whistSession, { type: "next-hand", seed: usePracticeSeed() })
+        : createWhistSession(usePracticeSeed(), whistSessionMode);
+      openWhistSession(next);
       persistSavedWhistRun();
+      await tick();
+    } catch (error) {
+      fullHandError = error instanceof Error ? error.message : "That hand could not be dealt.";
     } finally {
       whistDealPending = false;
     }
   }
 
   async function startSpadesHand(options: { keepSession?: boolean } = {}) {
-    if (!spadesBidReady) {
-      return;
+    if (spadesDealPending) return;
+    spadesDealPending = true;
+    try {
+      const next = options.keepSession && spadesSession
+        ? transitionSpadesSession(spadesSession, { type: "next-hand", seed: usePracticeSeed() })
+        : createSpadesSession(usePracticeSeed());
+      openSpadesSession(next);
+      persistSavedSpadesRun();
+      await tick();
+    } catch (error) {
+      fullHandError = error instanceof Error ? error.message : "That hand could not be dealt.";
+    } finally {
+      spadesDealPending = false;
     }
-
-    activeGameTable = "spades";
-    activeTableTabs.spades = "play";
-    whistFullHandSource = "play";
-    spadesPlayStarted = false;
-    spadesOpeningPanel = "table";
-    if (!options.keepSession) {
-      spadesMatchScores = { playerSide: 0, opponentSide: 0 };
-      spadesBagScores = { playerSide: 0, opponentSide: 0 };
-      spadesHandResults = [];
-      clearSavedSpadesRun();
-    }
-    await startFullHand("Spades");
-    spadesBids = suggestedSpadesBidsForHand(fullHand);
-    persistSavedSpadesRun();
   }
 
   async function startBridgeHand(options: { keepSession?: boolean } = {}) {
-    activeGameTable = "bridge";
-    activeTableTabs.bridge = "play";
-    whistFullHandSource = "play";
-    if (!options.keepSession) {
-      bridgeMatchScores = { ns: 0, ew: 0 };
-      bridgeHandResults = [];
-      clearSavedBridgeRun();
+    if (bridgeDealPending) return;
+    bridgeDealPending = true;
+    try {
+      const next = options.keepSession && bridgeSession
+        ? transitionBridgeSession(bridgeSession, { type: "next-hand", seed: usePracticeSeed() })
+        : createBridgeSession(usePracticeSeed());
+      openBridgeSession(next);
+      persistSavedBridgeRun();
+      await tick();
+    } catch (error) {
+      bridgeAuctionError = error instanceof Error ? error.message : "That board could not be dealt.";
+    } finally {
+      bridgeDealPending = false;
     }
-    await startFullHand("Bridge");
-    const openingCalls = bridgeAutoAdvanceAuction([], fullHand);
-    bridgeAuctionCalls = openingCalls;
-    bridgeAuctionSelectedCall = await bridgeSuggestedLegalUserCallWithCore(fullHand, bridgeAuctionCalls, "You");
-    bridgeAuctionSelectedBidId = bridgeAuctionSelectedCall === "Pass" || bridgeAuctionSelectedCall === "Double" || bridgeAuctionSelectedCall === "Redouble"
-      ? bridgeSuggestedBidForHand(fullHand?.playerHand ?? []).id
-      : bridgeAuctionSelectedCall;
-    bridgeAuctionError = "";
-    appView = "bridgeAuction";
-    persistSavedBridgeRun("bridgeAuction");
   }
 
-  async function advancePassedOutBridgeBoard() {
-    if (!fullHand || !bridgeAuctionStatus(bridgeAuctionCalls, bridgeDealerIndex(fullHand)).passedOut) return;
-    bridgeHandResults = [...bridgeHandResults, {
-      handNumber: fullHand.bridgeBoardNumber ?? bridgeHandResults.length + 1,
-      passedOut: true, contract: "Passed out", declarer: null, declarerSide: null,
-      vulnerability: bridgeVulnerabilityForHand(), target: 0, tricks: 0, defenders: 0, score: 0, made: false
-    }];
-    await startBridgeHand({ keepSession: true });
+  function advancePassedOutBridgeBoard() {
+    if (!isBridgeSessionHand() || !bridgeSession || bridgeSession.view !== "bridgeAuction"
+      || !bridgeAuctionStatus(bridgeSession.auctionCalls, bridgeDealerIndex()).passedOut) return;
+    void startBridgeHand({ keepSession: true });
   }
 
   function selectBridgeAuctionBid(bidId: string) {
-    bridgeAuctionSelectedBidId = bidId;
-    bridgeAuctionSelectedCall = bidId;
-    bridgeAuctionError = "";
-    persistSavedBridgeRun("bridgeAuction");
+    selectBridgeAuctionCall(bidId);
   }
 
   function selectBridgeAuctionCall(call: BridgeCallOption) {
-    bridgeAuctionSelectedCall = call;
-    if (call !== "Pass" && call !== "Double" && call !== "Redouble") {
-      bridgeAuctionSelectedBidId = call;
-    }
+    if (!isBridgeSessionHand() || !bridgeSession) return;
+    setBridgeSession(transitionBridgeSession(bridgeSession, { type: "select-call", call }));
     bridgeAuctionError = "";
-    persistSavedBridgeRun("bridgeAuction");
+    persistSavedBridgeRun();
   }
 
-  async function confirmBridgeAuction() {
-    if (!fullHand) {
-      return;
-    }
-
-    const status = bridgeAuctionStatus(bridgeAuctionCalls, bridgeDealerIndex(fullHand));
-
-    if (!status.complete) {
-      await bridgeApplyUserCall(bridgeAuctionSelectedCall);
-      return;
-    }
-
-    if (status.passedOut) {
-      bridgeAuctionError = "The hand was passed out. Deal a new Bridge hand.";
-      return;
-    }
-
-    const bridgeContract = await bridgeFinalizeContractWithCore(bridgeAuctionCalls, fullHand);
-    if (!bridgeContract) {
-      bridgeAuctionError = "The auction does not contain a contract yet.";
-      return;
-    }
-
-    fullHand = applyBrowserBridgeAuction(fullHand, bridgeContract, bridgeAuctionCalls);
-    usingBrowserFullHand = true;
-    fullHandSelectedCardId = "";
-    dummySelectedCardId = "";
-    fullHandReviewTrickCount = 0;
-    lastFullHandTapCardId = "";
-    lastFullHandTapAt = 0;
-    appView = "fullHand";
-    persistSavedBridgeRun("fullHand");
+  function confirmBridgeAuction() {
+    if (!isBridgeSessionHand() || !bridgeSession || bridgeSession.view !== "bridgeAuction") return;
+    const complete = bridgeAuctionStatus(bridgeSession.auctionCalls, bridgeDealerIndex()).complete;
+    const next = transitionBridgeSession(bridgeSession, { type: complete ? "start-play" : "make-call" });
+    openBridgeSession(next);
+    persistSavedBridgeRun();
   }
 
   function startPartnershipHand(options: { keepSession?: boolean } = {}) {
@@ -6669,7 +3804,7 @@
     activePathStepId = pathStepId;
     spadesPlayStarted = true;
     spadesOpeningPanel = "table";
-    spadesBids = defaultSpadesBids(1);
+    spadesBids = { ...defaultSpadesBidState };
     spadesMatchScores = { playerSide: 0, opponentSide: 0 };
     spadesBagScores = { playerSide: 0, opponentSide: 0 };
     spadesHandResults = [];
@@ -6685,10 +3820,8 @@
     spadesPlayStarted = true;
     whistOpeningLeadPracticeRound = round;
     activePathStepId = pathStepId;
-    whistMatchScores = { playerSide: 0, opponentSide: 0 };
-    whistHandResults = [];
-    fullHandRunActive = false;
-    fullHandRunResults = [];
+    whistSession = null;
+    barbuSession = null;
     dominoHand = null;
     heartsPassingHand = null;
     fullHandSelectedCardId = "";
@@ -6697,7 +3830,6 @@
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
     fullHand = buildWhistOpeningLeadPracticeHand(round);
-    usingBrowserFullHand = true;
     appView = "fullHand";
   }
 
@@ -6981,76 +4113,41 @@
   }
 
   function startBarbuRun() {
-    fullHandRunActive = true;
-    fullHandRunSeed = usePracticeSeed();
-    fullHandRunResults = [];
-    fullHand = null;
-    dominoHand = null;
-    openRunContractIntro(fullHandContracts[0]);
-  }
-
-  function openRunContractIntro(contract: FullHandContract) {
-    pendingRunContract = contract;
-    fullHand = null;
-    dominoHand = null;
-    fullHandReviewTrickCount = 0;
-    fullHandSelectedCardId = "";
-    dominoSelectedCardId = "";
-    appView = "runContractIntro";
-    persistSavedPlayBarbuRun("runContractIntro");
+    openBarbuSession(createBarbuSession(usePracticeSeed()));
+    persistSavedPlayBarbuRun();
   }
 
   function startPendingRunContract() {
-    void startFullHand(pendingRunContract, { keepRun: true });
+    dispatchBarbuSession({ type: "start-hand" });
   }
 
-  async function playDominoSelectedCard(cardId = dominoSelectedCardId) {
-    if (!dominoHand || dominoHand.status === "complete" || !cardId || !dominoHand.legalCardIds.includes(cardId)) {
-      return;
-    }
-
-    const playedCard = dominoHand.playerHand.find((card) => card.id === cardId);
-    const moveReason = playedCard ? dominoMoveExplanation(dominoHand, playedCard) : "";
+  function applyDominoAction(action: DominoAction, reason = "") {
+    if (!dominoHand) return;
     dominoError = "";
-
-    if (usingBrowserDomino || !hasTauriRuntime()) {
-      dominoHand = playBrowserDominoCard(dominoHand, cardId);
-      usingBrowserDomino = true;
-      recordCompletedDominoRunResult(dominoHand);
-      dominoSelectedCardId = "";
-      lastDominoTapCardId = "";
-      lastDominoTapAt = 0;
-      dominoLastMoveReason = moveReason;
-      persistSavedPlayBarbuRun("dominoHand");
-      return;
-    }
-
     try {
-      dominoHand = await invokeWithTimeout<DominoHandState>("play_domino_card", {
-        state: dominoHand,
-        cardId
-      });
-      recordCompletedDominoRunResult(dominoHand);
-      dominoSelectedCardId = "";
-      lastDominoTapCardId = "";
-      lastDominoTapAt = 0;
-      dominoLastMoveReason = moveReason;
-      persistSavedPlayBarbuRun("dominoHand");
-    } catch (error) {
-      if (!isInvokeTimeoutError(error)) {
-        dominoError = typeof error === "string" ? error : "That card could not be placed.";
-        return;
+      if (barbuSession) {
+        const next = transitionBarbuSession(barbuSession, action);
+        if (next === barbuSession) return;
+        setBarbuSession(next);
+      } else {
+        const next = dominoHandEngine.transition(dominoHand, action);
+        if (next === dominoHand) return;
+        dominoHand = next;
       }
-
-      dominoHand = playBrowserDominoCard(dominoHand, cardId);
-      usingBrowserDomino = true;
-      recordCompletedDominoRunResult(dominoHand);
       dominoSelectedCardId = "";
       lastDominoTapCardId = "";
       lastDominoTapAt = 0;
-      dominoLastMoveReason = moveReason;
-      persistSavedPlayBarbuRun("dominoHand");
+      dominoLastMoveReason = reason;
+      persistSavedPlayBarbuRun();
+    } catch (error) {
+      dominoError = error instanceof Error ? error.message : "That Domino action could not be completed.";
     }
+  }
+
+  function playDominoSelectedCard(cardId = dominoSelectedCardId) {
+    if (!dominoHand || dominoHand.status === "complete" || !dominoHand.legalCardIds.includes(cardId)) return;
+    const card = dominoHand.playerHand.find(card => card.id === cardId);
+    applyDominoAction({ type: "play-card", cardId }, card ? dominoMoveExplanation(dominoHand, card) : "");
   }
 
   async function selectDominoCard(card: Card) {
@@ -7079,47 +4176,8 @@
     void playDominoSelectedCard(cardId);
   }
 
-  async function passDomino() {
-    if (!dominoHand || dominoHand.status === "complete" || dominoHand.legalCardIds.length > 0) {
-      return;
-    }
-
-    dominoError = "";
-
-    if (usingBrowserDomino || !hasTauriRuntime()) {
-      dominoHand = passBrowserDominoTurn(dominoHand);
-      usingBrowserDomino = true;
-      recordCompletedDominoRunResult(dominoHand);
-      dominoLastMoveReason = "You passed because no card in your hand could start or extend a lane.";
-      lastDominoTapCardId = "";
-      lastDominoTapAt = 0;
-      persistSavedPlayBarbuRun("dominoHand");
-      return;
-    }
-
-    try {
-      dominoHand = await invokeWithTimeout<DominoHandState>("pass_domino_turn", {
-        state: dominoHand
-      });
-      recordCompletedDominoRunResult(dominoHand);
-      dominoLastMoveReason = "You passed because no card in your hand could start or extend a lane.";
-      lastDominoTapCardId = "";
-      lastDominoTapAt = 0;
-      persistSavedPlayBarbuRun("dominoHand");
-    } catch (error) {
-      if (!isInvokeTimeoutError(error)) {
-        dominoError = typeof error === "string" ? error : "You could not pass here.";
-        return;
-      }
-
-      dominoHand = passBrowserDominoTurn(dominoHand);
-      usingBrowserDomino = true;
-      recordCompletedDominoRunResult(dominoHand);
-      dominoLastMoveReason = "You passed because no card in your hand could start or extend a lane.";
-      lastDominoTapCardId = "";
-      lastDominoTapAt = 0;
-      persistSavedPlayBarbuRun("dominoHand");
-    }
+  function passDomino() {
+    applyDominoAction({ type: "pass" }, "You passed because no card in your hand could start or extend a lane.");
   }
 
   function startNextDominoHand() {
@@ -7127,17 +4185,8 @@
       return;
     }
 
-    if (fullHandRunActive) {
-      recordCompletedDominoRunResult(dominoHand);
-
-      if (fullHandRunIsComplete) {
-        startBarbuRun();
-        return;
-      }
-
-      const currentIndex = fullHandContracts.indexOf(dominoHand.contract);
-      const nextContract = fullHandContracts[(currentIndex + 1) % fullHandContracts.length] ?? "No Hearts";
-      openRunContractIntro(nextContract);
+    if (barbuSession) {
+      dispatchBarbuSession({ type: "next-contract" });
       return;
     }
 
@@ -7147,52 +4196,27 @@
   }
 
   function replayDominoHand() {
-    if (!dominoHand) {
-      return;
-    }
-
-    if (fullHandRunActive) {
-      fullHandRunResults = fullHandRunResults.filter((result) => result.contract !== "Domino");
-      void startFullHand("Domino", { keepRun: true });
-      return;
-    }
-
-    void startFullHand("Domino");
+    applyDominoAction({ type: "replay" });
   }
 
   function startNextFullHand() {
+    if (fullHandIsBridgeGame && bridgeDealPending) return;
+    if (fullHandIsSpadesGame && spadesDealPending) return;
     if (fullHandIsWhistGame && whistDealPending) return;
     if (!fullHand) {
       return;
     }
 
-    if (fullHandIsHeartsGame) {
-      if (heartsMatchIsComplete) {
-        clearSavedHeartsRun();
-        startHeartsHand();
-        return;
-      }
-
-      heartsHandResults = [
-        ...heartsHandResults,
-        {
-          handNumber: heartsHandResults.length + 1,
-          seatPenalties: heartsCurrentScoredSeatPenalties,
-          moonShooter: heartsCurrentMoonShooter
-        }
-      ];
-      heartsSessionScores = addSeatPenalties(heartsSessionScores, heartsCurrentScoredSeatPenalties);
-      void startHeartsPassingPhase({ keepSession: true });
+    if (isHeartsSessionActive() && heartsSession) {
+      if (heartsDealPending) return;
+      if (heartsSessionSettlement(heartsSession).complete) startHeartsHand();
+      else void startHeartsPassingPhase({ keepSession: true });
       return;
     }
 
     if (fullHandIsPartnershipGame) {
       if (fullHandIsBridgeGame) {
-        if (currentBridgeHandResult) {
-          bridgeHandResults = [...bridgeHandResults, currentBridgeHandResult];
-          bridgeMatchScores = bridgeScoreTotalsWith(currentBridgeHandResult);
-        }
-        startBridgeHand({ keepSession: true });
+        void startBridgeHand({ keepSession: true });
         return;
       }
 
@@ -7229,40 +4253,16 @@
       }
 
       if (fullHandIsSpadesGame) {
-        if (currentSpadesHandResult) {
-          const updated = addSpadesMatchResult(spadesMatchScores, spadesBagScores, currentSpadesHandResult);
-          spadesHandResults = [...spadesHandResults, currentSpadesHandResult];
-          spadesMatchScores = updated.scores;
-          spadesBagScores = updated.bags;
-        }
-        startSpadesHand({ keepSession: true });
+        void startSpadesHand({ keepSession: true });
         return;
       }
 
-      if (currentWhistHandResult) {
-        const settlement = settleWhistHand(whistMatchScores, whistGames, {
-          playerSide: currentWhistHandResult.playerSideOddTricks,
-          opponentSide: currentWhistHandResult.opponentSideOddTricks
-        }, whistSessionMode);
-        whistHandResults = [...whistHandResults, currentWhistHandResult];
-        whistMatchScores = settlement.nextScores;
-        whistGames = settlement.games;
-      }
       startPartnershipHand({ keepSession: true });
       return;
     }
 
-    if (fullHandRunActive) {
-      recordCompletedFullHandRunResult(fullHand);
-
-      if (fullHandRunIsComplete) {
-        startBarbuRun();
-        return;
-      }
-
-      const currentIndex = fullHandContracts.indexOf(fullHand.contract);
-      const nextContract = fullHandContracts[(currentIndex + 1) % fullHandContracts.length] ?? "No Hearts";
-      openRunContractIntro(nextContract);
+    if (barbuSession) {
+      dispatchBarbuSession({ type: "next-contract" });
       return;
     }
 
@@ -7277,25 +4277,35 @@
   }
 
   function replayFullHand() {
+    if (bridgeDealPending) return;
+    if (fullHandIsSpadesGame && spadesDealPending) return;
     if (!fullHandReplayAllowed) return;
     if (fullHandIsWhistGame && whistDealPending) return;
     if (!fullHand) {
       return;
     }
 
-    if (fullHandIsHeartsGame) {
-      void startHeartsPassingPhase({ keepSession: true });
+    if (isHeartsSessionActive() && heartsSession) {
+      if (heartsDealPending) return;
+      openHeartsSession(transitionHeartsSession(heartsSession, { type: "replay" }));
+      persistSavedHeartsRun();
       return;
     }
 
-    if (fullHandIsWhistGame && whistFullHandSource === "play") {
-      const seed = Number(fullHand.id.match(/whist-hand-(\d+)-dealer-/)?.[1]);
-      if (Number.isSafeInteger(seed)) {
-        whistDealPending = true;
-        void startFullHand("Whist", { seed, dealer: fullHand.whistDealer })
-          .then(persistSavedWhistRun).finally(() => { whistDealPending = false; });
-        return;
-      }
+    if (isBridgeSessionHand() && bridgeSession) {
+      openBridgeSession(transitionBridgeSession(bridgeSession, { type: "replay" }));
+      persistSavedBridgeRun();
+      return;
+    }
+    if (isSpadesSessionHand() && spadesSession) {
+      openSpadesSession(transitionSpadesSession(spadesSession, { type: "replay" }));
+      persistSavedSpadesRun();
+      return;
+    }
+    if (isWhistSessionHand() && whistSession) {
+      openWhistSession(transitionWhistSession(whistSession, { type: "replay" }));
+      persistSavedWhistRun();
+      return;
     }
 
     if (fullHandIsPartnershipGame) {
@@ -7317,13 +4327,24 @@
       return;
     }
 
-    if (fullHandRunActive) {
-      fullHandRunResults = fullHandRunResults.filter((result) => result.contract !== fullHand?.contract);
-      void startFullHand(fullHand.contract, { keepRun: true });
+    if (barbuSession) {
+      dispatchBarbuSession({ type: "replay" });
       return;
     }
-
-    void startFullHand(fullHand.contract);
+    const engine = typescriptHandEngine(fullHand.contract);
+    if (!engine) return;
+    fullHand = engine.transition(fullHand, { type: "replay" });
+    fullHandCardCountingAnswer = null;
+    fullHandCardCountingChecked = false;
+    fullHandCardCountingQuestionsAsked = 0;
+    fullHandCardCountingClean = 0;
+    fullHandReviewTrickCount = 0;
+    fullHandSelectedCardId = "";
+    dummySelectedCardId = "";
+    fullHandError = "";
+    lastFullHandTapCardId = "";
+    lastFullHandTapAt = 0;
+    persistSavedPlayBarbuRun();
   }
 
   function replayWeakestRunContract() {
@@ -7334,77 +4355,6 @@
     void startFullHand(fullHandRunWeakestContract.contract);
   }
 
-  function recordCompletedFullHandRunResult(state: FullHandState | null) {
-    if (!fullHandRunActive || !state || state.status !== "complete") {
-      return;
-    }
-
-    const result: FullHandRunResult = {
-      contract: state.contract,
-      playerPenalty: state.playerPenalty,
-      totalPenalty: state.totalPenalty,
-      seatPenalties: seatPenaltiesForTricks(state.completedTricks)
-    };
-
-    fullHandRunResults = [...fullHandRunResults.filter((item) => item.contract !== state.contract), result];
-  }
-
-  function recordCompletedDominoRunResult(state: DominoHandState | null) {
-    if (!fullHandRunActive || !state || state.status !== "complete") {
-      return;
-    }
-
-    const result: FullHandRunResult = {
-      contract: "Domino",
-      playerPenalty: state.scores[2] ?? 0,
-      totalPenalty: state.scores.reduce((total, score) => total + score, 0),
-      seatPenalties: dominoSeatScores(state)
-    };
-
-    fullHandRunResults = [...fullHandRunResults.filter((item) => item.contract !== "Domino"), result];
-  }
-
-  function dominoSeatScores(state: DominoHandState): Record<Seat, number> {
-    return {
-      Tutor: state.scores[0] ?? 0,
-      Right: state.scores[1] ?? 0,
-      You: state.scores[2] ?? 0,
-      Left: state.scores[3] ?? 0
-    };
-  }
-
-  function emptySeatPenalties(): Record<Seat, number> {
-    return {
-      Tutor: 0,
-      Right: 0,
-      You: 0,
-      Left: 0
-    };
-  }
-
-  function addSeatPenalties(left: Record<Seat, number>, right: Record<Seat, number>) {
-    return {
-      Tutor: left.Tutor + right.Tutor,
-      Right: left.Right + right.Right,
-      You: left.You + right.You,
-      Left: left.Left + right.Left
-    };
-  }
-
-  function seatPenaltiesForTricks(tricks: CompletedHandTrick[]) {
-    const totals = emptySeatPenalties();
-
-    for (const trick of tricks) {
-      const seat = seatByPlayerIndex[trick.winnerIndex];
-
-      if (seat) {
-        totals[seat] += trick.penalty;
-      }
-    }
-
-    return totals;
-  }
-
   function seatTricksWonForTricks(tricks: CompletedHandTrick[]) {
     const totals = emptySeatPenalties();
 
@@ -7413,18 +4363,6 @@
 
       if (seat) {
         totals[seat] += 1;
-      }
-    }
-
-    return totals;
-  }
-
-  function runSeatPenalties(results: FullHandRunResult[]) {
-    const totals = emptySeatPenalties();
-
-    for (const result of results) {
-      for (const seat of scoreSeats) {
-        totals[seat] += result.seatPenalties[seat] ?? 0;
       }
     }
 
@@ -7485,16 +4423,6 @@
     });
   }
 
-  function heartsMoonShooter(rawSeatPenalties: Record<Seat, number>) {
-    const total = scoreSeats.reduce((sum, seat) => sum + (rawSeatPenalties[seat] ?? 0), 0);
-
-    if (total !== heartsHandPenaltyTotal) {
-      return undefined;
-    }
-
-    return scoreSeats.find((seat) => rawSeatPenalties[seat] === heartsHandPenaltyTotal);
-  }
-
   function heartsMoonThreatSeat(rawSeatPenalties: Record<Seat, number>) {
     const total = scoreSeats.reduce((sum, seat) => sum + (rawSeatPenalties[seat] ?? 0), 0);
 
@@ -7503,22 +4431,6 @@
     }
 
     return scoreSeats.find((seat) => rawSeatPenalties[seat] === total);
-  }
-
-  function heartsScoredSeatPenalties(rawSeatPenalties: Record<Seat, number>) {
-    const shooter = heartsMoonShooter(rawSeatPenalties);
-
-    if (!shooter) {
-      return rawSeatPenalties;
-    }
-
-    return scoreSeats.reduce(
-      (scores, seat) => ({
-        ...scores,
-        [seat]: seat === shooter ? 0 : heartsHandPenaltyTotal
-      }),
-      emptySeatPenalties()
-    );
   }
 
   function heartsMoonResultText(shooter: Seat) {
@@ -7957,7 +4869,7 @@
 
   function fullHandResultHeading(hand: FullHandState) {
     if (hand.bridgeContract) {
-      const result = bridgeHandResultFor(hand);
+      const result = bridgeHandResultFor(hand, hand.bridgeBoardNumber ?? bridgeHandResults.length + 1);
       return `${hand.bridgeContract.label} ${result?.made ? "made" : "defeated"}`;
     }
 
@@ -7975,7 +4887,7 @@
 
   function fullHandResultText(hand: FullHandState, bridgeScores: { ns: number; ew: number }) {
     if (hand.bridgeContract) {
-      const result = bridgeHandResultFor(hand)!;
+      const result = bridgeHandResultFor(hand, hand.bridgeBoardNumber ?? bridgeHandResults.length + 1)!;
       const contract = hand.bridgeContract;
       return `Auction: ${bridgeAuctionSummary(hand.bridgeAuction ?? [])}. Contract: ${contract.label} by ${bridgeSeatLabel(contract.declarer)}; ${bridgeSeatLabel(contract.dummy)} was dummy. ${bridgeOpeningLeadSummary(hand)} Declarer side won ${result.tricks} tricks; defenders won ${result.defenders}. ${
         result.made ? `Contract made for ${formatSignedScore(result.score)}.`
@@ -8224,41 +5136,11 @@
     appView = "drill";
   }
 
-  async function loadGeneratedDrillCandidates(focusContract = "") {
+  function loadGeneratedDrillSessionSteps(focusContract = "") {
     const seed = usePracticeSeed();
-
-    try {
-      const drillSet = await invoke<GeneratedDrillSet>("generate_daily_drill_set", {
-        seed
-      });
-
-      const candidates = drillSet.scenarios
-        .map(drillStepFromGeneratedScenario)
-        .filter((step) => !focusContract || step.contract === focusContract);
-
-      if (candidates.length > 0) {
-        return { candidates, seed };
-      }
-    } catch {
-      const candidates = generateBrowserPlayBarbuDrillSteps(seed).filter(
-        (step) => !focusContract || step.contract === focusContract
-      );
-
-      if (candidates.length > 0) {
-        return { candidates, seed };
-      }
-    }
-
-    const fallbackCandidates = drillSteps.filter((step) => !focusContract || step.contract === focusContract);
-
-    return {
-      candidates: fallbackCandidates.length > 0 ? fallbackCandidates : [drillSteps[0]],
-      seed
-    };
-  }
-
-  async function loadGeneratedDrillSessionSteps(focusContract = "") {
-    const { candidates, seed } = await loadGeneratedDrillCandidates(focusContract);
+    const candidates = generateBarbuPracticeSet(seed).scenarios
+      .map(drillStepFromGeneratedScenario)
+      .filter((step) => !focusContract || step.contract === focusContract);
 
     if (focusContract) {
       return orderPracticePool(candidates, seed);
@@ -8466,59 +5348,12 @@
     appView = "drill";
   }
 
-  type HeartsGeneratedPracticeFocus =
-    | "first-trick"
-    | "avoid-hearts"
-    | "queen-danger"
-    | "break-hearts"
-    | "stop-moon"
-    | "score-hand";
-
-  const heartsGeneratedFallbackPools: Record<HeartsGeneratedPracticeFocus, DrillStep[]> = {
-    "first-trick": heartsFirstTrickDrillPool,
-    "avoid-hearts": heartsAvoidHeartsDrillPool,
-    "queen-danger": heartsQueenDangerDrillPool,
-    "break-hearts": heartsBreakHeartsDrillPool,
-    "stop-moon": heartsStopMoonDrillPool,
-    "score-hand": heartsScoreHandDrillPool
-  };
-
-  async function loadGeneratedHeartsPracticeSteps(seed: number, focus = "") {
-    try {
-      const drillSet = await invoke<GeneratedDrillSet>("generate_hearts_practice_set", {
-        seed,
-        focus: focus || null
-      });
-
-      const candidates = drillSet.scenarios.map(drillStepFromGeneratedScenario);
-
-      if (candidates.length > 0) {
-        return candidates;
-      }
-    } catch {
-      // Browser dev mode keeps using the authored fallback pools.
-    }
-
-    if (isHeartsGeneratedPracticeFocus(focus)) {
-      return heartsGeneratedFallbackPools[focus];
-    }
-
-    return heartsQuickDrillPools.flat();
-  }
-
-  function isHeartsGeneratedPracticeFocus(focus: string): focus is HeartsGeneratedPracticeFocus {
-    return (
-      focus === "first-trick" ||
-      focus === "avoid-hearts" ||
-      focus === "queen-danger" ||
-      focus === "break-hearts" ||
-      focus === "stop-moon" ||
-      focus === "score-hand"
-    );
+  function loadGeneratedHeartsPracticeSteps(seed: number, focus: HeartsPracticeFocus) {
+    return generateHeartsPracticeSet(seed, focus).scenarios.map(drillStepFromGeneratedScenario);
   }
 
   async function startGeneratedHeartsMicroDrill(
-    focus: HeartsGeneratedPracticeFocus,
+    focus: HeartsPracticeFocus,
     title: string,
     pathStepId = ""
   ) {
@@ -8543,21 +5378,9 @@
 
   async function startHeartsQuickDrill() {
     const seed = usePracticeSeed();
-    const generatedSteps = await loadGeneratedHeartsPracticeSteps(seed);
-    const generatedFamilies: HeartsGeneratedPracticeFocus[] = [
-      "first-trick",
-      "avoid-hearts",
-      "queen-danger",
-      "break-hearts",
-      "stop-moon",
-      "score-hand"
-    ];
-    const steps = generatedFamilies.map((family, index) => {
-      const familyCandidates = generatedSteps.filter((step) => step.scenarioId?.startsWith(`hearts-${family}`));
-      return familyCandidates.length > 0
-        ? selectGeneratedDrillCandidate(familyCandidates, seed + index * 11, [])
-        : heartsGeneratedFallbackPools[family][(seed + index) % heartsGeneratedFallbackPools[family].length];
-    });
+    const steps = heartsPracticeTopics.map((topic, index) =>
+      selectGeneratedDrillCandidate(loadGeneratedHeartsPracticeSteps(seed, topic), seed + index * 11, [])
+    );
     const offset = seed % steps.length;
 
     activeGameTable = "hearts";
@@ -8578,7 +5401,7 @@
     drillIndex = 0;
     drillResults = [];
     drillSetTitle = title;
-    activeDrillSteps = steps.length > 0 ? steps : [heartsAvoidHeartsDrillStep];
+    activeDrillSteps = steps;
     resetDrillDecision();
     appView = "drill";
   }
@@ -8833,13 +5656,7 @@
     heartsPassPracticeChecked = false;
     heartsPassPracticeError = "";
 
-    try {
-      heartsPassPractice = await invoke<HeartsPassScenario>("generate_hearts_pass_practice", {
-        seed
-      });
-    } catch {
-      heartsPassPractice = generateBrowserHeartsPassPractice(seed);
-    }
+    heartsPassPractice = generateHeartsPassPractice(seed);
   }
 
   async function nextHeartsPassPracticeStep() {
@@ -8989,37 +5806,8 @@
 
     selectedLessonId = lesson.id;
     activeTricks = lesson.tricks;
-    usingGeneratedPractice = false;
-    generatedPracticeError = "";
     trickIndex = 0;
     resetTrick();
-  }
-
-  function showFixedLesson() {
-    activeTricks = selectedLesson.tricks;
-    usingGeneratedPractice = false;
-    generatedPracticeError = "";
-    trickIndex = 0;
-    resetTrick();
-  }
-
-  async function loadGeneratedDrill() {
-    generatedPracticeError = "";
-
-    try {
-      const scenario = await invoke<GeneratedPracticeScenario>("generate_no_hearts_follow_suit", {
-        seed: practiceSeed
-      });
-
-      practiceSeed += 1;
-      activeTricks = [guidedTrickFromGeneratedScenario(scenario)];
-      usingGeneratedPractice = true;
-      trickIndex = 0;
-      resetTrick();
-    } catch {
-      usingGeneratedPractice = true;
-      generatedPracticeError = "Generated drills need the Tauri runtime. Use the fixed lesson here, or run Barbu with Tauri.";
-    }
   }
 
   function nextTrick() {
@@ -10912,6 +7700,7 @@
       </div>
 
       <div class="run-intro-panel">
+        {#if barbuSaveError}<p class="error" role="alert">{barbuSaveError}</p>{/if}
         <div class="run-session-summary" aria-label="Play Barbu session summary">
           <div>
             <span>Leader</span>
@@ -11427,16 +8216,12 @@
           <BridgeTable
             ariaLabel={`${fullHand.contract} hand table`}
             dummyHand={fullHand.dummyHand}
-            dummyLegalCardIds={fullHand.dummyLegalCardIds}
-            dummySelectedCardId={dummySelectedCardId}
+            playerHand={fullHand.playerHand}
             dummySeat={bridgeDummySeat}
-            dummySeatLabel={`${bridgeSeatLabel(bridgeDummySeat)} Dummy`}
             declarerSeat={bridgeDeclarerSeat}
             isDummyTurn={isBridgeDummyTurn}
             isReviewing={fullHandIsReviewingTrick}
-            onSelectDummy={selectDummyCard}
             pendingBySeat={fullHandPendingBySeat}
-            playerRoleLabel={`South ${bridgeUserSideDeclares ? "Declarer" : "Defender"}`}
             tableCards={fullHandVisibleTableCards}
           />
         {/snippet}
@@ -11550,7 +8335,7 @@
                   </div>
                   <div>
                     <span>Board</span>
-                    <strong>{bridgeHandResults.length + 1}</strong>
+                    <strong>{fullHand.bridgeBoardNumber ?? bridgeHandResults.length + 1}</strong>
                   </div>
                   <div>
                     <span>Score</span>
@@ -11687,7 +8472,7 @@
                       <span>Score</span>
                       <strong>NS {formatSignedScore(bridgeVisibleMatchScores.ns)}</strong>
                       <strong>EW {formatSignedScore(bridgeVisibleMatchScores.ew)}</strong>
-                      <strong>Board {bridgeHandResults.length + 1}</strong>
+                      <strong>Board {fullHand.bridgeBoardNumber ?? bridgeHandResults.length + 1}</strong>
                     </div>
                   </div>
                 </div>
@@ -11860,13 +8645,16 @@
               />
             {/if}
           {:else}
-            <div class:bridge-dummy-turn-feedback={isBridgeDummyTurn}>
+            <div class:bridge-dummy-turn-feedback={isBridgeDummyTurn} class:bridge-play-feedback={fullHandIsBridgeGame}>
               <ExerciseFeedback
                 eyebrow="Your turn"
                 title={isBridgeDummyTurn ? "Play from dummy" : fullHandIsBridgeGame ? (bridgeUserSideDeclares ? "Play as declarer" : "Defend the contract") : "Choose your card"}
-                result={isBridgeDummyTurn ? `You are declarer. Choose a card from ${bridgeSeatLabel(bridgeDummySeat)}'s exposed hand.` : fullHand.prompt}
+                result={fullHandIsBridgeGame ? bridgePlayPrompt : fullHand.prompt}
                 error={fullHandError}
               />
+              {#if fullHandIsBridgeGame}
+                <div class="bridge-active-hand-label">{bridgeActiveHandLabel}</div>
+              {/if}
             </div>
 
             {#if fullHandIsBridgeGame}
@@ -11966,7 +8754,10 @@
         statusValue={`${formatSignedScore(dominoScoreMap.You)} points`}
         tableAriaLabel="Domino layout"
         tableCards={[]}
-        showTable={false}
+        flowLayout
+        useCustomTable
+        surfaceClassName="domino-play-surface"
+        showTable={dominoHand.status !== "complete"}
         panelAriaLabel="Domino hand decision"
         onBack={openBarbuTable}
       >
@@ -12014,17 +8805,17 @@
               {/each}
             </div>
           {/if}
+        {/snippet}
 
-          {#if !fullHandRunIsComplete && dominoHand.status !== "complete"}
-            <div class="domino-layout hand-domino-layout" aria-label="Domino layout">
-              {#each dominoHand.layout as lane, index}
-                <div>
-                  <span>{dominoSuitLabel(index)}</span>
-                  <strong>{dominoLaneText(lane, dominoStartRank(dominoHand))}</strong>
-                </div>
-              {/each}
-            </div>
-          {/if}
+        {#snippet table()}
+          <div class="domino-layout hand-domino-layout" aria-label="Domino layout">
+            {#each dominoHand.layout as lane, index}
+              <div>
+                <span>{dominoSuitLabel(index)}</span>
+                <strong>{dominoLaneText(lane, dominoStartRank(dominoHand))}</strong>
+              </div>
+            {/each}
+          </div>
         {/snippet}
 
         {#snippet panel()}
@@ -12135,12 +8926,12 @@
       statusValue={`Decision ${currentDrillDecisionNumber} of ${activeDrillSteps.length}`}
       tableAriaLabel="Drill card table"
       pendingBySeat={currentDrillTrick.pendingBySeat}
-      showTable={!currentDrillIsDomino}
+      useCustomTable={currentDrillIsDomino}
       tableCards={currentDrillIsDomino ? [] : drillCompletedTable}
       panelAriaLabel="Drill decision"
       onBack={openActiveGameTable}
     >
-      {#snippet summary()}
+      {#snippet table()}
         {#if currentDrillIsDomino}
           <div class="domino-layout" aria-label="Domino drill layout">
             {#each drillDominoLayout as lane, index}
@@ -12483,10 +9274,7 @@
         />
 
         <div class="action-row">
-          {#if generatedPracticeError}
-            <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
-            <button class="primary-action" onclick={finishLesson} type="button">Mark practiced</button>
-          {:else if playedCard}
+          {#if playedCard}
             <button class="secondary-action" onclick={resetTrick} type="button">Reset</button>
             {#if isLastTrick}
               <button class="primary-action" onclick={finishLesson} type="button">Finish lesson</button>

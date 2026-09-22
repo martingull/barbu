@@ -22,6 +22,19 @@
   flex: none;
 }
 
+.app-shell.fixed-play-screen .table-play-surface.flow-play.bridge-play-surface {
+  --flow-panel-space: 106px;
+}
+
+.flow-play .bridge-play-feedback {
+  /* Keep the short turn prompt and hand label stable when control changes seats. */
+  min-height: 44px;
+}
+
+.app-shell.fixed-play-screen .flow-play.bridge-play-surface .bridge-current-hand-row {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play .full-hand-summary {
   gap: 3px;
   padding: 2px 0 5px;
@@ -42,6 +55,21 @@
 .flow-play.bridge-play-surface > .play-board-region {
   flex-basis: calc(var(--flow-card-width) * 5.6 + var(--flow-board-space));
   min-height: calc(var(--flow-card-width) * 5.6 + var(--flow-board-space));
+}
+
+.flow-play.domino-play-surface > .play-board-region {
+  container-type: inline-size;
+  flex-basis: auto;
+}
+
+.app-shell.fixed-play-screen .flow-play .play-board-region .hand-domino-layout {
+  height: 100%;
+  overflow: visible;
+}
+
+.flow-play .hand-domino-layout > div {
+  min-height: 64px;
+  overflow-wrap: anywhere;
 }
 
 .app-shell.fixed-play-screen .flow-play .play-board-region :is(.card-table, .table-tap-target) {

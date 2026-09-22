@@ -37,5 +37,6 @@ game within a rubber. New match resets points, bags, and rubber games as relevan
 
 `tests/e2e/game-completion.spec.ts` and `tests/e2e/hearts-match.spec.ts` cover score
 boundaries, wins, losses, ties, penalties, resume, completion events, and resets.
-Run `task ui:test` and `task core:test`. Browser mode is sufficient for these
-session/UI checks; native dealing and card legality remain Rust-backed on phones.
+Run `task ui:test` and `task domain:test`. Browser mode is sufficient for these
+session/UI checks; phones use the same TypeScript dealing and legality logic.
+Native packaging and integrations still require physical-device checks.
