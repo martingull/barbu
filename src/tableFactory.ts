@@ -1,4 +1,4 @@
-export const tableTabIds = ["learn", "practice", "play", "perfect"] as const;
+export const tableTabIds = ["learn", "play", "perfect"] as const;
 
 export type TableTabId = (typeof tableTabIds)[number];
 export type ActiveGameTable = "barbu" | "hearts" | "whist" | "spades" | "bridge" | string;
@@ -84,6 +84,7 @@ export type LearnPathStep<Action extends string = string> = {
   summary: string;
   action: Action;
   lessonId?: string;
+  exerciseAction?: string;
 };
 
 export type PracticeEntry<Action extends string = string> = {
@@ -119,7 +120,6 @@ export const monetizationPolicy = {
 
 const tabLabels: Record<TableTabId, string> = {
   learn: "Learn",
-  practice: "Practice",
   play: "Play",
   perfect: "Pro"
 };

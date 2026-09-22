@@ -1,5 +1,9 @@
-import type { Card, Suit } from "./lessonTypes";
+import type { Card, Seat, Suit } from "./lessonTypes";
 import { sortCardsForDisplay } from "./cardOrdering";
+
+export const compassSeatLabels: Record<Seat, string> = {
+  Tutor: "North", Right: "East", You: "South", Left: "West"
+};
 
 const suitSymbols: Record<Suit, string> = {
   C: "♣",

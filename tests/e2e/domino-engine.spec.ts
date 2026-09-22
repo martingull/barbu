@@ -100,8 +100,8 @@ for (const native of [false, true]) {
     await runtime(page, native);
     await page.goto("/");
     await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
-    await page.getByRole("tab", { name: "Practice", exact: true }).click();
-    await page.getByLabel("Full hand practice").getByRole("button", { name: /^Domino\b/ }).click();
+    await page.getByRole("tab", { name: "Learn", exact: true }).click();
+    await page.getByRole("button", { name: /^Try cards: Domino\b/ }).click();
     await expect(page.getByRole("heading", { name: "Domino hand", exact: true })).toBeVisible();
     const legal = page.locator(".domino-cards .full-hand-card.legal");
     if (await legal.count()) {

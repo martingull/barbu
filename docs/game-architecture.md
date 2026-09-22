@@ -11,7 +11,7 @@ David Parlett's *The Penguin Book of Card Games* is the starting reference for
 rules, terminology, and game families. For each game, record the chosen variant,
 source details available to us, intentional departures, and simplifications in
 `docs/<game>.md`. Do not invent book citations or assume all clubs use one ruleset.
-Write original teaching material. Learn, Practice, and Play must agree on the
+Write original teaching material. Learn (including exercises) and Play must agree on the
 chosen rules, scoring, and table conventions.
 
 ## Implementation Pattern
@@ -20,7 +20,7 @@ chosen rules, scoring, and table conventions.
 | --- | --- | --- |
 | Catalog and table metadata | `src/tableFactory.ts`, `src/games/whist.ts` | Use the factory and per-game definitions, not copied table markup. |
 | Registration | `src/gameRegistry.ts`, `src/games/index.ts` | Register metadata through the existing registry. |
-| Presentation | `GameTableShell`, `LearnPanel`, `PracticePanel`, `PlayTabPanel`, `TablePlaySurface`, `CardChoiceHand` | Reuse navigation, cards, selection, feedback, and responsive layout. |
+| Presentation | `GameTableShell`, `LearnPanel`, `CourseLesson`, `PlayTabPanel`, `TablePlaySurface`, `CardChoiceHand` | Reuse Learn/Play navigation, cards, selection, feedback, and responsive layout. |
 | Hand rules and actions | `src/domain/handEngine.ts` | Keep deterministic transitions independent of UI, storage, and Tauri. |
 | Match progression | `src/domain/whistSession.ts` | Own settlement, dealer rotation, replay, completion, and review state outside Svelte. |
 | Persistence | `src/persistence/whistSave.ts` | Validate and restore saves through an adapter; preserve compatibility or explicitly migrate it. |
@@ -82,11 +82,13 @@ replace copy-pasted screens with copy-pasted session or save implementations.
    out of `App.svelte`; wire only the required presentation and user actions.
 5. Add save validation, resume, replay, and compatibility tests. Ensure advancing
    a completed hand cannot score it twice, and practice cannot overwrite a match.
-6. Add Learn and Practice using the shared panels and gameplay rules. Preserve
+6. Add guided lessons and topic exercises to the shared Learn panel. Use
+   `CourseLesson` for concept/example/review and `TablePlaySurface` with
+   `flowLayout` for decisions. Keep course-progress keys stable. Preserve
    generated practice behavior during migration rather than silently replacing it.
 7. Test legality, conservation where applicable, scoring, completion, and opponent
    information limits. Add native/TypeScript comparison fixtures during migration.
-8. Exercise catalog, Learn, Practice, Play, save/resume, and completion in browser
+8. Exercise catalog, Learn topics and guided lessons, Play, save/resume, and completion in browser
    tests. Check small-screen layouts and a physical-device upgrade before release.
 9. Record what is migrated, what remains native, and which limitations remain.
    Remove legacy implementations and dispatch routes after their replacements

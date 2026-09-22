@@ -32,11 +32,6 @@ export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAct
         summary:
           "Bridge introduces basic natural bidding, the dummy, declarer play, and partnership defense."
       },
-      practice: {
-        eyebrow: "Practice",
-        title: "Repeat one Bridge habit.",
-        summary: "Repeat opening-bid, declarer-play, and defense decisions, then test the same habits in a full Bridge hand."
-      },
       play: {
         eyebrow: "Play",
         title: "Play a Bridge hand.",
@@ -57,11 +52,6 @@ export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAct
         { id: "declarer", label: "Declarer play", destination: "Bridge declarer concept" },
         { id: "dummy", label: "The Dummy", destination: "Bridge dummy concept" },
         { id: "defense", label: "Defense", destination: "Bridge defense concept" }
-      ],
-      practice: [
-        { id: "bidding", label: "Bidding", destination: "Bridge practice: Bidding" },
-        { id: "declarer-play", label: "Declarer play", destination: "Bridge practice: Declarer play" },
-        { id: "defense", label: "Defense", destination: "Bridge practice: Defense" }
       ],
       play: [{ id: "play-bridge", label: "Play Bridge", destination: "Bridge partnership hand" }]
     }

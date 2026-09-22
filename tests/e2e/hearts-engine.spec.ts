@@ -1,9 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 import native from "../fixtures/hearts-native-save.json" with { type: "json" };
-import { nativeHeartsPractice as practice } from "../fixtures/heartsPracticeFixture";
 import { createHeartsSession, transitionHeartsSession, heartsSessionSettlement } from "../../src/domain/heartsSession";
 import { saveHeartsSession } from "../../src/persistence/heartsSave";
 import { formatCardText } from "../../src/cardDisplay";
+import { generateHeartsPracticeSet, generateHeartsPassPractice, heartsPassPracticeCount } from "../../src/domain/heartsPractice";
 
 const key = "barbu.savedHeartsRun.v1";
 
@@ -94,45 +94,24 @@ test("Hearts practice uses TypeScript and cannot overwrite a passing match", asy
   await page.getByLabel("Your Hearts passing hand").locator("button").first().click();
   const saved = await page.evaluate(key => localStorage.getItem(key), key);
   await page.getByRole("button", { name: "Table", exact: true }).first().click();
-  await page.getByRole("tab", { name: "Practice", exact: true }).click();
-  await page.getByLabel("Hearts practice drills").getByRole("button", { name: /Pass three/ }).click();
+  await page.getByRole("tab", { name: "Learn", exact: true }).click();
+  const practiceSeed = await page.evaluate(() => Number(localStorage.getItem("barbu.practiceSeed.v1")));
+  await page.getByRole("button", { name: /^Try cards: Pass three/ }).click();
   await expect(page.getByLabel("Your Hearts pass practice hand")).toBeVisible();
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < heartsPassPracticeCount; i++) {
     const hand = page.getByLabel("Your Hearts pass practice hand");
-    for (const name of ["Q S", "A H", "K H"]) await hand.getByRole("button", { name, exact: true }).click();
+    for (const card of generateHeartsPassPractice(practiceSeed + i).recommendedPass) {
+      await hand.getByRole("button", { name: `${card.rank} ${card.suit}`, exact: true }).click();
+    }
     await page.getByRole("button", { name: "Check pass", exact: true }).click();
     await expect(page.getByLabel("Hearts pass practice cards")).toContainText("Good pass");
-    await page.getByRole("button", { name: i === 0 ? "Next pass" : "Complete exercise", exact: true }).click();
+    await page.getByRole("button", { name: i < heartsPassPracticeCount - 1 ? "Next pass" : "Complete exercise", exact: true }).click();
   }
   expect(await commands(page)).toEqual([]);
   expect(await page.evaluate(key => localStorage.getItem(key), key)).toBe(saved);
   await page.getByRole("tab", { name: "Play", exact: true }).click();
   await page.getByRole("button", { name: "Continue Hearts", exact: true }).click();
   await expect(page.getByLabel("Your Hearts passing hand").getByRole("button", { pressed: true })).toHaveCount(1);
-});
-
-test("Hearts quick drill includes exactly one decision from every topic without native commands", async ({ page }) => {
-  await mockNative(page);
-  await page.goto("/");
-  await openHearts(page);
-  await page.getByRole("tab", { name: "Practice", exact: true }).click();
-  await page.getByLabel("Hearts table actions").getByRole("button", { name: "Quick drill", exact: true }).click();
-  const topics = new Set<string>();
-  for (let i = 0; i < 6; i++) {
-    await expect(page.getByLabel("Drill progress")).toContainText(`${i} / 6 played`);
-    const text = await page.getByLabel("Drill decision").textContent();
-    const scenario = practice.sets[0].scenarios.find(s => text?.includes(formatCardText(s.prompt)))!;
-    expect(scenario).toBeDefined();
-    expect(topics.has(scenario.title)).toBe(false);
-    topics.add(scenario.title);
-    const id = scenario.outcomes.find(o => o.outcomeKind === "good")!.cardId;
-    await page.getByLabel("Your drill hand").getByRole("button", { name: `${id.slice(0, -1)} ${id.at(-1)}`, exact: true }).click();
-    await page.getByRole("button", { name: "Check answer", exact: true }).click();
-    await expect(page.getByLabel("Drill decision")).toContainText("Good");
-    await page.getByRole("button", { name: i === 5 ? "Review session" : "Next decision", exact: true }).click();
-  }
-  await expect(page.getByRole("heading", { name: "Session complete", exact: true })).toBeVisible();
-  expect(await commands(page)).toEqual([]);
 });
 
 for (const nativeRuntime of [false, true]) {
@@ -143,13 +122,13 @@ for (const nativeRuntime of [false, true]) {
       page.on("pageerror", error => errors.push(error.message));
       await page.goto("/");
       await openHearts(page);
-      await page.getByRole("tab", { name: "Practice", exact: true }).click();
-      await page.getByLabel("Hearts practice drills").getByRole("button", { name: title }).click();
+      await page.getByRole("tab", { name: "Learn", exact: true }).click();
+      await page.getByRole("button", { name: title === "First trick" ? /^First trick\b/ : `Try cards: ${title}`, exact: title !== "First trick" }).click();
       const seen = new Set<string>();
       for (let i = 0; i < 3; i++) {
-        await expect(page.getByLabel("Drill progress")).toContainText(`${i} / 3 played`);
+        await expect(page.getByLabel("Drill progress")).toContainText(`${i} / 3`);
         const text = await page.getByLabel("Drill decision").textContent();
-        const scenario = practice.sets[0].scenarios.find(s => text?.includes(formatCardText(s.prompt)));
+        const scenario = generateHeartsPracticeSet(0).scenarios.find(s => text?.includes(formatCardText(s.prompt)));
         expect(scenario).toBeDefined();
         expect(seen.has(scenario!.id)).toBe(false);
         seen.add(scenario!.id);

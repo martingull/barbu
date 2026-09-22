@@ -33,7 +33,7 @@ export function generateHeartsPracticeSet(seed: number, focus?: HeartsPracticeFo
       if (focus && focus !== topic) return;
       // Preserve native pool ordering without rounding large integer seeds.
       const scenarioSeed = BigInt(seed) * 97n + BigInt(index + round * 7);
-      const template = content.topics[index].scenarios[Number(scenarioSeed % 3n)];
+      const template = content.topics[index].scenarios[topic === "break-hearts" ? round : Number(scenarioSeed % 3n)];
       scenarios.push(createScenario(template, topic, scenarioSeed));
     });
   }
@@ -44,7 +44,7 @@ function createScenario(template: Template, topic: HeartsPracticeFocus, seed: bi
   const hand = template.hand.map(card);
   const led = template.ledSuit as Suit;
   const legal = topic === "score-hand" ? hand : legalHeartsCards(
-    hand, topic === "break-hearts" ? undefined : led, topic === "first-trick", template.heartsBroken ?? true
+    hand, template.before.length === 0 ? undefined : led, topic === "first-trick", template.heartsBroken ?? true
   );
   const scenario: GeneratedPracticeScenario = {
     id: `${template.id}-${seed}`, title: template.title, contract: "Hearts", ledSuit: led,
@@ -62,7 +62,7 @@ function evaluateChoice(s: GeneratedPracticeScenario, template: Template, topic:
   };
   if (!outcome.isLegal) {
     return { ...outcome, outcomeKind: "illegal", reason: "off_suit", explanation:
-      topic === "break-hearts"
+      topic === "break-hearts" && template.before.length === 0
         ? `${card.id} is not legal yet. Hearts have not been broken and you still have another suit.`
         : topic === "first-trick" && card.suit !== s.ledSuit && !s.playerHand.some(c => c.suit === s.ledSuit)
           ? `${card.id} is not legal on the first trick while you have a non-penalty discard.`
@@ -71,10 +71,15 @@ function evaluateChoice(s: GeneratedPracticeScenario, template: Template, topic:
   }
   if (topic === "break-hearts") {
     const onlyHearts = s.playerHand.every(card => card.suit === "H");
-    return { ...outcome, penalty: 0, outcomeKind: card.suit === "H" && cardRank(card) > 8 ? "risky" : "good",
-      explanation: card.suit !== "H" ? `${card.id} is legal. Lead a non-heart until hearts have been broken.`
-        : onlyHearts ? `${card.id} is legal because every card in your hand is a heart.`
-          : `${card.id} is legal because hearts are already broken, but low hearts are safer exits.` };
+    if (s.tableBeforeChoice.length) {
+      const completedTrick = [...s.tableBeforeChoice, { seat: "You" as const, card }, ...s.tableAfterChoice];
+      return { ...outcome, completedTrick, winner: trickWinner(completedTrick)!.seat,
+        penalty: completedTrick.reduce((sum, play) => sum + heartsPoints(play.card), 0),
+        explanation: `${card.id} follows hearts, as required. The other players can discard clubs and diamonds only because they have no hearts. Breaking hearts does not change the follow-suit rule.` };
+    }
+    return { ...outcome, explanation: onlyHearts
+      ? `${card.id} is legal because only hearts remain. This lead breaks hearts. Each follower must play a heart if they have one; otherwise they may discard another suit.`
+      : `${card.id} is a legal lead. Once hearts are broken, you may lead any suit you hold. Hearts are allowed, not required.` };
   }
   if (topic === "score-hand") {
     const points = heartsPoints(card);
@@ -127,16 +132,33 @@ function evaluateChoice(s: GeneratedPracticeScenario, template: Template, topic:
   return { ...outcome, winner, penalty, completedTrick, outcomeKind, reason, explanation };
 }
 
+export const heartsPassPracticeCount = content.passes.length;
+
 export function generateHeartsPassPractice(seed: number): HeartsPassScenario {
   checkSeed(seed);
-  const template = content.passes[seed % 2];
-  return { ...template, id: `${template.id}-${seed}`, playerHand: template.playerHand.map(card), recommendedPass: template.recommendedPass.map(card) };
+  const template = content.passes[seed % heartsPassPracticeCount];
+  return { ...template, id: `${template.id}-${seed}`, playerHand: template.playerHand.map(card),
+    recommendedPass: template.recommendedPass.map(card),
+    alternatives: template.alternatives.map(option => ({ ...option, cardIds: [...option.cardIds] })) };
 }
 
 export function evaluateHeartsPass(scenario: HeartsPassScenario, selectedIds: string[]) {
   const selected = [...new Set(selectedIds)];
-  const recommended = new Set(scenario.recommendedPass.map(card => card.id));
-  const matchedCards = selected.filter(id => recommended.has(id));
-  const isComplete = selected.length === 3 && selected.every(id => scenario.playerHand.some(card => card.id === id));
-  return { matchedCards, isComplete, isExact: isComplete && matchedCards.length === 3 };
+  const isComplete = selectedIds.length === 3 && selected.length === 3
+    && selected.every(id => scenario.playerHand.some(card => card.id === id));
+  if (!isComplete) return { isComplete, outcomeKind: "illegal" as const, explanation: "Choose exactly three different cards from your hand." };
+  const plans = [{ cardIds: scenario.recommendedPass.map(card => card.id), explanation: scenario.explanation }, ...scenario.alternatives];
+  const plan = plans.find(option => option.cardIds.length === 3 && option.cardIds.every(id => selected.includes(id)));
+  if (plan) return { isComplete, outcomeKind: "good" as const, explanation: plan.explanation };
+
+  const kept = scenario.playerHand.filter(card => !selected.includes(card.id));
+  const spades = kept.filter(card => card.suit === "S");
+  const exposedSpades = spades.length > 0 && spades.length <= 2 && spades.some(card => cardRank(card) >= 12);
+  const brokeClubs = scenario.playerHand.filter(card => card.suit === "C").length >= 6
+    && scenario.playerHand.some(card => card.suit === "C" && selected.includes(card.id));
+  const explanation = exposedSpades
+    ? "Your remaining high spades have little or no low cover. They can trap you with the queen."
+    : brokeClubs ? "You gave away low clubs that could help you duck tricks while keeping more dangerous cards."
+      : scenario.missedPlanExplanation;
+  return { isComplete, outcomeKind: "risky" as const, explanation: `Legal pass. ${explanation}` };
 }

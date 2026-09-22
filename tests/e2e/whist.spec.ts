@@ -16,12 +16,12 @@ async function openWhist(page: Page) {
   await page.getByRole("tab", { name: "Play" }).click();
 }
 
-test("Whist Learn and Practice stay reachable on small screens and complete each lesson", async ({ page }, info) => {
+test("Whist Learn and Play stay reachable on small screens and complete each lesson", async ({ page }, info) => {
   test.setTimeout(90_000);
   await page.setViewportSize({ width: 320, height: 568 });
   await page.goto("/");
   await openWhist(page);
-  for (const tab of ["Learn", "Practice"]) {
+  for (const tab of ["Learn", "Play"]) {
     await page.getByRole("tab", { name: tab, exact: true }).click();
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     const tabs = page.getByRole("tablist");
@@ -39,13 +39,13 @@ test("Whist Learn and Practice stay reachable on small screens and complete each
   }
   for (const course of courseCatalog.filter(course => course.game === "whist")) {
     await page.getByRole("tab", { name: "Learn", exact: true }).click();
-    await page.getByLabel("Whist lesson path").getByRole("button", { name: new RegExp(course.title) }).click();
+    await page.locator(`[data-skill="${course.pathStepId}"] .lesson-topic`).click();
     await expect(page.getByLabel("Whist course content")).toContainText(course.concept.body);
     await page.getByRole("button", { name: "See example" }).click();
     await expect(page.getByLabel(course.example.ariaLabel)).toBeVisible();
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: info.outputPath(`${course.id}-example-320.png`), fullPage: true });
-    await page.getByRole("button", { name: "Practice decision" }).click();
+    await page.getByRole("button", { name: "Try cards" }).click();
     for (let decision = 0; decision < 3; decision++) {
       await page.locator(".drill-hand .hand-card.legal").first().click();
       await page.getByRole("button", { name: "Check answer", exact: true }).click();

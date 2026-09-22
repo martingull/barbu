@@ -32,11 +32,6 @@ export const whistDef: GameDefinition<WhistLearnPathAction | WhistPracticeAction
         summary:
           "Whist teaches the partnership habits behind many later games: follow suit, manage trumps, lead strength, and read partner."
       },
-      practice: {
-        eyebrow: "Practice",
-        title: "Repeat one Whist habit.",
-        summary: "Repeat compact partnership trick-taking topics, then test the same habits in a full Whist hand."
-      },
       play: {
         eyebrow: "Play",
         title: "Play a partnership hand.",
@@ -56,14 +51,6 @@ export const whistDef: GameDefinition<WhistLearnPathAction | WhistPracticeAction
         { id: "follow-suit", label: "Follow suit", destination: "Whist follow-suit concept" },
         { id: "trumps", label: "Trump wins", destination: "Whist trump concept" },
         { id: "partner-suits", label: "Partner signals", destination: "Whist partnership concept" }
-      ],
-      practice: [
-        { id: "opening-lead", label: "Opening lead", destination: "Whist practice: Opening lead" },
-        { id: "follow-suit", label: "Follow suit", destination: "Whist practice: Follow suit" },
-        { id: "trump-or-discard", label: "Trump or discard", destination: "Whist practice: Trump or discard" },
-        { id: "third-hand-high", label: "Third hand high", destination: "Whist practice: Third hand high" },
-        { id: "return-partner-suit", label: "Return partner's suit", destination: "Whist practice: Return partner's suit" },
-        { id: "odd-tricks", label: "Count odd tricks", destination: "Whist practice: Count odd tricks" }
       ],
       play: [{ id: "play-whist", label: "Play Whist", destination: "Whist partnership hand" }]
     }

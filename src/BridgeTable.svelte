@@ -2,6 +2,7 @@
   import CardFace from "./CardFace.svelte";
   import CardTable from "./CardTable.svelte";
   import { sortCardsForDisplay } from "./cardOrdering";
+  import { compassSeatLabels } from "./cardDisplay";
   import type { Card, Seat, TableCard } from "./lessonTypes";
 
   type Props = {
@@ -28,12 +29,6 @@
     tableCards
   }: Props = $props();
 
-  const compassSeatLabels: Record<Seat, string> = {
-    Tutor: "North",
-    Right: "East",
-    You: "South",
-    Left: "West"
-  };
   // Keep the other visible hand above the table, never a second copy of the active hand.
   const showDeclarerHand = $derived(isDummyTurn && !isReviewing && dummySeat === "Tutor");
   const referenceSeat = $derived(showDeclarerHand ? "You" : dummySeat === "You" ? "Tutor" : dummySeat);

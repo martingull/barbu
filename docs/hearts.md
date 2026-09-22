@@ -6,7 +6,10 @@ across, then hold. The holder of 2C opens with that card. Players follow suit
 when possible; the highest card of the led suit wins, with no trumps.
 
 The first trick disallows penalty discards when a nonpenalty alternative exists.
-Hearts cannot be led until a heart has been discarded, unless only hearts remain.
+Hearts cannot be led until a heart has been played, unless only hearts remain.
+An all-heart lead also breaks hearts. Followers must still follow hearts when
+able; a player with no hearts may discard another suit. Once hearts are broken,
+the next leader may choose any suit, not necessarily hearts.
 The queen of spades alone does not break hearts. Each heart scores one penalty
 point and the queen of spades scores 13. Taking all 26 scores zero for that
 player and 26 for each opponent. After a complete hand, reaching 100 or more
@@ -34,6 +37,16 @@ at least eight points. A computer player pursues its own possible moon only with
 at least two controlling hearts or at least 20 captured points. These thresholds
 are teaching heuristics, not rules or evidence of expert strength. Authored
 passing exercises retain their scenario-specific recommendations.
+
+## Passing Practice
+
+Pass three contains three full-hand decisions: remove exposed high spades,
+preserve low exits, and create a diamond void. Each gives a defensive objective
+and explains the selected pass. The low-exits hand also accepts passing the queen
+with both diamonds as an alternative to passing the queen and high hearts.
+Other legal passes are labelled risky for the exercise's plan, not illegal or
+universally wrong. Incoming cards can refill a void or change the hand's risks.
+These replace the two legacy exercises that both required QS, KH and AH.
 
 ## Remaining Strength Gaps
 

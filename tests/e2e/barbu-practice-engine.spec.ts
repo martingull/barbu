@@ -15,7 +15,7 @@ async function openPractice(page: Page, native: boolean) {
   }, native);
   await page.goto("/");
   await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
-  await page.getByRole("tab", { name: "Practice", exact: true }).click();
+  await page.getByRole("tab", { name: "Learn", exact: true }).click();
 }
 
 async function checkDecision(page: Page, pool: GeneratedPracticeScenario[]) {
@@ -42,10 +42,10 @@ for (const native of [false, true]) {
       const errors: string[] = [];
       page.on("pageerror", error => errors.push(error.message));
       await openPractice(page, native);
-      await page.getByLabel("Fixed contract drills").getByRole("button", { name: new RegExp(`^${contract}\\b`) }).click();
+      await page.getByRole("button", { name: new RegExp(`^Try cards: ${contract}\\b`) }).click();
       const seen = new Set<string>();
       for (let i = 0; i < 4; i++) {
-        await expect(page.getByLabel("Drill progress")).toContainText(`${i} / 4 played`);
+        await expect(page.getByLabel("Drill progress")).toContainText(`${i} / 4`);
         const scenario = await checkDecision(page, generateBarbuPracticeSet(42, contract).scenarios);
         expect(seen.has(scenario.id)).toBe(false);
         seen.add(scenario.id);
@@ -60,7 +60,8 @@ for (const native of [false, true]) {
 
   test(`Barbu mixed practice includes Domino and persists review in ${native ? "native" : "browser"} mode`, async ({ page }, info) => {
     await openPractice(page, native);
-    await page.getByLabel("Barbu table actions").getByRole("button", { name: "Quick drill", exact: true }).click();
+    await page.getByRole("button", { name: /^Review results/ }).click();
+  await page.getByRole("button", { name: "Mixed contract review", exact: true }).click();
     const contracts: string[] = [];
     for (let i = 0; i < 7; i++) {
       const scenario = await checkDecision(page, generateBarbuPracticeSet(42).scenarios);

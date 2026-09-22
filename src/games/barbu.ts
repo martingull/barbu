@@ -1,8 +1,8 @@
 import type { GameDefinition } from "../gameRegistry";
 import { createGameTableDefinition } from "../tableFactory";
 
-export type BarbuLearnPathAction = "lesson" | "generated" | "review" | "planned";
-export type BarbuPracticeAction = "quick" | "fixed" | "domino";
+export type BarbuLearnPathAction = "lesson" | "planned";
+export type BarbuPracticeAction = "fixed" | "domino";
 
 export const barbuDef: GameDefinition<BarbuLearnPathAction | BarbuPracticeAction> = {
   table: createGameTableDefinition({
@@ -31,11 +31,6 @@ export const barbuDef: GameDefinition<BarbuLearnPathAction | BarbuPracticeAction
         title: "Learn the Barbu table.",
         summary: "Start with compact guided card decisions, then move into drills and a full table session."
       },
-      practice: {
-        eyebrow: "Practice",
-        title: "Sharpen one decision at a time.",
-        summary: "Use short mixed drills when you want rhythm, or isolate one contract pattern when a rule feels weak."
-      },
       play: {
         eyebrow: "Play",
         title: "Challenge the table.",
@@ -55,11 +50,6 @@ export const barbuDef: GameDefinition<BarbuLearnPathAction | BarbuPracticeAction
         { id: "continue-path", label: "Continue with next lesson", destination: "Next Barbu learning step" },
         { id: "reference", label: "Reference", destination: "Barbu reference" },
         { id: "contracts", label: "Barbu contracts", destination: "Barbu contract map" }
-      ],
-      practice: [
-        { id: "quick-drill", label: "Quick drill", destination: "Barbu practice: Quick drill" },
-        { id: "fixed-drills", label: "Fixed drills", destination: "Barbu practice: Fixed drills" },
-        { id: "domino-hand", label: "Play a full layout hand", destination: "Barbu practice: Play a full layout hand" }
       ],
       play: [
         { id: "continue-play-barbu", label: "Continue Play Barbu", destination: "Saved Play Barbu run" },
@@ -126,41 +116,11 @@ export const barbuDef: GameDefinition<BarbuLearnPathAction | BarbuPracticeAction
       title: "Build Domino",
       summary: "Place sevens and extend suit lanes.",
       action: "lesson",
-      lessonId: "barbu-domino"
-    },
-    {
-      id: "generated-drill",
-      step: "Practice",
-      title: "Practice table",
-      summary: "Run generated practice decisions and review the next repetition.",
-      action: "generated"
-    },
-    {
-      id: "review",
-      step: "Review",
-      title: "Review the hand",
-      summary: "Review your latest table and choose what to practice next.",
-      action: "review"
+      lessonId: "barbu-domino",
+      exerciseAction: "domino"
     }
   ],
   practiceGroups: [
-    {
-      id: "practice-actions",
-      ariaLabel: "Barbu table actions",
-      eyebrow: "Practice",
-      title: "Practice actions",
-      layout: "action-list",
-      entries: [
-        {
-          id: "quick-drill",
-          label: "Practice",
-          title: "Quick drill",
-          summary: "Run a short mixed-contract loop with immediate feedback.",
-          action: "quick",
-          group: "practice-actions"
-        }
-      ]
-    },
     {
       id: "fixed-drills",
       ariaLabel: "Fixed contract drills",
@@ -179,7 +139,7 @@ export const barbuDef: GameDefinition<BarbuLearnPathAction | BarbuPracticeAction
         {
           id: "domino-hand",
           label: "Domino",
-          title: "Play a full layout hand",
+          title: "Domino",
           summary: "Use the same Domino table as Play Barbu: open suits, pass only when blocked, and race to go out.",
           action: "domino",
           group: "full-hands"

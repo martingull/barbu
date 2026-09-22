@@ -118,6 +118,10 @@
   box-shadow: none;
 }
 
+.flow-play .table-play-panel > * {
+  flex-shrink: 0;
+}
+
 /* Reset the former independent viewport anchors, including short-screen rules. */
 .app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play .table-play-panel :is(.result, .outcome, .explanation, .full-hand-cards, .action-row) {
   position: static;
@@ -197,6 +201,40 @@
 
 .app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play.table-hidden .table-play-panel {
   flex: 1;
+  justify-content: flex-end;
+}
+
+.app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play.table-hidden .full-hand-cards {
+  margin-top: 0;
+}
+
+.app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play.learning-play-surface .table-play-panel .full-hand-cards:not(:has(> :nth-child(8))) {
+  grid-template-rows: calc(var(--flow-card-width) * 1.4);
+  height: calc(var(--flow-card-width) * 1.4);
+}
+
+.app-shell.fixed-play-screen .table-play-surface.flow-play.learning-play-surface:not(:has(.full-hand-cards > :nth-child(8))) {
+  --flow-hand-height: calc(var(--flow-card-width) * 1.4);
+}
+
+.app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play.learning-play-surface .table-play-panel:has(.full-hand-cards) .action-row {
+  margin-top: 0;
+}
+
+.app-shell.fixed-play-screen .flow-play.learning-copy-surface .table-play-panel {
+  min-height: 0;
+  justify-content: flex-start;
+}
+
+.learning-copy-surface .play-board-region { flex-basis: 160px; }
+
+.flow-play .full-hand-summary-row.learning-drill-summary {
+  grid-template-columns: 1fr 1fr 2fr;
+}
+
+.learning-play-surface .play-board-region > .domino-layout {
+  min-height: 140px;
+  height: 100%;
 }
 
 .app-shell.fixed-play-screen .flow-play .play-board-region .bridge-table {

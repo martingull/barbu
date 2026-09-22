@@ -124,7 +124,7 @@ table metadata with `createGameTableDefinition`, and register the definition in
 `src/games/index.ts`. Together these own:
 
 - catalog entries and free/pack access labels
-- the shared `Learn | Practice | Play | Pro` tab metadata
+- the shared `Learn | Play` navigation (future Pro metadata stays hidden)
 - table title, family, reference id, scorecard direction, and default tab
 - learn path step metadata
 - practice entry and practice group metadata
@@ -132,11 +132,21 @@ table metadata with `createGameTableDefinition`, and register the definition in
 `src/App.svelte` should consume that metadata through the shared table shell before adding game-specific behavior. The intended split is:
 
 - render the topbar and tab rail from `gameTableDefinitions` and `tableTabsFor`
-- render Learn with `LearnPanel`
-- render Practice with `PracticePanel`
+- render guided lessons, topic exercises, progress, and reference together with `LearnPanel`
+- render concept/example/review stages with `CourseLesson` and interactive decisions with `TablePlaySurface` in `flowLayout` mode, just like Play
 - reuse `PlayTabPanel` and shared card/table components for presentation
 - keep only route, selection, and action-dispatch glue in `App.svelte`; match progression and saved-game rules belong outside the component, as demonstrated by the Whist prototype
 - keep access decisions centralized; do not expose planned Pro features merely because their metadata exists
+
+Practice is an activity within Learn, not a separate navigation tab. Keep the
+existing course-progress and saved-game keys stable when changing presentation.
+Show each skill once: a guided lesson with an optional `Try cards` shortcut,
+matched by action (or lesson id for Barbu). Use `exerciseAction` only for an
+explicit mapping such as Domino. Do not add a second list of the same topics or
+a prominent mixed Quick drill. Review is secondary, not a required lesson;
+adaptive review of learned skills and mistakes remains future work.
+New games must use the same learning menu and compact card/action layout;
+special rules belong in game content and action handlers, not a new learning shell.
 
 For each new game, follow the checklist in `docs/game-architecture.md`. Whist is
 the current reference for the TypeScript hand/session/save separation, not a

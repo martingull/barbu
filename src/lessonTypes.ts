@@ -74,6 +74,8 @@ export type HeartsPassScenario = {
   playerHand: Card[];
   recommendedPass: Card[];
   explanation: string;
+  missedPlanExplanation: string;
+  alternatives: Array<{ cardIds: string[]; explanation: string }>;
 };
 
 export type GeneratedPracticeOutcome = {

@@ -1,5 +1,5 @@
 import type { Seat, TableCard } from "./lessonTypes";
-
+import { bridgeCourses } from "./lessons/bridgeCourses";
 
 export type CourseStage = "concept" | "example" | "review";
 
@@ -22,11 +22,12 @@ export type CoursePracticeTarget =
   | { kind: "guided-lesson"; game: "barbu"; lessonId: string }
   | { kind: "practice"; game: "hearts"; action: string }
   | { kind: "practice"; game: "whist"; action: string }
-  | { kind: "practice"; game: "spades"; action: string };
+  | { kind: "practice"; game: "spades"; action: string }
+  | { kind: "practice"; game: "bridge"; action: string };
 
 export type CourseContent = {
   id: string;
-  game: "barbu" | "hearts" | "whist" | "spades";
+  game: "barbu" | "hearts" | "whist" | "spades" | "bridge";
   pathStepId: string;
   practiceTarget: CoursePracticeTarget;
   contract: string;
@@ -508,25 +509,25 @@ export const courseCatalog: CourseContent[] = [
       body:
         "Passing is your first defensive decision. Move obvious danger cards, or shape your hand so one suit becomes easier to run out of.",
       points: [
-        { marker: "1", text: "Queen of spades and high hearts are common pass candidates." },
+        { marker: "1", text: "High spades without low cover can trap you with the queen." },
         { marker: "2", text: "A long suit can be useful, so do not break it casually." },
-        { marker: "3", text: "Passing should make the first tricks easier to survive." }
+        { marker: "3", text: "Emptying a suit can open discards, unless incoming cards refill it." }
       ]
     },
     example: {
-      heading: "You hold the queen of spades and high hearts.",
+      heading: "Your only spades are queen, king and ace.",
       body:
-        "That hand carries obvious danger. Passing Q S, A H, and K H removes cards that can trap you in expensive tricks.",
+        "Passing only the queen leaves ace and king without low cover. Passing all three spades removes that risk; the three cards you receive may change your plan.",
       sequence: [
         { label: "Danger", text: "QS can cost thirteen points." },
-        { label: "Hearts", text: "AH and KH can win heart tricks later." },
-        { label: "Pass", text: "Move the danger before play starts." }
+        { label: "Cover", text: "AS and KS can catch the queen after you pass it." },
+        { label: "Pass", text: "Move QS, KS and AS together." }
       ],
       ariaLabel: "Pass three example table",
       tableCards: [
         { seat: "You", card: { id: "QS", rank: "Q", suit: "S", label: "QS" } },
-        { seat: "You", card: { id: "AH", rank: "A", suit: "H", label: "AH" } },
-        { seat: "You", card: { id: "KH", rank: "K", suit: "H", label: "KH" } }
+        { seat: "You", card: { id: "KS", rank: "K", suit: "S", label: "KS" } },
+        { seat: "You", card: { id: "AS", rank: "A", suit: "S", label: "AS" } }
       ],
       pendingBySeat: { You: "pass three" }
     },
@@ -551,9 +552,9 @@ export const courseCatalog: CourseContent[] = [
     concept: {
       heading: "Hearts cannot be led until they are broken.",
       body:
-        "In this Hearts table, hearts become open after a heart has been discarded into a trick. Until then, you do not lead hearts unless your hand leaves no alternative.",
+        "The first heart played breaks hearts, including a lead from an all-heart hand. Before that, lead another suit if you can. Afterward, any suit may be led.",
       points: [
-        { marker: "1", text: "Track whether any heart has appeared off-suit." },
+        { marker: "1", text: "Follow the led suit whenever you hold it, even hearts." },
         { marker: "2", text: "Before hearts are broken, lead a non-heart if you can." },
         { marker: "3", text: "When only hearts remain, leading hearts is legal." }
       ]
@@ -563,7 +564,7 @@ export const courseCatalog: CourseContent[] = [
       body:
         "If you are on lead and still hold clubs, diamonds, or spades, choose one of those suits before leading a heart.",
       sequence: [
-        { label: "State", text: "No heart has been discarded yet." },
+        { label: "State", text: "No heart has been played yet." },
         { label: "Hand", text: "You still have a club." },
         { label: "Lead", text: "Lead the club, not a heart." }
       ],
@@ -578,11 +579,11 @@ export const courseCatalog: CourseContent[] = [
     review: {
       heading: "The broken-hearts rule controls early leads.",
       body:
-        "You practiced checking the table state before leading a heart.",
+        "Breaking hearts permits heart leads. It never requires the next leader to choose hearts, and it never removes the duty to follow suit.",
       points: [
-        { marker: "OK", text: "Hearts open after a heart is discarded." },
-        { marker: "OK", text: "Lead another suit while you can." },
-        { marker: "OK", text: "All-hearts hands are the exception." }
+        { marker: "OK", text: "An all-heart hand may lead hearts before they are broken." },
+        { marker: "OK", text: "Follow hearts if you have them; discard freely only when void." },
+        { marker: "OK", text: "After hearts break, the next leader may choose any suit." }
       ]
     }
   },
@@ -1214,5 +1215,6 @@ export const courseCatalog: CourseContent[] = [
         { marker: "OK", text: "Deal moves clockwise; five points wins a game, two games wins a rubber." }
       ]
     }
-  }
+  },
+  ...bridgeCourses
 ];

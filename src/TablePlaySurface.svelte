@@ -17,6 +17,7 @@
     panel: Snippet;
     panelAriaLabel: string;
     pendingBySeat?: Partial<Record<Seat, string>>;
+    seatLabels?: Partial<Record<Seat, string>>;
     statusLabel: string;
     statusValue: string;
     showTable?: boolean;
@@ -43,6 +44,7 @@
     panel,
     panelAriaLabel,
     pendingBySeat = {},
+    seatLabels = {},
     statusLabel,
     statusValue,
     showTable = true,
@@ -122,10 +124,10 @@
           tabindex="0"
           aria-label="Continue to next trick"
         >
-          <CardTable ariaLabel={tableAriaLabel} {pendingBySeat} {tableCards} />
+          <CardTable ariaLabel={tableAriaLabel} {pendingBySeat} {tableCards} {seatLabels} />
         </div>
       {:else}
-        <CardTable ariaLabel={tableAriaLabel} {pendingBySeat} {tableCards} />
+        <CardTable ariaLabel={tableAriaLabel} {pendingBySeat} {tableCards} {seatLabels} />
       {/if}
     {/snippet}
 

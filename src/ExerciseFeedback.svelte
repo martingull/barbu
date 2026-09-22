@@ -37,7 +37,7 @@
   <p class="outcome warning">{error}</p>
 {/if}
 
-{#if explanation}
+{#if explanation && formatCardText(explanation) !== formatCardText(result)}
   <p class="explanation">{formatCardText(explanation)}</p>
 {/if}
 

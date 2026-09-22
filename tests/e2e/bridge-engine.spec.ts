@@ -163,8 +163,8 @@ test("Bridge replay preserves the deal, next board settles once, and practice ca
   expect((await saved(page)).results).toHaveLength(1);
   const before = await page.evaluate(key => localStorage.getItem(key), key);
   await page.getByRole("button", { name: "Table", exact: true }).first().click();
-  await page.getByRole("tab", { name: "Practice", exact: true }).click();
-  await page.getByLabel("Bridge practice drills").getByRole("button", { name: /Declarer play/ }).click();
+  await page.getByRole("tab", { name: "Learn", exact: true }).click();
+  await page.getByRole("button", { name: /^Try cards: Declarer play/ }).click();
   await expect(page.getByLabel("Your drill hand")).toBeVisible();
   expect(await page.evaluate(key => localStorage.getItem(key), key)).toBe(before);
 });

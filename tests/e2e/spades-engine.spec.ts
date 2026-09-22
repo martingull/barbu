@@ -42,6 +42,8 @@ test("Spades bids, plays and resumes review without native commands", async ({ p
   await page.getByLabel("Your Spades hand").locator(".hand-card.legal").first().click();
   await page.getByRole("button", { name: "Play card", exact: true }).click();
   await expect(page.getByRole("button", { name: "Next trick", exact: true })).toBeVisible();
+  await expect(page.getByLabel("Spades hand decision")).not.toContainText("odd tricks above six");
+  await expect(page.getByLabel("Spades hand decision")).toContainText(/bid tricks|bid \d+ (reached|covered)/);
   await page.screenshot({ path: info.outputPath("spades-review.png"), fullPage: true });
   await page.reload();
   await openSpades(page);
@@ -97,8 +99,8 @@ test("Spades settles one hand on a double tap and practice preserves its save", 
   expect((await saved(page)).results).toHaveLength(1);
   const before = await page.evaluate(key => localStorage.getItem(key), key);
   await page.getByRole("button", { name: "Table", exact: true }).first().click();
-  await page.getByRole("tab", { name: "Practice", exact: true }).click();
-  await page.getByLabel("Spades practice drills").getByRole("button", { name: /Follow suit/ }).click();
+  await page.getByRole("tab", { name: "Learn", exact: true }).click();
+  await page.getByRole("button", { name: /^Try cards: Follow suit/ }).click();
   await expect(page.getByLabel("Your drill hand")).toBeVisible();
   expect(await page.evaluate(key => localStorage.getItem(key), key)).toBe(before);
 });

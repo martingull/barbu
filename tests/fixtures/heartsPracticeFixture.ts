@@ -21,5 +21,5 @@ export const nativeHeartsPractice = {
   passes: snapshot.passCases.map(id => {
     const pass = snapshot.passes.find(p => p.id === pattern(id))!;
     return { ...pass, id, playerHand: pass.playerHand.map(card), recommendedPass: pass.recommendedPass.map(card) };
-  }) as HeartsPassScenario[]
+  }) as Omit<HeartsPassScenario, "alternatives" | "missedPlanExplanation">[]
 };

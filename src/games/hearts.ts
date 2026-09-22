@@ -2,7 +2,7 @@ import type { GameDefinition } from "../gameRegistry";
 import { createGameTableDefinition } from "../tableFactory";
 
 export type HeartsLearnPathAction = "object" | "queen" | "avoid" | "pass" | "break" | "moon" | "score";
-export type HeartsPracticeAction = "quick" | "pass" | "first" | "avoid" | "queen" | "break" | "moon" | "score";
+export type HeartsPracticeAction = "pass" | "first" | "avoid" | "queen" | "break" | "moon" | "score";
 
 export const heartsDef: GameDefinition<HeartsLearnPathAction | HeartsPracticeAction> = {
   table: createGameTableDefinition({
@@ -31,12 +31,6 @@ export const heartsDef: GameDefinition<HeartsLearnPathAction | HeartsPracticeAct
         title: "Learn the Hearts table.",
         summary: "Move through short card decisions before playing full hands."
       },
-      practice: {
-        eyebrow: "Practice",
-        title: "Repeat the Hearts habits.",
-        summary:
-          "Use short drills for the danger cards, then move into live-hand practice for broken hearts, moon defense, and score reading."
-      },
       play: {
         eyebrow: "Play",
         title: "Play a Hearts match.",
@@ -57,16 +51,6 @@ export const heartsDef: GameDefinition<HeartsLearnPathAction | HeartsPracticeAct
         { id: "passing", label: "Pass three", destination: "Hearts passing concept" },
         { id: "score-reading", label: "Score reading", destination: "Hearts score concept" },
         { id: "reference", label: "Reference", destination: "Hearts reference" }
-      ],
-      practice: [
-        { id: "quick-drill", label: "Quick drill", destination: "Hearts practice: Quick drill" },
-        { id: "pass-three", label: "Pass three", destination: "Hearts practice: Pass three" },
-        { id: "first-trick", label: "First trick", destination: "Hearts practice: First trick" },
-        { id: "avoid-hearts", label: "Avoid hearts", destination: "Hearts practice: Avoid hearts" },
-        { id: "queen-danger", label: "Queen of Spades danger", destination: "Hearts practice: Queen of Spades danger" },
-        { id: "break-hearts", label: "Break hearts", destination: "Hearts practice: Break hearts" },
-        { id: "stop-the-moon", label: "Stop the moon", destination: "Hearts practice: Stop the moon" },
-        { id: "score-a-hand", label: "Score a hand", destination: "Hearts practice: Score a hand" }
       ],
       play: [{ id: "play-hearts", label: "Play Hearts", destination: "Hearts rotating-pass match" }]
     }
@@ -97,14 +81,14 @@ export const heartsDef: GameDefinition<HeartsLearnPathAction | HeartsPracticeAct
       id: "hearts-pass",
       step: "Before play",
       title: "Pass three",
-      summary: "Move obvious danger cards before the first trick starts.",
+      summary: "Remove danger, keep low exits, and create a void.",
       action: "pass"
     },
     {
       id: "hearts-break",
       step: "Rule",
       title: "Break hearts",
-      summary: "Learn when hearts can legally be led.",
+      summary: "Lead, follow, and choose the next suit after hearts break.",
       action: "break"
     },
     {
@@ -124,23 +108,6 @@ export const heartsDef: GameDefinition<HeartsLearnPathAction | HeartsPracticeAct
   ],
   practiceGroups: [
     {
-      id: "practice-actions",
-      ariaLabel: "Hearts table actions",
-      eyebrow: "Practice",
-      title: "Practice actions",
-      layout: "action-list",
-      entries: [
-        {
-          id: "quick-drill",
-          label: "Practice",
-          title: "Quick drill",
-          summary: "Run a short mixed Hearts loop with immediate feedback.",
-          action: "quick",
-          group: "practice-actions"
-        }
-      ]
-    },
-    {
       id: "fixed-drills",
       ariaLabel: "Hearts practice drills",
       eyebrow: "Practice set",
@@ -151,7 +118,7 @@ export const heartsDef: GameDefinition<HeartsLearnPathAction | HeartsPracticeAct
           id: "pass-three",
           label: "Passing",
           title: "Pass three",
-          summary: "Choose the three danger cards before the hand begins.",
+          summary: "Three hands: exposed spades, low exits, and a void.",
           action: "pass",
           group: "fixed-drills"
         },
@@ -183,7 +150,7 @@ export const heartsDef: GameDefinition<HeartsLearnPathAction | HeartsPracticeAct
           id: "break-hearts",
           label: "Play restriction",
           title: "Break hearts",
-          summary: "Decide whether a heart lead is legal before hearts have been broken.",
+          summary: "Three positions: an all-heart lead, following hearts, and the next lead.",
           action: "break",
           group: "fixed-drills"
         },

@@ -262,24 +262,9 @@
       "topic": "break-hearts",
       "scenarios": [
         {
-          "id": "hearts-break-hearts-blocked",
-          "title": "Break hearts",
-          "prompt": "You are on lead. Hearts have not been broken, and you still have non-hearts. Choose a legal lead.",
-          "ledSuit": "H",
-          "heartsBroken": false,
-          "hand": [
-            "9C",
-            "QD",
-            "AS",
-            "2H"
-          ],
-          "before": [],
-          "after": []
-        },
-        {
           "id": "hearts-break-hearts-only-hearts",
-          "title": "Break hearts",
-          "prompt": "You are on lead. Hearts have not been broken, but every card in your hand is a heart.",
+          "title": "Only hearts remain",
+          "prompt": "No heart has been played. You won the previous trick and have only hearts left. Choose your lead.",
           "ledSuit": "H",
           "heartsBroken": false,
           "hand": [
@@ -291,9 +276,23 @@
           "after": []
         },
         {
+          "id": "hearts-break-hearts-follow",
+          "title": "Follow the heart lead",
+          "prompt": "Now consider the follower's decision. Barbu has led 2H from an all-heart hand. Choose your card.",
+          "ledSuit": "H",
+          "heartsBroken": true,
+          "hand": [
+            "KH",
+            "6D",
+            "10S"
+          ],
+          "before": [["Tutor", "2H"], ["Right", "4C"]],
+          "after": [["Left", "9D"]]
+        },
+        {
           "id": "hearts-break-hearts-already-broken",
-          "title": "Break hearts",
-          "prompt": "Hearts have already been broken. You may lead a heart, but a low exit is usually safer.",
+          "title": "Choose the next lead",
+          "prompt": "In this later position, hearts are broken and you won the last trick. Choose a legal lead.",
           "ledSuit": "H",
           "heartsBroken": true,
           "hand": [
@@ -483,7 +482,9 @@
   ],
   "passes": [
     {
-      "explanation": "Beginner pass rule: move the obvious danger cards before the hand starts. Later we can teach suit-shortening and table reads.",
+      "explanation": "Passing all three high spades removes the queen and the ace/king that could catch it later. High hearts remain a risk; incoming cards may change the plan.",
+      "missedPlanExplanation": "The queen, king and ace have no low spade cover. For this exercise, pass them together rather than leaving high spades behind.",
+      "alternatives": [],
       "id": "hearts-pass",
       "playerHand": [
         "2C",
@@ -500,16 +501,23 @@
         "KH",
         "AH"
       ],
-      "prompt": "Choose three cards to pass. Start with Queen of Spades, high hearts, then dangerous high spades.",
+      "prompt": "Your only spades are the queen, king and ace. Choose a pass that removes this exposed spade holding.",
       "recommendedPass": [
         "QS",
-        "AH",
-        "KH"
+        "KS",
+        "AS"
       ],
-      "title": "Pass the danger cards"
+      "title": "Remove exposed spades"
     },
     {
-      "explanation": "This hand keeps 2C through 8C together. A long suit can become a planned exit route, so pass the danger cards without breaking the run.",
+      "explanation": "The queen has only one low spade for cover. Passing it with both high hearts removes danger while keeping your low clubs together.",
+      "missedPlanExplanation": "Keep the low club run as exits. Move the exposed queen with the high hearts, or with both diamonds to create a void.",
+      "alternatives": [
+        {
+          "cardIds": ["QS", "2D", "4D"],
+          "explanation": "A sound alternative: move the queen and empty diamonds without breaking the clubs. You keep high hearts, and incoming diamonds may refill the void."
+        }
+      ],
       "id": "hearts-pass-long-clubs",
       "playerHand": [
         "2C",
@@ -526,13 +534,23 @@
         "KH",
         "AH"
       ],
-      "prompt": "Choose three cards to pass while keeping the long club run together for later control.",
+      "prompt": "Keep the long club run as low exits. Remove danger or create a diamond void with your three-card pass.",
       "recommendedPass": [
         "QS",
         "AH",
         "KH"
       ],
-      "title": "Build a long suit"
+      "title": "Keep low exits"
+    },
+    {
+      "id": "hearts-pass-diamond-void",
+      "title": "Create a void",
+      "prompt": "Diamonds are a short suit headed by ace and king. Pass three cards to empty that suit while keeping your low spades.",
+      "playerHand": ["2C", "4C", "6C", "8C", "3D", "KD", "AD", "2S", "5S", "8S", "2H", "KH", "AH"],
+      "recommendedPass": ["3D", "KD", "AD"],
+      "explanation": "All three diamonds leave together. If no diamonds arrive, later diamond leads let you discard danger. Keep low spades to duck under the queen.",
+      "missedPlanExplanation": "Passing only the high diamonds leaves 3D, so you must still follow diamonds. For this exercise, empty the suit and keep your low spades.",
+      "alternatives": []
     }
   ]
 }

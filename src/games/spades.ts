@@ -32,11 +32,6 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
         summary:
           "Spades starts from Whist-family table habits, then makes one thing constant: spades are always trump."
       },
-      practice: {
-        eyebrow: "Practice",
-        title: "Practice one Spades habit.",
-        summary: "Repeat short scripted decisions for follow-suit, trump choices, book targets, and avoiding unnecessary bags."
-      },
       play: {
         eyebrow: "Play",
         title: "Play a Spades hand.",
@@ -56,12 +51,6 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
         { id: "fixed-trump", label: "Spades trump", destination: "Spades fixed-trump concept" },
         { id: "books", label: "Books", destination: "Spades books concept" },
         { id: "bidding", label: "Bidding", destination: "Spades bidding concept" }
-      ],
-      practice: [
-        { id: "follow-suit", label: "Follow suit", destination: "Spades practice: Follow suit" },
-        { id: "trump-or-discard", label: "Trump or discard", destination: "Spades practice: Trump or discard" },
-        { id: "bid-books", label: "Bid books", destination: "Spades practice: Bid books" },
-        { id: "bags", label: "Avoid bags", destination: "Spades practice: Avoid bags" }
       ],
       play: [{ id: "play-spades", label: "Play Spades", destination: "Spades scored hand" }]
     }
