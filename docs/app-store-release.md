@@ -13,10 +13,11 @@ The previous Apple account/signing blocker is resolved: team `3PB43Q6B3W`
 successfully exported with a cloud-managed Apple Distribution certificate and
 an iOS Team Store provisioning profile. The exported signature passes
 `codesign --verify --deep --strict`; `get-task-allow` is false and
-`testFlightInternalTestingOnly` is false. No build has been uploaded or submitted
-as part of this preparation. The App Store Connect record is named
-`Barbu - The king of cards`. Confirm its bundle ID and uploaded build history
-before upload.
+`testFlightInternalTestingOnly` is false. Version 1.0.3 (4) was successfully
+uploaded from the preserved archive on September 23 at 16:51 Europe/Oslo.
+Xcode reported "Upload succeeded" and "Uploaded package is processing".
+The App Store Connect record is named `Barbu - The king of cards`, bundle ID
+`com.martin.barbu`. It has not been submitted for App Review.
 
 The preserved candidate is
 `release/app-store/barbu-app-store-v1.0.3-build4.ipa`. Its archive is retained
@@ -48,9 +49,15 @@ Candidate IPA SHA-256:
 `3597db9063bd1ddd9f9a9329384b39c2a988d8e33e1fd38723eebd0057fd6fa4`.
 Its frontend assets are `index-CAR2ilQI.js` and `index-CFTZGQ9u.css`.
 
-Build number 4 is provisional until checked against App Store Connect. No upload,
-account declarations, TestFlight installation, or submission was performed in
-this preparation. The account owner must confirm the build number is unused.
+The account owner's TestFlight screenshot showed no previous builds before this
+upload. Build number 4 is now used; choose a higher number for another upload.
+Account declarations, processing completion, TestFlight installation, and App
+Review submission remain unverified.
+
+Xcode accepted the upload with one non-blocking warning: this release targets
+iOS 14.0, and its upload response says that from Spring 2027 Apple will require
+iOS 15.0 or later as the deployment target. Recheck the current requirement and
+raise the minimum before that deadline; it did not block this upload.
 
 ## Build
 
@@ -61,7 +68,7 @@ signed in, Rust iOS target, Node dependencies, Task, Ruby, and XcodeGen.
 task ios:init # Only when src-tauri/gen/apple is missing.
 node scripts/generate-ios-notices.mjs # Regenerate after either lockfile changes.
 task verify
-task ios:store:build IOS_BUILD_NUMBER=4 # Current candidate; confirm this number is unused before upload.
+task ios:store:build IOS_BUILD_NUMBER=5 # Next candidate; confirm this number is unused before upload.
 ```
 
 Use a new build number for each upload; check App Store Connect before choosing
@@ -106,10 +113,10 @@ Martin can test through an internal group using an eligible App Store Connect
 account. Browser testing and direct Xcode installs do not exercise Apple's
 distribution of the exact submitted build.
 
-1. Confirm the App Store Connect record uses `com.martin.barbu`, version `1.0.3`,
-   and that build 4 has not already been uploaded. Upload the verified candidate
-   using normal App Store distribution, not "TestFlight Internal Only"
-   (that upload option cannot be submitted to customers).
+1. In App Store Connect, open `com.martin.barbu` and locate version `1.0.3`,
+   build 4, uploaded September 23. Do not upload build 4 again. Future candidates
+   must use an unused higher build number and normal App Store distribution,
+   not "TestFlight Internal Only" (which cannot be submitted to customers).
 2. Wait for build processing and resolve any export-compliance questions or
    processing warnings in App Store Connect.
 3. Open Barbu > TestFlight > Internal Testing > +. Create a group, choose
