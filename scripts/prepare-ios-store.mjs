@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { copyFileSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,6 +13,13 @@ if (!/^[1-9][0-9]{0,3}$/.test(buildNumber ?? "")) {
 }
 
 const config = JSON.parse(readFileSync(resolve(root, "src-tauri/tauri.conf.json"), "utf8"));
+const notices = readFileSync(resolve(root, "public/THIRD_PARTY_LICENSES.txt"), "utf8");
+for (const lockfile of ["Cargo.lock", "package-lock.json"]) {
+  const hash = createHash("sha256").update(readFileSync(resolve(root, lockfile))).digest("hex");
+  if (!notices.includes(`${lockfile} SHA256: ${hash}`)) {
+    throw new Error("Dependency notices are stale. Run node scripts/generate-ios-notices.mjs before release.");
+  }
+}
 // Keep Tauri's generated project as the template, including its Rust build phase.
 const project = JSON.parse(execFileSync("ruby", [
   "-rjson", "-ryaml", "-e", "puts JSON.generate(YAML.load_file(ARGV[0]))",

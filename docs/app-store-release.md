@@ -3,23 +3,54 @@
 The first Apple release targets iPhone only. Device installs are not App Store
 packages. Do not upload the IPA produced by `ios:install:device`.
 
-## Current Status (September 14, 2026)
+## Current Status (September 23, 2026)
 
-Barbu 1.0.1, build 2 archives successfully with Xcode 26.5. The archive has
+Barbu 1.0.3, build 4 archives and exports successfully with Xcode 26.5. The archive has
 `UIDeviceFamily = [1]` and the privacy manifest. All 18 generated icon images
 are opaque, including the 1024-pixel store icon.
 
-App Store export is blocked, not complete. Apple's response for team
-`3PB43Q6B3W` was "No provider associated with App Store Connect user", followed
-by no permission to create iOS App Store provisioning profiles. Confirm active
-Developer Program membership, the correct team/account in Xcode, and App Store
-Connect access before retrying. No build has been uploaded or submitted.
+The previous Apple account/signing blocker is resolved: team `3PB43Q6B3W`
+successfully exported with a cloud-managed Apple Distribution certificate and
+an iOS Team Store provisioning profile. The exported signature passes
+`codesign --verify --deep --strict`; `get-task-allow` is false and
+`testFlightInternalTestingOnly` is false. No build has been uploaded or submitted
+as part of this preparation. The App Store Connect record is named
+`Barbu - The king of cards`. Confirm its bundle ID and uploaded build history
+before upload.
 
-Store screenshots, account declarations, and final TestFlight testing remain
-outstanding. The updated privacy page is publicly reachable. Martin confirmed
-that the card artwork was generated using ChatGPT; provenance is recorded in
-`THIRD_PARTY_NOTICES.md`. Browser checks are not a substitute for the final
-uploaded-build TestFlight check below.
+The preserved candidate is
+`release/app-store/barbu-app-store-v1.0.3-build4.ipa`. Its archive is retained
+alongside it as `Barbu-v1.0.3-build4.xcarchive`. These generated release artifacts
+are ignored by Git. Do not use a later device-install IPA from the generated
+build directory for App Store upload.
+
+Five refreshed native iPhone screenshots (1284 x 2778, opaque PNG) are in
+`release/app-store/screenshots-2026-09-23/`. Their layouts were visually inspected.
+Build 4 includes the merged Learn experience and the latest Hearts and Spades
+feedback. The previous build 3 and old screenshot set are retained for history,
+not for the current submission.
+
+Both public support and privacy pages return HTTP 200 and show
+`martin@insilicoveritas.org`. The support page links to GitHub Issues. Martin
+confirmed that the card artwork was generated using ChatGPT; provenance is
+recorded in `THIRD_PARTY_NOTICES.md`. Full dependency notices and exact source
+download links are bundled in `assets/THIRD_PARTY_LICENSES.txt` in the IPA.
+
+Verification: production build and native-shell check passed; 100 domain tests
+passed. The six-profile browser run passed 1,061 cases with 30 skipped and 13
+failures while Xcode was also running. All 13 failures passed on a one-worker
+rerun (1,074 passing cases in total). An earlier run stopped because the Mac ran
+out of disk space; only regenerable repository build caches were cleared.
+Native simulator navigation and screenshot capture passed. These checks do not
+replace testing the uploaded build through TestFlight.
+
+Candidate IPA SHA-256:
+`3597db9063bd1ddd9f9a9329384b39c2a988d8e33e1fd38723eebd0057fd6fa4`.
+Its frontend assets are `index-CAR2ilQI.js` and `index-CFTZGQ9u.css`.
+
+Build number 4 is provisional until checked against App Store Connect. No upload,
+account declarations, TestFlight installation, or submission was performed in
+this preparation. The account owner must confirm the build number is unused.
 
 ## Build
 
@@ -28,8 +59,9 @@ signed in, Rust iOS target, Node dependencies, Task, Ruby, and XcodeGen.
 
 ```sh
 task ios:init # Only when src-tauri/gen/apple is missing.
+node scripts/generate-ios-notices.mjs # Regenerate after either lockfile changes.
 task verify
-task ios:store:build IOS_BUILD_NUMBER=2
+task ios:store:build IOS_BUILD_NUMBER=4 # Current candidate; confirm this number is unused before upload.
 ```
 
 Use a new build number for each upload; check App Store Connect before choosing
@@ -39,7 +71,8 @@ override is iOS-only and does not alter Android's release version.
 The preparation task derives a project from Tauri's generated XcodeGen template,
 sets the iPhone device family, disables script sandboxing for the Rust build,
 bundles the privacy manifest, and removes alpha channels from generated iOS
-icons. Generated projects and signing material must not be committed.
+icons. It rejects dependency notices with stale lockfile hashes. Generated
+projects and signing material must not be committed.
 
 Only after a successful App Store export, upload:
 
@@ -58,13 +91,13 @@ and check App Store Connect's build warnings before selecting the build.
 - Confirm distribution export succeeds and the exported app's `get-task-allow`
   entitlement is false. An archive signed for development is not the final IPA.
 - Test the uploaded build through TestFlight: cold launch without a dev server,
-  offline play, all five game tables, Learn, Practice, saved-hand resume, and a
+  offline play, all five game tables, Learn lessons and exercises, saved-hand resume, and a
   completed game. Check both a compact iPhone viewport and a current iPhone.
 - Check the privacy manifest against the release binary whenever dependencies
   change. The file-timestamp declaration (`C617.1`) covers bundled/private file
   metadata used by the Rust/Tauri runtime, not fingerprinting or external files.
-- Retain card-art generation records and complete the dependency-license review
-  recorded in `THIRD_PARTY_NOTICES.md` before making content-rights declarations.
+- Retain card-art generation records and review regenerated dependency notices
+  whenever dependencies change; see `THIRD_PARTY_NOTICES.md`.
 
 ## Final TestFlight Check
 
@@ -73,8 +106,9 @@ Martin can test through an internal group using an eligible App Store Connect
 account. Browser testing and direct Xcode installs do not exercise Apple's
 distribution of the exact submitted build.
 
-1. Resolve the Apple account/signing blocker above. Build and upload the updated
-   release using normal App Store distribution, not "TestFlight Internal Only"
+1. Confirm the App Store Connect record uses `com.martin.barbu`, version `1.0.3`,
+   and that build 4 has not already been uploaded. Upload the verified candidate
+   using normal App Store distribution, not "TestFlight Internal Only"
    (that upload option cannot be submitted to customers).
 2. Wait for build processing and resolve any export-compliance questions or
    processing warnings in App Store Connect.
@@ -93,7 +127,7 @@ distribution of the exact submitted build.
 | --- | --- |
 | Cold launch in airplane mode | Catalog and cards load without the Mac or a dev server. |
 | Catalog | Six working entries; no planned games, paid labels, or Pro tab. |
-| Each game: Learn, Practice, Play | A lesson and exercise complete; a hand starts and cards are selectable. |
+| Each game: Learn, Play | A guided lesson and topic exercise complete in Learn; a hand starts in Play and cards are selectable. |
 | Complete a hand and a game/session | Correct result appears and the next action remains reachable. |
 | Background, close, reopen | Saved play resumes without losing or duplicating cards. |
 | Small screen and landscape | Cards, feedback, and bottom actions remain reachable without overlap. |
@@ -115,8 +149,9 @@ Practice tab. Check its memory exercises through Play.
   sizes. This release does not require a native iPad screenshot set.
 - Publish the updated privacy page before submission:
   https://martingull.github.io/barbu/privacy-policy.html
-- Provide a support URL. The existing public issue tracker is
-  https://github.com/martingull/barbu/issues; confirm this is the intended channel.
+- Publish `docs/support.html`, then verify and use
+  https://martingull.github.io/barbu/support.html as the Support URL.
+  The confirmed public contact is martin@insilicoveritas.org.
 - Review App Privacy against the shipped binary. Current Barbu code has no
   account, advertising, tracking, or analytics SDK and keeps progress locally.
   Answer the questionnaire yourself, including any separately collected data.
@@ -130,7 +165,9 @@ Practice tab. Check its memory exercises through Play.
 
 ## Listing Draft
 
-Name: Barbu (subject to availability)
+Name: Barbu - The king of cards
+
+Version: 1.0.3 (match the selected release build, not the initial 1.0 form default)
 
 Subtitle: Learn classic card games
 
@@ -153,8 +190,8 @@ or real-money gambling.
 
 Review notes:
 
-No account or login is required. Open a game from the catalog, then choose Learn,
-Practice, or Play. Gameplay and saved progress work locally; no development
+No account or login is required. Open a game from the catalog, then choose Learn
+or Play. Learn includes guided lessons and short exercises. Gameplay and saved progress work locally; no development
 server is required. There are no purchases or advertisements in this release.
 
 ## References
