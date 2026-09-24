@@ -21,7 +21,7 @@ chosen rules, scoring, and table conventions.
 | Catalog and table metadata | `src/tableFactory.ts`, `src/games/whist.ts` | Use the factory and per-game definitions, not copied table markup. |
 | Registration | `src/gameRegistry.ts`, `src/games/index.ts` | Register metadata through the existing registry. |
 | Presentation | `GameTableShell`, `LearnPanel`, `CourseLesson`, `PlayTabPanel`, `TablePlaySurface`, `CardChoiceHand` | Reuse Learn/Play navigation, cards, selection, feedback, and responsive layout. |
-| Feature coordination | `src/features/whist/WhistGame.svelte`, `whistFeature.ts` | Own game-local navigation, selection, lesson flow and saving; compose existing engines and shared views. |
+| Feature coordination | `src/features/{whist,hearts}/`, `src/features/GameLearning.svelte` | Own game-local match interaction and saving; compose existing engines and the shared lesson flow. |
 | Hand rules and actions | `src/domain/handEngine.ts` | Keep deterministic transitions independent of UI, storage, and Tauri. |
 | Match progression | `src/domain/whistSession.ts` | Own settlement, dealer rotation, replay, completion, and review state outside Svelte. |
 | Persistence | `src/persistence/whistSave.ts` | Validate and restore saves through an adapter; preserve compatibility or explicitly migrate it. |
@@ -73,7 +73,8 @@ replace copy-pasted screens with copy-pasted session or save implementations.
 
 ## Frontend Isolation
 
-Whist is the first isolated frontend feature under `src/features/whist/`:
+Whist and Hearts have isolated frontends under `src/features/whist/` and
+`src/features/hearts/`:
 
 - `WhistGame.svelte` composes the existing table metadata, Learn/Play panels,
   courses and exercises. Opening-lead practice has ephemeral state separate from
@@ -85,23 +86,31 @@ Whist is the first isolated frontend feature under `src/features/whist/`:
   `CardChoiceHand`. Its callbacks belong to either the match controller or the
   unsaved opening-lead exercise.
 - `openingLeadPractice.ts` holds the existing authored deals and their feedback.
+- `HeartsGame.svelte` composes the same Learn template with Hearts passing and
+  hand views. `heartsFeature.ts` owns the saved match, pass selection and resume,
+  delegating pass rotation and settlement to `heartsSession.ts`.
+- `HeartsPassExercise.svelte` owns only its three unsaved passing decisions.
+  Match passing uses `HeartsPassing.svelte`; neither duplicates domain rules.
+- `GameLearning.svelte` owns the common concept/example/exercise/review flow,
+  topic replay and history display. Game definitions supply metadata; each
+  feature supplies its exercise loader and any custom decision surface.
 
 `App.svelte` mounts the feature and supplies catalog/reference navigation, the
 shared seed source, course progress and exercise history. These are catalog-wide
-services, not Whist hand state. The controller outlives the mounted view so
+services, not individual-game hand state. The controllers outlive mounted views so
 leaving the game does not discard an in-memory match when storage is unavailable.
 
-`DrillScreen.svelte` and `DrillResultScreen.svelte` are shared by Whist and the
-remaining games. Pure decision/review helpers live under `src/lessons/`.
+`DrillScreen.svelte` and `DrillResultScreen.svelte` are shared across games.
+Pure decision/review and generated-scenario adapters live under `src/lessons/`.
 Keep shared card layout and CSS in the existing components; do not copy them
 into each feature or add game-specific viewport calculations.
 
 This is an incremental frontend refactor, not another engine migration. Other
 games and Card Counting still have orchestration in `App.svelte`. Card Counting
-intentionally still uses Whist hands and shared Whist presentation helpers;
-those references are not a second Whist match implementation. Extract the next
-game using the same boundaries, then generalize controller behavior only where
-the second implementation demonstrates a real common need. Do not add a
+intentionally still uses Hearts and Whist hands and their presentation helpers;
+those references are not second match implementations. Extract the next
+game using the same boundaries. Reuse the common Learn flow and generalize
+controller behavior only where it removes real complexity. Do not add a
 universal controller or replace the existing metadata/engine factories.
 
 Save keys, schemas, course progress identifiers, rules and native commands are

@@ -1,4 +1,9 @@
 <script lang="ts">
+  import HeartsGame from "./features/hearts/HeartsGame.svelte";
+  import { createHeartsFeature } from "./features/hearts/heartsFeature";
+  import { heartsTrickFeedback } from "./features/hearts/heartsPresentation";
+  import { scoreSeats, scoreSeatLabel, scoreSeatRunLabel, formatOrdinal, formatPointCount, seatTricksWonForTricks, type RunStanding } from "./scorePresentation";
+  import { drillStepFromGeneratedScenario } from "./lessons/generatedDrill";
   import { tick } from "svelte";
   import WhistGame from "./features/whist/WhistGame.svelte";
   import { createWhistFeature } from "./features/whist/whistFeature";
@@ -26,11 +31,8 @@
   import { spadesFollowSuitDrillPool, spadesTrumpOrDiscardDrillPool, spadesBidBooksDrillPool, spadesAvoidBagsDrillPool } from "./spadesLessons";
   import { invoke, isTauri } from "@tauri-apps/api/core";
   import { typescriptHandEngine } from "./domain/handEngine";
-  import { generateHeartsPracticeSet, generateHeartsPassPractice, evaluateHeartsPass, heartsPassPracticeCount, type HeartsPracticeFocus } from "./domain/heartsPractice";
-  import { createHeartsSession, transitionHeartsSession, heartsSessionSettlement, heartsMoonShooter, heartsScoredSeatPenalties,
-    heartsHandPenaltyTotal, heartsMatchTarget, type HeartsHandResult, type HeartsPassDirection, type HeartsSession } from "./domain/heartsSession";
+  import { heartsScoredSeatPenalties } from "./domain/heartsSession";
   import { addSeatPenalties, emptySeatPenalties, seatPenaltiesForTricks } from "./domain/trickTakingScore";
-  import { createHeartsSaveStore, restoreHeartsSession, saveHeartsSession, savedHeartsRunSummary, type SavedHeartsRun } from "./persistence/heartsSave";
   import { emptyWhistScore, whistSessionSettlement } from "./domain/whistSession";
   import { createBarbuSession, transitionBarbuSession, barbuSessionComplete, barbuSeatTotals, dominoSeatScores,
     type BarbuSession, type BarbuSessionEvent, type BarbuHandResult as FullHandRunResult } from "./domain/barbuSession";
@@ -62,7 +64,6 @@
   import { whistOddProgress, whistResultCopy } from "./whistScoring";
   import type { BarbuLearnPathAction } from "./games/barbu";
   import type { BridgeLearnPathAction, BridgePracticeAction } from "./games/bridge";
-  import type { HeartsLearnPathAction } from "./games/hearts";
   import type { SpadesLearnPathAction, SpadesPracticeAction } from "./games/spades";
   import {
     getCatalogCategories,
@@ -83,7 +84,6 @@
     BridgeAuctionCall,
     BridgeContractState,
     BridgeVulnerability,
-    HeartsPassScenario,
     PracticeReason,
     Seat,
     Suit,
@@ -94,7 +94,7 @@
   type AppView =
     | "catalog"
     | "barbuTable"
-    | "heartsTable"
+    | "heartsFeature"
     | "whistFeature"
     | "cardCountingTable"
     | "barbuContracts"
@@ -107,8 +107,6 @@
     | "runContractIntro"
     | "bridgeAuction"
     | "bridgeBiddingPractice"
-    | "heartsPass"
-    | "heartsPassPractice"
     | "fullHand"
     | "dominoHand"
     | "trumpCount"
@@ -170,15 +168,8 @@
   };
 
   type BarbuLearnPathStep = LearnPathStep<BarbuLearnPathAction>;
-  type HeartsLearnPathStep = LearnPathStep<HeartsLearnPathAction>;
   type SpadesLearnPathStep = LearnPathStep<SpadesLearnPathAction>;
   type BridgeLearnPathStep = LearnPathStep<BridgeLearnPathAction>;
-
-  type RunStanding = {
-    rank: number;
-    seat: Seat;
-    score: number;
-  };
 
   type RunContractIntro = {
     title: string;
@@ -295,14 +286,14 @@
   const drillPatternMemoryStorageKey = "barbu.drillPatternMemory.v1";
   const playBarbuHistoryStorageKey = "barbu.playHistory.v1";
   const barbuSaveStore = createBarbuSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
-  const heartsSaveStore = createHeartsSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
   const whistFeature = createWhistFeature({ storage: () => typeof localStorage === "undefined" ? undefined : localStorage, nextSeed: usePracticeSeed });
   let whistFixedSurface = false;
+  const heartsFeature = createHeartsFeature({ storage: () => typeof localStorage === "undefined" ? undefined : localStorage, nextSeed: usePracticeSeed });
+  let heartsFixedSurface = false;
   const spadesSaveStore = createSpadesSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
   const bridgeSaveStore = createBridgeSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
   const maxStoredDrillPatterns = 6;
   const maxStoredPlayBarbuAttempts = 8;
-  const scoreSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
   const spadesBidSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
 
   const countingTrickSeats: Seat[] = ["Tutor", "Right", "You", "Left"];
@@ -340,7 +331,6 @@
       action: "whist-memory"
     }
   ];
-  const heartsPassPracticeTotalSteps = heartsPassPracticeCount;
   const countingRanks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
   const countingSuits: Suit[] = ["C", "D", "H", "S"];
   const dangerCardMemoryConfig: CardMemoryExerciseConfig = {
@@ -368,12 +358,6 @@
   };
   const dominoOrderScores = [45, 20, 5, -5];
   const whistMatchTarget = 5;
-  const seatByPlayerIndex: Record<number, Seat> = {
-    0: "Tutor",
-    1: "Right",
-    2: "You",
-    3: "Left"
-  };
   const playerIndexBySeat: Record<Seat, number> = {
     Tutor: 0,
     Right: 1,
@@ -509,15 +493,12 @@
   let savedPlayBarbuRun: SavedPlayBarbuRun | null = barbuSaveStore.load();
   let barbuSession: BarbuSession | null = null;
   let barbuSaveError = "";
-  let savedHeartsRun: SavedHeartsRun | null = heartsSaveStore.load();
   let savedSpadesRun: SavedSpadesRun | null = spadesSaveStore.load();
   let spadesSession: SpadesSession | null = null;
   let spadesDealPending = false;
   let savedBridgeRun = bridgeSaveStore.load();
   let bridgeSession: BridgeSession | null = null;
   let bridgeDealPending = false;
-  let heartsSession: HeartsSession | null = null;
-  let heartsDealPending = false;
   let spadesBids: SpadesBidState = { ...defaultSpadesBidState };
   let spadesPlayStarted = true;
   let spadesOpeningPanel: "table" | "bid" = "table";
@@ -540,21 +521,11 @@
   $: spadesBidReady = true;
   $: spadesCurrentBidLabel = spadesBidLabel(spadesBids);
   let fullHand: FullHandState | null = null;
-  let heartsPassingHand: FullHandState | null = null;
-  let heartsPassPractice: HeartsPassScenario | null = null;
-  let heartsPassPracticeBaseSeed = 1;
-  let heartsPassPracticeStepIndex = 0;
   let dominoHand: DominoHandState | null = null;
   let fullHandSelectedCardId = "";
   let dummySelectedCardId = "";
-  let heartsPassSelectedCardIds: string[] = [];
-  let heartsPassDirection: HeartsPassDirection = "left";
-  let heartsPassPracticeSelectedCardIds: string[] = [];
-  let heartsPassPracticeChecked = false;
-  let heartsPassPracticeError = "";
   let dominoSelectedCardId = "";
   let fullHandError = "";
-  let heartsPassError = "";
   let dominoError = "";
   let fullHandReviewTrickCount = 0;
   let lastFullHandTapCardId = "";
@@ -599,8 +570,6 @@
     appView === "bridgeBiddingPractice" ||
     appView === "lesson" ||
     appView === "drill" ||
-    appView === "heartsPass" ||
-    appView === "heartsPassPractice" ||
     appView === "runContractIntro" ||
     appView === "fullHand" ||
     appView === "dominoHand" ||
@@ -794,9 +763,6 @@
   $: completedCount = playablePathSteps.filter((step) => completedPathSteps[step.id]).length;
   $: nextPathStep = playablePathSteps.find((step) => !completedPathSteps[step.id]);
   $: isCourseComplete = completedCount === playablePathSteps.length;
-  $: heartsCompletedCount = heartsUi.learnSteps.filter((step) => completedPathSteps[step.id]).length;
-  $: nextHeartsPathStep = heartsUi.learnSteps.find((step) => !completedPathSteps[step.id]);
-  $: isHeartsCourseComplete = heartsCompletedCount === heartsUi.learnSteps.length;
   $: spadesCompletedCount = spadesUi.learnSteps.filter((step) => completedPathSteps[step.id]).length;
   $: nextSpadesPathStep = spadesUi.learnSteps.find((step) => !completedPathSteps[step.id]);
   $: isSpadesCourseComplete = spadesCompletedCount === spadesUi.learnSteps.length;
@@ -823,15 +789,6 @@
       title: "Barbu contracts",
       summary: "See the contract roster and what each table asks you to notice.",
       onClick: openBarbuContracts
-    }
-  ];
-  $: heartsLearnPanelActions = [
-    {
-      id: "reference",
-      eyebrow: "Rules",
-      title: "Reference",
-      summary: heartsUi.table.learn.referenceSummary,
-      onClick: () => openReference(heartsUi.table.referenceId)
     }
   ];
   $: spadesLearnPanelActions = [
@@ -886,23 +843,18 @@
       ? `${currentDrill.contract} lesson`
       : currentDrillTrick.title;
   $: drillResultIsBarbuPractice = activeGameTable === "barbu";
-  $: drillResultIsHeartsPractice = activeGameTable === "hearts";
   $: drillResultIsSpadesPractice = activeGameTable === "spades";
   $: drillResultIsBridgePractice = activeGameTable === "bridge";
   $: drillResultIsTablePractice =
-    drillResultIsHeartsPractice || drillResultIsSpadesPractice || drillResultIsBridgePractice;
+    drillResultIsSpadesPractice || drillResultIsBridgePractice;
   $: drillResultMessage =
     drillResults.length > 0 && cleanDrillCount === drillResults.length
-      ? drillResultIsHeartsPractice
-        ? "Each decision matched this lesson's goal. Try the same skill in a full Hearts hand."
-          : drillResultIsSpadesPractice
+      ? drillResultIsSpadesPractice
             ? "Clean Spades practice. Keep reading the bid, trump, nil, and bags before full hands arrive."
             : drillResultIsBridgePractice
               ? "Clean Bridge practice. Keep planning declarer play, using dummy, and defending 1NT."
         : "Clean session. Barbu is ready to raise the pressure."
-      : drillResultIsHeartsPractice
-        ? "Review the feedback for the decisions you missed, then try this Hearts skill again."
-          : drillResultIsSpadesPractice
+      : drillResultIsSpadesPractice
             ? "Repeat the Spades pattern until bid-aware trick decisions feel automatic."
             : drillResultIsBridgePractice
               ? "Repeat the Bridge pattern until dummy, declarer, and defensive plans feel automatic."
@@ -939,17 +891,6 @@
   $: reviewFocusSummary = reviewContractResults.find((result) => result.contract === reviewReplayContract);
   $: fullHandLegalCardIds = new Set(fullHand?.legalCardIds ?? []);
   $: fullHandSelectedCard = fullHand?.playerHand.find((card) => card.id === fullHandSelectedCardId);
-  $: heartsPassSelectedCards =
-    heartsPassingHand?.playerHand.filter((card) => heartsPassSelectedCardIds.includes(card.id)) ?? [];
-  $: heartsPassCanSubmit = heartsPassSelectedCardIds.length === 3;
-  $: heartsPassPracticeSelectedCards =
-    heartsPassPractice?.playerHand.filter((card) => heartsPassPracticeSelectedCardIds.includes(card.id)) ?? [];
-  $: heartsPassPracticeRecommendedIds = new Set(heartsPassPracticeGood
-    ? heartsPassPracticeSelectedCardIds : heartsPassPractice?.recommendedPass.map((card) => card.id) ?? []);
-  $: heartsPassPracticeOutcome = heartsPassPractice ? evaluateHeartsPass(heartsPassPractice, heartsPassPracticeSelectedCardIds) : null;
-  $: heartsPassPracticeCanCheck = heartsPassPracticeOutcome?.isComplete ?? false;
-  $: heartsPassPracticeGood = heartsPassPracticeOutcome?.outcomeKind === "good";
-  $: heartsPassPracticeIsLastStep = heartsPassPracticeStepIndex >= heartsPassPracticeTotalSteps - 1;
   $: fullHandLastCompletedTrick = fullHand?.completedTricks[fullHand.completedTricks.length - 1];
   $: fullHandReviewTrick =
     fullHand && fullHandReviewTrickCount > 0 ? fullHand.completedTricks[fullHandReviewTrickCount - 1] : undefined;
@@ -1153,11 +1094,9 @@
   $: fullHandSeatPenalties = fullHand ? seatPenaltiesForTricks(fullHand.completedTricks) : emptySeatPenalties();
   $: fullHandSeatTrickCounts = fullHand ? seatTricksWonForTricks(fullHand.completedTricks) : emptySeatPenalties();
   $: whistResult = whistResultCopy(whistSettlement, whistPartnershipTricks, "game");
-  $: heartsResult = heartsResultCopy(heartsMatchIsComplete, heartsStandings, heartsHighestScore,
-    heartsCurrentMoonShooter, heartsVisibleHandCount, fullHand?.playerPenalty ?? 0, heartsScorecardMeta.objective);
   $: spadesResult = spadesResultCopy(currentSpadesHandResult, spadesVisibleMatchScores, spadesMatchIsComplete);
-  $: fullHandResultTitle = fullHandIsHeartsGame ? heartsResult.heading : fullHandIsWhistGame ? whistResult.heading : fullHandIsSpadesGame ? spadesResult.heading : fullHand ? fullHandResultHeading(fullHand) : "";
-  $: fullHandResultSummary = fullHandIsHeartsGame ? heartsResult.summary : fullHandIsWhistGame ? whistResult.summary : fullHandIsSpadesGame ? spadesResult.summary : fullHand ? fullHandResultText(fullHand, bridgeVisibleMatchScores) : "";
+  $: fullHandResultTitle = fullHandIsWhistGame ? whistResult.heading : fullHandIsSpadesGame ? spadesResult.heading : fullHand ? fullHandResultHeading(fullHand) : "";
+  $: fullHandResultSummary = fullHandIsWhistGame ? whistResult.summary : fullHandIsSpadesGame ? spadesResult.summary : fullHand ? fullHandResultText(fullHand, bridgeVisibleMatchScores) : "";
   $: fullHandBestTrick = fullHand ? fullHandBestTrickLabel(fullHand) : "";
   $: fullHandWorstTrick = fullHand ? fullHandWorstTrickLabel(fullHand) : "";
   $: fullHandIsHeartsGame = activeGameTable === "hearts" && fullHand?.contract === "Hearts" && !fullHandRunActive;
@@ -1253,41 +1192,14 @@
     fullHand?.status === "complete" &&
     spadesMatchComplete(spadesVisibleMatchScores);
   $: partnershipMatchIsComplete = fullHandIsSpadesGame ? spadesMatchIsComplete : whistMatchIsComplete;
-  $: heartsSessionForDisplay = activeGameTable === "hearts" && !fullHandCardCountingMode && !fullHandRunActive
-    && heartsSession && (heartsSession.phase === "passing" ? heartsPassingHand : fullHand) === heartsSession.fullHand ? heartsSession : null;
-  $: heartsHandResults = heartsSessionForDisplay?.results ?? [];
-  $: heartsMatchSettlement = heartsSessionForDisplay ? heartsSessionSettlement(heartsSessionForDisplay) : null;
-  $: heartsCurrentMoonShooter = fullHandIsHeartsGame ? heartsMoonShooter(fullHandSeatPenalties) : undefined;
-  $: heartsCurrentMoonThreatSeat = fullHandIsHeartsGame ? heartsMoonThreatSeat(fullHandSeatPenalties) : undefined;
-  $: heartsCurrentScoredSeatPenalties = fullHandIsHeartsGame
-    ? heartsScoredSeatPenalties(fullHandSeatPenalties)
-    : emptySeatPenalties();
-  $: currentHeartsHandResult = heartsMatchSettlement?.result ?? null;
-  $: heartsVisibleHandResults = currentHeartsHandResult
-    ? [...heartsHandResults, currentHeartsHandResult]
-    : heartsHandResults;
-  $: heartsVisibleHandCount = heartsVisibleHandResults.length;
   $: heartsScorecardMeta = heartsUi.table.scorecard;
-  $: heartsVisibleScores = heartsMatchSettlement?.scores ?? heartsCurrentScoredSeatPenalties;
-  $: heartsStandings = heartsScorecardStandings(heartsVisibleScores);
-  $: heartsHighestScore = scoreSeats
-    .map((seat) => ({ seat, score: heartsVisibleScores[seat] }))
-    .sort((left, right) => right.score - left.score)[0];
-  $: heartsMatchIsComplete =
-    fullHandIsHeartsGame && Boolean(heartsMatchSettlement?.complete);
+  $: heartsVisibleScores = heartsScoredSeatPenalties(fullHandSeatPenalties);
   $: fullHandCompletion = fullHand?.status !== "complete" || fullHandCardCountingActive ? null
-    : fullHandIsHeartsGame && heartsMatchIsComplete ? "match"
     : whistFullHandSource !== "play" ? null
     : fullHandIsSpadesGame && spadesMatchIsComplete ? "match"
     : fullHandIsWhistGame && whistSettlement.gameComplete ? "game"
     : fullHandIsBridgeGame ? "board" : null;
   $: fullHandReplayAllowed = !fullHandCompletion || fullHandCompletion === "board";
-  $: heartsPlayerStanding = heartsStandings.find((standing) => standing.seat === "You");
-  $: heartsPlayerPlaceLabel = heartsPlayerStanding ? formatOrdinal(heartsPlayerStanding.rank) : "1st";
-  $: heartsBestHand = heartsPlayerHandResult("best", heartsVisibleHandResults);
-  $: heartsWorstHand = heartsPlayerHandResult("worst", heartsVisibleHandResults);
-  $: heartsBestHandLabel = heartsBestHand ? heartsHandResultLabel(heartsBestHand) : "No hands yet";
-  $: heartsWorstHandLabel = heartsWorstHand ? heartsHandResultLabel(heartsWorstHand) : "No hands yet";
   $: activeRunContract = fullHand?.contract ?? dominoHand?.contract;
   $: fullHandRunCurrentIndex = activeRunContract ? fullHandContracts.indexOf(activeRunContract) : -1;
   $: pendingRunContractIndex = fullHandContracts.indexOf(pendingRunContract);
@@ -1346,11 +1258,7 @@
           : dominoHand
             ? `${dominoHand.cardsRemaining} cards left`
             : "Ready";
-  $: fullHandNextActionLabel = fullHandIsHeartsGame
-    ? heartsMatchIsComplete
-      ? "New match"
-      : "Next hand"
-    : fullHandIsBridgeGame
+  $: fullHandNextActionLabel = fullHandIsBridgeGame
     ? "Next board"
     : fullHandIsPartnershipGame
     ? whistFullHandSource === "practice"
@@ -1630,7 +1538,7 @@
     activeGameTable = "barbu";
     activeTableTabs.barbu = "play";
     fullHandCardCountingMode = false;
-    heartsPassingHand = null;
+
     setBarbuSession(session);
     fullHandSelectedCardId = "";
     dummySelectedCardId = "";
@@ -1675,79 +1583,6 @@
     persistSavedPlayBarbuRun();
   }
 
-  function heartsPassDirectionLabel(direction: HeartsPassDirection) {
-    return direction === "hold" ? "No pass" : `Pass ${direction}`;
-  }
-
-  function heartsPassTargetLabel(direction: HeartsPassDirection) {
-    if (direction === "right") {
-      return "Right";
-    }
-    if (direction === "across") {
-      return "Barbu";
-    }
-    return "Left";
-  }
-
-  function heartsPassReceiveLabel(direction: HeartsPassDirection) {
-    if (direction === "right") {
-      return "Left";
-    }
-    if (direction === "across") {
-      return "Barbu";
-    }
-    return "Right";
-  }
-
-  function isHeartsSessionActive() {
-    return activeGameTable === "hearts" && !fullHandRunActive && !fullHandCardCountingMode && heartsSession !== null
-      && (heartsSession.phase === "passing" ? heartsPassingHand : fullHand) === heartsSession.fullHand;
-  }
-
-  function setHeartsSession(session: HeartsSession) {
-    heartsSession = session;
-    heartsPassingHand = session.phase === "passing" ? session.fullHand : null;
-    fullHand = session.phase === "playing" ? session.fullHand : null;
-    heartsPassSelectedCardIds = session.selectedPassCardIds;
-    heartsPassDirection = session.passDirection;
-    fullHandReviewTrickCount = session.fullHandReviewTrickCount;
-  }
-
-  function openHeartsSession(session: HeartsSession) {
-    activeGameTable = "hearts";
-    activeTableTabs.hearts = "play";
-    barbuSession = null;
-    fullHandCardCountingMode = false;
-    dominoHand = null;
-    spadesPlayStarted = true;
-    setHeartsSession(session);
-    heartsPassError = "";
-    fullHandSelectedCardId = "";
-    dummySelectedCardId = "";
-    fullHandError = "";
-    lastFullHandTapCardId = "";
-    lastFullHandTapAt = 0;
-    appView = session.phase === "passing" ? "heartsPass" : "fullHand";
-  }
-
-  function persistSavedHeartsRun() {
-    if (!isHeartsSessionActive() || !heartsSession) return;
-    savedHeartsRun = saveHeartsSession(heartsSession, new Date().toISOString());
-    try {
-      heartsSaveStore.write(savedHeartsRun);
-    } catch {
-      if (heartsSession.phase === "passing") heartsPassError = "Progress could not be saved on this device.";
-      else fullHandError = "Progress could not be saved on this device.";
-    }
-  }
-
-  function continueSavedHeartsRun() {
-    const saved = savedHeartsRun ?? heartsSaveStore.load();
-    if (!saved) return;
-    openHeartsSession(restoreHeartsSession(saved));
-    persistSavedHeartsRun();
-  }
-
   function isSpadesSessionHand() {
     return activeGameTable === "spades" && whistFullHandSource === "play" && !fullHandCardCountingMode
       && !fullHandRunActive && spadesSession !== null && fullHand === spadesSession.fullHand;
@@ -1772,7 +1607,7 @@
     barbuSession = null;
     fullHandCardCountingMode = false;
     dominoHand = null;
-    heartsPassingHand = null;
+
     fullHandSelectedCardId = "";
     dummySelectedCardId = "";
     fullHandError = "";
@@ -1835,7 +1670,7 @@
     barbuSession = null;
     fullHandCardCountingMode = false;
     dominoHand = null;
-    heartsPassingHand = null;
+
     spadesPlayStarted = true;
     fullHandSelectedCardId = "";
     dummySelectedCardId = "";
@@ -1994,7 +1829,8 @@
 
   function openHeartsTable() {
     activeGameTable = "hearts";
-    appView = "gameTable";
+    heartsFeature.openTable();
+    appView = "heartsFeature";
   }
 
   function openWhistTable() {
@@ -3208,7 +3044,6 @@
 
     fullHandCardCountingMode = options.cardCounting === true;
     if (contract === "Spades") spadesSession = null;
-    if (contract === "Hearts") heartsSession = null;
     if (contract === "Bridge") bridgeSession = null;
     fullHandCardCountingAnswer = null;
     fullHandCardCountingChecked = false;
@@ -3218,7 +3053,7 @@
     barbuSession = null;
 
     dominoHand = null;
-    heartsPassingHand = null;
+
     const seed = options.seed ?? usePracticeSeed();
     fullHandSelectedCardId = "";
     dummySelectedCardId = "";
@@ -3233,28 +3068,11 @@
     appView = "fullHand";
   }
 
-  async function startHeartsPassingPhase(options: { keepSession?: boolean } = {}) {
-    if (heartsDealPending) return;
-    heartsDealPending = true;
-    try {
-      const session = options.keepSession && heartsSession
-        ? transitionHeartsSession(heartsSession, { type: "next-hand", seed: usePracticeSeed() })
-        : createHeartsSession(usePracticeSeed());
-      openHeartsSession(session);
-      persistSavedHeartsRun();
-      await tick();
-    } catch (error) {
-      fullHandError = error instanceof Error ? error.message : "That hand could not be dealt.";
-    } finally {
-      heartsDealPending = false;
-    }
-  }
-
   async function startDominoHand() {
     barbuSession = null;
     const seed = usePracticeSeed();
     fullHand = null;
-    heartsPassingHand = null;
+
     dominoSelectedCardId = "";
     dominoError = "";
     dominoLastMoveReason = "";
@@ -3264,33 +3082,6 @@
     dominoHand = dominoHandEngine.start({ seed });
 
     appView = "dominoHand";
-  }
-
-  function toggleHeartsPassCard(card: Card) {
-    if (!isHeartsSessionActive() || !heartsSession || heartsSession.phase !== "passing") return;
-    heartsPassError = "";
-    const next = transitionHeartsSession(heartsSession, { type: "select-pass", cardId: card.id });
-    if (next === heartsSession && heartsPassSelectedCardIds.length >= 3) {
-      heartsPassError = "Remove one card before choosing another.";
-      return;
-    }
-    setHeartsSession(next);
-    persistSavedHeartsRun();
-  }
-
-  function confirmHeartsPass() {
-    if (!isHeartsSessionActive() || !heartsSession || heartsSession.phase !== "passing") return;
-    if (heartsPassSelectedCardIds.length !== 3) {
-      heartsPassError = "Choose exactly three cards to pass.";
-      return;
-    }
-    const next = transitionHeartsSession(heartsSession, { type: "pass" });
-    if (next === heartsSession) {
-      heartsPassError = "Those cards could not be passed.";
-      return;
-    }
-    openHeartsSession(next);
-    persistSavedHeartsRun();
   }
 
   async function selectFullHandCard(card: Card) {
@@ -3345,9 +3136,7 @@
     const completedTrickCount = fullHand.completedTricks.length;
 
     try {
-      if (isHeartsSessionActive() && heartsSession) {
-        setHeartsSession(transitionHeartsSession(heartsSession, { type: "play-card", cardId: targetId }));
-      } else if (isBridgeSessionHand() && bridgeSession) {
+      if (isBridgeSessionHand() && bridgeSession) {
         setBridgeSession(transitionBridgeSession(bridgeSession, { type: "play-card", cardId: targetId }));
       } else if (isSpadesSessionHand() && spadesSession) {
         setSpadesSession(transitionSpadesSession(spadesSession, { type: "play-card", cardId: targetId }));
@@ -3363,7 +3152,7 @@
       lastFullHandTapCardId = "";
       lastFullHandTapAt = 0;
       persistSavedPlayBarbuRun();
-      persistSavedHeartsRun();
+
       persistSavedSpadesRun();
       persistSavedBridgeRun();
     } catch (error) {
@@ -3384,9 +3173,7 @@
       return;
     }
 
-    if (isHeartsSessionActive() && heartsSession) {
-      setHeartsSession(transitionHeartsSession(heartsSession, { type: "next-trick" }));
-    } else if (isBridgeSessionHand() && bridgeSession) {
+    if (isBridgeSessionHand() && bridgeSession) {
       setBridgeSession(transitionBridgeSession(bridgeSession, { type: "next-trick" }));
     } else if (isSpadesSessionHand() && spadesSession) {
       setSpadesSession(transitionSpadesSession(spadesSession, { type: "next-trick" }));
@@ -3400,7 +3187,7 @@
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
     persistSavedPlayBarbuRun();
-    persistSavedHeartsRun();
+
     persistSavedSpadesRun();
     persistSavedBridgeRun();
   }
@@ -3434,12 +3221,6 @@
 
   function startNoHeartsHand() {
     void startFullHand("No Hearts");
-  }
-
-  function startHeartsHand() {
-    activeGameTable = "hearts";
-    spadesPlayStarted = true;
-    void startHeartsPassingPhase();
   }
 
   async function startSpadesHand(options: { keepSession?: boolean } = {}) {
@@ -3522,77 +3303,6 @@
     spadesHandResults = [];
     await startFullHand("Spades");
     spadesBids = suggestedSpadesBidsForHand(fullHand);
-  }
-
-  function completeHeartsPathStep(stepId = activePathStepId) {
-    if (!stepId.startsWith("hearts-")) {
-      return;
-    }
-
-    saveCourseProgress({ ...completedPathSteps, [stepId]: true });
-  }
-
-  function startHeartsPathStep(step: HeartsLearnPathStep) {
-    const course = courseCatalog.find((item) => item.pathStepId === step.id && item.game === "hearts");
-
-    if (course) {
-      startCourse(course.id);
-      return;
-    }
-
-    if (step.action === "queen") {
-      void startHeartsQueenDangerDrill(step.id);
-      return;
-    }
-
-    if (step.action === "avoid") {
-      void startHeartsAvoidHeartsDrill(step.id);
-      return;
-    }
-
-    if (step.action === "pass") {
-      void startHeartsPassPractice(step.id);
-      return;
-    }
-
-    if (step.action === "break") {
-      void startHeartsBreakHeartsDrill(step.id);
-      return;
-    }
-
-    if (step.action === "moon") {
-      void startHeartsStopMoonDrill(step.id);
-      return;
-    }
-
-    void startHeartsScoreHandDrill(step.id);
-  }
-
-  function findNextHeartsPathStep(fromStepId = "") {
-    const currentStepIndex = heartsUi.learnSteps.findIndex((step) => step.id === fromStepId);
-    if (currentStepIndex >= 0 && completedPathSteps[fromStepId]) {
-      const nextSequentialStep = heartsUi.learnSteps
-        .slice(currentStepIndex + 1)
-        .find((step) => !completedPathSteps[step.id]);
-
-      if (nextSequentialStep) {
-        return nextSequentialStep;
-      }
-    }
-
-    return heartsUi.learnSteps.find((step) => !completedPathSteps[step.id]);
-  }
-
-  function continueHeartsPath(fromStepId = activePathStepId) {
-    const nextStep = findNextHeartsPathStep(fromStepId);
-
-    if (!nextStep) {
-      activeTableTabs.hearts = "learn";
-      openHeartsTable();
-      return;
-    }
-
-    startHeartsPathStep(nextStep);
   }
 
   function completeSpadesPathStep(stepId = activePathStepId) {
@@ -3804,13 +3514,6 @@
       return;
     }
 
-    if (isHeartsSessionActive() && heartsSession) {
-      if (heartsDealPending) return;
-      if (heartsSessionSettlement(heartsSession).complete) startHeartsHand();
-      else void startHeartsPassingPhase({ keepSession: true });
-      return;
-    }
-
     if (fullHandIsPartnershipGame) {
       if (fullHandIsBridgeGame) {
         void startBridgeHand({ keepSession: true });
@@ -3881,13 +3584,6 @@
       return;
     }
 
-    if (isHeartsSessionActive() && heartsSession) {
-      if (heartsDealPending) return;
-      openHeartsSession(transitionHeartsSession(heartsSession, { type: "replay" }));
-      persistSavedHeartsRun();
-      return;
-    }
-
     if (isBridgeSessionHand() && bridgeSession) {
       openBridgeSession(transitionBridgeSession(bridgeSession, { type: "replay" }));
       persistSavedBridgeRun();
@@ -3946,28 +3642,6 @@
     void startFullHand(fullHandRunWeakestContract.contract);
   }
 
-  function seatTricksWonForTricks(tricks: CompletedHandTrick[]) {
-    const totals = emptySeatPenalties();
-
-    for (const trick of tricks) {
-      const seat = seatByPlayerIndex[trick.winnerIndex];
-
-      if (seat) {
-        totals[seat] += 1;
-      }
-    }
-
-    return totals;
-  }
-
-  function scoreSeatLabel(seat: Seat) {
-    return seat === "Tutor" ? "Barbu" : seat;
-  }
-
-  function scoreSeatRunLabel(seat: Seat) {
-    return seat === "You" ? "Your" : scoreSeatLabel(seat);
-  }
-
   function scoreSeatResultLabel(seat: Seat) {
     return `${scoreSeatLabel(seat)} ${fullHandContractMeta.resultVerb}`;
   }
@@ -3993,120 +3667,6 @@
         rank
       };
     });
-  }
-
-  function heartsScorecardStandings(scores: Record<Seat, number>): RunStanding[] {
-    const orderedScores = scoreSeats
-      .map((seat) => ({ seat, score: scores[seat] }))
-      .sort((left, right) => left.score - right.score);
-    let previousScore = -1;
-    let previousRank = 0;
-
-    return orderedScores.map((standing, index) => {
-      const rank = index > 0 && standing.score === previousScore ? previousRank : index + 1;
-      previousScore = standing.score;
-      previousRank = rank;
-
-      return {
-        ...standing,
-        rank
-      };
-    });
-  }
-
-  function heartsMoonThreatSeat(rawSeatPenalties: Record<Seat, number>) {
-    const total = scoreSeats.reduce((sum, seat) => sum + (rawSeatPenalties[seat] ?? 0), 0);
-
-    if (total <= 0 || total >= heartsHandPenaltyTotal) {
-      return undefined;
-    }
-
-    return scoreSeats.find((seat) => rawSeatPenalties[seat] === total);
-  }
-
-  function heartsMoonResultText(shooter: Seat) {
-    if (shooter === "You") {
-      return "You shot the moon. This hand scores 0 for you and 26 for everyone else.";
-    }
-
-    return `${scoreSeatLabel(shooter)} shot the moon. This hand scores 0 for ${scoreSeatLabel(
-      shooter
-    )} and 26 for everyone else.`;
-  }
-
-  function heartsMoonThreatText() {
-    if (!fullHandIsHeartsGame || !heartsCurrentMoonThreatSeat || fullHand?.status !== "in_progress") {
-      return "";
-    }
-
-    if (heartsCurrentMoonThreatSeat === "You") {
-      return " You have every point so far; the table will try to break the moon.";
-    }
-
-    return ` ${scoreSeatLabel(heartsCurrentMoonThreatSeat)} has every point so far; break the moon by making someone else take points.`;
-  }
-
-  function withHeartsMoonThreat(message: string) {
-    return `${message}${heartsMoonThreatText()}`;
-  }
-
-  function heartsResultCopy(
-    matchComplete: boolean,
-    standings: RunStanding[],
-    trigger: { seat: Seat; score: number } | undefined,
-    moonShooter: Seat | undefined,
-    handCount: number,
-    playerPenalty: number,
-    objective: string
-  ) {
-    const player = standings.find(standing => standing.seat === "You");
-    const winner = standings[0];
-    const winners = standings.filter(standing => standing.rank === 1);
-    const winnerLabel = winners.map(standing => scoreSeatLabel(standing.seat)).join(" and ");
-    const moonText = moonShooter ? heartsMoonResultText(moonShooter) : "";
-    if (!player || !winner) return { heading: "Hearts hand complete", summary: "Low score wins.", winnerLabel };
-    if (matchComplete && trigger) {
-      const heading = player.rank === 1
-        ? winners.length > 1 ? "You tied the match" : "You won Hearts"
-        : `You finished ${formatOrdinal(player.rank)}`;
-      const resultVerb = winners.length > 1 ? "tie" : winner.seat === "You" ? "win" : "wins";
-      const result = `${scoreSeatLabel(trigger.seat)} reached ${trigger.score} points. ${winnerLabel} ${resultVerb} with ${winner.score}. You finished ${formatOrdinal(player.rank)} after ${handCount} ${handCount === 1 ? "hand" : "hands"}.`;
-      return { heading, summary: moonText ? `${moonText} ${result}` : result, winnerLabel };
-    }
-    const heading = moonShooter
-      ? moonShooter === "You" ? "You shot the moon" : `${scoreSeatLabel(moonShooter)} shot the moon`
-      : player.rank === 1
-        ? winners.length > 1 ? "You tied the table" : "You led the table"
-        : `You finished ${formatOrdinal(player.rank)}`;
-    return { heading, summary: moonText || `${objective}. You took ${formatPointCount(playerPenalty)}; ${scoreSeatLabel(winner.seat)} ${formatPointCount(winner.score)} leads the match.`, winnerLabel };
-  }
-
-  function heartsPlayerHandResult(kind: "best" | "worst", handResults: HeartsHandResult[]) {
-    const results = [...handResults];
-
-    if (!results.length) {
-      return undefined;
-    }
-
-    return results.sort((left, right) => {
-      const leftScore = left.seatPenalties.You ?? 0;
-      const rightScore = right.seatPenalties.You ?? 0;
-
-      return kind === "best"
-        ? leftScore - rightScore || left.handNumber - right.handNumber
-        : rightScore - leftScore || left.handNumber - right.handNumber;
-    })[0];
-  }
-
-  function heartsHandResultLabel(result: HeartsHandResult) {
-    const score = result.seatPenalties.You ?? 0;
-    const moonText = result.moonShooter
-      ? result.moonShooter === "You"
-        ? " (shot moon)"
-        : ` (${scoreSeatLabel(result.moonShooter)} shot moon)`
-      : "";
-
-    return `Hand ${result.handNumber}: ${score} ${score === 1 ? "point" : "points"}${moonText}`;
   }
 
   function runResultHeading(standings: RunStanding[]) {
@@ -4141,26 +3701,8 @@
     )} after ${contractsPlayed} contracts.`;
   }
 
-  function formatOrdinal(value: number) {
-    if (value === 1) {
-      return "1st";
-    }
-    if (value === 2) {
-      return "2nd";
-    }
-    if (value === 3) {
-      return "3rd";
-    }
-
-    return `${value}th`;
-  }
-
   function formatSignedScore(value: number) {
     return value > 0 ? `+${value}` : String(value);
-  }
-
-  function formatPointCount(value: number) {
-    return `${value} ${value === 1 ? "point" : "points"}`;
   }
 
   function runBestContract(results: FullHandRunResult[]) {
@@ -4283,39 +3825,7 @@
       return whistTrickFeedback(trick, fullHand?.contract ?? "partnership");
     }
 
-    if (fullHandIsHeartsGame) {
-      if (trick.outcome === "captured_penalty") {
-        if (fullHandTrickHasTag(trick, "opponent_loaded_player_trick")) {
-          return withHeartsMoonThreat(fullHandTrickHasTag(trick, "queen_spades_moved")
-            ? `You held the trick and the table loaded the queen of spades into it. That is 13 danger points plus any hearts.`
-            : `You held the trick and the table loaded hearts into it. The lead created pressure; look for a lower exit next time.`);
-        }
-        if (fullHandTrickHasTag(trick, "queen_spades_moved")) {
-          return withHeartsMoonThreat(`You captured the queen of spades and took ${penaltyText}. In Hearts, that one card is the big danger.`);
-        }
-        if (fullHandTrickHasTag(trick, "hearts_moved")) {
-          return withHeartsMoonThreat(`You captured hearts and took ${penaltyText}. Once hearts are broken, every heart can become cargo.`);
-        }
-        return withHeartsMoonThreat(`You won the trick and took ${penaltyText}. Try to stay below the current winner when danger can enter.`);
-      }
-      if (trick.outcome === "avoided_penalty") {
-        if (fullHandTrickHasTag(trick, "queen_spades_moved")) {
-          return withHeartsMoonThreat(`${trick.winner} took the queen of spades. Good: it moved, but not into your score.`);
-        }
-        if (fullHandTrickHasTag(trick, "hearts_moved")) {
-          return withHeartsMoonThreat(`${trick.winner} took ${penaltyText}. Good: the hearts moved away from you.`);
-        }
-        return withHeartsMoonThreat(`${trick.winner} took ${penaltyText}. Good: you stayed out of the loaded trick.`);
-      }
-      if (trick.outcome === "won_clean_trick") {
-        return withHeartsMoonThreat(fullHandTrickHasTag(trick, "pressure_lead")
-          ? "You won a clean trick after pressure from the lead. No points, but watch whether this gives you the next lead."
-          : "You won a clean trick. No points moved, but Hearts is still about avoiding the loaded tricks.");
-      }
-      return withHeartsMoonThreat(fullHandTrickHasTag(trick, "void_discard")
-        ? `${trick.winner} won a clean trick. Good: your void discard could not take the led suit.`
-        : `${trick.winner} won a clean trick. No hearts or queen of spades moved.`);
-    }
+    if (fullHandIsHeartsGame && fullHand) return heartsTrickFeedback(trick, fullHand);
 
     if (fullHand?.contract === "Hearts Trumps") {
       if (fullHandTrickHasTag(trick, "overtrumped")) {
@@ -4863,65 +4373,6 @@
     appView = "drill";
   }
 
-  function loadGeneratedHeartsPracticeSteps(seed: number, focus: HeartsPracticeFocus) {
-    return generateHeartsPracticeSet(seed, focus).scenarios.map(drillStepFromGeneratedScenario);
-  }
-
-  async function startGeneratedHeartsMicroDrill(
-    focus: HeartsPracticeFocus,
-    title: string,
-    pathStepId = ""
-  ) {
-    const seed = usePracticeSeed();
-    const candidates = await loadGeneratedHeartsPracticeSteps(seed, focus);
-    const orderedCandidates = focus === "break-hearts" ? candidates : orderPracticePool(candidates, seed);
-    activeHeartsPracticeFocus = focus;
-
-    startHeartsMicroDrillSession(orderedCandidates, title, pathStepId);
-  }
-
-  async function startHeartsAvoidHeartsDrill(pathStepId = "") {
-    await startGeneratedHeartsMicroDrill("avoid-hearts", "Hearts practice: avoid hearts", pathStepId);
-  }
-
-  async function startHeartsFirstTrickDrill(pathStepId = "") {
-    await startGeneratedHeartsMicroDrill("first-trick", "Hearts practice: first trick", pathStepId);
-  }
-
-  async function startHeartsQueenDangerDrill(pathStepId = "") {
-    await startGeneratedHeartsMicroDrill("queen-danger", "Hearts practice: Queen of Spades danger", pathStepId);
-  }
-
-  function startHeartsMicroDrillSession(steps: DrillStep[], title: string, pathStepId = "") {
-    activeGameTable = "hearts";
-    activePathStepId = pathStepId;
-    activeDrillFocusContract = "Hearts";
-    drillIndex = 0;
-    drillResults = [];
-    drillSetTitle = title;
-    activeDrillSteps = steps;
-    resetDrillDecision();
-    appView = "drill";
-  }
-
-  async function startHeartsBreakHeartsDrill(pathStepId = "") {
-    await startGeneratedHeartsMicroDrill("break-hearts", "Hearts practice: break hearts", pathStepId);
-  }
-
-  async function startHeartsStopMoonDrill(pathStepId = "") {
-    await startGeneratedHeartsMicroDrill("stop-moon", "Hearts practice: stop the moon", pathStepId);
-  }
-
-  async function startHeartsScoreHandDrill(pathStepId = "") {
-    await startGeneratedHeartsMicroDrill("score-hand", "Hearts practice: score a hand", pathStepId);
-  }
-
-  let activeHeartsPracticeFocus: HeartsPracticeFocus = "avoid-hearts";
-
-  function replayHeartsPracticeDrill() {
-    void startGeneratedHeartsMicroDrill(activeHeartsPracticeFocus, drillSetTitle);
-  }
-
   function startSpadesPracticeSession(focus: SpadesPracticeAction, steps: DrillStep[], title: string, pathStepId = "") {
     activeGameTable = "spades";
     activeTableTabs.spades = "learn";
@@ -5065,78 +4516,6 @@
     }
   }
 
-  async function startHeartsPassPractice(pathStepId = "") {
-    activeGameTable = "hearts";
-    activePathStepId = pathStepId;
-    heartsPassPracticeBaseSeed = usePracticeSeed();
-    heartsPassPracticeStepIndex = 0;
-    await loadHeartsPassPracticeStep();
-    appView = "heartsPassPractice";
-  }
-
-  async function loadHeartsPassPracticeStep() {
-    const seed = heartsPassPracticeBaseSeed + heartsPassPracticeStepIndex;
-    heartsPassPracticeSelectedCardIds = [];
-    heartsPassPracticeChecked = false;
-    heartsPassPracticeError = "";
-
-    heartsPassPractice = generateHeartsPassPractice(seed);
-  }
-
-  async function nextHeartsPassPracticeStep() {
-    if (heartsPassPracticeIsLastStep) {
-      if (activePathStepId === "hearts-pass") {
-        const course = courseCatalog.find((item) => item.pathStepId === activePathStepId && item.game === "hearts");
-
-        if (course) {
-          activeCourseId = course.id;
-          activeCourseStage = "review";
-          appView = "courseContent";
-        } else {
-          continueHeartsPath();
-        }
-      } else {
-        openHeartsTable();
-      }
-      return;
-    }
-
-    heartsPassPracticeStepIndex += 1;
-    await loadHeartsPassPracticeStep();
-  }
-
-  function toggleHeartsPassPracticeCard(card: Card) {
-    heartsPassPracticeError = "";
-
-    if (heartsPassPracticeSelectedCardIds.includes(card.id)) {
-      heartsPassPracticeSelectedCardIds = heartsPassPracticeSelectedCardIds.filter((cardId) => cardId !== card.id);
-      heartsPassPracticeChecked = false;
-      return;
-    }
-
-    if (heartsPassPracticeSelectedCardIds.length >= 3) {
-      heartsPassPracticeError = "Remove one card before choosing another.";
-      return;
-    }
-
-    heartsPassPracticeSelectedCardIds = [...heartsPassPracticeSelectedCardIds, card.id];
-    heartsPassPracticeChecked = false;
-  }
-
-  function checkHeartsPassPractice() {
-    if (!heartsPassPracticeCanCheck) {
-      heartsPassPracticeError = "Choose exactly three cards to pass.";
-      return;
-    }
-
-    heartsPassPracticeError = "";
-    heartsPassPracticeChecked = true;
-
-    if (activePathStepId === "hearts-pass" && !courseCatalog.some((course) => course.pathStepId === activePathStepId)) {
-      completeHeartsPathStep("hearts-pass");
-    }
-  }
-
   const practiceActionRegistry: PracticeActionRegistry = {
     barbu: {
       fixed: () => {
@@ -5144,15 +4523,7 @@
       },
       domino: () => void startDominoPracticeHand()
     },
-    hearts: {
-      pass: ({ pathStepId } = {}) => void startHeartsPassPractice(pathStepId),
-      first: ({ pathStepId } = {}) => void startHeartsFirstTrickDrill(pathStepId),
-      avoid: ({ pathStepId } = {}) => void startHeartsAvoidHeartsDrill(pathStepId),
-      queen: ({ pathStepId } = {}) => void startHeartsQueenDangerDrill(pathStepId),
-      break: ({ pathStepId } = {}) => void startHeartsBreakHeartsDrill(pathStepId),
-      moon: ({ pathStepId } = {}) => void startHeartsStopMoonDrill(pathStepId),
-      score: ({ pathStepId } = {}) => void startHeartsScoreHandDrill(pathStepId)
-    },
+    hearts: {},
     whist: {},
     spades: {
       follow: ({ pathStepId } = {}) => startSpadesFollowSuitDrill(pathStepId),
@@ -5168,7 +4539,6 @@
   };
 
   const barbuPracticeActions = createPracticePanelActions(practiceActionRegistry.barbu);
-  const heartsPracticeActions = createPracticePanelActions(practiceActionRegistry.hearts);
   const spadesPracticeActions = createPracticePanelActions(practiceActionRegistry.spades);
   const bridgePracticeActions = createPracticePanelActions(practiceActionRegistry.bridge);
 
@@ -5300,21 +4670,6 @@
     void continueDrill();
   }
 
-  function drillStepFromGeneratedScenario(scenario: GeneratedPracticeScenario): DrillStep {
-    return {
-      scenarioId: generatedScenarioPatternId(scenario.id),
-      contract: scenario.contract,
-      title: scenario.title,
-      trick: guidedTrickFromGeneratedScenario(scenario)
-    };
-  }
-
-  function generatedScenarioPatternId(id: string) {
-    const lastHyphen = id.lastIndexOf("-");
-
-    return lastHyphen > 0 ? id.slice(0, lastHyphen) : id;
-  }
-
   function saveCompletedDrillSession() {
     if (drillResults.length === 0) {
       return;
@@ -5372,39 +4727,6 @@
     return outcomeLabels[currentTrick.cardOutcomes?.[played.id] ?? "good"];
   }
 
-  function guidedTrickFromGeneratedScenario(scenario: GeneratedPracticeScenario): GuidedTrick {
-    return {
-      title: scenario.title,
-      beforeResult: scenario.prompt,
-      afterResult: "Generated drill complete. Check the explanation for the winner and penalty.",
-      emptyExplanation: scenario.prompt,
-      legalCardIds: scenario.legalCardIds,
-      hand: scenario.playerHand,
-      tableBeforeChoice: scenario.tableBeforeChoice,
-      tableAfterChoice: scenario.tableAfterChoice,
-      pendingBySeat: pendingSeatsForGeneratedScenario(scenario),
-      playedExplanations: Object.fromEntries(
-        scenario.outcomes.map((outcome) => [outcome.cardId, outcome.explanation])
-      ),
-      cardOutcomes: Object.fromEntries(
-        scenario.outcomes.map((outcome) => [outcome.cardId, outcome.outcomeKind])
-      ),
-      cardReasons: Object.fromEntries(
-        scenario.outcomes.map((outcome) => [outcome.cardId, outcome.reason])
-      )
-    };
-  }
-
-  function pendingSeatsForGeneratedScenario(scenario: GeneratedPracticeScenario) {
-    const pendingBySeat: Partial<Record<Seat, string>> = { You: "You" };
-
-    for (const play of scenario.tableAfterChoice) {
-      pendingBySeat[play.seat] = play.card.label;
-    }
-
-    return pendingBySeat;
-  }
-
   function factsForSection(section: GameReference["sections"][number]) {
     return section.facts ?? [];
   }
@@ -5413,11 +4735,6 @@
       learnProps: { steps: barbuUi.learnSteps, completedCount: barbuUi.learnSteps.filter(s => completedPathSteps[s.id]).length, nextStep: barbuUi.learnSteps.find(s => !completedPathSteps[s.id]), actions: barbuLearnPanelActions, onStepSelect: startPathStep },
       practiceProps: { lessonEntries: fixedDrillLessons, onLessonSelect: startFixedContractDrill, actions: barbuPracticeActions },
       playProps: { onPrimary: startBarbuRun, resumeLabel: savedPlayBarbuRun ? "Continue Play Barbu" : undefined, resumeNote: savedPlayBarbuRun ? savedPlayBarbuRunLabel : undefined, onResume: savedPlayBarbuRun ? continueSavedPlayBarbuRun : undefined }
-    },
-    hearts: {
-      learnProps: { steps: heartsUi.learnSteps, completedCount: heartsUi.learnSteps.filter(s => completedPathSteps[s.id]).length, nextStep: heartsUi.learnSteps.find(s => !completedPathSteps[s.id]), actions: heartsLearnPanelActions, onStepSelect: startHeartsPathStep },
-      practiceProps: { actions: heartsPracticeActions },
-      playProps: { onPrimary: startHeartsHand, resumeLabel: savedHeartsRun ? "Continue Hearts" : undefined, resumeNote: savedHeartsRun ? savedHeartsRunSummary(savedHeartsRun) : undefined, onResume: savedHeartsRun ? continueSavedHeartsRun : undefined }
     },
     spades: {
       learnProps: { steps: spadesUi.learnSteps, completedCount: spadesUi.learnSteps.filter(s => completedPathSteps[s.id]).length, nextStep: spadesUi.learnSteps.find(s => !completedPathSteps[s.id]), actions: spadesLearnPanelActions, onStepSelect: startSpadesPathStep },
@@ -5493,34 +4810,6 @@
           {formatSignedScore(fullHandRunSeatScores[seat])}
         </strong>
       {/each}
-    </div>
-  </div>
-{/snippet}
-
-{#snippet heartsScorecard(label = heartsScorecardMeta.label)}
-  <div class="run-scorecard hearts-scorecard" aria-label={label}>
-    <div class="run-scorecard-row hearts-scorecard-row header">
-      <span>Player</span>
-      <span>{heartsScorecardMeta.unitLabel}</span>
-      <span>Place</span>
-    </div>
-    {#each scoreSeats as seat}
-      <div class:active={seat === "You"} class="run-scorecard-row hearts-scorecard-row">
-        <span>
-          {scoreSeatLabel(seat)}
-          <small>{seat === "You" ? "You" : "Table"}</small>
-        </span>
-        <strong>{heartsVisibleScores[seat]}</strong>
-        <strong>{formatOrdinal(heartsStandings.find((standing) => standing.seat === seat)?.rank ?? 1)}</strong>
-      </div>
-    {/each}
-    <div class="run-scorecard-row hearts-scorecard-row total">
-      <span>
-        {heartsScorecardMeta.objective}
-        <small>Hand {heartsVisibleHandCount}</small>
-      </span>
-      <strong>Target {heartsMatchTarget}</strong>
-      <strong>{heartsPlayerPlaceLabel}</strong>
     </div>
   </div>
 {/snippet}
@@ -5646,7 +4935,7 @@
   </div>
 {/snippet}
 
-<main class:fixed-play-screen={isTablePlayScreen || (appView === "whistFeature" && whistFixedSurface)} class="app-shell">
+<main class:fixed-play-screen={isTablePlayScreen || (appView === "whistFeature" && whistFixedSurface) || (appView === "heartsFeature" && heartsFixedSurface)} class="app-shell">
   {#if appView === "catalog"}
     <section class="welcome-screen" aria-labelledby="catalog-title">
       <div class="welcome-copy">
@@ -5705,6 +4994,12 @@
         </p>
       {/if}
     </footer>
+  {:else if appView === "heartsFeature"}
+    <HeartsGame feature={heartsFeature} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
+      onBack={openCatalog} onReference={() => openReference("hearts")}
+      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })}
+      onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
+      onSurfaceChange={fixed => { heartsFixedSurface = fixed; }} />
   {:else if appView === "whistFeature"}
     <WhistGame feature={whistFeature} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onBack={openCatalog} onReference={() => openReference("whist")}
@@ -6619,192 +5914,6 @@
         </div>
       </div>
     </section>
-  {:else if appView === "heartsPassPractice"}
-    {#if heartsPassPractice}
-      <TablePlaySurface
-        mode="play"
-        ariaLabel="Hearts pass practice"
-        flowLayout
-        title="Pass three"
-        eyebrow="Hearts practice"
-        statusLabel="Exercise"
-        statusValue={`${heartsPassPracticeStepIndex + 1} of ${heartsPassPracticeTotalSteps}`}
-        tableAriaLabel="Hearts pass practice table"
-        tableCards={[]}
-        showTable={false}
-        panelAriaLabel="Hearts pass practice cards"
-        onBack={openHeartsTable}
-      >
-        {#snippet summary()}
-          <div class="full-hand-summary grouped-play-summary" aria-label="Hearts pass practice summary">
-            <div class="full-hand-summary-row current-hand" aria-label="Passing drill status">
-              <span class="summary-row-label">Passing drill</span>
-              <div>
-                <span>Goal</span>
-                <strong>{heartsPassPractice.title}</strong>
-              </div>
-              <div>
-                <span>Selected</span>
-                <strong>{heartsPassPracticeSelectedCardIds.length} / 3</strong>
-              </div>
-              <div>
-                <span>Result</span>
-                <strong>{heartsPassPracticeChecked ? heartsPassPracticeGood ? "Good" : "Risky" : "-"}</strong>
-              </div>
-            </div>
-          </div>
-        {/snippet}
-
-        {#snippet panel()}
-          <div class="lesson-heading">
-            <p class="eyebrow">Before the hand</p>
-            <h2>{heartsPassPractice.title}</h2>
-          </div>
-
-          {#if !heartsPassPracticeChecked}
-            <p class="result">{heartsPassPractice.prompt}</p>
-          {/if}
-          {#if heartsPassPracticeError}
-            <p class="outcome warning">{heartsPassPracticeError}</p>
-          {:else if heartsPassPracticeChecked}
-            <p class:warning={!heartsPassPracticeGood} class="outcome">
-              {heartsPassPracticeGood ? "Good pass." : "Risky pass."}
-              {heartsPassPracticeOutcome?.explanation}
-            </p>
-            {#if !heartsPassPracticeGood}
-              <p class="explanation pass-recommendation">
-                Suggested: {formatCardList(heartsPassPractice.recommendedPass)}.
-              </p>
-            {/if}
-          {:else if heartsPassPracticeSelectedCards.length}
-            <p class="explanation">
-              Passing: {formatCardList(heartsPassPracticeSelectedCards)}
-            </p>
-          {/if}
-
-          <CardChoiceHand
-            cards={heartsPassPractice.playerHand}
-            ariaLabel="Your Hearts pass practice hand"
-            className="hand full-hand-cards hearts-pass-cards"
-            cardClassName="card hand-card full-hand-card"
-            getCardClasses={(card) => ({
-              heart: card.suit === "H",
-              legal: !heartsPassPracticeSelectedCardIds.includes(card.id),
-              recommended: heartsPassPracticeChecked && heartsPassPracticeRecommendedIds.has(card.id),
-              selected: heartsPassPracticeSelectedCardIds.includes(card.id)
-            })}
-            isPressed={(card) => heartsPassPracticeSelectedCardIds.includes(card.id)}
-            onSelect={toggleHeartsPassPracticeCard}
-          />
-
-          <div class="action-row">
-            <button class="secondary-action" onclick={openHeartsTable} type="button">Table</button>
-            {#if heartsPassPracticeChecked}
-              {#if activePathStepId === "hearts-pass"}
-                <button class="primary-action" onclick={() => void nextHeartsPassPracticeStep()} type="button">
-                  {heartsPassPracticeIsLastStep
-                    ? isHeartsCourseComplete
-                      ? "Back to Hearts table"
-                      : "Continue Hearts path"
-                    : "Next pass"}
-                </button>
-              {:else}
-                <button class="primary-action" onclick={() => void nextHeartsPassPracticeStep()} type="button">
-                  {heartsPassPracticeIsLastStep ? "Complete exercise" : "Next pass"}
-                </button>
-              {/if}
-            {:else}
-              <button
-                class="primary-action"
-                disabled={!heartsPassPracticeCanCheck}
-                onclick={checkHeartsPassPractice}
-                type="button"
-              >
-                Check pass
-              </button>
-            {/if}
-          </div>
-        {/snippet}
-      </TablePlaySurface>
-    {/if}
-  {:else if appView === "heartsPass"}
-    {#if heartsPassingHand}
-      <TablePlaySurface
-        mode="play"
-        ariaLabel="Hearts passing phase"
-        flowLayout
-        title="Pass cards"
-        eyebrow="Hearts"
-        statusLabel={heartsPassDirectionLabel(heartsPassDirection)}
-        statusValue={`${heartsPassSelectedCardIds.length} of 3`}
-        tableAriaLabel="Hearts passing table"
-        tableCards={[]}
-        showTable={false}
-        panelAriaLabel="Hearts pass cards"
-        onBack={openHeartsTable}
-      >
-        {#snippet summary()}
-          <div class="full-hand-summary grouped-play-summary" aria-label="Hearts pass summary">
-            <div class="full-hand-summary-row current-hand" aria-label="Passing direction">
-              <span class="summary-row-label">Passing</span>
-              <div>
-                <span>You pass</span>
-                <strong>{heartsPassTargetLabel(heartsPassDirection)}</strong>
-              </div>
-              <div>
-                <span>You receive</span>
-                <strong>{heartsPassReceiveLabel(heartsPassDirection)}</strong>
-              </div>
-              <div>
-                <span>Cards</span>
-                <strong>{heartsPassSelectedCardIds.length} / 3</strong>
-              </div>
-            </div>
-          </div>
-        {/snippet}
-
-        {#snippet panel()}
-          <div class="lesson-heading">
-            <p class="eyebrow">Before the first trick</p>
-            <h2>Pass three cards</h2>
-          </div>
-
-          <p class="result">
-            Choose exactly three cards to pass to {heartsPassTargetLabel(heartsPassDirection)}. You will receive three cards
-            from {heartsPassReceiveLabel(heartsPassDirection)}.
-          </p>
-          {#if heartsPassSelectedCards.length}
-            <p class="explanation">
-              Passing: {formatCardList(heartsPassSelectedCards)}
-            </p>
-          {/if}
-          {#if heartsPassError}
-            <p class="outcome warning">{heartsPassError}</p>
-          {/if}
-
-          <CardChoiceHand
-            cards={heartsPassingHand.playerHand}
-            ariaLabel="Your Hearts passing hand"
-            className="hand full-hand-cards hearts-pass-cards"
-            cardClassName="card hand-card full-hand-card"
-            getCardClasses={(card) => ({
-              heart: card.suit === "H",
-              legal: !heartsPassSelectedCardIds.includes(card.id),
-              selected: heartsPassSelectedCardIds.includes(card.id)
-            })}
-            isPressed={(card) => heartsPassSelectedCardIds.includes(card.id)}
-            onSelect={toggleHeartsPassCard}
-          />
-
-          <div class="action-row">
-            <button class="secondary-action" onclick={openHeartsTable} type="button">Table</button>
-            <button class="primary-action" disabled={!heartsPassCanSubmit} onclick={() => void confirmHeartsPass()} type="button">
-              Pass cards
-            </button>
-          </div>
-        {/snippet}
-      </TablePlaySurface>
-    {/if}
   {:else if appView === "bridgeAuction"}
     {#if fullHand}
       <header class="topbar table-play-topbar" aria-label="Bridge auction">
@@ -7277,45 +6386,7 @@
             {:else}
               <GameResult game={fullHand.contract} completion={fullHandCompletion} title={fullHandResultTitle} summary={fullHandResultSummary} />
 
-              {#if fullHandIsHeartsGame}
-                <div class="hearts-result-stack" aria-label="Hearts hand score">
-                  {@render heartsScorecard("Hearts final scorecard")}
-                  <div class="hearts-hand-breakdown" aria-label="This hand breakdown">
-                    <div class="hearts-hand-breakdown-row header">
-                      <span>This hand</span>
-                      <span>Tricks</span>
-                      <span>Points</span>
-                    </div>
-                    {#each scoreSeats as seat}
-                      <div class:active={seat === "You"} class="hearts-hand-breakdown-row">
-                        <span>{scoreSeatLabel(seat)}</span>
-                        <strong>{fullHandSeatTrickCounts[seat]}</strong>
-                        <strong>{heartsCurrentScoredSeatPenalties[seat]}</strong>
-                      </div>
-                    {/each}
-                  </div>
-                </div>
-                {#if heartsMatchIsComplete}
-                  <div class="full-hand-result-tricks" aria-label="Hearts match summary">
-                    <div>
-                      <span>Winner</span>
-                      <strong>{heartsResult.winnerLabel}</strong>
-                    </div>
-                    <div>
-                      <span>Your place</span>
-                      <strong>{heartsPlayerPlaceLabel}</strong>
-                    </div>
-                    <div>
-                      <span>Best hand</span>
-                      <strong>{heartsBestHandLabel}</strong>
-                    </div>
-                    <div>
-                      <span>Hardest hand</span>
-                      <strong>{heartsWorstHandLabel}</strong>
-                    </div>
-                  </div>
-                {/if}
-              {:else if fullHandIsBridgeGame}
+              {#if fullHandIsBridgeGame}
                 <div class="hearts-result-stack" aria-label="Bridge hand score">
                   <div class="hearts-hand-breakdown" aria-label="Bridge contract breakdown">
                     <div class="hearts-hand-breakdown-row whist-score-row header">
@@ -7801,17 +6872,7 @@
     <DrillResultScreen title={drillSetTitle} results={drillResults} message={drillResultMessage}
       attempts={recentPlayBarbuAttempts} onBack={openActiveGameTable}>
       {#snippet actions()}
-          {#if drillResultIsHeartsPractice}
-            {#if activePathStepId.startsWith("hearts-")}
-              <button class="primary-action" onclick={() => continueHeartsPath()} type="button">
-                {isHeartsCourseComplete ? "Back to Hearts table" : "Continue Hearts path"}
-              </button>
-              <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
-            {:else}
-              <button class="primary-action" onclick={replayHeartsPracticeDrill} type="button">Practice Hearts again</button>
-              <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
-            {/if}
-          {:else if drillResultIsSpadesPractice}
+          {#if drillResultIsSpadesPractice}
             {#if activePathStepId.startsWith("spades-")}
               <button class="primary-action" onclick={() => continueSpadesPath()} type="button">
                 {isSpadesCourseComplete ? "Back to Spades table" : "Continue Spades path"}
@@ -7839,11 +6900,7 @@
           {/if}
       {/snippet}
       {#snippet footer()}
-        {#if drillResultIsHeartsPractice}
-          {#if !activePathStepId.startsWith("hearts-")}
-            <button class="primary-action" onclick={openActiveGameTable} type="button">Back to Learn</button>
-          {/if}
-        {:else if drillResultIsSpadesPractice}
+        {#if drillResultIsSpadesPractice}
           {#if !activePathStepId.startsWith("spades-")}
             <button class="primary-action" onclick={openActiveGameTable} type="button">Back to Learn</button>
           {/if}

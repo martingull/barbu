@@ -154,9 +154,10 @@ complete generic game factory. Reuse shared interfaces and extract common
 behavior when a second game demonstrates the need; do not clone the whole Whist
 implementation or force non-trick-taking games into its hand model.
 
-The Whist frontend is now isolated in `src/features/whist/`. Reuse `DrillScreen`
-and `DrillResultScreen` for exercises and review, and the existing table/hand
-components for play. Keep unsaved exercise state separate from the saved match.
+Whist and Hearts frontends are isolated in `src/features/whist/` and
+`src/features/hearts/`. Reuse `GameLearning` for the shared lesson flow,
+`DrillScreen` and `DrillResultScreen` for decisions and review, and the existing
+table/hand components for play. Keep unsaved exercises separate from saved matches.
 Other games still need frontend extraction; do not claim `App.svelte` is already
 only a router. See `docs/game-architecture.md` for the incremental boundary.
 
