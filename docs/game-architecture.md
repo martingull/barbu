@@ -21,7 +21,7 @@ chosen rules, scoring, and table conventions.
 | Catalog and table metadata | `src/tableFactory.ts`, `src/games/whist.ts` | Use the factory and per-game definitions, not copied table markup. |
 | Registration | `src/gameRegistry.ts`, `src/games/index.ts` | Register metadata through the existing registry. |
 | Presentation | `GameTableShell`, `LearnPanel`, `CourseLesson`, `PlayTabPanel`, `TablePlaySurface`, `CardChoiceHand` | Reuse Learn/Play navigation, cards, selection, feedback, and responsive layout. |
-| Feature coordination | `src/features/{whist,hearts,spades,bridge}/`, `src/features/GameLearning.svelte` | Own game-local match interaction and saving; compose existing engines and the shared lesson flow. |
+| Feature coordination | `src/features/{whist,hearts,spades,bridge,barbu}/`, `src/features/GameLearning.svelte` | Own game-local Play interaction and saving; compose existing engines. Barbu Learn extraction is still pending. |
 | Hand rules and actions | `src/domain/handEngine.ts` | Keep deterministic transitions independent of UI, storage, and Tauri. |
 | Match progression | `src/domain/whistSession.ts` | Own settlement, dealer rotation, replay, completion, and review state outside Svelte. |
 | Persistence | `src/persistence/whistSave.ts` | Validate and restore saves through an adapter; preserve compatibility or explicitly migrate it. |
@@ -107,8 +107,17 @@ Whist, Hearts, Spades and Bridge have isolated frontends under their respective
   to `bridgeSession.ts` and preserves the version-1 save. Its active-hand adapter
   lets the shared controller select and play either South's cards or the dummy,
   without duplicating rules or exposing the reference hand as selectable cards.
-- `reviewedMatchFeature.ts` shares selection, double-tap guarding, save/resume
-  and table navigation across these four reviewed trick-taking matches.
+- `BarbuPlay.svelte` owns contract introductions, trick hands, Domino and session
+  results. `barbuFeature.ts` dispatches the existing seven-contract session;
+  it does not add dealer-driven contract choice or change settlement.
+  `BarbuHandView` and `DominoHandView` also render unsaved learning hands,
+  while their saved Play controller remains isolated. Contract introductions
+  and pure feedback/score presentation live beside these views.
+- `savedSessionFeature.ts` shares saving, resume, navigation and double-tap
+  selection across all five games without assuming a trick-taking hand.
+  `reviewedMatchFeature.ts` composes it with trick review and next-hand behavior
+  for Whist, Hearts, Spades and Bridge. Barbu composes the base directly because
+  contract introductions and Domino do not fit the reviewed-match state.
   Passing, bids and Whist session mode remain in the game wrappers. This is an
   interaction helper for their existing session contract, not a universal game
   controller; it does not know rules, scoring, opponent policy or layout.
@@ -124,7 +133,9 @@ Keep shared card layout and CSS in the existing components; do not copy them
 into each feature or add game-specific viewport calculations.
 
 This is an incremental frontend refactor, not another engine migration.
-Barbu and Card Counting still have orchestration in `App.svelte`. Card Counting
+Barbu Learn and Card Counting still have orchestration in `App.svelte`. Barbu
+Play is isolated; the shell only launches it and provides navigation/seed services.
+Card Counting
 intentionally still uses Hearts and Whist hands and their presentation helpers;
 those references are not second match implementations. Extract the next
 game using the same boundaries. Reuse the common Learn flow and generalize

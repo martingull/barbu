@@ -160,7 +160,12 @@ Reuse `reviewedMatchFeature` for compatible match interaction and `GameLearning`
 table/hand components for play. Keep unsaved exercises separate from saved matches.
 Bridge supplies its active declarer/dummy hand to the shared interaction helper;
 auction transitions stay in its domain session, not in the shell or view components.
-Other games still need frontend extraction; do not claim `App.svelte` is already
+Barbu Play is isolated under `features/barbu`: intros, trick/Domino views, result
+presentation and a session controller. Its hand views also serve unsaved Learn hands.
+`savedSessionFeature` supplies common saving/navigation/selection plumbing;
+`reviewedMatchFeature` builds trick-review interaction on it. Keep Barbu's intro
+and Domino transitions in its own wrapper, not in the reviewed-match abstraction.
+Barbu Learn and Card Counting still need extraction; do not claim `App.svelte` is already
 only a router. See `docs/game-architecture.md` for the incremental boundary.
 
 If a new table needs an existing visual layout, use shared components before

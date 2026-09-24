@@ -1,4 +1,11 @@
 <script lang="ts">
+  import BarbuPlay from "./features/barbu/BarbuPlay.svelte";
+  import BarbuHandView from "./features/barbu/BarbuHandView.svelte";
+  import DominoHandView from "./features/barbu/DominoHandView.svelte";
+  import { createBarbuFeature } from "./features/barbu/barbuFeature";
+  import { savedPlayBarbuRunSummary } from "./persistence/barbuSave";
+  import { noLastTwoPhaseLabel, noLastTwoPhaseValue, fullHandTrickFeedback as barbuTrickFeedback, dominoSuitLabel, dominoStartRank, dominoLaneText, dominoMoveExplanation } from "./features/barbu/barbuPresentation";
+
   import BridgeGame from "./features/bridge/BridgeGame.svelte";
   import { createBridgeFeature } from "./features/bridge/bridgeFeature";
   import SpadesGame from "./features/spades/SpadesGame.svelte";
@@ -6,9 +13,9 @@
   import HeartsGame from "./features/hearts/HeartsGame.svelte";
   import { createHeartsFeature } from "./features/hearts/heartsFeature";
   import { heartsTrickFeedback } from "./features/hearts/heartsPresentation";
-  import { formatSignedScore, scoreSeats, scoreSeatLabel, scoreSeatRunLabel, formatOrdinal, formatPointCount, seatTricksWonForTricks, type RunStanding } from "./scorePresentation";
+  import { scoreSeats, scoreSeatLabel, scoreSeatRunLabel, formatPointCount } from "./scorePresentation";
   import { drillStepFromGeneratedScenario } from "./lessons/generatedDrill";
-  import { tick } from "svelte";
+
   import WhistGame from "./features/whist/WhistGame.svelte";
   import { createWhistFeature } from "./features/whist/whistFeature";
   import DrillResultScreen from "./DrillResultScreen.svelte";
@@ -17,16 +24,12 @@
   import { drillDecision, orderPracticePool, type DrillStep, type DrillResult } from "./lessons/drillDecision";
   import { whistTrumpSuitFromHandId, whistPartnershipTrickCounts, whistTrickFeedback } from "./whistPresentation";
 
-  import GameResult from "./GameResult.svelte";
   import { invoke, isTauri } from "@tauri-apps/api/core";
   import { typescriptHandEngine } from "./domain/handEngine";
   import { heartsScoredSeatPenalties } from "./domain/heartsSession";
-  import { addSeatPenalties, emptySeatPenalties, seatPenaltiesForTricks } from "./domain/trickTakingScore";
+  import { emptySeatPenalties, seatPenaltiesForTricks } from "./domain/trickTakingScore";
   import { emptyWhistScore, whistSessionSettlement } from "./domain/whistSession";
-  import { createBarbuSession, transitionBarbuSession, barbuSessionComplete, barbuSeatTotals, dominoSeatScores,
-    type BarbuSession, type BarbuSessionEvent, type BarbuHandResult as FullHandRunResult } from "./domain/barbuSession";
-  import { createBarbuSaveStore, saveBarbuSession, restoreBarbuSession, savedPlayBarbuRunSummary,
-    type SavedPlayBarbuRun } from "./persistence/barbuSave";
+
   import { dominoHandEngine, type DominoAction } from "./domain/dominoHand";
   import { generateBarbuPracticeSet } from "./domain/barbuPractice";
 
@@ -34,7 +37,7 @@
   import CardFace from "./CardFace.svelte";
   import CardTable from "./CardTable.svelte";
   import { compareCardsForDisplay } from "./cardOrdering";
-  import { formatCardLabel, formatCardList } from "./cardDisplay";
+  import { formatCardLabel } from "./cardDisplay";
   import ExerciseFeedback from "./ExerciseFeedback.svelte";
   import "./games";
   import { registry } from "./gameRegistry";
@@ -46,11 +49,11 @@
   import ProTabPanel from "./ProTabPanel.svelte";
   import TablePlaySurface from "./TablePlaySurface.svelte";
   import { fullHandContracts } from "./contractRegistry";
-  import { contractRunScore, contractScoreMeta, formatContractValue } from "./contractScoring";
+  import { contractScoreMeta } from "./contractScoring";
   import { courseCatalog, courseTargetsGuidedLesson, type CourseContent, type CourseStage } from "./courseContent";
   import { guidedLessons } from "./lessons/catalog";
   import { referenceCatalog } from "./referenceCatalog";
-  import { whistOddProgress, whistResultCopy } from "./whistScoring";
+  import { whistOddProgress } from "./whistScoring";
   import type { BarbuLearnPathAction } from "./games/barbu";
 
   import {
@@ -60,20 +63,7 @@
     type LearnPathStep,
     type TableTabId
   } from "./tableFactory";
-  import type {
-    Card,
-    CompletedHandTrick,
-    DominoHandState,
-    FullHandContract,
-    FullHandState,
-    GeneratedPracticeScenario,
-    GuidedCardOutcome,
-    GuidedTrick,
-    PracticeReason,
-    Seat,
-    Suit,
-    TableCard
-  } from "./lessonTypes";
+  import type { Card, CompletedHandTrick, DominoHandState, FullHandContract, FullHandState, GuidedCardOutcome, GuidedTrick, PracticeReason, Seat, Suit, TableCard } from "./lessonTypes";
   import type { GameReference } from "./referenceCatalog";
 
   type AppView =
@@ -90,7 +80,7 @@
     | "lesson"
     | "drill"
     | "drillResult"
-    | "runContractIntro"
+    | "barbuPlay"
     | "bridgeFeature"
     | "fullHand"
     | "dominoHand"
@@ -146,15 +136,6 @@
   };
 
   type BarbuLearnPathStep = LearnPathStep<BarbuLearnPathAction>;
-
-  type RunContractIntro = {
-    title: string;
-    role: string;
-    surface: string;
-    target: string;
-    reason: string;
-    habit: string;
-  };
 
   type CountMemoryQuestion =
     | {
@@ -259,7 +240,7 @@
   const practiceSeedStorageKey = "barbu.practiceSeed.v1";
   const drillPatternMemoryStorageKey = "barbu.drillPatternMemory.v1";
   const playBarbuHistoryStorageKey = "barbu.playHistory.v1";
-  const barbuSaveStore = createBarbuSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
+  const barbuFeature = createBarbuFeature({ storage: () => typeof localStorage === "undefined" ? undefined : localStorage, nextSeed: usePracticeSeed });
   const whistFeature = createWhistFeature({ storage: () => typeof localStorage === "undefined" ? undefined : localStorage, nextSeed: usePracticeSeed });
   let whistFixedSurface = false;
   const heartsFeature = createHeartsFeature({ storage: () => typeof localStorage === "undefined" ? undefined : localStorage, nextSeed: usePracticeSeed });
@@ -332,75 +313,9 @@
     })),
     isTrackedCard: (card) => card.rank === "Q"
   };
-  const dominoOrderScores = [45, 20, 5, -5];
+
   const whistMatchTarget = 5;
 
-  const runContractIntros: Record<FullHandContract, RunContractIntro> = {
-    Hearts: {
-      title: "Hearts and Queen of Spades are dangerous.",
-      role: "Starter Hearts hand",
-      surface: "Trick-taking hand",
-      target: "Avoid penalty tricks.",
-      reason: "Hearts rotates the pass, opens with 2C, and keeps hearts back until they are broken.",
-      habit: "Track hearts and the queen of spades before deciding whether to win."
-    },
-    "No Hearts": {
-      title: "Hearts are cargo. Do not bring them home.",
-      role: "Opening avoidance contract",
-      surface: "Trick-taking hand",
-      target: "Avoid winning heart tricks.",
-      reason: "Barbu starts with the simplest penalty shape: dangerous cards inside ordinary tricks.",
-      habit: "Locate the trick winner before worrying about the heart."
-    },
-    "No Queens": {
-      title: "Queens punish the player who captures them.",
-      role: "Penalty-card contract",
-      surface: "Trick-taking hand",
-      target: "Avoid queen tricks.",
-      reason: "This contract raises the pressure because one high card can pull a queen into your score.",
-      habit: "Duck under the current winner when a queen is loaded."
-    },
-    "King of Hearts": {
-      title: "One card carries the contract.",
-      role: "Single-danger contract",
-      surface: "Trick-taking hand",
-      target: "Avoid capturing KH.",
-      reason: "Barbu now narrows the danger to one card, so tracking matters more than fear of the whole suit.",
-      habit: "Find KH, then ask whether your card wins its trick."
-    },
-    "No Last Two": {
-      title: "The end of the hand is dangerous.",
-      role: "Timing contract",
-      surface: "Trick-taking hand",
-      target: "Avoid tricks 12 and 13.",
-      reason: "Early tricks are setup. Barbu wants to see whether you can keep a late escape.",
-      habit: "Count the hand before spending a low card."
-    },
-    "No Tricks": {
-      title: "Every trick you win costs you.",
-      role: "Pure avoidance contract",
-      surface: "Trick-taking hand",
-      target: "Avoid taking control.",
-      reason: "This contract turns the whole hand into ducking practice.",
-      habit: "Play below the current winner whenever the led suit allows it."
-    },
-    "Hearts Trumps": {
-      title: "Hearts are trumps.",
-      role: "Positive trick contract",
-      surface: "Trump hand",
-      target: "Win tricks with heart control.",
-      reason: "Barbu flips the table: hearts now outrank the led suit and tricks are worth points.",
-      habit: "Track whether a heart can cut the trick before you spend a high card."
-    },
-    Domino: {
-      title: "Build the layout from sevens.",
-      role: "Layout contract",
-      surface: "Domino layout",
-      target: "Go out before the table.",
-      reason: "Barbu changes the surface: no tricks, just legal adjacent placements in each suit.",
-      habit: "Open a suit with a seven, then extend the low or high end when you can."
-    }
-  };
   const outcomeLabels: Record<GuidedCardOutcome | "illegal", string> = {
     good: "Good",
     risky: "Risky",
@@ -456,10 +371,6 @@
   let completedPathSteps: Record<string, boolean> = loadCourseProgress();
   let playBarbuHistory: PlayBarbuAttempt[] = loadPlayBarbuHistory();
 
-  let savedPlayBarbuRun: SavedPlayBarbuRun | null = barbuSaveStore.load();
-  let barbuSession: BarbuSession | null = null;
-  let barbuSaveError = "";
-
   let fullHand: FullHandState | null = null;
   let dominoHand: DominoHandState | null = null;
   let fullHandSelectedCardId = "";
@@ -473,9 +384,7 @@
   let lastDominoTapCardId = "";
   let lastDominoTapAt = 0;
   let dominoLastMoveReason = "";
-  $: fullHandRunActive = barbuSession !== null;
-  $: fullHandRunResults = barbuSession?.results ?? [];
-  $: pendingRunContract = barbuSession?.pendingContract ?? fullHandContracts[0];
+
   let trumpCountSeed = practiceSeed;
   let trumpCountRound = buildTrumpCountRound(trumpCountSeed);
   let trumpCountRevealIndex = 0;
@@ -509,7 +418,7 @@
     appView === "courseContent" ||
     appView === "lesson" ||
     appView === "drill" ||
-    appView === "runContractIntro" ||
+    appView === "barbuPlay" ||
     appView === "fullHand" ||
     appView === "dominoHand" ||
     appView === "trumpCount" ||
@@ -676,11 +585,10 @@
   $: fullHandReviewFeedback = fullHandReviewTrick ? fullHandTrickFeedback(fullHandReviewTrick) : "";
   $: fullHandCardCountingActive =
     fullHandCardCountingMode &&
-    (fullHand?.contract === "Hearts" || fullHand?.contract === "Whist" || fullHand?.contract === "No Queens") &&
-    !fullHandRunActive;
+    (fullHand?.contract === "Hearts" || fullHand?.contract === "Whist" || fullHand?.contract === "No Queens");
   $: fullHandCardCountingIsWhist = fullHandCardCountingActive && fullHandCardCountingExercise === "whist-memory";
   $: fullHandCardCountingIsHighCard = fullHandCardCountingActive && fullHandCardCountingExercise === "high-card-memory";
-  $: fullHandCardCountingIsHearts = fullHandCardCountingActive && fullHandCardCountingExercise === "heart-memory";
+
   $: fullHandCardCountingIsDanger = fullHandCardCountingActive && fullHandCardCountingExercise === "danger-count";
   $: fullHandCardCountingCompletedTricks = fullHandCardCountingActive
     ? fullHand?.completedTricks.map((trick) => trick.cards) ?? []
@@ -730,7 +638,7 @@
     : fullHandCardCountingIsDanger
       ? fullHandCardCountingSeenCards.filter(dangerCardMemoryConfig.isTrackedCard)
       : fullHandCardCountingSeenCards.filter((card) => card.suit === fullHandCardCountingTrackedSuit);
-  $: fullHandCardCountingSeenCount = fullHandCardCountingReviewCards.length;
+
   $: fullHandCardCountingCoreScore = fullHandCardCountingActive
     ? fullHandCardCountingIsWhist || fullHandCardCountingIsHighCard
       ? whistPartnershipTricks.playerSide
@@ -857,36 +765,22 @@
         : {}
       : {};
   $: fullHandContractMeta = contractScoreMeta(fullHand?.contract ?? "No Hearts");
-  $: fullHandPenaltyName = fullHandContractMeta.unitName;
-  $: fullHandPenaltyPlural = fullHandContractMeta.unitPlural;
+
   $: fullHandPenaltyTotal = fullHandContractMeta.totalValue;
   $: fullHandPenaltyPlayedLabel = fullHandContractMeta.inPlayLabel;
   $: fullHandNoLastTwoPhaseLabel = noLastTwoPhaseLabel(fullHand);
   $: fullHandNoLastTwoPhaseValue = noLastTwoPhaseValue(fullHand);
-  $: fullHandPlayerPenaltyLabel =
-    fullHand?.playerPenalty === 1 ? fullHandPenaltyName : fullHandPenaltyPlural;
+
   $: fullHandSeatPenalties = fullHand ? seatPenaltiesForTricks(fullHand.completedTricks) : emptySeatPenalties();
-  $: fullHandSeatTrickCounts = fullHand ? seatTricksWonForTricks(fullHand.completedTricks) : emptySeatPenalties();
-  $: whistResult = whistResultCopy(whistSettlement, whistPartnershipTricks, "game");
-  $: fullHandResultTitle = fullHandIsWhistGame ? whistResult.heading : fullHand ? fullHandResultHeading(fullHand) : "";
-  $: fullHandResultSummary = fullHandIsWhistGame ? whistResult.summary : fullHand ? fullHandResultText(fullHand) : "";
-  $: fullHandBestTrick = fullHand ? fullHandBestTrickLabel(fullHand) : "";
-  $: fullHandWorstTrick = fullHand ? fullHandWorstTrickLabel(fullHand) : "";
-  $: fullHandIsHeartsGame = activeGameTable === "hearts" && fullHand?.contract === "Hearts" && !fullHandRunActive;
-  $: fullHandIsWhistGame = activeGameTable === "whist" && fullHand?.contract === "Whist" && !fullHandRunActive;
+
+  $: fullHandIsHeartsGame = activeGameTable === "hearts" && fullHand?.contract === "Hearts";
+  $: fullHandIsWhistGame = activeGameTable === "whist" && fullHand?.contract === "Whist";
 
   $: fullHandIsPartnershipGame = fullHandIsWhistGame;
 
-  $: whistTrumpSuitLabel =
-    fullHandIsPartnershipGame && fullHand
-      ? fullHand.trumpSuit
-        ? suitNameFromId(fullHand.trumpSuit)
-        : suitNameFromId(whistTrumpSuitFromHandId(fullHand.id))
-      : "";
   $: whistPartnershipTricks = fullHand ? whistPartnershipTrickCounts(fullHand.completedTricks) : { playerSide: 0, opponentSide: 0 };
   $: whistOddScore = whistOddProgress(whistPartnershipTricks);
-  $: whistPlayerSideOddTricks = whistOddScore.playerSideOddTricks;
-  $: whistOpponentSideOddTricks = whistOddScore.opponentSideOddTricks;
+
   $: whistOddProgressLabel = whistOddScore.label;
   $: whistOddProgressValue = whistOddScore.value;
 
@@ -916,94 +810,11 @@
     : fullHandIsWhistGame && whistSettlement.gameComplete ? "game"
     : null;
   $: fullHandReplayAllowed = !fullHandCompletion;
-  $: activeRunContract = fullHand?.contract ?? dominoHand?.contract;
-  $: fullHandRunCurrentIndex = activeRunContract ? fullHandContracts.indexOf(activeRunContract) : -1;
-  $: pendingRunContractIndex = fullHandContracts.indexOf(pendingRunContract);
-  $: pendingRunContractIntro = runContractIntros[pendingRunContract];
-  $: pendingRunStatusLabel = `Contract ${pendingRunContractIndex + 1} of ${fullHandContracts.length}`;
-  $: pendingRunSequenceLabel = `${fullHandRunResults.length} played, ${fullHandRunRemainingCount} to go`;
-  $: pendingRunSurfaceLabel = pendingRunContractIntro.surface;
-  $: fullHandRunOrderedResults = fullHandContracts
-    .map((contract) => fullHandRunResults.find((result) => result.contract === contract))
-    .filter((result): result is FullHandRunResult => Boolean(result));
-  $: fullHandRunSeatPenalties = barbuSeatTotals(fullHandRunResults, false);
-  $: fullHandRunSeatScores = barbuSeatTotals(fullHandRunResults);
-  $: fullHandRunStandings = runStandings(fullHandRunSeatScores);
-  $: fullHandRunPlayerStanding = fullHandRunStandings.find((standing) => standing.seat === "You");
-  $: fullHandRunLeader = fullHandRunStandings[0];
-  $: fullHandRunBestContract = runBestContract(fullHandRunOrderedResults);
-  $: fullHandRunWeakestContract = runWeakestContract(fullHandRunOrderedResults);
-  $: fullHandRunIsComplete = barbuSession !== null && barbuSessionComplete(barbuSession);
-  $: fullHandRunRemainingCount = Math.max(fullHandContracts.length - fullHandRunResults.length, 0);
-  $: fullHandRunLeaderLabel = fullHandRunLeader
-    ? `${scoreSeatLabel(fullHandRunLeader.seat)} ${formatSignedScore(fullHandRunLeader.score)}`
-    : "You 0";
-  $: fullHandRunPlayerPlaceLabel = fullHandRunPlayerStanding ? formatOrdinal(fullHandRunPlayerStanding.rank) : "1st";
-  $: fullHandRunRemainingLabel = `${fullHandRunRemainingCount} ${
-    fullHandRunRemainingCount === 1 ? "contract" : "contracts"
-  }`;
-  $: savedPlayBarbuRunLabel = savedPlayBarbuRun ? savedPlayBarbuRunSummary(savedPlayBarbuRun) : "";
-  $: fullHandRunResultTitle = fullHandRunIsComplete ? runResultHeading(fullHandRunStandings) : "Game complete";
-  $: fullHandRunResultSummary = fullHandRunIsComplete
-    ? runResultSummary(fullHandRunStandings, fullHandRunResults.length)
-    : "";
-  $: fullHandRunWinnerLabel = fullHandRunLeader
-    ? `${scoreSeatLabel(fullHandRunLeader.seat)} wins with ${formatSignedScore(fullHandRunLeader.score)}`
-    : "Game complete";
-  $: fullHandRunBestContractLabel = fullHandRunBestContract
-    ? `${fullHandRunBestContract.contract}: ${runContractValueLabel(fullHandRunBestContract)}`
-    : "No hands yet";
-  $: fullHandRunWeakestContractLabel = fullHandRunWeakestContract
-    ? `${fullHandRunWeakestContract.contract}: ${runContractValueLabel(fullHandRunWeakestContract)}`
-    : "No hands yet";
-  $: fullHandRunStatusLabel =
-    fullHandRunIsComplete
-      ? "Game complete"
-      : fullHandRunActive && fullHandRunCurrentIndex >= 0
-      ? `Contract ${fullHandRunCurrentIndex + 1} of ${fullHandContracts.length}`
-      : fullHandIsPartnershipGame
-        ? whistTrumpSuitLabel
-          ? `Trump ${whistTrumpSuitLabel}`
-          : "Whist"
-      : fullHand?.status === "complete" || dominoHand?.status === "complete"
-        ? "Complete"
-        : fullHand
-          ? `Trick ${fullHand.trickNumber}`
-          : dominoHand
-            ? `${dominoHand.cardsRemaining} cards left`
-            : "Ready";
-  $: fullHandNextActionLabel = fullHandIsPartnershipGame
-    ? whistFullHandSource === "practice"
-      ? "Try another"
-      : partnershipMatchIsComplete
-      ? "New match"
-      : fullHandIsWhistGame && whistSettlement.gameComplete
-      ? "Next game"
-      : "Next hand"
-    : fullHandRunActive
-    ? fullHandRunIsComplete
-      ? "New game"
-      : "Next contract"
-    : "Try another";
+
   $: dominoLegalCardIds = new Set(dominoHand?.legalCardIds ?? []);
   $: dominoSelectedCard = dominoHand?.playerHand.find((card) => card.id === dominoSelectedCardId);
   $: dominoDefaultPlayableCard = dominoHand?.playerHand.find((card) => dominoLegalCardIds.has(card.id));
-  $: dominoScoreMap = dominoHand
-    ? ({
-        Tutor: dominoHand.scores[0] ?? 0,
-        Right: dominoHand.scores[1] ?? 0,
-        You: dominoHand.scores[2] ?? 0,
-        Left: dominoHand.scores[3] ?? 0
-      } satisfies Record<Seat, number>)
-    : emptySeatPenalties();
-  $: dominoResultTitle = dominoHand?.status === "complete" ? dominoResultHeading(dominoHand) : "Build the layout";
-  $: dominoResultSummary = dominoHand?.status === "complete" ? dominoResultText(dominoHand) : "";
-  $: dominoNextOutScore = dominoHand ? dominoOrderScores[dominoHand.outOrder.length] ?? -5 : 0;
-  $: dominoMoveReason = dominoHand
-    ? dominoSelectedCard
-      ? dominoMoveExplanation(dominoHand, dominoSelectedCard)
-      : dominoLastMoveReason || dominoMoveExplanation(dominoHand, undefined)
-    : "";
+
   $: trumpCountVisibleTrick = trumpCountRound.tricks[trumpCountRevealIndex] ?? [];
   $: trumpCountTotalTricks = trumpCountRound.tricks.length;
   $: trumpCountQuestion = trumpCountRound.questions[trumpCountQuestionIndex] ?? trumpCountRound.questions[0];
@@ -1237,61 +1048,6 @@
     if (typeof localStorage !== "undefined") {
       localStorage.setItem(playBarbuHistoryStorageKey, JSON.stringify(playBarbuHistory));
     }
-  }
-
-  function setBarbuSession(session: BarbuSession) {
-    barbuSession = session;
-    fullHand = session.fullHand;
-    dominoHand = session.dominoHand;
-    fullHandReviewTrickCount = session.fullHandReviewTrickCount;
-  }
-
-  function openBarbuSession(session: BarbuSession) {
-    activeGameTable = "barbu";
-    activeTableTabs.barbu = "play";
-    fullHandCardCountingMode = false;
-
-    setBarbuSession(session);
-    fullHandSelectedCardId = "";
-    dominoSelectedCardId = "";
-    fullHandError = "";
-    dominoError = "";
-    dominoLastMoveReason = "";
-    lastFullHandTapCardId = "";
-    lastFullHandTapAt = 0;
-    lastDominoTapCardId = "";
-    lastDominoTapAt = 0;
-    appView = session.view;
-  }
-
-  function persistSavedPlayBarbuRun() {
-    if (!barbuSession) return;
-    savedPlayBarbuRun = saveBarbuSession(barbuSession, new Date().toISOString());
-    if (fullHandError === barbuSaveError) fullHandError = "";
-    if (dominoError === barbuSaveError) dominoError = "";
-    barbuSaveError = "";
-    try {
-      barbuSaveStore.write(savedPlayBarbuRun);
-    } catch {
-      barbuSaveError = "Progress could not be saved on this device.";
-      if (barbuSession.view === "dominoHand") dominoError = barbuSaveError;
-      else fullHandError = barbuSaveError;
-    }
-  }
-
-  function dispatchBarbuSession(event: BarbuSessionEvent) {
-    if (!barbuSession) return;
-    const next = transitionBarbuSession(barbuSession, event);
-    if (next === barbuSession) return;
-    openBarbuSession(next);
-    persistSavedPlayBarbuRun();
-  }
-
-  function continueSavedPlayBarbuRun() {
-    const saved = savedPlayBarbuRun ?? barbuSaveStore.load();
-    if (!saved) return;
-    openBarbuSession(restoreBarbuSession(saved));
-    persistSavedPlayBarbuRun();
   }
 
   function loadPracticeSeed() {
@@ -2630,8 +2386,6 @@
     fullHandCardCountingQuestionsAsked = 0;
     fullHandCardCountingClean = 0;
 
-    barbuSession = null;
-
     dominoHand = null;
 
     const seed = options.seed ?? usePracticeSeed();
@@ -2648,7 +2402,6 @@
   }
 
   async function startDominoHand() {
-    barbuSession = null;
     const seed = usePracticeSeed();
     fullHand = null;
 
@@ -2694,17 +2447,12 @@
     const completedTrickCount = fullHand.completedTricks.length;
 
     try {
-      if (barbuSession) {
-        setBarbuSession(transitionBarbuSession(barbuSession, { type: "play-card", cardId: targetId }));
-      } else {
-        const engine = typescriptHandEngine(fullHand.contract);
-        if (!engine) throw new Error(`Unsupported hand: ${fullHand.contract}`);
-        updateFullHandAfterPlayerPlay(engine.transition(fullHand, { type: "play-card", cardId: targetId }), completedTrickCount);
-      }
+      const engine = typescriptHandEngine(fullHand.contract);
+      if (!engine) throw new Error(`Unsupported hand: ${fullHand.contract}`);
+      updateFullHandAfterPlayerPlay(engine.transition(fullHand, { type: "play-card", cardId: targetId }), completedTrickCount);
       fullHandSelectedCardId = "";
       lastFullHandTapCardId = "";
       lastFullHandTapAt = 0;
-      persistSavedPlayBarbuRun();
     } catch (error) {
       fullHandError = typeof error === "string" ? error : error instanceof Error ? error.message : "That card could not be played.";
     }
@@ -2723,15 +2471,10 @@
       return;
     }
 
-    if (barbuSession) {
-      setBarbuSession(transitionBarbuSession(barbuSession, { type: "next-trick" }));
-    } else {
-      fullHandReviewTrickCount = 0;
-    }
+    fullHandReviewTrickCount = 0;
     fullHandSelectedCardId = "";
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
-    persistSavedPlayBarbuRun();
 
   }
 
@@ -2788,32 +2531,23 @@
   }
 
   function startBarbuRun() {
-    openBarbuSession(createBarbuSession(usePracticeSeed()));
-    persistSavedPlayBarbuRun();
-  }
-
-  function startPendingRunContract() {
-    dispatchBarbuSession({ type: "start-hand" });
+    activeGameTable = "barbu";
+    activeTableTabs.barbu = "play";
+    void barbuFeature.start();
+    appView = "barbuPlay";
   }
 
   function applyDominoAction(action: DominoAction, reason = "") {
     if (!dominoHand) return;
     dominoError = "";
     try {
-      if (barbuSession) {
-        const next = transitionBarbuSession(barbuSession, action);
-        if (next === barbuSession) return;
-        setBarbuSession(next);
-      } else {
-        const next = dominoHandEngine.transition(dominoHand, action);
-        if (next === dominoHand) return;
-        dominoHand = next;
-      }
+      const next = dominoHandEngine.transition(dominoHand, action);
+      if (next === dominoHand) return;
+      dominoHand = next;
       dominoSelectedCardId = "";
       lastDominoTapCardId = "";
       lastDominoTapAt = 0;
       dominoLastMoveReason = reason;
-      persistSavedPlayBarbuRun();
     } catch (error) {
       dominoError = error instanceof Error ? error.message : "That Domino action could not be completed.";
     }
@@ -2860,11 +2594,6 @@
       return;
     }
 
-    if (barbuSession) {
-      dispatchBarbuSession({ type: "next-contract" });
-      return;
-    }
-
     const currentIndex = fullHandContracts.indexOf(dominoHand.contract);
     const nextContract = fullHandContracts[(currentIndex + 1) % fullHandContracts.length] ?? "No Hearts";
     void startFullHand(nextContract);
@@ -2896,11 +2625,6 @@
       return;
     }
 
-    if (barbuSession) {
-      dispatchBarbuSession({ type: "next-contract" });
-      return;
-    }
-
     const currentIndex = fullHandContracts.indexOf(fullHand.contract);
     if (currentIndex < 0) {
       void startFullHand(fullHand.contract);
@@ -2929,10 +2653,6 @@
       return;
     }
 
-    if (barbuSession) {
-      dispatchBarbuSession({ type: "replay" });
-      return;
-    }
     const engine = typescriptHandEngine(fullHand.contract);
     if (!engine) return;
     fullHand = engine.transition(fullHand, { type: "replay" });
@@ -2945,114 +2665,16 @@
     fullHandError = "";
     lastFullHandTapCardId = "";
     lastFullHandTapAt = 0;
-    persistSavedPlayBarbuRun();
   }
 
-  function replayWeakestRunContract() {
-    if (!fullHandRunWeakestContract) {
-      return;
-    }
-
-    void startFullHand(fullHandRunWeakestContract.contract);
-  }
-
-  function scoreSeatResultLabel(seat: Seat) {
-    return `${scoreSeatLabel(seat)} ${fullHandContractMeta.resultVerb}`;
+  function fullHandTrickFeedback(trick: CompletedHandTrick) {
+    if (fullHandIsPartnershipGame) return whistTrickFeedback(trick, fullHand?.contract ?? "partnership");
+    if (fullHandIsHeartsGame && fullHand) return heartsTrickFeedback(trick, fullHand);
+    return fullHand ? barbuTrickFeedback(trick, fullHand) : "";
   }
 
   function fullHandTrickIsWarning(trick: CompletedHandTrick | undefined) {
     return fullHandContractMeta.kind === "avoidance" && trick?.outcome === "captured_penalty";
-  }
-
-  function runStandings(scores: Record<Seat, number>): RunStanding[] {
-    const orderedScores = scoreSeats
-      .map((seat) => ({ seat, score: scores[seat] }))
-      .sort((left, right) => right.score - left.score);
-    let previousScore = -1;
-    let previousRank = 0;
-
-    return orderedScores.map((standing, index) => {
-      const rank = index > 0 && standing.score === previousScore ? previousRank : index + 1;
-      previousScore = standing.score;
-      previousRank = rank;
-
-      return {
-        ...standing,
-        rank
-      };
-    });
-  }
-
-  function runResultHeading(standings: RunStanding[]) {
-    const player = standings.find((standing) => standing.seat === "You");
-
-    if (!player) {
-      return "Game complete";
-    }
-
-    if (player.rank === 1) {
-      const tiedWinners = standings.filter((standing) => standing.rank === 1);
-      return tiedWinners.length > 1 ? "You tied for 1st" : "You won the game";
-    }
-
-    return `You finished ${formatOrdinal(player.rank)}`;
-  }
-
-  function runResultSummary(standings: RunStanding[], contractsPlayed: number) {
-    const leader = standings[0];
-    const player = standings.find((standing) => standing.seat === "You");
-
-    if (!leader || !player) {
-      return `Game complete after ${contractsPlayed} contracts. Higher net score wins the table.`;
-    }
-
-    if (player.rank === 1) {
-      return `You finished with ${formatSignedScore(player.score)} after ${contractsPlayed} contracts. Higher net score wins the table.`;
-    }
-
-    return `${scoreSeatLabel(leader.seat)} won with ${formatSignedScore(leader.score)}. You finished with ${formatSignedScore(
-      player.score
-    )} after ${contractsPlayed} contracts.`;
-  }
-
-  function runBestContract(results: FullHandRunResult[]) {
-    return [...results].sort((left, right) => {
-      const leftScore = contractRunScore(left.contract, left.seatPenalties.You ?? 0);
-      const rightScore = contractRunScore(right.contract, right.seatPenalties.You ?? 0);
-
-      if (leftScore !== rightScore) {
-        return rightScore - leftScore;
-      }
-
-      return runContractRelativeScore(right) - runContractRelativeScore(left);
-    })[0];
-  }
-
-  function runWeakestContract(results: FullHandRunResult[]) {
-    return [...results].sort((left, right) => {
-      const leftScore = contractRunScore(left.contract, left.seatPenalties.You ?? 0);
-      const rightScore = contractRunScore(right.contract, right.seatPenalties.You ?? 0);
-
-      if (leftScore !== rightScore) {
-        return leftScore - rightScore;
-      }
-
-      return runContractRelativeScore(left) - runContractRelativeScore(right);
-    })[0];
-  }
-
-  function runContractValueLabel(result: FullHandRunResult) {
-    return formatContractValue(result.contract, result.seatPenalties.You ?? 0);
-  }
-
-  function runContractRelativeScore(result: FullHandRunResult) {
-    const playerScore = contractRunScore(result.contract, result.seatPenalties.You ?? 0);
-    const tableAverage =
-      scoreSeats
-        .filter((seat) => seat !== "You")
-        .reduce((total, seat) => total + contractRunScore(result.contract, result.seatPenalties[seat] ?? 0), 0) / 3;
-
-    return playerScore - tableAverage;
   }
 
   function fullHandCardClasses(card: Card) {
@@ -3062,369 +2684,6 @@
       illegal: !fullHandLegalCardIds.has(card.id),
       selected: fullHandSelectedCardId === card.id
     };
-  }
-
-  function noLastTwoPhaseLabel(hand: FullHandState | null | undefined) {
-    if (!hand || hand.contract !== "No Last Two") {
-      return "";
-    }
-    if (hand.trickNumber >= 13) {
-      return "Penalty trick";
-    }
-    if (hand.trickNumber === 12) {
-      return "Penalty trick";
-    }
-    return "Setup trick";
-  }
-
-  function noLastTwoPhaseValue(hand: FullHandState | null | undefined) {
-    if (!hand || hand.contract !== "No Last Two") {
-      return "";
-    }
-    if (hand.trickNumber >= 13) {
-      return "20 points";
-    }
-    if (hand.trickNumber === 12) {
-      return "10 points";
-    }
-    return "0 points";
-  }
-
-  function fullHandCompletedTrickNumber(trick: CompletedHandTrick) {
-    return fullHand ? fullHand.completedTricks.indexOf(trick) + 1 : 0;
-  }
-
-  function fullHandTrickHasTag(trick: CompletedHandTrick, tag: NonNullable<CompletedHandTrick["tacticalTags"]>[number]) {
-    return (trick.tacticalTags ?? []).includes(tag);
-  }
-
-  function fullHandTrickFeedback(trick: CompletedHandTrick) {
-    const penaltyText = `${trick.penalty} ${trick.penalty === 1 ? fullHandPenaltyName : fullHandPenaltyPlural}`;
-
-    if (fullHandIsPartnershipGame) {
-      const winnerIsPlayerSide = trick.winnerIndex === 0 || trick.winnerIndex === 2;
-
-      return whistTrickFeedback(trick, fullHand?.contract ?? "partnership");
-    }
-
-    if (fullHandIsHeartsGame && fullHand) return heartsTrickFeedback(trick, fullHand);
-
-    if (fullHand?.contract === "Hearts Trumps") {
-      if (fullHandTrickHasTag(trick, "overtrumped")) {
-        return trick.winner === "You"
-          ? `You overtrumped and banked ${penaltyText}. Good: your heart beat the previous trump.`
-          : `${trick.winner} overtrumped and banked ${penaltyText}. A higher heart took control.`;
-      }
-      if (fullHandTrickHasTag(trick, "trump_won")) {
-        return trick.winner === "You"
-          ? `Your heart won the trick and banked ${penaltyText}. Good: trumps beat the led suit.`
-          : `${trick.winner} won with a heart and banked ${penaltyText}. Count which trumps are still out.`;
-      }
-      return trick.winner === "You"
-        ? `You won the trick and banked ${penaltyText}. Good: you took control without needing a trump.`
-        : `${trick.winner} won the trick and banked ${penaltyText}. Look for a heart or higher control next time.`;
-    }
-
-    if (fullHand?.contract === "No Last Two") {
-      const trickNumber = fullHandCompletedTrickNumber(trick);
-      if (fullHandTrickHasTag(trick, "setup_trick")) {
-        return trick.winner === "You"
-          ? "You won a setup trick. No score yet; use these tricks to shed awkward high cards."
-          : `${trick.winner} won a setup trick. No score yet; the final two tricks are still ahead.`;
-      }
-      return trick.winner === "You"
-        ? `You won trick ${trickNumber} and took ${penaltyText}. This is one of the final two.`
-        : `${trick.winner} won trick ${trickNumber} and took ${penaltyText}. Good: you stayed out of the final-two penalty.`;
-    }
-
-    if (trick.outcome === "captured_penalty") {
-      if (fullHandTrickHasTag(trick, "danger_card_moved")) {
-        return `You won the trick and took ${penaltyText}. Penalty cards moved, and your card held the trick.`;
-      }
-      return `You won the trick and took ${penaltyText}. Risky: your card became the highest card in the led suit.`;
-    }
-    if (trick.outcome === "avoided_penalty") {
-      if (fullHandTrickHasTag(trick, "void_discard")) {
-        return `${trick.winner} won the trick and took ${penaltyText}. Good: you were void, so your discard stayed clear.`;
-      }
-      if (fullHandTrickHasTag(trick, "danger_card_moved")) {
-        return `${trick.winner} won the trick and took ${penaltyText}. Good: you kept below the danger.`;
-      }
-      return `${trick.winner} won the trick and took ${penaltyText}. Good: you stayed out of the penalty trick.`;
-    }
-    if (trick.outcome === "won_clean_trick") {
-      if (fullHand?.contract === "King of Hearts") {
-        return "You won a clean trick. Legal, but keep checking whether KH can still enter the trick.";
-      }
-      if (fullHand?.contract === "No Last Two") {
-        return "You won a clean trick. Legal, but the final two tricks are the ones that score.";
-      }
-      if (fullHand?.contract === "No Tricks") {
-        return "You won a trick. Legal, but every trick you win scores in this contract.";
-      }
-      if (fullHandTrickHasTag(trick, "followed_suit")) {
-        return `You followed suit and won a clean trick. Legal, but check whether ${fullHandPenaltyPlural} can still enter later.`;
-      }
-      return `You won a clean trick. Legal, but keep checking whether ${fullHandPenaltyPlural} can still enter the trick.`;
-    }
-    if (fullHand?.contract === "King of Hearts") {
-      return `${trick.winner} won a clean trick. KH did not move, so you stayed clear.`;
-    }
-    if (fullHand?.contract === "No Last Two") {
-      return `${trick.winner} won a clean trick. The final-two danger has not scored here.`;
-    }
-    if (fullHand?.contract === "No Tricks") {
-      return `${trick.winner} won the trick. Good: you stayed out of it.`;
-    }
-    if (fullHandTrickHasTag(trick, "void_discard")) {
-      return `${trick.winner} won a clean trick. Good: your void discard could not take the led suit.`;
-    }
-    return `${trick.winner} won a clean trick. No ${fullHandPenaltyPlural} moved, so you stayed clear.`;
-  }
-
-  function fullHandResultHeading(hand: FullHandState) {
-
-    if (hand.contract === "Hearts Trumps") {
-      return hand.playerPenalty >= 5 ? "Strong trick count" : "Keep fighting for tricks";
-    }
-    if (hand.playerPenalty === 0) {
-      return "Clean hand";
-    }
-    if (hand.playerPenalty === hand.totalPenalty) {
-      return "Barbu caught you";
-    }
-    return "Damage limited";
-  }
-
-  function fullHandResultText(hand: FullHandState) {
-
-    if (hand.contract === "Hearts Trumps") {
-      return `You won ${formatFullHandPenalty(hand.playerPenalty)}. The table won ${formatFullHandPenalty(
-        hand.totalPenalty - hand.playerPenalty
-      )}.`;
-    }
-
-    if (hand.playerPenalty === 0) {
-      return hand.contract === "King of Hearts"
-        ? "You kept KH out of your tricks."
-        : hand.contract === "No Last Two"
-          ? "You avoided both final tricks."
-          : hand.contract === "No Tricks"
-            ? "You avoided every trick."
-        : `You avoided every ${fullHandPenaltyName}.`;
-    }
-
-    const youTook = formatFullHandPenalty(hand.playerPenalty);
-    const tableTook = formatFullHandPenalty(hand.totalPenalty - hand.playerPenalty);
-
-    if (hand.playerPenalty === hand.totalPenalty) {
-      return `You took ${youTook}. Replay the contract and look for one duck or discard.`;
-    }
-
-    return `You took ${youTook}. The other seats absorbed ${tableTook}.`;
-  }
-
-  function fullHandBestTrickLabel(hand: FullHandState) {
-    if (contractScoreMeta(hand.contract).kind !== "avoidance") {
-      const won = hand.completedTricks
-        .filter((trick) => trick.winnerIndex === 2 && trick.penalty > 0)
-        .sort((left, right) => right.penalty - left.penalty)[0];
-
-      return won ? `You won ${formatFullHandPenalty(won.penalty)}` : "No won tricks";
-    }
-
-    const avoided = hand.completedTricks
-      .filter((trick) => trick.penalty > 0 && trick.winnerIndex !== 2)
-      .sort((left, right) => right.penalty - left.penalty)[0];
-
-    if (avoided) {
-      return `${avoided.winner} took ${formatFullHandPenalty(avoided.penalty)}`;
-    }
-
-    const cleanWin = hand.completedTricks.find((trick) => trick.winnerIndex === 2 && trick.penalty === 0);
-    return cleanWin ? "You won a clean trick" : "No escape trick";
-  }
-
-  function fullHandWorstTrickLabel(hand: FullHandState) {
-    if (contractScoreMeta(hand.contract).kind !== "avoidance") {
-      const missed = hand.completedTricks
-        .filter((trick) => trick.winnerIndex !== 2 && trick.penalty > 0)
-        .sort((left, right) => right.penalty - left.penalty)[0];
-
-      return missed ? `${missed.winner} won ${formatFullHandPenalty(missed.penalty)}` : "No missed tricks";
-    }
-
-    const captured = hand.completedTricks
-      .filter((trick) => trick.penalty > 0 && trick.winnerIndex === 2)
-      .sort((left, right) => right.penalty - left.penalty)[0];
-
-    return captured ? `You took ${formatFullHandPenalty(captured.penalty)}` : "No penalty tricks";
-  }
-
-  function formatFullHandPenalty(value: number) {
-    return `${value} ${value === 1 ? fullHandPenaltyName : fullHandPenaltyPlural}`;
-  }
-
-  function dominoResultHeading(state: DominoHandState) {
-    const playerRank = state.outOrder.indexOf("You") + 1;
-
-    if (playerRank === 1) {
-      return "You went out first";
-    }
-    if (playerRank > 0) {
-      return `You finished ${formatOrdinal(playerRank)}`;
-    }
-    return "Domino complete";
-  }
-
-  function dominoResultText(state: DominoHandState) {
-    const playerScore = state.scores[2] ?? 0;
-    const leader = scoreSeats
-      .map((seat, index) => ({ seat, score: state.scores[index] ?? 0 }))
-      .sort((left, right) => right.score - left.score)[0];
-
-    if (!leader || leader.seat === "You") {
-      return `You scored ${formatSignedScore(playerScore)}. Domino rewards the first players to empty their hands.`;
-    }
-
-    return `${scoreSeatLabel(leader.seat)} led Domino with ${formatSignedScore(leader.score)}. You scored ${formatSignedScore(playerScore)}.`;
-  }
-
-  function dominoSuitLabel(index: number) {
-    return ["Clubs", "Diamonds", "Hearts", "Spades"][index] ?? "Suit";
-  }
-
-  function dominoStartRank(state?: DominoHandState) {
-    return state?.startRank ?? "7";
-  }
-
-  function dominoLaneText(lane: Card[], startRank = "7") {
-    return lane.length ? lane.map(formatCardLabel).join(" ") : `Open with ${startRank}`;
-  }
-
-  function dominoOutOrderText(state: DominoHandState) {
-    return state.outOrder.length ? state.outOrder.map((seat) => scoreSeatLabel(seat as Seat)).join(" ") : "No one out";
-  }
-
-  function dominoMoveExplanation(state: DominoHandState, card: Card | undefined) {
-    if (!card) {
-      if (state.legalCardIds.length === 0) {
-        return "You are blocked. Pass to wait for a lane to open.";
-      }
-
-      return `Legal cards are highlighted. Next out: ${formatSignedScore(dominoNextOutScore)}.`;
-    }
-
-    if (!dominoLegalCardIds.has(card.id)) {
-      return dominoIllegalMoveExplanation(state, card);
-    }
-
-    const lane = state.layout[suitIndex(card.suit)];
-    const unlockedCards = dominoCardsUnlockedByPlacement(state, card);
-    const finishText =
-      state.playerHand.length === 1
-        ? ` Out for ${formatSignedScore(dominoNextOutScore)}.`
-        : "";
-    const unlockText = unlockedCards.length ? ` Opens ${unlockedCards.map(formatCardLabel).join(" or ")} later.` : "";
-
-    if (lane.length === 0) {
-      return `${formatCardLabel(card)} opens ${suitNames[card.suit]} from ${dominoStartRank(state)}.${unlockText}${finishText}`;
-    }
-
-    const direction = dominoExtensionDirection(lane, card);
-    return `${formatCardLabel(card)} extends ${suitNames[card.suit]} ${direction}.${unlockText}${finishText}`;
-  }
-
-  function dominoIllegalMoveExplanation(state: DominoHandState, card: Card) {
-    const lane = state.layout[suitIndex(card.suit)];
-
-    if (lane.length === 0) {
-      return `${formatCardLabel(card)} is blocked. Closed suits start with ${dominoStartRank(state)}.`;
-    }
-
-    return `${formatCardLabel(card)} is blocked. ${suitNames[card.suit]} needs the next lower or higher card.`;
-  }
-
-  function dominoCardsUnlockedByPlacement(state: DominoHandState, card: Card) {
-    const nextLayout = state.layout.map((lane) => [...lane]);
-    const lane = nextLayout[suitIndex(card.suit)];
-    lane.push(card);
-    lane.sort((left, right) => rankValue(left.rank) - rankValue(right.rank));
-
-    return state.playerHand
-      .filter((heldCard) => heldCard.id !== card.id && heldCard.suit === card.suit)
-      .filter((heldCard) => isLegalDominoCardOnLayout(nextLayout, heldCard, dominoStartRank(state)));
-  }
-
-  function isLegalDominoCardOnLayout(layout: Card[][], card: Card, startRank = "7") {
-    const lane = layout[suitIndex(card.suit)];
-
-    if (lane.length === 0) {
-      return card.rank === startRank;
-    }
-
-    const low = Math.min(...lane.map((played) => rankValue(played.rank)));
-    const high = Math.max(...lane.map((played) => rankValue(played.rank)));
-    const rank = rankValue(card.rank);
-
-    return rank === low - 1 || rank === high + 1;
-  }
-
-  function dominoExtensionDirection(lane: Card[], card: Card) {
-    const low = Math.min(...lane.map((played) => rankValue(played.rank)));
-    const high = Math.max(...lane.map((played) => rankValue(played.rank)));
-    const rank = rankValue(card.rank);
-
-    if (rank === low - 1) {
-      return "downward";
-    }
-    if (rank === high + 1) {
-      return "upward";
-    }
-    return "by one rank";
-  }
-
-  function dominoCardClasses(card: Card) {
-    return {
-      heart: card.suit === "H",
-      legal: dominoLegalCardIds.has(card.id),
-      illegal: !dominoLegalCardIds.has(card.id),
-      selected: dominoSelectedCardId === card.id
-    };
-  }
-
-  function runResultForContract(contract: FullHandContract) {
-    return fullHandRunResults.find((result) => result.contract === contract);
-  }
-
-  function scorecardCellLabel(contract: FullHandContract, seat: Seat) {
-    const score = scorecardCellScore(contract, seat);
-
-    if (score !== undefined) {
-      return formatSignedScore(score);
-    }
-
-    return contract === pendingRunContract || fullHand?.contract === contract ? "Now" : "-";
-  }
-
-  function scorecardCellScore(contract: FullHandContract, seat: Seat) {
-    const result = runResultForContract(contract);
-
-    if (!result) {
-      return undefined;
-    }
-
-    return contractRunScore(contract, result.seatPenalties[seat] ?? 0);
-  }
-
-  function scorecardRowState(contract: FullHandContract) {
-    if (runResultForContract(contract)) {
-      return "Complete";
-    }
-    if (contract === pendingRunContract || fullHand?.contract === contract) {
-      return "Now";
-    }
-    return "Pending";
   }
 
   async function startDailyDrill(pathStepId = "") {
@@ -3850,56 +3109,12 @@
     barbu: {
       learnProps: { steps: barbuUi.learnSteps, completedCount: barbuUi.learnSteps.filter(s => completedPathSteps[s.id]).length, nextStep: barbuUi.learnSteps.find(s => !completedPathSteps[s.id]), actions: barbuLearnPanelActions, onStepSelect: startPathStep },
       practiceProps: { lessonEntries: fixedDrillLessons, onLessonSelect: startFixedContractDrill, actions: barbuPracticeActions },
-      playProps: { onPrimary: startBarbuRun, resumeLabel: savedPlayBarbuRun ? "Continue Play Barbu" : undefined, resumeNote: savedPlayBarbuRun ? savedPlayBarbuRunLabel : undefined, onResume: savedPlayBarbuRun ? continueSavedPlayBarbuRun : undefined }
+      playProps: { onPrimary: startBarbuRun, primaryDisabled: $barbuFeature.dealing, primaryWarning: $barbuFeature.error, resumeLabel: $barbuFeature.saved ? "Continue Play Barbu" : undefined, resumeNote: $barbuFeature.saved ? savedPlayBarbuRunSummary($barbuFeature.saved) : undefined, onResume: $barbuFeature.saved ? () => { barbuFeature.resume(); appView = "barbuPlay"; } : undefined }
     },
 
   } as Record<string, any>;
 
 </script>
-
-{#snippet runScorecard(label = "Barbu scorecard")}
-  <div class="run-scorecard" aria-label={label}>
-    <div class="run-scorecard-row header">
-      <span>Contract</span>
-      {#each scoreSeats as seat}
-        <span>{scoreSeatLabel(seat)}</span>
-      {/each}
-    </div>
-    {#each fullHandContracts as contract}
-      <div
-        class:active={contract === pendingRunContract || fullHand?.contract === contract}
-        class:complete={Boolean(runResultForContract(contract))}
-        class:pending={!runResultForContract(contract) && contract !== pendingRunContract && fullHand?.contract !== contract}
-        class="run-scorecard-row"
-      >
-        <span>
-          {contract}
-          <small>{scorecardRowState(contract)}</small>
-        </span>
-        {#each scoreSeats as seat}
-          <strong
-            class:negative={(scorecardCellScore(contract, seat) ?? 0) < 0}
-            class:positive={(scorecardCellScore(contract, seat) ?? 0) > 0}
-            class:pending={scorecardCellScore(contract, seat) === undefined}
-          >
-            {scorecardCellLabel(contract, seat)}
-          </strong>
-        {/each}
-      </div>
-    {/each}
-    <div class="run-scorecard-row total">
-      <span>Total</span>
-      {#each scoreSeats as seat}
-        <strong
-          class:negative={fullHandRunSeatScores[seat] < 0}
-          class:positive={fullHandRunSeatScores[seat] > 0}
-        >
-          {formatSignedScore(fullHandRunSeatScores[seat])}
-        </strong>
-      {/each}
-    </div>
-  </div>
-{/snippet}
 
 {#snippet cardCountingExerciseGrid(label = "Card counting exercises")}
   <div class="fixed-contract-grid" aria-label={label}>
@@ -3924,43 +3139,6 @@
       <span>Subscriber feature</span>
       <strong>Competitive Play</strong>
       <small>Play ranked or table-style matches against other players when multiplayer and accounts are ready.</small>
-    </div>
-  </div>
-{/snippet}
-
-{#snippet runSequenceStrip(label = "Play Barbu sequence")}
-  <div class="run-sequence-strip" aria-label={label}>
-    {#each fullHandContracts as contract, index}
-      <div
-        class:active={contract === pendingRunContract || fullHand?.contract === contract || dominoHand?.contract === contract}
-        class:complete={Boolean(runResultForContract(contract))}
-        class:layout={contract === "Domino"}
-      >
-        <span>{index + 1}</span>
-        <strong>{contract}</strong>
-        <small>{runContractIntros[contract].role}</small>
-      </div>
-    {/each}
-  </div>
-{/snippet}
-
-{#snippet runSettlementSummary()}
-  <div class="run-final-summary" aria-label="Play Barbu settlement">
-    <div>
-      <span>Winner</span>
-      <strong>{fullHandRunWinnerLabel}</strong>
-    </div>
-    <div>
-      <span>Your place</span>
-      <strong>{fullHandRunPlayerStanding ? formatOrdinal(fullHandRunPlayerStanding.rank) : "Done"}</strong>
-    </div>
-    <div>
-      <span>Strongest</span>
-      <strong>{fullHandRunBestContractLabel}</strong>
-    </div>
-    <div>
-      <span>Weakest</span>
-      <strong>{fullHandRunWeakestContractLabel}</strong>
     </div>
   </div>
 {/snippet}
@@ -4884,92 +4062,25 @@
         </div>
       {/snippet}
     </CourseLesson>
-  {:else if appView === "runContractIntro"}
-    <header class="topbar run-intro-topbar" aria-label={`${pendingRunContract} game intro`}>
-      <button class="back-button" onclick={openBarbuTable} type="button">Table</button>
-      <div>
-        <p class="eyebrow">Play Barbu</p>
-        <h1>{pendingRunContract}</h1>
-      </div>
-      <div class="contract-status">
-        <span>Next contract</span>
-        <strong>{pendingRunStatusLabel}</strong>
-      </div>
-    </header>
-
-    <section class="run-intro-screen" aria-label="Play Barbu contract intro">
-      <div class="run-intro-card">
-        <p class="eyebrow">Barbu sets the contract</p>
-        <h2>{pendingRunContractIntro.title}</h2>
-        <p>{pendingRunContractIntro.reason}</p>
-        <div class="run-contract-role" aria-label={`${pendingRunContract} role`}>
-          <div>
-            <span>Role</span>
-            <strong>{pendingRunContractIntro.role}</strong>
-          </div>
-          <div>
-            <span>Surface</span>
-            <strong>{pendingRunSurfaceLabel}</strong>
-          </div>
-          <div>
-            <span>Sequence</span>
-            <strong>{pendingRunSequenceLabel}</strong>
-          </div>
-        </div>
-      </div>
-
-      <div class="run-intro-panel">
-        {#if barbuSaveError}<p class="error" role="alert">{barbuSaveError}</p>{/if}
-        <div class="run-session-summary" aria-label="Play Barbu session summary">
-          <div>
-            <span>Leader</span>
-            <strong>{fullHandRunLeaderLabel}</strong>
-          </div>
-          <div>
-            <span>Your place</span>
-            <strong>{fullHandRunPlayerPlaceLabel}</strong>
-          </div>
-          <div>
-            <span>Remaining</span>
-            <strong>{fullHandRunRemainingLabel}</strong>
-          </div>
-        </div>
-
-        {@render runSequenceStrip("Play Barbu contract sequence")}
-
-        <div class="run-contract-target" aria-label={`${pendingRunContract} target`}>
-          <div>
-            <span>Target</span>
-            <strong>{pendingRunContractIntro.target}</strong>
-          </div>
-          <div>
-            <span>Table habit</span>
-            <strong>{pendingRunContractIntro.habit}</strong>
-          </div>
-        </div>
-
-        {@render runScorecard("Play Barbu scorecard")}
-
-        <div class="course-actions">
-          <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
-          <button class="primary-action" onclick={startPendingRunContract} type="button">Start hand</button>
-        </div>
-      </div>
-    </section>
+  {:else if appView === "barbuPlay"}
+    <BarbuPlay feature={barbuFeature} onBack={openBarbuTable} onStandaloneHand={contract => void startFullHand(contract)} />
   {:else if appView === "fullHand"}
-    {#if fullHand}
+    {#if fullHand && !fullHandCardCountingActive}
+      <BarbuHandView hand={fullHand} reviewCount={fullHandReviewTrickCount} selectedCardId={fullHandSelectedCardId} error={fullHandError}
+        onBack={openFullHandTableTarget} onSelect={id => { const card = fullHand?.playerHand.find(card => card.id === id); if (card) void selectFullHandCard(card); }}
+        onPlay={() => void playFullHandCard()} onNextTrick={continueFullHandReview} onNextHand={startNextFullHand} onReplay={replayFullHand} />
+    {:else if fullHand}
       <TablePlaySurface
         mode={fullHand.status === "complete" ? "result" : "play"}
         ariaLabel={`${fullHand.contract} full hand`}
         flowLayout
-        title={fullHandCardCountingActive ? fullHandCardCountingTitle : `${fullHand.contract} hand`}
-        eyebrow={fullHandCardCountingActive ? "Card Counting I" : fullHandIsPartnershipGame ? (whistFullHandSource === "practice" ? `${fullHand.contract} practice` : `Play ${fullHand.contract}`) : fullHandRunActive ? "Play Barbu" : "Contract hand"}
-        statusLabel={fullHandCardCountingActive ? fullHandCardCountingStatusLabel : fullHandIsPartnershipGame ? "Trump" : fullHandRunStatusLabel}
-        statusValue={fullHandCardCountingActive ? `${fullHand.completedTricks.length} / 13 tricks` : fullHandIsPartnershipGame ? whistTrumpSuitLabel : `${fullHand.playerPenalty} ${fullHandPlayerPenaltyLabel}`}
+        title={fullHandCardCountingTitle}
+        eyebrow={"Card Counting I"}
+        statusLabel={fullHandCardCountingStatusLabel}
+        statusValue={`${fullHand.completedTricks.length} / 13 tricks`}
         tableAriaLabel={`${fullHand.contract} hand table`}
         pendingBySeat={fullHandPendingBySeat}
         showTable={
-          !fullHandRunIsComplete &&
           !(fullHandIsHeartsGame && fullHand.status === "complete") &&
           !(fullHandIsPartnershipGame && fullHand.status === "complete")
         }
@@ -4980,7 +4091,7 @@
       >
 
         {#snippet summary()}
-          {#if !fullHandRunIsComplete && !(fullHandIsPartnershipGame && fullHand.status === "complete")}
+          {#if !(fullHandIsPartnershipGame && fullHand.status === "complete")}
             <div
               class="full-hand-summary grouped-play-summary"
               aria-label={`${fullHand.contract} hand score`}
@@ -5052,34 +4163,13 @@
                 </div>
               {/if}
 
-              {#if fullHandRunActive}
-                <div class="full-hand-summary-row table-score" aria-label="Table scores">
-                  <span class="summary-row-label">Table scores</span>
-                  {#each scoreSeats as seat}
-                    <div>
-                      <span>{scoreSeatRunLabel(seat)} score</span>
-                      <strong>{formatSignedScore(fullHandRunSeatScores[seat])}</strong>
-                    </div>
-                  {/each}
-                </div>
-              {/if}
-            </div>
-          {:else if fullHandRunIsComplete}
-            <div class="full-hand-summary compact-run-complete" aria-label={`${fullHand.contract} hand score`}>
-              {#each scoreSeats as seat}
-                <div>
-                  <span>{scoreSeatRunLabel(seat)} score</span>
-                  <strong>{formatSignedScore(fullHandRunSeatScores[seat])}</strong>
-                </div>
-              {/each}
             </div>
           {/if}
         {/snippet}
 
         {#snippet panel()}
           {#if fullHand.status === "complete"}
-            {#if fullHandCardCountingActive}
-              <div class="counting-break-card" aria-label={`${fullHandCardCountingTitle} intermission`}>
+            <div class="counting-break-card" aria-label={`${fullHandCardCountingTitle} intermission`}>
                 <div class="lesson-heading">
                   <p class="eyebrow">Break</p>
                   <h2>{fullHandCardCountingBreakSummary.title}</h2>
@@ -5100,60 +4190,6 @@
                   </div>
                 </div>
               </div>
-            {:else if fullHandRunIsComplete}
-              <GameResult game="Barbu" completion="session" title={fullHandRunResultTitle} summary={fullHandRunResultSummary} />
-
-              <div class="full-hand-run-score" aria-label="Play Barbu score">
-                {#each fullHandRunStandings as standing}
-                  <div>
-                    <span>{formatOrdinal(standing.rank)} {scoreSeatLabel(standing.seat)}</span>
-                    <strong>{formatSignedScore(standing.score)}</strong>
-                  </div>
-                {/each}
-              </div>
-
-              {@render runSettlementSummary()}
-
-              {@render runScorecard("Play Barbu results")}
-            {:else}
-              <GameResult game={fullHand.contract} completion={fullHandCompletion} title={fullHandResultTitle} summary={fullHandResultSummary} />
-
-              {#if fullHandIsPartnershipGame}
-                <div class="hearts-result-stack" aria-label={`${fullHand.contract} hand score`}>
-                  <div class="hearts-hand-breakdown" aria-label={`${fullHand.contract} partnership breakdown`}>
-                    <div class="hearts-hand-breakdown-row whist-score-row header">
-                      <span>Partnership</span>
-                      <span>{fullHandIsWhistGame ? "Game" : "Match"}</span>
-                      <span>Tricks</span>
-                      <span>Odd</span>
-                    </div>
-                    <div class:active={true} class="hearts-hand-breakdown-row whist-score-row">
-                      <span>You + Barbu</span>
-                      <strong>{partnershipVisibleMatchScores.playerSide}</strong>
-                      <strong>{whistPartnershipTricks.playerSide}</strong>
-                      <strong>{whistPlayerSideOddTricks}</strong>
-                    </div>
-                    <div class="hearts-hand-breakdown-row whist-score-row">
-                      <span>Left + Right</span>
-                      <strong>{partnershipVisibleMatchScores.opponentSide}</strong>
-                      <strong>{whistPartnershipTricks.opponentSide}</strong>
-                      <strong>{whistOpponentSideOddTricks}</strong>
-                    </div>
-                  </div>
-                </div>
-              {:else}
-                <div class="full-hand-result-tricks" aria-label={`${fullHand.contract} key tricks`}>
-                  <div>
-                    <span>{fullHandContractMeta.bestLabel}</span>
-                    <strong>{fullHandBestTrick}</strong>
-                  </div>
-                  <div>
-                    <span>{fullHandContractMeta.weakestLabel}</span>
-                    <strong>{fullHandWorstTrick}</strong>
-                  </div>
-                </div>
-              {/if}
-            {/if}
           {:else if fullHandIsReviewingTrick}
             {#if fullHandCardCountingPromptActive && fullHandCardCountingQuestion}
               <section class:answered={fullHandCardCountingChecked} class="memory-check-card">
@@ -5283,18 +4319,8 @@
           <div class="action-row">
             {#if fullHand.status === "complete"}
               <button class="secondary-action" onclick={openFullHandTableTarget} type="button">Table</button>
-              {#if fullHandCardCountingActive}
-                <button class="secondary-action" onclick={replayFullHandCardCounting} type="button">Replay</button>
+              <button class="secondary-action" onclick={replayFullHandCardCounting} type="button">Replay</button>
                 <button class="primary-action" onclick={nextFullHandCardCounting} type="button">Next hand</button>
-              {:else if fullHandRunIsComplete}
-                <button class="secondary-action" onclick={() => void replayWeakestRunContract()} type="button">Replay weakest</button>
-                <button class="primary-action" onclick={startBarbuRun} type="button">New game</button>
-              {:else}
-                {#if fullHandReplayAllowed}
-                  <button class="secondary-action" onclick={() => void replayFullHand()} type="button">Replay</button>
-                {/if}
-                <button class="primary-action" onclick={() => void startNextFullHand()} type="button">{fullHandNextActionLabel}</button>
-              {/if}
             {:else if fullHandIsReviewingTrick}
               <button class="secondary-action" onclick={openFullHandTableTarget} type="button">Table</button>
               {#if fullHandCardCountingPromptActive}
@@ -5328,176 +4354,10 @@
     {/if}
   {:else if appView === "dominoHand"}
     {#if dominoHand}
-      <TablePlaySurface
-        mode={dominoHand.status === "complete" ? "result" : "play"}
-        ariaLabel="Domino hand"
-        title="Domino hand"
-        eyebrow={fullHandRunActive ? "Play Barbu" : "Contract hand"}
-        statusLabel={fullHandRunStatusLabel}
-        statusValue={`${formatSignedScore(dominoScoreMap.You)} points`}
-        tableAriaLabel="Domino layout"
-        tableCards={[]}
-        flowLayout
-        useCustomTable
-        surfaceClassName="domino-play-surface"
-        showTable={dominoHand.status !== "complete"}
-        panelAriaLabel="Domino hand decision"
-        onBack={openBarbuTable}
-      >
-        {#snippet summary()}
-          {#if !fullHandRunIsComplete && dominoHand.status !== "complete"}
-            <div class="full-hand-summary grouped-play-summary" aria-label="Domino hand score">
-              <div class="full-hand-summary-row current-hand" aria-label="Current hand">
-                <span class="summary-row-label">Current hand</span>
-                <div>
-                  <span>Your score</span>
-                  <strong>{formatSignedScore(dominoScoreMap.You)}</strong>
-                </div>
-              <div>
-                <span>Cards left</span>
-                <strong>{dominoHand.cardsRemaining}</strong>
-              </div>
-              <div>
-                <span>Next out</span>
-                <strong>{formatSignedScore(dominoNextOutScore)}</strong>
-              </div>
-                <div>
-                  <span>Order</span>
-                  <strong>{dominoOutOrderText(dominoHand)}</strong>
-                </div>
-              </div>
-              {#if fullHandRunActive}
-                <div class="full-hand-summary-row table-score" aria-label="Table scores">
-                  <span class="summary-row-label">Table scores</span>
-                  {#each scoreSeats as seat}
-                    <div>
-                      <span>{scoreSeatRunLabel(seat)} score</span>
-                      <strong>{formatSignedScore(dominoScoreMap[seat])}</strong>
-                    </div>
-                  {/each}
-                </div>
-              {/if}
-            </div>
-          {:else}
-            <div class="full-hand-summary compact-run-complete" aria-label="Domino hand score">
-              {#each scoreSeats as seat}
-                <div>
-                  <span>{scoreSeatRunLabel(seat)} score</span>
-                  <strong>{formatSignedScore(dominoScoreMap[seat])}</strong>
-                </div>
-              {/each}
-            </div>
-          {/if}
-        {/snippet}
-
-        {#snippet table()}
-          <div class="domino-layout hand-domino-layout" aria-label="Domino layout">
-            {#each dominoHand.layout as lane, index}
-              <div>
-                <span>{dominoSuitLabel(index)}</span>
-                <strong>{dominoLaneText(lane, dominoStartRank(dominoHand))}</strong>
-              </div>
-            {/each}
-          </div>
-        {/snippet}
-
-        {#snippet panel()}
-          {#if dominoHand.status === "complete"}
-            {#if fullHandRunIsComplete}
-              <GameResult game="Barbu" completion="session" title={fullHandRunResultTitle} summary={fullHandRunResultSummary} />
-
-              <div class="full-hand-run-score" aria-label="Play Barbu score">
-                {#each fullHandRunStandings as standing}
-                  <div>
-                    <span>{formatOrdinal(standing.rank)} {scoreSeatLabel(standing.seat)}</span>
-                    <strong>{formatSignedScore(standing.score)}</strong>
-                  </div>
-                {/each}
-              </div>
-
-              {@render runSettlementSummary()}
-
-              {@render runScorecard("Play Barbu results")}
-            {:else}
-              <div class="domino-result-card">
-                <div class="lesson-heading">
-                  <p class="eyebrow">Result</p>
-                  <h2>{dominoResultTitle}</h2>
-                </div>
-
-                <p class="result" aria-label="Domino result summary">{dominoResultSummary}</p>
-
-                <div class="domino-result-grid" aria-label="Domino result details">
-                  <div>
-                    <span>Your score</span>
-                    <strong>{formatSignedScore(dominoScoreMap.You)}</strong>
-                  </div>
-                  <div>
-                    <span>Winner</span>
-                    <strong>{dominoOutOrderText(dominoHand).split(" ")[0] ?? "Table"}</strong>
-                  </div>
-                  <div>
-                    <span>Order</span>
-                    <strong>{dominoOutOrderText(dominoHand)}</strong>
-                  </div>
-                </div>
-              </div>
-            {/if}
-          {:else}
-            <ExerciseFeedback
-              eyebrow="Your turn"
-              title="Place a card"
-              result={dominoHand.prompt}
-              error={dominoError}
-              explanation={dominoMoveReason}
-            />
-
-            <CardChoiceHand
-              cards={dominoHand.playerHand}
-              ariaLabel="Your Domino hand"
-              className="hand full-hand-cards domino-cards"
-              cardClassName="card hand-card full-hand-card"
-              getCardClasses={dominoCardClasses}
-              isPressed={(card) => dominoSelectedCardId === card.id}
-              onSelect={(card) => void selectDominoCard(card)}
-              onFocus={(card) => {
-                dominoSelectedCardId = card.id;
-              }}
-            />
-          {/if}
-
-          <div class="action-row">
-            {#if dominoHand.status === "complete"}
-              <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
-              {#if fullHandRunIsComplete}
-                <button class="secondary-action" onclick={() => void replayWeakestRunContract()} type="button">Replay weakest</button>
-                <button class="primary-action" onclick={startBarbuRun} type="button">New game</button>
-              {:else}
-                <button class="secondary-action" onclick={() => void replayDominoHand()} type="button">Replay</button>
-                <button class="primary-action" onclick={() => void startNextDominoHand()} type="button">{fullHandNextActionLabel}</button>
-              {/if}
-            {:else}
-              <button class="secondary-action" onclick={openBarbuTable} type="button">Table</button>
-              <button
-                class="secondary-action"
-                disabled={dominoHand.legalCardIds.length > 0}
-                onclick={() => void passDomino()}
-                type="button"
-              >
-                Pass
-              </button>
-              <button
-                class="primary-action"
-                disabled={!dominoDefaultPlayableCard}
-                onclick={placeSelectedOrDefaultDominoCard}
-                type="button"
-              >
-                Place card
-              </button>
-            {/if}
-          </div>
-        {/snippet}
-      </TablePlaySurface>
+      <DominoHandView {dominoHand} {dominoSelectedCardId} {dominoError} {dominoLastMoveReason}
+        onBack={openBarbuTable} onSelect={id => { const card = dominoHand?.playerHand.find(card => card.id === id); if (card) void selectDominoCard(card); }}
+        onFocus={id => { dominoSelectedCardId = id; }} onPlace={placeSelectedOrDefaultDominoCard} onPass={passDomino}
+        onNextHand={startNextDominoHand} onReplay={replayDominoHand} />
     {/if}
   {:else if appView === "drill"}
     {#snippet dominoDrillTable()}
