@@ -21,7 +21,7 @@ chosen rules, scoring, and table conventions.
 | Catalog and table metadata | `src/tableFactory.ts`, `src/games/whist.ts` | Use the factory and per-game definitions, not copied table markup. |
 | Registration | `src/gameRegistry.ts`, `src/games/index.ts` | Register metadata through the existing registry. |
 | Presentation | `GameTableShell`, `LearnPanel`, `CourseLesson`, `PlayTabPanel`, `TablePlaySurface`, `CardChoiceHand` | Reuse Learn/Play navigation, cards, selection, feedback, and responsive layout. |
-| Feature coordination | `src/features/{whist,hearts,spades}/`, `src/features/GameLearning.svelte` | Own game-local match interaction and saving; compose existing engines and the shared lesson flow. |
+| Feature coordination | `src/features/{whist,hearts,spades,bridge}/`, `src/features/GameLearning.svelte` | Own game-local match interaction and saving; compose existing engines and the shared lesson flow. |
 | Hand rules and actions | `src/domain/handEngine.ts` | Keep deterministic transitions independent of UI, storage, and Tauri. |
 | Match progression | `src/domain/whistSession.ts` | Own settlement, dealer rotation, replay, completion, and review state outside Svelte. |
 | Persistence | `src/persistence/whistSave.ts` | Validate and restore saves through an adapter; preserve compatibility or explicitly migrate it. |
@@ -73,7 +73,7 @@ replace copy-pasted screens with copy-pasted session or save implementations.
 
 ## Frontend Isolation
 
-Whist, Hearts and Spades have isolated frontends under their respective
+Whist, Hearts, Spades and Bridge have isolated frontends under their respective
 `src/features/<game>/` directories:
 
 - `WhistGame.svelte` composes the existing table metadata, Learn/Play panels,
@@ -99,8 +99,16 @@ Whist, Hearts and Spades have isolated frontends under their respective
   preserve the deal-first table, bid toggle, player-only adjustment and hand review.
   Its feature controller delegates bid locking, nil, bags and completion to
   `spadesSession.ts`; lessons never write the match save.
+- `BridgeGame.svelte` composes `BridgeAuction.svelte`, `BridgeHandView.svelte`
+  and the same `GameLearning` flow. Its bidding exercise is an unsaved custom
+  decision screen; declarer and defense exercises use the shared drill screen
+  with compass labels. The four existing courses and progress keys are unchanged.
+  `bridgeFeature.ts` delegates auction, passed-out boards, replay and settlement
+  to `bridgeSession.ts` and preserves the version-1 save. Its active-hand adapter
+  lets the shared controller select and play either South's cards or the dummy,
+  without duplicating rules or exposing the reference hand as selectable cards.
 - `reviewedMatchFeature.ts` shares selection, double-tap guarding, save/resume
-  and table navigation across these three reviewed trick-taking matches.
+  and table navigation across these four reviewed trick-taking matches.
   Passing, bids and Whist session mode remain in the game wrappers. This is an
   interaction helper for their existing session contract, not a universal game
   controller; it does not know rules, scoring, opponent policy or layout.
@@ -115,7 +123,7 @@ Pure decision/review and generated-scenario adapters live under `src/lessons/`.
 Keep shared card layout and CSS in the existing components; do not copy them
 into each feature or add game-specific viewport calculations.
 
-This is an incremental frontend refactor, not another engine migration. Bridge,
+This is an incremental frontend refactor, not another engine migration.
 Barbu and Card Counting still have orchestration in `App.svelte`. Card Counting
 intentionally still uses Hearts and Whist hands and their presentation helpers;
 those references are not second match implementations. Extract the next

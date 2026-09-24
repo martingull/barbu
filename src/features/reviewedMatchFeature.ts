@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import type { FullHandState } from "../lessonTypes";
+import type { Card, FullHandState } from "../lessonTypes";
 import type { ReviewedHandEvent } from "../domain/reviewedHand";
 import type { SaveStorage } from "../persistence/saveStore";
 
@@ -21,6 +21,7 @@ export function createReviewedMatchFeature<Session extends ReviewedSession, Save
   save: (session: Session, at: string) => Saved | null;
   restore: (saved: Saved) => Session;
   canPlay?: (session: Session) => boolean;
+  activeHand?: (session: Session) => { cards: Card[]; legalCardIds: string[] };
 }) {
   const now = options.now ?? Date.now;
   let state: MatchFeatureState<Session, Saved> = {
@@ -64,8 +65,11 @@ export function createReviewedMatchFeature<Session extends ReviewedSession, Save
       && !state.dealing && (options.canPlay?.(session) ?? true);
   }
   function play(cardId = state.selectedCardId) {
-    if (!state.session || !playable(state.session) || !state.session.fullHand.legalCardIds.includes(cardId)) return;
+    if (!state.session || !playable(state.session) || !activeHand(state.session).legalCardIds.includes(cardId)) return;
     change(session => options.transition(session, { type: "play-card", cardId }));
+  }
+  function activeHand(session: Session) {
+    return options.activeHand?.(session) ?? { cards: session.fullHand.playerHand, legalCardIds: session.fullHand.legalCardIds };
   }
   return {
     subscribe: store.subscribe, start, play, change,
@@ -80,7 +84,7 @@ export function createReviewedMatchFeature<Session extends ReviewedSession, Save
       update({ view: "hand", tab: "play" });
     },
     select(cardId: string) {
-      if (!state.session || !playable(state.session) || !state.session.fullHand.playerHand.some(card => card.id === cardId)) return;
+      if (!state.session || !playable(state.session) || !activeHand(state.session).cards.some(card => card.id === cardId)) return;
       const at = now();
       const doubleTap = lastTap.id === cardId && at - lastTap.at < 450;
       lastTap = { id: cardId, at };
