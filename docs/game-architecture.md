@@ -21,7 +21,7 @@ chosen rules, scoring, and table conventions.
 | Catalog and table metadata | `src/tableFactory.ts`, `src/games/whist.ts` | Use the factory and per-game definitions, not copied table markup. |
 | Registration | `src/gameRegistry.ts`, `src/games/index.ts` | Register metadata through the existing registry. |
 | Presentation | `GameTableShell`, `LearnPanel`, `CourseLesson`, `PlayTabPanel`, `TablePlaySurface`, `CardChoiceHand` | Reuse Learn/Play navigation, cards, selection, feedback, and responsive layout. |
-| Feature coordination | `src/features/{whist,hearts}/`, `src/features/GameLearning.svelte` | Own game-local match interaction and saving; compose existing engines and the shared lesson flow. |
+| Feature coordination | `src/features/{whist,hearts,spades}/`, `src/features/GameLearning.svelte` | Own game-local match interaction and saving; compose existing engines and the shared lesson flow. |
 | Hand rules and actions | `src/domain/handEngine.ts` | Keep deterministic transitions independent of UI, storage, and Tauri. |
 | Match progression | `src/domain/whistSession.ts` | Own settlement, dealer rotation, replay, completion, and review state outside Svelte. |
 | Persistence | `src/persistence/whistSave.ts` | Validate and restore saves through an adapter; preserve compatibility or explicitly migrate it. |
@@ -73,8 +73,8 @@ replace copy-pasted screens with copy-pasted session or save implementations.
 
 ## Frontend Isolation
 
-Whist and Hearts have isolated frontends under `src/features/whist/` and
-`src/features/hearts/`:
+Whist, Hearts and Spades have isolated frontends under their respective
+`src/features/<game>/` directories:
 
 - `WhistGame.svelte` composes the existing table metadata, Learn/Play panels,
   courses and exercises. Opening-lead practice has ephemeral state separate from
@@ -94,6 +94,16 @@ Whist and Hearts have isolated frontends under `src/features/whist/` and
 - `GameLearning.svelte` owns the common concept/example/exercise/review flow,
   topic replay and history display. Game definitions supply metadata; each
   feature supplies its exercise loader and any custom decision surface.
+- `SpadesGame.svelte` uses that Learn flow for all five courses and the existing
+  four three-decision exercise pools. `SpadesHandView.svelte` and `SpadesBids.svelte`
+  preserve the deal-first table, bid toggle, player-only adjustment and hand review.
+  Its feature controller delegates bid locking, nil, bags and completion to
+  `spadesSession.ts`; lessons never write the match save.
+- `reviewedMatchFeature.ts` shares selection, double-tap guarding, save/resume
+  and table navigation across these three reviewed trick-taking matches.
+  Passing, bids and Whist session mode remain in the game wrappers. This is an
+  interaction helper for their existing session contract, not a universal game
+  controller; it does not know rules, scoring, opponent policy or layout.
 
 `App.svelte` mounts the feature and supplies catalog/reference navigation, the
 shared seed source, course progress and exercise history. These are catalog-wide
@@ -105,8 +115,8 @@ Pure decision/review and generated-scenario adapters live under `src/lessons/`.
 Keep shared card layout and CSS in the existing components; do not copy them
 into each feature or add game-specific viewport calculations.
 
-This is an incremental frontend refactor, not another engine migration. Other
-games and Card Counting still have orchestration in `App.svelte`. Card Counting
+This is an incremental frontend refactor, not another engine migration. Bridge,
+Barbu and Card Counting still have orchestration in `App.svelte`. Card Counting
 intentionally still uses Hearts and Whist hands and their presentation helpers;
 those references are not second match implementations. Extract the next
 game using the same boundaries. Reuse the common Learn flow and generalize

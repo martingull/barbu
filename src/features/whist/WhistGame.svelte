@@ -32,7 +32,7 @@
   <GameLearning {...services} definition={whistDef} gameName="Whist" tab={$feature.tab}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
     loadExercise={(action, seed, fromCourse) => action === "lead" && !fromCourse ? { seed: 0 } : orderPracticePool(pools[action as WhistPracticeAction], seed())}
-    exerciseTitle={action => `Whist practice: ${names[action as WhistPracticeAction]}`} drillTitle={() => "Whist lesson"}
+    exerciseTitle={action => `Whist practice: ${names[action as WhistPracticeAction]}`} drillTitle={() => "Whist lesson"} drillEyebrow="Whist"
     resultMessage={clean => clean ? "Clean Whist practice. Keep reading partner, led suit, and trump before full hands arrive." : "Repeat the Whist pattern until follow-suit and trump decisions feel automatic."}>
     {#snippet customExercise(context)}<WhistOpeningLead onBack={context.onBack} onComplete={context.onComplete} />{/snippet}
     {#snippet play()}

@@ -11,12 +11,12 @@
   import type { LearnPathStep, TableTabId } from "../tableFactory";
   import type { CustomExerciseContext, FeatureServices } from "./featureServices";
 
-  let { definition, gameName, tab, onTab, play, customExercise, loadExercise, exerciseTitle, drillTitle, resultMessage,
+  let { definition, gameName, tab, onTab, play, customExercise, loadExercise, exerciseTitle, drillTitle, drillEyebrow, resultMessage,
     completedSteps, history, nextSeed, onBack, onReference, onCompleteStep, onExerciseComplete, onSurfaceChange }: FeatureServices & {
     definition: GameDefinition; gameName: string; tab: TableTabId; onTab: (tab: TableTabId) => void;
-    play: Snippet; customExercise: Snippet<[CustomExerciseContext]>;
+    play: Snippet; customExercise?: Snippet<[CustomExerciseContext]>;
     loadExercise: (action: string, nextSeed: () => number, fromCourse: boolean) => DrillStep[] | { seed: number };
-    exerciseTitle: (action: string) => string; drillTitle: (step: DrillStep) => string;
+    exerciseTitle: (action: string) => string; drillTitle: (step: DrillStep) => string; drillEyebrow?: string;
     resultMessage: (clean: boolean) => string;
   } = $props();
   let view = $state<"table" | "course" | "drill" | "custom" | "result">("table");
@@ -53,6 +53,7 @@
       const exercise = loadExercise(nextAction, nextSeed, fromCourse);
       const nextSteps = Array.isArray(exercise) ? exercise : null;
       if (nextSteps && !nextSteps.length) throw Error("This exercise could not be loaded.");
+      if (!nextSteps && !customExercise) throw Error("This exercise has no decision screen.");
       if (!fromCourse) course = null;
       action = nextAction;
       seed = Array.isArray(exercise) ? 0 : exercise.seed;
@@ -90,9 +91,9 @@
   <CourseLesson {course} {stage} onBack={table} onContinue={continueCourse} />
 {:else if view === "drill"}
   <DrillScreen step={steps[index]} selectedCardId={selected} checkedCardId={checked} {results} total={steps.length} {index}
-    title={drillTitle(steps[index])} eyebrow={exerciseTitle(action)} topic={gameName} onBack={table}
+    title={drillTitle(steps[index])} eyebrow={drillEyebrow ?? exerciseTitle(action)} topic={gameName} onBack={table}
     onSelect={card => { if (!checked) selected = card.id; }} onCheck={check} onNext={next} onFinish={finish} />
-{:else if view === "custom"}
+{:else if view === "custom" && customExercise}
   {@render customExercise({ action, seed, fromCourse: Boolean(course), courseComplete: completedCount === definition.learnSteps.length, onBack: table, onComplete: finishCustom })}
 {:else if view === "result"}
   <DrillResultScreen title={exerciseTitle(action)} {results} {attempts} onBack={table}

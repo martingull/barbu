@@ -1,8 +1,10 @@
 <script lang="ts">
+  import SpadesGame from "./features/spades/SpadesGame.svelte";
+  import { createSpadesFeature } from "./features/spades/spadesFeature";
   import HeartsGame from "./features/hearts/HeartsGame.svelte";
   import { createHeartsFeature } from "./features/hearts/heartsFeature";
   import { heartsTrickFeedback } from "./features/hearts/heartsPresentation";
-  import { scoreSeats, scoreSeatLabel, scoreSeatRunLabel, formatOrdinal, formatPointCount, seatTricksWonForTricks, type RunStanding } from "./scorePresentation";
+  import { formatSignedScore, scoreSeats, scoreSeatLabel, scoreSeatRunLabel, formatOrdinal, formatPointCount, seatTricksWonForTricks, type RunStanding } from "./scorePresentation";
   import { drillStepFromGeneratedScenario } from "./lessons/generatedDrill";
   import { tick } from "svelte";
   import WhistGame from "./features/whist/WhistGame.svelte";
@@ -22,13 +24,6 @@
   import { createBridgeSession, transitionBridgeSession, type BridgeSession } from "./domain/bridgeSession";
   import { createBridgeSaveStore, saveBridgeSession, restoreBridgeSession, type SavedBridgeRun } from "./persistence/bridgeSave";
   import GameResult from "./GameResult.svelte";
-  import { spadesMatchComplete, spadesMatchTarget, spadesSideBid, spadesHandResultFor, addSpadesMatchResult,
-    spadesPlayerSideSeats, spadesOpponentSideSeats, type SpadesHandResult, type SpadesScoreState } from "./spadesScoring";
-  import { defaultSpadesBidState, suggestedSpadesBidsForHand, type SpadesBidState } from "./domain/spadesBidding";
-  import { spadesTrickFeedback } from "./spadesFeedback";
-  import { createSpadesSession, transitionSpadesSession, type SpadesSession } from "./domain/spadesSession";
-  import { createSpadesSaveStore, saveSpadesSession, restoreSpadesSession, type SavedSpadesRun } from "./persistence/spadesSave";
-  import { spadesFollowSuitDrillPool, spadesTrumpOrDiscardDrillPool, spadesBidBooksDrillPool, spadesAvoidBagsDrillPool } from "./spadesLessons";
   import { invoke, isTauri } from "@tauri-apps/api/core";
   import { typescriptHandEngine } from "./domain/handEngine";
   import { heartsScoredSeatPenalties } from "./domain/heartsSession";
@@ -64,7 +59,6 @@
   import { whistOddProgress, whistResultCopy } from "./whistScoring";
   import type { BarbuLearnPathAction } from "./games/barbu";
   import type { BridgeLearnPathAction, BridgePracticeAction } from "./games/bridge";
-  import type { SpadesLearnPathAction, SpadesPracticeAction } from "./games/spades";
   import {
     getCatalogCategories,
     type ActiveGameTable,
@@ -96,6 +90,7 @@
     | "barbuTable"
     | "heartsFeature"
     | "whistFeature"
+    | "spadesFeature"
     | "cardCountingTable"
     | "barbuContracts"
     | "practiceChooser"
@@ -168,7 +163,6 @@
   };
 
   type BarbuLearnPathStep = LearnPathStep<BarbuLearnPathAction>;
-  type SpadesLearnPathStep = LearnPathStep<SpadesLearnPathAction>;
   type BridgeLearnPathStep = LearnPathStep<BridgeLearnPathAction>;
 
   type RunContractIntro = {
@@ -278,7 +272,6 @@
   let openingPrivacyPolicy = false;
   const barbuUi = registry.get("barbu")!;
   const heartsUi = registry.get("hearts")!;
-  const spadesUi = registry.get<SpadesLearnPathAction | SpadesPracticeAction>("spades")!;
   const bridgeUi = registry.get<BridgeLearnPathAction | BridgePracticeAction>("bridge")!;
 
   const progressStorageKey = "barbu.courseProgress.v1";
@@ -290,11 +283,11 @@
   let whistFixedSurface = false;
   const heartsFeature = createHeartsFeature({ storage: () => typeof localStorage === "undefined" ? undefined : localStorage, nextSeed: usePracticeSeed });
   let heartsFixedSurface = false;
-  const spadesSaveStore = createSpadesSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
+  const spadesFeature = createSpadesFeature({ storage: () => typeof localStorage === "undefined" ? undefined : localStorage, nextSeed: usePracticeSeed });
+  let spadesFixedSurface = false;
   const bridgeSaveStore = createBridgeSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
   const maxStoredDrillPatterns = 6;
   const maxStoredPlayBarbuAttempts = 8;
-  const spadesBidSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
 
   const countingTrickSeats: Seat[] = ["Tutor", "Right", "You", "Left"];
   const realisticTrumpTotalTricks = 13;
@@ -477,7 +470,6 @@
   let activeReferenceId = referenceCatalog[0].id;
   let activeCourseStage: CourseStage = "concept";
   let activeTableTabs: Record<string, TableTabId> = {};
-  let activeSpadesPracticeFocus: SpadesPracticeAction = "follow";
   let activeBridgePracticeFocus: BridgePracticeAction = "declarer";
   let bridgeBiddingPracticeIndex = 0;
   let bridgeBiddingSelectedCall: BridgeCallOption = "Pass";
@@ -493,18 +485,9 @@
   let savedPlayBarbuRun: SavedPlayBarbuRun | null = barbuSaveStore.load();
   let barbuSession: BarbuSession | null = null;
   let barbuSaveError = "";
-  let savedSpadesRun: SavedSpadesRun | null = spadesSaveStore.load();
-  let spadesSession: SpadesSession | null = null;
-  let spadesDealPending = false;
   let savedBridgeRun = bridgeSaveStore.load();
   let bridgeSession: BridgeSession | null = null;
   let bridgeDealPending = false;
-  let spadesBids: SpadesBidState = { ...defaultSpadesBidState };
-  let spadesPlayStarted = true;
-  let spadesOpeningPanel: "table" | "bid" = "table";
-  let spadesMatchScores: SpadesScoreState = { playerSide: 0, opponentSide: 0 };
-  let spadesBagScores: SpadesScoreState = { playerSide: 0, opponentSide: 0 };
-  let spadesHandResults: SpadesHandResult[] = [];
   let bridgeAuctionSelectedBidId = "1NT";
   let bridgeAuctionSelectedCall: BridgeCallOption = "1NT";
   let bridgeAuctionSelectedCallExplanation = "";
@@ -512,14 +495,6 @@
   let bridgeAuctionError = "";
   let bridgeHandResults: BridgeHandResult[] = [];
   let bridgeMatchScores: BridgeScoreState = { ns: 0, ew: 0 };
-  $: spadesPartnershipBids = {
-    playerSide: spadesSideBid(spadesBids, spadesPlayerSideSeats),
-    opponentSide: spadesSideBid(spadesBids, spadesOpponentSideSeats)
-  };
-  $: spadesBidTotal = spadesBidSeats.reduce((total, seat) => total + spadesBids[seat], 0);
-  $: spadesBidError = "";
-  $: spadesBidReady = true;
-  $: spadesCurrentBidLabel = spadesBidLabel(spadesBids);
   let fullHand: FullHandState | null = null;
   let dominoHand: DominoHandState | null = null;
   let fullHandSelectedCardId = "";
@@ -621,60 +596,6 @@
     return `${bridgeSeatLabel(openingLead.seat)} led ${formatCardLabel(openingLead.card)}.`;
   }
 
-  function spadesBidLabel(bids = spadesBids) {
-    return `${spadesSideBid(bids, spadesPlayerSideSeats)}-${spadesSideBid(bids, spadesOpponentSideSeats)}`;
-  }
-
-  function setSpadesSeatBid(seat: Seat, value: number) {
-    if (seat !== "You" || !isSpadesSessionHand() || !spadesSession) return;
-    setSpadesSession(transitionSpadesSession(spadesSession, { type: "set-bid", bid: value }));
-    persistSavedSpadesRun();
-  }
-
-  function bumpSpadesSeatBid(seat: Seat, delta: number) {
-    setSpadesSeatBid(seat, spadesBids[seat] + delta);
-  }
-
-  function spadesBidSeatLabel(seat: Seat) {
-    return seat === "Tutor" ? "Barbu" : scoreSeatLabel(seat);
-  }
-
-  function spadesNilSummary(results: SpadesHandResult["nilResults"]) {
-    if (!results.length) {
-      return "";
-    }
-
-    return results
-      .map((result) =>
-        `${spadesBidSeatLabel(result.seat)} ${result.tricks === 0 ? "made nil" : "missed nil"} (${formatSignedScore(result.score)})`
-      )
-      .join("; ");
-  }
-
-  function spadesResultCopy(result: SpadesHandResult | null, scores: SpadesScoreState, complete: boolean) {
-    const matchScore = `${scores.playerSide} - ${scores.opponentSide}`;
-    if (complete) {
-      const playerWon = scores.playerSide > scores.opponentSide;
-      return {
-        heading: playerWon ? "Your partnership won the match" : "Opponents won the match",
-        summary: `${playerWon ? "You + Barbu" : "Left + Right"} reached ${Math.max(scores.playerSide, scores.opponentSide)} points. Final match score: ${matchScore}.`
-      };
-    }
-    if (!result) return { heading: "Spades hand complete", summary: "Play to 500 points." };
-    const nilText = spadesNilSummary(result.nilResults);
-    const penaltyText = [
-      result.playerSideBagPenalty ? `You + Barbu took a ${result.playerSideBagPenalty}-point bag penalty` : "",
-      result.opponentSideBagPenalty ? `Left + Right took a ${result.opponentSideBagPenalty}-point bag penalty` : ""
-    ].filter(Boolean).join("; ");
-    const tiedAtTarget = scores.playerSide === scores.opponentSide && scores.playerSide >= spadesMatchTarget;
-    return {
-      heading: tiedAtTarget ? "Spades match tied: play on"
-        : result.playerSideScore === result.opponentSideScore ? "Spades hand tied"
-        : result.playerSideScore > result.opponentSideScore ? "Your partnership scored the hand" : "Opponents scored the hand",
-      summary: `Bid ${result.playerSideBid}-${result.opponentSideBid}. You + Barbu won ${result.playerSideTricks} books for ${formatSignedScore(result.playerSideScore)}; Left + Right won ${result.opponentSideTricks} books for ${formatSignedScore(result.opponentSideScore)}. ${nilText ? `${nilText}. ` : ""}${penaltyText ? `${penaltyText}. ` : ""}Match score: ${matchScore}.${tiedAtTarget ? " Play another hand to break the tie." : ""}`
-    };
-  }
-
   function rankValue(rank: string) {
     const values: Record<string, number> = {
       "2": 2,
@@ -763,9 +684,6 @@
   $: completedCount = playablePathSteps.filter((step) => completedPathSteps[step.id]).length;
   $: nextPathStep = playablePathSteps.find((step) => !completedPathSteps[step.id]);
   $: isCourseComplete = completedCount === playablePathSteps.length;
-  $: spadesCompletedCount = spadesUi.learnSteps.filter((step) => completedPathSteps[step.id]).length;
-  $: nextSpadesPathStep = spadesUi.learnSteps.find((step) => !completedPathSteps[step.id]);
-  $: isSpadesCourseComplete = spadesCompletedCount === spadesUi.learnSteps.length;
   $: bridgeCompletedCount = bridgeUi.learnSteps.filter((step) => completedPathSteps[step.id]).length;
   $: nextBridgePathStep = bridgeUi.learnSteps.find((step) => !completedPathSteps[step.id]);
   $: isBridgeCourseComplete = bridgeCompletedCount === bridgeUi.learnSteps.length;
@@ -789,15 +707,6 @@
       title: "Barbu contracts",
       summary: "See the contract roster and what each table asks you to notice.",
       onClick: openBarbuContracts
-    }
-  ];
-  $: spadesLearnPanelActions = [
-    {
-      id: "reference",
-      eyebrow: "Rules",
-      title: "Reference",
-      summary: spadesUi.table.learn.referenceSummary,
-      onClick: () => openReference(spadesUi.table.referenceId)
     }
   ];
   $: bridgeLearnPanelActions = [
@@ -839,24 +748,19 @@
   $: cleanDrillCount = drillResults.filter((result) => result.clean).length;
   $: isLastDrillDecision = drillIndex >= activeDrillSteps.length - 1;
   $: drillScreenTitle =
-    activeGameTable === "whist" || activeGameTable === "spades" || activeGameTable === "bridge"
+    activeGameTable === "bridge"
       ? `${currentDrill.contract} lesson`
       : currentDrillTrick.title;
   $: drillResultIsBarbuPractice = activeGameTable === "barbu";
-  $: drillResultIsSpadesPractice = activeGameTable === "spades";
   $: drillResultIsBridgePractice = activeGameTable === "bridge";
   $: drillResultIsTablePractice =
-    drillResultIsSpadesPractice || drillResultIsBridgePractice;
+    drillResultIsBridgePractice;
   $: drillResultMessage =
     drillResults.length > 0 && cleanDrillCount === drillResults.length
-      ? drillResultIsSpadesPractice
-            ? "Clean Spades practice. Keep reading the bid, trump, nil, and bags before full hands arrive."
-            : drillResultIsBridgePractice
+      ? drillResultIsBridgePractice
               ? "Clean Bridge practice. Keep planning declarer play, using dummy, and defending 1NT."
         : "Clean session. Barbu is ready to raise the pressure."
-      : drillResultIsSpadesPractice
-            ? "Repeat the Spades pattern until bid-aware trick decisions feel automatic."
-            : drillResultIsBridgePractice
+      : drillResultIsBridgePractice
               ? "Repeat the Bridge pattern until dummy, declarer, and defensive plans feel automatic."
         : "Use the next repetition to make the weak decision automatic.";
   $: currentContractResults = summarizeContractResults(drillResults);
@@ -1094,16 +998,14 @@
   $: fullHandSeatPenalties = fullHand ? seatPenaltiesForTricks(fullHand.completedTricks) : emptySeatPenalties();
   $: fullHandSeatTrickCounts = fullHand ? seatTricksWonForTricks(fullHand.completedTricks) : emptySeatPenalties();
   $: whistResult = whistResultCopy(whistSettlement, whistPartnershipTricks, "game");
-  $: spadesResult = spadesResultCopy(currentSpadesHandResult, spadesVisibleMatchScores, spadesMatchIsComplete);
-  $: fullHandResultTitle = fullHandIsWhistGame ? whistResult.heading : fullHandIsSpadesGame ? spadesResult.heading : fullHand ? fullHandResultHeading(fullHand) : "";
-  $: fullHandResultSummary = fullHandIsWhistGame ? whistResult.summary : fullHandIsSpadesGame ? spadesResult.summary : fullHand ? fullHandResultText(fullHand, bridgeVisibleMatchScores) : "";
+  $: fullHandResultTitle = fullHandIsWhistGame ? whistResult.heading : fullHand ? fullHandResultHeading(fullHand) : "";
+  $: fullHandResultSummary = fullHandIsWhistGame ? whistResult.summary : fullHand ? fullHandResultText(fullHand, bridgeVisibleMatchScores) : "";
   $: fullHandBestTrick = fullHand ? fullHandBestTrickLabel(fullHand) : "";
   $: fullHandWorstTrick = fullHand ? fullHandWorstTrickLabel(fullHand) : "";
   $: fullHandIsHeartsGame = activeGameTable === "hearts" && fullHand?.contract === "Hearts" && !fullHandRunActive;
   $: fullHandIsWhistGame = activeGameTable === "whist" && fullHand?.contract === "Whist" && !fullHandRunActive;
-  $: fullHandIsSpadesGame = activeGameTable === "spades" && fullHand?.contract === "Spades" && !fullHandRunActive;
   $: fullHandIsBridgeGame = activeGameTable === "bridge" && fullHand?.contract === "Bridge" && !fullHandRunActive;
-  $: fullHandIsPartnershipGame = fullHandIsWhistGame || fullHandIsSpadesGame || fullHandIsBridgeGame;
+  $: fullHandIsPartnershipGame = fullHandIsWhistGame || fullHandIsBridgeGame;
   $: bridgeDummySeat = fullHand?.bridgeContract?.dummy ?? "Tutor";
   $: bridgeDeclarerSeat = fullHand?.bridgeContract?.declarer ?? "You";
   $: bridgeUserSideDeclares = fullHandIsBridgeGame && (bridgeSideForSeat(bridgeDeclarerSeat) === "NS");
@@ -1155,16 +1057,8 @@
   $: bridgeContractMade = bridgeDeclarerTricks >= bridgeContractTarget;
   $: currentBridgeHandResult = fullHandIsBridgeGame && fullHand?.status === "complete" ? bridgeHandResultFor(fullHand, fullHand.bridgeBoardNumber ?? bridgeHandResults.length + 1) : null;
   $: bridgeVisibleMatchScores = bridgeScoreTotalsWith(currentBridgeHandResult, bridgeMatchScores);
-  $: currentSpadesHandResult = fullHandIsSpadesGame && fullHand?.status === "complete" ? spadesHandResultFor(fullHand, spadesHandResults.length + 1, spadesBids, spadesBagScores) : null;
   $: fullHandShowWhistMatchSummary =
-    (fullHandIsWhistGame || fullHandIsSpadesGame) && !fullHandCardCountingActive;
-  $: spadesBidsAdjustable =
-    fullHandIsSpadesGame &&
-    whistFullHandSource === "play" &&
-    !spadesPlayStarted &&
-    fullHand?.status === "in_progress" &&
-    fullHand?.completedTricks.length === 0;
-  $: spadesOpeningDecisionActive = spadesBidsAdjustable;
+    fullHandIsWhistGame && !fullHandCardCountingActive;
   // Card Counting retains single Whist hands, separate from the feature's saved match.
   $: whistSettlement = whistSessionSettlement({
     fullHand: fullHandIsWhistGame ? fullHand : null, scores: emptyWhistScore(), games: emptyWhistScore(), mode: "game"
@@ -1174,29 +1068,18 @@
   $: whistTurnedCardVisible = fullHandIsWhistGame && fullHand?.whistTurnedTrump
     && fullHand.completedTricks.length === 0
     && !fullHand.currentTrick.some(play => play.seat === ["Tutor", "Right", "You", "Left"][fullHand.whistDealer ?? -1]);
-  $: spadesVisibleResult = currentSpadesHandResult
-    ? addSpadesMatchResult(spadesMatchScores, spadesBagScores, currentSpadesHandResult)
-    : { scores: spadesMatchScores, bags: spadesBagScores };
-  $: spadesVisibleMatchScores = spadesVisibleResult.scores;
-  $: spadesVisibleBags = spadesVisibleResult.bags;
-  $: spadesVisibleHandCount = spadesHandResults.length + (currentSpadesHandResult ? 1 : 0);
-  $: partnershipVisibleMatchScores = fullHandIsSpadesGame ? spadesVisibleMatchScores : whistVisibleMatchScores;
-  $: partnershipVisibleHandCount = fullHandIsSpadesGame ? spadesVisibleHandCount : whistVisibleHandCount;
-  $: partnershipMatchTarget = fullHandIsSpadesGame ? spadesMatchTarget : whistMatchTarget;
+  $: partnershipVisibleMatchScores = whistVisibleMatchScores;
+  $: partnershipVisibleHandCount = whistVisibleHandCount;
+  $: partnershipMatchTarget = whistMatchTarget;
   $: whistMatchIsComplete =
     fullHandIsWhistGame &&
     fullHand?.status === "complete" &&
     whistSettlement.complete;
-  $: spadesMatchIsComplete =
-    fullHandIsSpadesGame &&
-    fullHand?.status === "complete" &&
-    spadesMatchComplete(spadesVisibleMatchScores);
-  $: partnershipMatchIsComplete = fullHandIsSpadesGame ? spadesMatchIsComplete : whistMatchIsComplete;
+  $: partnershipMatchIsComplete = whistMatchIsComplete;
   $: heartsScorecardMeta = heartsUi.table.scorecard;
   $: heartsVisibleScores = heartsScoredSeatPenalties(fullHandSeatPenalties);
   $: fullHandCompletion = fullHand?.status !== "complete" || fullHandCardCountingActive ? null
     : whistFullHandSource !== "play" ? null
-    : fullHandIsSpadesGame && spadesMatchIsComplete ? "match"
     : fullHandIsWhistGame && whistSettlement.gameComplete ? "game"
     : fullHandIsBridgeGame ? "board" : null;
   $: fullHandReplayAllowed = !fullHandCompletion || fullHandCompletion === "board";
@@ -1248,9 +1131,7 @@
       : fullHandIsPartnershipGame
         ? whistTrumpSuitLabel
           ? `Trump ${whistTrumpSuitLabel}`
-          : fullHandIsSpadesGame
-            ? "Spades"
-            : "Whist"
+          : "Whist"
       : fullHand?.status === "complete" || dominoHand?.status === "complete"
         ? "Complete"
         : fullHand
@@ -1583,70 +1464,6 @@
     persistSavedPlayBarbuRun();
   }
 
-  function isSpadesSessionHand() {
-    return activeGameTable === "spades" && whistFullHandSource === "play" && !fullHandCardCountingMode
-      && !fullHandRunActive && spadesSession !== null && fullHand === spadesSession.fullHand;
-  }
-
-  function setSpadesSession(session: SpadesSession) {
-    spadesSession = session;
-    fullHand = session.fullHand;
-    fullHandReviewTrickCount = session.fullHandReviewTrickCount;
-    spadesMatchScores = session.scores;
-    spadesBagScores = session.bags;
-    spadesBids = session.bids;
-    spadesHandResults = session.results;
-    spadesPlayStarted = session.playStarted;
-    spadesOpeningPanel = session.openingPanel;
-  }
-
-  function openSpadesSession(session: SpadesSession) {
-    activeGameTable = "spades";
-    activeTableTabs.spades = "play";
-    whistFullHandSource = "play";
-    barbuSession = null;
-    fullHandCardCountingMode = false;
-    dominoHand = null;
-
-    fullHandSelectedCardId = "";
-    dummySelectedCardId = "";
-    fullHandError = "";
-    lastFullHandTapCardId = "";
-    lastFullHandTapAt = 0;
-    setSpadesSession(session);
-    appView = "fullHand";
-  }
-
-  function persistSavedSpadesRun() {
-    if (!isSpadesSessionHand() || !spadesSession) return;
-    savedSpadesRun = saveSpadesSession(spadesSession, new Date().toISOString());
-    try {
-      spadesSaveStore.write(savedSpadesRun);
-    } catch {
-      fullHandError = "Progress could not be saved on this device.";
-    }
-  }
-
-  function savedSpadesRunSummary(savedRun: SavedSpadesRun) {
-    const handNumber = savedRun.results.length + 1;
-    const matchScore = `${savedRun.scores.playerSide} - ${savedRun.scores.opponentSide}`;
-
-    if (!savedRun.playStarted && savedRun.fullHand.status !== "complete") {
-      return `Hand ${handNumber}, bid ${spadesBidLabel(savedRun.bids)}, match ${matchScore}`;
-    }
-
-    return savedRun.fullHand.status === "complete"
-      ? `Hand ${handNumber} complete, match ${matchScore}`
-      : `Hand ${handNumber}, trick ${savedRun.fullHand.trickNumber}, match ${matchScore}`;
-  }
-
-  function continueSavedSpadesRun() {
-    const saved = savedSpadesRun ?? spadesSaveStore.load();
-    if (!saved) return;
-    openSpadesSession(restoreSpadesSession(saved));
-    persistSavedSpadesRun();
-  }
-
   function isBridgeSessionHand() {
     return activeGameTable === "bridge" && whistFullHandSource === "play" && !fullHandCardCountingMode
       && !fullHandRunActive && bridgeSession !== null && fullHand === bridgeSession.fullHand;
@@ -1671,7 +1488,6 @@
     fullHandCardCountingMode = false;
     dominoHand = null;
 
-    spadesPlayStarted = true;
     fullHandSelectedCardId = "";
     dummySelectedCardId = "";
     fullHandError = "";
@@ -1841,7 +1657,8 @@
 
   function openSpadesTable() {
     activeGameTable = "spades";
-    appView = "gameTable";
+    spadesFeature.openTable();
+    appView = "spadesFeature";
   }
 
   function openBridgeTable() {
@@ -3043,7 +2860,6 @@
     }
 
     fullHandCardCountingMode = options.cardCounting === true;
-    if (contract === "Spades") spadesSession = null;
     if (contract === "Bridge") bridgeSession = null;
     fullHandCardCountingAnswer = null;
     fullHandCardCountingChecked = false;
@@ -3085,7 +2901,7 @@
   }
 
   async function selectFullHandCard(card: Card) {
-    if (!fullHand || fullHand.status === "complete" || fullHandIsReviewingTrick || spadesOpeningDecisionActive) {
+    if (!fullHand || fullHand.status === "complete" || fullHandIsReviewingTrick) {
       return;
     }
 
@@ -3102,7 +2918,7 @@
   }
 
   async function selectDummyCard(card: Card) {
-    if (!fullHand || fullHand.status === "complete" || fullHandIsReviewingTrick || spadesOpeningDecisionActive) {
+    if (!fullHand || fullHand.status === "complete" || fullHandIsReviewingTrick) {
       return;
     }
 
@@ -3120,7 +2936,7 @@
 
   async function playFullHandCard(cardId?: string) {
     const targetId = cardId || (isBridgeDummyTurn ? dummySelectedCardId : fullHandSelectedCard?.id);
-    if (!fullHand || fullHandIsReviewingTrick || spadesOpeningDecisionActive || !targetId) {
+    if (!fullHand || fullHandIsReviewingTrick || !targetId) {
       return;
     }
     
@@ -3138,8 +2954,6 @@
     try {
       if (isBridgeSessionHand() && bridgeSession) {
         setBridgeSession(transitionBridgeSession(bridgeSession, { type: "play-card", cardId: targetId }));
-      } else if (isSpadesSessionHand() && spadesSession) {
-        setSpadesSession(transitionSpadesSession(spadesSession, { type: "play-card", cardId: targetId }));
       } else if (barbuSession) {
         setBarbuSession(transitionBarbuSession(barbuSession, { type: "play-card", cardId: targetId }));
       } else {
@@ -3153,7 +2967,6 @@
       lastFullHandTapAt = 0;
       persistSavedPlayBarbuRun();
 
-      persistSavedSpadesRun();
       persistSavedBridgeRun();
     } catch (error) {
       fullHandError = typeof error === "string" ? error : error instanceof Error ? error.message : "That card could not be played.";
@@ -3175,8 +2988,6 @@
 
     if (isBridgeSessionHand() && bridgeSession) {
       setBridgeSession(transitionBridgeSession(bridgeSession, { type: "next-trick" }));
-    } else if (isSpadesSessionHand() && spadesSession) {
-      setSpadesSession(transitionSpadesSession(spadesSession, { type: "next-trick" }));
     } else if (barbuSession) {
       setBarbuSession(transitionBarbuSession(barbuSession, { type: "next-trick" }));
     } else {
@@ -3188,7 +2999,6 @@
     lastFullHandTapAt = 0;
     persistSavedPlayBarbuRun();
 
-    persistSavedSpadesRun();
     persistSavedBridgeRun();
   }
 
@@ -3201,43 +3011,8 @@
     continueFullHandAfterTrick();
   }
 
-  function toggleSpadesOpeningPanel() {
-    if (!isSpadesSessionHand() || !spadesSession) return;
-    setSpadesSession(transitionSpadesSession(spadesSession, { type: "toggle-bids" }));
-    fullHandSelectedCardId = "";
-    fullHandError = "";
-    persistSavedSpadesRun();
-  }
-
-  function startSpadesOpeningPlay() {
-    if (!isSpadesSessionHand() || !spadesSession) return;
-    setSpadesSession(transitionSpadesSession(spadesSession, { type: "start-play" }));
-    fullHandSelectedCardId = "";
-    fullHandError = "";
-    lastFullHandTapCardId = "";
-    lastFullHandTapAt = 0;
-    persistSavedSpadesRun();
-  }
-
   function startNoHeartsHand() {
     void startFullHand("No Hearts");
-  }
-
-  async function startSpadesHand(options: { keepSession?: boolean } = {}) {
-    if (spadesDealPending) return;
-    spadesDealPending = true;
-    try {
-      const next = options.keepSession && spadesSession
-        ? transitionSpadesSession(spadesSession, { type: "next-hand", seed: usePracticeSeed() })
-        : createSpadesSession(usePracticeSeed());
-      openSpadesSession(next);
-      persistSavedSpadesRun();
-      await tick();
-    } catch (error) {
-      fullHandError = error instanceof Error ? error.message : "That hand could not be dealt.";
-    } finally {
-      spadesDealPending = false;
-    }
   }
 
   async function startBridgeHand(options: { keepSession?: boolean } = {}) {
@@ -3283,73 +3058,9 @@
   }
 
   function startPartnershipHand(options: { keepSession?: boolean } = {}) {
-    return fullHandIsSpadesGame
-      ? startSpadesHand(options)
-      : fullHandIsBridgeGame
-        ? startBridgeHand(options)
-        : openWhistTable();
-  }
-
-  async function startSpadesPracticeHand(pathStepId = "", _focus: SpadesPracticeAction = "follow") {
-    activeGameTable = "spades";
-    activeTableTabs.spades = "learn";
-    whistFullHandSource = "practice";
-    activePathStepId = pathStepId;
-    spadesPlayStarted = true;
-    spadesOpeningPanel = "table";
-    spadesBids = { ...defaultSpadesBidState };
-    spadesMatchScores = { playerSide: 0, opponentSide: 0 };
-    spadesBagScores = { playerSide: 0, opponentSide: 0 };
-    spadesHandResults = [];
-    await startFullHand("Spades");
-    spadesBids = suggestedSpadesBidsForHand(fullHand);
-  }
-
-  function completeSpadesPathStep(stepId = activePathStepId) {
-    if (!stepId.startsWith("spades-")) {
-      return;
-    }
-
-    saveCourseProgress({ ...completedPathSteps, [stepId]: true });
-  }
-
-  function startSpadesPathStep(step: SpadesLearnPathStep) {
-    const course = courseCatalog.find((item) => item.pathStepId === step.id && item.game === "spades");
-
-    if (course) {
-      startCourse(course.id);
-      return;
-    }
-
-    activePathStepId = step.id;
-    void startSpadesPracticeHand(step.id, step.action === "object" ? "follow" : (step.action as SpadesPracticeAction));
-  }
-
-  function findNextSpadesPathStep(fromStepId = "") {
-    const currentStepIndex = spadesUi.learnSteps.findIndex((step) => step.id === fromStepId);
-    if (currentStepIndex >= 0 && completedPathSteps[fromStepId]) {
-      const nextSequentialStep = spadesUi.learnSteps
-        .slice(currentStepIndex + 1)
-        .find((step) => !completedPathSteps[step.id]);
-
-      if (nextSequentialStep) {
-        return nextSequentialStep;
-      }
-    }
-
-    return spadesUi.learnSteps.find((step) => !completedPathSteps[step.id]);
-  }
-
-  function continueSpadesPath(fromStepId = activePathStepId) {
-    const nextStep = findNextSpadesPathStep(fromStepId);
-
-    if (!nextStep) {
-      activeTableTabs.spades = "learn";
-      openSpadesTable();
-      return;
-    }
-
-    startSpadesPathStep(nextStep);
+    return fullHandIsBridgeGame
+      ? startBridgeHand(options)
+      : openWhistTable();
   }
 
   function startBridgePathStep(step: BridgeLearnPathStep) {
@@ -3509,7 +3220,6 @@
 
   function startNextFullHand() {
     if (fullHandIsBridgeGame && bridgeDealPending) return;
-    if (fullHandIsSpadesGame && spadesDealPending) return;
     if (!fullHand) {
       return;
     }
@@ -3521,39 +3231,12 @@
       }
 
       if (whistFullHandSource === "practice") {
-        if (fullHandIsSpadesGame) {
-          if (activePathStepId) {
-            const completedStepId = activePathStepId;
-            const completedSpadesCourse = courseCatalog.find(
-              (course) => course.game === "spades" && course.pathStepId === completedStepId
-            );
-
-            if (completedSpadesCourse) {
-              activeCourseId = completedSpadesCourse.id;
-              activePathStepId = completedSpadesCourse.pathStepId;
-              activeCourseStage = "review";
-              appView = "courseContent";
-              return;
-            }
-
-            completeSpadesPathStep(completedStepId);
-            continueSpadesPath(completedStepId);
-          } else {
-            void startSpadesPracticeHand();
-          }
-        } else {
-          openWhistTable();
-        }
+        openWhistTable();
         return;
       }
 
       if (partnershipMatchIsComplete) {
         startPartnershipHand();
-        return;
-      }
-
-      if (fullHandIsSpadesGame) {
-        void startSpadesHand({ keepSession: true });
         return;
       }
 
@@ -3578,7 +3261,6 @@
 
   function replayFullHand() {
     if (bridgeDealPending) return;
-    if (fullHandIsSpadesGame && spadesDealPending) return;
     if (!fullHandReplayAllowed) return;
     if (!fullHand) {
       return;
@@ -3589,11 +3271,6 @@
       persistSavedBridgeRun();
       return;
     }
-    if (isSpadesSessionHand() && spadesSession) {
-      openSpadesSession(transitionSpadesSession(spadesSession, { type: "replay" }));
-      persistSavedSpadesRun();
-      return;
-    }
 
     if (fullHandIsPartnershipGame) {
       if (fullHandIsBridgeGame) {
@@ -3602,11 +3279,7 @@
       }
 
       if (whistFullHandSource === "practice") {
-        if (fullHandIsSpadesGame) {
-          void startSpadesPracticeHand(activePathStepId);
-        } else {
-          openWhistTable();
-        }
+        openWhistTable();
         return;
       }
 
@@ -3701,10 +3374,6 @@
     )} after ${contractsPlayed} contracts.`;
   }
 
-  function formatSignedScore(value: number) {
-    return value > 0 ? `+${value}` : String(value);
-  }
-
   function runBestContract(results: FullHandRunResult[]) {
     return [...results].sort((left, right) => {
       const leftScore = contractRunScore(left.contract, left.seatPenalties.You ?? 0);
@@ -3765,12 +3434,6 @@
     };
   }
 
-  function spadesOpeningCardClasses(card: Card) {
-    return {
-      heart: card.suit === "H"
-    };
-  }
-
   function noLastTwoPhaseLabel(hand: FullHandState | null | undefined) {
     if (!hand || hand.contract !== "No Last Two") {
       return "";
@@ -3807,10 +3470,6 @@
 
   function fullHandTrickFeedback(trick: CompletedHandTrick) {
     const penaltyText = `${trick.penalty} ${trick.penalty === 1 ? fullHandPenaltyName : fullHandPenaltyPlural}`;
-
-    if (fullHandIsSpadesGame && fullHand) {
-      return spadesTrickFeedback(fullHand.completedTricks.slice(0, fullHandCompletedTrickNumber(trick)), spadesBids);
-    }
 
     if (fullHandIsPartnershipGame) {
       const winnerIsPlayerSide = trick.winnerIndex === 0 || trick.winnerIndex === 2;
@@ -4373,53 +4032,6 @@
     appView = "drill";
   }
 
-  function startSpadesPracticeSession(focus: SpadesPracticeAction, steps: DrillStep[], title: string, pathStepId = "") {
-    activeGameTable = "spades";
-    activeTableTabs.spades = "learn";
-    activeSpadesPracticeFocus = focus;
-    activePathStepId = pathStepId;
-    activeDrillFocusContract = "Spades";
-    drillIndex = 0;
-    drillResults = [];
-    drillSetTitle = title;
-    activeDrillSteps = orderPracticePool(steps, usePracticeSeed());
-    resetDrillDecision();
-    appView = "drill";
-  }
-
-  function startSpadesFollowSuitDrill(pathStepId = "") {
-    startSpadesPracticeSession("follow", spadesFollowSuitDrillPool, "Spades practice: follow suit", pathStepId);
-  }
-
-  function startSpadesTrumpOrDiscardDrill(pathStepId = "") {
-    startSpadesPracticeSession("trump", spadesTrumpOrDiscardDrillPool, "Spades practice: trump or discard", pathStepId);
-  }
-
-  function startSpadesBidBooksDrill(pathStepId = "") {
-    startSpadesPracticeSession("bid", spadesBidBooksDrillPool, "Spades practice: bid books", pathStepId);
-  }
-
-  function startSpadesAvoidBagsDrill(pathStepId = "") {
-    startSpadesPracticeSession("bags", spadesAvoidBagsDrillPool, "Spades practice: avoid bags", pathStepId);
-  }
-
-  function replaySpadesPracticeDrill() {
-    switch (activeSpadesPracticeFocus) {
-      case "trump":
-        startSpadesTrumpOrDiscardDrill();
-        return;
-      case "bid":
-        startSpadesBidBooksDrill();
-        return;
-      case "bags":
-        startSpadesAvoidBagsDrill();
-        return;
-      case "follow":
-      default:
-        startSpadesFollowSuitDrill();
-    }
-  }
-
   function startBridgePracticeSession(focus: BridgePracticeAction, steps: DrillStep[], title: string, pathStepId = "") {
     activeGameTable = "bridge";
     activeTableTabs.bridge = "learn";
@@ -4525,12 +4137,7 @@
     },
     hearts: {},
     whist: {},
-    spades: {
-      follow: ({ pathStepId } = {}) => startSpadesFollowSuitDrill(pathStepId),
-      trump: ({ pathStepId } = {}) => startSpadesTrumpOrDiscardDrill(pathStepId),
-      bid: ({ pathStepId } = {}) => startSpadesBidBooksDrill(pathStepId),
-      bags: ({ pathStepId } = {}) => startSpadesAvoidBagsDrill(pathStepId)
-    },
+    spades: {},
     bridge: {
       bidding: ({ pathStepId } = {}) => startBridgeBiddingDrill(pathStepId),
       declarer: ({ pathStepId } = {}) => startBridgeDeclarerDrill(pathStepId),
@@ -4539,7 +4146,6 @@
   };
 
   const barbuPracticeActions = createPracticePanelActions(practiceActionRegistry.barbu);
-  const spadesPracticeActions = createPracticePanelActions(practiceActionRegistry.spades);
   const bridgePracticeActions = createPracticePanelActions(practiceActionRegistry.bridge);
 
   function continueCourse() {
@@ -4736,19 +4342,6 @@
       practiceProps: { lessonEntries: fixedDrillLessons, onLessonSelect: startFixedContractDrill, actions: barbuPracticeActions },
       playProps: { onPrimary: startBarbuRun, resumeLabel: savedPlayBarbuRun ? "Continue Play Barbu" : undefined, resumeNote: savedPlayBarbuRun ? savedPlayBarbuRunLabel : undefined, onResume: savedPlayBarbuRun ? continueSavedPlayBarbuRun : undefined }
     },
-    spades: {
-      learnProps: { steps: spadesUi.learnSteps, completedCount: spadesUi.learnSteps.filter(s => completedPathSteps[s.id]).length, nextStep: spadesUi.learnSteps.find(s => !completedPathSteps[s.id]), actions: spadesLearnPanelActions, onStepSelect: startSpadesPathStep },
-      practiceProps: { actions: spadesPracticeActions },
-      playProps: {
-        onPrimary: () => void startSpadesHand(),
-        resumeLabel: savedSpadesRun ? "Continue Spades" : undefined,
-        resumeNote: savedSpadesRun ? savedSpadesRunSummary(savedSpadesRun) : undefined,
-        onResume: savedSpadesRun ? continueSavedSpadesRun : undefined,
-        footerNote: `Individual bids, nil, bags, and ten-bag penalties score locally. Play to ${spadesMatchTarget}.`,
-        primaryDisabled: !spadesBidReady,
-        primaryWarning: spadesBidError
-      }
-    },
     bridge: {
       learnProps: {
         steps: bridgeUi.learnSteps,
@@ -4841,63 +4434,6 @@
   </div>
 {/snippet}
 
-{#snippet spadesBidSetup(label = "Spades bids", editable = true)}
-  <section class="play-spades-bids" aria-label={label}>
-    <p class="eyebrow">Set your bid for this hand</p>
-    <div class="spades-bid-grid">
-      {#each spadesBidSeats as seat}
-        <label class="spades-bid-control" class:auto={seat !== "You"}>
-          <span>{spadesBidSeatLabel(seat)}{spadesBids[seat] === 0 ? " nil" : ""}</span>
-          {#if seat === "You"}
-            <div class="spades-bid-stepper">
-              <button
-                class="drill-action spades-bid-button"
-                aria-label="Decrease You bid"
-                disabled={!editable || spadesBids.You <= 0}
-                onclick={() => bumpSpadesSeatBid("You", -1)}
-                type="button"
-              >
-                -
-              </button>
-              <strong class="spades-bid-value" aria-label={`You bid ${spadesBids.You}`}>
-                {spadesBids.You}
-              </strong>
-              <button
-                class="drill-action spades-bid-button"
-                aria-label="Increase You bid"
-                disabled={!editable || spadesBids.You >= 13}
-                onclick={() => bumpSpadesSeatBid("You", 1)}
-                type="button"
-              >
-                +
-              </button>
-            </div>
-          {:else}
-            <div class="spades-bid-stepper auto">
-              <span class="spades-bid-placeholder" aria-hidden="true"></span>
-              <strong class="spades-bid-value auto" aria-label={`${spadesBidSeatLabel(seat)} bid ${spadesBids[seat]}`}>
-                {spadesBids[seat]}
-              </strong>
-              <small>Auto</small>
-            </div>
-          {/if}
-        </label>
-      {/each}
-    </div>
-    <p class="saved-run-note">
-      {editable
-        ? "Your opening estimate comes from aces, protected kings, high spades, and spade length. Set 0 for nil."
-        : "Bids are locked for this hand."}
-    </p>
-    <p class="spades-bid-summary">
-      Team bids:
-      <strong>You + Barbu {spadesPartnershipBids.playerSide}</strong>
-      <strong>Left + Right {spadesPartnershipBids.opponentSide}</strong>
-      <span>Table total {spadesBidTotal}</span>
-    </p>
-  </section>
-{/snippet}
-
 {#snippet runSequenceStrip(label = "Play Barbu sequence")}
   <div class="run-sequence-strip" aria-label={label}>
     {#each fullHandContracts as contract, index}
@@ -4935,7 +4471,7 @@
   </div>
 {/snippet}
 
-<main class:fixed-play-screen={isTablePlayScreen || (appView === "whistFeature" && whistFixedSurface) || (appView === "heartsFeature" && heartsFixedSurface)} class="app-shell">
+<main class:fixed-play-screen={isTablePlayScreen || (appView === "whistFeature" && whistFixedSurface) || (appView === "heartsFeature" && heartsFixedSurface) || (appView === "spadesFeature" && spadesFixedSurface)} class="app-shell">
   {#if appView === "catalog"}
     <section class="welcome-screen" aria-labelledby="catalog-title">
       <div class="welcome-copy">
@@ -4994,6 +4530,12 @@
         </p>
       {/if}
     </footer>
+  {:else if appView === "spadesFeature"}
+    <SpadesGame feature={spadesFeature} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
+      onBack={openCatalog} onReference={() => openReference("spades")}
+      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })}
+      onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
+      onSurfaceChange={fixed => { spadesFixedSurface = fixed; }} />
   {:else if appView === "heartsFeature"}
     <HeartsGame feature={heartsFeature} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onBack={openCatalog} onReference={() => openReference("hearts")}
@@ -6254,8 +5796,8 @@
                   </div>
                   {#if fullHandShowWhistMatchSummary}
                     <div>
-                      <span>{fullHandIsSpadesGame ? "Bid" : whistOddProgressLabel}</span>
-                      <strong>{fullHandIsSpadesGame ? spadesCurrentBidLabel : whistOddProgressValue}</strong>
+                      <span>{whistOddProgressLabel}</span>
+                      <strong>{whistOddProgressValue}</strong>
                     </div>
                   {/if}
                   {#if fullHand.contract === "No Last Two"}
@@ -6279,7 +5821,7 @@
               {/if}
               {#if fullHandShowWhistMatchSummary}
                 <div class="full-hand-summary-row table-score" aria-label={`${fullHand.contract} match score`}>
-                  <span class="summary-row-label">{fullHandIsSpadesGame ? "Score" : "Game"} to {partnershipMatchTarget}</span>
+                  <span class="summary-row-label">Game to {partnershipMatchTarget}</span>
                   <div>
                     <span>You + Barbu</span>
                     <strong>{partnershipVisibleMatchScores.playerSide}</strong>
@@ -6289,8 +5831,8 @@
                     <strong>{partnershipVisibleMatchScores.opponentSide}</strong>
                   </div>
                   <div>
-                    <span>{fullHandIsSpadesGame ? "Bags" : "Hands"}</span>
-                    <strong>{fullHandIsSpadesGame ? `${spadesVisibleBags.playerSide}-${spadesVisibleBags.opponentSide}` : partnershipVisibleHandCount}</strong>
+                    <span>Hands</span>
+                    <strong>{partnershipVisibleHandCount}</strong>
                   </div>
                   {#if fullHandIsWhistGame && fullHand.whistDealer !== undefined}
                     <div>
@@ -6422,19 +5964,19 @@
                       <span>Partnership</span>
                       <span>{fullHandIsWhistGame ? "Game" : "Match"}</span>
                       <span>Tricks</span>
-                      <span>{fullHandIsSpadesGame ? "Bid" : "Odd"}</span>
+                      <span>Odd</span>
                     </div>
                     <div class:active={true} class="hearts-hand-breakdown-row whist-score-row">
                       <span>You + Barbu</span>
                       <strong>{partnershipVisibleMatchScores.playerSide}</strong>
                       <strong>{whistPartnershipTricks.playerSide}</strong>
-                      <strong>{fullHandIsSpadesGame ? `${spadesPartnershipBids.playerSide}` : whistPlayerSideOddTricks}</strong>
+                      <strong>{whistPlayerSideOddTricks}</strong>
                     </div>
                     <div class="hearts-hand-breakdown-row whist-score-row">
                       <span>Left + Right</span>
                       <strong>{partnershipVisibleMatchScores.opponentSide}</strong>
                       <strong>{whistPartnershipTricks.opponentSide}</strong>
-                      <strong>{fullHandIsSpadesGame ? `${spadesPartnershipBids.opponentSide}` : whistOpponentSideOddTricks}</strong>
+                      <strong>{whistOpponentSideOddTricks}</strong>
                     </div>
                   </div>
                 </div>
@@ -6547,7 +6089,6 @@
               <p class:warning={fullHandTrickIsWarning(fullHandReviewTrick)} class="outcome">
                 {fullHandReviewFeedback}
               </p>
-              {#if !fullHandIsSpadesGame}
                 <p class="explanation">
                   {fullHandIsBridgeGame
                     ? "Check who won and press Next trick when ready."
@@ -6557,33 +6098,6 @@
                     ? "Check the trick number first. Tap the table or press Next trick when you are ready."
                     : "Left's card is on the table. Tap the table or press Next trick when you are ready."}
                 </p>
-              {/if}
-            {/if}
-          {:else if spadesOpeningDecisionActive}
-            {#if spadesOpeningPanel === "bid"}
-              <div class="lesson-heading">
-                <p class="eyebrow">Before the first trick</p>
-                <h2>Adjust the bids</h2>
-              </div>
-
-              {@render spadesBidSetup("Spades bids for this hand", true)}
-            {:else}
-              <ExerciseFeedback
-                eyebrow="Before the first trick"
-                title="Read your hand"
-                result="Check your spades, likely winners, and weak suits before setting the table bid."
-                error={fullHandError}
-              />
-
-              <CardChoiceHand
-                cards={fullHand.playerHand}
-                ariaLabel={`Your ${fullHand.contract} hand`}
-                className="hand full-hand-cards"
-                cardClassName="card hand-card full-hand-card"
-                getCardClasses={spadesOpeningCardClasses}
-                isPressed={() => false}
-                onSelect={() => {}}
-              />
             {/if}
           {:else}
             <div class:bridge-dummy-turn-feedback={isBridgeDummyTurn} class:bridge-play-feedback={fullHandIsBridgeGame}>
@@ -6652,19 +6166,6 @@
                   Next trick
                 </button>
               {/if}
-            {:else if spadesOpeningDecisionActive}
-              <button class="secondary-action" onclick={openFullHandTableTarget} type="button">Table</button>
-              <button class="secondary-action" onclick={toggleSpadesOpeningPanel} type="button">
-                {spadesOpeningPanel === "bid" ? "Show cards" : "Adjust bid"}
-              </button>
-              <button
-                class="primary-action"
-                disabled={!spadesBidReady}
-                onclick={startSpadesOpeningPlay}
-                type="button"
-              >
-                Start hand
-              </button>
             {:else}
               <button class="secondary-action" onclick={openFullHandTableTarget} type="button">Table</button>
               <button
@@ -6863,7 +6364,7 @@
     {/snippet}
     <DrillScreen step={currentDrill} selectedCardId={drillSelectedCardId} checkedCardId={drillCheckedCardId}
       results={drillResults} total={activeDrillSteps.length} index={drillIndex} title={drillScreenTitle}
-      eyebrow={activeGameTable === "spades" || activeGameTable === "bridge" ? currentDrill.contract : drillSetTitle}
+      eyebrow={activeGameTable === "bridge" ? currentDrill.contract : drillSetTitle}
       topic={activeDrillFocusContract} seatLabels={activeGameTable === "bridge" ? compassSeatLabels : {}}
       customTable={currentDrillIsDomino ? dominoDrillTable : undefined}
       onBack={openActiveGameTable} onSelect={selectDrillCard} onCheck={checkDrillAnswer}
@@ -6872,17 +6373,7 @@
     <DrillResultScreen title={drillSetTitle} results={drillResults} message={drillResultMessage}
       attempts={recentPlayBarbuAttempts} onBack={openActiveGameTable}>
       {#snippet actions()}
-          {#if drillResultIsSpadesPractice}
-            {#if activePathStepId.startsWith("spades-")}
-              <button class="primary-action" onclick={() => continueSpadesPath()} type="button">
-                {isSpadesCourseComplete ? "Back to Spades table" : "Continue Spades path"}
-              </button>
-              <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
-            {:else}
-              <button class="primary-action" onclick={replaySpadesPracticeDrill} type="button">Practice Spades again</button>
-              <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
-            {/if}
-          {:else if drillResultIsBridgePractice}
+          {#if drillResultIsBridgePractice}
             {#if activePathStepId.startsWith("bridge-")}
               <button class="primary-action" onclick={() => continueBridgePath()} type="button">
                 {isBridgeCourseComplete ? "Back to Bridge table" : "Continue Bridge path"}
@@ -6900,11 +6391,7 @@
           {/if}
       {/snippet}
       {#snippet footer()}
-        {#if drillResultIsSpadesPractice}
-          {#if !activePathStepId.startsWith("spades-")}
-            <button class="primary-action" onclick={openActiveGameTable} type="button">Back to Learn</button>
-          {/if}
-        {:else if drillResultIsBridgePractice}
+        {#if drillResultIsBridgePractice}
           {#if !activePathStepId.startsWith("bridge-")}
             <button class="primary-action" onclick={openActiveGameTable} type="button">Back to Learn</button>
           {/if}

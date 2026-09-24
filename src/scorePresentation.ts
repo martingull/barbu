@@ -3,6 +3,11 @@ import { emptySeatPenalties, trickTakingSeats } from "./domain/trickTakingScore"
 export type RunStanding = { seat: Seat; score: number; rank: number };
 export const scoreSeats: Seat[] = ["You", "Tutor", "Left", "Right"];
 
+export function formatSignedScore(value: number) {
+  return value > 0 ? `+${value}` : String(value);
+}
+
+
 export function scoreSeatLabel(seat: Seat) {
   return seat === "Tutor" ? "Barbu" : seat;
 }
