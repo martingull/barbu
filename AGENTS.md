@@ -135,7 +135,7 @@ table metadata with `createGameTableDefinition`, and register the definition in
 - render guided lessons, topic exercises, progress, and reference together with `LearnPanel`
 - render concept/example/review stages with `CourseLesson` and interactive decisions with `TablePlaySurface` in `flowLayout` mode, just like Play
 - reuse `PlayTabPanel` and shared card/table components for presentation
-- keep only route, selection, and action-dispatch glue in `App.svelte`; match progression and saved-game rules belong outside the component, as demonstrated by the Whist prototype
+- keep catalog-wide routing and services in `App.svelte`; game-local selection, navigation and dispatch belong under `src/features/<game>/`, as demonstrated by `features/whist`; rules and settlement remain in the domain
 - keep access decisions centralized; do not expose planned Pro features merely because their metadata exists
 
 Practice is an activity within Learn, not a separate navigation tab. Keep the
@@ -153,6 +153,12 @@ the current reference for the TypeScript hand/session/save separation, not a
 complete generic game factory. Reuse shared interfaces and extract common
 behavior when a second game demonstrates the need; do not clone the whole Whist
 implementation or force non-trick-taking games into its hand model.
+
+The Whist frontend is now isolated in `src/features/whist/`. Reuse `DrillScreen`
+and `DrillResultScreen` for exercises and review, and the existing table/hand
+components for play. Keep unsaved exercise state separate from the saved match.
+Other games still need frontend extraction; do not claim `App.svelte` is already
+only a router. See `docs/game-architecture.md` for the incremental boundary.
 
 If a new table needs an existing visual layout, use shared components before
 adding another large inline branch. Rules, scoring, generated practice, and

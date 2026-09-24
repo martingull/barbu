@@ -1,5 +1,12 @@
 <script lang="ts">
   import { tick } from "svelte";
+  import WhistGame from "./features/whist/WhistGame.svelte";
+  import { createWhistFeature } from "./features/whist/whistFeature";
+  import DrillResultScreen from "./DrillResultScreen.svelte";
+  import { summarizeContractResults, weakestContractFromResults, buildDrillLoopInsight, buildReviewInsight, type PlayBarbuAttempt } from "./lessons/drillReview";
+  import DrillScreen from "./DrillScreen.svelte";
+  import { drillDecision, orderPracticePool, type DrillStep, type DrillResult } from "./lessons/drillDecision";
+  import { whistTrumpSuitFromHandId, whistPartnershipTrickCounts, whistTrickFeedback } from "./whistPresentation";
   import { bridgeBiddingPracticeSteps, bridgeDeclarerDrillPool, bridgeDefenseDrillPool } from "./bridgePractice";
   import { bridgeHighCardPoints, bridgeSuitCount, explainBridgeCall } from "./bridgeBidding";
   import { bridgeBidOptions, bridgeSideForSeat, bridgeAuctionStatus, bridgeLegalCallOptions,
@@ -17,7 +24,6 @@
   import { createSpadesSession, transitionSpadesSession, type SpadesSession } from "./domain/spadesSession";
   import { createSpadesSaveStore, saveSpadesSession, restoreSpadesSession, type SavedSpadesRun } from "./persistence/spadesSave";
   import { spadesFollowSuitDrillPool, spadesTrumpOrDiscardDrillPool, spadesBidBooksDrillPool, spadesAvoidBagsDrillPool } from "./spadesLessons";
-  import { whistFollowSuitDrillPool, whistTrumpOrDiscardDrillPool, whistThirdHandHighDrillPool, whistReturnPartnerSuitDrillPool, whistOpeningLeadLessonPool, whistOddTrickDrillPool } from "./whistLessons";
   import { invoke, isTauri } from "@tauri-apps/api/core";
   import { typescriptHandEngine } from "./domain/handEngine";
   import { generateHeartsPracticeSet, generateHeartsPassPractice, evaluateHeartsPass, heartsPassPracticeCount, type HeartsPracticeFocus } from "./domain/heartsPractice";
@@ -25,8 +31,7 @@
     heartsHandPenaltyTotal, heartsMatchTarget, type HeartsHandResult, type HeartsPassDirection, type HeartsSession } from "./domain/heartsSession";
   import { addSeatPenalties, emptySeatPenalties, seatPenaltiesForTricks } from "./domain/trickTakingScore";
   import { createHeartsSaveStore, restoreHeartsSession, saveHeartsSession, savedHeartsRunSummary, type SavedHeartsRun } from "./persistence/heartsSave";
-  import { createWhistSession, emptyWhistScore, transitionWhistSession, whistSessionSettlement, type WhistSession } from "./domain/whistSession";
-  import { createWhistSaveStore, restoreWhistSession, saveWhistSession, savedWhistRunSummary, type SavedWhistRun } from "./persistence/whistSave";
+  import { emptyWhistScore, whistSessionSettlement } from "./domain/whistSession";
   import { createBarbuSession, transitionBarbuSession, barbuSessionComplete, barbuSeatTotals, dominoSeatScores,
     type BarbuSession, type BarbuSessionEvent, type BarbuHandResult as FullHandRunResult } from "./domain/barbuSession";
   import { createBarbuSaveStore, saveBarbuSession, restoreBarbuSession, savedPlayBarbuRunSummary,
@@ -54,12 +59,11 @@
   import { courseCatalog, courseTargetsGuidedLesson, type CourseContent, type CourseStage } from "./courseContent";
   import { guidedLessons } from "./lessons/catalog";
   import { referenceCatalog } from "./referenceCatalog";
-  import { whistOddProgress, whistResultCopy, type WhistSessionMode } from "./whistScoring";
+  import { whistOddProgress, whistResultCopy } from "./whistScoring";
   import type { BarbuLearnPathAction } from "./games/barbu";
   import type { BridgeLearnPathAction, BridgePracticeAction } from "./games/bridge";
   import type { HeartsLearnPathAction } from "./games/hearts";
   import type { SpadesLearnPathAction, SpadesPracticeAction } from "./games/spades";
-  import type { WhistLearnPathAction, WhistPracticeAction } from "./games/whist";
   import {
     getCatalogCategories,
     type ActiveGameTable,
@@ -91,7 +95,7 @@
     | "catalog"
     | "barbuTable"
     | "heartsTable"
-    | "whistTable"
+    | "whistFeature"
     | "cardCountingTable"
     | "barbuContracts"
     | "practiceChooser"
@@ -116,7 +120,6 @@
   type CardCountingReturnTarget = ActiveGameTable | "card-counting";
   type CardCountingExerciseAction = "heart-memory" | "trump-count" | "high-card-memory" | "danger-count" | "whist-memory";
   type FullHandCardCountingExercise = "heart-memory" | "danger-count" | "whist-memory" | "high-card-memory";
-
 
   type CardCountingExerciseDefinition = {
     eyebrow: string;
@@ -144,49 +147,11 @@
     isTrackedCard: (card: Card) => boolean;
   };
 
-  type DrillStep = {
-    scenarioId?: string;
-    contract: string;
-    title: string;
-    trick: GuidedTrick;
-  };
-
-  type DrillResult = {
-    contract: string;
-    cardLabel: string;
-    outcome: GuidedCardOutcome | "illegal";
-    reason: PracticeReason;
-    clean: boolean;
-  };
-
   type BridgeBiddingPracticeResult = {
     id: string;
     selectedCall: BridgeCallOption;
     correctCall: BridgeCallOption;
     clean: boolean;
-  };
-
-  type PlayBarbuAttempt = {
-    id: string;
-    completedAt: string;
-    results: DrillResult[];
-  };
-
-  type ContractResultSummary = {
-    contract: string;
-    clean: number;
-    total: number;
-    outcome: GuidedCardOutcome | "illegal";
-  };
-
-  type ReviewInsight = {
-    contract: string;
-    message: string;
-  };
-
-  type DrillLoopInsight = ReviewInsight & {
-    heading: string;
-    streakText: string;
   };
 
   type PracticeLaunchContext = {
@@ -206,7 +171,6 @@
 
   type BarbuLearnPathStep = LearnPathStep<BarbuLearnPathAction>;
   type HeartsLearnPathStep = LearnPathStep<HeartsLearnPathAction>;
-  type WhistLearnPathStep = LearnPathStep<WhistLearnPathAction>;
   type SpadesLearnPathStep = LearnPathStep<SpadesLearnPathAction>;
   type BridgeLearnPathStep = LearnPathStep<BridgeLearnPathAction>;
 
@@ -317,25 +281,12 @@
     | { kind: "boss_card"; prompt: string; answer: boolean; targetCard: Card }
     | { kind: "void_spotter"; prompt: string; answer: Seat; targetSuit: Suit };
 
-  type WhistOpeningLeadPracticeDeal = {
-    id: string;
-    trumpSuit: Suit;
-    focusSuit: Suit;
-    recommendedLead: string;
-    explanation: string;
-    prompt: string;
-    hands: Card[][];
-  };
-
-  const whistOpeningLeadPracticeMaxRounds = 3;
-
   const catalogCategories = getCatalogCategories();
   const privacyPolicyUrl = "https://martingull.github.io/barbu/privacy-policy.html";
   let privacyPolicyError = "";
   let openingPrivacyPolicy = false;
   const barbuUi = registry.get("barbu")!;
   const heartsUi = registry.get("hearts")!;
-  const whistUi = registry.get("whist")!;
   const spadesUi = registry.get<SpadesLearnPathAction | SpadesPracticeAction>("spades")!;
   const bridgeUi = registry.get<BridgeLearnPathAction | BridgePracticeAction>("bridge")!;
 
@@ -345,7 +296,8 @@
   const playBarbuHistoryStorageKey = "barbu.playHistory.v1";
   const barbuSaveStore = createBarbuSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
   const heartsSaveStore = createHeartsSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
-  const whistSaveStore = createWhistSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
+  const whistFeature = createWhistFeature({ storage: () => typeof localStorage === "undefined" ? undefined : localStorage, nextSeed: usePracticeSeed });
+  let whistFixedSurface = false;
   const spadesSaveStore = createSpadesSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
   const bridgeSaveStore = createBridgeSaveStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
   const maxStoredDrillPatterns = 6;
@@ -541,7 +493,6 @@
   let activeReferenceId = referenceCatalog[0].id;
   let activeCourseStage: CourseStage = "concept";
   let activeTableTabs: Record<string, TableTabId> = {};
-  let activeWhistPracticeFocus: WhistPracticeAction = "follow";
   let activeSpadesPracticeFocus: SpadesPracticeAction = "follow";
   let activeBridgePracticeFocus: BridgePracticeAction = "declarer";
   let bridgeBiddingPracticeIndex = 0;
@@ -549,7 +500,6 @@
   let bridgeBiddingCheckedCall: BridgeCallOption | "" = "";
   let bridgeBiddingPracticeResults: BridgeBiddingPracticeResult[] = [];
   let whistFullHandSource: "play" | "practice" | "card-counting" = "play";
-  let whistOpeningLeadPracticeRound = 0;
   let activeCardCountingTab: CardCountingTabId = "play";
   let cardCountingReturnTarget: CardCountingReturnTarget = "barbu";
   let activeGameTable: ActiveGameTable = "barbu";
@@ -560,7 +510,6 @@
   let barbuSession: BarbuSession | null = null;
   let barbuSaveError = "";
   let savedHeartsRun: SavedHeartsRun | null = heartsSaveStore.load();
-  let savedWhistRun: SavedWhistRun | null = whistSaveStore.load();
   let savedSpadesRun: SavedSpadesRun | null = spadesSaveStore.load();
   let spadesSession: SpadesSession | null = null;
   let spadesDealPending = false;
@@ -569,9 +518,6 @@
   let bridgeDealPending = false;
   let heartsSession: HeartsSession | null = null;
   let heartsDealPending = false;
-  let whistSession: WhistSession | null = null;
-  let whistSessionMode: WhistSessionMode = "game";
-  let whistDealPending = false;
   let spadesBids: SpadesBidState = { ...defaultSpadesBidState };
   let spadesPlayStarted = true;
   let spadesOpeningPanel: "table" | "bid" = "table";
@@ -686,103 +632,9 @@
     return { id: label, rank, suit, label };
   }
 
-  function whistOpeningLeadPracticeDeals(): WhistOpeningLeadPracticeDeal[] {
-    return [
-      {
-        id: "long-spades",
-        trumpSuit: "H",
-        focusSuit: "S",
-        recommendedLead: "5S",
-        explanation: "5S is fourth highest from Q-10-8-5-2. It invites spades while preserving the queen.",
-        prompt:
-          "Lead 1 of 3. Hearts are trumps. Show Barbu spades with fourth highest from Q-10-8-5-2.",
-        hands: [
-          ["AS", "KS", "9S", "4S", "2D", "QD", "5D", "AC", "9C", "6C", "AH", "10H", "4H"].map(cardFromId),
-          ["JS", "7S", "3S", "KD", "10D", "8D", "3D", "QC", "8C", "5C", "KH", "9H", "2H"].map(cardFromId),
-          ["8S", "AD", "QS", "9D", "10S", "6D", "5S", "JH", "2S", "7H", "KC", "3H", "4C"].map(cardFromId),
-          ["6S", "JD", "7D", "4D", "JC", "10C", "7C", "3C", "2C", "QH", "8H", "6H", "5H"].map(cardFromId)
-        ]
-      },
-      {
-        id: "strong-clubs",
-        trumpSuit: "D",
-        focusSuit: "C",
-        recommendedLead: "KC",
-        explanation: "KC leads the top of the K-Q-J honour sequence, showing supported strength.",
-        prompt:
-          "Lead 2 of 3. Diamonds are trumps. Show Barbu clubs with the top of K-Q-J.",
-        hands: [
-          ["KS", "10S", "7S", "2S", "AC", "10C", "3C", "AH", "QH", "8H", "4H", "AD", "KD"].map(cardFromId),
-          ["QS", "JS", "9S", "5S", "8C", "7C", "5C", "KH", "9H", "5H", "2H", "QD", "JD"].map(cardFromId),
-          ["KC", "7D", "QC", "10H", "JC", "6H", "9C", "3H", "6C", "2C", "AS", "8S", "4S"].map(cardFromId),
-          ["6S", "3S", "4C", "JH", "7H", "10D", "9D", "8D", "6D", "5D", "4D", "3D", "2D"].map(cardFromId)
-        ]
-      },
-      {
-        id: "strong-clubs-save-trump",
-        trumpSuit: "S",
-        focusSuit: "C",
-        recommendedLead: "AC",
-        explanation: "AC cashes a winner in your long plain suit while keeping AS and KS for control.",
-        prompt:
-          "Lead 3 of 3. Spades are trumps. Show Barbu clubs: cash the ace and retain your two top trumps.",
-        hands: [
-          ["QS", "JS", "7S", "4S", "AD", "KD", "10D", "AH", "KH", "QH", "5H", "KC", "JC"].map(cardFromId),
-          ["10S", "9S", "6S", "3S", "QD", "JD", "5D", "JH", "9H", "6H", "3H", "10C", "9C"].map(cardFromId),
-          ["9D", "AS", "8D", "KS", "6D", "AC", "4D", "QC", "2C", "5C", "10H", "3C", "7H"].map(cardFromId),
-          ["8S", "5S", "2S", "7D", "3D", "8H", "4H", "2H", "8C", "7C", "6C", "4C", "2D"].map(cardFromId)
-        ]
-      }
-    ];
-  }
-
   function cardFromId(cardId: string): Card {
     const suit = cardId.at(-1) as Suit;
     return appCard(cardId.slice(0, -1), suit);
-  }
-
-  function whistOpeningLeadPracticeDealFor(round: number) {
-    const deals = whistOpeningLeadPracticeDeals();
-    return deals[round % deals.length];
-  }
-
-  function buildWhistOpeningLeadPracticeHand(round: number): FullHandState {
-    const deal = whistOpeningLeadPracticeDealFor(round);
-    const playerHand = deal.hands[2];
-
-    return {
-      id: `whist-opening-lead-practice-${deal.id}-${deal.trumpSuit}`,
-      contract: "Whist",
-      hands: deal.hands,
-      currentPlayerIndex: 2,
-      currentPlayer: "You",
-      currentTrick: [],
-      completedTricks: [],
-      playerHand,
-      legalCardIds: playerHand.map((card) => card.id),
-      playerPenalty: 0,
-      totalPenalty: 0,
-      cardsRemaining: 52,
-      trickNumber: 1,
-      status: "in_progress",
-      prompt: deal.prompt
-    };
-  }
-
-  function whistTrumpSuitFromHandId(id: string): Suit | null {
-    const suffix = id.split("-").at(-1);
-    if (suffix === "null") return null;
-    return suffix === "C" || suffix === "D" || suffix === "H" || suffix === "S" ? suffix : "S";
-  }
-
-  function whistPartnershipTrickCounts(tricks: CompletedHandTrick[]) {
-    return tricks.reduce(
-      (totals, trick) => ({
-        playerSide: totals.playerSide + (trick.winnerIndex === 0 || trick.winnerIndex === 2 ? 1 : 0),
-        opponentSide: totals.opponentSide + (trick.winnerIndex === 1 || trick.winnerIndex === 3 ? 1 : 0)
-      }),
-      { playerSide: 0, opponentSide: 0 }
-    );
   }
 
   function bridgeAuctionSummary(calls: BridgeAuctionCall[] = fullHand?.bridgeAuction ?? bridgeAuctionCalls) {
@@ -945,9 +797,6 @@
   $: heartsCompletedCount = heartsUi.learnSteps.filter((step) => completedPathSteps[step.id]).length;
   $: nextHeartsPathStep = heartsUi.learnSteps.find((step) => !completedPathSteps[step.id]);
   $: isHeartsCourseComplete = heartsCompletedCount === heartsUi.learnSteps.length;
-  $: whistCompletedCount = whistUi.learnSteps.filter((step) => completedPathSteps[step.id]).length;
-  $: nextWhistPathStep = whistUi.learnSteps.find((step) => !completedPathSteps[step.id]);
-  $: isWhistCourseComplete = whistCompletedCount === whistUi.learnSteps.length;
   $: spadesCompletedCount = spadesUi.learnSteps.filter((step) => completedPathSteps[step.id]).length;
   $: nextSpadesPathStep = spadesUi.learnSteps.find((step) => !completedPathSteps[step.id]);
   $: isSpadesCourseComplete = spadesCompletedCount === spadesUi.learnSteps.length;
@@ -985,15 +834,6 @@
       onClick: () => openReference(heartsUi.table.referenceId)
     }
   ];
-  $: whistLearnPanelActions = [
-    {
-      id: "reference",
-      eyebrow: "Rules",
-      title: "Reference",
-      summary: whistUi.table.learn.referenceSummary,
-      onClick: () => openReference(whistUi.table.referenceId)
-    }
-  ];
   $: spadesLearnPanelActions = [
     {
       id: "reference",
@@ -1029,7 +869,6 @@
   $: drillLegalCardIds = new Set(currentDrillTrick.legalCardIds);
   $: drillSelectedCard = currentDrillTrick.hand.find((card) => card.id === drillSelectedCardId);
   $: drillCheckedCard = currentDrillTrick.hand.find((card) => card.id === drillCheckedCardId);
-  $: isDrillSelectionLegal = drillSelectedCard ? drillLegalCardIds.has(drillSelectedCard.id) : false;
   $: isDrillCheckedLegal = drillCheckedCard ? drillLegalCardIds.has(drillCheckedCard.id) : false;
   $: currentDrillIsDomino = currentDrill.contract === "Domino";
   $: drillCompletedTable = drillCheckedCard && isDrillCheckedLegal
@@ -1040,10 +879,7 @@
       ]
     : currentDrillTrick.tableBeforeChoice;
   $: drillDominoLayout = buildDominoDrillLayout(drillCompletedTable);
-  $: drillOutcome = drillCheckedCard ? buildDrillOutcome(drillCheckedCard) : "";
-  $: drillFeedback = drillCheckedCard ? buildDrillFeedback(drillCheckedCard) : currentDrillTrick.emptyExplanation;
   $: cleanDrillCount = drillResults.filter((result) => result.clean).length;
-  $: currentDrillDecisionNumber = drillCheckedCard ? drillResults.length : drillResults.length + 1;
   $: isLastDrillDecision = drillIndex >= activeDrillSteps.length - 1;
   $: drillScreenTitle =
     activeGameTable === "whist" || activeGameTable === "spades" || activeGameTable === "bridge"
@@ -1051,17 +887,14 @@
       : currentDrillTrick.title;
   $: drillResultIsBarbuPractice = activeGameTable === "barbu";
   $: drillResultIsHeartsPractice = activeGameTable === "hearts";
-  $: drillResultIsWhistPractice = activeGameTable === "whist";
   $: drillResultIsSpadesPractice = activeGameTable === "spades";
   $: drillResultIsBridgePractice = activeGameTable === "bridge";
   $: drillResultIsTablePractice =
-    drillResultIsHeartsPractice || drillResultIsWhistPractice || drillResultIsSpadesPractice || drillResultIsBridgePractice;
+    drillResultIsHeartsPractice || drillResultIsSpadesPractice || drillResultIsBridgePractice;
   $: drillResultMessage =
     drillResults.length > 0 && cleanDrillCount === drillResults.length
       ? drillResultIsHeartsPractice
         ? "Each decision matched this lesson's goal. Try the same skill in a full Hearts hand."
-        : drillResultIsWhistPractice
-          ? "Clean Whist practice. Keep reading partner, led suit, and trump before full hands arrive."
           : drillResultIsSpadesPractice
             ? "Clean Spades practice. Keep reading the bid, trump, nil, and bags before full hands arrive."
             : drillResultIsBridgePractice
@@ -1069,8 +902,6 @@
         : "Clean session. Barbu is ready to raise the pressure."
       : drillResultIsHeartsPractice
         ? "Review the feedback for the decisions you missed, then try this Hearts skill again."
-        : drillResultIsWhistPractice
-          ? "Repeat the Whist pattern until follow-suit and trump decisions feel automatic."
           : drillResultIsSpadesPractice
             ? "Repeat the Spades pattern until bid-aware trick decisions feel automatic."
             : drillResultIsBridgePractice
@@ -1084,7 +915,6 @@
       : result.contract.toLowerCase() === activeGameTable)).slice(0, 3);
   $: drillLoopInsight = buildDrillLoopInsight(drillResults, recentPlayBarbuAttempts);
   $: drillLoopFocus = drillLoopInsight.contract || weakContract || "Full table";
-  $: drillLoopFocusSummary = currentContractResults.find((result) => result.contract === drillLoopFocus);
   $: currentBridgeBiddingPractice = bridgeBiddingPracticeSteps[bridgeBiddingPracticeIndex] ?? bridgeBiddingPracticeSteps[0];
   $: bridgeBiddingPracticeDecisionNumber = bridgeBiddingCheckedCall ? bridgeBiddingPracticeResults.length : bridgeBiddingPracticeResults.length + 1;
   $: bridgeBiddingPracticeCleanCount = bridgeBiddingPracticeResults.filter((result) => result.clean).length;
@@ -1322,7 +1152,7 @@
     fullHand?.playerPenalty === 1 ? fullHandPenaltyName : fullHandPenaltyPlural;
   $: fullHandSeatPenalties = fullHand ? seatPenaltiesForTricks(fullHand.completedTricks) : emptySeatPenalties();
   $: fullHandSeatTrickCounts = fullHand ? seatTricksWonForTricks(fullHand.completedTricks) : emptySeatPenalties();
-  $: whistResult = whistResultCopy(whistSettlement, whistPartnershipTricks, whistRubberActive ? "rubber" : "game");
+  $: whistResult = whistResultCopy(whistSettlement, whistPartnershipTricks, "game");
   $: heartsResult = heartsResultCopy(heartsMatchIsComplete, heartsStandings, heartsHighestScore,
     heartsCurrentMoonShooter, heartsVisibleHandCount, fullHand?.playerPenalty ?? 0, heartsScorecardMeta.objective);
   $: spadesResult = spadesResultCopy(currentSpadesHandResult, spadesVisibleMatchScores, spadesMatchIsComplete);
@@ -1356,11 +1186,6 @@
   $: bridgePlayPrompt = bridgeLedSuit
     ? `Led: ${suitNames[bridgeLedSuit]}. Follow suit if you can.`
     : fullHand?.completedTricks.length === 0 ? "Make the opening lead." : "Lead any card.";
-  $: whistOpeningLeadPracticeActive = fullHandIsWhistGame && whistFullHandSource === "practice" && activeWhistPracticeFocus === "lead";
-  $: whistOpeningLeadPracticeReview =
-    whistOpeningLeadPracticeActive &&
-    fullHandIsReviewingTrick &&
-    Boolean(fullHandReviewTrick && fullHandCompletedTrickNumber(fullHandReviewTrick) === 1);
   $: whistTrumpSuitLabel =
     fullHandIsPartnershipGame && fullHand
       ? fullHand.trumpSuit
@@ -1401,14 +1226,12 @@
     fullHand?.status === "in_progress" &&
     fullHand?.completedTricks.length === 0;
   $: spadesOpeningDecisionActive = spadesBidsAdjustable;
-  $: whistSessionForDisplay = fullHandIsWhistGame && whistFullHandSource === "play" && !fullHandCardCountingActive
-    && whistSession?.fullHand === fullHand ? whistSession : null;
-  $: whistSettlement = whistSessionSettlement(whistSessionForDisplay ?? {
+  // Card Counting retains single Whist hands, separate from the feature's saved match.
+  $: whistSettlement = whistSessionSettlement({
     fullHand: fullHandIsWhistGame ? fullHand : null, scores: emptyWhistScore(), games: emptyWhistScore(), mode: "game"
   });
   $: whistVisibleMatchScores = whistSettlement.points;
-  $: whistVisibleHandCount = (whistSessionForDisplay?.results.length ?? 0) + (fullHandIsWhistGame && fullHand?.status === "complete" ? 1 : 0);
-  $: whistRubberActive = whistSessionForDisplay?.mode === "rubber";
+  $: whistVisibleHandCount = fullHandIsWhistGame && fullHand?.status === "complete" ? 1 : 0;
   $: whistTurnedCardVisible = fullHandIsWhistGame && fullHand?.whistTurnedTrump
     && fullHand.completedTricks.length === 0
     && !fullHand.currentTrick.some(play => play.seat === ["Tutor", "Right", "You", "Left"][fullHand.whistDealer ?? -1]);
@@ -1456,7 +1279,7 @@
     : fullHandIsHeartsGame && heartsMatchIsComplete ? "match"
     : whistFullHandSource !== "play" ? null
     : fullHandIsSpadesGame && spadesMatchIsComplete ? "match"
-    : fullHandIsWhistGame && whistSettlement.gameComplete ? whistRubberActive && whistSettlement.complete ? "rubber" : "game"
+    : fullHandIsWhistGame && whistSettlement.gameComplete ? "game"
     : fullHandIsBridgeGame ? "board" : null;
   $: fullHandReplayAllowed = !fullHandCompletion || fullHandCompletion === "board";
   $: heartsPlayerStanding = heartsStandings.find((standing) => standing.seat === "You");
@@ -1925,53 +1748,6 @@
     persistSavedHeartsRun();
   }
 
-  function isWhistSessionHand() {
-    return activeGameTable === "whist" && whistFullHandSource === "play" && !fullHandCardCountingMode
-      && !fullHandRunActive && whistSession !== null && fullHand === whistSession.fullHand;
-  }
-
-  function setWhistSession(session: WhistSession) {
-    whistSession = session;
-    fullHand = session.fullHand;
-    fullHandReviewTrickCount = session.fullHandReviewTrickCount;
-  }
-
-  function openWhistSession(session: WhistSession) {
-    activeGameTable = "whist";
-    activeTableTabs.whist = "play";
-    whistFullHandSource = "play";
-    whistSessionMode = session.mode;
-    barbuSession = null;
-    fullHandCardCountingMode = false;
-    dominoHand = null;
-    heartsPassingHand = null;
-    spadesPlayStarted = true;
-    setWhistSession(session);
-    fullHandSelectedCardId = "";
-    dummySelectedCardId = "";
-    fullHandError = "";
-    lastFullHandTapCardId = "";
-    lastFullHandTapAt = 0;
-    appView = "fullHand";
-  }
-
-  function persistSavedWhistRun() {
-    if (!isWhistSessionHand() || !whistSession) return;
-    savedWhistRun = saveWhistSession(whistSession, new Date().toISOString());
-    try {
-      whistSaveStore.write(savedWhistRun);
-    } catch {
-      fullHandError = "Progress could not be saved on this device.";
-    }
-  }
-
-  function continueSavedWhistRun() {
-    const saved = savedWhistRun ?? whistSaveStore.load();
-    if (!saved) return;
-    openWhistSession(restoreWhistSession(saved));
-    persistSavedWhistRun();
-  }
-
   function isSpadesSessionHand() {
     return activeGameTable === "spades" && whistFullHandSource === "play" && !fullHandCardCountingMode
       && !fullHandRunActive && spadesSession !== null && fullHand === spadesSession.fullHand;
@@ -2005,7 +1781,6 @@
     setSpadesSession(session);
     appView = "fullHand";
   }
-
 
   function persistSavedSpadesRun() {
     if (!isSpadesSessionHand() || !spadesSession) return;
@@ -2224,7 +1999,8 @@
 
   function openWhistTable() {
     activeGameTable = "whist";
-    appView = "gameTable";
+    whistFeature.openTable();
+    appView = "whistFeature";
   }
 
   function openSpadesTable() {
@@ -3431,7 +3207,6 @@
     }
 
     fullHandCardCountingMode = options.cardCounting === true;
-    if (contract === "Whist") whistSession = null;
     if (contract === "Spades") spadesSession = null;
     if (contract === "Hearts") heartsSession = null;
     if (contract === "Bridge") bridgeSession = null;
@@ -3576,8 +3351,6 @@
         setBridgeSession(transitionBridgeSession(bridgeSession, { type: "play-card", cardId: targetId }));
       } else if (isSpadesSessionHand() && spadesSession) {
         setSpadesSession(transitionSpadesSession(spadesSession, { type: "play-card", cardId: targetId }));
-      } else if (isWhistSessionHand() && whistSession) {
-        setWhistSession(transitionWhistSession(whistSession, { type: "play-card", cardId: targetId }));
       } else if (barbuSession) {
         setBarbuSession(transitionBarbuSession(barbuSession, { type: "play-card", cardId: targetId }));
       } else {
@@ -3591,7 +3364,6 @@
       lastFullHandTapAt = 0;
       persistSavedPlayBarbuRun();
       persistSavedHeartsRun();
-      persistSavedWhistRun();
       persistSavedSpadesRun();
       persistSavedBridgeRun();
     } catch (error) {
@@ -3618,8 +3390,6 @@
       setBridgeSession(transitionBridgeSession(bridgeSession, { type: "next-trick" }));
     } else if (isSpadesSessionHand() && spadesSession) {
       setSpadesSession(transitionSpadesSession(spadesSession, { type: "next-trick" }));
-    } else if (isWhistSessionHand() && whistSession) {
-      setWhistSession(transitionWhistSession(whistSession, { type: "next-trick" }));
     } else if (barbuSession) {
       setBarbuSession(transitionBarbuSession(barbuSession, { type: "next-trick" }));
     } else {
@@ -3631,39 +3401,11 @@
     lastFullHandTapAt = 0;
     persistSavedPlayBarbuRun();
     persistSavedHeartsRun();
-    persistSavedWhistRun();
     persistSavedSpadesRun();
     persistSavedBridgeRun();
   }
 
-  function continueWhistOpeningLeadPractice() {
-    if (!whistOpeningLeadPracticeReview) {
-      continueFullHandAfterTrick();
-      return;
-    }
-
-    fullHandSelectedCardId = "";
-    fullHandError = "";
-    fullHandReviewTrickCount = 0;
-    lastFullHandTapCardId = "";
-    lastFullHandTapAt = 0;
-
-    if (whistOpeningLeadPracticeRound >= whistOpeningLeadPracticeMaxRounds - 1) {
-      fullHand = null;
-      activeTableTabs.whist = "learn";
-      appView = "gameTable";
-      return;
-    }
-
-    void startWhistPracticeHand(activePathStepId, whistOpeningLeadPracticeRound + 1);
-  }
-
   function continueFullHandReview() {
-    if (whistOpeningLeadPracticeReview) {
-      continueWhistOpeningLeadPractice();
-      return;
-    }
-
     if (fullHandCardCountingPromptActive) {
       continueFullHandCardCountingAfterQuestion();
       return;
@@ -3698,23 +3440,6 @@
     activeGameTable = "hearts";
     spadesPlayStarted = true;
     void startHeartsPassingPhase();
-  }
-
-  async function startWhistHand(options: { keepSession?: boolean } = {}) {
-    if (whistDealPending) return;
-    whistDealPending = true;
-    try {
-      const next = options.keepSession && whistSession
-        ? transitionWhistSession(whistSession, { type: "next-hand", seed: usePracticeSeed() })
-        : createWhistSession(usePracticeSeed(), whistSessionMode);
-      openWhistSession(next);
-      persistSavedWhistRun();
-      await tick();
-    } catch (error) {
-      fullHandError = error instanceof Error ? error.message : "That hand could not be dealt.";
-    } finally {
-      whistDealPending = false;
-    }
   }
 
   async function startSpadesHand(options: { keepSession?: boolean } = {}) {
@@ -3781,7 +3506,7 @@
       ? startSpadesHand(options)
       : fullHandIsBridgeGame
         ? startBridgeHand(options)
-        : startWhistHand(options);
+        : openWhistTable();
   }
 
   async function startSpadesPracticeHand(pathStepId = "", _focus: SpadesPracticeAction = "follow") {
@@ -3797,27 +3522,6 @@
     spadesHandResults = [];
     await startFullHand("Spades");
     spadesBids = suggestedSpadesBidsForHand(fullHand);
-  }
-
-  async function startWhistPracticeHand(pathStepId = "", round = 0) {
-    activeGameTable = "whist";
-    activeTableTabs.whist = "learn";
-    whistFullHandSource = "practice";
-    activeWhistPracticeFocus = "lead";
-    spadesPlayStarted = true;
-    whistOpeningLeadPracticeRound = round;
-    activePathStepId = pathStepId;
-    whistSession = null;
-    barbuSession = null;
-    dominoHand = null;
-    heartsPassingHand = null;
-    fullHandSelectedCardId = "";
-    fullHandError = "";
-    fullHandReviewTrickCount = 0;
-    lastFullHandTapCardId = "";
-    lastFullHandTapAt = 0;
-    fullHand = buildWhistOpeningLeadPracticeHand(round);
-    appView = "fullHand";
   }
 
   function completeHeartsPathStep(stepId = activePathStepId) {
@@ -3889,52 +3593,6 @@
     }
 
     startHeartsPathStep(nextStep);
-  }
-
-  function completeWhistPathStep(stepId = activePathStepId) {
-    if (!stepId.startsWith("whist-")) {
-      return;
-    }
-
-    saveCourseProgress({ ...completedPathSteps, [stepId]: true });
-  }
-
-  function startWhistPathStep(step: WhistLearnPathStep) {
-    const course = courseCatalog.find((item) => item.pathStepId === step.id && item.game === "whist");
-
-    if (course) {
-      startCourse(course.id);
-      return;
-    }
-
-    practiceActionRegistry.whist[step.action]({ pathStepId: step.id, source: "course" });
-  }
-
-  function findNextWhistPathStep(fromStepId = "") {
-    const currentStepIndex = whistUi.learnSteps.findIndex((step) => step.id === fromStepId);
-    if (currentStepIndex >= 0 && completedPathSteps[fromStepId]) {
-      const nextSequentialStep = whistUi.learnSteps
-        .slice(currentStepIndex + 1)
-        .find((step) => !completedPathSteps[step.id]);
-
-      if (nextSequentialStep) {
-        return nextSequentialStep;
-      }
-    }
-
-    return whistUi.learnSteps.find((step) => !completedPathSteps[step.id]);
-  }
-
-  function continueWhistPath(fromStepId = activePathStepId) {
-    const nextStep = findNextWhistPathStep(fromStepId);
-
-    if (!nextStep) {
-      activeTableTabs.whist = "learn";
-      openWhistTable();
-      return;
-    }
-
-    startWhistPathStep(nextStep);
   }
 
   function completeSpadesPathStep(stepId = activePathStepId) {
@@ -4142,7 +3800,6 @@
   function startNextFullHand() {
     if (fullHandIsBridgeGame && bridgeDealPending) return;
     if (fullHandIsSpadesGame && spadesDealPending) return;
-    if (fullHandIsWhistGame && whistDealPending) return;
     if (!fullHand) {
       return;
     }
@@ -4182,7 +3839,7 @@
             void startSpadesPracticeHand();
           }
         } else {
-          void startWhistPracticeHand(activePathStepId);
+          openWhistTable();
         }
         return;
       }
@@ -4220,7 +3877,6 @@
     if (bridgeDealPending) return;
     if (fullHandIsSpadesGame && spadesDealPending) return;
     if (!fullHandReplayAllowed) return;
-    if (fullHandIsWhistGame && whistDealPending) return;
     if (!fullHand) {
       return;
     }
@@ -4242,11 +3898,6 @@
       persistSavedSpadesRun();
       return;
     }
-    if (isWhistSessionHand() && whistSession) {
-      openWhistSession(transitionWhistSession(whistSession, { type: "replay" }));
-      persistSavedWhistRun();
-      return;
-    }
 
     if (fullHandIsPartnershipGame) {
       if (fullHandIsBridgeGame) {
@@ -4258,7 +3909,7 @@
         if (fullHandIsSpadesGame) {
           void startSpadesPracticeHand(activePathStepId);
         } else {
-          void startWhistPracticeHand(activePathStepId);
+          openWhistTable();
         }
         return;
       }
@@ -4612,52 +4263,6 @@
     return (trick.tacticalTags ?? []).includes(tag);
   }
 
-  function whistOpeningLeadPracticeFeedback(trick: CompletedHandTrick) {
-    if (!fullHandIsWhistGame || whistFullHandSource !== "practice" || activeWhistPracticeFocus !== "lead" || fullHandCompletedTrickNumber(trick) !== 1 || !fullHand) {
-      return "";
-    }
-
-    const lead = trick.cards[0];
-    if (!lead) {
-      return "";
-    }
-
-    const leadCard = lead.card;
-    const leadLabel = formatCardLabel(leadCard);
-    const leadSuit = suitNameFromId(leadCard.suit).toLowerCase();
-    const trumpSuit = whistTrumpSuitFromHandId(fullHand.id);
-    const deal = whistOpeningLeadPracticeDealFor(whistOpeningLeadPracticeRound);
-    const focusSuit = deal.focusSuit;
-    const focusSuitLabel = suitNameFromId(focusSuit).toLowerCase();
-    const winnerIsPlayerSide = trick.winnerIndex === 0 || trick.winnerIndex === 2;
-
-    if (lead.seat !== "You") {
-      return `${scoreSeatLabel(lead.seat)} opened ${leadLabel}. Follow suit, support Barbu, and count trump.`;
-    }
-
-    if (leadCard.suit === trumpSuit) {
-      return `${leadLabel} opened trump. Here it spends control before inviting ${focusSuitLabel}.`;
-    }
-
-    if (leadCard.suit === focusSuit) {
-      if (leadCard.id !== deal.recommendedLead) {
-        return `${leadLabel} shows ${focusSuitLabel}. ${deal.explanation}`;
-      }
-
-      return deal.explanation;
-    }
-
-    if (rankValue(leadCard.rank) >= rankValue("J")) {
-      return winnerIsPlayerSide
-        ? `${leadLabel} opened strong ${leadSuit}, but the target invite was ${focusSuitLabel}.`
-        : `${leadLabel} opened strong ${leadSuit}, hiding the ${focusSuitLabel} plan.`;
-    }
-
-    return winnerIsPlayerSide
-      ? `${leadLabel} opened ${leadSuit}. Cleaner message: invite ${focusSuitLabel}.`
-      : `${leadLabel} opened ${leadSuit}. Legal, but it does not invite ${focusSuitLabel}.`;
-  }
-
   function fullHandTrickFeedback(trick: CompletedHandTrick) {
     const penaltyText = `${trick.penalty} ${trick.penalty === 1 ? fullHandPenaltyName : fullHandPenaltyPlural}`;
 
@@ -4666,11 +4271,6 @@
     }
 
     if (fullHandIsPartnershipGame) {
-      const openingLeadFeedback = whistOpeningLeadPracticeFeedback(trick);
-      if (openingLeadFeedback) {
-        return openingLeadFeedback;
-      }
-
       const winnerIsPlayerSide = trick.winnerIndex === 0 || trick.winnerIndex === 2;
       if (fullHandIsBridgeGame) {
         const winnerIsDeclarerSide = trick.winnerIndex % 2 === playerIndexBySeat[bridgeVisibleContract.declarer] % 2;
@@ -4680,28 +4280,7 @@
           : `${bridgeSeatLabel(trick.winner)} won for the defense. Protect entries and look for the next sure trick.`;
       }
 
-      const partnershipLabel = winnerIsPlayerSide ? "You + Barbu" : "Left + Right";
-
-      if (fullHandTrickHasTag(trick, "trump_won")) {
-        return winnerIsPlayerSide
-          ? `${trick.winner} won with trump for ${partnershipLabel}. Good cut: your side took control.`
-          : `${trick.winner} won with trump for ${partnershipLabel}. Count that trump as gone.`;
-      }
-      if (fullHandTrickHasTag(trick, "avoided_overtake")) {
-        return `Barbu held the trick and you stayed under him. Good ${fullHand?.contract ?? "partnership"} play: do not fight your own partner.`;
-      }
-      if (fullHandTrickHasTag(trick, "partner_supported")) {
-        return trick.winner === "You"
-          ? "Barbu led the suit and you carried it home. Good third-hand support."
-          : "Barbu's lead held for your side. Good: the partnership kept control.";
-      }
-      if (fullHandTrickHasTag(trick, "partner_held")) {
-        return "Barbu held the trick for your partnership. Save strength and watch what suit he led.";
-      }
-
-      return winnerIsPlayerSide
-        ? `${trick.winner} won the trick for ${partnershipLabel}. Build toward odd tricks above six.`
-        : `${trick.winner} won the trick for ${partnershipLabel}. Regain lead or return Barbu's suit.`;
+      return whistTrickFeedback(trick, fullHand?.contract ?? "partnership");
     }
 
     if (fullHandIsHeartsGame) {
@@ -5313,7 +4892,6 @@
     await startGeneratedHeartsMicroDrill("queen-danger", "Hearts practice: Queen of Spades danger", pathStepId);
   }
 
-
   function startHeartsMicroDrillSession(steps: DrillStep[], title: string, pathStepId = "") {
     activeGameTable = "hearts";
     activePathStepId = pathStepId;
@@ -5324,15 +4902,6 @@
     activeDrillSteps = steps;
     resetDrillDecision();
     appView = "drill";
-  }
-
-  function orderPracticePool(steps: DrillStep[], seed: number) {
-    if (steps.length <= 1) {
-      return steps;
-    }
-
-    const offset = seed % steps.length;
-    return [...steps.slice(offset), ...steps.slice(0, offset)];
   }
 
   async function startHeartsBreakHeartsDrill(pathStepId = "") {
@@ -5351,71 +4920,6 @@
 
   function replayHeartsPracticeDrill() {
     void startGeneratedHeartsMicroDrill(activeHeartsPracticeFocus, drillSetTitle);
-  }
-
-  function startWhistPracticeSession(focus: WhistPracticeAction, steps: DrillStep[], title: string, pathStepId = "") {
-    activeGameTable = "whist";
-    activeTableTabs.whist = "learn";
-    activeWhistPracticeFocus = focus;
-    activePathStepId = pathStepId;
-    activeDrillFocusContract = "Whist";
-    drillIndex = 0;
-    drillResults = [];
-    drillSetTitle = title;
-    activeDrillSteps = orderPracticePool(steps, usePracticeSeed());
-    resetDrillDecision();
-    appView = "drill";
-  }
-
-  function startWhistOpeningLeadDrill(pathStepId = "") {
-    void startWhistPracticeHand(pathStepId);
-  }
-
-  function startWhistOpeningLeadLesson(pathStepId = "") {
-    startWhistPracticeSession("lead", whistOpeningLeadLessonPool, "Whist lesson: opening leads", pathStepId);
-  }
-
-  function startWhistFollowSuitDrill(pathStepId = "") {
-    startWhistPracticeSession("follow", whistFollowSuitDrillPool, "Whist practice: follow suit", pathStepId);
-  }
-
-  function startWhistTrumpOrDiscardDrill(pathStepId = "") {
-    startWhistPracticeSession("trump", whistTrumpOrDiscardDrillPool, "Whist practice: trump or discard", pathStepId);
-  }
-
-  function startWhistThirdHandHighDrill(pathStepId = "") {
-    startWhistPracticeSession("third", whistThirdHandHighDrillPool, "Whist practice: third hand high", pathStepId);
-  }
-
-  function startWhistReturnPartnerSuitDrill(pathStepId = "") {
-    startWhistPracticeSession("return", whistReturnPartnerSuitDrillPool, "Whist practice: return partner's suit", pathStepId);
-  }
-
-  function startWhistOddTrickDrill(pathStepId = "") {
-    startWhistPracticeSession("odd", whistOddTrickDrillPool, "Whist practice: count odd tricks", pathStepId);
-  }
-
-  function replayWhistPracticeDrill() {
-    switch (activeWhistPracticeFocus) {
-      case "lead":
-        startWhistOpeningLeadDrill();
-        return;
-      case "trump":
-        startWhistTrumpOrDiscardDrill();
-        return;
-      case "third":
-        startWhistThirdHandHighDrill();
-        return;
-      case "return":
-        startWhistReturnPartnerSuitDrill();
-        return;
-      case "odd":
-        startWhistOddTrickDrill();
-        return;
-      case "follow":
-      default:
-        startWhistFollowSuitDrill();
-    }
   }
 
   function startSpadesPracticeSession(focus: SpadesPracticeAction, steps: DrillStep[], title: string, pathStepId = "") {
@@ -5649,21 +5153,7 @@
       moon: ({ pathStepId } = {}) => void startHeartsStopMoonDrill(pathStepId),
       score: ({ pathStepId } = {}) => void startHeartsScoreHandDrill(pathStepId)
     },
-    whist: {
-      lead: ({ pathStepId, source } = {}) => {
-        if (source === "course") {
-          startWhistOpeningLeadLesson(pathStepId);
-          return;
-        }
-
-        startWhistOpeningLeadDrill(pathStepId);
-      },
-      follow: ({ pathStepId } = {}) => startWhistFollowSuitDrill(pathStepId),
-      trump: ({ pathStepId } = {}) => startWhistTrumpOrDiscardDrill(pathStepId),
-      third: ({ pathStepId } = {}) => startWhistThirdHandHighDrill(pathStepId),
-      return: ({ pathStepId } = {}) => startWhistReturnPartnerSuitDrill(pathStepId),
-      odd: ({ pathStepId } = {}) => startWhistOddTrickDrill(pathStepId)
-    },
+    whist: {},
     spades: {
       follow: ({ pathStepId } = {}) => startSpadesFollowSuitDrill(pathStepId),
       trump: ({ pathStepId } = {}) => startSpadesTrumpOrDiscardDrill(pathStepId),
@@ -5679,7 +5169,6 @@
 
   const barbuPracticeActions = createPracticePanelActions(practiceActionRegistry.barbu);
   const heartsPracticeActions = createPracticePanelActions(practiceActionRegistry.hearts);
-  const whistPracticeActions = createPracticePanelActions(practiceActionRegistry.whist);
   const spadesPracticeActions = createPracticePanelActions(practiceActionRegistry.spades);
   const bridgePracticeActions = createPracticePanelActions(practiceActionRegistry.bridge);
 
@@ -5759,19 +5248,12 @@
       return;
     }
 
-    const outcome = buildDrillOutcomeKey(selected);
-    const reason = buildDrillReasonKey(selected, outcome);
+    const { result } = drillDecision(currentDrill, selected);
 
     drillCheckedCardId = selected.id;
     drillResults = [
       ...drillResults,
-      {
-        contract: currentDrill.contract,
-        cardLabel: selected.label,
-        outcome,
-        reason,
-        clean: cleanDrillOutcomes.includes(outcome)
-      }
+      result
     ];
   }
 
@@ -5818,45 +5300,6 @@
     void continueDrill();
   }
 
-  function drillCardClasses(card: Card) {
-    return {
-      heart: card.suit === "H",
-      legal: drillLegalCardIds.has(card.id) && !drillCheckedCardId,
-      illegal: !drillLegalCardIds.has(card.id) && !drillCheckedCardId,
-      selected: drillSelectedCardId === card.id,
-      played: drillCheckedCardId === card.id
-    };
-  }
-
-  function buildDrillOutcomeKey(card: Card): GuidedCardOutcome | "illegal" {
-    if (!drillLegalCardIds.has(card.id)) {
-      return "illegal";
-    }
-
-    return currentDrillTrick.cardOutcomes?.[card.id] ?? "good";
-  }
-
-  function buildDrillOutcome(card: Card) {
-    return outcomeLabels[buildDrillOutcomeKey(card)];
-  }
-
-  function buildDrillReasonKey(card: Card, outcome: GuidedCardOutcome | "illegal"): PracticeReason {
-    if (!drillLegalCardIds.has(card.id)) {
-      return "off_suit";
-    }
-
-    return currentDrillTrick.cardReasons?.[card.id] ?? normalizeStoredReason(undefined, outcome);
-  }
-
-  function buildDrillFeedback(card: Card) {
-    if (!drillLegalCardIds.has(card.id)) {
-      return currentDrillTrick.playedExplanations[card.id] ??
-        `${formatCardLabel(card)} is not legal while you still have a legal card.`;
-    }
-
-    return currentDrillTrick.playedExplanations[card.id] ?? "That legal play completes the trick.";
-  }
-
   function drillStepFromGeneratedScenario(scenario: GeneratedPracticeScenario): DrillStep {
     return {
       scenarioId: generatedScenarioPatternId(scenario.id),
@@ -5885,171 +5328,6 @@
       },
       ...playBarbuHistory
     ]);
-  }
-
-  function summarizeContractResults(results: DrillResult[]): ContractResultSummary[] {
-    const summaries = new Map<string, ContractResultSummary>();
-
-    for (const result of results) {
-      const summary = summaries.get(result.contract) ?? {
-        contract: result.contract,
-        clean: 0,
-        total: 0,
-        outcome: result.outcome
-      };
-
-      summary.total += 1;
-      summary.clean += result.clean ? 1 : 0;
-      summary.outcome = worstOutcome(summary.outcome, result.outcome);
-      summaries.set(result.contract, summary);
-    }
-
-    return Array.from(summaries.values());
-  }
-
-  function weakestContractFromResults(summaries: ContractResultSummary[]) {
-    if (summaries.length === 0) {
-      return "";
-    }
-
-    return [...summaries].sort((left, right) => {
-      const leftRate = left.clean / left.total;
-      const rightRate = right.clean / right.total;
-      return leftRate - rightRate || outcomeSeverity(right.outcome) - outcomeSeverity(left.outcome);
-    })[0].contract;
-  }
-
-  function cleanAttemptCount(attempts: PlayBarbuAttempt[]) {
-    return attempts.filter((attempt) => attempt.results.length > 0 && attempt.results.every((result) => result.clean)).length;
-  }
-
-  function buildDrillLoopInsight(results: DrillResult[], attempts: PlayBarbuAttempt[]): DrillLoopInsight {
-    try {
-      const cleanCount = results.filter((result) => result.clean).length;
-      const replayContract = weakestContractFromResults(summarizeContractResults(results));
-      const reasonInsight = buildReasonInsight(results, {
-        empty: "Finish a quick drill to unlock a replay target.",
-        clean:
-          "Good table. Repeat once more for rhythm, or replay the weakest contract to keep the habit sharp.",
-        risky:
-          "You won a clean trick. In avoidance contracts, only win when the trick is worth taking.",
-        captured:
-          "You captured a penalty. Before playing high, ask who wins if you stay low."
-      });
-      const cleanStreak = cleanAttemptCount(attempts);
-
-      return {
-        contract: replayContract || reasonInsight.contract,
-        heading: results.length > 0 && cleanCount === results.length ? "Repeat for rhythm" : "Replay the weak spot",
-        message: reasonInsight.message,
-        streakText: cleanStreak
-          ? `${cleanStreak} recent clean ${cleanStreak === 1 ? "table" : "tables"}`
-          : "No clean streak yet"
-      };
-    } catch {
-      return {
-        contract: "",
-        heading: "Repeat for rhythm",
-        message: "Finish a quick drill to unlock a replay target.",
-        streakText: "No clean streak yet"
-      };
-    }
-  }
-
-  function worstOutcome(left: GuidedCardOutcome | "illegal", right: GuidedCardOutcome | "illegal") {
-    return outcomeSeverity(right) > outcomeSeverity(left) ? right : left;
-  }
-
-  function outcomeSeverity(outcome: GuidedCardOutcome | "illegal") {
-    const severity: Record<GuidedCardOutcome | "illegal", number> = {
-      good: 0,
-      risky: 1,
-      penalty: 2,
-      illegal: 3
-    };
-
-    return severity[outcome];
-  }
-
-  function buildReviewInsight(attempts: PlayBarbuAttempt[]): ReviewInsight {
-    const recentResults = attempts.flatMap((attempt) => attempt.results);
-
-    return buildReasonInsight(recentResults, {
-      empty: "Play a practice table to give Barbu enough decisions to review.",
-      clean: "You followed suit well. Keep repeating the table until reading the winner feels automatic.",
-      risky: "You won a clean trick. That is legal, but keep checking whether the trick is actually dangerous.",
-      captured: "You captured a penalty. Before playing high, ask who wins the trick if you stay low."
-    });
-  }
-
-  function buildReasonInsight(
-    results: DrillResult[],
-    copy: { empty: string; clean: string; risky: string; captured: string }
-  ): ReviewInsight {
-    if (results.length === 0) {
-      return {
-        contract: "",
-        message: copy.empty
-      };
-    }
-
-    const priority: PracticeReason[] = [
-      "off_suit",
-      "captured_penalty",
-      "won_clean_trick",
-      "void_discard",
-      "avoided_penalty",
-      "followed_suit"
-    ];
-    const reason = priority.find((candidate) => results.some((result) => result.reason === candidate));
-    const result = reason ? results.find((item) => item.reason === reason) : undefined;
-    const contract = result?.contract ?? "";
-
-    if (reason === "off_suit") {
-      return {
-        contract,
-        message: "Check the led suit before choosing. Off-suit cards are only allowed when you are void."
-      };
-    }
-
-    if (reason === "captured_penalty") {
-      return {
-        contract,
-        message:
-          contract === "No Last Two"
-            ? "You won a late trick. In No Last Two, the safe card is often the card that loses the trick."
-            : copy.captured
-      };
-    }
-
-    if (reason === "won_clean_trick") {
-      return {
-        contract,
-        message: copy.risky
-      };
-    }
-
-    if (reason === "void_discard") {
-      return {
-        contract,
-        message: "You used a void turn to discard. Keep looking for chances to shed danger when someone else controls the trick."
-      };
-    }
-
-    if (reason === "avoided_penalty") {
-      return {
-        contract,
-        message:
-          contract === "No Last Two"
-            ? "Good avoidance. You lost the late trick while staying legal, which is the point of No Last Two."
-            : "You avoided the penalty card. Keep locating the trick winner before choosing your card."
-      };
-    }
-
-    return {
-      contract,
-      message: copy.clean
-    };
   }
 
   function cardClasses(card: Card) {
@@ -6140,11 +5418,6 @@
       learnProps: { steps: heartsUi.learnSteps, completedCount: heartsUi.learnSteps.filter(s => completedPathSteps[s.id]).length, nextStep: heartsUi.learnSteps.find(s => !completedPathSteps[s.id]), actions: heartsLearnPanelActions, onStepSelect: startHeartsPathStep },
       practiceProps: { actions: heartsPracticeActions },
       playProps: { onPrimary: startHeartsHand, resumeLabel: savedHeartsRun ? "Continue Hearts" : undefined, resumeNote: savedHeartsRun ? savedHeartsRunSummary(savedHeartsRun) : undefined, onResume: savedHeartsRun ? continueSavedHeartsRun : undefined }
-    },
-    whist: {
-      learnProps: { steps: whistUi.learnSteps, completedCount: whistUi.learnSteps.filter(s => completedPathSteps[s.id]).length, nextStep: whistUi.learnSteps.find(s => !completedPathSteps[s.id]), actions: whistLearnPanelActions, onStepSelect: startWhistPathStep },
-      practiceProps: { actions: whistPracticeActions },
-      playProps: { onPrimary: () => void startWhistHand(), resumeLabel: savedWhistRun ? "Continue Whist" : undefined, resumeNote: savedWhistRun ? savedWhistRunSummary(savedWhistRun) : undefined, onResume: savedWhistRun ? continueSavedWhistRun : undefined, footerNote: `You and Barbu play to ${whistMatchTarget} points against Left and Right.` }
     },
     spades: {
       learnProps: { steps: spadesUi.learnSteps, completedCount: spadesUi.learnSteps.filter(s => completedPathSteps[s.id]).length, nextStep: spadesUi.learnSteps.find(s => !completedPathSteps[s.id]), actions: spadesLearnPanelActions, onStepSelect: startSpadesPathStep },
@@ -6373,7 +5646,7 @@
   </div>
 {/snippet}
 
-<main class:fixed-play-screen={isTablePlayScreen} class="app-shell">
+<main class:fixed-play-screen={isTablePlayScreen || (appView === "whistFeature" && whistFixedSurface)} class="app-shell">
   {#if appView === "catalog"}
     <section class="welcome-screen" aria-labelledby="catalog-title">
       <div class="welcome-copy">
@@ -6432,6 +5705,12 @@
         </p>
       {/if}
     </footer>
+  {:else if appView === "whistFeature"}
+    <WhistGame feature={whistFeature} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
+      onBack={openCatalog} onReference={() => openReference("whist")}
+      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })}
+      onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
+      onSurfaceChange={fixed => { whistFixedSurface = fixed; }} />
   {:else if appView === "cardCountingTable"}
     <GameTableShell table={cardCountingTable} activeTab={activeCardCountingTab} onBack={openCatalog}
       onTabSelect={(tab) => { activeCardCountingTab = tab === "play" ? "play" : "learn"; }}>
@@ -6500,19 +5779,6 @@
           resumeNote={activeConfig.playProps.resumeNote}
           onResume={activeConfig.playProps.onResume}
         >
-          {#if activeGameTable === "whist"}
-            <fieldset class="whist-session-options" role="radiogroup" aria-label="Whist session">
-              <legend>Session</legend>
-              <label>
-                <input type="radio" name="whist-session" value="game" bind:group={whistSessionMode} />
-                <span>Single game<small>First to 5 points</small></span>
-              </label>
-              <label>
-                <input type="radio" name="whist-session" value="rubber" bind:group={whistSessionMode} />
-                <span>Rubber<small>Best of three games</small></span>
-              </label>
-            </fieldset>
-          {/if}
         </PlayTabPanel>
       {:else}
         <ProTabPanel
@@ -7874,13 +7140,13 @@
                     <strong>{fullHandIsPartnershipGame ? whistPartnershipTricks.opponentSide : `${fullHand.totalPenalty} / ${fullHandPenaltyTotal}`}</strong>
                   </div>
                   <div>
-                    <span>{whistOpeningLeadPracticeActive ? "Lead" : "Tricks"}</span>
-                    <strong>{whistOpeningLeadPracticeActive ? `${whistOpeningLeadPracticeRound + 1} / ${whistOpeningLeadPracticeMaxRounds}` : `${fullHand.completedTricks.length} / 13`}</strong>
+                    <span>Tricks</span>
+                    <strong>{fullHand.completedTricks.length} / 13</strong>
                   </div>
                   {#if fullHandShowWhistMatchSummary}
                     <div>
-                      <span>{fullHandIsSpadesGame ? "Bid" : whistOpeningLeadPracticeActive ? "Focus" : whistOddProgressLabel}</span>
-                      <strong>{fullHandIsSpadesGame ? spadesCurrentBidLabel : whistOpeningLeadPracticeActive ? "Opening" : whistOddProgressValue}</strong>
+                      <span>{fullHandIsSpadesGame ? "Bid" : whistOddProgressLabel}</span>
+                      <strong>{fullHandIsSpadesGame ? spadesCurrentBidLabel : whistOddProgressValue}</strong>
                     </div>
                   {/if}
                   {#if fullHand.contract === "No Last Two"}
@@ -7913,9 +7179,9 @@
                     <span>Left + Right</span>
                     <strong>{partnershipVisibleMatchScores.opponentSide}</strong>
                   </div>
-                  <div aria-label={whistRubberActive ? "Whist rubber games" : undefined}>
-                    <span>{fullHandIsSpadesGame ? "Bags" : whistRubberActive ? "Games" : "Hands"}</span>
-                    <strong>{fullHandIsSpadesGame ? `${spadesVisibleBags.playerSide}-${spadesVisibleBags.opponentSide}` : whistRubberActive ? `${whistSettlement.games.playerSide}-${whistSettlement.games.opponentSide}` : partnershipVisibleHandCount}</strong>
+                  <div>
+                    <span>{fullHandIsSpadesGame ? "Bags" : "Hands"}</span>
+                    <strong>{fullHandIsSpadesGame ? `${spadesVisibleBags.playerSide}-${spadesVisibleBags.opponentSide}` : partnershipVisibleHandCount}</strong>
                   </div>
                   {#if fullHandIsWhistGame && fullHand.whistDealer !== undefined}
                     <div>
@@ -8297,7 +7563,7 @@
                 {#if fullHandReplayAllowed}
                   <button class="secondary-action" onclick={() => void replayFullHand()} type="button">Replay</button>
                 {/if}
-                <button class="primary-action" disabled={fullHandIsWhistGame && whistDealPending} onclick={() => void startNextFullHand()} type="button">{fullHandNextActionLabel}</button>
+                <button class="primary-action" onclick={() => void startNextFullHand()} type="button">{fullHandNextActionLabel}</button>
               {/if}
             {:else if fullHandIsReviewingTrick}
               <button class="secondary-action" onclick={openFullHandTableTarget} type="button">Table</button>
@@ -8312,11 +7578,7 @@
                 </button>
               {:else}
                 <button class="primary-action" onclick={continueFullHandReview} type="button">
-                  {whistOpeningLeadPracticeReview
-                    ? whistOpeningLeadPracticeRound >= whistOpeningLeadPracticeMaxRounds - 1
-                      ? "Finish session"
-                      : "Next lead"
-                    : "Next trick"}
+                  Next trick
                 </button>
               {/if}
             {:else if spadesOpeningDecisionActive}
@@ -8521,118 +7783,24 @@
       </TablePlaySurface>
     {/if}
   {:else if appView === "drill"}
-    <TablePlaySurface
-      mode="play"
-      flowLayout
-      surfaceClassName={currentDrillIsDomino ? "learning-play-surface domino-play-surface" : "learning-play-surface"}
-      ariaLabel={drillScreenTitle}
-      title={drillScreenTitle}
-      eyebrow={activeGameTable === "whist" || activeGameTable === "spades" || activeGameTable === "bridge" ? currentDrill.contract : drillSetTitle}
-      statusLabel={currentDrill.contract}
-      statusValue={`Decision ${currentDrillDecisionNumber} of ${activeDrillSteps.length}`}
-      tableAriaLabel="Drill card table"
-      pendingBySeat={currentDrillTrick.pendingBySeat}
-      seatLabels={activeGameTable === "bridge" ? compassSeatLabels : {}}
-      useCustomTable={currentDrillIsDomino}
-      tableCards={currentDrillIsDomino ? [] : drillCompletedTable}
-      panelAriaLabel="Drill decision"
-      onBack={openActiveGameTable}
-    >
-      {#snippet table()}
-        {#if currentDrillIsDomino}
-          <div class="domino-layout" aria-label="Domino drill layout">
-            {#each drillDominoLayout as lane, index}
-              <div>
-                <span>{dominoSuitLabel(index)}</span>
-                <strong>{dominoLaneText(lane)}</strong>
-              </div>
-            {/each}
-          </div>
-        {/if}
-      {/snippet}
-
-      {#snippet summary()}
-        <div class="full-hand-summary grouped-play-summary" aria-label="Drill progress">
-          <div class="full-hand-summary-row learning-drill-summary">
-            <div><span>Played</span><strong>{drillResults.length} / {activeDrillSteps.length}</strong></div>
-            <div><span>Clean</span><strong>{cleanDrillCount}</strong></div>
-            <div><span>Topic</span><strong>{activeDrillFocusContract || "Mixed contracts"}</strong></div>
-          </div>
-        </div>
-      {/snippet}
-
-      {#snippet panel()}
-        <ExerciseFeedback
-          eyebrow={currentDrill.contract}
-          title={currentDrillTrick.title}
-          result={drillCheckedCard ? "" : currentDrillTrick.beforeResult}
-          explanation={drillFeedback}
-          outcome={drillOutcome}
-          warning={drillOutcome === "Illegal" || drillOutcome === "Risky" || drillOutcome === "Penalty"}
-        />
-
-        <CardChoiceHand
-          cards={currentDrillTrick.hand}
-          ariaLabel="Your drill hand"
-          className="hand drill-hand full-hand-cards"
-          cardClassName="card hand-card full-hand-card"
-          getCardClasses={drillCardClasses}
-          isPressed={(card) => drillSelectedCardId === card.id}
-          onSelect={selectDrillCard}
-        />
-
-        <div class="action-row">
-          {#if drillCheckedCard}
-            {#if isLastDrillDecision}
-              <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
-            {:else}
-              <button class="secondary-action" onclick={finishDrill} type="button">Finish session</button>
-            {/if}
-            <button class="primary-action" onclick={handleDrillPrimaryAction} type="button">
-              {isLastDrillDecision ? "Review session" : "Next decision"}
-            </button>
-          {:else}
-            <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
-            <button class="primary-action" disabled={!drillSelectedCard} onclick={checkDrillAnswer} type="button">
-              Check answer
-            </button>
-          {/if}
-        </div>
-      {/snippet}
-    </TablePlaySurface>
+    {#snippet dominoDrillTable()}
+      <div class="domino-layout" aria-label="Domino drill layout">
+        {#each drillDominoLayout as lane, index}
+          <div><span>{dominoSuitLabel(index)}</span><strong>{dominoLaneText(lane)}</strong></div>
+        {/each}
+      </div>
+    {/snippet}
+    <DrillScreen step={currentDrill} selectedCardId={drillSelectedCardId} checkedCardId={drillCheckedCardId}
+      results={drillResults} total={activeDrillSteps.length} index={drillIndex} title={drillScreenTitle}
+      eyebrow={activeGameTable === "spades" || activeGameTable === "bridge" ? currentDrill.contract : drillSetTitle}
+      topic={activeDrillFocusContract} seatLabels={activeGameTable === "bridge" ? compassSeatLabels : {}}
+      customTable={currentDrillIsDomino ? dominoDrillTable : undefined}
+      onBack={openActiveGameTable} onSelect={selectDrillCard} onCheck={checkDrillAnswer}
+      onNext={handleDrillPrimaryAction} onFinish={finishDrill} />
   {:else if appView === "drillResult"}
-    <header class="topbar" aria-label="Drill result">
-      <button class="back-button" onclick={openActiveGameTable} type="button">Table</button>
-      <div>
-        <p class="eyebrow">{drillSetTitle}</p>
-        <h1>Session complete</h1>
-      </div>
-      <div class="contract-status">
-        <span>Score</span>
-        <strong>{cleanDrillCount} of {drillResults.length} clean</strong>
-      </div>
-    </header>
-
-    <section class="drill-result-screen" aria-label="Drill results">
-      <div class="drill-loop-panel" aria-label="Next drill step">
-        <div class="drill-loop-copy">
-          <p class="eyebrow">Practice loop</p>
-          <h2>Next repetition</h2>
-          <strong>{drillLoopInsight.heading}</strong>
-          <p>{drillLoopInsight.message}</p>
-        </div>
-        <div class="drill-loop-detail">
-          <span>Weakest contract</span>
-          <strong>{drillLoopFocus}</strong>
-          {#if drillLoopFocusSummary}
-            <small>{drillLoopFocusSummary.clean} / {drillLoopFocusSummary.total} clean</small>
-          {/if}
-        </div>
-        <div class="drill-loop-detail">
-          <span>Recent rhythm</span>
-          <strong>{drillLoopInsight.streakText}</strong>
-        </div>
-        <div class="drill-loop-actions">
+    <DrillResultScreen title={drillSetTitle} results={drillResults} message={drillResultMessage}
+      attempts={recentPlayBarbuAttempts} onBack={openActiveGameTable}>
+      {#snippet actions()}
           {#if drillResultIsHeartsPractice}
             {#if activePathStepId.startsWith("hearts-")}
               <button class="primary-action" onclick={() => continueHeartsPath()} type="button">
@@ -8641,16 +7809,6 @@
               <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
             {:else}
               <button class="primary-action" onclick={replayHeartsPracticeDrill} type="button">Practice Hearts again</button>
-              <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
-            {/if}
-          {:else if drillResultIsWhistPractice}
-            {#if activePathStepId.startsWith("whist-")}
-              <button class="primary-action" onclick={() => continueWhistPath()} type="button">
-                {isWhistCourseComplete ? "Back to Whist table" : "Continue Whist path"}
-              </button>
-              <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
-            {:else}
-              <button class="primary-action" onclick={replayWhistPracticeDrill} type="button">Practice Whist again</button>
               <button class="secondary-action" onclick={openActiveGameTable} type="button">Table</button>
             {/if}
           {:else if drillResultIsSpadesPractice}
@@ -8679,55 +7837,10 @@
             </button>
             <button class="secondary-action" onclick={() => void startDailyDrill()} type="button">Try again</button>
           {/if}
-        </div>
-      </div>
-
-      <div class="drill-score-card">
-        <p class="eyebrow">Result</p>
-        <h2>{cleanDrillCount} / {drillResults.length} clean decisions</h2>
-        <p>{drillResultMessage}</p>
-      </div>
-
-      <div class="drill-result-list" aria-label="Decision results">
-        {#each drillResults as result, index}
-          <div>
-            <span>{index + 1}</span>
-            <strong>{result.contract}</strong>
-            <small>{outcomeLabels[result.outcome]}</small>
-            <em>{result.cardLabel}</em>
-          </div>
-        {/each}
-      </div>
-
-      <div class="contract-result-list" aria-label="Contract results">
-        {#each currentContractResults as result}
-          <div>
-            <span>{result.clean === result.total ? "Clean" : outcomeLabels[result.outcome]}</span>
-            <strong>{result.contract}</strong>
-            <small>{result.clean} / {result.total} clean</small>
-          </div>
-        {/each}
-      </div>
-
-      {#if recentPlayBarbuAttempts.length}
-        <div class="recent-attempt-list" aria-label="Recent quick drill attempts">
-          <p class="eyebrow">Recent tables</p>
-          {#each recentPlayBarbuAttempts as attempt}
-            <div>
-              <strong>{attempt.results.filter((result) => result.clean).length} / {attempt.results.length} clean</strong>
-              <small>{attempt.results.map((result) => result.contract).join(" · ")}</small>
-            </div>
-          {/each}
-        </div>
-      {/if}
-
-      <div class="course-actions drill-result-actions">
+      {/snippet}
+      {#snippet footer()}
         {#if drillResultIsHeartsPractice}
           {#if !activePathStepId.startsWith("hearts-")}
-            <button class="primary-action" onclick={openActiveGameTable} type="button">Back to Learn</button>
-          {/if}
-        {:else if drillResultIsWhistPractice}
-          {#if !activePathStepId.startsWith("whist-")}
             <button class="primary-action" onclick={openActiveGameTable} type="button">Back to Learn</button>
           {/if}
         {:else if drillResultIsSpadesPractice}
@@ -8743,8 +7856,8 @@
         {:else}
           <button class="primary-action" onclick={continueCourse} type="button">Continue path</button>
         {/if}
-      </div>
-    </section>
+      {/snippet}
+    </DrillResultScreen>
   {:else if appView === "pathReview"}
     <header class="topbar" aria-label="Barbu review">
       <button class="back-button" onclick={openBarbuLearnTable} type="button">Table</button>

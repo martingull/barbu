@@ -21,6 +21,7 @@ chosen rules, scoring, and table conventions.
 | Catalog and table metadata | `src/tableFactory.ts`, `src/games/whist.ts` | Use the factory and per-game definitions, not copied table markup. |
 | Registration | `src/gameRegistry.ts`, `src/games/index.ts` | Register metadata through the existing registry. |
 | Presentation | `GameTableShell`, `LearnPanel`, `CourseLesson`, `PlayTabPanel`, `TablePlaySurface`, `CardChoiceHand` | Reuse Learn/Play navigation, cards, selection, feedback, and responsive layout. |
+| Feature coordination | `src/features/whist/WhistGame.svelte`, `whistFeature.ts` | Own game-local navigation, selection, lesson flow and saving; compose existing engines and shared views. |
 | Hand rules and actions | `src/domain/handEngine.ts` | Keep deterministic transitions independent of UI, storage, and Tauri. |
 | Match progression | `src/domain/whistSession.ts` | Own settlement, dealer rotation, replay, completion, and review state outside Svelte. |
 | Persistence | `src/persistence/whistSave.ts` | Validate and restore saves through an adapter; preserve compatibility or explicitly migrate it. |
@@ -70,6 +71,43 @@ Extract shared behavior when another real game needs it. Prefer composition and
 small interfaces over a universal engine full of game-name conditionals. Do not
 replace copy-pasted screens with copy-pasted session or save implementations.
 
+## Frontend Isolation
+
+Whist is the first isolated frontend feature under `src/features/whist/`:
+
+- `WhistGame.svelte` composes the existing table metadata, Learn/Play panels,
+  courses and exercises. Opening-lead practice has ephemeral state separate from
+  the saved match.
+- `whistFeature.ts` creates an instance-local store for the match, selected card,
+  mode, saving and resume. It dispatches existing domain session events rather
+  than implementing rules. Storage and the seed source are injected.
+- `WhistHandView.svelte` presents a session through `TablePlaySurface` and
+  `CardChoiceHand`. Its callbacks belong to either the match controller or the
+  unsaved opening-lead exercise.
+- `openingLeadPractice.ts` holds the existing authored deals and their feedback.
+
+`App.svelte` mounts the feature and supplies catalog/reference navigation, the
+shared seed source, course progress and exercise history. These are catalog-wide
+services, not Whist hand state. The controller outlives the mounted view so
+leaving the game does not discard an in-memory match when storage is unavailable.
+
+`DrillScreen.svelte` and `DrillResultScreen.svelte` are shared by Whist and the
+remaining games. Pure decision/review helpers live under `src/lessons/`.
+Keep shared card layout and CSS in the existing components; do not copy them
+into each feature or add game-specific viewport calculations.
+
+This is an incremental frontend refactor, not another engine migration. Other
+games and Card Counting still have orchestration in `App.svelte`. Card Counting
+intentionally still uses Whist hands and shared Whist presentation helpers;
+those references are not a second Whist match implementation. Extract the next
+game using the same boundaries, then generalize controller behavior only where
+the second implementation demonstrates a real common need. Do not add a
+universal controller or replace the existing metadata/engine factories.
+
+Save keys, schemas, course progress identifiers, rules and native commands are
+unchanged. Verify feature isolation, blocked storage, old-save resume, course
+completion and compact-screen play before migrating the next game.
+
 ## New-Game And Migration Checklist
 
 1. Document the object, players, cards, deal, turn order, legal actions, scoring,
@@ -79,7 +117,8 @@ replace copy-pasted screens with copy-pasted session or save implementations.
 3. Add a definition under `src/games/`, register it, and add catalog metadata.
    Keep incomplete games marked as planned rather than exposing unfinished play.
 4. Implement or adapt the hand and session boundaries. Keep rules and settlement
-   out of `App.svelte`; wire only the required presentation and user actions.
+   in the domain, game-local interaction under `src/features/<game>/`, and only
+   catalog-wide routing/services in `App.svelte`.
 5. Add save validation, resume, replay, and compatibility tests. Ensure advancing
    a completed hand cannot score it twice, and practice cannot overwrite a match.
 6. Add guided lessons and topic exercises to the shared Learn panel. Use
