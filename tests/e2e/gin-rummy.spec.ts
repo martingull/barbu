@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { createGinSession, ginComplete, transitionGinSession, type GinSession } from "../../src/domain/ginRummySession";
-import { chooseGinAction, ginObservation } from "../../src/domain/ginRummyPolicy";
+import { advanceGinOpponent, chooseGinAction, ginObservation } from "../../src/domain/ginRummyPolicy";
 import { ginSaveKey, restoreGinSession, saveGinSession } from "../../src/persistence/ginRummySave";
 import { ginExercises, ginExerciseAnswer } from "../../src/lessons/gin-rummy/exercises";
 
@@ -38,8 +38,18 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 740 }
     await expect(back).toHaveAttribute("src", "/cards/barbu-back.webp");
     await expect(back).toHaveAttribute("alt", "");
     await expect.poll(() => back.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBe(500);
+    const stockBox = (await board.locator(".stock-back").boundingBox())!;
+    const upcardBox = (await board.locator(".upcard").boundingBox())!;
+    expect(stockBox.width).toBeGreaterThanOrEqual(viewport.height >= 740 ? 64 : 45);
+    expect(stockBox.width).toBeLessThanOrEqual(72);
+    expect(Math.abs(stockBox.width - upcardBox.width)).toBeLessThanOrEqual(1);
+    expect(Math.abs(stockBox.height / stockBox.width - 726 / 500)).toBeLessThan(0.01);
     const original = (await board.boundingBox())!;
-    await page.getByRole("button", { name: "Take upcard", exact: true }).click();
+    const takeUpcard = page.getByLabel("Gin turn actions").getByRole("button", { name: "Take upcard", exact: true });
+    await expect(takeUpcard).toBeEnabled();
+    await expect(takeUpcard).toBeInViewport();
+    await page.screenshot({ path: info.outputPath("gin-opening-actions.png"), fullPage: true });
+    await takeUpcard.click();
     await expect(hand.getByRole("button")).toHaveCount(11);
     const picked = (await saved(page)).hand.blockedDiscard;
     const pickedCard = (await saved(page)).hand.hands[0].find(card => card.id === picked)!;
@@ -48,6 +58,7 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 740 }
     await hand.locator("button.legal").first().click();
     await expect(page.getByRole("button", { name: "Discard", exact: true })).toBeEnabled();
     const after = (await board.boundingBox())!;
+    expect((await board.locator(".stock-back").boundingBox())!.width).toBeCloseTo(stockBox.width, 1);
     expect(Math.abs(original.height - after.height)).toBeLessThanOrEqual(1);
     const handBox = (await hand.boundingBox())!;
     expect(handBox.y - (after.y + after.height)).toBeGreaterThanOrEqual(8);
@@ -70,6 +81,38 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 740 }
     expect(errors).toEqual([]);
   });
 }
+
+test("Gin offers both draw buttons and disables the upcard only for a forced stock draw", async ({ page }, info) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  let session = transitionGinSession(transitionGinSession(createGinSession(1), { type: "pass" }), { type: "pass" });
+  await seed(page, session);
+  const actions = page.getByLabel("Gin turn actions");
+  await expect(actions.getByRole("button", { name: "Take upcard", exact: true })).toBeDisabled();
+  await expect(page.locator(".pile").filter({ hasText: "Upcard" })).toBeDisabled();
+  await expect(page.locator(".turn-prompt")).toHaveText("Both players passed. Draw from the stock.");
+  await actions.getByRole("button", { name: "Draw stock", exact: true }).click();
+  session = await saved(page);
+  expect(session.hand.hands[0]).toHaveLength(11);
+  session = advanceGinOpponent(transitionGinSession(session, { type: "discard", cardId: session.hand.hands[0][0].id }));
+  expect(session.hand.phase).toBe("draw");
+  expect(session.hand.turn).toBe(0);
+  await seed(page, session);
+  for (const name of ["Draw stock", "Take upcard"]) {
+    await expect(actions.getByRole("button", { name, exact: true })).toBeEnabled();
+    await expect(actions.getByRole("button", { name, exact: true })).toBeInViewport();
+  }
+  const bounds = (await actions.boundingBox())!;
+  expect(bounds.y + bounds.height).toBeLessThanOrEqual(568);
+  await page.screenshot({ path: info.outputPath("gin-draw-actions.png"), fullPage: true });
+  const upcard = session.hand.discards.at(-1)!;
+  await actions.getByRole("button", { name: "Take upcard", exact: true }).click();
+  const after = await saved(page);
+  expect(after.hand.hands[0]).toHaveLength(11);
+  expect(after.hand.hands[0]).toContainEqual(upcard);
+  expect(after.hand.stock).toEqual(session.hand.stock);
+  expect(after.hand.blockedDiscard).toBe(upcard.id);
+  await expect(page.locator(".pile").filter({ hasText: "Upcard" })).toBeDisabled();
+});
 
 test("Gin completes a played hand and advances once without stale points", async ({ page }, info) => {
   await seed(page);

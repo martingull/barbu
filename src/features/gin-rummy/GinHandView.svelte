@@ -18,6 +18,8 @@
   let layout = $derived(bestMeldLayout(hand.hands[0]));
   let preview = $derived(ginDiscardLayout(hand, selectedCardId));
   let upcard = $derived(hand.discards.at(-1));
+  let canDrawStock = $derived(hand.turn === 0 && hand.phase === "draw");
+  let canTakeUpcard = $derived(hand.turn === 0 && (hand.phase === "offer" || hand.phase === "draw") && !hand.forcedStock && Boolean(upcard));
   let scores = $derived(ginFinalScores(session));
   let prompt = $derived(hand.phase === "offer" ? "Take the opening upcard or pass."
     : hand.phase === "draw" ? hand.forcedStock ? "Both players passed. Draw from the stock." : "Draw from the stock or take the upcard."
@@ -43,10 +45,10 @@
     <div class="gin-table">
       <p class="opponent">Barbu <span>10 cards</span></p>
       <div class="piles">
-        <button class="pile" disabled={hand.phase !== "draw"} onclick={() => onAction({ type: "draw", source: "stock" })} aria-label="Draw stock" type="button">
+        <button class="pile" disabled={!canDrawStock} onclick={() => onAction({ type: "draw", source: "stock" })} aria-label="Draw stock" type="button">
           <span class="stock-back"><CardBack decorative /></span><strong>Stock <span>{hand.stock.length}</span></strong>
         </button>
-        <button class="pile" disabled={hand.phase === "discard" || hand.forcedStock} onclick={() => onAction({ type: "draw", source: "discard" })} aria-label="Take upcard" type="button">
+        <button class="pile" disabled={!canTakeUpcard} onclick={() => onAction({ type: "draw", source: "discard" })} aria-label="Take upcard" type="button">
           <span class="upcard">{#if upcard}<CardFace card={upcard} />{:else}<span class="empty-pile">Empty</span>{/if}</span><strong>Upcard</strong>
         </button>
       </div>
@@ -80,12 +82,14 @@
       <CardChoiceHand cards={hand.hands[0]} ariaLabel="Your Gin Rummy hand" className="hand full-hand-cards"
         cardClassName="card hand-card full-hand-card" onSelect={card => onSelect(card.id)} isPressed={card => card.id === selectedCardId}
         getCardClasses={card => ({ legal: card.id !== hand.blockedDiscard, illegal: card.id === hand.blockedDiscard, selected: card.id === selectedCardId })} />
-      <div class="action-row">
+      <div class="action-row gin-actions" aria-label="Gin turn actions">
         <button class="secondary-action" onclick={onBack} type="button">Table</button>
         {#if hand.phase === "offer"}
-          <button class="primary-action" onclick={() => onAction({ type: "pass" })} type="button">Pass upcard</button>
+          <button class="secondary-action" onclick={() => onAction({ type: "pass" })} type="button">Pass upcard</button>
+          <button class="primary-action" disabled={!canTakeUpcard} onclick={() => onAction({ type: "draw", source: "discard" })} type="button">Take upcard</button>
         {:else if hand.phase === "draw"}
-          <button class="primary-action" onclick={() => onAction({ type: "draw", source: "stock" })} type="button">Draw stock</button>
+          <button class="primary-action" disabled={!canDrawStock} onclick={() => onAction({ type: "draw", source: "stock" })} type="button">Draw stock</button>
+          <button class="secondary-action" disabled={!canTakeUpcard} onclick={() => onAction({ type: "draw", source: "discard" })} type="button">Take upcard</button>
         {:else}
           <button class="secondary-action" disabled={!preview} onclick={() => onAction({ type: "discard", cardId: selectedCardId })} type="button">Discard</button>
           <button class="primary-action" disabled={!preview || preview.points > 10} onclick={() => onAction({ type: "discard", cardId: selectedCardId, knock: true })} type="button">{preview?.points === 0 ? "Go gin" : "Knock"}</button>
@@ -98,16 +102,21 @@
 
 <style>
   :global(.gin-play-surface.flow-play > .play-board-region) { min-height: 168px; flex-basis: 168px; }
-  .gin-table { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 6px; background: #285342; color: #f7faf3; border-block: 1px solid #718d77; }
+  .gin-table {
+    /* Reserve room for both labels and the two-line turn message. */
+    --gin-pile-width: clamp(45px, min(24cqw, calc((100cqh - 100px) / 1.452)), 72px);
+    height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 6px; background: #285342; color: #f7faf3; border-block: 1px solid #718d77;
+  }
   .opponent, .last-action { margin: 0; font-size: 0.8rem; line-height: 1.3; text-align: center; }
   .opponent { font-weight: 700; }.opponent span { margin-left: 8px; font-weight: 400; color: #d8e1d5; }
   .last-action { min-height: 2.6em; }
   .turn-prompt { min-height: calc(2.08rem + 8px); }
+  .gin-actions { min-height: 52px; }
   .piles { display: flex; justify-content: center; gap: 28px; }
   .pile { display: grid; gap: 5px; justify-items: center; padding: 2px; min-width: 70px; background: transparent; color: #f7faf3; border: 0; cursor: pointer; }
   .pile:disabled { opacity: 1; cursor: default; }.pile:focus-visible { outline: 2px solid #ead490; outline-offset: 3px; }
   .pile strong { font-size: 0.75rem; }.pile strong span { margin-left: 4px; color: #ead490; }
-  .upcard, .stock-back { display: block; width: 45px; height: 63px; }
+  .upcard, .stock-back { display: block; width: var(--gin-pile-width); aspect-ratio: 500 / 726; }
   .empty-pile { display: grid; place-items: center; width: 100%; height: 100%; border: 1px dashed #b7cabb; border-radius: 3px; font-size: 0.65rem; color: #d8e1d5; }
   .hand-analysis { display: grid; gap: 4px; font-size: 0.75rem; line-height: 1.3; min-height: 36px; }
   .hand-analysis strong { color: #ead490; }.hand-analysis span { color: #d8e1d5; min-height: 2.6em; }
