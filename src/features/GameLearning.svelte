@@ -16,7 +16,7 @@
   import type { CustomExerciseContext, FeatureServices, LearningEntry, LearningResultActions } from "./featureServices";
 
   let { definition, gameName, tab, onTab, play, customExercise, loadExercise, exerciseTitle, drillTitle, drillEyebrow, seatLabels = {}, resultMessage,
-    entry, onEntryConsumed, onIntroductionComplete, onPlay, playLabel, resources, lessonEntries = [], customExample: renderExample, drillTableFor, drillTopic, resultActions, historyFilter,
+    entry, onEntryConsumed, onIntroductionComplete, onPlay, playLabel, introductionRecommendation, resources, lessonEntries = [], customExample: renderExample, drillTableFor, drillTopic, resultActions, historyFilter,
     completedSteps, history, nextSeed, onBack, onReference, onCompleteStep, onExerciseComplete, onSurfaceChange }: FeatureServices & {
     definition: GameDefinition; gameName: string; tab: TableTabId; onTab: (tab: TableTabId) => void;
     play: Snippet; customExercise?: Snippet<[CustomExerciseContext]>;
@@ -29,6 +29,7 @@
     onIntroductionComplete?: () => void;
     onPlay?: () => void;
     playLabel?: string;
+    introductionRecommendation?: { title: string; summary: string; label: string; onOpen: () => void };
     resources?: Array<{ id: string; title: string; summary: string; onClick: () => void }>;
     lessonEntries?: Array<{ id: string; contract: string; title: string }>;
     customExample?: Snippet<[CourseContent]>;
@@ -155,6 +156,12 @@
         <button class="secondary-action" onclick={table} type="button">Learn {gameName}</button>
         {#if onPlay}<button class="primary-action" onclick={onPlay} type="button">{playLabel ?? `Play ${gameName}`}</button>{/if}
       </div>
+      {#if results.length === steps.length && introductionRecommendation}
+        <section class="next-game" aria-label="Explore another game">
+          <div><h2>{introductionRecommendation.title}</h2><p>{introductionRecommendation.summary}</p></div>
+          <button class="secondary-action" onclick={introductionRecommendation.onOpen} type="button">{introductionRecommendation.label}</button>
+        </section>
+      {/if}
     {/snippet}
   </TablePlaySurface>
 {:else if view === "result"}
@@ -181,3 +188,11 @@
   </GameTableShell>
 {/if}
 {#if error}<p class="outcome warning" role="alert">{error}</p>{/if}
+
+<style>
+  .next-game { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #ffffff26; }
+  .next-game > div { flex: 1 1 190px; min-width: 0; }
+  .next-game h2 { margin: 0; font-size: 1rem; line-height: 1.3; }
+  .next-game p { margin: 6px 0 0; color: #c8d8ca; font-size: 0.875rem; line-height: 1.4; }
+  .next-game button { min-height: 44px; }
+</style>

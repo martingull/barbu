@@ -167,9 +167,9 @@ export type CatalogCategory = {
 export function getCatalogCategories(): CatalogCategory[] {
   const categories: CatalogCategory[] = [
     {
-      id: "games",
-      title: "Choose a table",
-      summary: "Classic card club games.",
+      id: "hearts-contracts",
+      title: "Hearts & changing contracts",
+      summary: "Avoid penalties, then try a new objective each hand.",
       entries: [
         createCatalogEntry({
           id: "hearts",
@@ -181,6 +181,23 @@ export function getCatalogCategories(): CatalogCategory[] {
           accessModel: "free-starter",
           summary: "Keep hearts and the queen of spades out of your tricks."
         }),
+        createCatalogEntry({
+          id: "barbu",
+          family: "Hearts",
+          title: "Barbu",
+          card: { rank: "K", suit: "H" },
+          status: "Ready",
+          access: "Free",
+          accessModel: "free-starter",
+          summary: "Seven contracts, with a new objective each hand."
+        })
+      ]
+    },
+    {
+      id: "partners-tricks",
+      title: "Partners & tricks",
+      summary: "Work together, from winning tricks to bidding contracts.",
+      entries: [
         createCatalogEntry({
           id: "whist",
           family: "Whist",
@@ -210,17 +227,14 @@ export function getCatalogCategories(): CatalogCategory[] {
           access: "Free",
           accessModel: "free-starter",
           summary: "Bid a contract, then play as declarer or defend."
-        }),
-        createCatalogEntry({
-          id: "barbu",
-          family: "Hearts",
-          title: "Barbu",
-          card: { rank: "K", suit: "H" },
-          status: "Ready",
-          access: "Free",
-          accessModel: "free-starter",
-          summary: "Seven contracts, with a new objective each hand."
-        }),
+        })
+      ]
+    },
+    {
+      id: "rummy",
+      title: "Rummy games",
+      summary: "Collect sets and runs. Choose what to keep and discard.",
+      entries: [
         createCatalogEntry({
           id: "gin-rummy",
           family: "Rummy",
@@ -246,7 +260,7 @@ export function getCatalogCategories(): CatalogCategory[] {
     {
       id: "skill-packs",
       title: "Card Skills",
-      summary: "Solo drills and memory trainers.",
+      summary: "Remember what has been played. Plan what comes next.",
       entries: [
         createCatalogEntry({
           id: "card-counting",

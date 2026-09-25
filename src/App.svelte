@@ -371,6 +371,7 @@
       onSurfaceChange={fixed => { spadesFixedSurface = fixed; }} />
   {:else if appView === "heartsFeature"}
     <HeartsGame feature={heartsFeature} initialEntry={heartsEntry} onEntryConsumed={() => { heartsEntry = undefined; }} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
+      onExploreBarbu={() => { openBarbuTable(); barbuFeature.openTable("learn"); }}
       onBack={openCatalog} onReference={() => openReference("hearts")}
       onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })}
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}

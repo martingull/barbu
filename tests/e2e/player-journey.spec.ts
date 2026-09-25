@@ -26,7 +26,8 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 740 }
     await expect(page.getByRole("heading", { name: "Barbu", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Try Hearts", exact: true })).toBeInViewport();
     await expect(page.getByRole("button", { name: "Open Hearts", exact: true })).toBeInViewport();
-    await expect(page.getByLabel("Games", { exact: true }).getByRole("button")).toHaveCount(5);
+    await expect(page.getByRole("region", { name: "Hearts & changing contracts" }).getByRole("button")).toHaveCount(2);
+    await expect(page.getByRole("region", { name: "Partners & tricks" }).getByRole("button")).toHaveCount(3);
     await expect(page.getByRole("region", { name: "Card Skills" }).getByRole("button")).toHaveCount(1);
     await expect(page.getByLabel("Saved games")).toHaveCount(0);
     await expect(page.locator(".catalog-home")).not.toContainText(/Ready|Bridge Path|Pack/);
@@ -61,6 +62,7 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 740 }
     await finishIntroduction(page);
     await expect(page.getByRole("button", { name: "Play Hearts", exact: true })).toBeInViewport();
     await expect(page.getByRole("button", { name: "Learn Hearts", exact: true })).toBeInViewport();
+    await expect(page.getByRole("button", { name: "Learn Barbu", exact: true })).toBeInViewport();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: info.outputPath("introduction-result.png"), fullPage: true });
     await page.getByRole("button", { name: "Learn Hearts", exact: true }).click();
@@ -103,6 +105,25 @@ test("introduction never overwrites a saved match and is consumed after leaving"
   expect(restored.heartsPassingHand).toEqual(saved.heartsPassingHand);
   expect(restored.heartsPassSelectedCardIds).toEqual(saved.heartsPassSelectedCardIds);
   expect(errors).toEqual([]);
+});
+
+test("next-game suggestion opens Barbu Learn without changing either saved match", async ({ page }) => {
+  await page.goto("/");
+  for (const title of ["Barbu", "Hearts"]) {
+    await page.getByRole("button", { name: `Open ${title}`, exact: true }).click();
+    await page.getByRole("button", { name: `Play ${title}`, exact: true }).click();
+    await home(page);
+  }
+  const keys = ["barbu.savedPlayRun.v1", "barbu.savedHeartsRun.v1"];
+  const saves = await page.evaluate(keys => keys.map(key => localStorage.getItem(key)), keys);
+  await page.getByRole("button", { name: "Try Hearts", exact: true }).click();
+  await finishIntroduction(page);
+  await page.getByRole("button", { name: "Learn Barbu", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Barbu's table", exact: true })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Learn", exact: true })).toHaveAttribute("aria-selected", "true");
+  expect(await page.evaluate(keys => keys.map(key => localStorage.getItem(key)), keys)).toEqual(saves);
+  await page.getByRole("button", { name: "Games", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Learn Hearts", exact: true })).toBeVisible();
 });
 
 test("all saved games can be resumed directly and the latest appears first", async ({ page }, info) => {

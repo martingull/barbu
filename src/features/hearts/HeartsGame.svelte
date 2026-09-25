@@ -13,8 +13,8 @@
   import type { FeatureServices, LearningEntry } from "../featureServices";
   import type { HeartsFeature } from "./heartsFeature";
 
-  let { feature, initialEntry, onEntryConsumed, ...services }: FeatureServices & {
-    feature: HeartsFeature; initialEntry?: LearningEntry; onEntryConsumed?: () => void;
+  let { feature, initialEntry, onEntryConsumed, onExploreBarbu, ...services }: FeatureServices & {
+    feature: HeartsFeature; initialEntry?: LearningEntry; onEntryConsumed?: () => void; onExploreBarbu?: () => void;
   } = $props();
   let learningFixed = $state(false);
   $effect(() => { services.onSurfaceChange($feature.view === "hand" || learningFixed); });
@@ -48,6 +48,7 @@
   <GameLearning {...services} definition={heartsDef} gameName="Hearts" tab={$feature.tab}
     entry={initialEntry} {onEntryConsumed} onPlay={() => $feature.saved ? feature.resume() : void feature.start()}
     onIntroductionComplete={() => services.onCompleteStep(heartsIntroduction.id)}
+    introductionRecommendation={onExploreBarbu ? { ...heartsIntroduction.recommendation, onOpen: onExploreBarbu } : undefined}
     playLabel={$feature.saved ? "Continue Hearts" : "Play Hearts"}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
     {loadExercise} exerciseTitle={action => `Hearts practice: ${names[action as HeartsPracticeAction]}`}

@@ -52,8 +52,11 @@
   </section>
 
   {#each categories as category (category.id)}
-    <section class="catalog-group" aria-label={category.id === "games" ? "Games" : category.title}>
-      <h2>{category.title}</h2>
+    <section class="catalog-group" data-collection={category.id} aria-labelledby={`collection-${category.id}`}>
+      <header class="collection-heading">
+        <h2 id={`collection-${category.id}`}>{category.title}</h2>
+        <p>{category.summary}</p>
+      </header>
       <div class="catalog-games">
         {#each category.entries as game (game.id)}
           <button class="catalog-game" aria-label={`Open ${game.title}`} onclick={() => onOpen(game.id)} type="button">
@@ -97,8 +100,12 @@
   .first-game { display: flex; gap: 12px; justify-content: space-between; align-items: center; padding: 14px 0; border-block: 1px solid #ffffff26; }
   .first-game > div { min-width: 0; }
   .first-game button { flex: none; min-height: 44px; padding: 8px 12px; font-size: 0.875rem; }
-  .catalog-group { padding-top: 20px; }
-  .catalog-group > h2 { margin-bottom: 10px; }
+  .catalog-group { padding-top: 24px; --collection-accent: #d99b96; }
+  .catalog-group[data-collection="partners-tricks"] { --collection-accent: #ddce94; }
+  .catalog-group[data-collection="skill-packs"] { --collection-accent: #b3ccd5; }
+  .collection-heading { border-left: 3px solid var(--collection-accent); padding-left: 10px; margin-bottom: 12px; }
+  .collection-heading h2 { color: #f5f1cf; font-family: Georgia, "Times New Roman", serif; font-size: 1.25rem; line-height: 1.3; }
+  .collection-heading p { font-size: 0.8rem; }
   .catalog-games { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px 12px; }
   .catalog-game { display: grid; grid-template-columns: minmax(0, 1fr) 84px; align-items: center; gap: 12px; min-height: 90px; width: 100%; padding: 12px; border: 1px solid #728a70; border-radius: 6px; background: #285342; color: #f7faf3; text-align: left; }
   .catalog-game:hover { background: #305e4b; }
@@ -114,7 +121,8 @@
   .table-mark > span:nth-child(2) { left: 26px; top: 8px; transform: rotate(2deg); }
   .table-mark > span:nth-child(3) { left: 46px; top: 15px; transform: rotate(13deg); }
   @media (min-width: 640px) {
-    .catalog-games { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .catalog-games { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+    .catalog-group[data-collection="skill-packs"] .catalog-games { max-width: 434px; }
   }
   @media (max-width: 340px) {
     .first-game { align-items: start; flex-direction: column; gap: 8px; }

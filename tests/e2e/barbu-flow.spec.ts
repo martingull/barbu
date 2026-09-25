@@ -585,7 +585,8 @@ async function playDominoHand(page: Page) {
 test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { name: "Choose a table" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Hearts & changing contracts" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Partners & tricks" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Barbu", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Try Hearts", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Card Skills" })).toBeVisible();
@@ -596,7 +597,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.locator(".catalog-game")).toHaveCount(6);
   await expect(page.locator(".catalog-game:disabled")).toHaveCount(0);
   await expect(page.locator(".catalog-home")).not.toContainText(/The Bridge Path|Ready/);
-  await expect(page.getByLabel("Games")).not.toContainText(/Gin Rummy|Canasta|Card Counting II|Solitaire|Pack/);
+  await expect(page.locator(".catalog-home")).not.toContainText(/Gin Rummy|Canasta|Card Counting II|Solitaire|Pack/);
   await expect(page.getByRole("button", { name: /Open Whist/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Open Spades/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Open Bridge/ })).toBeVisible();
@@ -606,7 +607,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
     .poll(async () =>
       page.locator(".catalog-game strong").evaluateAll((items) => items.slice(0, 5).map((item) => item.textContent?.trim()))
     )
-    .toEqual(["Hearts", "Whist", "Spades", "Bridge", "Barbu"]);
+    .toEqual(["Hearts", "Barbu", "Whist", "Spades", "Bridge"]);
 
   await page.screenshot({ path: testInfo.outputPath("catalog.png"), fullPage: true });
 

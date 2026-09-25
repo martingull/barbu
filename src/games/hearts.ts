@@ -193,6 +193,11 @@ export const heartsIntroduction = {
   summary: "Avoid penalty cards. Lowest score wins.",
   label: "Try Hearts",
   action: "introduction",
+  recommendation: {
+    title: "Next table: Barbu",
+    summary: "Familiar tricks, changing rules. Explore seven different contracts.",
+    label: "Learn Barbu"
+  },
   completed: {
     title: "Hearts introduction complete",
     summary: "Passing, avoiding points and planning your hand.",
