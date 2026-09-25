@@ -113,7 +113,7 @@ export type PracticeGroup<Action extends string = string> = {
 
 export const monetizationPolicy = {
   model: "free-usage-then-unlock",
-  freeStarterIds: ["hearts", "barbu", "whist", "spades", "bridge", "card-counting"],
+  freeStarterIds: ["hearts", "barbu", "whist", "spades", "bridge", "gin-rummy", "card-counting"],
   paidUnlocks: ["individual-pack", "subscription"],
   meteredFreeUsage: {
     unitLimit: "tbd",
@@ -240,10 +240,10 @@ export function getCatalogCategories(): CatalogCategory[] {
           family: "Rummy",
           title: "Gin Rummy",
           card: { rank: "7", suit: "D" },
-          status: "Planned",
-          access: "Pack",
-          accessModel: "metered-pack",
-          summary: "Draw, discard, meld, and read what the opponent is collecting."
+          status: "Ready",
+          access: "Free",
+          accessModel: "free-starter",
+          summary: "Build sets and runs. Knock before your opponent."
         }),
         createCatalogEntry({
           id: "canasta",

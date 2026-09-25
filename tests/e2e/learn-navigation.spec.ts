@@ -27,7 +27,7 @@ async function expectLearningLayout(page: Page) {
 test("every table shares Learn and Play and keeps exercises inside Learn", async ({ page }, info) => {
   for (const [game, exercise] of [
     ["Barbu", "No Hearts"], ["Hearts", "Pass three"], ["Whist", "Follow suit"],
-    ["Spades", "Follow suit"], ["Bridge", "Opening bids"], ["Card Counting I", "Count trumps"]
+    ["Spades", "Follow suit"], ["Bridge", "Opening bids"], ["Gin Rummy", "Sets and runs"], ["Card Counting I", "Count trumps"]
   ]) {
     await page.goto("/");
     await page.getByRole("button", { name: `Open ${game}`, exact: true }).click();
@@ -36,7 +36,7 @@ test("every table shares Learn and Play and keeps exercises inside Learn", async
     await expect(page.getByLabel("Continue learning")).toBeVisible();
     await expect(page.getByRole("button", { name: /Quick drill/ })).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Guided lessons", exact: true })).toHaveCount(0);
-    const expectedSkills: Record<string, number> = { Barbu: 7, Hearts: 8, Whist: 7, Spades: 5, Bridge: 4, "Card Counting I": 5 };
+    const expectedSkills: Record<string, number> = { Barbu: 7, Hearts: 8, Whist: 7, Spades: 5, Bridge: 4, "Gin Rummy": 3, "Card Counting I": 5 };
     await expect(page.locator(".learn-skill")).toHaveCount(expectedSkills[game]);
     const skillIds = await page.locator(".learn-skill").evaluateAll(rows => rows.map(row => row.getAttribute("data-skill")));
     expect(new Set(skillIds).size).toBe(skillIds.length);

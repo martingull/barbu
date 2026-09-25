@@ -1,4 +1,5 @@
 import type { SavedPlayBarbuRun } from "../../persistence/barbuSave";
+import type { SavedGinRun } from "../../persistence/ginRummySave";
 import { savedPlayBarbuRunSummary } from "../../persistence/barbuSave";
 import type { SavedHeartsRun } from "../../persistence/heartsSave";
 import { savedHeartsRunSummary } from "../../persistence/heartsSave";
@@ -15,6 +16,7 @@ type SavedGames = {
   whist: SavedWhistRun | null;
   spades: SavedSpadesRun | null;
   bridge: SavedBridgeRun | null;
+  "gin-rummy"?: SavedGinRun | null;
 };
 export type SavedGameId = keyof SavedGames;
 export type ContinueGame = { id: SavedGameId; title: string; summary: string; savedAt: string };
@@ -22,6 +24,10 @@ export type ContinueGame = { id: SavedGameId; title: string; summary: string; sa
 // Use the feature controllers' validated saves, including their in-memory updates.
 export function continueGames(saved: SavedGames): ContinueGame[] {
   const entries: ContinueGame[] = [];
+  if (saved["gin-rummy"]) {
+    const gin = saved["gin-rummy"];
+    entries.push({ id: "gin-rummy", title: "Gin Rummy", summary: `Hand ${gin.handNumber}, You ${gin.scores[0]} - Barbu ${gin.scores[1]}`, savedAt: gin.savedAt });
+  }
   if (saved.hearts) entries.push({ id: "hearts", title: "Hearts", summary: savedHeartsRunSummary(saved.hearts), savedAt: saved.hearts.savedAt });
   if (saved.whist) entries.push({ id: "whist", title: "Whist", summary: savedWhistRunSummary(saved.whist), savedAt: saved.whist.savedAt });
   if (saved.spades) entries.push({ id: "spades", title: "Spades", summary: savedSpadesRunSummary(saved.spades), savedAt: saved.spades.savedAt });

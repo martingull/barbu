@@ -28,6 +28,7 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 740 }
     await expect(page.getByRole("button", { name: "Open Hearts", exact: true })).toBeInViewport();
     await expect(page.getByRole("region", { name: "Hearts & changing contracts" }).getByRole("button")).toHaveCount(2);
     await expect(page.getByRole("region", { name: "Partners & tricks" }).getByRole("button")).toHaveCount(3);
+    await expect(page.getByRole("region", { name: "Rummy games" }).getByRole("button")).toHaveCount(1);
     await expect(page.getByRole("region", { name: "Card Skills" }).getByRole("button")).toHaveCount(1);
     await expect(page.getByLabel("Saved games")).toHaveCount(0);
     await expect(page.locator(".catalog-home")).not.toContainText(/Ready|Bridge Path|Pack/);
@@ -42,7 +43,7 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 740 }
     expect(titleBox.x - (logoBox.x + logoBox.width)).toBeGreaterThanOrEqual(12);
     const wordmarkBox = (await page.locator(".brand-wordmark").boundingBox())!;
     expect(Math.abs(logoBox.y + logoBox.height / 2 - wordmarkBox.y - wordmarkBox.height / 2)).toBeLessThanOrEqual(1);
-    for (const title of ["Hearts", "Whist", "Spades", "Bridge", "Barbu", "Card Counting I"]) {
+    for (const title of ["Hearts", "Whist", "Spades", "Bridge", "Barbu", "Gin Rummy", "Card Counting I"]) {
       const game = page.getByRole("button", { name: `Open ${title}`, exact: true });
       await expect(game.locator("img")).toHaveCount(title === "Barbu" ? 3 : 1);
       await expect(game).toHaveCSS("background-color", "rgb(40, 83, 66)");

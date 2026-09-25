@@ -1,4 +1,5 @@
 import { legalCards, trickWinner } from "./trickTakingRules";
+import { shuffledDeck } from "./deck";
 import { chooseBarbuCard } from "./barbuPolicy";
 import { barbuTrickPoints, isBarbuTrickContract, type BarbuTrickContract } from "./barbuRules";
 import { originalSpadesCards, spadesBidFromId, suggestedSpadesBidForCards } from "./spadesBidding";
@@ -1040,22 +1041,6 @@ function promptForState(state: FullHandState, playerPenalty: number) {
   return `${suitName(led)} were led. Follow suit if you can.`;
 }
 
-function standardDeck() {
-  return suits.flatMap((suit) => ranks.map((rank) => card(rank, suit)));
-}
-
-function shuffledDeck(seed: number) {
-  const deck = standardDeck();
-  const rng = new DeterministicRng(seed);
-
-  for (let index = deck.length - 1; index > 0; index -= 1) {
-    const swapIndex = rng.nextInt(index + 1);
-    [deck[index], deck[swapIndex]] = [deck[swapIndex], deck[index]];
-  }
-
-  return deck;
-}
-
 function card(rank: Rank, suit: Suit): Card {
   const label = `${rank}${suit}`;
   return { id: label, rank, suit, label };
@@ -1111,17 +1096,4 @@ function cloneState(state: FullHandState): FullHandState {
     dummyHand: state.dummyHand ? [...state.dummyHand] : undefined,
     dummyLegalCardIds: state.dummyLegalCardIds ? [...state.dummyLegalCardIds] : undefined
   };
-}
-
-class DeterministicRng {
-  private state: number;
-
-  constructor(seed: number) {
-    this.state = (seed ^ 0xa0761d64) >>> 0;
-  }
-
-  nextInt(upperBound: number) {
-    this.state = (Math.imul(this.state, 1664525) + 1013904223) >>> 0;
-    return this.state % upperBound;
-  }
 }

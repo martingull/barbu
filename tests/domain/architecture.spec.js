@@ -33,7 +33,8 @@ test("domain, storage and shared UI retain one-way dependency boundaries", () =>
         const target = relative(process.cwd(), resolve(dirname(file), spec));
         const permitted = spec.startsWith(".")
           ? allowed.some(prefix => target.startsWith(prefix) && (prefix !== "content/" || target.endsWith(".json")))
-          : layer === "components" && spec === "svelte";
+          : layer === "components" && spec === "svelte"
+            || layer === "domain" && spec === "javascript-lp-solver" && file.endsWith("rummyMelds.ts");
         if (!permitted) violations.push(`${file} imports ${spec}`);
       }
     }

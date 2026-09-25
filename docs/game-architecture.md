@@ -35,6 +35,8 @@ src/
 ```
 
 Keep domain imports within `domain/` or structured JSON under `content/`.
+Reviewed algorithm dependencies may be explicitly allowlisted: `rummyMelds.ts`
+uses `javascript-lp-solver` for non-overlapping meld and layoff selection.
 Persistence depends on the domain, never on Svelte or game views. Shared components
 and presentation helpers must not import game features; features compose them.
 Card Counting deliberately reuses the other games' feedback for its unsaved hands.
@@ -106,6 +108,15 @@ Keep each game's objectives, opponent policy, bidding, scoring, and variants
 explicit. Hearts avoidance must not inherit Whist's trick-winning strategy.
 Rummy-family games should reuse cards and presentation where useful, not be
 forced into a trick-taking state model.
+
+Gin Rummy is the first implemented rummy-family table. It reuses the deterministic
+deck, saved-session controller, metadata factory, Learn flow and card surfaces.
+Its draw/discard state and scoring live in `ginRummySession.ts`, with public-information
+opponent decisions in `ginRummyPolicy.ts`. `features/gin-rummy/` owns only interaction
+and rendering. Its version-1 action-log save is replay-validated; three authored
+courses contain nine decisions and never write the match save. See
+[Gin Rummy](gin-rummy.md) for the classic scoring profile, source notes, automatic
+meld/layoff declarations and remaining limitations.
 
 Extract shared behavior when another real game needs it. Prefer composition and
 small interfaces over a universal engine full of game-name conditionals. Do not

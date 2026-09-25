@@ -1,3 +1,5 @@
+import { ginRummyReference } from "./ginRummyReference";
+
 export type ReferenceFact = {
   label: string;
   value: string;
@@ -37,6 +39,7 @@ export type GameReference = {
   title: string;
   family: string;
   baseline: string;
+  baselineLabel?: string;
   overview: string;
   sections: ReferenceSection[];
   contracts: ReferenceContract[];
@@ -802,5 +805,6 @@ export const referenceCatalog: GameReference[] = [
           "The Bridge table offers local contract practice with documented natural agreements. Opponents use deterministic heuristics, not expert search: advanced competitive auctions, slam investigation, entry planning, and defensive signalling remain limited. Session totals are raw contract points, not matchpoints or IMPs."
       }
     ]
-  }
+  },
+  ginRummyReference
 ];

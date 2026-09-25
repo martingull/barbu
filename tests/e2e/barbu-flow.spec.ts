@@ -594,10 +594,10 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByRole("button", { name: "Open Barbu" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Card Counting I" })).toContainText("Remember trumps");
   await expect(page.getByRole("button", { name: /planned/i })).toHaveCount(0);
-  await expect(page.locator(".catalog-game")).toHaveCount(6);
+  await expect(page.locator(".catalog-game")).toHaveCount(7);
   await expect(page.locator(".catalog-game:disabled")).toHaveCount(0);
   await expect(page.locator(".catalog-home")).not.toContainText(/The Bridge Path|Ready/);
-  await expect(page.locator(".catalog-home")).not.toContainText(/Gin Rummy|Canasta|Card Counting II|Solitaire|Pack/);
+  await expect(page.locator(".catalog-home")).not.toContainText(/Canasta|Card Counting II|Solitaire|Pack/);
   await expect(page.getByRole("button", { name: /Open Whist/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Open Spades/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Open Bridge/ })).toBeVisible();

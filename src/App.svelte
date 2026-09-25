@@ -4,6 +4,8 @@
   import SpadesGame from "./features/spades/SpadesGame.svelte";
   import HeartsGame from "./features/hearts/HeartsGame.svelte";
   import WhistGame from "./features/whist/WhistGame.svelte";
+  import GinRummyGame from "./features/gin-rummy/GinRummyGame.svelte";
+  import { createGinRummyFeature } from "./features/gin-rummy/ginRummyFeature";
   import CardCountingGame from "./features/card-counting/CardCountingGame.svelte";
   import { createBarbuFeature } from "./features/barbu/barbuFeature";
   import { createBridgeFeature } from "./features/bridge/bridgeFeature";
@@ -21,7 +23,7 @@
   import { getCatalogCategories, type ActiveGameTable, type CatalogGameId } from "./games/tableFactory";
   import type { GuidedCardOutcome, PracticeReason } from "./domain/types";
 
-  type AppView = "catalog" | "barbuFeature" | "heartsFeature" | "whistFeature" | "spadesFeature" | "bridgeFeature" | "cardCountingFeature" | "reference";
+  type AppView = "catalog" | "barbuFeature" | "heartsFeature" | "whistFeature" | "spadesFeature" | "bridgeFeature" | "ginFeature" | "cardCountingFeature" | "reference";
   const catalogCategories = getCatalogCategories();
   const privacyPolicyUrl = "https://martingull.github.io/barbu/privacy-policy.html";
   let privacyPolicyError = "";
@@ -46,15 +48,17 @@
   let spadesFixedSurface = false;
   let bridgeFixedSurface = false;
   let cardCountingFixedSurface = false;
+  let ginFixedSurface = false;
   const services = { storage: () => typeof localStorage === "undefined" ? undefined : localStorage, nextSeed: usePracticeSeed };
   const barbuFeature = createBarbuFeature(services);
   const whistFeature = createWhistFeature(services);
   const heartsFeature = createHeartsFeature(services);
   const spadesFeature = createSpadesFeature(services);
   const bridgeFeature = createBridgeFeature(services);
-  const playFeatures = { barbu: barbuFeature, hearts: heartsFeature, whist: whistFeature, spades: spadesFeature, bridge: bridgeFeature };
+  const ginFeature = createGinRummyFeature(services);
+  const playFeatures = { barbu: barbuFeature, hearts: heartsFeature, whist: whistFeature, spades: spadesFeature, bridge: bridgeFeature, "gin-rummy": ginFeature };
   $: savedGames = continueGames({ barbu: $barbuFeature.saved, hearts: $heartsFeature.saved,
-    whist: $whistFeature.saved, spades: $spadesFeature.saved, bridge: $bridgeFeature.saved });
+    whist: $whistFeature.saved, spades: $spadesFeature.saved, bridge: $bridgeFeature.saved, "gin-rummy": $ginFeature.saved });
   $: activeReference = referenceCatalog.find(reference => reference.id === activeReferenceId) ?? referenceCatalog[0];
   $: activeReferenceIsBarbu = activeReference.id === "barbu";
   $: heartsIntroductionComplete = completedPathSteps[heartsIntroduction.id] === true;
@@ -241,6 +245,7 @@
 
 
   function openActiveGameTable() {
+    if (activeGameTable === "gin-rummy") { openGame("gin-rummy"); return; }
     if (activeGameTable === "hearts") {
       openHeartsTable();
       return;
@@ -278,6 +283,12 @@
 
 
   function openGame(gameId: CatalogGameId) {
+    if (gameId === "gin-rummy") {
+      activeGameTable = "gin-rummy";
+      ginFeature.openTable();
+      appView = "ginFeature";
+      return;
+    }
     if (gameId === "hearts") {
       openHeartsTable();
       return;
@@ -338,7 +349,7 @@
 
 </script>
 
-<main class:fixed-play-screen={(appView === "whistFeature" && whistFixedSurface) || (appView === "heartsFeature" && heartsFixedSurface) || (appView === "spadesFeature" && spadesFixedSurface) || (appView === "bridgeFeature" && bridgeFixedSurface) || (appView === "barbuFeature" && barbuFixedSurface) || (appView === "cardCountingFeature" && cardCountingFixedSurface)} class="app-shell">
+<main class:fixed-play-screen={(appView === "whistFeature" && whistFixedSurface) || (appView === "heartsFeature" && heartsFixedSurface) || (appView === "spadesFeature" && spadesFixedSurface) || (appView === "bridgeFeature" && bridgeFixedSurface) || (appView === "barbuFeature" && barbuFixedSurface) || (appView === "cardCountingFeature" && cardCountingFixedSurface) || (appView === "ginFeature" && ginFixedSurface)} class="app-shell">
   {#if appView === "catalog"}
     <GameCatalog categories={catalogCategories} {savedGames} introduction={heartsIntroductionComplete ? heartsIntroduction.completed : heartsIntroduction} onOpen={openGame} onContinue={continueGame} onIntroduction={tryHearts} />
 
@@ -382,6 +393,12 @@
       onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })}
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
       onSurfaceChange={fixed => { whistFixedSurface = fixed; }} />
+  {:else if appView === "ginFeature"}
+    <GinRummyGame feature={ginFeature} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
+      onBack={openCatalog} onReference={() => openReference("gin-rummy")}
+      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })}
+      onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
+      onSurfaceChange={fixed => { ginFixedSurface = fixed; }} />
   {:else if appView === "cardCountingFeature"}
     <CardCountingGame completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onBack={openCatalog} onReference={() => {}}
@@ -397,7 +414,7 @@
       </div>
       <div class="contract-status">
         <span>Baseline</span>
-        <strong>Parlett</strong>
+        <strong>{activeReference.baselineLabel ?? "Parlett"}</strong>
       </div>
     </header>
 
@@ -427,6 +444,7 @@
         {/each}
       </section>
 
+      {#if activeReference.contracts.length}
       <section class="reference-list" aria-label="Contract reference">
         <div class="section-heading">
           <p class="eyebrow">{activeReferenceIsBarbu ? "Core game" : "Current game"}</p>
@@ -444,6 +462,7 @@
         </div>
       </section>
 
+      {/if}
       <section class="reference-list" aria-label="Contract roadmap">
         <div class="section-heading">
           <p class="eyebrow">{activeReferenceIsBarbu ? "Core roadmap" : "Rule boundary"}</p>
