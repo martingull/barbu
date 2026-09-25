@@ -1,13 +1,14 @@
 <script lang="ts">
   import { untrack } from "svelte";
-  import TablePlaySurface from "../../TablePlaySurface.svelte";
-  import CardChoiceHand from "../../CardChoiceHand.svelte";
-  import ExerciseFeedback from "../../ExerciseFeedback.svelte";
+  import TablePlaySurface from "../../components/TablePlaySurface.svelte";
+  import CardChoiceHand from "../../components/CardChoiceHand.svelte";
+  import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
   import { startMemoryHand, transitionMemoryHand, memoryHandQuestion, memoryHandDefinitions, type MemoryHandEvent } from "../../domain/cardCountingSession";
   import type { MemoryExercise } from "../../domain/cardCountingQuestions";
-  import { contractScoreMeta } from "../../contractScoring";
-  import { formatCardLabel } from "../../cardDisplay";
-  import { whistPartnershipTrickCounts, whistTrickFeedback } from "../../whistPresentation";
+  import { contractScoreMeta } from "../../domain/contractScoring";
+  import { formatCardLabel } from "../../presentation/cardDisplay";
+  import { partnershipTrickCounts } from "../../domain/trickTakingScore";
+  import { whistTrickFeedback } from "../whist/whistPresentation";
   import { heartsTrickFeedback } from "../hearts/heartsPresentation";
   import { fullHandTrickFeedback } from "../barbu/barbuPresentation";
   import { memoryPresentation, memoryQuestionHeading, memoryAnswerText, memoryReviewCards, memoryResult } from "./countingPresentation";
@@ -29,7 +30,7 @@
   let definition = $derived(memoryHandDefinitions[session.exercise]);
   let meta = $derived(contractScoreMeta(hand.contract));
   let partnership = $derived(hand.contract === "Whist");
-  let tricks = $derived(whistPartnershipTrickCounts(hand.completedTricks));
+  let tricks = $derived(partnershipTrickCounts(hand.completedTricks));
   let result = $derived(memoryResult(session));
   let feedback = $derived(review ? partnership ? whistTrickFeedback(review)
     : hand.contract === "Hearts" ? heartsTrickFeedback(review, hand) : fullHandTrickFeedback(review, hand) : "");

@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { SpadesBidState } from "../../domain/spadesBidding";
-  import { scoreSeats as spadesBidSeats } from "../../scorePresentation";
-  import { spadesSideBid, spadesPlayerSideSeats, spadesOpponentSideSeats } from "../../spadesScoring";
+  import { scoreSeats as spadesBidSeats } from "../../presentation/scorePresentation";
+  import { spadesSideBid, spadesPlayerSideSeats, spadesOpponentSideSeats } from "../../domain/spadesScoring";
   import { spadesBidSeatLabel } from "./spadesPresentation";
   let { bids: spadesBids, editable = true, onBid, label = "Spades bids for this hand" }: {
     bids: SpadesBidState; editable?: boolean; onBid: (bid: number) => void; label?: string;

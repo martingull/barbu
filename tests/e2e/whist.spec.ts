@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { startBrowserWhistHand, playBrowserWhistCard } from "../../src/domain/trickTakingHand";
-import { courseCatalog } from "../../src/courseContent";
+import { courseCatalog } from "../../src/lessons/courses";
 
 const saveKey = "barbu.savedWhistRun.v1";
 const pair = (scores: number[]) => ({ playerSide: scores[0], opponentSide: scores[1] });

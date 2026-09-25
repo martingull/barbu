@@ -1,5 +1,5 @@
 import native from "./barbu-native-hands.json" with { type: "json" };
-import type { Card, CompletedHandTrick, FullHandState, Seat, TableCard } from "../../src/lessonTypes";
+import type { Card, CompletedHandTrick, FullHandState, Seat, TableCard } from "../../src/domain/types";
 
 export const nativeBarbuHands = native.cases;
 const seats: Seat[] = ["Tutor", "Right", "You", "Left"];

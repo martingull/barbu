@@ -1,4 +1,4 @@
-import type { GeneratedPracticeScenario, GuidedTrick, Seat } from "../lessonTypes";
+import type { GeneratedPracticeScenario, GuidedTrick, Seat } from "../domain/types";
 import type { DrillStep } from "./drillDecision";
 
 export function drillStepFromGeneratedScenario(scenario: GeneratedPracticeScenario): DrillStep {

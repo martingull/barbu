@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import GameLearning from "../GameLearning.svelte";
-  import PlayTabPanel from "../../PlayTabPanel.svelte";
+  import PlayTabPanel from "../../components/PlayTabPanel.svelte";
   import BarbuPlay from "./BarbuPlay.svelte";
   import BarbuPracticeHand from "./BarbuPracticeHand.svelte";
   import BarbuGuidedLesson from "./BarbuGuidedLesson.svelte";
@@ -13,7 +13,7 @@
   import { buildDrillLoopInsight, summarizeContractResults, weakestContractFromResults } from "../../lessons/drillReview";
   import { createBarbuPracticeLoader, barbuExerciseTitle, exerciseContract, isBarbuAttempt } from "./barbuLearning";
   import { savedPlayBarbuRunSummary } from "../../persistence/barbuSave";
-  import type { FullHandContract } from "../../lessonTypes";
+  import type { FullHandContract } from "../../domain/types";
   import type { FeatureServices, LearningEntry } from "../featureServices";
   import type { BarbuFeature } from "./barbuFeature";
 

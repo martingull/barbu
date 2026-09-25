@@ -1,4 +1,4 @@
-import type { FullHandState } from "../lessonTypes";
+import type { FullHandState } from "../domain/types";
 import { isBarbuTrickContract } from "../domain/barbuRules";
 import { hydrateFullHandState } from "../domain/trickTakingHand";
 import { trickWinner } from "../domain/trickTakingRules";

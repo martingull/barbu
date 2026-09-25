@@ -6,7 +6,7 @@ import { isLegalDominoPlacement } from "../../src/domain/dominoRules";
 import { dominoSuits } from "../../src/domain/dominoDeal";
 import { cardRank } from "../../src/domain/trickTakingRules";
 import { dominoFixtures as fixtures, inflateDominoHand, compactDominoHand } from "../fixtures/dominoHandFixture";
-import type { DominoHandState, Card } from "../../src/lessonTypes";
+import type { DominoHandState, Card } from "../../src/domain/types";
 
 function freeze<T>(value: T): T {
   if (value && typeof value === "object") { Object.freeze(value); Object.values(value).forEach(freeze); }

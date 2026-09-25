@@ -1,14 +1,14 @@
 <script lang="ts">
-  import TablePlaySurface from "../../TablePlaySurface.svelte";
-  import CardChoiceHand from "../../CardChoiceHand.svelte";
-  import ExerciseFeedback from "../../ExerciseFeedback.svelte";
-  import GameResult from "../../GameResult.svelte";
+  import TablePlaySurface from "../../components/TablePlaySurface.svelte";
+  import CardChoiceHand from "../../components/CardChoiceHand.svelte";
+  import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
+  import GameResult from "../../components/GameResult.svelte";
   import BarbuSessionResult from "./BarbuSessionResult.svelte";
-  import type { FullHandState } from "../../lessonTypes";
+  import type { FullHandState } from "../../domain/types";
   import { barbuSessionComplete, barbuSeatTotals, type BarbuSession } from "../../domain/barbuSession";
-  import { fullHandContracts } from "../../contractRegistry";
-  import { contractScoreMeta } from "../../contractScoring";
-  import { formatSignedScore, scoreSeats, scoreSeatRunLabel } from "../../scorePresentation";
+  import { fullHandContracts } from "../../domain/contractRegistry";
+  import { contractScoreMeta } from "../../domain/contractScoring";
+  import { formatSignedScore, scoreSeats, scoreSeatRunLabel } from "../../presentation/scorePresentation";
   import { noLastTwoPhaseLabel, noLastTwoPhaseValue, fullHandTrickFeedback, fullHandResultHeading,
     fullHandResultText, fullHandBestTrickLabel, fullHandWorstTrickLabel, formatHandValue } from "./barbuPresentation";
 

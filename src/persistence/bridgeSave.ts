@@ -1,4 +1,4 @@
-import type { BridgeAuctionCall, BridgeContractState, BridgeVulnerability } from "../lessonTypes";
+import type { BridgeAuctionCall, BridgeContractState, BridgeVulnerability } from "../domain/types";
 import { bridgeAuctionStatus, bridgeFinalizeContract, bridgeLegalCallOptions, normalizeBridgeCall } from "../domain/bridgeAuction";
 import type { BridgeSession } from "../domain/bridgeSession";
 import type { BridgeHandResult } from "../domain/bridgeScoring";

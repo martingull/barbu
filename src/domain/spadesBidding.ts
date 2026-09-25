@@ -1,4 +1,4 @@
-import type { Card, FullHandState, Seat, Suit } from "../lessonTypes";
+import type { Card, FullHandState, Seat, Suit } from "./types";
 import { cardRank } from "./trickTakingRules";
 import { trickTakingSeats } from "./trickTakingScore";
 

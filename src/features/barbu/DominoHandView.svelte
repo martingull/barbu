@@ -1,12 +1,12 @@
 <script lang="ts">
-  import TablePlaySurface from "../../TablePlaySurface.svelte";
-  import CardChoiceHand from "../../CardChoiceHand.svelte";
-  import ExerciseFeedback from "../../ExerciseFeedback.svelte";
+  import TablePlaySurface from "../../components/TablePlaySurface.svelte";
+  import CardChoiceHand from "../../components/CardChoiceHand.svelte";
+  import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
   import BarbuSessionResult from "./BarbuSessionResult.svelte";
   import { barbuSessionComplete, dominoSeatScores, type BarbuSession } from "../../domain/barbuSession";
-  import { fullHandContracts } from "../../contractRegistry";
-  import { scoreSeats, scoreSeatRunLabel, formatSignedScore } from "../../scorePresentation";
-  import type { Card, DominoHandState } from "../../lessonTypes";
+  import { fullHandContracts } from "../../domain/contractRegistry";
+  import { scoreSeats, scoreSeatRunLabel, formatSignedScore } from "../../presentation/scorePresentation";
+  import type { Card, DominoHandState } from "../../domain/types";
   import { dominoOrderScores, dominoResultHeading, dominoResultText, dominoSuitLabel, dominoLaneText,
     dominoStartRank, dominoOutOrderText, dominoMoveExplanation } from "./barbuPresentation";
   export let dominoHand: DominoHandState;

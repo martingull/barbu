@@ -3,7 +3,7 @@ import { heartsHandEngine } from "../../src/domain/handEngine";
 import { createHeartsSession, heartsSessionSettlement, transitionHeartsSession, type HeartsSession } from "../../src/domain/heartsSession";
 import { seatPenaltiesForTricks } from "../../src/domain/trickTakingScore";
 import { createHeartsSaveStore, normalizeHeartsSave, restoreHeartsSession, saveHeartsSession } from "../../src/persistence/heartsSave";
-import type { FullHandState } from "../../src/lessonTypes";
+import type { FullHandState } from "../../src/domain/types";
 import native from "../fixtures/hearts-native-save.json" with { type: "json" };
 
 function freeze<T>(value: T): T {

@@ -1,11 +1,11 @@
-import type { GuidedLesson } from "../lessonTypes";
-import { dominoLesson } from "./domino";
-import { heartsTrumpsLesson } from "./heartsTrumps";
-import { kingOfHeartsLesson } from "./kingOfHearts";
-import { noHeartsLesson } from "./noHearts";
-import { noLastTwoLesson } from "./noLastTwo";
-import { noQueensLesson } from "./noQueens";
-import { noTricksLesson } from "./noTricks";
+import type { GuidedLesson } from "../domain/types";
+import { dominoLesson } from "./barbu/domino";
+import { heartsTrumpsLesson } from "./barbu/heartsTrumps";
+import { kingOfHeartsLesson } from "./barbu/kingOfHearts";
+import { noHeartsLesson } from "./barbu/noHearts";
+import { noLastTwoLesson } from "./barbu/noLastTwo";
+import { noQueensLesson } from "./barbu/noQueens";
+import { noTricksLesson } from "./barbu/noTricks";
 
 export const guidedLessons: GuidedLesson[] = [
   noHeartsLesson,

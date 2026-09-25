@@ -2,7 +2,7 @@
   import BarbuScorecard from "./BarbuScorecard.svelte";
   import { barbuRunPresentation } from "./barbuRunPresentation";
   import { contractIntro } from "./contractIntros";
-  import { fullHandContracts } from "../../contractRegistry";
+  import { fullHandContracts } from "../../domain/contractRegistry";
   import type { BarbuSession } from "../../domain/barbuSession";
   export let session: BarbuSession;
   export let error = "";

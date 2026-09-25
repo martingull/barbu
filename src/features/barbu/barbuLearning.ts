@@ -1,4 +1,4 @@
-import { fullHandContracts } from "../../contractRegistry";
+import { fullHandContracts } from "../../domain/contractRegistry";
 import { generateBarbuPracticeSet } from "../../domain/barbuPractice";
 import { drillStepFromGeneratedScenario } from "../../lessons/generatedDrill";
 import { orderPracticePool, type DrillStep } from "../../lessons/drillDecision";

@@ -75,7 +75,7 @@ and Tauri dependencies. Hearts, Whist and Spades native full-hand engines, polic
 settlement, and command routes have been removed. Keep the frozen native-save
 fixtures for compatibility tests, not a second production implementation.
 Spades uses one bidding heuristic in `src/domain/spadesBidding.ts`, explicit locked
-bids, and the existing twelve authored exercises in `src/spadesLessons.ts`.
+bids, and the existing twelve authored exercises in `src/lessons/spades/exercises.ts`.
 Keep opponents from playing opening cards before the player locks the bids.
 Bridge reuses the same hand, reviewed-hand and save factories. Auction legality
 and contract formation live in `src/domain/bridgeAuction.ts`, duplicate scoring
@@ -103,6 +103,15 @@ engine changes, in addition to the existing verification commands.
 
 ### Shared Foundations
 
+Keep `src/` limited to `App.svelte`, `main.ts`, declarations and responsibility
+folders. Shared Svelte surfaces belong in `components/`, game views and display
+copy in `features/<game>/`, pure formatting/layout helpers in `presentation/`,
+and styles in `styles/`. Table metadata and its factory/registry live in `games/`.
+Author courses/exercises under `lessons/<game>/`; keep `lessons/courses.ts` a thin
+catalog. Rules, policies, scoring and shared card/hand types live in `domain/`.
+Do not make the domain import presentation, features, persistence or Tauri.
+See the source map and boundary tests in `docs/game-architecture.md`.
+
 - Put shared TypeScript gameplay in `src/domain`; keep native platform integrations in `src-tauri`.
 - Share low-level card-table mechanics across games: deck, deal, turn order, follow-suit legality, trick winner, played-card memory, scoring primitives, and compact table presentation.
 - Keep game policy separate by game or contract. Barbu contract policy, Hearts/Black Lady avoidance policy, Domino layout policy, and future Whist/Bridge policies should call shared primitives but make their own decisions about winning, ducking, dumping danger cards, preserving trumps, or taking control.
@@ -118,8 +127,8 @@ engine changes, in addition to the existing verification commands.
 
 ## Frontend Table Pattern
 
-Start with `src/tableFactory.ts` and the definitions in `src/games/` when adding
-or changing a table. Use `GameDefinition` from `src/gameRegistry.ts`, construct
+Start with `src/games/tableFactory.ts` and the definitions in `src/games/` when adding
+or changing a table. Use `GameDefinition` from `src/games/gameRegistry.ts`, construct
 table metadata with `createGameTableDefinition`, and register the definition in
 `src/games/index.ts`. Together these own:
 

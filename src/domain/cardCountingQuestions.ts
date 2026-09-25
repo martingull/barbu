@@ -1,4 +1,4 @@
-import type { Card, Seat, Suit, TableCard } from "../lessonTypes";
+import type { Card, Seat, Suit, TableCard } from "./types";
 export type MemoryExercise = "heart-memory" | "high-card-memory" | "danger-count" | "whist-memory";
 export type CountingExercise = MemoryExercise | "trump-count";
 export type MemoryAnswer = number | boolean | Seat;

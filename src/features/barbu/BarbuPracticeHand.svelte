@@ -3,8 +3,8 @@
   import { typescriptHandEngine } from "../../domain/handEngine";
   import { dominoHandEngine } from "../../domain/dominoHand";
   import { transitionReviewedHand, type ReviewedHand } from "../../domain/reviewedHand";
-  import { fullHandContracts } from "../../contractRegistry";
-  import type { DominoHandState, FullHandContract } from "../../lessonTypes";
+  import { fullHandContracts } from "../../domain/contractRegistry";
+  import type { DominoHandState, FullHandContract } from "../../domain/types";
   import { dominoMoveExplanation } from "./barbuPresentation";
   import BarbuHandView from "./BarbuHandView.svelte";
   import DominoHandView from "./DominoHandView.svelte";

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import CardFace from "../../CardFace.svelte";
-  import { formatCardLabel } from "../../cardDisplay";
-  import { scoreSeatLabel } from "../../scorePresentation";
-  import type { Card, Seat } from "../../lessonTypes";
+  import CardFace from "../../components/CardFace.svelte";
+  import { formatCardLabel } from "../../presentation/cardDisplay";
+  import { scoreSeatLabel } from "../../presentation/scorePresentation";
+  import type { Card, Seat } from "../../domain/types";
   import type { MemoryAnswer, MemoryQuestion } from "../../domain/cardCountingQuestions";
   let { question, answer, checked, heading, caption, feedback, labels, cards, onAnswer }: {
     question: MemoryQuestion; answer: MemoryAnswer | null; checked: boolean; heading: string; caption: string;

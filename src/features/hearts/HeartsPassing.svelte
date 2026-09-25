@@ -1,7 +1,7 @@
 <script lang="ts">
-  import TablePlaySurface from "../../TablePlaySurface.svelte";
-  import CardChoiceHand from "../../CardChoiceHand.svelte";
-  import { formatCardList } from "../../cardDisplay";
+  import TablePlaySurface from "../../components/TablePlaySurface.svelte";
+  import CardChoiceHand from "../../components/CardChoiceHand.svelte";
+  import { formatCardList } from "../../presentation/cardDisplay";
   import { heartsPassDirectionLabel, heartsPassTargetLabel, heartsPassReceiveLabel } from "./heartsPresentation";
   import type { HeartsSession } from "../../domain/heartsSession";
   let { session, error: heartsPassError, onBack, onSelect, onPass }: {

@@ -5,7 +5,7 @@ import { buildTrumpCountRound, buildTrumpMemoryQuestion, buildCourtMemoryQuestio
   buildWhistMemoryQuestion, type MemoryExercise } from "../../src/domain/cardCountingQuestions";
 import { typescriptHandEngine } from "../../src/domain/handEngine";
 import { memoryReviewCards } from "../../src/features/card-counting/countingPresentation";
-import type { TableCard } from "../../src/lessonTypes";
+import type { TableCard } from "../../src/domain/types";
 
 test("counting questions use only played cards and preserve their existing seed choices", () => {
   const tricks: TableCard[][] = [[

@@ -1,13 +1,13 @@
 <script lang="ts">
   import GameLearning from "../GameLearning.svelte";
-  import PlayTabPanel from "../../PlayTabPanel.svelte";
+  import PlayTabPanel from "../../components/PlayTabPanel.svelte";
   import BridgeAuction from "./BridgeAuction.svelte";
   import BridgeHandView from "./BridgeHandView.svelte";
   import BridgeBiddingPractice from "./BridgeBiddingPractice.svelte";
   import { bridgeDef } from "../../games/bridge";
-  import { bridgeDeclarerDrillPool, bridgeDefenseDrillPool } from "../../bridgePractice";
+  import { bridgeDeclarerDrillPool, bridgeDefenseDrillPool } from "../../lessons/bridge/exercises";
   import { orderPracticePool } from "../../lessons/drillDecision";
-  import { compassSeatLabels } from "../../cardDisplay";
+  import { compassSeatLabels } from "../../presentation/cardDisplay";
   import { savedBridgeRunSummary } from "./bridgePresentation";
   import type { FeatureServices } from "../featureServices";
   import type { BridgeFeature } from "./bridgeFeature";

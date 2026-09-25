@@ -1,4 +1,4 @@
-import type { GuidedCardOutcome, PracticeReason } from "../lessonTypes";
+import type { GuidedCardOutcome, PracticeReason } from "../domain/types";
 import type { DrillResult } from "./drillDecision";
 
 export type PlayBarbuAttempt = {

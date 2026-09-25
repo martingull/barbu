@@ -1,9 +1,9 @@
 <script lang="ts">
-  import TablePlaySurface from "../../TablePlaySurface.svelte";
-  import CardChoiceHand from "../../CardChoiceHand.svelte";
-  import { formatCardList } from "../../cardDisplay";
+  import TablePlaySurface from "../../components/TablePlaySurface.svelte";
+  import CardChoiceHand from "../../components/CardChoiceHand.svelte";
+  import { formatCardList } from "../../presentation/cardDisplay";
   import { generateHeartsPassPractice, evaluateHeartsPass, heartsPassPracticeCount as heartsPassPracticeTotalSteps } from "../../domain/heartsPractice";
-  import type { Card } from "../../lessonTypes";
+  import type { Card } from "../../domain/types";
   import type { CustomExerciseContext } from "../featureServices";
   let { context }: { context: CustomExerciseContext } = $props();
   let heartsPassPracticeStepIndex = $state(0);

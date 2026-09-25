@@ -1,11 +1,11 @@
 <script lang="ts">
-  import TablePlaySurface from "../../TablePlaySurface.svelte";
-  import ExerciseFeedback from "../../ExerciseFeedback.svelte";
-  import CardChoiceHand from "../../CardChoiceHand.svelte";
+  import TablePlaySurface from "../../components/TablePlaySurface.svelte";
+  import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
+  import CardChoiceHand from "../../components/CardChoiceHand.svelte";
   import DominoLessonTable from "./DominoLessonTable.svelte";
   import { guidedLessons } from "../../lessons/catalog";
   import { drillOutcomeLabels as outcomeLabels } from "../../lessons/drillDecision";
-  import type { Card, Suit } from "../../lessonTypes";
+  import type { Card, Suit } from "../../domain/types";
   export let lessonId: string;
   export let onBack: () => void;
   export let onComplete: () => void;

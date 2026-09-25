@@ -1,4 +1,4 @@
-import type { Card, Suit, TableCard } from "../lessonTypes";
+import type { Card, Suit, TableCard } from "./types";
 
 export function cardRank(card: Card): number {
   return ({ J: 11, Q: 12, K: 13, A: 14 } as Record<string, number>)[card.rank] ?? Number(card.rank);

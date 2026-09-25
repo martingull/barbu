@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { TableCard } from "../../lessonTypes";
+  import type { TableCard } from "../../domain/types";
   import { cardRank } from "../../domain/trickTakingRules";
   import { dominoSuitLabel, dominoLaneText } from "./barbuPresentation";
   let { cards, label }: { cards: TableCard[]; label: string } = $props();

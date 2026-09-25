@@ -1,5 +1,5 @@
-import type { GameDefinition } from "../gameRegistry";
-import { createGameTableDefinition } from "../tableFactory";
+import type { GameDefinition } from "./gameRegistry";
+import { createGameTableDefinition } from "./tableFactory";
 
 export type WhistLearnPathAction = "object" | WhistPracticeAction;
 export type WhistPracticeAction = "lead" | "follow" | "trump" | "third" | "return" | "odd";

@@ -1,5 +1,5 @@
 import { get } from "svelte/store";
-import type { Card, FullHandState } from "../lessonTypes";
+import type { Card, FullHandState } from "../domain/types";
 import type { ReviewedHandEvent } from "../domain/reviewedHand";
 import { createSavedSessionFeature, type SessionFeatureOptions } from "./savedSessionFeature";
 export type { FeatureOptions, SessionFeatureState as MatchFeatureState } from "./savedSessionFeature";

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import TablePlaySurface from "../../TablePlaySurface.svelte";
-  import CardChoiceHand from "../../CardChoiceHand.svelte";
-  import ExerciseFeedback from "../../ExerciseFeedback.svelte";
-  import { bridgeBiddingPracticeSteps } from "../../bridgePractice";
-  import { bridgeHighCardPoints } from "../../bridgeBidding";
+  import TablePlaySurface from "../../components/TablePlaySurface.svelte";
+  import CardChoiceHand from "../../components/CardChoiceHand.svelte";
+  import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
+  import { bridgeBiddingPracticeSteps } from "../../lessons/bridge/exercises";
+  import { bridgeHighCardPoints } from "../../domain/bridgeBidding";
   import { bridgeCallLabel, type BridgeCallOption } from "../../domain/bridgeAuction";
   import { bridgeHandShapeLabel, bridgeSeatLabel } from "./bridgePresentation";
   let { onBack, onComplete }: { onBack: () => void; onComplete: () => void } = $props();

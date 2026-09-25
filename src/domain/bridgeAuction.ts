@@ -1,5 +1,5 @@
-import type { BridgeAuctionCall, BridgeContractState, BridgeStrain, FullHandState, Seat } from "../lessonTypes";
-import { parseBridgeBid, suggestBridgeCall } from "../bridgeBidding";
+import type { BridgeAuctionCall, BridgeContractState, BridgeStrain, FullHandState, Seat } from "./types";
+import { parseBridgeBid, suggestBridgeCall } from "./bridgeBidding";
 import { trickTakingSeats as seats } from "./trickTakingScore";
 
 export type BridgeBidOption = {

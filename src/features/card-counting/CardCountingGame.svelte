@@ -1,6 +1,6 @@
 <script lang="ts">
   import GameLearning from "../GameLearning.svelte";
-  import PlayTabPanel from "../../PlayTabPanel.svelte";
+  import PlayTabPanel from "../../components/PlayTabPanel.svelte";
   import { cardCountingDef, cardCountingExercises } from "../../games/cardCounting";
   import type { CountingExercise } from "../../domain/cardCountingQuestions";
   import type { FeatureServices, LearningEntry } from "../featureServices";

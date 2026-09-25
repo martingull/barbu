@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import fixtures from "../fixtures/spades-native-hand.json" with { type: "json" };
-import type { FullHandState } from "../../src/lessonTypes";
+import type { FullHandState } from "../../src/domain/types";
 import { spadesHandEngine, typescriptHandEngine } from "../../src/domain/handEngine";
 import { createSpadesSession, transitionSpadesSession, spadesSessionSettlement, type SpadesSession } from "../../src/domain/spadesSession";
 import { suggestedSpadesBidsForHand, originalSpadesCards } from "../../src/domain/spadesBidding";

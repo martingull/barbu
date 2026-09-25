@@ -1,4 +1,4 @@
-import type { Card } from "../lessonTypes";
+import type { Card } from "./types";
 import { cardRank } from "./trickTakingRules";
 
 export function isLegalDominoPlacement(lane: Card[], card: Card, startRank = "7"): boolean {

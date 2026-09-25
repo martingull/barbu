@@ -1,4 +1,4 @@
-import type { FullHandState } from "../lessonTypes";
+import type { FullHandState } from "../domain/types";
 import { heartsSessionSettlement, type HeartsHandResult, type HeartsPassDirection, type HeartsSession } from "../domain/heartsSession";
 import { emptySeatPenalties, trickTakingSeats, type SeatScores } from "../domain/trickTakingScore";
 import { hydrateFullHandState } from "../domain/trickTakingHand";

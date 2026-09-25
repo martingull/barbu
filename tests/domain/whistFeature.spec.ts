@@ -3,7 +3,7 @@ import { get } from "svelte/store";
 import { createWhistFeature } from "../../src/features/whist/whistFeature";
 import { whistSaveKey } from "../../src/persistence/whistSave";
 import { drillDecision } from "../../src/lessons/drillDecision";
-import { whistFollowSuitDrillPool } from "../../src/whistLessons";
+import { whistFollowSuitDrillPool } from "../../src/lessons/whist/exercises";
 
 function setup() {
   const data = new Map<string, string>();

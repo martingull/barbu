@@ -1,6 +1,6 @@
 <script lang="ts">
   import GameLearning from "../GameLearning.svelte";
-  import PlayTabPanel from "../../PlayTabPanel.svelte";
+  import PlayTabPanel from "../../components/PlayTabPanel.svelte";
   import HeartsPassing from "./HeartsPassing.svelte";
   import HeartsHandView from "./HeartsHandView.svelte";
   import HeartsPassExercise from "./HeartsPassExercise.svelte";

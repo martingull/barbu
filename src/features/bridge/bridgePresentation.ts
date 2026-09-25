@@ -1,11 +1,11 @@
-import type { Card, Seat, FullHandState, BridgeAuctionCall, BridgeContractState, BridgeVulnerability, CompletedHandTrick } from "../../lessonTypes";
-import { compassSeatLabels, formatCardLabel } from "../../cardDisplay";
-import { displaySuitSequence } from "../../cardOrdering";
-import { bridgeSuitCount } from "../../bridgeBidding";
+import type { Card, Seat, FullHandState, BridgeAuctionCall, BridgeContractState, BridgeVulnerability, CompletedHandTrick } from "../../domain/types";
+import { compassSeatLabels, formatCardLabel } from "../../presentation/cardDisplay";
+import { displaySuitSequence } from "../../presentation/cardOrdering";
+import { bridgeSuitCount } from "../../domain/bridgeBidding";
 import { bridgeCallLongLabel, bridgeSideForSeat, type BridgeCallOption } from "../../domain/bridgeAuction";
 import { bridgeHandResultFor, type BridgeScoreState } from "../../domain/bridgeScoring";
 import { trickTakingSeats } from "../../domain/trickTakingScore";
-import { formatSignedScore } from "../../scorePresentation";
+import { formatSignedScore } from "../../presentation/scorePresentation";
 import type { SavedBridgeRun } from "../../persistence/bridgeSave";
 
 export const bridgeSeatLabel = (seat: Seat | "Unknown") => seat === "Unknown" ? seat : compassSeatLabels[seat];

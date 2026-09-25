@@ -3,7 +3,7 @@
   import BarbuHandView from "./BarbuHandView.svelte";
   import DominoHandView from "./DominoHandView.svelte";
   import { runWeakestContract } from "./barbuPresentation";
-  import type { FullHandContract } from "../../lessonTypes";
+  import type { FullHandContract } from "../../domain/types";
   import type { BarbuFeature } from "./barbuFeature";
   let { feature, onBack, onStandaloneHand }: {
     feature: BarbuFeature; onBack: () => void; onStandaloneHand: (contract: FullHandContract) => void;

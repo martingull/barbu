@@ -1,12 +1,12 @@
 <script lang="ts">
   import GameLearning from "../GameLearning.svelte";
-  import PlayTabPanel from "../../PlayTabPanel.svelte";
+  import PlayTabPanel from "../../components/PlayTabPanel.svelte";
   import WhistHandView from "./WhistHandView.svelte";
   import WhistOpeningLead from "./WhistOpeningLead.svelte";
   import { whistDef, type WhistPracticeAction } from "../../games/whist";
   import { orderPracticePool, type DrillStep } from "../../lessons/drillDecision";
   import { whistFollowSuitDrillPool, whistTrumpOrDiscardDrillPool, whistThirdHandHighDrillPool,
-    whistReturnPartnerSuitDrillPool, whistOpeningLeadLessonPool, whistOddTrickDrillPool } from "../../whistLessons";
+    whistReturnPartnerSuitDrillPool, whistOpeningLeadLessonPool, whistOddTrickDrillPool } from "../../lessons/whist/exercises";
   import { savedWhistRunSummary } from "../../persistence/whistSave";
   import type { FeatureServices } from "../featureServices";
   import type { WhistFeature } from "./whistFeature";

@@ -1,6 +1,6 @@
-import { formatCardLabel } from "../../cardDisplay";
-import { whistTrumpSuitFromHandId } from "../../whistPresentation";
-import type { Card, FullHandState, Suit, CompletedHandTrick } from "../../lessonTypes";
+import { formatCardLabel } from "../../presentation/cardDisplay";
+import { whistTrumpSuitFromHandId } from "./whistPresentation";
+import type { Card, FullHandState, Suit, CompletedHandTrick } from "../../domain/types";
 
 type WhistOpeningLeadPracticeDeal = {
   id: string;

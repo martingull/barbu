@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { startBrowserHeartsHand, playBrowserHeartsCard } from "../../src/domain/trickTakingHand";
-import type { FullHandState, Seat } from "../../src/lessonTypes";
+import type { FullHandState, Seat } from "../../src/domain/types";
 
 const saveKey = "barbu.savedHeartsRun.v1";
 const seats: Seat[] = ["Tutor", "Right", "You", "Left"];

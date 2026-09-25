@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import type { Card } from "../lessonTypes";
+import type { Card } from "../domain/types";
 import type { SaveStorage } from "../persistence/saveStore";
 
 export type FeatureOptions = { storage: () => SaveStorage | undefined; nextSeed: () => number; now?: () => number };

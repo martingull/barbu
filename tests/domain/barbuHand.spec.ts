@@ -4,7 +4,7 @@ import { barbuTrickContracts } from "../../src/domain/barbuRules";
 import { chooseBarbuCard } from "../../src/domain/barbuPolicy";
 import { normalizeBarbuHand } from "../../src/persistence/barbuHandSave";
 import { nativeBarbuHands, nativeBarbuHand, compactBarbuHand } from "../fixtures/barbuHandFixture";
-import type { Card, FullHandState } from "../../src/lessonTypes";
+import type { Card, FullHandState } from "../../src/domain/types";
 
 function freeze<T>(value: T): T {
   if (value && typeof value === "object") { Object.freeze(value); Object.values(value).forEach(freeze); }

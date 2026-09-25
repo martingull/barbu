@@ -3,9 +3,9 @@ import { chooseBarbuCard } from "./barbuPolicy";
 import { barbuTrickPoints, isBarbuTrickContract, type BarbuTrickContract } from "./barbuRules";
 import { originalSpadesCards, spadesBidFromId, suggestedSpadesBidForCards } from "./spadesBidding";
 import { heartsPoints, legalHeartsCards } from "./heartsRules";
-import { chooseWhistCard, whistPositionFromHand } from "../whistPolicy";
-import { bridgeBoardConditions } from "../bridgeBoard";
-import { chooseHeartsCard, chooseHeartsPass, heartsPositionFromHand } from "../heartsPolicy";
+import { chooseWhistCard, whistPositionFromHand } from "./whistPolicy";
+import { bridgeBoardConditions } from "./bridgeBoard";
+import { chooseHeartsCard, chooseHeartsPass, heartsPositionFromHand } from "./heartsPolicy";
 import type {
   Card,
   BridgeAuctionCall,
@@ -16,7 +16,7 @@ import type {
   Seat,
   Suit,
   TableCard
-} from "../lessonTypes";
+} from "./types";
 
 type Rank = "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "J" | "Q" | "K" | "A";
 

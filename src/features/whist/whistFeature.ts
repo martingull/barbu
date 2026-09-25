@@ -2,7 +2,7 @@ import { derived, get, writable } from "svelte/store";
 import { createReviewedMatchFeature, type FeatureOptions } from "../reviewedMatchFeature";
 import { createWhistSession, transitionWhistSession, whistSessionComplete } from "../../domain/whistSession";
 import { createWhistSaveStore, restoreWhistSession, saveWhistSession } from "../../persistence/whistSave";
-import type { WhistSessionMode } from "../../whistScoring";
+import type { WhistSessionMode } from "../../domain/whistScoring";
 import { whistDef } from "../../games/whist";
 
 export function createWhistFeature(options: FeatureOptions) {

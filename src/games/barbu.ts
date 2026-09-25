@@ -1,5 +1,5 @@
-import type { GameDefinition } from "../gameRegistry";
-import { createGameTableDefinition } from "../tableFactory";
+import type { GameDefinition } from "./gameRegistry";
+import { createGameTableDefinition } from "./tableFactory";
 
 export type BarbuLearnPathAction = "lesson" | "planned";
 export type BarbuPracticeAction = "fixed" | "domino";

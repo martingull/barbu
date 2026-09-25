@@ -27,11 +27,11 @@ remain necessary before making claims about opponent strength.
 
 ## Implementation And Verification
 
-- Shared browser/native policy: `src/whistPolicy.ts`; scoring: `src/whistScoring.ts`.
+- Shared browser/native policy: `src/domain/whistPolicy.ts`; scoring: `src/domain/whistScoring.ts`.
 - Hand/session engine: `src/domain/handEngine.ts` and `src/domain/whistSession.ts`.
   The duplicate Rust hand engine, opponent policy, and settlement are removed.
 - Table metadata and learning path: `src/games/whist.ts` and the shared table factory.
-- Authored decisions: `src/whistLessons.ts`; concepts and examples: `src/courseContent.ts`.
+- Authored decisions: `src/lessons/whist/exercises.ts`; concepts and examples: `src/lessons/whist/courses.ts`.
   Learn covers the same clockwise deal/play, exposed trump, five-point games,
   honours-off scoring and optional rubber as Play. Tests check all 18 authored
   decisions against the public-information policy and complete all seven lessons.

@@ -1,7 +1,8 @@
 <script lang="ts">
-  import CardChoiceHand from "../../CardChoiceHand.svelte";
-  import GameResult from "../../GameResult.svelte";
-  import { bridgeHighCardPoints, explainBridgeCall } from "../../bridgeBidding";
+  import CardChoiceHand from "../../components/CardChoiceHand.svelte";
+  import GameResult from "../../components/GameResult.svelte";
+  import { bridgeHighCardPoints } from "../../domain/bridgeBidding";
+  import { explainBridgeCall } from "./bridgeBidExplanation";
   import { bridgeAuctionStatus, bridgeLegalCallOptions, bridgeSuggestedCallForHand, bridgeFinalizeContract,
     bridgeBidOptions, bridgeCallLongLabel, type BridgeCallOption } from "../../domain/bridgeAuction";
   import type { BridgeSession } from "../../domain/bridgeSession";

@@ -1,4 +1,4 @@
-import type { Card, Suit } from "../lessonTypes";
+import type { Card, Suit } from "./types";
 import { legalCards } from "./trickTakingRules";
 
 export function heartsPoints(card: Card): number {

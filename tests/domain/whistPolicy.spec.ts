@@ -1,12 +1,12 @@
 import { test, expect } from "@playwright/test";
 import policyCases from "../fixtures/whist-policy.json" with { type: "json" };
 import sessionCases from "../fixtures/whist-session.json" with { type: "json" };
-import { chooseWhistCard, whistPositionFromHand, type WhistPosition } from "../../src/whistPolicy";
-import { settleWhistHand, type WhistSessionMode } from "../../src/whistScoring";
+import { chooseWhistCard, whistPositionFromHand, type WhistPosition } from "../../src/domain/whistPolicy";
+import { settleWhistHand, type WhistSessionMode } from "../../src/domain/whistScoring";
 import { startBrowserWhistHand, playBrowserWhistCard } from "../../src/domain/trickTakingHand";
-import type { Card, Suit } from "../../src/lessonTypes";
-import * as lessons from "../../src/whistLessons";
-import { courseCatalog } from "../../src/courseContent";
+import type { Card, Suit } from "../../src/domain/types";
+import * as lessons from "../../src/lessons/whist/exercises";
+import { courseCatalog } from "../../src/lessons/courses";
 
 const card = (id: string): Card => ({ id, label: id, rank: id.slice(0, -1), suit: id.at(-1) as Suit });
 const plays = (trick: (number | string)[][]) => trick.map(play => ({ player: Number(play[0]), card: card(String(play[1])) }));

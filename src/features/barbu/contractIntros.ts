@@ -1,4 +1,4 @@
-import type { FullHandContract } from "../../lessonTypes";
+import type { FullHandContract } from "../../domain/types";
 
 type RunContractIntro = { title: string; role: string; surface: string; target: string; reason: string; habit: string };
 

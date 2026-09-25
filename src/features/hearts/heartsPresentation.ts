@@ -1,7 +1,7 @@
-import type { Seat, FullHandState, CompletedHandTrick } from "../../lessonTypes";
+import type { Seat, FullHandState, CompletedHandTrick } from "../../domain/types";
 import { heartsHandPenaltyTotal, type HeartsHandResult, type HeartsPassDirection } from "../../domain/heartsSession";
 import { seatPenaltiesForTricks } from "../../domain/trickTakingScore";
-import { scoreSeats, scoreSeatLabel, formatOrdinal, formatPointCount, type RunStanding } from "../../scorePresentation";
+import { scoreSeats, scoreSeatLabel, formatOrdinal, formatPointCount, type RunStanding } from "../../presentation/scorePresentation";
 
 export function heartsPassDirectionLabel(direction: HeartsPassDirection) {
   return direction === "hold" ? "No pass" : `Pass ${direction}`;

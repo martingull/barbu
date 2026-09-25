@@ -1,13 +1,13 @@
 <script lang="ts">
-  import TablePlaySurface from "../../TablePlaySurface.svelte";
-  import CardChoiceHand from "../../CardChoiceHand.svelte";
-  import ExerciseFeedback from "../../ExerciseFeedback.svelte";
-  import GameResult from "../../GameResult.svelte";
+  import TablePlaySurface from "../../components/TablePlaySurface.svelte";
+  import CardChoiceHand from "../../components/CardChoiceHand.svelte";
+  import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
+  import GameResult from "../../components/GameResult.svelte";
   import SpadesBids from "./SpadesBids.svelte";
   import { spadesSessionSettlement, spadesSessionComplete, type SpadesSession } from "../../domain/spadesSession";
-  import { spadesSideBid, spadesPlayerSideSeats, spadesOpponentSideSeats, spadesMatchTarget } from "../../spadesScoring";
-  import { spadesTrickFeedback } from "../../spadesFeedback";
-  import { whistPartnershipTrickCounts } from "../../whistPresentation";
+  import { spadesSideBid, spadesPlayerSideSeats, spadesOpponentSideSeats, spadesMatchTarget } from "../../domain/spadesScoring";
+  import { spadesTrickFeedback } from "./spadesFeedback";
+  import { partnershipTrickCounts } from "../../domain/trickTakingScore";
   import { spadesBidLabel, spadesResultCopy } from "./spadesPresentation";
   let { session, selectedCardId, error, dealing, onBack, onSelect, onPlay, onNextTrick, onNextHand, onReplay, onBid, onToggleBids, onStartPlay }: {
     session: SpadesSession; selectedCardId: string; error: string; dealing: boolean;
@@ -22,7 +22,7 @@
     ? hand.completedTricks[session.fullHandReviewTrickCount - 1] : undefined);
   let tableCards = $derived(review?.cards ?? hand.currentTrick);
   let legal = $derived(new Set(hand.legalCardIds));
-  let tricks = $derived(whistPartnershipTrickCounts(hand.completedTricks));
+  let tricks = $derived(partnershipTrickCounts(hand.completedTricks));
   let bids = $derived({ playerSide: spadesSideBid(session.bids, spadesPlayerSideSeats),
     opponentSide: spadesSideBid(session.bids, spadesOpponentSideSeats) });
   let settlement = $derived(spadesSessionSettlement(session));

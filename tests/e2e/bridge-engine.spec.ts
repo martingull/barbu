@@ -3,8 +3,8 @@ import { bridgeLegacyCases } from "../fixtures/bridgeLegacy";
 import { createBridgeSession, transitionBridgeSession, bridgeSessionSettlement } from "../../src/domain/bridgeSession";
 import { saveBridgeSession, restoreBridgeSession } from "../../src/persistence/bridgeSave";
 import { trickTakingSeats } from "../../src/domain/trickTakingScore";
-import { sortCardsForDisplay } from "../../src/cardOrdering";
-import { formatCardLabel } from "../../src/cardDisplay";
+import { sortCardsForDisplay } from "../../src/presentation/cardOrdering";
+import { formatCardLabel } from "../../src/presentation/cardDisplay";
 
 const key = "barbu.savedBridgeRun.v1";
 const saved = (page: Page) => page.evaluate(key => JSON.parse(localStorage.getItem(key)!), key);

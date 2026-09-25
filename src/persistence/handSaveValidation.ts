@@ -1,4 +1,4 @@
-import type { Card, FullHandContract, FullHandState, Seat, Suit, TableCard } from "../lessonTypes";
+import type { Card, FullHandContract, FullHandState, Seat, Suit, TableCard } from "../domain/types";
 import { trickTakingSeats as seats } from "../domain/trickTakingScore";
 import { barbuTrickPoints, isBarbuTrickContract } from "../domain/barbuRules";
 

@@ -1,5 +1,5 @@
-import { createGameTableDefinition } from "../tableFactory";
-import type { GameDefinition } from "../gameRegistry";
+import { createGameTableDefinition } from "./tableFactory";
+import type { GameDefinition } from "./gameRegistry";
 import type { CountingExercise } from "../domain/cardCountingQuestions";
 
 export const cardCountingTable = createGameTableDefinition({

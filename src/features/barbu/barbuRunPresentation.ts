@@ -1,6 +1,6 @@
-import { fullHandContracts } from "../../contractRegistry";
+import { fullHandContracts } from "../../domain/contractRegistry";
 import { barbuSessionComplete, barbuSeatTotals, type BarbuSession, type BarbuHandResult as FullHandRunResult } from "../../domain/barbuSession";
-import { formatOrdinal, formatSignedScore, scoreSeatLabel } from "../../scorePresentation";
+import { formatOrdinal, formatSignedScore, scoreSeatLabel } from "../../presentation/scorePresentation";
 import { contractIntro } from "./contractIntros";
 import { runStandings, runBestContract, runWeakestContract, runResultHeading, runResultSummary, runContractValueLabel } from "./barbuPresentation";
 

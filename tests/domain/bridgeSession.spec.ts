@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import fixture from "../fixtures/bridge-native-rules.json" with { type: "json" };
 import { bridgeLegacyCases } from "../fixtures/bridgeLegacy";
-import type { BridgeAuctionCall, BridgeStrain, BridgeVulnerability, FullHandState } from "../../src/lessonTypes";
+import type { BridgeAuctionCall, BridgeStrain, BridgeVulnerability, FullHandState } from "../../src/domain/types";
 import { bridgeAuctionStatus, bridgeFinalizeContract, bridgeLegalCallOptions } from "../../src/domain/bridgeAuction";
 import { bridgeDuplicateScore } from "../../src/domain/bridgeScoring";
 import { createBridgeSession, transitionBridgeSession, bridgeSessionSettlement, type BridgeSession } from "../../src/domain/bridgeSession";

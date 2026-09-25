@@ -1,11 +1,11 @@
 <script lang="ts">
   import GameLearning from "../GameLearning.svelte";
-  import PlayTabPanel from "../../PlayTabPanel.svelte";
+  import PlayTabPanel from "../../components/PlayTabPanel.svelte";
   import SpadesHandView from "./SpadesHandView.svelte";
   import { spadesDef, type SpadesPracticeAction } from "../../games/spades";
-  import { spadesMatchTarget } from "../../spadesScoring";
+  import { spadesMatchTarget } from "../../domain/spadesScoring";
   import { orderPracticePool, type DrillStep } from "../../lessons/drillDecision";
-  import { spadesFollowSuitDrillPool, spadesTrumpOrDiscardDrillPool, spadesBidBooksDrillPool, spadesAvoidBagsDrillPool } from "../../spadesLessons";
+  import { spadesFollowSuitDrillPool, spadesTrumpOrDiscardDrillPool, spadesBidBooksDrillPool, spadesAvoidBagsDrillPool } from "../../lessons/spades/exercises";
   import { savedSpadesRunSummary } from "./spadesPresentation";
   import type { FeatureServices } from "../featureServices";
   import type { SpadesFeature } from "./spadesFeature";

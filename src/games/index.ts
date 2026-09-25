@@ -1,4 +1,4 @@
-import { registry } from "../gameRegistry";
+import { registry } from "./gameRegistry";
 import { barbuDef } from "./barbu";
 import { heartsDef } from "./hearts";
 import { spadesDef } from "./spades";

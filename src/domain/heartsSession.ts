@@ -1,4 +1,4 @@
-import type { FullHandState, Seat } from "../lessonTypes";
+import type { FullHandState, Seat } from "./types";
 import { heartsHandEngine } from "./handEngine";
 import { transitionReviewedHand, type ReviewedHandEvent } from "./reviewedHand";
 import { addSeatPenalties, emptySeatPenalties, seatPenaltiesForTricks, trickTakingSeats, type SeatScores } from "./trickTakingScore";

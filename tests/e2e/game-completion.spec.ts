@@ -2,8 +2,8 @@ import { expect, test, type Page } from "@playwright/test";
 import { startBrowserWhistHand, playBrowserWhistCard, startBrowserSpadesHand, playBrowserSpadesCard,
   startBrowserBridgeHand, applyBrowserBridgeAuction, playBrowserBridgeCard } from "../../src/domain/trickTakingHand";
 import { dominoHandEngine } from "../../src/domain/dominoHand";
-import { fullHandContracts } from "../../src/contractRegistry";
-import type { BridgeAuctionCall, FullHandState } from "../../src/lessonTypes";
+import { fullHandContracts } from "../../src/domain/contractRegistry";
+import type { BridgeAuctionCall, FullHandState } from "../../src/domain/types";
 
 type EndEvent = { game: string; scope: string; title: string; summary: string };
 declare global { interface Window { gameEnds: EndEvent[] } }

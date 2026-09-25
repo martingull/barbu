@@ -3,7 +3,7 @@ import { get } from "svelte/store";
 import { createBarbuFeature } from "../../src/features/barbu/barbuFeature";
 import { barbuSessionComplete, dominoSeatScores } from "../../src/domain/barbuSession";
 import { barbuSaveKey } from "../../src/persistence/barbuSave";
-import { fullHandContracts } from "../../src/contractRegistry";
+import { fullHandContracts } from "../../src/domain/contractRegistry";
 import { dominoResultText } from "../../src/features/barbu/barbuPresentation";
 import { contractIntro } from "../../src/features/barbu/contractIntros";
 import { dominoHandEngine } from "../../src/domain/dominoHand";

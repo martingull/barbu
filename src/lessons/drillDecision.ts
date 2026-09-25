@@ -1,5 +1,5 @@
-import type { Card, GuidedCardOutcome, GuidedTrick, PracticeReason } from "../lessonTypes";
-import { formatCardLabel } from "../cardDisplay";
+import type { Card, GuidedCardOutcome, GuidedTrick, PracticeReason } from "../domain/types";
+import { formatCardLabel } from "../presentation/cardDisplay";
 
 export type DrillStep = { scenarioId?: string; contract: string; title: string; trick: GuidedTrick };
 export type DrillResult = { contract: string; cardLabel: string; outcome: GuidedCardOutcome | "illegal"; reason: PracticeReason; clean: boolean };

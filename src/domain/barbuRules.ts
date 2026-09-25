@@ -1,4 +1,4 @@
-import type { Card, TableCard } from "../lessonTypes";
+import type { Card, TableCard } from "./types";
 
 export const barbuTrickContracts = ["No Hearts", "No Queens", "King of Hearts", "No Last Two", "No Tricks", "Hearts Trumps"] as const;
 export type BarbuTrickContract = typeof barbuTrickContracts[number];

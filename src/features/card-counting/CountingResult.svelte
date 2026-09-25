@@ -1,5 +1,5 @@
 <script lang="ts">
-  import GameResult from "../../GameResult.svelte";
+  import GameResult from "../../components/GameResult.svelte";
   let { label, title, summary, clean, attempts, scoreLabel, score }: {
     label: string; title: string; summary: string; clean: number; attempts: number; scoreLabel: string; score: string;
   } = $props();

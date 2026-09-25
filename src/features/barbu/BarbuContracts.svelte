@@ -1,6 +1,6 @@
 <script lang="ts">
   import { guidedLessons } from "../../lessons/catalog";
-  import { courseCatalog, courseTargetsGuidedLesson } from "../../courseContent";
+  import { courseCatalog, courseTargetsGuidedLesson } from "../../lessons/courses";
   export let completedPathSteps: Record<string, boolean>;
   export let onBack: () => void;
   export let onStep: (id: string) => void;

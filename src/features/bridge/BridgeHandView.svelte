@@ -1,13 +1,13 @@
 <script lang="ts">
-  import TablePlaySurface from "../../TablePlaySurface.svelte";
-  import BridgeTable from "../../BridgeTable.svelte";
-  import CardChoiceHand from "../../CardChoiceHand.svelte";
-  import ExerciseFeedback from "../../ExerciseFeedback.svelte";
-  import GameResult from "../../GameResult.svelte";
+  import TablePlaySurface from "../../components/TablePlaySurface.svelte";
+  import BridgeTable from "./BridgeTable.svelte";
+  import CardChoiceHand from "../../components/CardChoiceHand.svelte";
+  import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
+  import GameResult from "../../components/GameResult.svelte";
   import { bridgeSessionSettlement, type BridgeSession } from "../../domain/bridgeSession";
   import { bridgeDeclarerTrickCounts } from "../../domain/bridgeScoring";
   import { bridgeSideForSeat } from "../../domain/bridgeAuction";
-  import { formatSignedScore } from "../../scorePresentation";
+  import { formatSignedScore } from "../../presentation/scorePresentation";
   import { bridgeActiveHand, bridgeSeatLabel, bridgePartnershipLabel, bridgeResultCopy, bridgeReviewFeedback } from "./bridgePresentation";
   let { session, selectedCardId, error, dealing, onBack, onSelect, onPlay, onNextTrick, onNextHand, onReplay }: {
     session: BridgeSession; selectedCardId: string; error: string; dealing: boolean;

@@ -1,16 +1,17 @@
 <script lang="ts">
   import { untrack, type Snippet } from "svelte";
-  import type { Seat, TableCard } from "../lessonTypes";
+  import type { Seat, TableCard } from "../domain/types";
   import type { PlayBarbuAttempt } from "../lessons/drillReview";
-  import GameTableShell from "../GameTableShell.svelte";
-  import LearnPanel from "../LearnPanel.svelte";
-  import CourseLesson from "../CourseLesson.svelte";
-  import DrillScreen from "../DrillScreen.svelte";
-  import DrillResultScreen from "../DrillResultScreen.svelte";
-  import { courseCatalog, type CourseContent, type CourseStage } from "../courseContent";
+  import GameTableShell from "../components/GameTableShell.svelte";
+  import LearnPanel from "../components/LearnPanel.svelte";
+  import CourseLesson from "../components/CourseLesson.svelte";
+  import DrillScreen from "../components/DrillScreen.svelte";
+  import DrillResultScreen from "../components/DrillResultScreen.svelte";
+  import { courseCatalog } from "../lessons/courses";
+  import type { CourseContent, CourseStage } from "../lessons/courseTypes";
   import { drillDecision, type DrillStep, type DrillResult } from "../lessons/drillDecision";
-  import type { GameDefinition } from "../gameRegistry";
-  import type { LearnPathStep, TableTabId } from "../tableFactory";
+  import type { GameDefinition } from "../games/gameRegistry";
+  import type { LearnPathStep, TableTabId } from "../games/tableFactory";
   import type { CustomExerciseContext, FeatureServices, LearningEntry, LearningResultActions } from "./featureServices";
 
   let { definition, gameName, tab, onTab, play, customExercise, loadExercise, exerciseTitle, drillTitle, drillEyebrow, seatLabels = {}, resultMessage,

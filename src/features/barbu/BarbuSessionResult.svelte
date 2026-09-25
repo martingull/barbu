@@ -1,8 +1,8 @@
 <script lang="ts">
-  import GameResult from "../../GameResult.svelte";
+  import GameResult from "../../components/GameResult.svelte";
   import BarbuScorecard from "./BarbuScorecard.svelte";
   import type { BarbuSession } from "../../domain/barbuSession";
-  import { formatOrdinal, formatSignedScore, scoreSeatLabel } from "../../scorePresentation";
+  import { formatOrdinal, formatSignedScore, scoreSeatLabel } from "../../presentation/scorePresentation";
   import { barbuRunPresentation } from "./barbuRunPresentation";
   export let session: BarbuSession;
   $: ({ fullHandRunResultTitle, fullHandRunResultSummary, fullHandRunStandings, fullHandRunWinnerLabel,

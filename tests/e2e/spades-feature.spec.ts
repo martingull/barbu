@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { courseCatalog } from "../../src/courseContent";
+import { courseCatalog } from "../../src/lessons/courses";
 
 test("Spades bidding survives other games and every guided lesson", async ({ page }, info) => {
   test.setTimeout(60_000);

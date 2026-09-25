@@ -1,13 +1,13 @@
 <script lang="ts">
-  import TablePlaySurface from "../../TablePlaySurface.svelte";
-  import CardChoiceHand from "../../CardChoiceHand.svelte";
-  import ExerciseFeedback from "../../ExerciseFeedback.svelte";
-  import GameResult from "../../GameResult.svelte";
+  import TablePlaySurface from "../../components/TablePlaySurface.svelte";
+  import CardChoiceHand from "../../components/CardChoiceHand.svelte";
+  import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
+  import GameResult from "../../components/GameResult.svelte";
   import { heartsSessionSettlement, heartsMoonShooter, heartsScoredSeatPenalties, heartsMatchTarget, type HeartsSession } from "../../domain/heartsSession";
   import { seatPenaltiesForTricks } from "../../domain/trickTakingScore";
-  import { contractScoreMeta } from "../../contractScoring";
+  import { contractScoreMeta } from "../../domain/contractScoring";
   import { heartsDef } from "../../games/hearts";
-  import { scoreSeats, scoreSeatLabel, scoreSeatRunLabel, formatOrdinal, seatTricksWonForTricks } from "../../scorePresentation";
+  import { scoreSeats, scoreSeatLabel, scoreSeatRunLabel, formatOrdinal, seatTricksWonForTricks } from "../../presentation/scorePresentation";
   import { heartsScorecardStandings, heartsResultCopy, heartsPlayerHandResult, heartsHandResultLabel, heartsTrickFeedback } from "./heartsPresentation";
   let { session, selectedCardId, error, dealing, onBack, onSelect, onPlay, onNextTrick, onNextHand, onReplay }: {
     session: HeartsSession; selectedCardId: string; error: string; dealing: boolean;

@@ -1,4 +1,4 @@
-import type { Card, Suit } from "../lessonTypes";
+import type { Card, Suit } from "./types";
 import { cardRank } from "./trickTakingRules";
 
 export const dominoSuits: Suit[] = ["C", "D", "H", "S"];

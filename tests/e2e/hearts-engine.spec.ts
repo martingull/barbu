@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import native from "../fixtures/hearts-native-save.json" with { type: "json" };
 import { createHeartsSession, transitionHeartsSession, heartsSessionSettlement } from "../../src/domain/heartsSession";
 import { saveHeartsSession } from "../../src/persistence/heartsSave";
-import { formatCardText } from "../../src/cardDisplay";
+import { formatCardText } from "../../src/presentation/cardDisplay";
 import { generateHeartsPracticeSet, generateHeartsPassPractice, heartsPassPracticeCount } from "../../src/domain/heartsPractice";
 
 const key = "barbu.savedHeartsRun.v1";

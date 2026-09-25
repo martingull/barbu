@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { nativeBarbuHands, nativeBarbuHand, compactBarbuHand } from "../fixtures/barbuHandFixture";
-import type { FullHandState } from "../../src/lessonTypes";
+import type { FullHandState } from "../../src/domain/types";
 
 const key = "barbu.savedPlayRun.v1";
 async function openPlay(page: Page) {

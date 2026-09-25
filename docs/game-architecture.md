@@ -16,10 +16,50 @@ chosen rules, scoring, and table conventions.
 
 ## Implementation Pattern
 
+### Source Map
+
+```text
+src/
+  App.svelte          Catalog/reference routing and shared services
+  main.ts             Svelte startup and platform setup
+  app.d.ts            Environment declarations
+  components/         Shared Svelte cards, tables, Learn/Play and result surfaces
+  features/           Per-game interaction, views and game-specific display copy
+  domain/             Rules, policies, scoring, sessions and shared game types
+  persistence/        Save validation and storage adapters
+  games/              Table definitions, registry, factory and reference catalog
+  lessons/            Shared lesson flow data/adapters and catalogs
+    <game>/           Authored courses and exercises for that game
+  presentation/       Shared formatting, card ordering and layout measurement
+  styles/             Global styling and shared table layout
+```
+
+Keep domain imports within `domain/` or structured JSON under `content/`.
+Persistence depends on the domain, never on Svelte or game views. Shared components
+and presentation helpers must not import game features; features compose them.
+Card Counting deliberately reuses the other games' feedback for its unsaved hands.
+`tests/domain/architecture.spec.js` checks these dependency boundaries.
+
+`lessons/courses.ts` assembles per-game courses; it is not a place to accumulate
+new game prose. `lessons/courseTypes.ts` owns their shared structure. Generated
+exercise templates stay in `content/` and deterministic generators in `domain/`.
+Do not duplicate the authored TypeScript courses as JSON merely for symmetry.
+
+Scoring and display copy have separate owners. For example, `domain/whistScoring.ts`
+settles the game, while `features/whist/whistPresentation.ts` formats the result.
+Partnership trick totals are shared domain calculations in `trickTakingScore.ts`;
+Spades and Card Counting must not import Whist presentation to count tricks.
+
+The source-root `ProTabPanel` was unused and removed. Future monetization metadata
+remains in the definitions, but there is no active subscription screen. Native
+packaging, public assets, release artifacts and compatibility fixtures retain their
+existing locations. The stylesheet move preserves CSS rules and load order; a
+future stylesheet decomposition must be verified independently of file organization.
+
 | Responsibility | Existing reference | Expectation |
 | --- | --- | --- |
-| Catalog and table metadata | `src/tableFactory.ts`, `src/games/whist.ts` | Use the factory and per-game definitions, not copied table markup. |
-| Registration | `src/gameRegistry.ts`, `src/games/index.ts` | Register metadata through the existing registry. |
+| Catalog and table metadata | `src/games/tableFactory.ts`, `src/games/whist.ts` | Use the factory and per-game definitions, not copied table markup. |
+| Registration | `src/games/gameRegistry.ts`, `src/games/index.ts` | Register metadata through the existing registry. |
 | Presentation | `GameTableShell`, `LearnPanel`, `CourseLesson`, `PlayTabPanel`, `TablePlaySurface`, `CardChoiceHand` | Reuse Learn/Play navigation, cards, selection, feedback, and responsive layout. |
 | Feature coordination | `src/features/{whist,hearts,spades,bridge,barbu}/`, `src/features/GameLearning.svelte` | Own game-local Learn/Play interaction and saving; compose existing engines. |
 | Hand rules and actions | `src/domain/handEngine.ts` | Keep deterministic transitions independent of UI, storage, and Tauri. |
@@ -37,11 +77,11 @@ engine. Hearts practice uses `src/domain/heartsPractice.ts` with structured temp
 in `content/hearts-practice.json`. Its legality and points reuse full-play rules;
 frozen native outputs verify all 18 decisions and both passing patterns.
 Spades uses the same hand, review and save factories, with bidding and settlement
-in domain modules and its twelve authored decisions in `src/spadesLessons.ts`.
+in domain modules and its twelve authored decisions in `src/lessons/spades/exercises.ts`.
 Bridge adds auction and duplicate-scoring domain modules, a board session, and a
 version-1 save adapter. Its native auction/scoring mirror is removed. Replay
 restores the actual deal and contract; Next board commits one result, including
-a zero-point passed-out board. Its authored decisions live in `src/bridgePractice.ts`.
+a zero-point passed-out board. Its authored decisions live in `src/lessons/bridge/exercises.ts`.
 Barbu generated practice now follows the same domain/content split in
 `src/domain/barbuPractice.ts` and `content/barbu-practice.json`. Four seeded
 patterns per contract retain dynamic rank/suit choices. Scoring and Domino

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { fullHandContracts } from "../../contractRegistry";
+  import { fullHandContracts } from "../../domain/contractRegistry";
   import { barbuSeatTotals, type BarbuSession } from "../../domain/barbuSession";
-  import { contractRunScore } from "../../contractScoring";
-  import { scoreSeats, scoreSeatLabel, formatSignedScore } from "../../scorePresentation";
-  import type { FullHandContract, Seat } from "../../lessonTypes";
+  import { contractRunScore } from "../../domain/contractScoring";
+  import { scoreSeats, scoreSeatLabel, formatSignedScore } from "../../presentation/scorePresentation";
+  import type { FullHandContract, Seat } from "../../domain/types";
   export let session: BarbuSession;
   export let label = "Barbu scorecard";
   $: fullHand = session.fullHand;

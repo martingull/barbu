@@ -1,8 +1,8 @@
-import type { Seat } from "../../lessonTypes";
+import type { Seat } from "../../domain/types";
 import type { SpadesBidState } from "../../domain/spadesBidding";
 import type { SavedSpadesRun } from "../../persistence/spadesSave";
-import { spadesSideBid, spadesPlayerSideSeats, spadesOpponentSideSeats, spadesMatchTarget, type SpadesHandResult, type SpadesScoreState } from "../../spadesScoring";
-import { scoreSeatLabel, formatSignedScore } from "../../scorePresentation";
+import { spadesSideBid, spadesPlayerSideSeats, spadesOpponentSideSeats, spadesMatchTarget, type SpadesHandResult, type SpadesScoreState } from "../../domain/spadesScoring";
+import { scoreSeatLabel, formatSignedScore } from "../../presentation/scorePresentation";
 
 export function spadesBidLabel(bids: SpadesBidState) {
   return `${spadesSideBid(bids, spadesPlayerSideSeats)}-${spadesSideBid(bids, spadesOpponentSideSeats)}`;

@@ -13,11 +13,11 @@
   import type { LearningEntry } from "./features/featureServices";
   import type { PlayBarbuAttempt } from "./lessons/drillReview";
   import { invoke, isTauri } from "@tauri-apps/api/core";
-  import CardFace from "./CardFace.svelte";
+  import CardFace from "./components/CardFace.svelte";
   import "./games";
-  import { referenceCatalog, type GameReference } from "./referenceCatalog";
-  import { getCatalogCategories, type ActiveGameTable, type CatalogGameId } from "./tableFactory";
-  import type { Card, GuidedCardOutcome, PracticeReason } from "./lessonTypes";
+  import { referenceCatalog, type GameReference } from "./games/referenceCatalog";
+  import { getCatalogCategories, type ActiveGameTable, type CatalogGameId } from "./games/tableFactory";
+  import type { Card, GuidedCardOutcome, PracticeReason } from "./domain/types";
 
   type AppView = "catalog" | "barbuFeature" | "heartsFeature" | "whistFeature" | "spadesFeature" | "bridgeFeature" | "cardCountingFeature" | "reference";
   const catalogCategories = getCatalogCategories();

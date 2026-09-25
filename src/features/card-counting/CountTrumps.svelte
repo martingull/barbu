@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
-  import TablePlaySurface from "../../TablePlaySurface.svelte";
-  import { formatCardLabel } from "../../cardDisplay";
+  import TablePlaySurface from "../../components/TablePlaySurface.svelte";
+  import { formatCardLabel } from "../../presentation/cardDisplay";
   import { startCountRound, transitionCountRound, type MemoryEvent } from "../../domain/cardCountingSession";
   import MemoryPrompt from "./MemoryPrompt.svelte";
   import CountingResult from "./CountingResult.svelte";

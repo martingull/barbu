@@ -1,4 +1,4 @@
-import type { CompletedHandTrick, Seat } from "../lessonTypes";
+import type { CompletedHandTrick, Seat } from "./types";
 
 export const trickTakingSeats: Seat[] = ["Tutor", "Right", "You", "Left"];
 export type SeatScores = Record<Seat, number>;
@@ -16,4 +16,14 @@ export function seatPenaltiesForTricks(tricks: CompletedHandTrick[]): SeatScores
     if (seat) totals[seat] += trick.penalty;
   }
   return totals;
+}
+
+export function partnershipTrickCounts(tricks: CompletedHandTrick[]) {
+  return tricks.reduce(
+    (totals, trick) => ({
+      playerSide: totals.playerSide + (trick.winnerIndex === 0 || trick.winnerIndex === 2 ? 1 : 0),
+      opponentSide: totals.opponentSide + (trick.winnerIndex === 1 || trick.winnerIndex === 3 ? 1 : 0)
+    }),
+    { playerSide: 0, opponentSide: 0 }
+  );
 }

@@ -1,7 +1,8 @@
-import type { Card, CompletedHandTrick, DominoHandState, FullHandContract, FullHandState, Seat, Suit } from "../../lessonTypes";
-import { contractRunScore, contractScoreMeta, formatContractValue } from "../../contractScoring";
-import { formatCardLabel } from "../../cardDisplay";
-import { scoreSeats, scoreSeatLabel, formatSignedScore, formatOrdinal, type RunStanding } from "../../scorePresentation";
+import type { Card, CompletedHandTrick, DominoHandState, FullHandContract, FullHandState, Seat, Suit } from "../../domain/types";
+import { contractRunScore, contractScoreMeta } from "../../domain/contractScoring";
+import { formatContractValue } from "../../presentation/contractPresentation";
+import { formatCardLabel } from "../../presentation/cardDisplay";
+import { scoreSeats, scoreSeatLabel, formatSignedScore, formatOrdinal, type RunStanding } from "../../presentation/scorePresentation";
 import { dominoSeatScores, type BarbuHandResult as FullHandRunResult } from "../../domain/barbuSession";
 import { isLegalDominoPlacement } from "../../domain/dominoRules";
 import { cardRank } from "../../domain/trickTakingRules";

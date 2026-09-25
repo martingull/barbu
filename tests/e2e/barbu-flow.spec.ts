@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test";
 import type { Locator, Page } from "@playwright/test";
 import { chooseBrowserOpponentCardForState } from "../../src/domain/trickTakingHand";
-import type { Card, FullHandState } from "../../src/lessonTypes";
+import type { Card, FullHandState } from "../../src/domain/types";
 import { createBridgeSession, transitionBridgeSession } from "../../src/domain/bridgeSession";
 import { saveBridgeSession } from "../../src/persistence/bridgeSave";
 import { trickTakingSeats } from "../../src/domain/trickTakingScore";
-import { whistOddProgress } from "../../src/whistScoring";
+import { whistOddProgress } from "../../src/features/whist/whistPresentation";
 
 test.beforeEach(async ({ page }, testInfo) => {
   if (testInfo.project.name !== "iphone-16") {

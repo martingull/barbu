@@ -1,12 +1,12 @@
 <script lang="ts">
-  import TablePlaySurface from "../../TablePlaySurface.svelte";
-  import CardChoiceHand from "../../CardChoiceHand.svelte";
-  import ExerciseFeedback from "../../ExerciseFeedback.svelte";
-  import GameResult from "../../GameResult.svelte";
-  import { formatCardLabel } from "../../cardDisplay";
+  import TablePlaySurface from "../../components/TablePlaySurface.svelte";
+  import CardChoiceHand from "../../components/CardChoiceHand.svelte";
+  import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
+  import GameResult from "../../components/GameResult.svelte";
+  import { formatCardLabel } from "../../presentation/cardDisplay";
   import { whistSessionSettlement, type WhistSession } from "../../domain/whistSession";
-  import { whistOddProgress, whistResultCopy } from "../../whistScoring";
-  import { whistPartnershipTrickCounts, whistTrickFeedback, whistTrumpSuitFromHandId } from "../../whistPresentation";
+  import { whistOddProgress, whistResultCopy, whistTrickFeedback, whistTrumpSuitFromHandId } from "./whistPresentation";
+  import { partnershipTrickCounts } from "../../domain/trickTakingScore";
   import { whistOpeningLeadPracticeFeedback, whistOpeningLeadPracticeMaxRounds } from "./openingLeadPractice";
 
   let { session, selectedCardId, error = "", dealing = false, practiceRound,
@@ -21,7 +21,7 @@
     ? hand.completedTricks[session.fullHandReviewTrickCount - 1] : undefined);
   let tableCards = $derived(review?.cards ?? hand.currentTrick);
   let legal = $derived(new Set(hand.legalCardIds));
-  let tricks = $derived(whistPartnershipTrickCounts(hand.completedTricks));
+  let tricks = $derived(partnershipTrickCounts(hand.completedTricks));
   let odd = $derived(whistOddProgress(tricks));
   let settlement = $derived(whistSessionSettlement(session));
   let rubber = $derived(session.mode === "rubber");

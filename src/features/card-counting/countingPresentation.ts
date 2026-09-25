@@ -1,11 +1,11 @@
 import type { MemoryQuestion, MemoryExercise } from "../../domain/cardCountingQuestions";
 import type { MemoryHandSession } from "../../domain/cardCountingSession";
 import { isCourtCard } from "../../domain/cardCountingQuestions";
-import { whistPartnershipTrickCounts } from "../../whistPresentation";
+import { partnershipTrickCounts } from "../../domain/trickTakingScore";
 import { heartsScoredSeatPenalties } from "../../domain/heartsSession";
 import { seatPenaltiesForTricks } from "../../domain/trickTakingScore";
-import { formatCardLabel } from "../../cardDisplay";
-import { scoreSeatLabel, formatPointCount } from "../../scorePresentation";
+import { formatCardLabel } from "../../presentation/cardDisplay";
+import { scoreSeatLabel, formatPointCount } from "../../presentation/scorePresentation";
 const suitNames = { C: "clubs", D: "diamonds", H: "hearts", S: "spades" };
 export const memoryPresentation = {
   "heart-memory": { title: "Heart memory hand", game: "Black Lady", target: "Target heart card", count: "Heart count answer options", specific: "Heart card answer options", seen: "Hearts seen so far" },
@@ -106,7 +106,7 @@ export function memoryResult(session: MemoryHandSession) {
   const partnership = session.fullHand.contract === "Whist";
   const danger = session.exercise === "danger-count";
   const penalties = seatPenaltiesForTricks(session.fullHand.completedTricks);
-  const score = partnership ? whistPartnershipTrickCounts(session.fullHand.completedTricks).playerSide
+  const score = partnership ? partnershipTrickCounts(session.fullHand.completedTricks).playerSide
     : danger ? penalties.You : heartsScoredSeatPenalties(penalties).You;
   const titles = {
     "heart-memory": sharp ? "Sharp heart memory" : "Heart memory hand complete",

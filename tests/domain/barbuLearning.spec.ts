@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { createBarbuPracticeLoader, isBarbuAttempt } from "../../src/features/barbu/barbuLearning";
 import { guidedLessons } from "../../src/lessons/catalog";
-import { fullHandContracts } from "../../src/contractRegistry";
+import { fullHandContracts } from "../../src/domain/contractRegistry";
 import type { DrillStep } from "../../src/lessons/drillDecision";
 
 test("Barbu preserves authored courses, seeded four-pattern drills and standalone Domino", () => {
