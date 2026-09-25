@@ -20,3 +20,15 @@ export type CustomExerciseContext = {
   onBack: () => void;
   onComplete: () => void;
 };
+
+export type LearningEntry =
+  | { kind: "continue" }
+  | { kind: "step"; id: string }
+  | { kind: "exercise"; action: string };
+
+export type LearningResultActions = {
+  results: DrillResult[];
+  attempts: PlayBarbuAttempt[];
+  onExercise: (action: string) => void;
+  onBack: () => void;
+};

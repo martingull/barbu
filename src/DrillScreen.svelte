@@ -9,7 +9,7 @@
     seatLabels = {}, customTable, onBack, onSelect, onCheck, onNext, onFinish }: {
     step: DrillStep; selectedCardId: string; checkedCardId: string; results: DrillResult[];
     total: number; index: number; title: string; eyebrow: string; topic: string;
-    seatLabels?: Partial<Record<Seat, string>>; customTable?: Snippet;
+    seatLabels?: Partial<Record<Seat, string>>; customTable?: Snippet<[TableCard[]]>;
     onBack: () => void; onSelect: (card: Card) => void; onCheck: () => void; onNext: () => void; onFinish: () => void;
   } = $props();
   let trick = $derived(step.trick);
@@ -26,7 +26,7 @@
   statusLabel={step.contract} statusValue={`Decision ${checked ? results.length : results.length + 1} of ${total}`}
   tableAriaLabel="Drill card table" pendingBySeat={trick.pendingBySeat} {seatLabels}
   useCustomTable={!!customTable} tableCards={customTable ? [] : tableCards} panelAriaLabel="Drill decision" {onBack}>
-  {#snippet table()}{#if customTable}{@render customTable()}{/if}{/snippet}
+  {#snippet table()}{#if customTable}{@render customTable(tableCards)}{/if}{/snippet}
   {#snippet summary()}
     <div class="full-hand-summary grouped-play-summary" aria-label="Drill progress">
       <div class="full-hand-summary-row learning-drill-summary">

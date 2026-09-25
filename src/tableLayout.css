@@ -237,6 +237,11 @@
   height: 100%;
 }
 
+.learning-play-surface .play-board-region > .domino-layout > div {
+  min-height: 0;
+  overflow-wrap: anywhere;
+}
+
 .app-shell.fixed-play-screen .flow-play .play-board-region .bridge-table {
   --bridge-card-width: var(--flow-card-width);
   --bridge-mini-card-width: var(--bridge-card-width);

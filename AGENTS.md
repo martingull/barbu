@@ -154,7 +154,7 @@ complete generic game factory. Reuse shared interfaces and extract common
 behavior when a second game demonstrates the need; do not clone the whole Whist
 implementation or force non-trick-taking games into its hand model.
 
-Whist, Hearts, Spades and Bridge frontends are isolated in `src/features/<game>/`.
+Whist, Hearts, Spades, Bridge and Barbu frontends are isolated in `src/features/<game>/`.
 Reuse `reviewedMatchFeature` for compatible match interaction and `GameLearning` for the shared lesson flow,
 `DrillScreen` and `DrillResultScreen` for decisions and review, and the existing
 table/hand components for play. Keep unsaved exercises separate from saved matches.
@@ -165,8 +165,10 @@ presentation and a session controller. Its hand views also serve unsaved Learn h
 `savedSessionFeature` supplies common saving/navigation/selection plumbing;
 `reviewedMatchFeature` builds trick-review interaction on it. Keep Barbu's intro
 and Domino transitions in its own wrapper, not in the reviewed-match abstraction.
-Barbu Learn and Card Counting still need extraction; do not claim `App.svelte` is already
-only a router. See `docs/game-architecture.md` for the incremental boundary.
+Barbu Learn composes `GameLearning` with authored guided tricks, generated drills,
+Domino layout snippets and an unsaved hand controller. Preserve its seven progress
+keys and four generated patterns per contract. Card Counting still needs extraction;
+do not claim `App.svelte` is already only a router. See `docs/game-architecture.md`.
 
 If a new table needs an existing visual layout, use shared components before
 adding another large inline branch. Rules, scoring, generated practice, and

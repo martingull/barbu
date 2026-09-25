@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test";
+import { guidedLessons } from "../../src/lessons/catalog";
+import { barbuDef } from "../../src/games/barbu";
 
 test("Barbu review survives learning hands and other games without sharing their state", async ({ page }, info) => {
   const errors: string[] = [];
@@ -38,5 +40,50 @@ test("Barbu review survives learning hands and other games without sharing their
   await expect(page.locator(".full-hand-cards")).toBeVisible();
   await expect(page.getByRole("button", { name: "Play card", exact: true })).toBeInViewport();
   await page.screenshot({ path: info.outputPath("barbu-compact-hand.png"), fullPage: true });
+  expect(errors).toEqual([]);
+});
+
+test("Barbu courses retain progress through reference navigation and compact-screen remounts", async ({ page }, info) => {
+  test.setTimeout(60_000);
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
+  await page.getByRole("tab", { name: "Learn", exact: true }).click();
+  for (const [index, step] of barbuDef.learnSteps.entries()) {
+    await page.getByRole("button", { name: /^Reference\b/ }).click();
+    await page.getByRole("button", { name: "Continue path", exact: true }).click();
+    await page.getByRole("button", { name: "See example", exact: true }).click();
+    if (index === 6) {
+      await page.screenshot({ path: info.outputPath("barbu-domino-example.png"), fullPage: true });
+      const panel = await page.locator(".table-play-panel").boundingBox();
+      const laneBottom = await page.locator(".domino-layout > div").evaluateAll(lanes => Math.max(...lanes.map(lane => lane.getBoundingClientRect().bottom)));
+      expect(laneBottom + 4).toBeLessThanOrEqual(panel!.y);
+    }
+    await page.getByRole("button", { name: "Try cards", exact: true }).click();
+    const lesson = guidedLessons.find(lesson => lesson.id === step.lessonId)!;
+    for (const [decision, trick] of lesson.tricks.entries()) {
+      await expect(page.locator(".full-hand-card.selected")).toHaveCount(0);
+      const card = trick.hand.find(card => trick.legalCardIds.includes(card.id))!;
+      await page.getByLabel("Your hand", { exact: true }).getByRole("button", { name: `${card.rank} ${card.suit}`, exact: true }).click();
+      await page.getByRole("button", { name: "Play selected", exact: true }).click();
+      const next = page.getByRole("button", { name: decision === lesson.tricks.length - 1 ? "Finish lesson" : "Next trick", exact: true });
+      await expect(next).toBeInViewport();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      if (decision === 0) await page.screenshot({ path: info.outputPath(`${step.id}-guided.png`), fullPage: true });
+      await next.click();
+    }
+    await page.getByRole("button", { name: `Finish ${lesson.contract}`, exact: true }).click();
+    await expect(page.getByLabel("Barbu course progress")).toContainText(`${index + 1} / 7 complete`);
+  }
+  await page.reload();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
+  await page.getByRole("tab", { name: "Learn", exact: true }).click();
+  await expect(page.getByLabel("Barbu course progress")).toContainText("7 / 7 complete");
+  await page.evaluate(() => { Storage.prototype.setItem = () => { throw Error("Storage blocked"); }; });
+  await page.getByRole("button", { name: /^Review results/ }).click();
+  await page.getByRole("button", { name: "Finish review", exact: true }).click();
+  await expect(page.getByRole("tab", { name: "Learn", exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });

@@ -21,7 +21,7 @@ chosen rules, scoring, and table conventions.
 | Catalog and table metadata | `src/tableFactory.ts`, `src/games/whist.ts` | Use the factory and per-game definitions, not copied table markup. |
 | Registration | `src/gameRegistry.ts`, `src/games/index.ts` | Register metadata through the existing registry. |
 | Presentation | `GameTableShell`, `LearnPanel`, `CourseLesson`, `PlayTabPanel`, `TablePlaySurface`, `CardChoiceHand` | Reuse Learn/Play navigation, cards, selection, feedback, and responsive layout. |
-| Feature coordination | `src/features/{whist,hearts,spades,bridge,barbu}/`, `src/features/GameLearning.svelte` | Own game-local Play interaction and saving; compose existing engines. Barbu Learn extraction is still pending. |
+| Feature coordination | `src/features/{whist,hearts,spades,bridge,barbu}/`, `src/features/GameLearning.svelte` | Own game-local Learn/Play interaction and saving; compose existing engines. |
 | Hand rules and actions | `src/domain/handEngine.ts` | Keep deterministic transitions independent of UI, storage, and Tauri. |
 | Match progression | `src/domain/whistSession.ts` | Own settlement, dealer rotation, replay, completion, and review state outside Svelte. |
 | Persistence | `src/persistence/whistSave.ts` | Validate and restore saves through an adapter; preserve compatibility or explicitly migrate it. |
@@ -73,7 +73,7 @@ replace copy-pasted screens with copy-pasted session or save implementations.
 
 ## Frontend Isolation
 
-Whist, Hearts, Spades and Bridge have isolated frontends under their respective
+Whist, Hearts, Spades, Bridge and Barbu have isolated frontends under their respective
 `src/features/<game>/` directories:
 
 - `WhistGame.svelte` composes the existing table metadata, Learn/Play panels,
@@ -121,6 +121,14 @@ Whist, Hearts, Spades and Bridge have isolated frontends under their respective
   Passing, bids and Whist session mode remain in the game wrappers. This is an
   interaction helper for their existing session contract, not a universal game
   controller; it does not know rules, scoring, opponent policy or layout.
+- `BarbuGame.svelte` composes the same Learn flow with authored guided tricks,
+  contract navigation and review history. `barbuLearning.ts` selects existing
+  generated scenarios and keeps the version-1 recent-pattern memory. Its four
+  patterns per contract and seven-decision mixed review are unchanged.
+  `DominoLessonTable` supplies a shared layout for examples and decisions;
+  `BarbuPracticeHand` reuses the Play views without writing a saved run.
+  Shared Learn extensions are optional entry points, resource actions and
+  presentation snippets, not game-specific rules inside `GameLearning`.
 
 `App.svelte` mounts the feature and supplies catalog/reference navigation, the
 shared seed source, course progress and exercise history. These are catalog-wide
@@ -133,8 +141,8 @@ Keep shared card layout and CSS in the existing components; do not copy them
 into each feature or add game-specific viewport calculations.
 
 This is an incremental frontend refactor, not another engine migration.
-Barbu Learn and Card Counting still have orchestration in `App.svelte`. Barbu
-Play is isolated; the shell only launches it and provides navigation/seed services.
+Card Counting still has orchestration in `App.svelte`. All five game features
+are isolated; the shell launches them and provides catalog-wide services.
 Card Counting
 intentionally still uses Hearts and Whist hands and their presentation helpers;
 those references are not second match implementations. Extract the next
