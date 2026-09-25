@@ -24,7 +24,8 @@ export type CustomExerciseContext = {
 export type LearningEntry =
   | { kind: "continue" }
   | { kind: "step"; id: string }
-  | { kind: "exercise"; action: string };
+  | { kind: "exercise"; action: string }
+  | { kind: "introduction"; action: string; title: string };
 
 export type LearningResultActions = {
   results: DrillResult[];

@@ -57,31 +57,6 @@ button {
   touch-action: manipulation;
 }
 
-.welcome-screen {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.72fr);
-  gap: 18px;
-  align-items: stretch;
-  min-height: 280px;
-  padding: 12px 0 18px;
-}
-
-.welcome-copy {
-  display: grid;
-  align-content: center;
-  max-width: 620px;
-}
-
-.intro {
-  max-width: 540px;
-  margin: 14px 0 0;
-  color: #dbe7d1;
-  font-size: 1.08rem;
-  font-weight: 700;
-  line-height: 1.42;
-}
-
-.welcome-copy h1,
 .topbar h1,
 .section-heading h2 {
   color: #f7faf3;
@@ -93,159 +68,9 @@ button {
   color: #aebcae;
 }
 
-.welcome-table {
-  position: relative;
-  min-height: 240px;
-  overflow: hidden;
-  border: 1px solid #b7c3ae;
-  border-radius: 8px;
-  background:
-    radial-gradient(circle at 54% 46%, rgba(255, 255, 255, 0.18), transparent 45%),
-    linear-gradient(145deg, #32624f, #1f4638);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
-}
-
-.welcome-table::before,
-.welcome-table::after {
-  position: absolute;
-  width: 132px;
-  height: 88px;
-  border: 1px dashed rgba(255, 255, 255, 0.28);
-  border-radius: 999px;
-  content: "";
-}
-
-.welcome-table::before {
-  top: 22px;
-  left: 24px;
-}
-
-.welcome-table::after {
-  right: 22px;
-  bottom: 20px;
-}
-
-.mini-card {
-  position: absolute;
-  display: block;
-  width: 92px;
-  aspect-ratio: 5 / 7;
-  overflow: hidden;
-  border: 1px solid rgba(245, 241, 207, 0.42);
-  border-radius: 10px;
-  background: transparent;
-  filter: drop-shadow(0 14px 20px rgba(9, 32, 22, 0.34));
-}
-
-.mini-card-one {
-  top: 66px;
-  left: 22%;
-  transform: rotate(-9deg);
-}
-
-.mini-card-two {
-  top: 82px;
-  left: calc(22% + 64px);
-  transform: rotate(4deg);
-}
-
-.mini-card-three {
-  top: 98px;
-  left: calc(22% + 128px);
-  transform: rotate(12deg);
-}
-
-.catalog-section {
-  display: grid;
-  gap: 12px;
-}
-
 .section-heading {
   display: grid;
   gap: 2px;
-}
-
-.game-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.game-card {
-  display: grid;
-  grid-template-rows: auto auto 1fr auto;
-  gap: 9px;
-  min-height: 170px;
-  padding: 14px;
-  border: 1px solid rgba(245, 241, 207, 0.22);
-  border-radius: 8px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(9, 34, 24, 0.16)),
-    #182f25;
-  color: #f7faf3;
-  text-align: left;
-}
-
-.game-card-meta {
-  display: flex;
-  align-items: start;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.game-card.ready {
-  border-color: #f5f1cf;
-  box-shadow: 0 10px 26px rgba(35, 56, 44, 0.12);
-  cursor: pointer;
-}
-
-.game-card:disabled {
-  opacity: 1;
-}
-
-.game-family,
-.game-access {
-  width: fit-content;
-  padding: 3px 7px;
-  border-radius: 999px;
-  background: rgba(245, 241, 207, 0.12);
-  color: #f5f1cf;
-  font-size: 0.72rem;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.game-access {
-  max-width: 60px;
-  color: #dbe7d1;
-  text-align: right;
-}
-
-.game-card strong {
-  font-size: 1.24rem;
-  line-height: 1.05;
-}
-
-.game-summary {
-  color: #dbe7d1;
-  font-size: 0.9rem;
-  font-weight: 650;
-  line-height: 1.34;
-}
-
-.game-footer {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: auto;
-  color: #f0b3a8;
-  font-size: 0.78rem;
-  font-weight: 900;
-}
-
-.game-footer .free-access {
-  color: #f5f1cf;
 }
 
 .catalog-footer {
@@ -2468,18 +2293,6 @@ strong[aria-label="Whist dealer"] {
 }
 
 @media (max-width: 820px) {
-  .welcome-screen {
-    grid-template-columns: 1fr;
-    min-height: auto;
-  }
-
-  .welcome-table {
-    min-height: 210px;
-  }
-
-  .game-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 
   .table-room {
     grid-template-columns: 1fr;
@@ -2524,90 +2337,6 @@ strong[aria-label="Whist dealer"] {
   .app-shell.fixed-play-screen {
     align-content: stretch;
     padding: max(8px, var(--app-safe-area-top)) 12px max(8px, var(--app-safe-area-bottom));
-  }
-
-  .welcome-screen {
-    gap: 12px;
-    min-height: 312px;
-    padding-top: 6px;
-    padding-bottom: 12px;
-  }
-
-  .intro {
-    margin-top: 10px;
-    font-size: 0.98rem;
-  }
-
-  .welcome-table {
-    min-height: 156px;
-  }
-
-  .welcome-table::before,
-  .welcome-table::after {
-    width: 100px;
-    height: 64px;
-  }
-
-  .welcome-table::before {
-    top: 15px;
-    left: 16px;
-  }
-
-  .welcome-table::after {
-    right: 14px;
-    bottom: 14px;
-  }
-
-  .mini-card {
-    width: 68px;
-  }
-
-  .mini-card-one {
-    top: 42px;
-    left: 19%;
-  }
-
-  .mini-card-two {
-    top: 48px;
-    left: calc(19% + 46px);
-  }
-
-  .mini-card-three {
-    top: 55px;
-    left: calc(19% + 92px);
-  }
-
-  .game-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .game-card {
-    min-height: 148px;
-    gap: 7px;
-    padding: 12px;
-  }
-
-  .game-card-meta {
-    gap: 6px;
-  }
-
-  .game-family,
-  .game-access {
-    padding: 3px 6px;
-    font-size: 0.66rem;
-  }
-
-  .game-access {
-    max-width: 54px;
-  }
-
-  .game-card strong {
-    font-size: 1.08rem;
-  }
-
-  .game-summary {
-    font-size: 0.84rem;
   }
 
   .table-room {
@@ -3676,14 +3405,6 @@ strong[aria-label="Whist dealer"] {
 @media (max-width: 360px) {
   :root {
     --app-hand-thumb-offset: 58px;
-  }
-
-  .game-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .game-card {
-    min-height: 0;
   }
 
   .table-play-surface.compact-play .full-hand-cards {

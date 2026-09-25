@@ -6,10 +6,11 @@
   import CardChoiceHand from "./CardChoiceHand.svelte";
   import ExerciseFeedback from "./ExerciseFeedback.svelte";
   let { step, selectedCardId, checkedCardId, results, total, index, title, eyebrow, topic,
-    seatLabels = {}, customTable, onBack, onSelect, onCheck, onNext, onFinish }: {
+    seatLabels = {}, customTable, allowEarlyFinish = true, finishLabel = "Review session", onBack, onSelect, onCheck, onNext, onFinish }: {
     step: DrillStep; selectedCardId: string; checkedCardId: string; results: DrillResult[];
     total: number; index: number; title: string; eyebrow: string; topic: string;
     seatLabels?: Partial<Record<Seat, string>>; customTable?: Snippet<[TableCard[]]>;
+    allowEarlyFinish?: boolean; finishLabel?: string;
     onBack: () => void; onSelect: (card: Card) => void; onCheck: () => void; onNext: () => void; onFinish: () => void;
   } = $props();
   let trick = $derived(step.trick);
@@ -47,9 +48,9 @@
         illegal: !legal.has(card.id) && !checkedCardId, selected: selectedCardId === card.id, played: checkedCardId === card.id })}
       isPressed={card => selectedCardId === card.id} {onSelect} />
     <div class="action-row">
-      <button class="secondary-action" onclick={checked && !last ? onFinish : onBack} type="button">{checked && !last ? "Finish session" : "Table"}</button>
+      <button class="secondary-action" onclick={allowEarlyFinish && checked && !last ? onFinish : onBack} type="button">{allowEarlyFinish && checked && !last ? "Finish session" : "Table"}</button>
       {#if checked}
-        <button class="primary-action" onclick={onNext} type="button">{last ? "Review session" : "Next decision"}</button>
+        <button class="primary-action" onclick={onNext} type="button">{last ? finishLabel : "Next decision"}</button>
       {:else}
         <button class="primary-action" disabled={!trick.hand.some(card => card.id === selectedCardId)} onclick={onCheck} type="button">Check answer</button>
       {/if}

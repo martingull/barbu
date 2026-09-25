@@ -13,11 +13,13 @@
   import type { LearningEntry } from "./features/featureServices";
   import type { PlayBarbuAttempt } from "./lessons/drillReview";
   import { invoke, isTauri } from "@tauri-apps/api/core";
-  import CardFace from "./components/CardFace.svelte";
+  import GameCatalog from "./features/catalog/GameCatalog.svelte";
+  import { continueGames, type SavedGameId } from "./features/catalog/catalogPresentation";
+  import { heartsIntroduction } from "./games/hearts";
   import "./games";
   import { referenceCatalog, type GameReference } from "./games/referenceCatalog";
   import { getCatalogCategories, type ActiveGameTable, type CatalogGameId } from "./games/tableFactory";
-  import type { Card, GuidedCardOutcome, PracticeReason } from "./domain/types";
+  import type { GuidedCardOutcome, PracticeReason } from "./domain/types";
 
   type AppView = "catalog" | "barbuFeature" | "heartsFeature" | "whistFeature" | "spadesFeature" | "bridgeFeature" | "cardCountingFeature" | "reference";
   const catalogCategories = getCatalogCategories();
@@ -29,11 +31,6 @@
   const playBarbuHistoryStorageKey = "barbu.playHistory.v1";
   const maxStoredPlayBarbuAttempts = 8;
   const cleanDrillOutcomes: Array<GuidedCardOutcome | "illegal"> = ["good"];
-  const catalogTableCards: Card[] = [
-    { id: "catalog-queen-spades", rank: "Q", suit: "S", label: "QS" },
-    { id: "catalog-king-hearts", rank: "K", suit: "H", label: "KH" },
-    { id: "catalog-ace-spades", rank: "A", suit: "S", label: "AS" }
-  ];
 
   let appView: AppView = "catalog";
   let activeGameTable: ActiveGameTable = "barbu";
@@ -42,6 +39,7 @@
   let completedPathSteps = loadCourseProgress();
   let playBarbuHistory = loadPlayBarbuHistory();
   let barbuEntry: LearningEntry | undefined;
+  let heartsEntry: LearningEntry | undefined;
   let barbuFixedSurface = false;
   let whistFixedSurface = false;
   let heartsFixedSurface = false;
@@ -54,8 +52,12 @@
   const heartsFeature = createHeartsFeature(services);
   const spadesFeature = createSpadesFeature(services);
   const bridgeFeature = createBridgeFeature(services);
+  const playFeatures = { barbu: barbuFeature, hearts: heartsFeature, whist: whistFeature, spades: spadesFeature, bridge: bridgeFeature };
+  $: savedGames = continueGames({ barbu: $barbuFeature.saved, hearts: $heartsFeature.saved,
+    whist: $whistFeature.saved, spades: $spadesFeature.saved, bridge: $bridgeFeature.saved });
   $: activeReference = referenceCatalog.find(reference => reference.id === activeReferenceId) ?? referenceCatalog[0];
   $: activeReferenceIsBarbu = activeReference.id === "barbu";
+  $: heartsIntroductionComplete = completedPathSteps[heartsIntroduction.id] === true;
 
   function loadCourseProgress() {
     try {
@@ -211,6 +213,7 @@
 
   function openHeartsTable() {
     activeGameTable = "hearts";
+    heartsEntry = undefined;
     heartsFeature.openTable();
     appView = "heartsFeature";
   }
@@ -315,6 +318,19 @@
     barbuEntry = { kind: "continue" };
   }
 
+  function continueGame(id: SavedGameId) {
+    openGame(id);
+    playFeatures[id].resume();
+  }
+
+  function tryHearts() {
+    openHeartsTable();
+    heartsFeature.openTable("learn");
+    if (!heartsIntroductionComplete) {
+      heartsEntry = { kind: "introduction", action: heartsIntroduction.action, title: heartsIntroduction.title };
+    }
+  }
+
 
   function factsForSection(section: GameReference["sections"][number]) {
     return section.facts ?? [];
@@ -324,53 +340,7 @@
 
 <main class:fixed-play-screen={(appView === "whistFeature" && whistFixedSurface) || (appView === "heartsFeature" && heartsFixedSurface) || (appView === "spadesFeature" && spadesFixedSurface) || (appView === "bridgeFeature" && bridgeFixedSurface) || (appView === "barbuFeature" && barbuFixedSurface) || (appView === "cardCountingFeature" && cardCountingFixedSurface)} class="app-shell">
   {#if appView === "catalog"}
-    <section class="welcome-screen" aria-labelledby="catalog-title">
-      <div class="welcome-copy">
-        <p class="eyebrow">Card game catalog</p>
-        <h1 id="catalog-title">Choose a table</h1>
-        <p class="intro">
-          Learn, practice, and play. Follow the Bridge path from Hearts to Whist, or explore other classic card club games.
-        </p>
-      </div>
-
-      <div class="welcome-table" aria-hidden="true">
-        <div class="mini-card mini-card-one"><CardFace card={catalogTableCards[0]} decorative /></div>
-        <div class="mini-card mini-card-two"><CardFace card={catalogTableCards[1]} decorative /></div>
-        <div class="mini-card mini-card-three"><CardFace card={catalogTableCards[2]} decorative /></div>
-      </div>
-    </section>
-
-    <section class="catalog-section" aria-label="Games">
-      {#each catalogCategories as category}
-        <div class="section-heading">
-          <p class="eyebrow">{category.summary}</p>
-          <h2>{category.title}</h2>
-        </div>
-
-        <div class="game-grid">
-          {#each category.entries as game}
-            <button
-              aria-label={game.status === "Ready" ? `Open ${game.title}` : `${game.title} planned`}
-              class:ready={game.status === "Ready"}
-              class="game-card"
-              disabled={game.status !== "Ready"}
-              onclick={() => openGame(game.id)}
-              type="button"
-            >
-              <span class="game-card-meta">
-                <span class="game-family">{game.family}</span>
-                <span class:free-access={game.access === "Free"} class="game-access">{game.access}</span>
-              </span>
-              <strong>{game.title}</strong>
-              <span class="game-summary">{game.summary}</span>
-              <span class="game-footer">
-                <span>{game.status}</span>
-              </span>
-            </button>
-          {/each}
-        </div>
-      {/each}
-    </section>
+    <GameCatalog categories={catalogCategories} {savedGames} introduction={heartsIntroductionComplete ? heartsIntroduction.completed : heartsIntroduction} onOpen={openGame} onContinue={continueGame} onIntroduction={tryHearts} />
 
     <footer class="catalog-footer">
       <a href={privacyPolicyUrl} rel="noopener noreferrer" target="_blank" onclick={openPrivacyPolicy} aria-busy={openingPrivacyPolicy}>Privacy policy</a>
@@ -400,7 +370,7 @@
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
       onSurfaceChange={fixed => { spadesFixedSurface = fixed; }} />
   {:else if appView === "heartsFeature"}
-    <HeartsGame feature={heartsFeature} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
+    <HeartsGame feature={heartsFeature} initialEntry={heartsEntry} onEntryConsumed={() => { heartsEntry = undefined; }} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onBack={openCatalog} onReference={() => openReference("hearts")}
       onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })}
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}

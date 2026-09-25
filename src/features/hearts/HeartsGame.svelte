@@ -4,15 +4,18 @@
   import HeartsPassing from "./HeartsPassing.svelte";
   import HeartsHandView from "./HeartsHandView.svelte";
   import HeartsPassExercise from "./HeartsPassExercise.svelte";
-  import { heartsDef, type HeartsPracticeAction } from "../../games/hearts";
+  import { heartsDef, heartsIntroduction, type HeartsPracticeAction } from "../../games/hearts";
+  import { heartsIntroductionSteps } from "../../lessons/hearts/introduction";
   import { generateHeartsPracticeSet, type HeartsPracticeFocus } from "../../domain/heartsPractice";
   import { orderPracticePool } from "../../lessons/drillDecision";
   import { drillStepFromGeneratedScenario } from "../../lessons/generatedDrill";
   import { savedHeartsRunSummary } from "../../persistence/heartsSave";
-  import type { FeatureServices } from "../featureServices";
+  import type { FeatureServices, LearningEntry } from "../featureServices";
   import type { HeartsFeature } from "./heartsFeature";
 
-  let { feature, ...services }: FeatureServices & { feature: HeartsFeature } = $props();
+  let { feature, initialEntry, onEntryConsumed, ...services }: FeatureServices & {
+    feature: HeartsFeature; initialEntry?: LearningEntry; onEntryConsumed?: () => void;
+  } = $props();
   let learningFixed = $state(false);
   $effect(() => { services.onSurfaceChange($feature.view === "hand" || learningFixed); });
   const focuses: Record<Exclude<HeartsPracticeAction, "pass">, HeartsPracticeFocus> = {
@@ -24,6 +27,7 @@
   };
   function loadExercise(action: string, nextSeed: () => number) {
     const seed = nextSeed();
+    if (action === "introduction") return heartsIntroductionSteps(seed);
     if (action === "pass") return { seed };
     const focus = focuses[action as Exclude<HeartsPracticeAction, "pass">];
     const steps = generateHeartsPracticeSet(seed, focus).scenarios.map(drillStepFromGeneratedScenario);
@@ -42,6 +46,9 @@
   {/if}
 {:else}
   <GameLearning {...services} definition={heartsDef} gameName="Hearts" tab={$feature.tab}
+    entry={initialEntry} {onEntryConsumed} onPlay={() => $feature.saved ? feature.resume() : void feature.start()}
+    onIntroductionComplete={() => services.onCompleteStep(heartsIntroduction.id)}
+    playLabel={$feature.saved ? "Continue Hearts" : "Play Hearts"}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
     {loadExercise} exerciseTitle={action => `Hearts practice: ${names[action as HeartsPracticeAction]}`}
     drillTitle={step => step.trick.title}

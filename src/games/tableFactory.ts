@@ -1,3 +1,5 @@
+import type { Card } from "../domain/types";
+
 export const tableTabIds = ["learn", "play", "perfect"] as const;
 
 export type TableTabId = (typeof tableTabIds)[number];
@@ -75,6 +77,7 @@ export type CatalogEntry = {
   access: CatalogAccess;
   accessModel: CatalogAccessModel;
   summary: string;
+  card: Pick<Card, "rank" | "suit">;
 };
 
 export type LearnPathStep<Action extends string = string> = {
@@ -164,66 +167,65 @@ export type CatalogCategory = {
 export function getCatalogCategories(): CatalogCategory[] {
   const categories: CatalogCategory[] = [
     {
-      id: "bridge-path",
-      title: "The Bridge Path",
-      summary: "Learn the fundamentals of trick-taking and partnership play.",
+      id: "games",
+      title: "Choose a table",
+      summary: "Classic card club games.",
       entries: [
         createCatalogEntry({
           id: "hearts",
           family: "Hearts",
           title: "Hearts",
+          card: { rank: "Q", suit: "S" },
           status: "Ready",
           access: "Free",
           accessModel: "free-starter",
-          summary: "Black Lady style penalty play."
+          summary: "Keep hearts and the queen of spades out of your tricks."
         }),
         createCatalogEntry({
           id: "whist",
           family: "Whist",
           title: "Whist",
+          card: { rank: "A", suit: "C" },
           status: "Ready",
           access: "Free",
           accessModel: "free-starter",
-          summary: "Partnership trick play and silent suit signals."
+          summary: "Win tricks together with a partner."
         }),
         createCatalogEntry({
           id: "spades",
           family: "Whist",
           title: "Spades",
+          card: { rank: "A", suit: "S" },
           status: "Ready",
           access: "Free",
           accessModel: "free-starter",
-          summary: "Partnership trick play with spades always trump."
+          summary: "Bid your tricks. Spades are always trump."
         }),
         createCatalogEntry({
           id: "bridge",
           family: "Bridge",
           title: "Bridge",
+          card: { rank: "K", suit: "D" },
           status: "Ready",
           access: "Free",
           accessModel: "free-starter",
-          summary: "Declarer play, defense, and bidding concepts."
-        })
-      ]
-    },
-    {
-      id: "club-games",
-      title: "Club Games",
-      summary: "Other classic card club tables.",
-      entries: [
+          summary: "Bid a contract, then play as declarer or defend."
+        }),
         createCatalogEntry({
           id: "barbu",
           family: "Hearts",
           title: "Barbu",
+          card: { rank: "K", suit: "H" },
           status: "Ready",
           access: "Free",
           accessModel: "free-starter",
-          summary: "Seven-contract table play with changing objectives."
+          summary: "Seven contracts, with a new objective each hand."
         }),
         createCatalogEntry({
           id: "gin-rummy",
           family: "Rummy",
           title: "Gin Rummy",
+          card: { rank: "7", suit: "D" },
           status: "Planned",
           access: "Pack",
           accessModel: "metered-pack",
@@ -233,6 +235,7 @@ export function getCatalogCategories(): CatalogCategory[] {
           id: "canasta",
           family: "Rummy",
           title: "Canasta",
+          card: { rank: "2", suit: "H" },
           status: "Planned",
           access: "Pack",
           accessModel: "metered-pack",
@@ -249,15 +252,17 @@ export function getCatalogCategories(): CatalogCategory[] {
           id: "card-counting",
           family: "Card skills",
           title: "Card Counting I",
+          card: { rank: "J", suit: "C" },
           status: "Ready",
           access: "Free",
           accessModel: "free-starter",
-          summary: "5 memory exercises: count trumps, track high cards, and remember danger cards."
+          summary: "Remember trumps, high cards and danger cards."
         }),
         createCatalogEntry({
           id: "card-counting-ii",
           family: "Skill pack",
           title: "Card Counting II",
+          card: { rank: "J", suit: "S" },
           status: "Planned",
           access: "Pack",
           accessModel: "metered-pack",
@@ -267,6 +272,7 @@ export function getCatalogCategories(): CatalogCategory[] {
           id: "solitaire",
           family: "Patience",
           title: "Solitaire",
+          card: { rank: "A", suit: "D" },
           status: "Planned",
           access: "Pack",
           accessModel: "metered-pack",

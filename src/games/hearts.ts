@@ -187,3 +187,15 @@ export const heartsDef: GameDefinition<HeartsLearnPathAction | HeartsPracticeAct
     headingSummary: "Play subscriber AI contracts or competitive settlement tables."
   }
 };
+export const heartsIntroduction = {
+  id: "hearts-introduction",
+  title: "A taste of Hearts",
+  summary: "Avoid penalty cards. Lowest score wins.",
+  label: "Try Hearts",
+  action: "introduction",
+  completed: {
+    title: "Hearts introduction complete",
+    summary: "Passing, avoiding points and planning your hand.",
+    label: "Learn Hearts"
+  }
+};

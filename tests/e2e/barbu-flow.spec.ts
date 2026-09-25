@@ -447,7 +447,7 @@ async function startSavedPlayBarbuContractHand(page: Page, contract: string) {
     );
   }, contract);
   await page.reload();
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await openBarbuTab(page, "Play");
   await page.getByRole("button", { name: "Continue Play Barbu" }).click();
   await expect(page.getByRole("heading", { name: contract })).toBeVisible();
@@ -586,28 +586,25 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: "Choose a table" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "The Bridge Path" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Club Games" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Barbu", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Try Hearts", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Card Skills" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Hearts" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Barbu" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Open Card Counting I" })).toContainText("Free");
-  await expect(page.getByRole("button", { name: "Open Card Counting I" })).toContainText("5 memory exercises");
+  await expect(page.getByRole("button", { name: "Open Card Counting I" })).toContainText("Remember trumps");
   await expect(page.getByRole("button", { name: /planned/i })).toHaveCount(0);
-  await expect(page.locator(".game-card")).toHaveCount(6);
-  await expect(page.locator(".game-card:disabled")).toHaveCount(0);
-  await expect(page.locator(".game-access")).toHaveText(Array(6).fill("Free"));
+  await expect(page.locator(".catalog-game")).toHaveCount(6);
+  await expect(page.locator(".catalog-game:disabled")).toHaveCount(0);
+  await expect(page.locator(".catalog-home")).not.toContainText(/The Bridge Path|Ready/);
   await expect(page.getByLabel("Games")).not.toContainText(/Gin Rummy|Canasta|Card Counting II|Solitaire|Pack/);
   await expect(page.getByRole("button", { name: /Open Whist/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Open Spades/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Open Bridge/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Open Whist/ })).toContainText("Free");
-  await expect(page.getByRole("button", { name: /Open Spades/ })).toContainText("Free");
   await expect(page.getByRole("heading", { name: "Varieties of play" })).toHaveCount(0);
   await expect(page.getByText("Barbu Learning Table")).toHaveCount(0);
   await expect
     .poll(async () =>
-      page.locator(".game-card strong").evaluateAll((items) => items.slice(0, 5).map((item) => item.textContent?.trim()))
+      page.locator(".catalog-game strong").evaluateAll((items) => items.slice(0, 5).map((item) => item.textContent?.trim()))
     )
     .toEqual(["Hearts", "Whist", "Spades", "Bridge", "Barbu"]);
 
@@ -2932,7 +2929,7 @@ test("active game tables share one compact surface", async ({ page }, testInfo) 
 
 test("Play Barbu can resume a saved local run", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await openBarbuTab(page, "Play");
   await page.getByRole("button", { name: "Play Barbu" }).click();
   await page.getByRole("button", { name: "Start hand" }).click();
@@ -2942,7 +2939,7 @@ test("Play Barbu can resume a saved local run", async ({ page }) => {
   await expect.poll(async () => page.evaluate(() => localStorage.getItem("barbu.savedPlayRun.v1"))).not.toBeNull();
 
   await page.reload();
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await openBarbuTab(page, "Play");
   await expect(page.getByRole("button", { name: "Continue Play Barbu" })).toBeVisible();
   await expect(page.getByText("No Hearts, trick 1")).toBeVisible();

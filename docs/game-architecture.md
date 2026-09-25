@@ -175,6 +175,17 @@ shared seed source, course progress and exercise history. These are catalog-wide
 services, not individual-game hand state. The controllers outlive mounted views so
 leaving the game does not discard an in-memory match when storage is unavailable.
 
+`features/catalog/GameCatalog.svelte` presents the home collection, with games
+separate from Card Skills. Its resume list comes from the feature controllers'
+validated saves, ordered by recency; it does not parse storage or change save
+schemas. The Hearts introduction enters the shared learning flow directly with
+three existing decisions in a fixed sequence: follow suit, avoid a heart, and
+discard the queen. It records exercise history and a separate `hearts-introduction`
+completion flag in the existing progress store, not course mastery. Completed
+introductions lead from home to Learn instead of restarting. Leaving early does
+not mark completion, and the introduction never replaces a saved match. The final Play action resumes Hearts
+when a match exists. Catalog metadata stays in `games/tableFactory.ts`.
+
 `DrillScreen.svelte` and `DrillResultScreen.svelte` are shared across games.
 Pure decision/review and generated-scenario adapters live under `src/lessons/`.
 Keep shared card layout and CSS in the existing components; do not copy them
