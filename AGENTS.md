@@ -167,8 +167,12 @@ presentation and a session controller. Its hand views also serve unsaved Learn h
 and Domino transitions in its own wrapper, not in the reviewed-match abstraction.
 Barbu Learn composes `GameLearning` with authored guided tricks, generated drills,
 Domino layout snippets and an unsaved hand controller. Preserve its seven progress
-keys and four generated patterns per contract. Card Counting still needs extraction;
-do not claim `App.svelte` is already only a router. See `docs/game-architecture.md`.
+keys and four generated patterns per contract. Card Counting is isolated under
+`features/card-counting`, using the shared Learn/Play surfaces and unsaved domain
+hands. Keep its question generation and transitions in `domain/cardCounting*`;
+do not reintroduce duplicate trick engines or persist its hands as matches.
+`App.svelte` now owns catalog/reference routing and shared services, not game state.
+See `docs/game-architecture.md` for boundaries and remaining curriculum limitations.
 
 If a new table needs an existing visual layout, use shared components before
 adding another large inline branch. Rules, scoring, generated practice, and

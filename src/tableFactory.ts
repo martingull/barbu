@@ -252,7 +252,7 @@ export function getCatalogCategories(): CatalogCategory[] {
           status: "Ready",
           access: "Free",
           accessModel: "free-starter",
-          summary: "4 minigames for real-hand memory: trumps, court cards, and danger cards."
+          summary: "5 memory exercises: count trumps, track high cards, and remember danger cards."
         }),
         createCatalogEntry({
           id: "card-counting-ii",

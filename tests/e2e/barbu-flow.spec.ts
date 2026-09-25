@@ -546,7 +546,6 @@ async function playDominoDecision(page: Page) {
   const legalCard = page.locator(".domino-cards .full-hand-card.legal").first();
 
   if (await placeCard.isEnabled()) {
-    await legalCard.click();
     await expectFeedbackAboveHand(page, ".domino-cards");
     await placeCard.click();
     await expect.poll(async () => (await handRegion.innerText()) !== previousState).toBe(true);
@@ -593,7 +592,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByRole("button", { name: "Open Hearts" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Barbu" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Card Counting I" })).toContainText("Free");
-  await expect(page.getByRole("button", { name: "Open Card Counting I" })).toContainText("4 minigames");
+  await expect(page.getByRole("button", { name: "Open Card Counting I" })).toContainText("5 memory exercises");
   await expect(page.getByRole("button", { name: /planned/i })).toHaveCount(0);
   await expect(page.locator(".game-card")).toHaveCount(6);
   await expect(page.locator(".game-card:disabled")).toHaveCount(0);
@@ -2192,7 +2191,7 @@ test("Card Counting I starts card-counting minigames", async ({ page }, testInfo
   let seenTrumpsInSegment = 0;
   for (let trick = 1; trick <= 13; trick += 1) {
     await expect(page.getByLabel("Count trumps trainer")).toContainText(`Trick ${trick} of 13`);
-    seenTrumpsInSegment += await page.locator(".trump-memory-card.trump").count();
+    seenTrumpsInSegment += await page.getByLabel("Trump trick reveal").locator(".table-card.heart").count();
     const isCheckpoint = countCheckpoints[countCheckpointIndex] === trick;
     await page.getByRole("button", { name: isCheckpoint ? "Answer memory" : "Next trick" }).click();
 

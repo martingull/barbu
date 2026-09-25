@@ -141,12 +141,19 @@ Keep shared card layout and CSS in the existing components; do not copy them
 into each feature or add game-specific viewport calculations.
 
 This is an incremental frontend refactor, not another engine migration.
-Card Counting still has orchestration in `App.svelte`. All five game features
-are isolated; the shell launches them and provides catalog-wide services.
-Card Counting
-intentionally still uses Hearts and Whist hands and their presentation helpers;
-those references are not second match implementations. Extract the next
-game using the same boundaries. Reuse the common Learn flow and generalize
+All five game features and Card Counting are isolated; the shell launches them
+and provides catalog-wide services. `features/card-counting/CardCountingGame`
+uses `GameLearning`, `PlayTabPanel` and the shared flow-layout table. Its five
+exercises share a memory-question view and unboxed results. Pure question
+generation and exercise transitions live in `domain/cardCountingQuestions` and
+`domain/cardCountingSession`; the unused legacy practice engines were removed.
+Card Counting reuses unsaved Hearts, Whist and No Queens hands and their
+presentation helpers, never writing a saved match. It has no authored course
+completion keys. The observation warm-up uses groups of four cards, not a legal
+Whist deal. Existing question limitations remain: boss-card questions currently
+have positive answers, and void spotting targets one seat rather than accepting
+all demonstrated voids. These need a separate curriculum pass.
+Add the next game using the same boundaries. Reuse the common Learn flow and generalize
 controller behavior only where it removes real complexity. Do not add a
 universal controller or replace the existing metadata/engine factories.
 
