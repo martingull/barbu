@@ -34,6 +34,10 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 740 }
     const hand = page.getByLabel("Your Gin Rummy hand", { exact: true });
     await expect(hand.getByRole("button")).toHaveCount(10);
     const board = page.locator(".gin-table");
+    const back = board.locator(".stock-back img");
+    await expect(back).toHaveAttribute("src", "/cards/barbu-back.webp");
+    await expect(back).toHaveAttribute("alt", "");
+    await expect.poll(() => back.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBe(500);
     const original = (await board.boundingBox())!;
     await page.getByRole("button", { name: "Take upcard", exact: true }).click();
     await expect(hand.getByRole("button")).toHaveCount(11);

@@ -38,6 +38,10 @@ ChatGPT. Retain the original generations and any supplied source-image records
 with the product assets. This provenance note records the creator's confirmation;
 it is not an independent review of any third-party material supplied as input.
 
+`public/cards/barbu-back.webp` was generated with the built-in image-generation
+tool on September 25, 2026, using the existing Barbu app icon as the character
+reference. See `docs/card-back-art.md` for the prompts and asset preparation.
+
 ## Product Assets
 
 Barbu-specific logos, app icons, lesson text, product copy, and original UI

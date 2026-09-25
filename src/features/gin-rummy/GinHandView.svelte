@@ -1,12 +1,12 @@
 <script lang="ts">
   import TablePlaySurface from "../../components/TablePlaySurface.svelte";
   import CardFace from "../../components/CardFace.svelte";
+  import CardBack from "../../components/CardBack.svelte";
   import CardChoiceHand from "../../components/CardChoiceHand.svelte";
   import GameResult from "../../components/GameResult.svelte";
   import { bestMeldLayout } from "../../domain/rummyMelds";
   import { ginComplete, ginDiscardLayout, ginFinalScores, type GinSession, type GinAction } from "../../domain/ginRummySession";
   import { formatCardList, formatCardText } from "../../presentation/cardDisplay";
-  import mark from "../../../src-tauri/icons/128x128@2x.png";
 
   let { session, selectedCardId, error, onSelect, onAction, onBack, onNext, onReplay, onNew }: {
     session: GinSession; selectedCardId: string; error: string; onSelect: (id: string) => void;
@@ -44,7 +44,7 @@
       <p class="opponent">Barbu <span>10 cards</span></p>
       <div class="piles">
         <button class="pile" disabled={hand.phase !== "draw"} onclick={() => onAction({ type: "draw", source: "stock" })} aria-label="Draw stock" type="button">
-          <span class="stock-back"><img src={mark} alt="" /></span><strong>Stock <span>{hand.stock.length}</span></strong>
+          <span class="stock-back"><CardBack decorative /></span><strong>Stock <span>{hand.stock.length}</span></strong>
         </button>
         <button class="pile" disabled={hand.phase === "discard" || hand.forcedStock} onclick={() => onAction({ type: "draw", source: "discard" })} aria-label="Take upcard" type="button">
           <span class="upcard">{#if upcard}<CardFace card={upcard} />{:else}<span class="empty-pile">Empty</span>{/if}</span><strong>Upcard</strong>
@@ -109,8 +109,6 @@
   .pile strong { font-size: 0.75rem; }.pile strong span { margin-left: 4px; color: #ead490; }
   .upcard, .stock-back { display: block; width: 45px; height: 63px; }
   .empty-pile { display: grid; place-items: center; width: 100%; height: 100%; border: 1px dashed #b7cabb; border-radius: 3px; font-size: 0.65rem; color: #d8e1d5; }
-  .stock-back { display: grid; place-items: center; background: #773c4d; border: 2px solid #f5f1cf; border-radius: 3px; }
-  .stock-back img { width: 33px; height: 33px; object-fit: contain; }
   .hand-analysis { display: grid; gap: 4px; font-size: 0.75rem; line-height: 1.3; min-height: 36px; }
   .hand-analysis strong { color: #ead490; }.hand-analysis span { color: #d8e1d5; min-height: 2.6em; }
   .meld-review { border-top: 1px solid #ffffff26; padding: 10px 0; }
