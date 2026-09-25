@@ -1,6 +1,6 @@
 import fixture from "./bridge-legacy-save.json" with { type: "json" };
 import type { SavedBridgeRun } from "../../src/persistence/bridgeSave";
-import type { FullHandState, Suit } from "../../src/lessonTypes";
+import type { FullHandState, Suit } from "../../src/domain/types";
 
 function expand(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(expand);

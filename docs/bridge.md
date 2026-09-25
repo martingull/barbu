@@ -31,7 +31,7 @@ computer partners do not understand unimplemented conventions.
 
 ## Implementation
 
-`src/bridgeBidding.ts` contains Barbu Natural bidding and contextual explanations,
+`src/domain/bridgeBidding.ts` contains Barbu Natural bidding and contextual explanations,
 shared by browser and installed builds. `src/domain/bridgeAuction.ts` owns legal
 calls and contract formation; `bridgeScoring.ts` owns duplicate scoring.
 `bridgeSession.ts` owns auction/play phases, trick review, replay and board
@@ -50,7 +50,7 @@ history. Declarer may additionally use the other declaring hand. Defenders must
 not use partner's hidden cards. Tests check information independence, follow-suit
 legality, card conservation, and completion across all declarer seats and strains.
 
-Authored short exercises live in `src/bridgePractice.ts`, not the screen.
+Authored short exercises live in `src/lessons/bridge/exercises.ts`, not the screen.
 Each topic has three decisions; defense exercises remain defensive. Legal cards
 are checked separately from tactical grades, and scripts must contain four unique
 seats in clockwise order with no duplicated cards.

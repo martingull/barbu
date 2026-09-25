@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { bridgeHandEngine, heartsHandEngine, spadesHandEngine, typescriptHandEngine, whistHandEngine } from "../../src/domain/handEngine";
-import type { FullHandState } from "../../src/lessonTypes";
+import type { FullHandState } from "../../src/domain/types";
 import { barbuTrickContracts } from "../../src/domain/barbuRules";
 import nativeFixture from "../fixtures/whist-native-save.json" with { type: "json" };
 

@@ -1,5 +1,5 @@
-import type { GameDefinition } from "../gameRegistry";
-import { createGameTableDefinition } from "../tableFactory";
+import type { GameDefinition } from "./gameRegistry";
+import { createGameTableDefinition } from "./tableFactory";
 
 export type SpadesLearnPathAction = "object" | SpadesPracticeAction;
 export type SpadesPracticeAction = "follow" | "trump" | "bid" | "bags";

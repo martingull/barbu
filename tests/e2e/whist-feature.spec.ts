@@ -1,0 +1,38 @@
+import { expect, test } from "@playwright/test";
+
+test("Whist survives another game's play and a lesson without sharing hand state", async ({ page }, info) => {
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  const saveKey = "barbu.savedWhistRun.v1";
+  await page.goto("/");
+  await page.getByRole("button", { name: /Open Whist/ }).click();
+  await page.getByRole("button", { name: "Play Whist", exact: true }).click();
+  await page.locator(".full-hand-card.legal").first().click();
+  await page.getByRole("button", { name: "Play card", exact: true }).click();
+  await page.getByRole("button", { name: "Next trick", exact: true }).click();
+  const saved = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), saveKey);
+  await page.locator(".full-hand-card.legal").first().click();
+  await page.getByRole("button", { name: "Table", exact: true }).first().click();
+  await page.getByRole("button", { name: "Games", exact: true }).click();
+  await page.getByRole("button", { name: /Open Hearts/ }).click();
+  await page.getByRole("button", { name: "Play Hearts", exact: true }).click();
+  await expect(page.getByLabel("Your Hearts passing hand").getByRole("button")).toHaveCount(13);
+  await page.getByRole("button", { name: "Table", exact: true }).first().click();
+  await page.getByRole("button", { name: "Games", exact: true }).click();
+  await page.getByRole("button", { name: /Open Whist/ }).click();
+  await page.getByRole("tab", { name: "Learn", exact: true }).click();
+  await page.getByRole("button", { name: /^Try cards: Follow suit/ }).click();
+  await page.locator(".drill-hand .hand-card.legal").first().click();
+  await page.getByRole("button", { name: "Check answer", exact: true }).click();
+  await page.getByRole("button", { name: "Finish session", exact: true }).click();
+  await expect(page.getByLabel("Next drill step")).toBeVisible();
+  await expect(page.getByLabel("Recent quick drill attempts")).toContainText("Whist");
+  await page.screenshot({ path: info.outputPath("whist-learn-review.png"), fullPage: true });
+  await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
+  await page.getByRole("tab", { name: "Play", exact: true }).click();
+  await page.getByRole("button", { name: "Continue Whist", exact: true }).click();
+  await expect(page.getByLabel("Your Whist hand").locator(".full-hand-card")).toHaveCount(12);
+  await expect(page.getByRole("button", { name: "Play card", exact: true })).toBeDisabled();
+  expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key)!).fullHand, saveKey)).toEqual(saved.fullHand);
+  expect(errors).toEqual([]);
+});

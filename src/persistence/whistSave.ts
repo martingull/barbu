@@ -1,4 +1,4 @@
-import type { FullHandState } from "../lessonTypes";
+import type { FullHandState } from "../domain/types";
 import { hydrateFullHandState } from "../domain/trickTakingHand";
 import { whistSessionComplete, whistSessionSettlement, type WhistHandResult, type WhistSession } from "../domain/whistSession";
 import { createSaveStore, type SaveStorage } from "./saveStore";

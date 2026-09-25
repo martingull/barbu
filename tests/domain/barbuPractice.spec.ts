@@ -6,7 +6,7 @@ import { typescriptHandEngine } from "../../src/domain/handEngine";
 import { dominoHandEngine } from "../../src/domain/dominoHand";
 import { isLegalDominoPlacement } from "../../src/domain/dominoRules";
 import { legalCards, trickWinner } from "../../src/domain/trickTakingRules";
-import type { Card, FullHandContract, GeneratedPracticeScenario, TableCard } from "../../src/lessonTypes";
+import type { Card, FullHandContract, GeneratedPracticeScenario, TableCard } from "../../src/domain/types";
 
 // Native hashes cover the entire DTO except two deliberately corrected classes of feedback copy.
 function canonical(value: unknown): unknown {

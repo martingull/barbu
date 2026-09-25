@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { dominoHandEngine as engine } from "../../src/domain/dominoHand";
 import { normalizeDominoHand } from "../../src/persistence/dominoSave";
 import { dominoFixtures as fixtures, inflateDominoHand, compactDominoHand } from "../fixtures/dominoHandFixture";
-import type { DominoHandState } from "../../src/lessonTypes";
+import type { DominoHandState } from "../../src/domain/types";
 
 const key = "barbu.savedPlayRun.v1";
 async function openPlay(page: Page) {

@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { nativeHeartsPractice as native } from "../fixtures/heartsPracticeFixture";
 import { evaluateHeartsPass, generateHeartsPassPractice, generateHeartsPracticeSet, heartsPassPracticeCount, heartsPracticeTopics, type HeartsPracticeFocus } from "../../src/domain/heartsPractice";
 import { legalHeartsCards } from "../../src/domain/heartsRules";
-import type { Card } from "../../src/lessonTypes";
+import type { Card } from "../../src/domain/types";
 
 test("unchanged Hearts topics retain their native migration coverage", () => {
   native.sets.forEach((expected, seed) => {

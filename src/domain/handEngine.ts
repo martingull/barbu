@@ -1,4 +1,4 @@
-import type { FullHandContract, FullHandState, Seat } from "../lessonTypes";
+import type { FullHandContract, FullHandState, Seat } from "./types";
 import { barbuTrickContracts } from "./barbuRules";
 import { startBarbuHand, playBarbuCard, replayBarbuHand } from "./trickTakingHand";
 import { applyBrowserHeartsPass, playBrowserHeartsCard, replayHeartsHand, startBrowserHeartsHand, startBrowserHeartsPassingHand,

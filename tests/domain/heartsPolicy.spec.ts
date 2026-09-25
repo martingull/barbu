@@ -1,9 +1,9 @@
 import { test, expect } from "@playwright/test";
 import cases from "../fixtures/hearts-policy.json" with { type: "json" };
 import passCases from "../fixtures/hearts-pass.json" with { type: "json" };
-import { chooseHeartsCard, chooseHeartsPass, heartsPositionFromHand, type HeartsPosition } from "../../src/heartsPolicy";
+import { chooseHeartsCard, chooseHeartsPass, heartsPositionFromHand, type HeartsPosition } from "../../src/domain/heartsPolicy";
 import { startBrowserHeartsHand, startBrowserHeartsPassingHand, applyBrowserHeartsPass, playBrowserHeartsCard, hydrateFullHandState } from "../../src/domain/trickTakingHand";
-import type { Card, FullHandState, Seat, Suit } from "../../src/lessonTypes";
+import type { Card, FullHandState, Seat, Suit } from "../../src/domain/types";
 
 const card = (id: string): Card => ({ id, label: id, rank: id.slice(0, -1), suit: id.at(-1) as Suit });
 const rank = (c: Card) => ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"].indexOf(c.rank);

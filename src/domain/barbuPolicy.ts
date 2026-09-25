@@ -1,4 +1,4 @@
-import type { Card, Seat, TableCard } from "../lessonTypes";
+import type { Card, Seat, TableCard } from "./types";
 import type { BarbuTrickContract } from "./barbuRules";
 import { cardRank, legalCards, trickWinner } from "./trickTakingRules";
 

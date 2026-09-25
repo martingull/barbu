@@ -1,4 +1,4 @@
-import type { Card, DominoHandState } from "../lessonTypes";
+import type { Card, DominoHandState } from "./types";
 import { trickTakingSeats as seats } from "./trickTakingScore";
 import { dealDomino, dominoRanks, dominoSuits, compareDominoCards } from "./dominoDeal";
 import { chooseDominoCard, legalDominoCards } from "./dominoPolicy";

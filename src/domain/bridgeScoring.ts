@@ -1,4 +1,4 @@
-import type { BridgeContractState, BridgeVulnerability, FullHandState, Seat } from "../lessonTypes";
+import type { BridgeContractState, BridgeVulnerability, FullHandState, Seat } from "./types";
 import { trickTakingSeats as seats } from "./trickTakingScore";
 import { bridgeSideForSeat } from "./bridgeAuction";
 

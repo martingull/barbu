@@ -1,5 +1,5 @@
-import type { GameDefinition } from "../gameRegistry";
-import { createGameTableDefinition } from "../tableFactory";
+import type { GameDefinition } from "./gameRegistry";
+import { createGameTableDefinition } from "./tableFactory";
 
 export type HeartsLearnPathAction = "object" | "queen" | "avoid" | "pass" | "break" | "moon" | "score";
 export type HeartsPracticeAction = "pass" | "first" | "avoid" | "queen" | "break" | "moon" | "score";

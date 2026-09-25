@@ -1,5 +1,5 @@
 import content from "../../content/barbu-practice.json" with { type: "json" };
-import type { Card, GeneratedDrillSet, GeneratedPracticeOutcome, GeneratedPracticeScenario, Seat, Suit, TableCard } from "../lessonTypes";
+import type { Card, GeneratedDrillSet, GeneratedPracticeOutcome, GeneratedPracticeScenario, Seat, Suit, TableCard } from "./types";
 import { barbuTrickContracts, barbuTrickPoints, type BarbuTrickContract } from "./barbuRules";
 import { isLegalDominoPlacement } from "./dominoRules";
 import { cardRank, legalCards, trickWinner } from "./trickTakingRules";

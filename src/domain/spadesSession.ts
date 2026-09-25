@@ -1,5 +1,5 @@
-import type { FullHandState } from "../lessonTypes";
-import { addSpadesMatchResult, spadesHandResultFor, spadesMatchComplete, type SpadesHandResult, type SpadesScoreState } from "../spadesScoring";
+import type { FullHandState } from "./types";
+import { addSpadesMatchResult, spadesHandResultFor, spadesMatchComplete, type SpadesHandResult, type SpadesScoreState } from "./spadesScoring";
 import { spadesClampBid, suggestedSpadesBidsForHand, type SpadesBidState } from "./spadesBidding";
 import { spadesHandEngine } from "./handEngine";
 import { transitionReviewedHand, type ReviewedHandEvent } from "./reviewedHand";

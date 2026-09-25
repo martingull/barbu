@@ -1,5 +1,5 @@
 import fixtures from "./domino-hands.json" with { type: "json" };
-import type { Card, DominoHandState } from "../../src/lessonTypes";
+import type { Card, DominoHandState } from "../../src/domain/types";
 import { trickTakingSeats as seats } from "../../src/domain/trickTakingScore";
 
 export const dominoFixtures = fixtures;

@@ -1,11 +1,11 @@
 import { test, expect } from "@playwright/test";
 import cases from "../fixtures/spades-nil-policy.json" with { type: "json" };
 import { hydrateFullHandState, startSpadesBiddingHand, playBrowserSpadesCard, chooseBrowserOpponentCardForState } from "../../src/domain/trickTakingHand";
-import type { Card, FullHandState, Seat, Suit } from "../../src/lessonTypes";
+import type { Card, FullHandState, Seat, Suit } from "../../src/domain/types";
 
 import { beginSpadesHand } from "../../src/domain/trickTakingHand";
 import { suggestedSpadesBidsForHand } from "../../src/domain/spadesBidding";
-import { spadesScoreForSide, spadesMatchComplete } from "../../src/spadesScoring";
+import { spadesScoreForSide, spadesMatchComplete } from "../../src/domain/spadesScoring";
 
 const seats: Seat[] = ["Tutor", "Right", "You", "Left"];
 const card = (id: string): Card => ({ id, label: id, rank: id.slice(0, -1), suit: id.at(-1) as Suit });

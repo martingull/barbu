@@ -75,7 +75,7 @@ and Tauri dependencies. Hearts, Whist and Spades native full-hand engines, polic
 settlement, and command routes have been removed. Keep the frozen native-save
 fixtures for compatibility tests, not a second production implementation.
 Spades uses one bidding heuristic in `src/domain/spadesBidding.ts`, explicit locked
-bids, and the existing twelve authored exercises in `src/spadesLessons.ts`.
+bids, and the existing twelve authored exercises in `src/lessons/spades/exercises.ts`.
 Keep opponents from playing opening cards before the player locks the bids.
 Bridge reuses the same hand, reviewed-hand and save factories. Auction legality
 and contract formation live in `src/domain/bridgeAuction.ts`, duplicate scoring
@@ -103,6 +103,15 @@ engine changes, in addition to the existing verification commands.
 
 ### Shared Foundations
 
+Keep `src/` limited to `App.svelte`, `main.ts`, declarations and responsibility
+folders. Shared Svelte surfaces belong in `components/`, game views and display
+copy in `features/<game>/`, pure formatting/layout helpers in `presentation/`,
+and styles in `styles/`. Table metadata and its factory/registry live in `games/`.
+Author courses/exercises under `lessons/<game>/`; keep `lessons/courses.ts` a thin
+catalog. Rules, policies, scoring and shared card/hand types live in `domain/`.
+Do not make the domain import presentation, features, persistence or Tauri.
+See the source map and boundary tests in `docs/game-architecture.md`.
+
 - Put shared TypeScript gameplay in `src/domain`; keep native platform integrations in `src-tauri`.
 - Share low-level card-table mechanics across games: deck, deal, turn order, follow-suit legality, trick winner, played-card memory, scoring primitives, and compact table presentation.
 - Keep game policy separate by game or contract. Barbu contract policy, Hearts/Black Lady avoidance policy, Domino layout policy, and future Whist/Bridge policies should call shared primitives but make their own decisions about winning, ducking, dumping danger cards, preserving trumps, or taking control.
@@ -118,8 +127,8 @@ engine changes, in addition to the existing verification commands.
 
 ## Frontend Table Pattern
 
-Start with `src/tableFactory.ts` and the definitions in `src/games/` when adding
-or changing a table. Use `GameDefinition` from `src/gameRegistry.ts`, construct
+Start with `src/games/tableFactory.ts` and the definitions in `src/games/` when adding
+or changing a table. Use `GameDefinition` from `src/games/gameRegistry.ts`, construct
 table metadata with `createGameTableDefinition`, and register the definition in
 `src/games/index.ts`. Together these own:
 
@@ -135,7 +144,7 @@ table metadata with `createGameTableDefinition`, and register the definition in
 - render guided lessons, topic exercises, progress, and reference together with `LearnPanel`
 - render concept/example/review stages with `CourseLesson` and interactive decisions with `TablePlaySurface` in `flowLayout` mode, just like Play
 - reuse `PlayTabPanel` and shared card/table components for presentation
-- keep only route, selection, and action-dispatch glue in `App.svelte`; match progression and saved-game rules belong outside the component, as demonstrated by the Whist prototype
+- keep catalog-wide routing and services in `App.svelte`; game-local selection, navigation and dispatch belong under `src/features/<game>/`, as demonstrated by `features/whist`; rules and settlement remain in the domain
 - keep access decisions centralized; do not expose planned Pro features merely because their metadata exists
 
 Practice is an activity within Learn, not a separate navigation tab. Keep the
@@ -153,6 +162,26 @@ the current reference for the TypeScript hand/session/save separation, not a
 complete generic game factory. Reuse shared interfaces and extract common
 behavior when a second game demonstrates the need; do not clone the whole Whist
 implementation or force non-trick-taking games into its hand model.
+
+Whist, Hearts, Spades, Bridge and Barbu frontends are isolated in `src/features/<game>/`.
+Reuse `reviewedMatchFeature` for compatible match interaction and `GameLearning` for the shared lesson flow,
+`DrillScreen` and `DrillResultScreen` for decisions and review, and the existing
+table/hand components for play. Keep unsaved exercises separate from saved matches.
+Bridge supplies its active declarer/dummy hand to the shared interaction helper;
+auction transitions stay in its domain session, not in the shell or view components.
+Barbu Play is isolated under `features/barbu`: intros, trick/Domino views, result
+presentation and a session controller. Its hand views also serve unsaved Learn hands.
+`savedSessionFeature` supplies common saving/navigation/selection plumbing;
+`reviewedMatchFeature` builds trick-review interaction on it. Keep Barbu's intro
+and Domino transitions in its own wrapper, not in the reviewed-match abstraction.
+Barbu Learn composes `GameLearning` with authored guided tricks, generated drills,
+Domino layout snippets and an unsaved hand controller. Preserve its seven progress
+keys and four generated patterns per contract. Card Counting is isolated under
+`features/card-counting`, using the shared Learn/Play surfaces and unsaved domain
+hands. Keep its question generation and transitions in `domain/cardCounting*`;
+do not reintroduce duplicate trick engines or persist its hands as matches.
+`App.svelte` now owns catalog/reference routing and shared services, not game state.
+See `docs/game-architecture.md` for boundaries and remaining curriculum limitations.
 
 If a new table needs an existing visual layout, use shared components before
 adding another large inline branch. Rules, scoring, generated practice, and

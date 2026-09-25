@@ -110,8 +110,8 @@ passes. A separate curriculum improvement should use distinct decisions and
 explanations tied to hand shape and passing context, with behavior-focused tests.
 
 Spades now owns its bidding heuristic in `src/domain/spadesBidding.ts`, settlement
-in `src/spadesScoring.ts`, and match transitions in `src/domain/spadesSession.ts`.
-Its twelve authored practice decisions moved unchanged to `src/spadesLessons.ts`.
+in `src/domain/spadesScoring.ts`, and match transitions in `src/domain/spadesSession.ts`.
+Its twelve authored practice decisions moved unchanged to `src/lessons/spades/exercises.ts`.
 New matches deal all 52 cards before any opening play; Start hand locks the bids
 and advances the opening opponents. Only the player's bid is adjustable.
 Locked bids are explicit hand metadata, not new data encoded in the hand ID.
@@ -136,10 +136,10 @@ in-memory progress cannot survive a reload until saving succeeds.
 
 Bridge uses the shared hand-engine registry, reviewed-hand transitions and save
 store. `bridgeAuction.ts` owns legal calls, contract formation and automatic
-auction turns, reusing `src/bridgeBidding.ts` for Barbu Natural. `bridgeScoring.ts`
+auction turns, reusing `src/domain/bridgeBidding.ts` for Barbu Natural. `bridgeScoring.ts`
 owns duplicate settlement. `bridgeSession.ts` owns selection, calls, opening
 play, replay, review and board advancement. Svelte dispatches those events.
-All nine authored Bridge decisions now live in `src/bridgePractice.ts`.
+All nine authored Bridge decisions now live in `src/lessons/bridge/exercises.ts`.
 A new practice/play consistency check caught the existing 1NT exercise declaring
 16 HCP while its cards held only 14. Replacing its 7C with QC makes the stated
 16 HCP and 1NT answer correct without changing its shape or the bidding policy.

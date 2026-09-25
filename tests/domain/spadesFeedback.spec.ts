@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import type { CompletedHandTrick, Seat } from "../../src/lessonTypes";
-import { spadesTrickFeedback } from "../../src/spadesFeedback";
+import type { CompletedHandTrick, Seat } from "../../src/domain/types";
+import { spadesTrickFeedback } from "../../src/features/spades/spadesFeedback";
 
 const bids = { You: 2, Tutor: 1, Left: 4, Right: 3 };
 const trick = (winner: Seat): CompletedHandTrick => ({

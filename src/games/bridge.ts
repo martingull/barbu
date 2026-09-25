@@ -1,5 +1,5 @@
-import type { GameDefinition } from "../gameRegistry";
-import { createGameTableDefinition } from "../tableFactory";
+import type { GameDefinition } from "./gameRegistry";
+import { createGameTableDefinition } from "./tableFactory";
 
 export type BridgeLearnPathAction = "bidding" | "declarer" | "dummy" | "defense";
 export type BridgePracticeAction = "bidding" | "declarer" | "defense";

@@ -1,7 +1,7 @@
 import { hydrateFullHandState } from "../domain/trickTakingHand";
 import { defaultSpadesBidState, spadesClampBid, type SpadesBidState } from "../domain/spadesBidding";
 import { spadesSessionComplete, type SpadesSession } from "../domain/spadesSession";
-import type { SpadesHandResult } from "../spadesScoring";
+import type { SpadesHandResult } from "../domain/spadesScoring";
 import { createSaveStore, type SaveStorage } from "./saveStore";
 import { isSavedTrickHand, natural, normalizedReviewCount, record, seat } from "./handSaveValidation";
 

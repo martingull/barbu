@@ -1,5 +1,5 @@
-import type { FullHandState, Suit } from "../lessonTypes";
-import { settleWhistHand, whistOddTricksForSide, type WhistPartnershipTricks, type WhistSessionMode } from "../whistScoring";
+import type { FullHandState, Suit } from "./types";
+import { settleWhistHand, whistOddTricksForSide, type WhistPartnershipTricks, type WhistSessionMode } from "./whistScoring";
 import { whistHandEngine } from "./handEngine";
 import { transitionReviewedHand, type ReviewedHandEvent } from "./reviewedHand";
 

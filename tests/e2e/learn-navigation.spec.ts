@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { bridgeCourses } from "../../src/lessons/bridgeCourses";
+import { bridgeCourses } from "../../src/lessons/bridge/courses";
 
 async function expectLearningLayout(page: Page) {
   const surface = page.locator(".table-play-surface.flow-play");

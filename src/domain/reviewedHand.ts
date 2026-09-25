@@ -1,4 +1,4 @@
-import type { FullHandState } from "../lessonTypes";
+import type { FullHandState } from "./types";
 import type { HandEngine } from "./handEngine";
 
 export type ReviewedHand = { fullHand: FullHandState; fullHandReviewTrickCount: number };

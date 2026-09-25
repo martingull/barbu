@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { createBarbuSession, transitionBarbuSession as step, barbuSessionComplete, barbuSeatTotals,
   barbuSeedForContract, type BarbuSession } from "../../src/domain/barbuSession";
 import { createBarbuSaveStore, normalizeBarbuSave, restoreBarbuSession, saveBarbuSession } from "../../src/persistence/barbuSave";
-import { fullHandContracts } from "../../src/contractRegistry";
+import { fullHandContracts } from "../../src/domain/contractRegistry";
 import { nativeBarbuHands, nativeBarbuHand, compactBarbuHand } from "../fixtures/barbuHandFixture";
 import { dominoFixtures, inflateDominoHand } from "../fixtures/dominoHandFixture";
 

@@ -1,8 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 import { generateBarbuPracticeSet } from "../../src/domain/barbuPractice";
 import { barbuTrickContracts } from "../../src/domain/barbuRules";
-import { formatCardText } from "../../src/cardDisplay";
-import type { GeneratedPracticeScenario } from "../../src/lessonTypes";
+import { formatCardText } from "../../src/presentation/cardDisplay";
+import type { GeneratedPracticeScenario } from "../../src/domain/types";
 
 async function openPractice(page: Page, native: boolean) {
   await page.addInitScript(native => {

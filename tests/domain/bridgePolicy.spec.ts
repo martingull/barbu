@@ -1,11 +1,12 @@
 import { test, expect } from "@playwright/test";
 import fixtures from "../fixtures/bridge-bidding.json" with { type: "json" };
-import { bridgeOpeningCall, suggestBridgeCall, explainBridgeCall } from "../../src/bridgeBidding";
+import { bridgeOpeningCall, suggestBridgeCall } from "../../src/domain/bridgeBidding";
+import { explainBridgeCall } from "../../src/features/bridge/bridgeBidExplanation";
 import { bridgeLegalCallOptions } from "../../src/domain/bridgeAuction";
-import { bridgeBoardConditions } from "../../src/bridgeBoard";
-import { bridgeBiddingPracticeSteps, bridgeDeclarerDrillPool, bridgeDefenseDrillPool } from "../../src/bridgePractice";
+import { bridgeBoardConditions } from "../../src/domain/bridgeBoard";
+import { bridgeBiddingPracticeSteps, bridgeDeclarerDrillPool, bridgeDefenseDrillPool } from "../../src/lessons/bridge/exercises";
 import { startBrowserBridgeHand, chooseBrowserOpponentCardForState, applyBrowserBridgeAuction, playBrowserBridgeCard } from "../../src/domain/trickTakingHand";
-import type { BridgeAuctionCall, Card, FullHandState, Seat, Suit } from "../../src/lessonTypes";
+import type { BridgeAuctionCall, Card, FullHandState, Seat, Suit } from "../../src/domain/types";
 
 const seats: Seat[] = ["Tutor", "Right", "You", "Left"];
 const card = (id: string): Card => ({ id, rank: id.slice(0, -1), suit: id.at(-1) as Suit, label: id });

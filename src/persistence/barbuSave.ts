@@ -1,4 +1,4 @@
-import { fullHandContracts } from "../contractRegistry";
+import { fullHandContracts } from "../domain/contractRegistry";
 import { barbuSessionComplete, settleBarbuSession, type BarbuHandResult, type BarbuSession } from "../domain/barbuSession";
 import { trickTakingSeats } from "../domain/trickTakingScore";
 import { normalizeBarbuHand } from "./barbuHandSave";

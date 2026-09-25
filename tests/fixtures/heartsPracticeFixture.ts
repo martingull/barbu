@@ -1,5 +1,5 @@
 import snapshot from "./hearts-native-practice.json" with { type: "json" };
-import type { Card, GeneratedDrillSet, HeartsPassScenario, Seat, TableCard } from "../../src/lessonTypes";
+import type { Card, GeneratedDrillSet, HeartsPassScenario, Seat, TableCard } from "../../src/domain/types";
 
 const pattern = (id: string) => id.replace(/-\d+$/, "");
 const card = (id: string): Card => ({ id, label: id, rank: id.slice(0, -1), suit: id.slice(-1) as Card["suit"] });

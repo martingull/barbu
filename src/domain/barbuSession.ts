@@ -1,6 +1,6 @@
-import type { FullHandState, DominoHandState, FullHandContract } from "../lessonTypes";
-import { fullHandContracts } from "../contractRegistry";
-import { contractRunScore } from "../contractScoring";
+import type { FullHandState, DominoHandState, FullHandContract } from "./types";
+import { fullHandContracts } from "./contractRegistry";
+import { contractRunScore } from "./contractScoring";
 import { typescriptHandEngine } from "./handEngine";
 import { dominoHandEngine } from "./dominoHand";
 import { transitionReviewedHand, type ReviewedHandEvent } from "./reviewedHand";

@@ -1,5 +1,5 @@
 import content from "../../content/hearts-practice.json" with { type: "json" };
-import type { Card, GeneratedDrillSet, GeneratedPracticeOutcome, GeneratedPracticeScenario, HeartsPassScenario, Seat, Suit, TableCard } from "../lessonTypes";
+import type { Card, GeneratedDrillSet, GeneratedPracticeOutcome, GeneratedPracticeScenario, HeartsPassScenario, Seat, Suit, TableCard } from "./types";
 import { heartsPoints, legalHeartsCards } from "./heartsRules";
 import { cardRank, trickWinner } from "./trickTakingRules";
 

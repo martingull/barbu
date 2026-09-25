@@ -1,4 +1,4 @@
-import type { BridgeAuctionCall, FullHandState } from "../lessonTypes";
+import type { BridgeAuctionCall, FullHandState } from "./types";
 import { bridgeAuctionStatus, bridgeAutoAdvanceAuction, bridgeCallLabel, bridgeFinalizeContract,
   bridgeLegalCallOptions, bridgeSuggestedCallForHand, type BridgeCallOption } from "./bridgeAuction";
 import { bridgeHandResultFor, bridgeScoreTotalsWith, type BridgeHandResult, type BridgeScoreState } from "./bridgeScoring";
