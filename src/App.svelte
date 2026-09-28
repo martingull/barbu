@@ -447,7 +447,7 @@
       {#if activeReference.contracts.length}
       <section class="reference-list" aria-label="Contract reference">
         <div class="section-heading">
-          <p class="eyebrow">{activeReferenceIsBarbu ? "Core game" : "Current game"}</p>
+          <p class="eyebrow">Rules</p>
           <h2>{activeReferenceIsBarbu ? "Barbu contracts" : `${activeReference.title} rules`}</h2>
         </div>
         <div class="reference-list-grid">
@@ -463,25 +463,6 @@
       </section>
 
       {/if}
-      <section class="reference-list" aria-label="Contract roadmap">
-        <div class="section-heading">
-          <p class="eyebrow">{activeReferenceIsBarbu ? "Core roadmap" : "Rule boundary"}</p>
-          <h2>{activeReferenceIsBarbu ? "Contract status" : "Current and later rules"}</h2>
-        </div>
-        <div class="contract-roadmap-list">
-          {#each activeReference.contractRoadmap as item}
-            <article class="contract-roadmap-card">
-              <div>
-                <p class="eyebrow">{item.coreStatus}</p>
-                <h3>{item.title}</h3>
-              </div>
-              <span>{item.appStatus}</span>
-              <p>{item.note}</p>
-            </article>
-          {/each}
-        </div>
-      </section>
-
       <section class="reference-list" aria-label="Variants and varieties">
         <div class="section-heading">
           <p class="eyebrow">Varieties of play</p>

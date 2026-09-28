@@ -1956,10 +1956,9 @@ test("Hearts reference explains the Black Lady rule boundary", async ({ page }, 
   await expect(page.getByLabel("Contract reference")).toContainText("Hearts rules");
   await expect(page.getByLabel("Contract reference")).toContainText("queen of spades is 13");
   await expect(page.getByLabel("Contract reference")).toContainText("shooting the moon");
-  await expect(page.getByLabel("Contract roadmap")).toContainText("Rotating pass");
-  await expect(page.getByLabel("Contract roadmap")).toContainText("Core");
-  await expect(page.getByLabel("Contract roadmap")).toContainText("Playable");
-  await expect(page.getByLabel("Variants and varieties")).toContainText("House-Rule Boundary");
+  await expect(page.getByLabel("Contract roadmap")).toHaveCount(0);
+  await expect(page.getByLabel("Hearts reference sections")).toContainText("The queen of spades may be passed.");
+  await expect(page.getByLabel("Variants and varieties")).toContainText("House Rules");
   await page.screenshot({ path: testInfo.outputPath("hearts-reference.png"), fullPage: true });
 
   await page.getByRole("button", { name: "Back to Hearts table" }).click();
@@ -1977,11 +1976,8 @@ test("Whist reference reflects the classic partnership table", async ({ page }, 
   await expect(page.getByRole("heading", { name: "Whist reference" })).toBeVisible();
   await expect(page.getByLabel("Whist overview")).toContainText("classic four-player partnership trick-taking game");
   await expect(page.getByLabel("Whist reference sections")).toContainText("Learning Path");
-  await expect(page.getByLabel("Whist reference sections")).toContainText("Playable local match with resume");
-  await expect(page.getByLabel("Contract roadmap")).toContainText("Learning path");
-  await expect(page.getByLabel("Contract roadmap")).toContainText("Playable hand");
-  await expect(page.getByLabel("Contract roadmap")).toContainText("Table habits");
-  await expect(page.getByLabel("Contract roadmap")).toContainText("Playable");
+  await expect(page.getByLabel("Whist reference sections")).toContainText("Single game or best-of-three rubber");
+  await expect(page.getByLabel("Contract roadmap")).toHaveCount(0);
   await page.screenshot({ path: testInfo.outputPath("whist-reference.png"), fullPage: true });
 
   await page.getByRole("button", { name: "Back to Whist table" }).click();
@@ -1989,7 +1985,7 @@ test("Whist reference reflects the classic partnership table", async ({ page }, 
   await expect(page.getByRole("tab", { name: "Learn" })).toHaveAttribute("aria-selected", "true");
 });
 
-test("Spades reference reflects the finished partnership table", async ({ page }, testInfo) => {
+test("Spades reference explains partnership rules and nil variants", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Open Spades/ }).click();
 
@@ -2000,18 +1996,39 @@ test("Spades reference reflects the finished partnership table", async ({ page }
   await expect(page.getByLabel("Spades overview")).toContainText("nil and bags");
   await expect(page.getByLabel("Spades reference sections")).toContainText("Deal And Bid");
   await expect(page.getByLabel("Spades reference sections")).toContainText("Bidding Heuristic");
-  await expect(page.getByLabel("Spades reference sections")).toContainText("App Learning Path");
+  await expect(page.getByLabel("Spades reference sections")).toContainText("Learning Path");
   await expect(page.getByLabel("Contract reference")).toContainText("nil scores +100 or -100");
-  await expect(page.getByLabel("Contract roadmap")).toContainText("Learning path");
-  await expect(page.getByLabel("Contract roadmap")).toContainText("Local match resume");
-  await expect(page.getByLabel("Contract roadmap")).toContainText("Playable");
+  await expect(page.getByLabel("Contract roadmap")).toHaveCount(0);
   await expect(page.getByLabel("Variants and varieties")).toContainText("Blind nil");
+  await expect(page.getByLabel("Variants and varieties")).toContainText("This table uses ordinary nil");
   await page.screenshot({ path: testInfo.outputPath("spades-reference.png"), fullPage: true });
 
   await page.getByRole("button", { name: "Back to Spades table" }).click();
   await expect(page.getByRole("heading", { name: "Spades table", exact: true })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Learn" })).toHaveAttribute("aria-selected", "true");
 });
+
+for (const reference of [
+  { game: "Bridge", rule: "Session totals add the contract points", variant: "Local Contract Play" },
+  { game: "Gin Rummy", rule: "Melds and layoffs are arranged automatically", variant: "Oklahoma Gin" }
+]) {
+  test(`${reference.game} reference describes rules without development status`, async ({ page }, testInfo) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: `Open ${reference.game}`, exact: true }).click();
+    await page.getByRole("tab", { name: "Learn" }).click();
+    await page.getByLabel("Learning resources").getByRole("button", { name: "Reference" }).click();
+
+    await expect(page.getByRole("heading", { name: `${reference.game} reference` })).toBeVisible();
+    await expect(page.getByLabel(`${reference.game} reference sections`)).toContainText(reference.rule);
+    await expect(page.getByLabel("Variants and varieties")).toContainText(reference.variant);
+    await expect(page.getByLabel("Contract roadmap")).toHaveCount(0);
+    await expect(page.locator("main")).not.toContainText(/Current and later rules|Contract status|future work|not yet available|Planned/);
+    await page.screenshot({ path: testInfo.outputPath("reference.png"), fullPage: true });
+
+    await page.getByRole("button", { name: `Back to ${reference.game} table` }).click();
+    await expect(page.getByRole("tab", { name: "Learn" })).toHaveAttribute("aria-selected", "true");
+  });
+}
 
 test("Hearts play starts with a rotating pass phase before the hand", async ({ page }, testInfo) => {
   await page.goto("/");
@@ -2722,11 +2739,11 @@ test("Barbu reference exposes baseline rules and varieties", async ({ page }, te
   await expect(page.getByLabel("Contract reference").getByText("No Last Two", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Contract reference").getByText("No Tricks", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Contract reference").getByText("Hearts Trumps", { exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Contract status" })).toBeVisible();
-  await expect(page.getByLabel("Contract roadmap")).toContainText("Core");
-  await expect(page.getByLabel("Contract roadmap")).toContainText("Hearts Trumps");
-  await expect(page.getByLabel("Contract roadmap")).toContainText("Domino");
-  await expect(page.getByLabel("Contract roadmap")).toContainText("Playable");
+  await expect(page.getByRole("heading", { name: "Contract status" })).toHaveCount(0);
+  await expect(page.getByLabel("Contract roadmap")).toHaveCount(0);
+  await expect(page.getByLabel("Variants and varieties")).toContainText("Seven-Contract Training Table");
+  await expect(page.getByLabel("Variants and varieties")).toContainText("does not use dealer-selected contracts");
+  await expect(page.getByLabel("Variants and varieties")).not.toContainText("Future");
   await expect(page.getByRole("heading", { name: "Documented variations" })).toBeVisible();
 
   await page.screenshot({ path: testInfo.outputPath("barbu-reference.png"), fullPage: true });

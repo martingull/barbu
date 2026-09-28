@@ -23,7 +23,7 @@ export const heartsDef: GameDefinition<HeartsLearnPathAction | HeartsPracticeAct
       progressAriaLabel: "Hearts course progress",
       nextSummary: "Return to the next short Hearts decision.",
       completeSummary: "Replay any Hearts lesson or move into practice.",
-      referenceSummary: "Check the current rules, names, scoring, and documented simplifications."
+      referenceSummary: "Check the rules, scoring, and varieties of play."
     },
     tabIntros: {
       learn: {

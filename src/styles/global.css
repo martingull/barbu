@@ -1858,50 +1858,6 @@ strong[aria-label="Whist dealer"] {
   font-weight: 800;
 }
 
-.contract-roadmap-list {
-  display: grid;
-  gap: 8px;
-}
-
-.contract-roadmap-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 7px 10px;
-  min-height: 74px;
-  padding: 12px;
-  border: 1px solid rgba(245, 241, 207, 0.22);
-  border-radius: 8px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(9, 34, 24, 0.16)),
-    #182f25;
-}
-
-.contract-roadmap-card h3 {
-  color: #f7faf3;
-  font-size: 1rem;
-  line-height: 1.12;
-}
-
-.contract-roadmap-card > span {
-  align-self: start;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: rgba(245, 241, 207, 0.14);
-  color: #f5f1cf;
-  font-size: 0.68rem;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.contract-roadmap-card > p {
-  grid-column: 1 / -1;
-  margin: 0;
-  color: #dbe7d1;
-  font-size: 0.82rem;
-  font-weight: 750;
-  line-height: 1.34;
-}
-
 .recent-attempt-list {
   grid-column: 1 / -1;
 }

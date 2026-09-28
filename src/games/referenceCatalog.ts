@@ -20,14 +20,6 @@ export type ReferenceContract = {
   lesson: string;
 };
 
-export type ReferenceContractRoadmapItem = {
-  id: string;
-  title: string;
-  coreStatus: string;
-  appStatus: string;
-  note: string;
-};
-
 export type ReferenceVariant = {
   id: string;
   title: string;
@@ -43,7 +35,6 @@ export type GameReference = {
   overview: string;
   sections: ReferenceSection[];
   contracts: ReferenceContract[];
-  contractRoadmap: ReferenceContractRoadmapItem[];
   variants: ReferenceVariant[];
 };
 
@@ -175,75 +166,24 @@ export const referenceCatalog: GameReference[] = [
         lesson: "Open a suit with a seven, then extend the low or high end by one rank when you can."
       }
     ],
-    contractRoadmap: [
-      {
-        id: "no-hearts",
-        title: "No Hearts",
-        coreStatus: "Core",
-        appStatus: "Playable",
-        note: "Read who will win the trick before worrying about which penalty cards have been played."
-      },
-      {
-        id: "no-queens",
-        title: "No Queens",
-        coreStatus: "Core",
-        appStatus: "Playable",
-        note: "Queens are dangerous only when they land in a trick you win."
-      },
-      {
-        id: "king-of-hearts",
-        title: "King of Hearts",
-        coreStatus: "Core",
-        appStatus: "Playable",
-        note: "The contract centers on one danger card: the king of hearts."
-      },
-      {
-        id: "no-last-two",
-        title: "No Last Two",
-        coreStatus: "Core",
-        appStatus: "Playable",
-        note: "Early tricks shape the endgame; the final two tricks are the scoring danger."
-      },
-      {
-        id: "no-tricks",
-        title: "No Tricks",
-        coreStatus: "Core",
-        appStatus: "Playable",
-        note: "Every trick is costly, so ducking and preserving low exits matter from the first lead."
-      },
-      {
-        id: "hearts-trumps",
-        title: "Hearts Trumps",
-        coreStatus: "Core",
-        appStatus: "Playable",
-        note: "Hearts become trumps, so a heart can cut a plain-suit trick and take control."
-      },
-      {
-        id: "domino",
-        title: "Domino",
-        coreStatus: "Core",
-        appStatus: "Playable",
-        note: "Domino uses a layout surface rather than a trick-taking surface: open suits with sevens, then build outward by rank."
-      }
-    ],
     variants: [
       {
-        id: "parlett-baseline",
-        title: "Core Baseline",
+        id: "training-table",
+        title: "Seven-Contract Training Table",
         note:
-          "The core Barbu game starts from Parlett for rules, terminology, play direction, and contract descriptions before Barbu adapts them into lessons."
+          "Play follows a fixed sequence of seven contracts. Hearts are trump for Hearts Trumps, and Domino starts from sevens. This training format does not use dealer-selected contracts, doubling, or full-table settlement."
       },
       {
         id: "learning-table",
         title: "Teaching Variety",
         note:
-          "Small authored positions and generated drills are teaching forms of the same contracts. They should preserve the baseline rule being taught."
+          "Short card decisions use the same contract rules as full hands, with fewer cards so you can focus on one idea at a time."
       },
       {
-        id: "future-varieties",
-        title: "Future Varieties Of Play",
+        id: "table-varieties",
+        title: "Table Customs",
         note:
-          "Named varieties can change contract order, scoring, or table customs. Those differences should be documented as varieties rather than mixed into the core contract reference."
+          "Barbu tables can differ in contract choice, trump selection, scoring, and doubling agreements. Agree on the rules before playing at a new table."
       }
     ]
   },
@@ -279,7 +219,7 @@ export const referenceCatalog: GameReference[] = [
         id: "play",
         title: "Play",
         body:
-          "A match rotates pass direction: left, right, across, then no pass. The holder of 2♣ opens the first trick with 2♣. Everyone else must follow the led suit when possible. First-trick penalty dumps are blocked when safe cards exist. Hearts cannot be led until a heart has already been played, unless a player has only hearts.",
+          "A match rotates pass direction: left, right, across, then no pass. The queen of spades may be passed. The holder of 2♣ opens the first trick with 2♣. Everyone else must follow the led suit when possible. First-trick penalty dumps are blocked when safe cards exist. Hearts cannot be led until a heart has already been played, unless a player has only hearts.",
         facts: [
           { label: "Pass", value: "Left, right, across, hold" },
           { label: "Opening lead", value: "Holder of 2♣ leads 2♣" },
@@ -313,43 +253,6 @@ export const referenceCatalog: GameReference[] = [
         lesson: "Start by reading who wins the trick, then manage the cumulative score over several hands."
       }
     ],
-    contractRoadmap: [
-      {
-        id: "black-lady-match",
-        title: "Focused local match",
-        coreStatus: "Core",
-        appStatus: "Playable",
-        note: "The match uses rotating pass directions, 2♣ opening, follow-suit legality, first-trick penalty restrictions, hearts-broken lead restrictions, trick winners, hearts, queen-of-spades scoring, shoot-the-moon scoring, and a 100-point target. Computer players use their own cards and public play, with heuristic decisions rather than expert search."
-      },
-      {
-        id: "passing",
-        title: "Rotating pass",
-        coreStatus: "Core",
-        appStatus: "Playable",
-        note: "The table rotates left, right, across, and hold. The queen of spades is passable by default; locked danger spades belong to a named house-rule variant."
-      },
-      {
-        id: "hearts-broken",
-        title: "Hearts-broken lead restriction",
-        coreStatus: "Core",
-        appStatus: "Playable",
-        note: "Heart leads are blocked until hearts are broken unless the player has only hearts."
-      },
-      {
-        id: "shooting-moon",
-        title: "Shooting the moon",
-        coreStatus: "Core",
-        appStatus: "Playable",
-        note: "If one seat captures all 26 points in a hand, that seat scores 0 and the other seats score 26."
-      },
-      {
-        id: "match-scoring",
-        title: "Multi-hand match scoring",
-        coreStatus: "Core",
-        appStatus: "Playable",
-        note: "The local match repeats hands until one seat reaches 100 penalty points. Low score wins."
-      }
-    ],
     variants: [
       {
         id: "black-lady",
@@ -359,9 +262,9 @@ export const referenceCatalog: GameReference[] = [
       },
       {
         id: "house-rule-boundary",
-        title: "House-Rule Boundary",
+        title: "House Rules",
         note:
-          "Locked danger spades, bonus-jack scoring, alternate pass schedules, and other table customs should be introduced as named Hearts varieties rather than merged into the Black Lady baseline."
+          "Some tables restrict passing high spades, award a bonus for the jack of diamonds, or use a different pass schedule. This table allows any card to be passed, counts only hearts and the queen of spades as penalties, and rotates left, right, across, and hold."
       }
     ]
   },
@@ -457,7 +360,7 @@ export const referenceCatalog: GameReference[] = [
         facts: [
           { label: "First step", value: "Concept: win tricks together" },
           { label: "Practice", value: "Compact Whist habits" },
-          { label: "Play", value: "Playable local match with resume" }
+          { label: "Play", value: "Single game or best-of-three rubber" }
         ]
       }
     ],
@@ -468,36 +371,6 @@ export const referenceCatalog: GameReference[] = [
         objective: "Win tricks with your partner and score the tricks your side wins above six.",
         scoring: "Each odd trick above six is one point for the partnership.",
         lesson: "Start by learning follow-suit, trumping, partner support, and odd-trick counting."
-      }
-    ],
-    contractRoadmap: [
-      {
-        id: "whist-reference",
-        title: "Reference baseline",
-        coreStatus: "Core",
-        appStatus: "Defined",
-        note: "Classic four-player partnership Whist is defined for object, players, cards, deal, trump, play, scoring, and table signals."
-      },
-      {
-        id: "whist-learn",
-        title: "Learning path",
-        coreStatus: "Core",
-        appStatus: "Playable",
-        note: "The path teaches object, follow-suit, trumps, partner reading, suit invitation, and odd-trick scoring."
-      },
-      {
-        id: "whist-play",
-        title: "Playable hand",
-        coreStatus: "Core",
-        appStatus: "Playable",
-        note: "Playable Whist has a visible turned trump, clockwise dealer rotation, thirteen-trick play, five-point games, optional best-of-three rubbers, and local resume. Computer players use public-information heuristics, not expert search."
-      },
-      {
-        id: "whist-table-habits",
-        title: "Table habits",
-        coreStatus: "Core",
-        appStatus: "Playable",
-        note: "The table emphasizes opening leads, partner returns, third-hand support, trump use, and odd-trick awareness."
       }
     ],
     variants: [
@@ -530,7 +403,7 @@ export const referenceCatalog: GameReference[] = [
           "Win tricks with your partner while treating spades as the permanent trump suit. Each side has a bid, so the goal is to take at least that many books without drifting into unnecessary bags.",
         facts: [
           { label: "Game type", value: "Partnership trick-taking" },
-          { label: "Current focus", value: "Bids, books, and bags" }
+          { label: "Key ideas", value: "Bids, books, and bags" }
         ]
       },
       {
@@ -605,13 +478,13 @@ export const referenceCatalog: GameReference[] = [
       },
       {
         id: "app-learning",
-        title: "App Learning Path",
+        title: "Learning Path",
         body:
-          "The Spades lessons reuse the shared game-table course flow used by Hearts and Whist. The path starts with the partnership object, then practices follow-suit legality, fixed trump, bidding from a visible hand, nil awareness, and bag management through short scripted decisions before moving into full local play.",
+          "Start with the partnership objective, then try following suit, using trumps, bidding from your hand, protecting nil, and managing bags. Short card decisions let you explore each idea before a full match.",
         facts: [
           { label: "First step", value: "Concept: win your books" },
           { label: "Practice", value: "Three short scripted decisions per topic" },
-          { label: "Play", value: "Playable local match with resume" }
+          { label: "Play", value: "Partnership match to 500 points" }
         ]
       }
     ],
@@ -624,49 +497,12 @@ export const referenceCatalog: GameReference[] = [
         lesson: "Start by recognizing when you must follow suit, when a spade can cut the trick, when nil needs protection, and when an extra book becomes a bag."
       }
     ],
-    contractRoadmap: [
-      {
-        id: "spades-reference",
-        title: "Reference baseline",
-        coreStatus: "Core",
-        appStatus: "Defined",
-        note: "Spades is defined as a Whist-family partnership game with fixed spades trump, bids, books, and bags."
-      },
-      {
-        id: "spades-learn",
-        title: "Learning path",
-        coreStatus: "Core",
-        appStatus: "Playable",
-        note: "The path uses the shared course template and teaches object, follow-suit legality, fixed trump, bidding, nil awareness, and bag management."
-      },
-      {
-        id: "spades-play",
-        title: "Playable scored hand",
-        coreStatus: "Core",
-        appStatus: "Playable",
-        note: "The current implementation reuses the partnership full-hand table, shows your hand before bidding, estimates each hidden bid from that hand, lets the player adjust only their own bid, and scores nil, bags, ten-bag penalties, and matches."
-      },
-      {
-        id: "spades-resume",
-        title: "Local match resume",
-        coreStatus: "Core",
-        appStatus: "Playable",
-        note: "Local play saves match score, bag count, bids, hand state, and the pre-play bid/table toggle so Spades can resume like Hearts and Whist."
-      },
-      {
-        id: "spades-variants",
-        title: "Advanced variants",
-        coreStatus: "Variant",
-        appStatus: "Planned",
-        note: "Blind nil, alternate bag penalties, jokers, partnership bidding conventions, and table-specific scoring should be introduced as named Spades variants."
-      }
-    ],
     variants: [
       {
-        id: "nil-boundary",
-        title: "Nil Boundary",
+        id: "blind-nil",
+        title: "Blind Nil",
         note:
-          "The current table teaches ordinary individual bids, partnership totals, nil, bags, and the ten-bag penalty. The opening bid estimate counts aces, protected kings, high spades, and spade length, then suggests nil only for hands with no clear winners. Blind nil should be introduced as a named variant once the core hand feels settled."
+          "Blind nil is a bid to take no tricks made before looking at the hand. This table uses ordinary nil: you see your cards before choosing your bid."
       }
     ]
   },
@@ -676,7 +512,7 @@ export const referenceCatalog: GameReference[] = [
     family: "Bridge",
     baseline: "Contract Bridge local table with auction, declarer play, dummy, vulnerability, and duplicate scoring",
     overview:
-      "Bridge is a four-player partnership trick-taking game with an auction, a contract, declarer play, an exposed dummy, and two defenders. The Bridge table now plays a local contract hand from a rotating auction into declarer/dummy play or defense.",
+      "Bridge is a four-player partnership trick-taking game with an auction, a contract, declarer play, an exposed dummy, and two defenders. Bid for a contract, then play as declarer with dummy or defend with your partner.",
     sections: [
       {
         id: "object",
@@ -737,11 +573,11 @@ export const referenceCatalog: GameReference[] = [
         id: "app-learning",
         title: "Learning Path",
         body:
-          "The Bridge path teaches declarer play, dummy handling, and defense through short decisions. Play uses Barbu Natural agreements, the standard sixteen-board dealer and vulnerability cycle, and duplicate contract scores. Passed-out boards score zero and advance the session. Matchpoint comparisons and IMP team results are not yet available.",
+          "The Bridge path teaches declarer play, dummy handling, and defense through short decisions. Play uses Barbu Natural agreements, the standard sixteen-board dealer and vulnerability cycle, and duplicate contract scores. Passed-out boards score zero and advance the session. Session totals add the contract points from each board; they are not matchpoints or IMPs.",
         facts: [
           { label: "Play", value: "Auction into scored contract hand" },
           { label: "Practice", value: "Short scripted decisions" },
-          { label: "Future", value: "Comparative duplicate results and advanced bidding" }
+          { label: "Session score", value: "Total contract points" }
         ]
       },
       {
@@ -763,46 +599,16 @@ export const referenceCatalog: GameReference[] = [
         id: "starter-1nt",
         title: "Contract hand",
         objective: "Take at least six plus the contract level as declarer.",
-        scoring: "Duplicate-style scoring is active for made contracts, undertricks, overtricks, doubles, redoubles, game, slam, and vulnerability.",
+        scoring: "Duplicate scoring accounts for made contracts, undertricks, overtricks, doubles, redoubles, game, slam, and vulnerability.",
         lesson: "Start by planning sure tricks, using dummy, establishing long suits, and timing stoppers."
-      }
-    ],
-    contractRoadmap: [
-      {
-        id: "bridge-reference",
-        title: "Reference baseline",
-        coreStatus: "Core",
-        appStatus: "Defined",
-        note: "Bridge is defined as contract partnership play with auction, declarer, dummy, defense, and contract scoring layers."
-      },
-      {
-        id: "bridge-learn",
-        title: "Learning path",
-        coreStatus: "Core",
-        appStatus: "Playable",
-        note: "The current path teaches declarer planning, dummy handling, and defense through short table decisions."
-      },
-      {
-        id: "bridge-play",
-        title: "Playable contract hand",
-        coreStatus: "Core",
-        appStatus: "Playable",
-        note: "The Bridge table runs a rotating auction, derives declarer/dummy/opening lead, hides dummy until the opening lead, and scores the completed contract."
-      },
-      {
-        id: "bridge-auction",
-        title: "Auction and scoring",
-        coreStatus: "Core",
-        appStatus: "Playable",
-        note: "Pass, double, redouble, standard board vulnerability, duplicate contract scoring, and Barbu Natural responses and rebids are active. Advanced conventions and comparative duplicate sessions remain future layers."
       }
     ],
     variants: [
       {
-        id: "starter-boundary",
-        title: "Current Boundary",
+        id: "local-contract-play",
+        title: "Local Contract Play",
         note:
-          "The Bridge table offers local contract practice with documented natural agreements. Opponents use deterministic heuristics, not expert search: advanced competitive auctions, slam investigation, entry planning, and defensive signalling remain limited. Session totals are raw contract points, not matchpoints or IMPs."
+          "Play individual boards against computer opponents using Barbu Natural agreements. Each board earns its duplicate contract score. Matchpoints and IMPs compare results from other tables; this local session does not make those comparisons."
       }
     ]
   },
