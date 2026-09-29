@@ -8,15 +8,15 @@
   let { course, stage, onBack, onContinue, customExample }: {
     course: CourseContent; stage: CourseStage; onBack: () => void; onContinue: () => void; customExample?: Snippet;
   } = $props();
-  let copy = $derived(stage === "concept" ? course.concept : stage === "example" ? course.example : course.review);
+  let copy = $derived(stage === "concept" ? course.concept : course.example);
   let points = $derived(stage === "example" ? course.example.sequence.map(step => ({ marker: step.label, text: step.text }))
-    : stage === "concept" ? course.concept.points : course.review.points);
+    : course.concept.points);
   let singleHand = $derived(course.example.tableCards.length > 1 && new Set(course.example.tableCards.map(play => play.seat)).size === 1);
 </script>
 
 <TablePlaySurface flowLayout surfaceClassName="learning-play-surface learning-copy-surface"
-  ariaLabel={`${course.contract} course content`} title={stage === "review" ? "Review" : course.title}
-  eyebrow={course.contract} statusLabel="Lesson" statusValue={stage === "concept" ? "Concept" : stage === "example" ? "Example" : "Review"}
+  ariaLabel={`${course.contract} course content`} title={course.title}
+  eyebrow={course.contract} statusLabel="Lesson" statusValue={stage === "concept" ? "Concept" : "Example"}
   showTable={stage === "example"} tableAriaLabel={course.example.ariaLabel} tableCards={course.example.tableCards}
   pendingBySeat={course.example.pendingBySeat} useCustomTable={singleHand || course.contract === "Domino"}
   seatLabels={course.game === "bridge" ? compassSeatLabels : {}}
@@ -45,7 +45,7 @@
     <div class="action-row">
       <button class="secondary-action" onclick={onBack} type="button">Table</button>
       <button class="primary-action" onclick={onContinue} type="button">
-        {stage === "concept" ? "See example" : stage === "example" ? "Try cards" : `Finish ${course.contract}`}
+        {stage === "concept" ? "See example" : "Try cards"}
       </button>
     </div>
   {/snippet}

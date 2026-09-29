@@ -165,7 +165,15 @@ test("Gin teaches nine decisions and persists progress separately from play", as
       if (index === 0) await page.screenshot({ path: info.outputPath(`gin-${topic}.png`), fullPage: true });
       await page.getByRole("button", { name: index === 2 ? "Finish practice" : "Next decision", exact: true }).click();
     }
-    await page.getByRole("button", { name: "Finish Gin Rummy", exact: true }).click();
+    await expect(page.getByRole("status")).toHaveText("Topic complete.");
+    await expect(page.getByRole("button", { name: "Continue Gin Rummy", exact: true })).toBeVisible();
+    if (topic === "knock") {
+      await expect(page.getByRole("button", { name: "Next topic", exact: true })).toHaveCount(0);
+      await page.getByRole("button", { name: "Continue Gin Rummy", exact: true }).click();
+      expect(await saved(page)).toEqual(before);
+      await page.getByRole("button", { name: "Table", exact: true }).first().click();
+      await page.getByRole("tab", { name: "Learn", exact: true }).click();
+    } else await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
   }
   await expect(page.getByLabel("Gin Rummy course progress")).toContainText("3 / 3 complete");
   expect(await saved(page)).toEqual(before);

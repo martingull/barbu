@@ -8,6 +8,7 @@ export type FeatureServices = {
   onBack: () => void;
   onReference: () => void;
   onCompleteStep: (id: string) => void;
+  onResetSteps: (ids: string[]) => void;
   onExerciseComplete: (results: DrillResult[]) => void;
   onSurfaceChange: (fixed: boolean) => void;
 };
@@ -16,7 +17,6 @@ export type CustomExerciseContext = {
   action: string;
   seed: number;
   fromCourse: boolean;
-  courseComplete: boolean;
   onBack: () => void;
   onComplete: () => void;
 };
@@ -26,10 +26,3 @@ export type LearningEntry =
   | { kind: "step"; id: string }
   | { kind: "exercise"; action: string }
   | { kind: "introduction"; action: string; title: string };
-
-export type LearningResultActions = {
-  results: DrillResult[];
-  attempts: PlayBarbuAttempt[];
-  onExercise: (action: string) => void;
-  onBack: () => void;
-};

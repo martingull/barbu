@@ -1,6 +1,6 @@
 import type { Seat, TableCard } from "../domain/types";
 
-export type CourseStage = "concept" | "example" | "review";
+export type CourseStage = "concept" | "example";
 
 type CoursePanel = {
   heading: string;

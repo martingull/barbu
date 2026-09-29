@@ -28,6 +28,7 @@
   {/if}
 {:else}
   <GameLearning {...services} definition={bridgeDef} gameName="Bridge" tab={$feature.tab}
+    onPlay={() => $feature.saved ? feature.resume() : void feature.start()} playLabel={$feature.saved ? "Continue Bridge" : "Play Bridge"}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
     loadExercise={(action, seed) => action === "bidding" ? { seed: 0 } : orderPracticePool(action === "defense" ? bridgeDefenseDrillPool : bridgeDeclarerDrillPool, seed())}
     exerciseTitle={action => `Bridge practice: ${names[action]}`} drillTitle={() => "Bridge lesson"} drillEyebrow="Bridge" seatLabels={compassSeatLabels}
@@ -35,7 +36,7 @@
     {#snippet customExercise(context)}<BridgeBiddingPractice onBack={context.onBack} onComplete={context.onComplete} />{/snippet}
     {#snippet play()}
       <PlayTabPanel table={bridgeDef.table} {...bridgeDef.playTabConfig}
-        footerNote="Bridge uses a basic natural auction: five-card majors, better minor, 15-17 1NT, strong 2C, declarer, dummy, opening lead, vulnerability, and duplicate scoring."
+        footerNote="Natural bidding: five-card majors, better minor, 15-17 1NT, strong 2C."
         primaryDisabled={$feature.dealing} primaryWarning={$feature.error} onPrimary={() => void feature.start()}
         resumeLabel={$feature.saved ? "Continue Bridge" : undefined} resumeNote={$feature.saved ? savedBridgeRunSummary($feature.saved) : undefined}
         onResume={$feature.saved ? feature.resume : undefined} />

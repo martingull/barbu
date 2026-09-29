@@ -10,7 +10,6 @@
   import DominoLessonTable from "./DominoLessonTable.svelte";
   import { barbuDef } from "../../games/barbu";
   import { guidedLessons } from "../../lessons/catalog";
-  import { buildDrillLoopInsight, summarizeContractResults, weakestContractFromResults } from "../../lessons/drillReview";
   import { createBarbuPracticeLoader, barbuExerciseTitle, exerciseContract, isBarbuAttempt } from "./barbuLearning";
   import { savedPlayBarbuRunSummary } from "../../persistence/barbuSave";
   import type { FullHandContract } from "../../domain/types";
@@ -57,6 +56,7 @@
   <BarbuPlay {feature} onBack={table} onStandaloneHand={standalone} />
 {:else}
   <GameLearning {...services} definition={barbuDef} gameName="Barbu" tab={$feature.tab} {entry} {lessonEntries}
+    onPlay={() => $feature.saved ? feature.resume() : void feature.start()} playLabel={$feature.saved ? "Continue Barbu" : "Play Barbu"}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
     resources={[
       { id: "review-results", title: "Review results", summary: "Return to your previous contract decisions.", onClick: () => { route = "review"; } },
@@ -66,7 +66,7 @@
     loadExercise={(action, _seed, fromCourse) => loader.load(action, fromCourse)}
     exerciseTitle={barbuExerciseTitle} drillTitle={step => step.trick.title}
     drillTopic={exerciseContract} drillTableFor={step => step.contract === "Domino" ? dominoTable : undefined}
-    historyFilter={isBarbuAttempt} resultMessage={clean => clean
+    resultMessage={clean => clean
       ? "Clean session. Barbu is ready to raise the pressure." : "Use the next repetition to make the weak decision automatic."}>
     {#snippet customExample(course)}
       <DominoLessonTable cards={course.example.tableCards} label={course.example.ariaLabel} />
@@ -79,12 +79,6 @@
           <BarbuPracticeHand initialContract="Domino" initialSeed={context.seed} nextSeed={services.nextSeed} onBack={context.onBack} />
         {/if}
       {/key}
-    {/snippet}
-    {#snippet resultActions(context)}
-      {@const focus = buildDrillLoopInsight(context.results, context.attempts).contract
-        || weakestContractFromResults(summarizeContractResults(context.results))}
-      <button class="primary-action" onclick={() => context.onExercise(focus || "mixed")} type="button">Replay {focus || "Full table"}</button>
-      <button class="secondary-action" onclick={() => context.onExercise("mixed")} type="button">Try again</button>
     {/snippet}
     {#snippet play()}
       <PlayTabPanel table={barbuDef.table} {...barbuDef.playTabConfig}

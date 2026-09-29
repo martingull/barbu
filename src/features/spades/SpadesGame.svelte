@@ -25,10 +25,11 @@
     onBid={feature.setBid} onToggleBids={feature.toggleBids} onStartPlay={feature.startPlay} />
 {:else}
   <GameLearning {...services} definition={spadesDef} gameName="Spades" tab={$feature.tab}
+    onPlay={() => $feature.saved ? feature.resume() : void feature.start()} playLabel={$feature.saved ? "Continue Spades" : "Play Spades"}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
     loadExercise={(action, seed) => orderPracticePool(pools[action as SpadesPracticeAction], seed())}
     exerciseTitle={action => `Spades practice: ${names[action as SpadesPracticeAction]}`} drillTitle={() => "Spades lesson"} drillEyebrow="Spades"
-    resultMessage={clean => clean ? "Clean Spades practice. Keep reading the bid, trump, nil, and bags before full hands arrive." : "Repeat the Spades pattern until bid-aware trick decisions feel automatic."}>
+    resultMessage={clean => clean ? "Try reading bids, trump, nil, and bags in a full Spades hand." : "Review the feedback, then try this Spades topic again."}>
     {#snippet play()}
       <PlayTabPanel table={spadesDef.table} {...spadesDef.playTabConfig}
         footerNote={`Individual bids, nil, bags, and ten-bag penalties score locally. Play to ${spadesMatchTarget}.`}

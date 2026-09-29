@@ -34,6 +34,7 @@
     heartsPassPracticeChecked = true;
   }
   function nextHeartsPassPracticeStep() {
+    if (!heartsPassPracticeChecked) return;
     if (heartsPassPracticeIsLastStep) { context.onComplete(); return; }
     heartsPassPracticeStepIndex += 1;
     heartsPassPracticeSelectedCardIds = [];
@@ -121,19 +122,9 @@
     <div class="action-row">
       <button class="secondary-action" onclick={context.onBack} type="button">Table</button>
       {#if heartsPassPracticeChecked}
-        {#if context.fromCourse}
-          <button class="primary-action" onclick={() => void nextHeartsPassPracticeStep()} type="button">
-            {heartsPassPracticeIsLastStep
-              ? context.courseComplete
-                ? "Back to Hearts table"
-                : "Continue Hearts path"
-              : "Next pass"}
-          </button>
-        {:else}
-          <button class="primary-action" onclick={() => void nextHeartsPassPracticeStep()} type="button">
-            {heartsPassPracticeIsLastStep ? "Complete exercise" : "Next pass"}
-          </button>
-        {/if}
+        <button class="primary-action" onclick={nextHeartsPassPracticeStep} type="button">
+          {heartsPassPracticeIsLastStep ? "Finish topic" : "Next pass"}
+        </button>
       {:else}
         <button
           class="primary-action"

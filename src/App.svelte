@@ -87,6 +87,11 @@
     } catch { /* Progress remains available for this session. */ }
   }
 
+  function resetCourseSteps(ids: string[]) {
+    const resetIds = new Set(ids);
+    saveCourseProgress(Object.fromEntries(Object.entries(completedPathSteps).filter(([id]) => !resetIds.has(id))));
+  }
+
 
   function loadPlayBarbuHistory(): PlayBarbuAttempt[] {
     try {
@@ -379,50 +384,50 @@
   {:else if appView === "barbuFeature"}
     <BarbuGame feature={barbuFeature} initialEntry={barbuEntry} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onBack={openCatalog} onReference={() => openReference("barbu")}
-      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })}
+      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })} onResetSteps={resetCourseSteps}
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
       onSurfaceChange={fixed => { barbuFixedSurface = fixed; }} />
   {:else if appView === "bridgeFeature"}
     <BridgeGame feature={bridgeFeature} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onBack={openCatalog} onReference={() => openReference("bridge")}
-      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })}
+      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })} onResetSteps={resetCourseSteps}
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
       onSurfaceChange={fixed => { bridgeFixedSurface = fixed; }} />
   {:else if appView === "spadesFeature"}
     <SpadesGame feature={spadesFeature} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onBack={openCatalog} onReference={() => openReference("spades")}
-      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })}
+      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })} onResetSteps={resetCourseSteps}
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
       onSurfaceChange={fixed => { spadesFixedSurface = fixed; }} />
   {:else if appView === "heartsFeature"}
     <HeartsGame feature={heartsFeature} initialEntry={heartsEntry} onEntryConsumed={() => { heartsEntry = undefined; }} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onExploreBarbu={() => { openBarbuTable(); barbuFeature.openTable("learn"); }}
       onBack={openCatalog} onReference={() => openReference("hearts")}
-      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })}
+      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })} onResetSteps={resetCourseSteps}
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
       onSurfaceChange={fixed => { heartsFixedSurface = fixed; }} />
   {:else if appView === "whistFeature"}
     <WhistGame feature={whistFeature} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onBack={openCatalog} onReference={() => openReference("whist")}
-      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })}
+      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })} onResetSteps={resetCourseSteps}
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
       onSurfaceChange={fixed => { whistFixedSurface = fixed; }} />
   {:else if appView === "ginFeature"}
     <GinRummyGame feature={ginFeature} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onBack={openCatalog} onReference={() => openReference("gin-rummy")}
-      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })}
+      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })} onResetSteps={resetCourseSteps}
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
       onSurfaceChange={fixed => { ginFixedSurface = fixed; }} />
   {:else if appView === "canastaFeature"}
     <CanastaGame feature={canastaFeature} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onBack={openCatalog} onReference={() => openReference("canasta")}
-      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })}
+      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })} onResetSteps={resetCourseSteps}
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
       onSurfaceChange={fixed => { canastaFixedSurface = fixed; }} />
   {:else if appView === "cardCountingFeature"}
     <CardCountingGame completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onBack={openCatalog} onReference={() => {}}
-      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })}
+      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })} onResetSteps={resetCourseSteps}
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
       onSurfaceChange={fixed => { cardCountingFixedSurface = fixed; }} />
   {:else if appView === "reference"}

@@ -1009,14 +1009,6 @@ button {
   gap: 8px;
 }
 
-.drill-result-actions {
-  justify-content: stretch;
-}
-
-.drill-result-actions .primary-action {
-  width: 100%;
-}
-
 .topbar {
   display: flex;
   align-items: center;
@@ -1774,56 +1766,6 @@ strong[aria-label="Whist dealer"] {
   grid-column: 1 / -1;
 }
 
-.drill-result-list {
-  display: grid;
-  gap: 8px;
-}
-
-.drill-result-list div {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: center;
-  min-height: 70px;
-  padding: 12px;
-  border: 1px solid rgba(245, 241, 207, 0.22);
-  border-radius: 8px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(9, 34, 24, 0.16)),
-    #182f25;
-}
-
-.drill-result-list span {
-  display: grid;
-  width: 32px;
-  aspect-ratio: 1;
-  place-items: center;
-  border-radius: 999px;
-  background: #f5f1cf;
-  color: #21372d;
-  font-size: 0.78rem;
-  font-weight: 900;
-}
-
-.drill-result-list strong {
-  color: #f7faf3;
-  font-size: 1rem;
-}
-
-.drill-result-list small {
-  color: #f0b3a8;
-  font-size: 0.78rem;
-  font-weight: 900;
-}
-
-.drill-result-list em {
-  grid-column: 2 / -1;
-  color: #dbe7d1;
-  font-size: 0.82rem;
-  font-style: normal;
-  font-weight: 800;
-}
-
 .contract-result-list,
 .recent-attempt-list {
   display: grid;
@@ -2579,22 +2521,10 @@ strong[aria-label="Whist dealer"] {
     font-size: 1.26rem;
   }
 
-  .drill-result-list div {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .drill-result-list small {
-    grid-column: 2;
-  }
-
 
   .course-actions {
     display: grid;
     grid-template-columns: 0.8fr 1fr;
-  }
-
-  .drill-result-actions {
-    grid-template-columns: 1fr;
   }
 
   .drill-loop-panel {

@@ -10,14 +10,15 @@
     nextStep?: LearnPathStep;
     actions?: LearnAction[];
     onStepSelect: (step: LearnPathStep) => void;
+    onStepPractice: (step: LearnPathStep) => void;
+    onReset: () => void;
     groups: PracticeGroup[];
     exerciseActions: Record<string, () => void>;
     lessonEntries?: Array<{ id: string; contract: string; title: string }>;
-    onLessonSelect?: (id: string) => void;
   };
 
-  let { table, steps, completedSteps, completedCount, nextStep, actions = [], onStepSelect,
-    groups, exerciseActions, lessonEntries = [], onLessonSelect }: Props = $props();
+  let { table, steps, completedSteps, completedCount, nextStep, actions = [], onStepSelect, onStepPractice, onReset,
+    groups, exerciseActions, lessonEntries = [] }: Props = $props();
   let firstStep = $derived(steps.find(step => step.action !== "planned"));
   let firstExercise = $derived(groups.flatMap(group => group.entries ?? [])[0]);
   let exercises = $derived(groups.flatMap(group => group.entries ?? []));
@@ -34,9 +35,11 @@
         <div class="progress-track"><div class="progress-fill" style={`width: ${progress}%`}></div></div>
       </div>
     {/if}
-    {#if currentStep || firstExercise}
+    {#if steps.length && completedCount === steps.length}
+      <button class="drill-action" onclick={onReset} type="button">Reset lessons</button>
+    {:else if currentStep || firstExercise}
       <button class="drill-action" onclick={() => currentStep ? onStepSelect(currentStep) : firstExercise && exerciseActions[firstExercise.action]?.()} type="button">
-        {steps.length && !nextStep ? "Review lessons" : completedCount ? "Continue learning" : "Start learning"}
+        {completedCount ? "Continue learning" : "Start learning"}
       </button>
       <p class="next-topic">{currentStep?.title ?? firstExercise?.title}</p>
     {/if}
@@ -55,9 +58,9 @@
             <span><small>{step.step}</small><strong>{step.title}</strong><small>{step.summary}</small></span>
             <span class="lesson-status">{completedSteps[step.id] ? "Complete" : step.action === "planned" ? "Planned" : step.id === nextStep?.id ? "Next" : "Open"}</span>
           </button>
-          {#if exercise || lesson}
-            <button class="exercise-shortcut" aria-label={`Try cards: ${exercise?.title ?? lesson?.contract}`}
-              onclick={() => exercise ? exerciseActions[exercise.action]?.() : lesson && onLessonSelect?.(lesson.id)} type="button">Try cards</button>
+          {#if step.action !== "planned"}
+            <button class="exercise-shortcut" aria-label={`Try cards: ${exercise?.title ?? lesson?.contract ?? step.title}`}
+              onclick={() => onStepPractice(step)} type="button">Try cards</button>
           {/if}
           </div>
         {/each}

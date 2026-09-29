@@ -30,13 +30,14 @@
     onNextTrick={feature.nextTrick} onNextHand={() => void feature.start(true)} onReplay={feature.replay} />
 {:else}
   <GameLearning {...services} definition={whistDef} gameName="Whist" tab={$feature.tab}
+    onPlay={() => $feature.saved ? feature.resume() : void feature.start()} playLabel={$feature.saved ? "Continue Whist" : "Play Whist"}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
     loadExercise={(action, seed, fromCourse) => action === "lead" && !fromCourse ? { seed: 0 } : orderPracticePool(pools[action as WhistPracticeAction], seed())}
     exerciseTitle={action => `Whist practice: ${names[action as WhistPracticeAction]}`} drillTitle={() => "Whist lesson"} drillEyebrow="Whist"
-    resultMessage={clean => clean ? "Clean Whist practice. Keep reading partner, led suit, and trump before full hands arrive." : "Repeat the Whist pattern until follow-suit and trump decisions feel automatic."}>
+    resultMessage={clean => clean ? "Try reading partner, led suit, and trump in a full Whist hand." : "Review the feedback, then try this Whist topic again."}>
     {#snippet customExercise(context)}<WhistOpeningLead onBack={context.onBack} onComplete={context.onComplete} />{/snippet}
     {#snippet play()}
-      <PlayTabPanel table={whistDef.table} {...whistDef.playTabConfig} footerNote="You and Barbu play to 5 points against Left and Right."
+      <PlayTabPanel table={whistDef.table} {...whistDef.playTabConfig}
         primaryDisabled={$feature.dealing} primaryWarning={$feature.error} onPrimary={() => void feature.start()}
         resumeLabel={$feature.saved ? "Continue Whist" : undefined} resumeNote={$feature.saved ? savedWhistRunSummary($feature.saved) : undefined}
         onResume={$feature.saved ? feature.resume : undefined}>

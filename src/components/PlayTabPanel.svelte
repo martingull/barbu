@@ -45,7 +45,7 @@
   <div class="barbu-mode-copy">
     <p class="eyebrow">{table.tabs.play.intro.eyebrow}</p>
     <h2>{table.tabs.play.intro.title}</h2>
-    <p>{table.tabs.play.intro.summary}</p>
+    <p>{supportingCopy ?? table.tabs.play.intro.summary}</p>
   </div>
 
   <div class="table-action-groups" aria-label={actionAriaLabel}>
@@ -77,8 +77,5 @@
       {/if}
     </section>
 
-    {#if supportingCopy}
-      <p class="supporting-copy">{supportingCopy}</p>
-    {/if}
   </div>
 </div>

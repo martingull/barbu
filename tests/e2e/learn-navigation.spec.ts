@@ -136,17 +136,19 @@ test("Bridge guided topics use the common lesson loop and preserve progress on r
       }
       await expectLearningLayout(page);
       await page.screenshot({ path: info.outputPath(`${course.id}-${decision}-feedback.png`), fullPage: true });
-      await page.getByRole("button", { name: /^(Next decision|Finish practice|Review session)$/ }).click();
+      await page.getByRole("button", { name: /^(Next decision|Finish practice|Finish topic)$/ }).click();
     }
-    await expect(page.getByRole("heading", { name: "Review", exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "Finish Bridge", exact: true }).click();
+    await expect(page.getByRole("status")).toHaveText("Topic complete.");
+    await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
     await expect(page.getByLabel("Bridge course progress")).toContainText(`${index + 1} / 4 complete`);
   }
   await page.reload();
   await page.getByRole("button", { name: "Open Bridge", exact: true }).click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
   await expect(page.getByLabel("Bridge course progress")).toContainText("4 / 4 complete");
-  await page.getByRole("button", { name: "Review lessons", exact: true }).click();
+  await page.getByRole("button", { name: "Reset lessons", exact: true }).click();
+  await expect(page.getByLabel("Bridge course progress")).toContainText("0 / 4 complete");
+  await page.getByRole("button", { name: "Start learning", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Opening bids", exact: true })).toBeVisible();
 });
 
