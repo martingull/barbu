@@ -8,7 +8,7 @@
   import { bridgeDeclarerTrickCounts } from "../../domain/bridgeScoring";
   import { bridgeSideForSeat } from "../../domain/bridgeAuction";
   import { formatSignedScore } from "../../presentation/scorePresentation";
-  import { bridgeActiveHand, bridgeSeatLabel, bridgePartnershipLabel, bridgeResultCopy, bridgeReviewFeedback } from "./bridgePresentation";
+  import { bridgeActiveHand, bridgeSeatLabel, bridgeResultCopy, bridgeReviewFeedback } from "./bridgePresentation";
   let { session, selectedCardId, error, dealing, onBack, onSelect, onPlay, onNextTrick, onNextHand, onReplay }: {
     session: BridgeSession; selectedCardId: string; error: string; dealing: boolean;
     onBack: () => void; onSelect: (id: string) => void; onPlay: () => void;
@@ -35,7 +35,7 @@
 </script>
 
 <TablePlaySurface flowLayout mode={complete ? "result" : "play"} ariaLabel="Bridge full hand"
-  title="Bridge hand" eyebrow="Play Bridge" statusLabel="Contract" statusValue={contract.label}
+  title="Bridge hand" eyebrow="Play Bridge" statusLabel={complete ? `Board ${hand.bridgeBoardNumber ?? session.results.length + 1}` : "Contract"} statusValue={contract.label}
   tableAriaLabel="Bridge hand table" pendingBySeat={pending} surfaceClassName="bridge-play-surface"
   showTable={!complete} {tableCards} tableVariant="bridge" panelAriaLabel="Bridge hand decision"
   {onBack} onSurfaceClick={review ? onNextTrick : undefined} useCustomTable>
@@ -73,15 +73,15 @@
           <div class="hearts-hand-breakdown-row whist-score-row active">
             <span>{contract.label}</span><strong>{contract.target}</strong><strong>{tricks.declarer}</strong><strong>{tricks.defenders}</strong>
           </div>
-          <div class="hearts-hand-breakdown-row whist-score-row">
-            <span>{bridgePartnershipLabel(contract.declarerSide ?? bridgeSideForSeat(contract.declarer))}</span>
-            <strong>{contract.vulnerability}</strong><strong>{formatSignedScore(settlement.result?.score ?? 0)}</strong><strong>{bridgeSeatLabel(contract.declarer)}</strong>
-          </div>
-          <div class="hearts-hand-breakdown-row whist-score-row">
-            <span>Score</span><strong>NS {formatSignedScore(settlement.scores.ns)}</strong><strong>EW {formatSignedScore(settlement.scores.ew)}</strong>
-            <strong>Board {hand.bridgeBoardNumber ?? session.results.length + 1}</strong>
-          </div>
         </div>
+        <dl class="bridge-result-details" aria-label="Bridge board settlement">
+          <div><dt>Declarer</dt><dd>{bridgeSeatLabel(contract.declarer)}</dd></div>
+          <div><dt>Dummy</dt><dd>{bridgeSeatLabel(contract.dummy)}</dd></div>
+          <div><dt>Vulnerable</dt><dd>{contract.vulnerability}</dd></div>
+          <div><dt>{contract.declarerSide ?? bridgeSideForSeat(contract.declarer)} this board</dt><dd>{formatSignedScore(settlement.result?.score ?? 0)}</dd></div>
+          <div><dt>NS total</dt><dd>{formatSignedScore(settlement.scores.ns)}</dd></div>
+          <div><dt>EW total</dt><dd>{formatSignedScore(settlement.scores.ew)}</dd></div>
+        </dl>
       </div>
     {:else if review}
       <div class="lesson-heading"><p class="eyebrow">Trick complete</p><h2>Read the table</h2></div>
@@ -112,3 +112,10 @@
     </div>
   {/snippet}
 </TablePlaySurface>
+
+<style>
+  .bridge-result-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin: 0; }
+  .bridge-result-details > div { min-width: 0; padding-block: 6px; border-bottom: 1px solid #ffffff26; overflow-wrap: anywhere; }
+  dt { color: #dbe7d1; font-size: 0.75rem; }
+  dd { margin: 3px 0 0; font-size: 0.9rem; font-weight: 700; }
+</style>

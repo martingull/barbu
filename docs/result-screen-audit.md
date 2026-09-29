@@ -1,0 +1,53 @@
+# Completion Screen Audit
+
+Audited 2026-09-29 against the local working tree, not submitted iOS build 1.0.3 (4).
+
+## Coverage
+
+Playwright WebKit and Chromium at 320x568, 360x740, 414x736, 820x1180,
+and 1180x820 CSS pixels. Tablet dimensions are browser viewport checks, not
+proof of native iPad compatibility-mode behavior.
+
+- Whist: hand, single game, and rubber completion.
+- Spades: hand and match completion, including nil and bag-penalty feedback.
+- Bridge: board completion and next auction.
+- Barbu: contract, Domino, and seven-contract session completion.
+- Gin Rummy: hand and game completion, including meld/deadwood review.
+- Card Counting: memory-hand and Count Trumps warm-up completion.
+
+Hearts' completion flow was checked in the preceding Hearts pass. Canasta remains hidden.
+
+The audit uses engine-generated hands, checks score-label overflow, scrolls to
+the last result row, checks clearance above the action buttons, and clicks the
+next-hand/new-game action. Screenshots capture the initial and scrolled views.
+
+## Findings Fixed
+
+1. Barbu's last-trick board pushed result feedback behind fixed buttons at
+   320x568. Completed contracts now use the shared table-free, scrollable result layout.
+2. Barbu's four-column session summary allowed descriptive text to overlap on
+   narrow screens. Its columns now wrap according to available width.
+3. Bridge mixed vulnerability, seat names, and scores beneath unrelated column
+   headings. Board details and cumulative totals now have explicit labels.
+4. Domino displayed hand scores as Barbu table/session totals. Those displays
+   now use the existing session totals; scoring rules are unchanged.
+5. Result-screen headings used excessive space on narrow phones. Shared titles
+   now use compact typography.
+
+## Verification
+
+- 130 layout checks plus 34 existing completion checks passed.
+- All six Barbu trick-contract smoke flows passed in both engines (12 checks).
+- After correcting Domino totals, its contract/session matrix passed again (20 checks).
+- Production build and TypeScript check passed. The existing bundle-size warning remains.
+
+Reproduce the layout and completion checks:
+
+```sh
+npx playwright test tests/e2e/result-layout.spec.ts tests/e2e/game-completion.spec.ts --project=iphone-xr --project=galaxy-s9 --output=test-results/result-audit-final
+```
+
+Screenshots are ignored test artifacts under `test-results/result-audit-final/`;
+the last Domino/session rerun is under `test-results/result-audit-domino/`.
+No device build was installed or uploaded during this audit. Native smoke testing
+and App Review's assessment of product value remain separate release checks.

@@ -2052,12 +2052,12 @@ test("Hearts play starts with a rotating pass phase before the hand", async ({ p
   await passThreeHeartsCards(page);
 
   await expect(page.getByRole("heading", { name: "Hearts hand" })).toBeVisible();
-  await expect(page.getByLabel("Hearts hand score")).toContainText("Your penalty");
+  await expect(page.getByLabel("Hearts hand score")).toContainText("Your hand");
   await expect(page.getByLabel("Hearts hand score")).toContainText("26");
-  await expect(page.getByLabel("Hearts table score")).toContainText("Your penalty");
-  await expect(page.getByLabel("Hearts table score")).toContainText("Barbu penalty");
-  await expect(page.getByLabel("Hearts table score")).toContainText("Left penalty");
-  await expect(page.getByLabel("Hearts table score")).toContainText("Right penalty");
+  await expect(page.getByLabel("Hearts table score")).toContainText("Your total");
+  await expect(page.getByLabel("Hearts table score")).toContainText("Barbu total");
+  await expect(page.getByLabel("Hearts table score")).toContainText("Left total");
+  await expect(page.getByLabel("Hearts table score")).toContainText("Right total");
   await expect(page.getByLabel("Hearts hand table")).toBeVisible();
   await expectTableSlotsSeparated(page);
   await expectTableCardholdersDoNotOverlap(page);
@@ -2154,13 +2154,14 @@ test("Hearts next hand carries score and starts with passing again", async ({ pa
   }
 
   await expect(page.getByRole("button", { name: "Next hand" })).toBeVisible();
-  await expect(page.getByLabel("Hearts final scorecard")).toContainText("Low score leads");
-  await expect(page.getByLabel("Hearts final scorecard")).toContainText("Target 100");
-  await expect(page.getByLabel("Hearts final scorecard")).toContainText("Hand 1");
+  await expect(page.getByLabel("Hearts final scorecard")).toContainText("Lowest score wins");
+  await expect(page.getByLabel("Hearts final scorecard")).toContainText("Ends at 100");
+  await expect(page.getByLabel("Hearts final scorecard")).toContainText("After hand 1");
   await expect(page.getByLabel("This hand breakdown")).toContainText("Tricks");
   await expect(page.getByLabel("This hand breakdown")).toContainText("Points");
-  await expectNoPageScroll(page);
-  await expectGameplayActionRowPinned(page);
+  await page.locator(".app-shell").evaluate(element => { element.scrollTop = element.scrollHeight; });
+  await expect(page.getByLabel("This hand breakdown")).toBeInViewport({ ratio: 1 });
+  await expect(page.getByRole("button", { name: "Next hand", exact: true })).toBeInViewport({ ratio: 1 });
   await page.screenshot({ path: testInfo.outputPath("hearts-scoreboard.png"), fullPage: true });
   await page.getByRole("button", { name: "Next hand" }).click();
 
@@ -3080,14 +3081,12 @@ for (const contract of barbuTrickContractSmokeCases) {
 
     await expect(page.getByLabel(`${contract} result summary`)).toBeVisible();
     await expect(page.getByLabel(`${contract} key tricks`)).toBeVisible();
-    const resultTable = await page.getByLabel(`${contract} hand table`).boundingBox();
-    expect(resultTable).not.toBeNull();
-    await expectTableSlotsSeparated(page);
-    await expectNoVerticalCollision(page, ".card-table", ".table-play-panel", 6);
+    await expect(page.getByLabel(`${contract} hand table`)).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Replay" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Next contract" })).toBeVisible();
+    await page.getByRole("button", { name: "Next contract" }).scrollIntoViewIfNeeded();
+    await expect(page.getByRole("button", { name: "Next contract" })).toBeInViewport({ ratio: 1 });
+    await expectNoVerticalCollision(page, ".full-hand-result-tricks", ".table-play-surface .action-row", 8);
     await expectNoPageScroll(page);
-    await expectGameplayActionRowPinned(page);
 
     await page.screenshot({ path: testInfo.outputPath(`${contract.toLowerCase().replaceAll(" ", "-")}-hand.png`), fullPage: true });
   });

@@ -5,7 +5,6 @@
   import GameResult from "../../components/GameResult.svelte";
   import { heartsSessionSettlement, heartsMoonShooter, heartsScoredSeatPenalties, heartsMatchTarget, type HeartsSession } from "../../domain/heartsSession";
   import { seatPenaltiesForTricks } from "../../domain/trickTakingScore";
-  import { contractScoreMeta } from "../../domain/contractScoring";
   import { heartsDef } from "../../games/hearts";
   import { scoreSeats, scoreSeatLabel, scoreSeatRunLabel, formatOrdinal, seatTricksWonForTricks } from "../../presentation/scorePresentation";
   import { heartsScorecardStandings, heartsResultCopy, heartsPlayerHandResult, heartsHandResultLabel, heartsTrickFeedback } from "./heartsPresentation";
@@ -14,7 +13,6 @@
     onBack: () => void; onSelect: (id: string) => void; onPlay: () => void;
     onNextTrick: () => void; onNextHand: () => void; onReplay: () => void;
   } = $props();
-  const meta = contractScoreMeta("Hearts");
   const heartsScorecardMeta = heartsDef.table.scorecard;
   let hand = $derived(session.fullHand);
   let complete = $derived(hand.status === "complete");
@@ -33,7 +31,7 @@
   let heartsVisibleHandCount = $derived(results.length);
   let heartsMatchIsComplete = $derived(settlement.complete);
   let trigger = $derived(scoreSeats.map(seat => ({ seat, score: heartsVisibleScores[seat] })).sort((a, b) => b.score - a.score)[0]);
-  let heartsResult = $derived(heartsResultCopy(settlement.complete, heartsStandings, trigger, heartsMoonShooter(raw), results.length, hand.playerPenalty, heartsScorecardMeta.objective));
+  let heartsResult = $derived(heartsResultCopy(settlement.complete, heartsStandings, trigger, heartsMoonShooter(raw), results.length, heartsCurrentScoredSeatPenalties.You));
   let best = $derived(heartsPlayerHandResult("best", results));
   let worst = $derived(heartsPlayerHandResult("worst", results));
   let heartsBestHandLabel = $derived(best ? heartsHandResultLabel(best) : "No hands yet");
@@ -44,14 +42,13 @@
   <div class="run-scorecard hearts-scorecard" aria-label={label}>
     <div class="run-scorecard-row hearts-scorecard-row header">
       <span>Player</span>
-      <span>{heartsScorecardMeta.unitLabel}</span>
+      <span>Match total</span>
       <span>Place</span>
     </div>
     {#each scoreSeats as seat}
       <div class:active={seat === "You"} class="run-scorecard-row hearts-scorecard-row">
         <span>
           {scoreSeatLabel(seat)}
-          <small>{seat === "You" ? "You" : "Table"}</small>
         </span>
         <strong>{heartsVisibleScores[seat]}</strong>
         <strong>{formatOrdinal(heartsStandings.find((standing) => standing.seat === seat)?.rank ?? 1)}</strong>
@@ -59,33 +56,33 @@
     {/each}
     <div class="run-scorecard-row hearts-scorecard-row total">
       <span>
-        {heartsScorecardMeta.objective}
-        <small>Hand {heartsVisibleHandCount}</small>
+        Lowest score wins
+        <small>After hand {heartsVisibleHandCount}</small>
       </span>
-      <strong>Target {heartsMatchTarget}</strong>
+      <strong>Ends at {heartsMatchTarget}</strong>
       <strong>{heartsPlayerPlaceLabel}</strong>
     </div>
   </div>
 {/snippet}
 
 <TablePlaySurface flowLayout mode={complete ? "result" : "play"} ariaLabel="Hearts full hand"
-  title="Hearts hand" eyebrow="Contract hand" statusLabel={complete ? "Complete" : `Trick ${hand.trickNumber}`}
-  statusValue={`${hand.playerPenalty} ${hand.playerPenalty === 1 ? meta.unitName : meta.unitPlural}`} tableAriaLabel="Hearts hand table" {tableCards}
+  title="Hearts hand" eyebrow="Hearts" statusLabel={complete ? (settlement.complete ? "Match over" : "Hand scored") : `Trick ${review ? session.fullHandReviewTrickCount : hand.trickNumber}`}
+  statusValue={`Hand ${session.results.length + 1}`} tableAriaLabel="Hearts hand table" {tableCards}
   showTable={!complete} pendingBySeat={!review && !complete && hand.currentPlayer === "You" ? { You: "You" } : {}}
   panelAriaLabel="Hearts hand decision" {onBack} onSurfaceClick={review ? onNextTrick : undefined}>
   {#snippet summary()}
     <div class="full-hand-summary grouped-play-summary" aria-label="Hearts hand score">
       <div class="full-hand-summary-row current-hand" aria-label="Current hand">
         <span class="summary-row-label">Current hand</span>
-        <div><span>{meta.playerValueLabel}</span><strong>{hand.playerPenalty}</strong></div>
-        <div><span>{meta.inPlayLabel}</span><strong>{hand.totalPenalty} / 26</strong></div>
+        <div><span>Your hand</span><strong>{complete ? heartsCurrentScoredSeatPenalties.You : hand.playerPenalty}</strong></div>
+        <div><span>Points taken</span><strong>{hand.totalPenalty} / 26</strong></div>
         <div><span>Tricks</span><strong>{hand.completedTricks.length} / 13</strong></div>
       </div>
       <div class="full-hand-summary-row table-score" aria-label="Hearts table score">
-        <span class="summary-row-label">{heartsScorecardMeta.label}</span>
+        <span class="summary-row-label">Match including this hand</span>
         {#each scoreSeats as seat}
           <div>
-            <span>{scoreSeatRunLabel(seat)} penalty</span>
+            <span>{scoreSeatRunLabel(seat)} total</span>
             <strong>{heartsVisibleScores[seat]}</strong>
           </div>
         {/each}
@@ -137,7 +134,6 @@
     {:else if review}
       <div class="lesson-heading"><p class="eyebrow">Trick complete</p><h2>Read the table</h2></div>
       <p class:warning={review.outcome === "captured_penalty"} class="outcome">{heartsTrickFeedback(review, hand)}</p>
-      <p class="explanation">Left's card is on the table. Tap the table or press Next trick when you are ready.</p>
     {:else}
       <ExerciseFeedback eyebrow="Your turn" title="Choose your card" result={hand.prompt} {error} />
       <CardChoiceHand cards={hand.playerHand} ariaLabel="Your Hearts hand" className="hand full-hand-cards"

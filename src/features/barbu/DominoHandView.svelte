@@ -3,7 +3,7 @@
   import CardChoiceHand from "../../components/CardChoiceHand.svelte";
   import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
   import BarbuSessionResult from "./BarbuSessionResult.svelte";
-  import { barbuSessionComplete, dominoSeatScores, type BarbuSession } from "../../domain/barbuSession";
+  import { barbuSessionComplete, barbuSeatTotals, dominoSeatScores, type BarbuSession } from "../../domain/barbuSession";
   import { fullHandContracts } from "../../domain/contractRegistry";
   import { scoreSeats, scoreSeatRunLabel, formatSignedScore } from "../../presentation/scorePresentation";
   import type { Card, DominoHandState } from "../../domain/types";
@@ -25,7 +25,7 @@
   export let onNewGame: (() => void) | undefined = undefined;
   $: fullHandRunActive = Boolean(session);
   $: fullHandRunIsComplete = session ? barbuSessionComplete(session) : false;
-  $: fullHandRunStatusLabel = fullHandRunIsComplete ? "Game complete" : session
+  $: fullHandRunStatusLabel = fullHandRunIsComplete ? "Session complete" : session
     ? `Contract ${fullHandContracts.indexOf("Domino") + 1} of ${fullHandContracts.length}`
     : dominoHand.status === "complete" ? "Complete" : `${dominoHand.cardsRemaining} cards left`;
   $: fullHandNextActionLabel = session ? "Next contract" : "Try another";
@@ -33,6 +33,8 @@
   $: dominoSelectedCard = dominoHand.playerHand.find(card => card.id === dominoSelectedCardId);
   $: dominoDefaultPlayableCard = dominoHand.playerHand.find(card => dominoLegalCardIds.has(card.id));
   $: dominoScoreMap = dominoSeatScores(dominoHand);
+  $: sessionTotals = barbuSeatTotals(session?.results ?? []);
+  $: resultScores = fullHandRunIsComplete ? sessionTotals : dominoScoreMap;
   $: dominoResultTitle = dominoResultHeading(dominoHand);
   $: dominoResultSummary = dominoResultText(dominoHand);
   $: dominoNextOutScore = dominoOrderScores[dominoHand.outOrder.length] ?? -5;
@@ -47,10 +49,10 @@
       <TablePlaySurface
         mode={dominoHand.status === "complete" ? "result" : "play"}
         ariaLabel="Domino hand"
-        title="Domino hand"
+        title={fullHandRunIsComplete ? "Barbu session" : "Domino hand"}
         eyebrow={fullHandRunActive ? "Play Barbu" : "Contract hand"}
         statusLabel={fullHandRunStatusLabel}
-        statusValue={`${formatSignedScore(dominoScoreMap.You)} points`}
+        statusValue={`${formatSignedScore(resultScores.You)} points`}
         tableAriaLabel="Domino layout"
         tableCards={[]}
         flowLayout
@@ -88,18 +90,18 @@
                   {#each scoreSeats as seat}
                     <div>
                       <span>{scoreSeatRunLabel(seat)} score</span>
-                      <strong>{formatSignedScore(dominoScoreMap[seat])}</strong>
+                      <strong>{formatSignedScore(sessionTotals[seat])}</strong>
                     </div>
                   {/each}
                 </div>
               {/if}
             </div>
           {:else}
-            <div class="full-hand-summary compact-run-complete" aria-label="Domino hand score">
+            <div class="full-hand-summary compact-run-complete" aria-label={fullHandRunIsComplete ? "Barbu final totals" : "Domino hand score"}>
               {#each scoreSeats as seat}
                 <div>
-                  <span>{scoreSeatRunLabel(seat)} score</span>
-                  <strong>{formatSignedScore(dominoScoreMap[seat])}</strong>
+                  <span>{scoreSeatRunLabel(seat)} {fullHandRunIsComplete ? "total" : "score"}</span>
+                  <strong>{formatSignedScore(resultScores[seat])}</strong>
                 </div>
               {/each}
             </div>

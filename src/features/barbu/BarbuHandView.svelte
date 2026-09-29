@@ -34,7 +34,7 @@
 <TablePlaySurface flowLayout mode={complete ? "result" : "play"} ariaLabel={`${hand.contract} full hand`}
   title={`${hand.contract} hand`} eyebrow={session ? "Play Barbu" : "Contract hand"} {statusLabel}
   statusValue={formatHandValue(hand.playerPenalty, hand.contract)} tableAriaLabel={`${hand.contract} hand table`}
-  {tableCards} showTable={!runComplete}
+  {tableCards} showTable={!complete}
   pendingBySeat={!review && !complete && hand.currentTrick.length < 4 && hand.currentPlayer === "You" ? { You: "You" } : {}}
   panelAriaLabel={`${hand.contract} hand decision`} {onBack} onSurfaceClick={review ? onNextTrick : undefined}>
   {#snippet summary()}

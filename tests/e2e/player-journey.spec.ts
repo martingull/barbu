@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { heartsSaveKey, restoreHeartsSession, type SavedHeartsRun } from "../../src/persistence/heartsSave";
 
 async function home(page: Page) {
   await page.getByRole("button", { name: "Table", exact: true }).first().click();
@@ -18,6 +19,50 @@ async function finishIntroduction(page: Page) {
   await expect(page.getByLabel("Introduction result", { exact: true })).toBeVisible();
   await expect(page.getByRole("status")).toHaveText("Introduction complete.");
 }
+
+test("Hearts introduction leads through a full hand and a saved second hand", async ({ page }, info) => {
+  test.setTimeout(90_000);
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto("/");
+  await page.getByRole("button", { name: "Try Hearts", exact: true }).click();
+  await finishIntroduction(page);
+  await page.getByRole("button", { name: "Play Hearts", exact: true }).click();
+  const passing = page.getByLabel("Your Hearts passing hand").getByRole("button");
+  for (let i = 0; i < 3; i++) await passing.nth(i).click();
+  await page.getByRole("button", { name: "Pass cards", exact: true }).click();
+  await expect(page.getByLabel("Current hand", { exact: true })).toContainText("Your hand");
+  await expect(page.getByLabel("Hearts table score")).toContainText("Your total");
+  await page.screenshot({ path: info.outputPath("hearts-first-trick.png") });
+  for (let trick = 1; trick <= 13; trick++) {
+    await page.locator(".full-hand-card.legal").first().click();
+    await page.getByRole("button", { name: "Play card", exact: true }).click();
+    if (trick < 13) {
+      await expect(page.locator(".contract-status")).toContainText(`Trick ${trick}`);
+      await expect(page.locator(".outcome")).toContainText(/leads? next/);
+      await expect(page.locator("main")).not.toContainText("Left's card is on the table");
+      if (trick === 1) await page.screenshot({ path: info.outputPath("hearts-trick-review.png") });
+      await page.getByRole("button", { name: "Next trick", exact: true }).click();
+    }
+  }
+  await expect(page.locator(".contract-status")).toContainText("Hand scored");
+  await expect(page.locator(".table-play-panel h2")).toHaveText(/Hand 1 complete|shot the moon/);
+  await expect(page.getByLabel("Hearts result summary")).not.toContainText(/finished|won Hearts/);
+  await page.locator(".app-shell").evaluate(element => { element.scrollTop = element.scrollHeight; });
+  await expect(page.getByLabel("This hand breakdown")).toBeInViewport({ ratio: 1 });
+  await page.screenshot({ path: info.outputPath("hearts-hand-result.png") });
+  await page.getByRole("button", { name: "Next hand", exact: true }).click();
+  await expect(page.locator(".contract-status")).toContainText("Pass right");
+  const saved: SavedHeartsRun = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), heartsSaveKey);
+  expect(saved.results).toHaveLength(1);
+  expect(saved.scores).toEqual(saved.results[0].seatPenalties);
+  await page.reload();
+  await page.getByRole("button", { name: "Continue Hearts", exact: true }).click();
+  await expect(page.locator(".contract-status")).toContainText("Pass right");
+  const resumed = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), heartsSaveKey);
+  expect(restoreHeartsSession(resumed)).toEqual(restoreHeartsSession(saved));
+  expect(errors).toEqual([]);
+});
 
 for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { width: 1280, height: 800 }]) {
   test(`catalog and introduction fit ${viewport.width}x${viewport.height}`, async ({ page }, info) => {
