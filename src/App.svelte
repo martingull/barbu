@@ -5,6 +5,9 @@
   import HeartsGame from "./features/hearts/HeartsGame.svelte";
   import WhistGame from "./features/whist/WhistGame.svelte";
   import GinRummyGame from "./features/gin-rummy/GinRummyGame.svelte";
+  import CanastaGame from "./features/canasta/CanastaGame.svelte";
+  import { isCatalogGameAvailable } from "./games/tableFactory";
+  import { createCanastaFeature } from "./features/canasta/canastaFeature";
   import { createGinRummyFeature } from "./features/gin-rummy/ginRummyFeature";
   import CardCountingGame from "./features/card-counting/CardCountingGame.svelte";
   import { createBarbuFeature } from "./features/barbu/barbuFeature";
@@ -23,7 +26,7 @@
   import { getCatalogCategories, type ActiveGameTable, type CatalogGameId } from "./games/tableFactory";
   import type { GuidedCardOutcome, PracticeReason } from "./domain/types";
 
-  type AppView = "catalog" | "barbuFeature" | "heartsFeature" | "whistFeature" | "spadesFeature" | "bridgeFeature" | "ginFeature" | "cardCountingFeature" | "reference";
+  type AppView = "catalog" | "barbuFeature" | "heartsFeature" | "whistFeature" | "spadesFeature" | "bridgeFeature" | "ginFeature" | "canastaFeature" | "cardCountingFeature" | "reference";
   const catalogCategories = getCatalogCategories();
   const privacyPolicyUrl = "https://martingull.github.io/barbu/privacy-policy.html";
   let privacyPolicyError = "";
@@ -49,6 +52,7 @@
   let bridgeFixedSurface = false;
   let cardCountingFixedSurface = false;
   let ginFixedSurface = false;
+  let canastaFixedSurface = false;
   const services = { storage: () => typeof localStorage === "undefined" ? undefined : localStorage, nextSeed: usePracticeSeed };
   const barbuFeature = createBarbuFeature(services);
   const whistFeature = createWhistFeature(services);
@@ -56,9 +60,10 @@
   const spadesFeature = createSpadesFeature(services);
   const bridgeFeature = createBridgeFeature(services);
   const ginFeature = createGinRummyFeature(services);
-  const playFeatures = { barbu: barbuFeature, hearts: heartsFeature, whist: whistFeature, spades: spadesFeature, bridge: bridgeFeature, "gin-rummy": ginFeature };
+  const canastaFeature = createCanastaFeature(services);
+  const playFeatures = { barbu: barbuFeature, hearts: heartsFeature, whist: whistFeature, spades: spadesFeature, bridge: bridgeFeature, "gin-rummy": ginFeature, canasta: canastaFeature };
   $: savedGames = continueGames({ barbu: $barbuFeature.saved, hearts: $heartsFeature.saved,
-    whist: $whistFeature.saved, spades: $spadesFeature.saved, bridge: $bridgeFeature.saved, "gin-rummy": $ginFeature.saved });
+    whist: $whistFeature.saved, spades: $spadesFeature.saved, bridge: $bridgeFeature.saved, "gin-rummy": $ginFeature.saved, canasta: $canastaFeature.saved });
   $: activeReference = referenceCatalog.find(reference => reference.id === activeReferenceId) ?? referenceCatalog[0];
   $: activeReferenceIsBarbu = activeReference.id === "barbu";
   $: heartsIntroductionComplete = completedPathSteps[heartsIntroduction.id] === true;
@@ -245,6 +250,7 @@
 
 
   function openActiveGameTable() {
+    if (activeGameTable === "canasta") { openGame("canasta"); return; }
     if (activeGameTable === "gin-rummy") { openGame("gin-rummy"); return; }
     if (activeGameTable === "hearts") {
       openHeartsTable();
@@ -283,6 +289,13 @@
 
 
   function openGame(gameId: CatalogGameId) {
+    if (!isCatalogGameAvailable(gameId)) return;
+    if (gameId === "canasta") {
+      activeGameTable = "canasta";
+      canastaFeature.openTable();
+      appView = "canastaFeature";
+      return;
+    }
     if (gameId === "gin-rummy") {
       activeGameTable = "gin-rummy";
       ginFeature.openTable();
@@ -330,6 +343,7 @@
   }
 
   function continueGame(id: SavedGameId) {
+    if (!isCatalogGameAvailable(id)) return;
     openGame(id);
     playFeatures[id].resume();
   }
@@ -349,7 +363,7 @@
 
 </script>
 
-<main class:fixed-play-screen={(appView === "whistFeature" && whistFixedSurface) || (appView === "heartsFeature" && heartsFixedSurface) || (appView === "spadesFeature" && spadesFixedSurface) || (appView === "bridgeFeature" && bridgeFixedSurface) || (appView === "barbuFeature" && barbuFixedSurface) || (appView === "cardCountingFeature" && cardCountingFixedSurface) || (appView === "ginFeature" && ginFixedSurface)} class="app-shell">
+<main class:fixed-play-screen={(appView === "whistFeature" && whistFixedSurface) || (appView === "heartsFeature" && heartsFixedSurface) || (appView === "spadesFeature" && spadesFixedSurface) || (appView === "bridgeFeature" && bridgeFixedSurface) || (appView === "barbuFeature" && barbuFixedSurface) || (appView === "cardCountingFeature" && cardCountingFixedSurface) || (appView === "ginFeature" && ginFixedSurface) || (appView === "canastaFeature" && canastaFixedSurface)} class="app-shell">
   {#if appView === "catalog"}
     <GameCatalog categories={catalogCategories} {savedGames} introduction={heartsIntroductionComplete ? heartsIntroduction.completed : heartsIntroduction} onOpen={openGame} onContinue={continueGame} onIntroduction={tryHearts} />
 
@@ -399,6 +413,12 @@
       onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })}
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
       onSurfaceChange={fixed => { ginFixedSurface = fixed; }} />
+  {:else if appView === "canastaFeature"}
+    <CanastaGame feature={canastaFeature} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
+      onBack={openCatalog} onReference={() => openReference("canasta")}
+      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })}
+      onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
+      onSurfaceChange={fixed => { canastaFixedSurface = fixed; }} />
   {:else if appView === "cardCountingFeature"}
     <CardCountingGame completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onBack={openCatalog} onReference={() => {}}

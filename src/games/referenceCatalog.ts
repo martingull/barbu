@@ -1,4 +1,5 @@
 import { ginRummyReference } from "./ginRummyReference";
+import { canastaReference } from "./canastaReference";
 
 export type ReferenceFact = {
   label: string;
@@ -612,5 +613,6 @@ export const referenceCatalog: GameReference[] = [
       }
     ]
   },
-  ginRummyReference
+  ginRummyReference,
+  canastaReference
 ];

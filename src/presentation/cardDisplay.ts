@@ -19,6 +19,7 @@ export function suitSymbol(suit: Suit) {
 }
 
 export function formatCardLabel(card: Pick<Card, "rank" | "suit">) {
+  if (card.rank === "Joker") return card.suit === "H" ? "Red joker" : "Black joker";
   return `${card.rank}${suitSymbol(card.suit)}`;
 }
 

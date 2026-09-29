@@ -37,6 +37,7 @@
   }
 
   function cardImagePath(card: Card) {
+    if (card.rank === "Joker") return `/cards/PNG-cards-1.3/${card.suit === "H" ? "red" : "black"}_joker.png`;
     return `/cards/cards/${rankFileName(card.rank)}_of_${suitFileNames[card.suit]}.png`;
   }
 

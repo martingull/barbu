@@ -11,6 +11,8 @@ import { saveWhistSession } from "../../src/persistence/whistSave";
 import { saveSpadesSession } from "../../src/persistence/spadesSave";
 import { saveBridgeSession } from "../../src/persistence/bridgeSave";
 import { saveBarbuSession } from "../../src/persistence/barbuSave";
+import { createCanastaSession } from "../../src/domain/canastaSession";
+import { saveCanastaSession } from "../../src/persistence/canastaSave";
 
 test("learning collections contain each ready game once without changing its family", () => {
   const categories = getCatalogCategories();
@@ -26,6 +28,16 @@ test("learning collections contain each ready game once without changing its fam
   expect(entries.find(entry => entry.id === "bridge")?.family).toBe("Bridge");
   expect(entries.find(entry => entry.id === "spades")?.family).toBe("Whist");
   expect(categories.every(category => category.title && category.summary)).toBe(true);
+});
+
+test("unavailable games do not appear in resume shortcuts or lose their saves", () => {
+  const saved = {
+    hearts: null, whist: null, spades: null, bridge: null, barbu: null,
+    canasta: saveCanastaSession(createCanastaSession(3), "2026-09-29T10:00:00Z")
+  };
+  const before = structuredClone(saved);
+  expect(continueGames(saved)).toEqual([]);
+  expect(saved).toEqual(before);
 });
 
 test("home orders validated saves by recency without changing them", () => {

@@ -95,3 +95,35 @@ test("Hearts applies shooting the moon before checking the match target", async 
   await expect(page.getByLabel("Hearts result summary")).toContainText("shot the moon");
   await expect(page.getByLabel("Hearts result summary")).toContainText("reached 100 points");
 });
+
+for (const viewport of [
+  { width: 320, height: 568 },
+  { width: 414, height: 736 },
+  { width: 820, height: 1180 },
+  { width: 1280, height: 800 }
+]) {
+  for (const matchComplete of [false, true]) {
+    test(`Hearts ${matchComplete ? "match" : "hand"} results scroll at ${viewport.width}x${viewport.height}`, async ({ page }, info) => {
+      await page.setViewportSize(viewport);
+      const { complete, points, trigger } = finalDeal();
+      const scores = emptyScores();
+      if (matchComplete) scores[trigger] = 100 - points[trigger];
+      await resume(page, complete, scores);
+      const shell = page.locator(".app-shell");
+      const actions = page.locator(".compact-result .action-row");
+      const lastContent = matchComplete
+        ? page.getByLabel("Hearts match summary")
+        : page.getByLabel("This hand breakdown");
+      await expect(shell).toHaveCSS("overflow-y", "auto");
+      await shell.evaluate(element => { element.scrollTop = element.scrollHeight; });
+      await expect(lastContent).toBeInViewport({ ratio: 1 });
+      const contentBox = await lastContent.boundingBox();
+      const actionBox = await actions.boundingBox();
+      expect(contentBox!.y + contentBox!.height).toBeLessThanOrEqual(actionBox!.y);
+      await expect(actions).toBeInViewport({ ratio: 1 });
+      await page.screenshot({ path: info.outputPath("scorecard-scrolled.png") });
+      await page.getByRole("button", { name: matchComplete ? "New match" : "Next hand", exact: true }).click();
+      await expect(page.getByLabel("Your Hearts passing hand")).toBeVisible();
+    });
+  }
+}

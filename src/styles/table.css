@@ -1,3 +1,36 @@
+/* Completed scorecards can exceed a viewport. Keep one scrolling surface and
+   reserve the action row's space instead of clipping rows behind fixed buttons. */
+.app-shell.fixed-play-screen:has(.table-play-surface.compact-result.table-hidden) {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding-bottom: var(--app-thumb-bottom-gap);
+}
+
+.app-shell.fixed-play-screen .table-play-surface.compact-result.table-hidden,
+.app-shell.fixed-play-screen .table-play-surface.compact-result.table-hidden .table-play-panel {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  overflow: visible;
+}
+
+.app-shell.fixed-play-screen .table-play-surface.compact-result.table-hidden .table-play-panel {
+  padding-bottom: 8px;
+}
+
+.app-shell.fixed-play-screen .table-play-surface.compact-result.table-hidden .action-row {
+  position: sticky;
+  inset: auto;
+  bottom: 0;
+  flex: none;
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
+  background: #102319;
+  z-index: 1;
+}
+
 /* Full hands share one height budget. Messages and cards stay in document flow,
    so wrapped feedback consumes space before the board is sized. */
 .app-shell.fixed-play-screen:has(.flow-play) {

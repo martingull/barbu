@@ -22,6 +22,7 @@ const rankOrder: Record<Rank, number> = {
 };
 
 export function compareCardsForDisplay(left: Pick<Card, "rank" | "suit">, right: Pick<Card, "rank" | "suit">) {
+  if (left.rank === "Joker" || right.rank === "Joker") return (left.rank === "Joker" ? 1 : 0) - (right.rank === "Joker" ? 1 : 0) || displaySuitOrder[left.suit] - displaySuitOrder[right.suit];
   return displaySuitOrder[left.suit] - displaySuitOrder[right.suit] || rankOrder[left.rank as Rank] - rankOrder[right.rank as Rank];
 }
 

@@ -8,7 +8,11 @@ export function standardDeck(): Card[] {
 
 // Preserve the original trick-taking shuffle so existing seeds and saves stay stable.
 export function shuffledDeck(seed: number): Card[] {
-  const deck = standardDeck();
+  return shuffledCards(standardDeck(), seed);
+}
+
+export function shuffledCards<T>(cards: readonly T[], seed: number): T[] {
+  const deck = [...cards];
   let state = (seed ^ 0xa0761d64) >>> 0;
   for (let index = deck.length - 1; index > 0; index--) {
     state = (Math.imul(state, 1664525) + 1013904223) >>> 0;

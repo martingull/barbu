@@ -251,9 +251,9 @@ export function getCatalogCategories(): CatalogCategory[] {
           title: "Canasta",
           card: { rank: "2", suit: "H" },
           status: "Planned",
-          access: "Pack",
-          accessModel: "metered-pack",
-          summary: "Partnership meld-building with wild cards, packs, and bonuses."
+          access: "Free",
+          accessModel: "free-starter",
+          summary: "Build canastas with your partner. Take the pile at the right moment."
         })
       ]
     },
@@ -302,4 +302,8 @@ export function getCatalogCategories(): CatalogCategory[] {
       entries: category.entries.filter((entry) => entry.status === "Ready")
     }))
     .filter((category) => category.entries.length > 0);
+}
+
+export function isCatalogGameAvailable(id: string): boolean {
+  return getCatalogCategories().some(category => category.entries.some(entry => entry.id === id));
 }

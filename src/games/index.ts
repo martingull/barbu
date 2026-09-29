@@ -6,6 +6,7 @@ import { whistDef } from "./whist";
 import { bridgeDef } from "./bridge";
 import { cardCountingDef } from "./cardCounting";
 import { ginRummyDef } from "./ginRummy";
+import { canastaDef } from "./canasta";
 
 // Register all core games
 registry.register("barbu", barbuDef);
@@ -15,3 +16,4 @@ registry.register("spades", spadesDef);
 registry.register("bridge", bridgeDef);
 registry.register("card-counting", cardCountingDef);
 registry.register("gin-rummy", ginRummyDef);
+registry.register("canasta", canastaDef);

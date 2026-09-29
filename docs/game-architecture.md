@@ -223,6 +223,15 @@ Add the next game using the same boundaries. Reuse the common Learn flow and gen
 controller behavior only where it removes real complexity. Do not add a
 universal controller or replace the existing metadata/engine factories.
 
+The paused Canasta prototype (hidden from players) extends the rummy collection with its own Modern American session and
+meld rules, not Gin's knock/deadwood model. It shares deterministic shuffling,
+the save-store/session controller, Learn/Play shell, card faces and completion
+events. Double-pack identities are local to Canasta; existing single-deck IDs
+and saves remain stable. Its policy projection removes hidden cards and stock
+order. Large hands and public melds scroll in bounded regions rather than shrinking
+the shared cards. See [Canasta](canasta.md) for the selected table agreements,
+source differences and verification requirements.
+
 Save keys, schemas, course progress identifiers, rules and native commands are
 unchanged. Verify feature isolation, blocked storage, old-save resume, course
 completion and compact-screen play before migrating the next game.
