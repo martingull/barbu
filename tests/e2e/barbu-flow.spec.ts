@@ -1391,17 +1391,20 @@ test("Bridge bidding practice teaches the basic natural openings", async ({ page
 
   await expect(page.getByRole("heading", { name: "Bridge bidding" })).toBeVisible();
   await expect(page.getByLabel("Bridge bidding estimate")).toContainText("2-3-4-4");
-  await expect(page.getByLabel("Your Bridge bidding practice hand").getByRole("button")).toHaveCount(13);
-  await expect(page.getByLabel("Your Bridge bidding practice hand").getByRole("button").nth(0)).toHaveAttribute("aria-label", "7 S");
-  await expect(page.getByLabel("Your Bridge bidding practice hand").getByRole("button").nth(2)).toHaveAttribute("aria-label", "2 H");
-  await expect(page.getByLabel("Your Bridge bidding practice hand").getByRole("button").nth(5)).toHaveAttribute("aria-label", "5 D");
-  await expect(page.getByLabel("Your Bridge bidding practice hand").getByRole("button").nth(9)).toHaveAttribute("aria-label", "3 C");
+  const hand = page.getByLabel("Your Bridge bidding practice hand");
+  await expect(hand.getByRole("button")).toHaveCount(0);
+  await expect(hand.getByRole("img")).toHaveCount(13);
+  await expect(hand.getByRole("img").nth(0)).toHaveAttribute("alt", "7♠");
+  await expect(hand.getByRole("img").nth(2)).toHaveAttribute("alt", "2♥");
+  await expect(hand.getByRole("img").nth(5)).toHaveAttribute("alt", "5♦");
+  await expect(hand.getByRole("img").nth(9)).toHaveAttribute("alt", "3♣");
   for (const [expected, points] of [["Pass", 8], ["1NT", 16], ["1♠", 13]] as const) {
+    await expect(page.getByRole("button", { name: "Check answer", exact: true })).toBeDisabled();
     await expect(page.getByLabel("Bridge bidding estimate").locator("strong").first()).toHaveText(String(points));
     await page.getByLabel("Bridge bidding choices").getByRole("button", { name: expected }).click();
     await page.getByRole("button", { name: "Check answer" }).click();
     await expect(page.getByLabel("Bridge bidding exercise")).toContainText("Good");
-    await page.getByRole("button", { name: /Next decision|Finish practice/ }).click();
+    await page.getByRole("button", { name: /Next decision|Finish topic/ }).click();
   }
 
   await expect(page.getByRole("status")).toHaveText("Topic complete.");

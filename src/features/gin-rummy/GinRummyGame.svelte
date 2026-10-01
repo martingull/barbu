@@ -19,7 +19,8 @@
   <GameLearning {...services} definition={ginRummyDef} gameName="Gin Rummy" tab={$feature.tab}
     onPlay={() => $feature.saved ? feature.resume() : void feature.start()} playLabel={$feature.saved ? "Continue Gin Rummy" : "Play Gin Rummy"}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
-    loadExercise={() => ({ seed: 0 })} exerciseTitle={() => "Gin Rummy"} drillTitle={step => step.trick.title} resultMessage={() => "Try your skills in a full hand."}>
+    loadExercise={() => ({ seed: 0 })} exerciseTitle={() => "Gin Rummy"} drillTitle={step => step.trick.title}
+    resultMessage={clean => clean ? "Take this skill into a full hand, or continue learning." : "Check the decisions you missed, then try this topic again."}>
     {#snippet customExercise(context)}<GinExercise {context} />{/snippet}
     {#snippet play()}
       <PlayTabPanel table={ginRummyDef.table} {...ginRummyDef.playTabConfig} primaryWarning={$feature.error} primaryDisabled={$feature.dealing}

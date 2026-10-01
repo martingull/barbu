@@ -39,8 +39,16 @@ if the loser never scored. These bonuses do not advance the 100-point target.
   explicit actions, replayed and validated to rebuild state and score summaries.
   They preserve results across reloads and do not re-run a changed AI policy.
 - The feature composes `savedSessionFeature`, `GameLearning`, `TablePlaySurface`
-  and `CardChoiceHand`. Learn has three topics with three authored decisions
-  each. Exercises use the same meld engine and never modify match saves.
+  and `CardChoiceHand`. Learn has five topics with three authored decisions
+  each: melds, deadwood, draw choices, knocking, and gin. Counting and finishing
+  topics fade hints across the three decisions. Feedback shows melds and the
+  unmatched-card total using the same meld engine as Play. Custom decisions
+  feed the shared result summary and never modify match saves. Existing topic
+  progress remains valid; new topics begin incomplete.
+
+The first curriculum expansion focuses on counting and finishing eligibility.
+Linked draw-then-discard turns and interactive layoff/undercut settlement are
+still curriculum gaps; the knock exercises do not claim to teach optimal timing.
 
 ## Deliberate boundaries
 

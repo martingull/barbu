@@ -4,10 +4,11 @@
   import { drillOutcomeLabels, type DrillResult } from "../lessons/drillDecision";
   import type { CourseContent } from "../lessons/courseTypes";
 
-  let { title, results, message, complete, total, kind, review, onBack, actions }: {
+  let { title, results, message, complete, total, kind, review, onBack, actions, playAction }: {
     title: string; results: DrillResult[]; message: string; complete: boolean; total: number;
     kind: "Topic" | "Exercise";
     review?: CourseContent["review"]; onBack: () => void; actions: Snippet;
+    playAction?: Snippet;
   } = $props();
 </script>
 
@@ -20,7 +21,7 @@
       <p class="result">{results.filter(result => result.clean).length} of {results.length} decisions matched the lesson's goal.</p>
     {/if}
     <p class="result">{message}</p>
-    <div class="action-row">{@render actions()}</div>
+    <div class="learning-actions" role="group" aria-label="Lesson actions">{@render actions()}</div>
     {#if results.length || review}
       <details>
         <summary>Review decisions</summary>
@@ -38,11 +39,17 @@
         {/if}
       </details>
     {/if}
-    <button class="secondary-action" onclick={onBack} type="button">Back to Learn</button>
+    <div class="learning-actions" role="group" aria-label="Game navigation">
+      <button class="secondary-action" onclick={onBack} type="button">Back to Learn</button>
+      {@render playAction?.()}
+    </div>
   {/snippet}
 </TablePlaySurface>
 
 <style>
+  .learning-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .learning-actions > :global(button) { min-width: 0; white-space: normal; }
+  .learning-actions > :global(button:only-child) { grid-column: 1 / -1; }
   details { border-top: 1px solid #ffffff26; margin: 12px 0; padding-top: 8px; }
   summary { min-height: 44px; align-content: center; cursor: pointer; }
   h2 { font-size: 1rem; }

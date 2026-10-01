@@ -1,7 +1,7 @@
 import type { GameDefinition } from "./gameRegistry";
 import { createGameTableDefinition } from "./tableFactory";
 
-export type BridgeLearnPathAction = "bidding" | "declarer" | "dummy" | "defense";
+export type BridgeLearnPathAction = "contracts" | "bidding" | "declarer" | "dummy" | "defense";
 export type BridgePracticeAction = "bidding" | "declarer" | "defense";
 
 export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAction> = {
@@ -58,6 +58,14 @@ export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAct
   }),
   learnSteps: [
     {
+      id: "bridge-contracts", step: "Start", title: "Read the contract",
+      summary: "Find the trump suit and the number of tricks your partnership needs.", action: "contracts"
+    },
+    {
+      id: "bridge-dummy", step: "Seats", title: "The Dummy",
+      summary: "Keep declarer and dummy separate, and play from the hand whose turn it is.", action: "dummy"
+    },
+    {
       id: "bridge-bidding",
       step: "System",
       title: "Opening bids",
@@ -70,13 +78,6 @@ export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAct
       title: "Declarer play",
       summary: "The declarer plays both their own hand and their partner's exposed hand.",
       action: "declarer"
-    },
-    {
-      id: "bridge-dummy",
-      step: "Rule",
-      title: "The Dummy",
-      summary: "After the opening lead, the declarer's partner exposes their hand as the dummy.",
-      action: "dummy"
     },
     {
       id: "bridge-defense",

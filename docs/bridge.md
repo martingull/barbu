@@ -54,6 +54,16 @@ Authored short exercises live in `src/lessons/bridge/exercises.ts`, not the scre
 Each topic has three decisions; defense exercises remain defensive. Legal cards
 are checked separately from tactical grades, and scripts must contain four unique
 seats in clockwise order with no duplicated cards.
+The five-topic path now starts with reading contracts and controlling dummy,
+before opening bids, declarer tactics and defense. Dummy has its own three
+reduced-hand positions, not a replay of declarer tactics. The shared drill view
+supports an explicit playing seat and a read-only reference hand; selected dummy
+cards render at North, and South's cards remain separate. Contract targets use
+the auction engine's bid metadata. Bidding choices start unselected. Existing
+progress keys and match saves are retained.
+
+Responder auctions, multi-trick planning sequences and interactive duplicate
+score explanation remain curriculum gaps, not completed lessons.
 
 ## Remaining Strength Boundaries
 

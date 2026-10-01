@@ -18,7 +18,7 @@ export type CustomExerciseContext = {
   seed: number;
   fromCourse: boolean;
   onBack: () => void;
-  onComplete: () => void;
+  onComplete: (results?: DrillResult[]) => void;
 };
 
 export type LearningEntry =

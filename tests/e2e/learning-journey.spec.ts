@@ -59,6 +59,7 @@ for (const [game, topic, saveKey] of [
     expect(await progress(page)).toEqual({ [topic]: true });
     await expect(page.getByRole("status")).toHaveText("Topic complete.");
     const resume = page.getByRole("button", { name: `Continue ${game}`, exact: true });
+    await expect(page.getByRole("group", { name: "Game navigation", exact: true }).getByRole("button")).toHaveText(["Back to Learn", `Continue ${game}`]);
     await expect(resume).toBeInViewport();
     await expect(page.getByRole("button", { name: "Next topic", exact: true })).toBeInViewport();
     await page.screenshot({ path: info.outputPath(`${game}-learn-result.png`) });
@@ -164,6 +165,20 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 820, height: 1180 
     await page.locator('[data-skill="hearts-avoid"] .exercise-shortcut').click();
     await finish(page);
     await expect(page.getByRole("button", { name: "Play Hearts", exact: true })).toBeInViewport();
+    const lessonActions = page.getByRole("group", { name: "Lesson actions", exact: true });
+    const navigation = page.getByRole("group", { name: "Game navigation", exact: true });
+    await expect(lessonActions.getByRole("button")).toHaveText(["Try again", "Next topic"]);
+    await expect(navigation.getByRole("button")).toHaveText(["Back to Learn", "Play Hearts"]);
+    for (const row of [lessonActions, navigation]) {
+      const boxes = await row.getByRole("button").evaluateAll(buttons => buttons.map(button => {
+        const { x, y, right, width } = button.getBoundingClientRect();
+        return { x, y, right, width };
+      }));
+      expect(Math.abs(boxes[0].y - boxes[1].y)).toBeLessThan(1);
+      expect(boxes[1].x - boxes[0].right).toBeGreaterThanOrEqual(7);
+      expect(Math.abs(boxes[0].width - boxes[1].width)).toBeLessThan(1);
+    }
+    expect((await navigation.boundingBox())!.y).toBeGreaterThan((await lessonActions.boundingBox())!.y);
     await page.screenshot({ path: info.outputPath("learning-result.png") });
     await page.getByText("Review decisions", { exact: true }).click();
     await page.getByRole("button", { name: "Back to Learn", exact: true }).scrollIntoViewIfNeeded();

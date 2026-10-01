@@ -18,7 +18,7 @@
   let checked = $derived(trick.hand.find(card => card.id === checkedCardId));
   let decision = $derived(checked ? drillDecision(step, checked) : null);
   let tableCards: TableCard[] = $derived(checked && legal.has(checked.id)
-    ? [...trick.tableBeforeChoice, { seat: "You", card: checked }, ...trick.tableAfterChoice] : trick.tableBeforeChoice);
+    ? [...trick.tableBeforeChoice, { seat: step.playingSeat ?? "You", card: checked }, ...trick.tableAfterChoice] : trick.tableBeforeChoice);
   let last = $derived(index >= total - 1);
 </script>
 
@@ -29,6 +29,13 @@
   useCustomTable={!!customTable} tableCards={customTable ? [] : tableCards} panelAriaLabel="Drill decision" {onBack}>
   {#snippet table()}{#if customTable}{@render customTable(tableCards)}{/if}{/snippet}
   {#snippet summary()}
+    {#if step.referenceHand}
+      <div class="reference-hand" aria-label={step.referenceHand.label}>
+        <strong>{step.referenceHand.label}</strong>
+        <CardChoiceHand cards={step.referenceHand.cards.filter(card => !tableCards.some(play => play.card.id === card.id))}
+          readonly onSelect={() => {}} ariaLabel="Reference cards" />
+      </div>
+    {:else}
     <div class="full-hand-summary grouped-play-summary" aria-label="Drill progress">
       <div class="full-hand-summary-row learning-drill-summary">
         <div><span>Played</span><strong>{results.length} / {total}</strong></div>
@@ -36,13 +43,15 @@
         <div><span>Topic</span><strong>{topic || "Mixed contracts"}</strong></div>
       </div>
     </div>
+    {/if}
   {/snippet}
   {#snippet panel()}
     <ExerciseFeedback eyebrow={step.contract} title={trick.title} result={checked ? "" : trick.beforeResult}
       explanation={decision?.feedback ?? trick.emptyExplanation}
       outcome={decision ? drillOutcomeLabels[decision.result.outcome] : ""}
       warning={decision ? decision.result.outcome !== "good" : false} />
-    <CardChoiceHand cards={trick.hand} ariaLabel="Your drill hand" className="hand drill-hand full-hand-cards"
+    {#if step.handLabel}<p class="active-hand-label">{step.handLabel}</p>{/if}
+    <CardChoiceHand cards={trick.hand} ariaLabel={step.handLabel ?? "Your drill hand"} className="hand drill-hand full-hand-cards"
       cardClassName="card hand-card full-hand-card"
       getCardClasses={card => ({ heart: card.suit === "H", legal: legal.has(card.id) && !checkedCardId,
         illegal: !legal.has(card.id) && !checkedCardId, selected: selectedCardId === card.id, played: checkedCardId === card.id })}
@@ -57,3 +66,10 @@
     </div>
   {/snippet}
 </TablePlaySurface>
+
+<style>
+  .reference-hand { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #f7faf3; font-size: 0.75rem; }
+  .reference-hand :global(.hand) { display: flex; gap: 4px; margin: 0; }
+  .reference-hand :global(.card) { width: 32px; height: 46px; padding: 0; }
+  .active-hand-label { margin: 0; font-size: 0.8rem; font-weight: 700; }
+</style>

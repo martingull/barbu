@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { bridgeCourses } from "../../src/lessons/bridge/courses";
+import { bridgeBiddingPracticeSteps, bridgeContractSteps } from "../../src/lessons/bridge/exercises";
+import { bridgeCallLabel } from "../../src/domain/bridgeAuction";
 
 async function expectLearningLayout(page: Page) {
   const surface = page.locator(".table-play-surface.flow-play");
@@ -128,7 +130,10 @@ test("Bridge guided topics use the common lesson loop and preserve progress on r
     await page.screenshot({ path: info.outputPath(`${course.id}-example.png`), fullPage: true });
     await page.getByRole("button", { name: "Try cards", exact: true }).click();
     for (let decision = 0; decision < 3; decision++) {
-      if (index === 0) {
+      if (course.id === "bridge-contracts" || course.id === "bridge-bidding") {
+        await expect(page.getByRole("button", { name: "Check answer", exact: true })).toBeDisabled();
+        await page.getByRole("button", { name: course.id === "bridge-contracts"
+          ? `${bridgeContractSteps[decision].contract.target} tricks` : bridgeCallLabel(bridgeBiddingPracticeSteps[decision].correctCall), exact: true }).click();
         await page.getByRole("button", { name: "Check answer", exact: true }).click();
       } else {
         await page.locator(".drill-hand .hand-card.legal").first().click();
@@ -140,16 +145,16 @@ test("Bridge guided topics use the common lesson loop and preserve progress on r
     }
     await expect(page.getByRole("status")).toHaveText("Topic complete.");
     await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
-    await expect(page.getByLabel("Bridge course progress")).toContainText(`${index + 1} / 4 complete`);
+    await expect(page.getByLabel("Bridge course progress")).toContainText(`${index + 1} / 5 complete`);
   }
   await page.reload();
   await page.getByRole("button", { name: "Open Bridge", exact: true }).click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
-  await expect(page.getByLabel("Bridge course progress")).toContainText("4 / 4 complete");
+  await expect(page.getByLabel("Bridge course progress")).toContainText("5 / 5 complete");
   await page.getByRole("button", { name: "Reset lessons", exact: true }).click();
-  await expect(page.getByLabel("Bridge course progress")).toContainText("0 / 4 complete");
+  await expect(page.getByLabel("Bridge course progress")).toContainText("0 / 5 complete");
   await page.getByRole("button", { name: "Start learning", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Opening bids", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Read the contract", exact: true })).toBeVisible();
 });
 
 test("existing progress survives the merged menu and short hands stay beside actions", async ({ page }, info) => {

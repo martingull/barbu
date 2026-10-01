@@ -1,17 +1,76 @@
-import type { BridgeVulnerability, Seat, Card, GuidedTrick, Suit } from "../../domain/types";
+import type { BridgeVulnerability, Seat, Card, Suit } from "../../domain/types";
 
-import type { BridgeCallOption } from "../../domain/bridgeAuction";
+import { bridgeBidById, type BridgeCallOption } from "../../domain/bridgeAuction";
+import type { DrillStep } from "../drillDecision";
 
-type DrillStep = { scenarioId: string; contract: string; title: string; trick: GuidedTrick };
 const card = (rank: string, suit: Suit): Card => ({ id: rank + suit, rank, suit, label: rank + suit });
+
+export const bridgeContractSteps = [
+  { bid: "1H", title: "A partnership target", hint: "The first six tricks are the base. Add the level: 6 + 1 = 7. Hearts are trump.", options: ["1", "7", "13"] },
+  { bid: "3NT", title: "No trump", hint: "Add the level to six. NT means no suit is trump.", options: ["3", "6", "9"] },
+  { bid: "4S", title: "Read your contract", hint: "", options: ["4", "9", "10"] }
+].map(step => ({ ...step, contract: bridgeBidById(step.bid) }));
+
+export const bridgeDummyDrillPool: DrillStep[] = [
+  {
+    scenarioId: "bridge-dummy-follow", contract: "Bridge", title: "Play from North",
+    playingSeat: "Tutor", handLabel: "North dummy: choose a card",
+    referenceHand: { label: "South declarer", cards: [card("5", "H"), card("7", "C"), card("8", "D")] },
+    trick: {
+      title: "Dummy follows suit", beforeResult: "South declares 1NT. West leads a heart. North dummy plays next: choose a heart from North's cards.",
+      emptyExplanation: "These are reduced hands. South controls dummy, but cannot substitute a card from South's own hand.",
+      afterResult: "North followed hearts from its own hand.",
+      hand: [card("A", "H"), card("2", "H"), card("4", "C")], legalCardIds: ["AH", "2H"],
+      tableBeforeChoice: [{ seat: "Left", card: card("K", "H") }],
+      tableAfterChoice: [{ seat: "Right", card: card("3", "H") }, { seat: "You", card: card("5", "H") }],
+      pendingBySeat: { Tutor: "North Dummy", You: "South Declarer", Left: "West Defender", Right: "East Defender" },
+      playedExplanations: { AH: "Good. North follows with its own heart. Declarer chose it for dummy.", "2H": "Good. North follows with its own heart. Both hearts obey the rule; this decision is about the active hand.", "4C": "Illegal. North has hearts, so dummy must follow hearts." },
+      cardOutcomes: { AH: "good", "2H": "good" }
+    }
+  },
+  {
+    scenarioId: "bridge-dummy-void", contract: "Bridge", title: "Separate hands",
+    playingSeat: "Tutor", handLabel: "North dummy: choose a card",
+    referenceHand: { label: "South declarer", cards: [card("A", "H"), card("3", "C"), card("4", "S")] },
+    trick: {
+      title: "Dummy has no hearts", beforeResult: "West leads a heart in 1NT. North has no hearts, but South does. Choose a legal card from North dummy.",
+      emptyExplanation: "Follow-suit applies to the hand playing, not to the combined cards of the partnership.",
+      afterResult: "North can discard; South must still follow hearts on South's turn.",
+      hand: [card("2", "C"), card("4", "D"), card("5", "S")], legalCardIds: ["2C", "4D", "5S"],
+      tableBeforeChoice: [{ seat: "Left", card: card("7", "H") }],
+      tableAfterChoice: [{ seat: "Right", card: card("Q", "H") }, { seat: "You", card: card("A", "H") }],
+      pendingBySeat: { Tutor: "North Dummy", You: "South Declarer", Left: "West Defender", Right: "East Defender" },
+      playedExplanations: Object.fromEntries(["2C", "4D", "5S"].map(id => [id, "Good. North is void in hearts and may discard any of these cards. South's ace does not change North's obligation."])),
+      cardOutcomes: { "2C": "good", "4D": "good", "5S": "good" },
+      cardReasons: { "2C": "void_discard", "4D": "void_discard", "5S": "void_discard" }
+    }
+  },
+  {
+    scenarioId: "bridge-declarer-turn", contract: "Bridge", title: "South's turn",
+    playingSeat: "You", handLabel: "South declarer: choose a card",
+    referenceHand: { label: "North dummy", cards: [card("4", "C"), card("6", "S")] },
+    trick: {
+      title: "Win from the active hand", beforeResult: "In 1NT, North has led a diamond and East played the king. It is South's turn. Which card secures this trick?",
+      emptyExplanation: "", afterResult: "The turn has moved from dummy to South after East's play.",
+      hand: [card("A", "D"), card("2", "D"), card("8", "C")], legalCardIds: ["AD", "2D"],
+      tableBeforeChoice: [{ seat: "Tutor", card: card("3", "D") }, { seat: "Right", card: card("K", "D") }],
+      tableAfterChoice: [{ seat: "Left", card: card("4", "D") }],
+      pendingBySeat: { Tutor: "North Dummy", You: "South Declarer", Left: "West Defender", Right: "East Defender" },
+      playedExplanations: { AD: "Good. South's ace beats the king in no trump. It is played from South, not from North dummy.", "2D": "Legal, but East's king keeps the trick. South's ace could win it.", "8C": "Illegal. South has diamonds and must follow suit." },
+      cardOutcomes: { AD: "good", "2D": "risky" }, cardReasons: { AD: "won_clean_trick", "2D": "followed_suit" }
+    }
+  }
+];
 
 const bridgeFinesseDrillStep: DrillStep = {
   scenarioId: "bridge-finesse-low-toward-honor",
   contract: "Bridge",
   title: "Try the queen",
+  handLabel: "South declarer: choose a card",
+  referenceHand: { label: "North dummy (excerpt)", cards: [card("3", "C"), card("6", "C"), card("8", "C"), card("2", "D")] },
   trick: {
     title: "Try the finesse",
-    beforeResult: "North dummy leads a small club and East follows low. Try your queen, keeping the ace, to finesse against East's possible king.",
+    beforeResult: "In 1NT, North dummy leads a small club and East follows low. Try your queen, keeping the ace, to finesse against East's possible king.",
     afterResult: "A low lead toward honors is the basic finesse shape in declarer play.",
     emptyExplanation: "A finesse risks the queen to keep the ace for another trick. It succeeds when East holds the king.",
     legalCardIds: ["AC", "QC", "7C"],
@@ -35,11 +94,13 @@ const bridgeEstablishSuitDrillStep: DrillStep = {
   scenarioId: "bridge-establish-long-suit",
   contract: "Bridge",
   title: "Establish the long suit",
+  handLabel: "South declarer: choose a card",
+  referenceHand: { label: "North dummy (excerpt)", cards: [card("10", "D"), card("9", "D"), card("8", "D"), card("6", "D"), card("3", "D")] },
   trick: {
     title: "Force out the ace",
     beforeResult: "You need extra tricks in 1NT. Lead the king to drive out the ace and set up dummy's diamonds.",
     afterResult: "Declarer often gives up one trick early to establish a long suit for later winners.",
-    emptyExplanation: "With touching KQJ honors opposite length, start the sequence and make the defenders spend the ace.",
+    emptyExplanation: "Only the relevant cards are shown. South's KQJ faces five diamonds in dummy; start the sequence to force out the ace.",
     legalCardIds: ["KD", "QD", "JD", "4S"],
     hand: [card("K", "D"), card("Q", "D"), card("J", "D"), card("4", "S")],
     tableBeforeChoice: [],
@@ -63,6 +124,8 @@ const bridgeHoldUpDrillStep: DrillStep = {
   scenarioId: "bridge-hold-up-notrump",
   contract: "Bridge",
   title: "Hold up once",
+  handLabel: "South declarer: choose a card",
+  referenceHand: { label: "North dummy (excerpt)", cards: [card("7", "H"), card("3", "H"), card("J", "C"), card("6", "D")] },
   trick: {
     title: "Break defender communication",
     beforeResult: "West leads a long-suit king in 1NT. Duck the first round to make the defenders spend an entry.",
@@ -232,8 +295,8 @@ export const bridgeBiddingPracticeSteps: BridgeBiddingPracticeStep[] = [
   },
   {
     id: "bridge-bid-five-card-major",
-    title: "Open the five-card major",
-    prompt: "You are South with 13 HCP and five spades. In basic natural bidding, five-card majors come before a minor opening.",
+    title: "Your opening decision",
+    prompt: "You are South and the dealer. Which opening describes your strength and shape in basic natural bidding?",
     hand: [
       card("A", "S"),
       card("K", "S"),

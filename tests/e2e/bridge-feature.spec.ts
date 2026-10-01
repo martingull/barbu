@@ -26,10 +26,12 @@ test("Bridge auction and active hand survive other games and bidding lessons", a
   await page.getByRole("button", { name: "See example", exact: true }).click();
   await page.getByRole("button", { name: "Try cards", exact: true }).click();
   for (let i = 0; i < 3; i++) {
+    await expect(page.getByRole("button", { name: "Check answer", exact: true })).toBeDisabled();
+    await page.getByLabel("Bridge bidding choices").getByRole("button", { name: ["Pass", "1NT", "1♠"][i], exact: true }).click();
     await page.getByRole("button", { name: "Check answer", exact: true }).click();
-    await page.getByRole("button", { name: i === 2 ? "Finish practice" : "Next decision", exact: true }).click();
+    await page.getByRole("button", { name: i === 2 ? "Finish topic" : "Next decision", exact: true }).click();
   }
-  await page.getByRole("button", { name: "Finish Bridge", exact: true }).click();
+  await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
   expect(await saved()).toEqual(auction);
   await page.getByRole("tab", { name: "Play", exact: true }).click();
   await page.getByRole("button", { name: "Continue Bridge", exact: true }).click();

@@ -6,9 +6,11 @@
   import { bridgeHighCardPoints } from "../../domain/bridgeBidding";
   import { bridgeCallLabel, type BridgeCallOption } from "../../domain/bridgeAuction";
   import { bridgeHandShapeLabel, bridgeSeatLabel } from "./bridgePresentation";
-  let { onBack, onComplete }: { onBack: () => void; onComplete: () => void } = $props();
+  import type { DrillResult } from "../../lessons/drillDecision";
+  let { onBack, onComplete }: { onBack: () => void; onComplete: (results?: DrillResult[]) => void } = $props();
+  let results = $state<DrillResult[]>([]);
   let index = $state(0);
-  let selected = $state<BridgeCallOption>(bridgeBiddingPracticeSteps[0]?.correctCall ?? "Pass");
+  let selected = $state<BridgeCallOption>("");
   let checked = $state<BridgeCallOption | "">("");
   let step = $derived(bridgeBiddingPracticeSteps[index]);
   let last = $derived(index >= bridgeBiddingPracticeSteps.length - 1);
@@ -17,12 +19,17 @@
     : "Choose the call that best describes South's hand for basic natural bidding.");
   let outcome = $derived(checked ? checked === step.correctCall ? "Good" : "Risky" : "");
   function select(call: BridgeCallOption) { if (!checked) selected = call; }
-  function check() { if (!checked) checked = selected; }
+  function check() {
+    if (checked || !selected) return;
+    checked = selected;
+    const good = checked === step.correctCall;
+    results = [...results, { contract: "Bridge", cardLabel: bridgeCallLabel(checked), outcome: good ? "good" : "risky", clean: good, reason: "bid_selection" }];
+  }
   function next() {
     if (!checked) return;
-    if (last) { onComplete(); return; }
+    if (last) { onComplete(results); return; }
     index += 1;
-    selected = bridgeBiddingPracticeSteps[index].correctCall;
+    selected = "";
     checked = "";
   }
 </script>
@@ -65,6 +72,7 @@
 
     <CardChoiceHand
       cards={step.hand}
+      readonly
       ariaLabel="Your Bridge bidding practice hand"
       className="hand full-hand-cards bridge-auction-hand"
       cardClassName="card hand-card full-hand-card"
@@ -92,10 +100,10 @@
       <button class="secondary-action" onclick={onBack} type="button">Table</button>
       {#if checked}
         <button class="primary-action" onclick={next} type="button">
-          {last ? "Finish practice" : "Next decision"}
+          {last ? "Finish topic" : "Next decision"}
         </button>
       {:else}
-        <button class="primary-action" onclick={check} type="button">
+        <button class="primary-action" disabled={!selected} onclick={check} type="button">
           Check answer
         </button>
       {/if}

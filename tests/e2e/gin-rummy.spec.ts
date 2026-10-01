@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { createGinSession, ginComplete, transitionGinSession, type GinSession } from "../../src/domain/ginRummySession";
 import { advanceGinOpponent, chooseGinAction, ginObservation } from "../../src/domain/ginRummyPolicy";
 import { ginSaveKey, restoreGinSession, saveGinSession } from "../../src/persistence/ginRummySave";
-import { ginExercises, ginExerciseAnswer } from "../../src/lessons/gin-rummy/exercises";
+import { ginExercises, ginExerciseAnswer, ginExerciseChoices, ginSelectsDiscard } from "../../src/lessons/gin-rummy/exercises";
 
 async function saved(page: Page) {
   return restoreGinSession(await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), ginSaveKey));
@@ -140,7 +140,8 @@ test("Gin game completion is announced and survives reload", async ({ page }) =>
   await expect(page.getByLabel("Your Gin Rummy hand", { exact: true })).toBeVisible();
 });
 
-test("Gin teaches nine decisions and persists progress separately from play", async ({ page }, info) => {
+test("Gin teaches fifteen decisions and persists progress separately from play", async ({ page }, info) => {
+  test.setTimeout(60_000);
   await page.setViewportSize({ width: 320, height: 568 });
   await seed(page);
   const before = await saved(page);
@@ -152,22 +153,24 @@ test("Gin teaches nine decisions and persists progress separately from play", as
     await page.getByRole("button", { name: "Try cards", exact: true }).click();
     for (let index = 0; index < steps.length; index++) {
       const step = steps[index];
-      const choices = topic === "melds" ? step.hand.map(card => card.id) : topic === "draw" ? ["stock", "upcard"] : ["continue", "knock", "gin"];
-      const correct = choices.find(choice => ginExerciseAnswer(topic, step, choice).good)!;
+      const choices = ginExerciseChoices(topic, step);
+      const correct = choices.find(choice => ginExerciseAnswer(topic, step, choice.id).good)!;
       await expect(page.locator(".contract-status")).toContainText(`Decision ${index + 1} of 3`);
-      if (topic === "melds") {
-        const card = step.hand.find(card => card.id === correct)!;
+      if (ginSelectsDiscard(topic)) {
+        const card = step.hand.find(card => card.id === correct.id)!;
         await page.getByLabel("Your Gin Rummy exercise hand").getByRole("button", { name: `${card.rank} ${card.suit}`, exact: true }).click();
-      } else await page.getByRole("button", { name: ({ stock: "Draw stock", upcard: "Take upcard", continue: "Keep playing", knock: "Knock", gin: "Go gin" } as Record<string, string>)[correct], exact: true }).click();
+      } else await page.getByRole("button", { name: correct.label, exact: true }).click();
       await expect(page.getByRole("button", { name: "Check answer", exact: true })).toBeInViewport();
       await page.getByRole("button", { name: "Check answer", exact: true }).click();
       await expect(page.locator(".outcome")).toHaveText("Good");
+      if (topic !== "draw") await expect(page.getByRole("region", { name: "Deadwood breakdown" })).toBeVisible();
       if (index === 0) await page.screenshot({ path: info.outputPath(`gin-${topic}.png`), fullPage: true });
-      await page.getByRole("button", { name: index === 2 ? "Finish practice" : "Next decision", exact: true }).click();
+      await page.getByRole("button", { name: index === 2 ? "Finish topic" : "Next decision", exact: true }).click();
     }
     await expect(page.getByRole("status")).toHaveText("Topic complete.");
     await expect(page.getByRole("button", { name: "Continue Gin Rummy", exact: true })).toBeVisible();
-    if (topic === "knock") {
+    await expect(page.getByLabel("Learning summary")).toContainText("3 of 3 decisions");
+    if (topic === "gin") {
       await expect(page.getByRole("button", { name: "Next topic", exact: true })).toHaveCount(0);
       await page.getByRole("button", { name: "Continue Gin Rummy", exact: true }).click();
       expect(await saved(page)).toEqual(before);
@@ -175,12 +178,12 @@ test("Gin teaches nine decisions and persists progress separately from play", as
       await page.getByRole("tab", { name: "Learn", exact: true }).click();
     } else await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
   }
-  await expect(page.getByLabel("Gin Rummy course progress")).toContainText("3 / 3 complete");
+  await expect(page.getByLabel("Gin Rummy course progress")).toContainText("5 / 5 complete");
   expect(await saved(page)).toEqual(before);
   await page.reload();
   await page.getByRole("button", { name: "Open Gin Rummy", exact: true }).click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
-  await expect(page.getByLabel("Gin Rummy course progress")).toContainText("3 / 3 complete");
+  await expect(page.getByLabel("Gin Rummy course progress")).toContainText("5 / 5 complete");
   await page.getByRole("button", { name: /^Reference/ }).click();
   await expect(page.getByRole("heading", { name: "Gin Rummy reference", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Back to Gin Rummy table", exact: true }).click();
@@ -202,7 +205,7 @@ test("Gin lesson distinguishes an illegal declaration from a risky decision", as
   await page.goto("/");
   await page.getByRole("button", { name: "Open Gin Rummy", exact: true }).click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
-  await page.getByRole("button", { name: "Try cards: Knock and gin", exact: true }).click();
+  await page.getByRole("button", { name: "Try cards: Knock or keep playing", exact: true }).click();
   await page.getByRole("button", { name: "Go gin", exact: true }).click();
   await page.getByRole("button", { name: "Check answer", exact: true }).click();
   await expect(page.locator(".outcome")).toHaveText("Illegal");

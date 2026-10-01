@@ -15,6 +15,7 @@
     onSelect: (card: Card) => void;
     onFocus?: (card: Card) => void;
     cardLabel?: (card: Card) => string;
+    readonly?: boolean;
   };
 
   let {
@@ -26,6 +27,7 @@
     isPressed = () => false,
     onSelect,
     onFocus,
+    readonly = false,
     cardLabel = card => `${card.rank} ${card.suit}`
   }: Props = $props();
 
@@ -41,6 +43,9 @@
 
 <div class={className} class:has-selection={cards.some(isPressed)} aria-label={ariaLabel}>
   {#each sortCardsForDisplay(cards) as card}
+    {#if readonly}
+      <div class={buttonClass(card)}><CardFace {card} /></div>
+    {:else}
     <button
       aria-label={cardLabel(card)}
       aria-pressed={isPressed(card)}
@@ -51,5 +56,6 @@
     >
       <CardFace {card} decorative />
     </button>
+    {/if}
   {/each}
 </div>

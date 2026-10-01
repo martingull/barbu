@@ -1,6 +1,33 @@
 import type { CourseContent } from "../courseTypes";
+import { bridgeDef } from "../../games/bridge";
 
-export const bridgeCourses: CourseContent[] = [
+const courses: CourseContent[] = [
+  {
+    id: "bridge-contracts", game: "bridge", pathStepId: "bridge-contracts",
+    practiceTarget: { kind: "practice", game: "bridge", action: "contracts" },
+    contract: "Bridge", title: "Read the contract",
+    concept: {
+      heading: "A target for two partners.",
+      body: "Four players form two partnerships: North-South and East-West. The auction sets a contract for one partnership: a trick target and a trump suit, or no trump.",
+      points: [
+        { marker: "Target", text: "Add six to the contract level. 1H needs seven tricks; 4S needs ten." },
+        { marker: "Trump", text: "A trump beats a card in another suit, but you must still follow the led suit when you can." },
+        { marker: "NT", text: "In no trump, the highest card of the led suit wins." }
+      ]
+    },
+    example: {
+      heading: "4S means ten tricks with spades as trump.",
+      body: "The target belongs to declarer and dummy together, not ten tricks from one hand. The defenders try to stop them reaching it.",
+      ariaLabel: "Bridge contract example", pendingBySeat: {},
+      tableCards: [{ seat: "You", card: { id: "AS", rank: "A", suit: "S", label: "AS" } }],
+      sequence: [
+        { label: "Level", text: "6 + 4 = 10 tricks needed out of 13." },
+        { label: "Suit", text: "Spades are trump for this hand." },
+        { label: "Result", text: "Ten tricks makes the contract. Nine is one trick short." }
+      ]
+    },
+    review: { heading: "Read the target before playing.", body: "Contract level plus six gives the partnership target. Check the strain separately: a suit or no trump.", points: [] }
+  },
   {
     id: "bridge-bidding", game: "bridge", pathStepId: "bridge-bidding",
     practiceTarget: { kind: "practice", game: "bridge", action: "bidding" },
@@ -79,7 +106,7 @@ export const bridgeCourses: CourseContent[] = [
   },
   {
     id: "bridge-dummy", game: "bridge", pathStepId: "bridge-dummy",
-    practiceTarget: { kind: "practice", game: "bridge", action: "declarer" },
+    practiceTarget: { kind: "practice", game: "bridge", action: "dummy" },
     contract: "Bridge", title: "The Dummy",
     concept: {
       heading: "One player directs two separate hands.",
@@ -149,3 +176,5 @@ export const bridgeCourses: CourseContent[] = [
     }
   }
 ];
+
+export const bridgeCourses = bridgeDef.learnSteps.map(step => courses.find(course => course.pathStepId === step.id)!);

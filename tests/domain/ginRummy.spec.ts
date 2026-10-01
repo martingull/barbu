@@ -4,7 +4,7 @@ import { bestMeldLayout, deadwoodPoints, rummyMelds } from "../../src/domain/rum
 import { createGinSession, ginComplete, ginFinalScores, replayGinHand, scoreGinHand, transitionGinSession, type GinSession } from "../../src/domain/ginRummySession";
 import { advanceGinOpponent, chooseGinAction, ginObservation } from "../../src/domain/ginRummyPolicy";
 import { createGinSaveStore, normalizeGinSave, restoreGinSession, saveGinSession } from "../../src/persistence/ginRummySave";
-import { ginCards, ginExercises, ginExerciseAnswer } from "../../src/lessons/gin-rummy/exercises";
+import { ginCards, ginExercises, ginExerciseAnswer, ginExerciseChoices } from "../../src/lessons/gin-rummy/exercises";
 import { createGinRummyFeature } from "../../src/features/gin-rummy/ginRummyFeature";
 import { get } from "svelte/store";
 
@@ -166,9 +166,28 @@ test("each learning topic has three decisions with at least one correct choice",
   for (const [topic, steps] of Object.entries(ginExercises)) {
     expect(steps).toHaveLength(3);
     for (const step of steps) {
-      const options = topic === "melds" ? step.hand.map(card => card.id) : topic === "draw" ? ["stock", "upcard"] : ["continue", "knock", "gin"];
+      const options = ginExerciseChoices(topic, step).map(choice => choice.id);
       expect(options.some(option => ginExerciseAnswer(topic, step, option).good)).toBe(true);
       expect(new Set(step.hand.map(card => card.id)).size).toBe(step.hand.length);
     }
+  }
+});
+
+test("counting and finishing lessons use the same meld solver as play", () => {
+  expect(ginExercises.deadwood.map(step => bestMeldLayout(step.hand).points)).toEqual([2, 10, 31]);
+  for (const [index, answer] of ["2", "10", "31"].entries()) {
+    expect(ginExerciseAnswer("deadwood", ginExercises.deadwood[index], answer).good).toBe(true);
+    expect(ginExerciseAnswer("deadwood", ginExercises.deadwood[index], "0").good).toBe(false);
+  }
+  expect(bestMeldLayout(ginExercises.knock[2].hand).points).toBe(10);
+  expect(ginExerciseAnswer("knock", ginExercises.knock[2], "knock").good).toBe(true);
+  for (const [index, discard] of ["KS", "AD", "KH"].entries()) {
+    const step = ginExercises.gin[index];
+    expect(step.hand).toHaveLength(11);
+    const hand = step.hand.filter(card => card.id !== discard);
+    expect(hand).toHaveLength(10);
+    expect(bestMeldLayout(hand).points).toBe(0);
+    expect(ginExerciseAnswer("gin", step, discard).good).toBe(true);
+    expect(ginExerciseAnswer("gin", step, step.hand[0].id).good).toBe(false);
   }
 });

@@ -152,8 +152,10 @@
     try { onCompleteStep(activeStep.id); }
     catch { /* The result remains usable when progress cannot be saved. */ }
   }
-  function finishCustom() {
+  function finishCustom(decisions: DrillResult[] = []) {
     if (view !== "custom") return;
+    results = decisions;
+    try { if (results.length) onExerciseComplete(results); } catch { /* Results remain available without storage. */ }
     exerciseComplete = true;
     completeTopic();
     view = "result";
@@ -203,11 +205,13 @@
     total={steps.length} onBack={table} review={course?.review}
     message={results.length ? resultMessage(results.every(result => result.clean)) : "Try this skill in a full hand, or continue learning."}>
     {#snippet actions()}
+      <button class="secondary-action" onclick={retry} type="button">Try again</button>
       {#if exerciseComplete && nextStep}
         <button class="primary-action" onclick={() => practiceStep(nextStep!)} type="button">Next topic</button>
       {/if}
+    {/snippet}
+    {#snippet playAction()}
       {#if onPlay}<button class="primary-action" onclick={onPlay} type="button">{playLabel ?? `Play ${gameName}`}</button>{/if}
-      <button class="secondary-action" onclick={retry} type="button">Try again</button>
     {/snippet}
   </DrillResultScreen>
 {:else}

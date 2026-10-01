@@ -113,8 +113,8 @@ Gin Rummy is the first implemented rummy-family table. It reuses the determinist
 deck, saved-session controller, metadata factory, Learn flow and card surfaces.
 Its draw/discard state and scoring live in `ginRummySession.ts`, with public-information
 opponent decisions in `ginRummyPolicy.ts`. `features/gin-rummy/` owns only interaction
-and rendering. Its version-1 action-log save is replay-validated; three authored
-courses contain nine decisions and never write the match save. See
+and rendering. Its version-1 action-log save is replay-validated. Five authored
+courses contain fifteen decisions and never write the match save. See
 [Gin Rummy](gin-rummy.md) for the classic scoring profile, source notes, automatic
 meld/layoff declarations and remaining limitations.
 
@@ -153,7 +153,8 @@ Whist, Hearts, Spades, Bridge and Barbu have isolated frontends under their resp
 - `BridgeGame.svelte` composes `BridgeAuction.svelte`, `BridgeHandView.svelte`
   and the same `GameLearning` flow. Its bidding exercise is an unsaved custom
   decision screen; declarer and defense exercises use the shared drill screen
-  with compass labels. The four existing courses and progress keys are unchanged.
+  with compass labels. The five-topic path adds contract targets and dedicated
+  dummy decisions while retaining the four existing progress keys.
   `bridgeFeature.ts` delegates auction, passed-out boards, replay and settlement
   to `bridgeSession.ts` and preserves the version-1 save. Its active-hand adapter
   lets the shared controller select and play either South's cards or the dummy,

@@ -1,8 +1,10 @@
-import type { Card, GuidedCardOutcome, GuidedTrick, PracticeReason } from "../domain/types";
+import type { Card, GuidedCardOutcome, GuidedTrick, PracticeReason, Seat } from "../domain/types";
 import { formatCardLabel } from "../presentation/cardDisplay";
 
-export type DrillStep = { scenarioId?: string; contract: string; title: string; trick: GuidedTrick };
-export type DrillResult = { contract: string; cardLabel: string; outcome: GuidedCardOutcome | "illegal"; reason: PracticeReason; clean: boolean };
+export type DrillStep = { scenarioId?: string; contract: string; title: string; trick: GuidedTrick;
+  playingSeat?: Seat; handLabel?: string; referenceHand?: { label: string; cards: Card[] } };
+export type DrillResult = { contract: string; cardLabel: string; outcome: GuidedCardOutcome | "illegal";
+  reason: PracticeReason | "meld_count" | "contract_target" | "bid_selection"; clean: boolean };
 export const drillOutcomeLabels = { good: "Good", risky: "Risky", penalty: "Penalty", illegal: "Illegal" } as const;
 
 export function drillDecision(step: DrillStep, card: Card) {
