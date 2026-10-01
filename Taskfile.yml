@@ -158,3 +158,8 @@ tasks:
     desc: Run the Tauri Android development target
     cmds:
       - npm run tauri:android
+
+  android:prepare:
+    desc: Sync tracked Android activity and icons into the generated project
+    cmds:
+      - npm run prepare:android

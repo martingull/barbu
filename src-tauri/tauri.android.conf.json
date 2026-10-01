@@ -1,0 +1,6 @@
+{
+  "build": {
+    "beforeDevCommand": "npm run prepare:android && npm run dev",
+    "beforeBuildCommand": "npm run prepare:android && npm run build"
+  }
+}

@@ -29,9 +29,10 @@ test("Hearts match survives Card Counting, a lesson and a reload", async ({ page
   for (let i = 0; i < 3; i++) {
     await page.locator(".drill-hand .hand-card.legal").first().click();
     await page.getByRole("button", { name: "Check answer", exact: true }).click();
-    await page.getByRole("button", { name: i === 2 ? "Review session" : "Next decision", exact: true }).click();
+    await page.getByRole("button", { name: i === 2 ? "Finish topic" : "Next decision", exact: true }).click();
   }
-  await page.getByRole("button", { name: "Finish Hearts", exact: true }).click();
+  await expect(page.getByRole("status")).toHaveText("Topic complete.");
+  await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
   await expect(page.getByLabel("Hearts course progress")).toContainText("1 / 7 complete");
   expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), key)).toEqual(saved);
   await page.reload();

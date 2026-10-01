@@ -26,6 +26,7 @@ task tauri:dev
 - **[SCREEN_PLAN.md](./SCREEN_PLAN.md)**: UI boundaries, catalog structure, and navigation architecture.
 - **[AGENTS.md](./AGENTS.md)**: Technical guidelines for AI agents working in this repository.
 - **[THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md)**: Dependency licenses and attribution.
+- **[Google Play Closed Testing](./docs/google-play-release.md)**: Android packaging, generated-project settings, and release verification history.
 
 ## License
 

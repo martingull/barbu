@@ -36,7 +36,7 @@ test("Privacy policy opens a separate tab in browser mode", async ({ page, conte
   const popup = await popupPromise;
   await expect(popup).toHaveURL(policyUrl);
   await expect(popup.getByRole("heading", { name: "Barbu Privacy Policy" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Choose a table" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Barbu", exact: true, level: 1 })).toBeVisible();
   await popup.close();
 });
 

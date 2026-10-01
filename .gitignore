@@ -1,6 +1,7 @@
 /node_modules/
 /dist/
 /target/
+/src-tauri/gen/android/
 /src-tauri/gen/apple/
 /src-tauri/gen/schemas/
 /playwright-report/
@@ -8,6 +9,7 @@
 /test-results-domain/
 /release/google-play/
 /release/app-store/
+/release/marketing/
 
 .idea/
 .DS_Store

@@ -235,9 +235,19 @@ Do not commit generated output:
 - `node_modules/`
 - `dist/`
 - `target/`
+- `src-tauri/gen/android/`
+- `src-tauri/gen/apple/`
 - `src-tauri/gen/schemas/`
+- `release/google-play/` (bundles, symbols, and signing material)
 
 These are ignored by `.gitignore`.
+Keep Android launcher artwork in `src-tauri/icons/android/` and sync it with
+`npm run sync:android-icons`. Native system-bar handling lives in
+`src-tauri/android/MainActivity.kt`; `task android:prepare` syncs it and the icons.
+Android build/dev hooks run this task's preparation script automatically.
+Record required generated-project overrides in
+`docs/google-play-release.md`; do not rely on ignored Gradle edits surviving
+regeneration. Never commit signing credentials or private keys.
 
 ## Mobile Notes
 

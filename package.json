@@ -1,6 +1,6 @@
 {
   "name": "barbu",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": true,
   "license": "UNLICENSED",
   "type": "module",
@@ -10,6 +10,7 @@
     "build:ios-assets": "vite build && rsync -a --delete dist/ src-tauri/gen/apple/assets/",
     "cards:process": "node scripts/process-cards.mjs",
     "prepare:ios": "npm run build:ios-assets",
+    "prepare:android": "node scripts/prepare-android.mjs",
     "test:e2e": "playwright test",
     "test:domain": "tsc -p tsconfig.domain.json && playwright test --config playwright.domain.config.ts",
     "preview": "vite preview",
@@ -17,7 +18,7 @@
     "tauri:dev": "tauri dev",
     "tauri:ios": "tauri ios dev",
     "sync:android-icons": "node scripts/sync-android-icons.mjs",
-    "tauri:android": "npm run sync:android-icons && tauri android dev"
+    "tauri:android": "tauri android dev"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",
