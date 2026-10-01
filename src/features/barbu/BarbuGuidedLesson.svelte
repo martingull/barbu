@@ -4,14 +4,16 @@
   import CardChoiceHand from "../../components/CardChoiceHand.svelte";
   import DominoLessonTable from "./DominoLessonTable.svelte";
   import { guidedLessons } from "../../lessons/catalog";
-  import { drillOutcomeLabels as outcomeLabels } from "../../lessons/drillDecision";
+  import { drillOutcomeLabels as outcomeLabels, type DrillResult } from "../../lessons/drillDecision";
+  import { barbuGuidedDecision, barbuGuidedResult } from "../../lessons/barbu/guidedFeedback";
   import type { Card, Suit } from "../../domain/types";
   export let lessonId: string;
   export let onBack: () => void;
-  export let onComplete: () => void;
+  export let onComplete: (results: DrillResult[]) => void;
   let trickIndex = 0;
   let selectedCardId = "";
   let playedCardId = "";
+  let results: DrillResult[] = [];
   const suitNames: Record<Suit, string> = { C: "clubs", D: "diamonds", H: "hearts", S: "spades" };
   $: selectedLesson = guidedLessons.find(lesson => lesson.id === lessonId) ?? guidedLessons[0];
   $: activeTricks = selectedLesson.tricks;
@@ -28,7 +30,7 @@
     : currentTrick.tableBeforeChoice;
   $: currentLessonIsDomino = contractLabel === "Domino";
   $: explanation = buildExplanation(selectedCard, playedCard);
-  $: resultText = playedCard ? currentTrick.afterResult : currentTrick.beforeResult;
+  $: resultText = playedCard ? barbuGuidedResult(contractLabel, currentTrick, playedCard) : currentTrick.beforeResult;
   $: isLastTrick = trickIndex === activeTricks.length - 1;
 
   $: lessonOutcome = selectedCard && (playedCard || !isSelectedLegal) ? buildLessonOutcome(selectedCard, playedCard) : "";
@@ -54,7 +56,10 @@
   }
 
   function nextTrick() {
-    trickIndex = isLastTrick ? 0 : trickIndex + 1;
+    if (!playedCard) return;
+    results = [...results, barbuGuidedDecision(contractLabel, currentTrick, playedCard).result];
+    if (isLastTrick) { onComplete(results); return; }
+    trickIndex++;
     resetTrick();
   }
 
@@ -79,13 +84,13 @@
 
     if (!legalCardIds.has(selected.id)) {
       if (contractLabel === "Domino") {
-        return `${selected.label} does not fit the layout right now. Open with a seven or extend an open suit by one rank.`;
+        return currentTrick.playedExplanations[selected.id] ?? `${selected.label} does not fit the layout right now. Open with a seven or extend an open suit by one rank.`;
       }
 
       return `${selected.label} is not legal here because you still have ${suitNames[currentTrick.hand.find((card) => legalCardIds.has(card.id))?.suit ?? selected.suit]}.`;
     }
 
-    return currentTrick.playedExplanations[selected.id] ?? `${selected.label} is legal here.`;
+    return currentTrick.emptyExplanation;
   }
 
   function buildLessonOutcome(selected: Card, played: Card | undefined) {
@@ -106,8 +111,8 @@
   flowLayout
   ariaLabel="Guided trick"
   surfaceClassName={currentLessonIsDomino ? "learning-play-surface domino-play-surface" : "learning-play-surface"}
-  title={gameLabel}
-  eyebrow={contractLabel}
+  title={contractLabel}
+  eyebrow={gameLabel}
   statusLabel="Decision"
   statusValue={`${trickIndex + 1} of ${activeTricks.length}`}
   tableAriaLabel="Card table"
@@ -117,6 +122,9 @@
   useCustomTable={currentLessonIsDomino}
   onBack={onBack}
 >
+  {#snippet summary()}
+    <p class="lesson-stage">{["Worked example", "Guided decision", "Your turn"][trickIndex]} <span>Separate positions</span></p>
+  {/snippet}
   {#snippet table()}
   {#if currentLessonIsDomino}
     <DominoLessonTable cards={completedTable} label="Domino lesson layout" />
@@ -146,7 +154,7 @@
       {#if playedCard}
         <button class="secondary-action" onclick={resetTrick} type="button">Reset</button>
         {#if isLastTrick}
-          <button class="primary-action" onclick={onComplete} type="button">Finish lesson</button>
+          <button class="primary-action" onclick={nextTrick} type="button">Finish lesson</button>
         {:else}
           <button class="primary-action" onclick={nextTrick} type="button">Next trick</button>
         {/if}
@@ -159,3 +167,8 @@
     </div>
   {/snippet}
 </TablePlaySurface>
+
+<style>
+  .lesson-stage { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; margin: 0; color: #f7faf3; font-size: 0.75rem; }
+  .lesson-stage span { color: #c1d1bf; }
+</style>

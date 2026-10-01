@@ -1,17 +1,18 @@
 import type { GuidedLesson, GuidedTrick } from "../../domain/types";
+import { lessonCards } from "./guidedFeedback";
 
 export const noLastTwoGuidedTricks: GuidedTrick[] = [
   {
     title: "Duck the twelfth trick",
+    trickNumber: 12,
     beforeResult: "This is trick 12. Left led 7S, Barbu played JS, and Right followed with 3S.",
-    afterResult: "Barbu wins with JS and takes this last-two penalty.",
+    afterResult: "The winner of trick 12 takes 10 penalty points.",
     emptyExplanation:
-      "Spades were led. In the final two tricks, winning the trick is the danger, so stay below the current winner when you can.",
+      "Play 2S below JS to avoid the 10-point penalty. QS would win. Each player has two cards left at trick 12.",
     legalCardIds: ["2S", "QS"],
     hand: [
       { id: "2S", rank: "2", suit: "S", label: "2S" },
-      { id: "QS", rank: "Q", suit: "S", label: "QS" },
-      { id: "5H", rank: "5", suit: "H", label: "5H" }
+      { id: "QS", rank: "Q", suit: "S", label: "QS" }
     ],
     tableBeforeChoice: [
       { seat: "Left", card: { id: "7S", rank: "7", suit: "S", label: "7S" } },
@@ -35,14 +36,14 @@ export const noLastTwoGuidedTricks: GuidedTrick[] = [
   },
   {
     title: "Forced into the final trick",
+    trickNumber: 13,
     beforeResult: "This is trick 13. Left led 9C, Barbu played QC, and Right followed with 4C.",
     afterResult: "You win the final trick with AC and take the last-trick penalty.",
     emptyExplanation:
-      "Clubs were led. AC is your only club, so the penalty is forced. Earlier exits matter in No Last Two.",
+      "The final trick costs 20 points. You have only one card left; earlier decisions determine whether you can escape.",
     legalCardIds: ["AC"],
     hand: [
-      { id: "AC", rank: "A", suit: "C", label: "AC" },
-      { id: "6D", rank: "6", suit: "D", label: "6D" }
+      { id: "AC", rank: "A", suit: "C", label: "AC" }
     ],
     tableBeforeChoice: [
       { seat: "Left", card: { id: "9C", rank: "9", suit: "C", label: "9C" } },
@@ -60,6 +61,23 @@ export const noLastTwoGuidedTricks: GuidedTrick[] = [
     cardReasons: {
       AC: "captured_penalty"
     }
+  },
+  {
+    title: "A different ending", trickNumber: 12,
+    beforeResult: "A new ending, trick 12. You play last in No Last Two. Choose a card.",
+    afterResult: "Only the trick winner takes the 10-point penalty.", emptyExplanation: "",
+    hand: lessonCards("AD", "3D"), legalCardIds: ["AD", "3D"],
+    tableBeforeChoice: [
+      { seat: "Left", card: lessonCards("8D")[0] },
+      { seat: "Tutor", card: lessonCards("4D")[0] },
+      { seat: "Right", card: lessonCards("QD")[0] }
+    ], tableAfterChoice: [], pendingBySeat: { You: "You" },
+    playedExplanations: {
+      "3D": "3D leaves QD winning, so Right takes the 10 points for trick 12. This avoids the current penalty, not a promise about the final trick.",
+      AD: "AD overtakes QD and takes the 10-point penalty for trick 12. You could duck this trick with 3D."
+    },
+    cardOutcomes: { "3D": "good", AD: "penalty" },
+    cardReasons: { "3D": "avoided_penalty", AD: "captured_penalty" }
   }
 ];
 

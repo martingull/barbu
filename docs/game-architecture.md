@@ -177,6 +177,12 @@ Whist, Hearts, Spades, Bridge and Barbu have isolated frontends under their resp
   contract navigation and review history. `barbuLearning.ts` selects existing
   generated scenarios and keeps the version-1 recent-pattern memory. Its four
   patterns per contract and seven-decision mixed review are unchanged.
+  Each of the seven authored courses has three separate positions: a worked
+  example, a hinted decision and an unassisted decision (21 in total). Guided
+  feedback derives the actual winner and points from the gameplay rules, and
+  decisions feed the shared result/history surface. Forced legal penalties are
+  shown as penalties but count as following the lesson correctly. Selecting a
+  legal card does not reveal its explanation until the player commits it.
   `DominoLessonTable` supplies a shared layout for examples and decisions;
   `BarbuPracticeHand` reuses the Play views without writing a saved run.
   Shared Learn extensions are optional entry points, resource actions and

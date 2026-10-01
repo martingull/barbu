@@ -1,4 +1,5 @@
 import type { GuidedLesson, GuidedTrick } from "../../domain/types";
+import { lessonCards } from "./guidedFeedback";
 
 export const noQueensGuidedTricks: GuidedTrick[] = [
   {
@@ -6,7 +7,7 @@ export const noQueensGuidedTricks: GuidedTrick[] = [
     beforeResult: "Barbu led 8D. Right followed with QD, loading the trick with a queen.",
     afterResult: "Left wins with AD and takes the queen penalty.",
     emptyExplanation:
-      "Diamonds were led. You have diamonds, so you must follow. The queen is dangerous only for the player who wins this trick.",
+      "Follow diamonds with 3D or KD. In this example Left will play AD next and take QD, worth 6 penalty points.",
     legalCardIds: ["3D", "KD"],
     hand: [
       { id: "3D", rank: "3", suit: "D", label: "3D" },
@@ -38,7 +39,7 @@ export const noQueensGuidedTricks: GuidedTrick[] = [
     beforeResult: "Left led 5C. Barbu played QC. Right followed with 9C. You play last.",
     afterResult: "You win with KC and take the queen penalty.",
     emptyExplanation:
-      "Clubs were led. KC is your only club, so it is legal and forced even though it wins the queen.",
+      "Avoiding a penalty does not let you ignore the led suit.",
     legalCardIds: ["KC"],
     hand: [
       { id: "KC", rank: "K", suit: "C", label: "KC" },
@@ -61,6 +62,24 @@ export const noQueensGuidedTricks: GuidedTrick[] = [
     cardReasons: {
       KC: "captured_penalty"
     }
+  },
+  {
+    title: "Choose your discard",
+    beforeResult: "You play last in No Queens and have no clubs. Which card would you discard?",
+    afterResult: "A discarded queen scores against the trick winner.", emptyExplanation: "",
+    hand: lessonCards("QD", "AS", "2D"), legalCardIds: ["QD", "AS", "2D"],
+    tableBeforeChoice: [
+      { seat: "Left", card: lessonCards("KC")[0] },
+      { seat: "Tutor", card: lessonCards("AC")[0] },
+      { seat: "Right", card: lessonCards("10C")[0] }
+    ], tableAfterChoice: [], pendingBySeat: { You: "You" },
+    playedExplanations: {
+      QD: "You are void in clubs. QD cannot win this trick, so Barbu collects the queen's 6 points instead of you keeping the danger.",
+      AS: "Legal, but QD stays in your hand. You could have discarded the queen into Barbu's winning trick.",
+      "2D": "Legal, but you keep QD and lose a low diamond that could help you duck later."
+    },
+    cardOutcomes: { QD: "good", AS: "risky", "2D": "risky" },
+    cardReasons: { QD: "void_discard", AS: "void_discard", "2D": "void_discard" }
   }
 ];
 

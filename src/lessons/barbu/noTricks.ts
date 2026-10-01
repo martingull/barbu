@@ -1,4 +1,5 @@
 import type { GuidedLesson, GuidedTrick } from "../../domain/types";
+import { lessonCards } from "./guidedFeedback";
 
 export const noTricksGuidedTricks: GuidedTrick[] = [
   {
@@ -6,7 +7,7 @@ export const noTricksGuidedTricks: GuidedTrick[] = [
     beforeResult: "Barbu led 9C. Right followed with KC.",
     afterResult: "Right keeps control with KC unless you overtake.",
     emptyExplanation:
-      "Clubs were led. In No Tricks, every trick you win scores against you, so low legal cards are valuable.",
+      "Play 2C below KC. Taking the trick with AC costs 2 points even without hearts or queens. Left will follow with 5C.",
     legalCardIds: ["2C", "AC"],
     hand: [
       { id: "2C", rank: "2", suit: "C", label: "2C" },
@@ -37,7 +38,7 @@ export const noTricksGuidedTricks: GuidedTrick[] = [
     beforeResult: "Left led 4D, Barbu played 8D, and Right followed with 9D.",
     afterResult: "You win with KD. The play is legal, but the trick still counts against you.",
     emptyExplanation:
-      "Diamonds were led. KD is your only diamond, so it is forced even though it wins the trick.",
+      "You must follow suit even when every legal choice has a cost.",
     legalCardIds: ["KD"],
     hand: [
       { id: "KD", rank: "K", suit: "D", label: "KD" },
@@ -59,6 +60,24 @@ export const noTricksGuidedTricks: GuidedTrick[] = [
     cardReasons: {
       KD: "captured_penalty"
     }
+  },
+  {
+    title: "Choose a card yourself",
+    beforeResult: "You play last in No Tricks. Choose a card.",
+    afterResult: "Every trick won costs 2 points.", emptyExplanation: "",
+    hand: lessonCards("4H", "QH", "AC"), legalCardIds: ["4H", "QH"],
+    tableBeforeChoice: [
+      { seat: "Left", card: lessonCards("5H")[0] },
+      { seat: "Tutor", card: lessonCards("JH")[0] },
+      { seat: "Right", card: lessonCards("9H")[0] }
+    ], tableAfterChoice: [], pendingBySeat: { You: "You" },
+    playedExplanations: {
+      "4H": "4H stays below JH. Barbu wins and takes the 2-point trick penalty. Hearts do not add extra penalties in No Tricks.",
+      QH: "QH wins the trick and costs 2 points. Its rank and suit do not add further penalties in this contract.",
+      AC: "Hearts were led and you must follow hearts."
+    },
+    cardOutcomes: { "4H": "good", QH: "penalty" },
+    cardReasons: { "4H": "avoided_penalty", QH: "captured_penalty" }
   }
 ];
 

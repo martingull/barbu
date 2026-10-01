@@ -50,9 +50,9 @@ for (const native of [false, true]) {
         expect(seen.has(scenario.id)).toBe(false);
         seen.add(scenario.id);
         if (i === 0 && contract === "Hearts Trumps") await page.screenshot({ path: info.outputPath("barbu-trump-practice.png"), fullPage: true });
-        await page.getByRole("button", { name: i === 3 ? "Review session" : "Next decision", exact: true }).click();
+        await page.getByRole("button", { name: i === 3 ? "Finish topic" : "Next decision", exact: true }).click();
       }
-      await expect(page.getByRole("heading", { name: "Session complete", exact: true })).toBeVisible();
+      await expect(page.getByRole("status")).toHaveText("Topic complete.");
       expect(await page.evaluate(() => (window as unknown as { nativeCommands: string[] }).nativeCommands)).toEqual([]);
       expect(errors).toEqual([]);
     });
@@ -61,7 +61,7 @@ for (const native of [false, true]) {
   test(`Barbu mixed practice includes Domino and persists review in ${native ? "native" : "browser"} mode`, async ({ page }, info) => {
     await openPractice(page, native);
     await page.getByRole("button", { name: /^Review results/ }).click();
-  await page.getByRole("button", { name: "Mixed contract review", exact: true }).click();
+    await page.getByRole("button", { name: "Mixed contract review", exact: true }).click();
     const contracts: string[] = [];
     for (let i = 0; i < 7; i++) {
       const scenario = await checkDecision(page, generateBarbuPracticeSet(42).scenarios);
@@ -76,10 +76,10 @@ for (const native of [false, true]) {
         expect(board!.y + board!.height).toBeLessThanOrEqual(hand!.y);
         await page.screenshot({ path: info.outputPath("barbu-domino-practice.png"), fullPage: true });
       }
-      await page.getByRole("button", { name: i === 6 ? "Review session" : "Next decision", exact: true }).click();
+      await page.getByRole("button", { name: i === 6 ? "Finish topic" : "Next decision", exact: true }).click();
     }
     expect(contracts).toEqual([...barbuTrickContracts, "Domino"]);
-    await expect(page.getByRole("heading", { name: "Session complete", exact: true })).toBeVisible();
+    await expect(page.getByRole("status")).toHaveText("Exercise complete.");
     const history = await page.evaluate(() => JSON.parse(localStorage.getItem("barbu.playHistory.v1")!));
     expect(history[0].results.map((r: { contract: string }) => r.contract)).toEqual(contracts);
     expect(await page.evaluate(() => localStorage.getItem("barbu.practiceSeed.v1"))).toBe("43");

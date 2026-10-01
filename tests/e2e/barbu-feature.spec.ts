@@ -18,10 +18,9 @@ test("Barbu review survives learning hands and other games without sharing their
   await page.getByRole("button", { name: "Table", exact: true }).first().click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
   await page.getByRole("button", { name: /^Try cards: Domino\b/ }).click();
-  await expect(page.getByLabel("Your Domino hand")).toBeVisible();
-  const place = page.getByRole("button", { name: "Place card", exact: true });
-  if (await place.isEnabled()) await place.click();
-  else await page.getByRole("button", { name: "Pass", exact: true }).click();
+  await expect(page.getByLabel("Domino lesson layout")).toBeVisible();
+  await page.getByLabel("Your hand", { exact: true }).getByRole("button", { name: "7 H", exact: true }).click();
+  await page.getByRole("button", { name: "Play selected", exact: true }).click();
   await page.screenshot({ path: info.outputPath("barbu-domino.png"), fullPage: true });
   expect(await page.evaluate(key => localStorage.getItem(key), key)).toBe(saved);
   await page.getByRole("button", { name: "Table", exact: true }).first().click();
@@ -64,6 +63,8 @@ test("Barbu courses retain progress through reference navigation and compact-scr
     await page.getByRole("button", { name: "Try cards", exact: true }).click();
     const lesson = guidedLessons.find(lesson => lesson.id === step.lessonId)!;
     for (const [decision, trick] of lesson.tricks.entries()) {
+      await expect(page.getByText(`Decision`, { exact: true })).toBeVisible();
+      await expect(page.locator(".contract-status")).toContainText(`${decision + 1} of 3`);
       await expect(page.locator(".full-hand-card.selected")).toHaveCount(0);
       const card = trick.hand.find(card => trick.legalCardIds.includes(card.id))!;
       await page.getByLabel("Your hand", { exact: true }).getByRole("button", { name: `${card.rank} ${card.suit}`, exact: true }).click();
@@ -74,7 +75,9 @@ test("Barbu courses retain progress through reference navigation and compact-scr
       if (decision === 0) await page.screenshot({ path: info.outputPath(`${step.id}-guided.png`), fullPage: true });
       await next.click();
     }
-    await page.getByRole("button", { name: `Finish ${lesson.contract}`, exact: true }).click();
+    await expect(page.getByRole("status")).toHaveText("Topic complete.");
+    await expect(page.getByLabel("Learning summary")).toContainText("of 3 decisions matched the lesson's goal");
+    await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
     await expect(page.getByLabel("Barbu course progress")).toContainText(`${index + 1} / 7 complete`);
   }
   await page.reload();

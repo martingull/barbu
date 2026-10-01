@@ -1,4 +1,5 @@
 import type { GuidedLesson, GuidedTrick } from "../../domain/types";
+import { lessonCards } from "./guidedFeedback";
 
 export const kingOfHeartsGuidedTricks: GuidedTrick[] = [
   {
@@ -6,7 +7,7 @@ export const kingOfHeartsGuidedTricks: GuidedTrick[] = [
     beforeResult: "Barbu led 10H. Right played KH, putting the contract card into the trick.",
     afterResult: "The king of hearts is in this trick. Check the explanation to see who captured it.",
     emptyExplanation:
-      "Hearts were led. You have hearts, so you must follow. The goal is not to win the trick containing KH.",
+      "Play 2H to stay below KH. Playing AH would capture the king and cost 20 points. Left will follow with QH.",
     legalCardIds: ["2H", "AH"],
     hand: [
       { id: "2H", rank: "2", suit: "H", label: "2H" },
@@ -36,9 +37,9 @@ export const kingOfHeartsGuidedTricks: GuidedTrick[] = [
   {
     title: "Discard the king when you are void",
     beforeResult: "Left led 6S. Barbu and Right followed spades. You have no spades.",
-    afterResult: "Right wins with AS. Your KH is safely discarded into a trick you do not win.",
+    afterResult: "Right's AS wins. Your chosen discard determines whether KH leaves your hand.",
     emptyExplanation:
-      "You cannot follow spades, so any card is legal. This is a chance to get rid of the dangerous king.",
+      "When you cannot follow suit, consider which card you most want out of your hand.",
     legalCardIds: ["KH", "4D", "8C"],
     hand: [
       { id: "KH", rank: "K", suit: "H", label: "KH" },
@@ -67,6 +68,24 @@ export const kingOfHeartsGuidedTricks: GuidedTrick[] = [
       "4D": "void_discard",
       "8C": "void_discard"
     }
+  },
+  {
+    title: "Choose your heart",
+    beforeResult: "You play last in King of Hearts. Choose a card.",
+    afterResult: "The highest heart wins the trick.", emptyExplanation: "",
+    hand: lessonCards("KH", "2H", "7C"), legalCardIds: ["KH", "2H"],
+    tableBeforeChoice: [
+      { seat: "Left", card: lessonCards("AH")[0] },
+      { seat: "Tutor", card: lessonCards("4H")[0] },
+      { seat: "Right", card: lessonCards("9H")[0] }
+    ], tableAfterChoice: [], pendingBySeat: { You: "You" },
+    playedExplanations: {
+      KH: "KH follows suit below AH. Left captures the king and its 20 penalty points; it cannot hurt you later.",
+      "2H": "Legal and safe for this trick, but KH remains in your hand. This was a chance to play it under the ace.",
+      "7C": "Hearts were led and you still have hearts."
+    },
+    cardOutcomes: { KH: "good", "2H": "risky" },
+    cardReasons: { KH: "avoided_penalty", "2H": "followed_suit" }
   }
 ];
 

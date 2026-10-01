@@ -7,6 +7,15 @@ import { saveBridgeSession } from "../../src/persistence/bridgeSave";
 import { trickTakingSeats } from "../../src/domain/trickTakingScore";
 import { whistOddProgress } from "../../src/features/whist/whistPresentation";
 
+async function finishGuidedLesson(page: Page) {
+  while (await page.getByRole("button", { name: "Next trick", exact: true }).isVisible()) {
+    await page.getByRole("button", { name: "Next trick", exact: true }).click();
+    await page.getByLabel("Your hand", { exact: true }).locator(".hand-card.legal").first().click();
+    await page.getByRole("button", { name: "Play selected", exact: true }).click();
+  }
+  await page.getByRole("button", { name: "Finish lesson", exact: true }).click();
+}
+
 test.beforeEach(async ({ page }, testInfo) => {
   if (testInfo.project.name !== "iphone-16") {
     return;
@@ -2624,7 +2633,7 @@ test("Domino shortcut completes its guided topic without starting a full hand", 
   await page.getByRole("button", { name: "5 S", exact: true }).click();
   await page.getByRole("button", { name: "Play selected", exact: true }).click();
   await expectNoPageScroll(page);
-  await page.getByRole("button", { name: "Finish lesson", exact: true }).click();
+  await finishGuidedLesson(page);
   await expect(page.getByRole("status")).toHaveText("Topic complete.");
   await page.screenshot({ path: testInfo.outputPath("domino-learning-result.png"), fullPage: true });
   await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
@@ -2707,7 +2716,7 @@ test("guided lesson accepts a legal card play", async ({ page }) => {
   await page.getByRole("button", { name: "See example" }).click();
   await page.getByRole("button", { name: "Try cards" }).click();
 
-  await expect(page.getByRole("heading", { name: "Barbu" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No Hearts", exact: true })).toBeVisible();
   await expect(page.getByLabel("Current lesson").locator(".result")).toBeVisible();
   await expect(page.locator(".learning-play-surface.flow-play")).toBeVisible();
   await expect(page.getByLabel("Guided Barbu lessons")).toHaveCount(0);
@@ -2718,7 +2727,7 @@ test("guided lesson accepts a legal card play", async ({ page }) => {
   await page.getByRole("button", { name: "Play selected" }).click();
 
   await expect(page.getByText("Good")).toBeVisible();
-  await expect(page.getByText("Left wins with A♣ and takes 2 heart penalty points from Right's 4♥.")).toBeVisible();
+  await expect(page.getByText("Left wins with A♣. 2 penalty points for Left.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Next trick" })).toBeVisible();
 });
 
@@ -3168,7 +3177,7 @@ test("finishing a lesson advances course progress", async ({ page }, testInfo) =
 
   await page.getByRole("button", { name: "Q S" }).click();
   await page.getByRole("button", { name: "Play selected" }).click();
-  await page.getByRole("button", { name: "Finish lesson" }).click();
+  await finishGuidedLesson(page);
 
   await expect(page.getByRole("status")).toHaveText("Topic complete.");
   await page.getByText("Review decisions", { exact: true }).click();
@@ -3205,7 +3214,7 @@ test("No Queens course has concept example play and review", async ({ page }) =>
 
   await page.getByRole("button", { name: "K C" }).click();
   await page.getByRole("button", { name: "Play selected" }).click();
-  await page.getByRole("button", { name: "Finish lesson" }).click();
+  await finishGuidedLesson(page);
 
   await expect(page.getByRole("status")).toHaveText("Topic complete.");
   await page.getByText("Review decisions", { exact: true }).click();
@@ -3244,7 +3253,7 @@ test("King of Hearts course has concept example play and review", async ({ page 
 
   await page.getByRole("button", { name: "K H" }).click();
   await page.getByRole("button", { name: "Play selected" }).click();
-  await page.getByRole("button", { name: "Finish lesson" }).click();
+  await finishGuidedLesson(page);
 
   await expect(page.getByRole("status")).toHaveText("Topic complete.");
   await page.getByText("Review decisions", { exact: true }).click();
@@ -3277,7 +3286,7 @@ test("No Last Two course has concept example play and review", async ({ page }) 
 
   await page.getByRole("button", { name: "A C" }).click();
   await page.getByRole("button", { name: "Play selected" }).click();
-  await page.getByRole("button", { name: "Finish lesson" }).click();
+  await finishGuidedLesson(page);
 
   await expect(page.getByRole("status")).toHaveText("Topic complete.");
   await page.getByText("Review decisions", { exact: true }).click();
@@ -3310,7 +3319,7 @@ test("No Tricks course has concept example play and review", async ({ page }) =>
 
   await page.getByRole("button", { name: "K D" }).click();
   await page.getByRole("button", { name: "Play selected" }).click();
-  await page.getByRole("button", { name: "Finish lesson" }).click();
+  await finishGuidedLesson(page);
 
   await expect(page.getByRole("status")).toHaveText("Topic complete.");
   await page.getByText("Review decisions", { exact: true }).click();
@@ -3338,7 +3347,7 @@ test("Hearts Trumps course has concept example play and review", async ({ page }
 
   await page.getByRole("button", { name: "5 H" }).click();
   await page.getByRole("button", { name: "Play selected" }).click();
-  await page.getByRole("button", { name: "Finish lesson" }).click();
+  await finishGuidedLesson(page);
 
   await expect(page.getByRole("status")).toHaveText("Topic complete.");
   await page.getByText("Review decisions", { exact: true }).click();
@@ -3368,7 +3377,7 @@ test("Domino course uses a layout example and guided placement", async ({ page }
   await expect(page.getByLabel("Card table")).toHaveCount(0);
   await page.getByRole("button", { name: "5 S" }).click();
   await page.getByRole("button", { name: "Play selected" }).click();
-  await page.getByRole("button", { name: "Finish lesson" }).click();
+  await finishGuidedLesson(page);
 
   await expect(page.getByRole("status")).toHaveText("Topic complete.");
   await page.getByText("Review decisions", { exact: true }).click();

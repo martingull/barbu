@@ -1,12 +1,13 @@
 import type { GuidedLesson, GuidedTrick } from "../../domain/types";
+import { lessonCards } from "./guidedFeedback";
 
 export const heartsTrumpsGuidedTricks: GuidedTrick[] = [
   {
     title: "Trump when you are void",
     beforeResult: "Barbu led 9C. Right followed with AC. You have no clubs.",
-    afterResult: "You trump with 5H and win the trick. Hearts outrank the led suit in this contract.",
+    afterResult: "A heart can beat the led clubs when you are void.",
     emptyExplanation:
-      "Clubs were led, but you are void. In Hearts Trumps, a heart can cut the trick and take control.",
+      "You have no clubs. Play 5H or 7H to trump AC and win 5 points. Left will discard 4D; a plain-suit discard cannot win.",
     legalCardIds: ["5H", "7H", "2D", "KS"],
     hand: [
       { id: "2D", rank: "2", suit: "D", label: "2D" },
@@ -38,6 +39,43 @@ export const heartsTrumpsGuidedTricks: GuidedTrick[] = [
       "2D": "void_discard",
       KS: "void_discard"
     }
+  },
+  {
+    title: "Follow before trumping",
+    beforeResult: "Clubs were led. You play last in Hearts Trumps. Try to win this trick.",
+    afterResult: "Having trumps does not remove the obligation to follow suit.",
+    emptyExplanation: "Check whether you hold the led suit before considering a trump.",
+    hand: lessonCards("AC", "2C", "KH"), legalCardIds: ["AC", "2C"],
+    tableBeforeChoice: [
+      { seat: "Left", card: lessonCards("4C")[0] },
+      { seat: "Tutor", card: lessonCards("QC")[0] },
+      { seat: "Right", card: lessonCards("KC")[0] }
+    ], tableAfterChoice: [], pendingBySeat: { You: "You" },
+    playedExplanations: {
+      AC: "AC follows clubs and wins 5 points. You do not need to trump to win a trick.",
+      "2C": "Legal, but KC keeps the trick and Right gets the 5 points. Your ace could win it.",
+      KH: "You have clubs, so KH cannot be played yet. Follow suit before using a trump."
+    },
+    cardOutcomes: { AC: "good", "2C": "risky" },
+    cardReasons: { AC: "won_clean_trick", "2C": "followed_suit" }
+  },
+  {
+    title: "Read the winner",
+    beforeResult: "You play last in Hearts Trumps. Which card wins this trick?",
+    afterResult: "The highest trump beats every card in the led suit.", emptyExplanation: "",
+    hand: lessonCards("5H", "JH", "8C"), legalCardIds: ["5H", "JH", "8C"],
+    tableBeforeChoice: [
+      { seat: "Left", card: lessonCards("AS")[0] },
+      { seat: "Tutor", card: lessonCards("7H")[0] },
+      { seat: "Right", card: lessonCards("3S")[0] }
+    ], tableAfterChoice: [], pendingBySeat: { You: "You" },
+    playedExplanations: {
+      JH: "JH beats Barbu's 7H and wins 5 points. A trump was already winning, so you needed a higher trump.",
+      "5H": "5H is legal but lower than 7H. Barbu keeps the trick; spending a trump is not enough to win it.",
+      "8C": "8C is legal because you have no spades, but cannot beat the trump. JH could win this trick."
+    },
+    cardOutcomes: { JH: "good", "5H": "risky", "8C": "risky" },
+    cardReasons: { JH: "won_clean_trick", "5H": "void_discard", "8C": "void_discard" }
   }
 ];
 

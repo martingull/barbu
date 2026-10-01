@@ -25,6 +25,7 @@ export type PracticeReason =
 
 export type GuidedTrick = {
   title: string;
+  trickNumber?: number;
   beforeResult: string;
   afterResult: string;
   emptyExplanation: string;
