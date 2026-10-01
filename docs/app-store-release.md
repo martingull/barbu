@@ -3,7 +3,54 @@
 The first Apple release targets iPhone only. Device installs are not App Store
 packages. Do not upload the IPA produced by `ios:install:device`.
 
-## Current Status (September 23, 2026)
+## Current Candidate (October 1, 2026)
+
+Version `1.0.4`, build `5`, was built from `08d406b` and refreshed dependency
+notices, then uploaded successfully on October 1 at 16:27 Europe/Oslo. TestFlight
+processed it and shows Ready to Submit. Martin installed it on his iPhone 16
+(iOS 26.6.2 per TestFlight) and confirmed the requested learning, saved-hand,
+Gin Rummy and Bridge flows work. Do not reuse the Android package or an iPhone
+development-install IPA.
+
+App Store Connect confirms the September 29 rejection of `1.0.3 (4)` under
+Guideline 4.2 (Minimum Functionality), reviewed on iPad Air 11-inch (M3).
+The September 24 physical-device videos and response were submitted; the
+earlier Guideline 2.1 information request is not the latest rejection reason.
+
+The replacement includes Gin Rummy, the family-organized catalog, an introductory
+Hearts journey, saved-game continuation, expanded Barbu/Bridge/Gin learning, and
+clearer lesson completion, retry, and next-lesson actions. Canasta remains hidden.
+Keep the iPhone-only target, but verify iPad compatibility-mode scrolling and
+controls because Apple used an iPad for review.
+
+The exported IPA passed distribution signature, entitlement (`get-task-allow`
+false), version, iPhone-only device-family, privacy manifest, dependency notices
+and bundled frontend asset checks. Preserve these exact artifacts:
+
+- `release/app-store/barbu-app-store-v1.0.4-build5.ipa`
+- `release/app-store/Barbu-v1.0.4-build5.xcarchive`
+- `release/app-store/verification-v1.0.4-build5.json`
+
+IPA SHA-256: `4dda90b1938f61d56ae50fd8b82044c18819f03d198d576a20bd426e3906b26a`.
+Frontend: `index-D7-YHMdb.js` and `index-BtzRYBG9.css`.
+
+All 105 selected iPhone WebKit tests passed, including tablet-sized lesson and
+result layouts. Native iPhone 13 Pro Max and iPad Air 11 M3 simulator journeys
+passed on iOS 26.5. The first iPad run failed because XCTest exposes answer
+choices as switches; correcting the temporary test selector resolved it.
+Simulator compilation succeeded but Tauri's subsequent packaging hit an existing
+archive-directory conflict. The verified DerivedData simulator app was installed
+directly; the separate, preserved distribution archive was unaffected.
+
+App Store Connect's editable version now has `1.0.4 (5)` selected, refreshed
+description/keywords and the updated [review notes](app-review-response.md).
+Six current native screenshots at 1284 x 2778 are in
+`release/app-store/screenshots-v1.0.4-build5/`. The initial catalog capture caught
+a pre-paint frame; it was replaced after a cold launch and visually checked.
+Screenshot upload and final App Review resubmission are pending confirmation.
+The existing automatic-release-after-approval setting is unchanged.
+
+## Previous Submission (1.0.3 Build 4)
 
 Barbu 1.0.3, build 4 archives and exports successfully with Xcode 26.5. The archive has
 `UIDeviceFamily = [1]` and the privacy manifest. All 18 generated icon images
@@ -17,7 +64,12 @@ an iOS Team Store provisioning profile. The exported signature passes
 uploaded from the preserved archive on September 23 at 16:51 Europe/Oslo.
 Xcode reported "Upload succeeded" and "Uploaded package is processing".
 The App Store Connect record is named `Barbu - The king of cards`, bundle ID
-`com.martin.barbu`. It has not been submitted for App Review.
+`com.martin.barbu`. Apple processed the build, and Martin confirmed installing
+and testing it through TestFlight on September 23. It was subsequently submitted
+for App Review. On September 24, Apple requested additional information under
+Guideline 2.1, including a physical-device recording on the latest operating
+system. The message does not identify a specific crash or gameplay defect.
+See [the response draft and recording checklist](app-review-response.md).
 
 The preserved candidate is
 `release/app-store/barbu-app-store-v1.0.3-build4.ipa`. Its archive is retained
@@ -51,8 +103,10 @@ Its frontend assets are `index-CAR2ilQI.js` and `index-CFTZGQ9u.css`.
 
 The account owner's TestFlight screenshot showed no previous builds before this
 upload. Build number 4 is now used; choose a higher number for another upload.
-Account declarations, processing completion, TestFlight installation, and App
-Review submission remain unverified.
+Processing completion is confirmed by the App Store Connect screenshot.
+Martin submitted two physical iPhone 16 recordings and review notes on September
+24. The notes report TestFlight testing on iOS 26.6.2. These recordings demonstrate
+build 4, not the new candidate. Approval and publication have not occurred.
 
 Xcode accepted the upload with one non-blocking warning: this release targets
 iOS 14.0, and its upload response says that from Spring 2027 Apple will require
@@ -68,7 +122,7 @@ signed in, Rust iOS target, Node dependencies, Task, Ruby, and XcodeGen.
 task ios:init # Only when src-tauri/gen/apple is missing.
 node scripts/generate-ios-notices.mjs # Regenerate after either lockfile changes.
 task verify
-task ios:store:build IOS_BUILD_NUMBER=5 # Next candidate; confirm this number is unused before upload.
+task ios:store:build IOS_BUILD_NUMBER=6 # Next candidate; confirm this number is unused before upload.
 ```
 
 Use a new build number for each upload; check App Store Connect before choosing
@@ -98,7 +152,7 @@ and check App Store Connect's build warnings before selecting the build.
 - Confirm distribution export succeeds and the exported app's `get-task-allow`
   entitlement is false. An archive signed for development is not the final IPA.
 - Test the uploaded build through TestFlight: cold launch without a dev server,
-  offline play, all five game tables, Learn lessons and exercises, saved-hand resume, and a
+  offline play, all six card games, Learn lessons and exercises, saved-hand resume, and a
   completed game. Check both a compact iPhone viewport and a current iPhone.
 - Check the privacy manifest against the release binary whenever dependencies
   change. The file-timestamp declaration (`C617.1`) covers bundled/private file
@@ -113,8 +167,8 @@ Martin can test through an internal group using an eligible App Store Connect
 account. Browser testing and direct Xcode installs do not exercise Apple's
 distribution of the exact submitted build.
 
-1. In App Store Connect, open `com.martin.barbu` and locate version `1.0.3`,
-   build 4, uploaded September 23. Do not upload build 4 again. Future candidates
+1. In App Store Connect, open `com.martin.barbu` and locate the new version `1.0.4`,
+   build 5 once uploaded. Do not select rejected build 4. Future candidates
    must use an unused higher build number and normal App Store distribution,
    not "TestFlight Internal Only" (which cannot be submitted to customers).
 2. Wait for build processing and resolve any export-compliance questions or
@@ -133,15 +187,15 @@ distribution of the exact submitted build.
 | Check | Expected result |
 | --- | --- |
 | Cold launch in airplane mode | Catalog and cards load without the Mac or a dev server. |
-| Catalog | Six working entries; no planned games, paid labels, or Pro tab. |
+| Catalog | Seven working entries; no Canasta, planned games, paid labels, or Pro tab. |
 | Each game: Learn, Play | A guided lesson and topic exercise complete in Learn; a hand starts in Play and cards are selectable. |
 | Complete a hand and a game/session | Correct result appears and the next action remains reachable. |
 | Background, close, reopen | Saved play resumes without losing or duplicating cards. |
 | Small screen and landscape | Cards, feedback, and bottom actions remain reachable without overlap. |
 | Privacy link, online | The public policy opens successfully. |
 
-For this release, the six catalog entries are Hearts, Whist, Spades, Bridge,
-Barbu, and Card Counting I. Card Counting I has Learn and Play, not a separate
+For this release, the seven catalog entries are Hearts, Whist, Spades, Bridge,
+Barbu, Gin Rummy, and Card Counting I. Card Counting I has Learn and Play, not a separate
 Practice tab. Check its memory exercises through Play.
 
 [Apple's internal testing instructions](https://developer.apple.com/help/app-store-connect/test-a-beta-version/add-internal-testers)
@@ -174,7 +228,7 @@ Practice tab. Check its memory exercises through Play.
 
 Name: Barbu - The king of cards
 
-Version: 1.0.3 (match the selected release build, not the initial 1.0 form default)
+Version: 1.0.4 (match the selected release build)
 
 Subtitle: Learn classic card games
 
@@ -185,7 +239,7 @@ Keywords: hearts,spades,whist,bridge,tricks,bidding,lessons,practice,offline
 Description:
 
 Learn and practise classic card games at Barbu's table. Explore Hearts, Spades,
-Whist, Bridge, and Barbu with short lessons, card decisions, and local games
+Whist, Bridge, Barbu, and Gin Rummy with short lessons, card decisions, and local games
 against computer opponents.
 
 Build your understanding of following suit, bidding, taking tricks, and scoring.
