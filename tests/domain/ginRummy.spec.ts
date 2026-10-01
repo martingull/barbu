@@ -1,7 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { shuffledDeck, standardDeck } from "../../src/domain/deck";
 import { bestMeldLayout, deadwoodPoints, rummyMelds } from "../../src/domain/rummyMelds";
-import { createGinSession, ginComplete, ginFinalScores, replayGinHand, scoreGinHand, transitionGinSession, type GinSession } from "../../src/domain/ginRummySession";
+import { createGinSession, ginComplete, ginFinalScores, ginScoreBreakdown, replayGinHand, scoreGinHand, transitionGinSession, type GinSession } from "../../src/domain/ginRummySession";
+import { formatRummyMeld } from "../../src/presentation/rummyDisplay";
+import { formatCardList } from "../../src/presentation/cardDisplay";
 import { advanceGinOpponent, chooseGinAction, ginObservation } from "../../src/domain/ginRummyPolicy";
 import { createGinSaveStore, normalizeGinSave, restoreGinSession, saveGinSession } from "../../src/persistence/ginRummySave";
 import { ginCards, ginExercises, ginExerciseAnswer, ginExerciseChoices } from "../../src/lessons/gin-rummy/exercises";
@@ -136,6 +138,38 @@ test("final bonuses do not count toward the target and shutout doubles only the 
   expect(ginFinalScores(session)).toEqual([303, 40]);
   session.scores = [103, 0]; session.wins = [5, 0];
   expect(ginFinalScores(session)).toEqual([403, 0]);
+  expect(ginScoreBreakdown(session)[0]).toEqual({ handPoints: 103, handsWon: 5, boxBonus: 100, gameBonus: 200, total: 403 });
+});
+
+test("phone result separates the 100-point race from final bonuses", () => {
+  const session = createGinSession(1);
+  session.scores = [106, 77]; session.wins = [2, 4];
+  expect(ginScoreBreakdown(session)).toEqual([
+    { handPoints: 106, handsWon: 2, boxBonus: 40, gameBonus: 100, total: 246 },
+    { handPoints: 77, handsWon: 4, boxBonus: 80, gameBonus: 0, total: 157 },
+  ]);
+  expect(ginFinalScores(session)).toEqual([246, 157]);
+  const result = scoreGinHand([
+    ginCards("5S 5H 5D 5C QS QH QC AD 2D 3D"),
+    ginCards("7S 7H 7D 2H 3H 4H 2S 3S 2C 4C"),
+  ], 0);
+  expect(result.kind).toBe("gin");
+  expect(result.layouts[1].points).toBe(11);
+  expect(result.points).toBe(31);
+  session.scores = [75, 77]; session.wins = [1, 4];
+  expect(ginComplete(session)).toBe(false);
+  expect(ginScoreBreakdown(session).map(score => score.total)).toEqual([75, 77]);
+  session.scores = [77, 106]; session.wins = [4, 2];
+  expect(ginFinalScores(session)).toEqual([157, 246]);
+});
+
+test("rummy runs display ace low without changing shared card ordering", () => {
+  const cards = ginCards("2D 3D AD"), original = [...cards];
+  expect(formatRummyMeld({ kind: "run", cards })).toBe("A♦, 2♦, 3♦");
+  expect(formatRummyMeld({ kind: "run", cards: ginCards("KH JH QH") })).toBe("J♥, Q♥, K♥");
+  expect(formatRummyMeld({ kind: "set", cards: ginCards("5C 5D 5H 5S") })).toBe("5♠, 5♥, 5♦, 5♣");
+  expect(formatCardList(cards)).toBe("2♦, 3♦, A♦");
+  expect(cards).toEqual(original);
 });
 
 test("saves reject illegal actions and recompute stale summaries", () => {

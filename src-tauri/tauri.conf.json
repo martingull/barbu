@@ -30,7 +30,8 @@
       "versionCode": 1000005
     },
     "iOS": {
-      "developmentTeam": "3PB43Q6B3W"
+      "developmentTeam": "3PB43Q6B3W",
+      "minimumSystemVersion": "15.0"
     }
   }
 }

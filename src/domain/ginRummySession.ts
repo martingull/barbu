@@ -41,11 +41,20 @@ export function scoreGinHand(hands: [Card[], Card[]], knocker: GinPlayer): GinRe
     points: gin ? ginRules.ginBonus + defending.points : undercut ? ginRules.undercutBonus + attacking.points - defending.points : defending.points - attacking.points,
     layouts: knocker === 0 ? [attacking, defending] : [defending, attacking] };
 }
-export function ginFinalScores(session: GinSession): [number, number] {
-  if (!ginComplete(session)) return [...session.scores];
+export function ginScoreBreakdown(session: GinSession) {
+  const complete = ginComplete(session);
   const winner: GinPlayer = session.scores[0] >= ginRules.target ? 0 : 1;
-  return session.scores.map((score, player) => score + ginRules.boxBonus * session.wins[player]
-    + (player === winner ? ginRules.gameBonus * (session.scores[otherGinPlayer(winner)] === 0 ? 2 : 1) : 0)) as [number, number];
+  return ([0, 1] as const).map(player => {
+    const handPoints = session.scores[player];
+    const boxBonus = complete ? ginRules.boxBonus * session.wins[player] : 0;
+    const gameBonus = complete && player === winner
+      ? ginRules.gameBonus * (session.scores[otherGinPlayer(winner)] === 0 ? 2 : 1) : 0;
+    return { handPoints, handsWon: session.wins[player], boxBonus, gameBonus, total: handPoints + boxBonus + gameBonus };
+  });
+}
+export function ginFinalScores(session: GinSession): [number, number] {
+  const scores = ginScoreBreakdown(session);
+  return [scores[0].total, scores[1].total];
 }
 export function transitionGinSession(session: GinSession, action: GinAction): GinSession {
   if (ginComplete(session)) throw Error("This game is complete.");

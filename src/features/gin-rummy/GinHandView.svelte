@@ -5,8 +5,9 @@
   import CardChoiceHand from "../../components/CardChoiceHand.svelte";
   import GameResult from "../../components/GameResult.svelte";
   import { bestMeldLayout } from "../../domain/rummyMelds";
-  import { ginComplete, ginDiscardLayout, ginFinalScores, type GinSession, type GinAction } from "../../domain/ginRummySession";
+  import { ginComplete, ginDiscardLayout, ginScoreBreakdown, ginRules, type GinSession, type GinAction } from "../../domain/ginRummySession";
   import { formatCardList, formatCardText } from "../../presentation/cardDisplay";
+  import { formatRummyMeld } from "../../presentation/rummyDisplay";
 
   let { session, selectedCardId, error, onSelect, onAction, onBack, onNext, onReplay, onNew }: {
     session: GinSession; selectedCardId: string; error: string; onSelect: (id: string) => void;
@@ -20,7 +21,13 @@
   let upcard = $derived(hand.discards.at(-1));
   let canDrawStock = $derived(hand.turn === 0 && hand.phase === "draw");
   let canTakeUpcard = $derived(hand.turn === 0 && (hand.phase === "offer" || hand.phase === "draw") && !hand.forcedStock && Boolean(upcard));
-  let scores = $derived(ginFinalScores(session));
+  let settlement = $derived(ginScoreBreakdown(session));
+  let result = $derived(hand.result);
+  let handCalculation = $derived(result?.knocker == null ? "" : result.kind === "gin"
+    ? `${result.layouts[1 - result.knocker].points} opponent deadwood + ${ginRules.ginBonus} gin bonus = ${result.points} points.`
+    : result.kind === "undercut"
+    ? `${result.layouts[result.knocker].points} knocker deadwood - ${result.layouts[1 - result.knocker].points} defender deadwood + ${ginRules.undercutBonus} undercut bonus = ${result.points} points.`
+    : `${result.layouts[1 - result.knocker].points} defender deadwood - ${result.layouts[result.knocker].points} knocker deadwood = ${result.points} points.`);
   let prompt = $derived(hand.phase === "offer" ? "Take the opening upcard or pass."
     : hand.phase === "draw" ? hand.forcedStock ? "Both players passed. Draw from the stock." : "Draw from the stock or take the upcard."
     : "Choose your discard. Knock with 10 or less, or keep playing.");
@@ -34,9 +41,9 @@
   {#snippet summary()}
     <div class="full-hand-summary grouped-play-summary" aria-label="Gin Rummy score">
       <div class="full-hand-summary-row current-hand" style="grid-template-columns: repeat(4, minmax(0, 1fr))">
-        <div><span>You</span><strong>{scores[0]}</strong></div>
-        <div><span>Barbu</span><strong>{scores[1]}</strong></div>
-        <div><span>Target</span><strong>100</strong></div>
+        <div><span>You</span><strong>{session.scores[0]}</strong></div>
+        <div><span>Barbu</span><strong>{session.scores[1]}</strong></div>
+        <div><span>Target</span><strong>{ginRules.target}</strong></div>
         <div><span>Dealer</span><strong>{hand.dealer === 0 ? "You" : "Barbu"}</strong></div>
       </div>
     </div>
@@ -60,11 +67,27 @@
       <GameResult game="Gin Rummy" title={resultTitle} completion={gameOver ? "game" : null}
         summary={hand.result.kind === "draw" ? "Two stock cards remain. No points; the same dealer deals again."
           : `${hand.result.winner === 0 ? "You score" : "Barbu scores"} ${hand.result.points} points ${hand.result.kind === "gin" ? "for gin" : hand.result.kind === "undercut" ? "for an undercut" : "after knocking"}.`} />
-      {#if gameOver}<p class="result">Final score: You {scores[0]}, Barbu {scores[1]}. Includes game and box bonuses.</p>{/if}
+      {#if handCalculation}<p class="hand-calculation">{handCalculation}</p>{/if}
+      {#if gameOver}
+        <section class="gin-settlement" aria-label="Gin Rummy final scoring">
+          <h2>Final scoring</h2>
+          <p>First to {ginRules.target} hand points wins. Bonuses are added after the game.</p>
+          <table>
+            <thead><tr><th scope="col">Points</th><th scope="col">You</th><th scope="col">Barbu</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">From hands</th>{#each settlement as score}<td>{score.handPoints}</td>{/each}</tr>
+              <tr><th scope="row">Hands won</th>{#each settlement as score}<td>{score.handsWon}</td>{/each}</tr>
+              <tr><th scope="row">Box bonus ({ginRules.boxBonus} per win)</th>{#each settlement as score}<td>+{score.boxBonus}</td>{/each}</tr>
+              <tr><th scope="row">Game bonus{settlement.some(score => score.gameBonus === ginRules.gameBonus * 2) ? " (shutout)" : ""}</th>{#each settlement as score}<td>+{score.gameBonus}</td>{/each}</tr>
+            </tbody>
+            <tfoot><tr><th scope="row">Final total</th>{#each settlement as score}<td>{score.total}</td>{/each}</tr></tfoot>
+          </table>
+        </section>
+      {/if}
       {#each hand.result.layouts as final, player}
         <section class="meld-review" aria-label={`${player === 0 ? "Your" : "Barbu's"} melds`}>
           <h2>{player === 0 ? "You" : "Barbu"}: {final.points} deadwood</h2>
-          {#each final.melds as meld}<p>{meld.kind === "set" ? "Set" : "Run"}: {formatCardList(meld.cards)}</p>{/each}
+          {#each final.melds as meld}<p>{meld.kind === "set" ? "Set" : "Run"}: {formatRummyMeld(meld)}</p>{/each}
           {#each final.layoffs as layoff}<p>Laid off: {formatCardList(layoff.cards)}</p>{/each}
           <p>Deadwood: {final.deadwood.length ? formatCardList(final.deadwood) : "None"}</p>
         </section>
@@ -77,7 +100,7 @@
       <p class="result turn-prompt">{prompt}</p>
       <div class="hand-analysis" aria-label="Your Gin Rummy melds">
         <strong>Deadwood: {preview ? preview.points : layout.points}{preview ? " after discard" : ""}</strong>
-        <span>{layout.melds.length ? layout.melds.map(meld => formatCardList(meld.cards)).join(" / ") : "No complete melds yet"}</span>
+        <span>{layout.melds.length ? layout.melds.map(formatRummyMeld).join(" / ") : "No complete melds yet"}</span>
       </div>
       <CardChoiceHand cards={hand.hands[0]} ariaLabel="Your Gin Rummy hand" className="hand full-hand-cards"
         cardClassName="card hand-card full-hand-card" onSelect={card => onSelect(card.id)} isPressed={card => card.id === selectedCardId}
@@ -122,4 +145,12 @@
   .hand-analysis strong { color: #ead490; }.hand-analysis span { color: #d8e1d5; min-height: 2.6em; }
   .meld-review { border-top: 1px solid #ffffff26; padding: 10px 0; }
   .meld-review h2 { font-size: 1rem; margin: 0 0 8px; }.meld-review p { font-size: 0.85rem; line-height: 1.4; margin: 4px 0; }
+  .hand-calculation, .gin-settlement p { font-size: 0.8rem; line-height: 1.4; margin: 0; }
+  .gin-settlement h2 { font-size: 1rem; margin: 0 0 6px; }
+  .gin-settlement table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 0.8rem; margin-top: 8px; }
+  .gin-settlement th, .gin-settlement td { padding: 5px 4px; text-align: right; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+  .gin-settlement th:first-child { width: 58%; text-align: left; }
+  .gin-settlement tbody th { font-weight: 400; }
+  .gin-settlement thead, .gin-settlement tfoot { border-block: 1px solid #ffffff26; }
+  .gin-settlement tfoot { font-weight: 700; }
 </style>

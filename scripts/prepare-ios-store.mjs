@@ -25,6 +25,8 @@ const project = JSON.parse(execFileSync("ruby", [
   "-rjson", "-ryaml", "-e", "puts JSON.generate(YAML.load_file(ARGV[0]))",
   resolve(apple, "project.yml"),
 ], { encoding: "utf8" }));
+// The generated template may predate the tracked deployment target.
+project.options.deploymentTarget.iOS = config.bundle.iOS.minimumSystemVersion;
 const targets = Object.values(project.targets).filter(
   (target) => target.platform === "iOS" && target.type === "application",
 );

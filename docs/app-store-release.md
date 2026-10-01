@@ -47,8 +47,18 @@ description/keywords and the updated [review notes](app-review-response.md).
 Six current native screenshots at 1284 x 2778 are in
 `release/app-store/screenshots-v1.0.4-build5/`. The initial catalog capture caught
 a pre-paint frame; it was replaced after a cold launch and visually checked.
-Screenshot upload and final App Review resubmission are pending confirmation.
+Martin updated the screenshots and resubmitted on October 1; App Store Connect
+shows version `1.0.4` Waiting for Review.
 The existing automatic-release-after-approval setting is unchanged.
+
+## Minimum iOS Version
+
+Future builds require iOS 15.0, set by `bundle.iOS.minimumSystemVersion` in
+`src-tauri/tauri.conf.json`. App Store preparation applies that same value to the
+generated Xcode project, including when its template was created with iOS 14.0.
+Build `1.0.4 (5)` already submitted for review still targets iOS 14.0; its
+ITMS-90068 notice is a non-blocking warning about the April 2027 requirement.
+Do not replace that submission solely for this change.
 
 ## Previous Submission (1.0.3 Build 4)
 
@@ -110,8 +120,8 @@ build 4, not the new candidate. Approval and publication have not occurred.
 
 Xcode accepted the upload with one non-blocking warning: this release targets
 iOS 14.0, and its upload response says that from Spring 2027 Apple will require
-iOS 15.0 or later as the deployment target. Recheck the current requirement and
-raise the minimum before that deadline; it did not block this upload.
+iOS 15.0 or later as the deployment target. The tracked configuration now sets
+15.0 for subsequent builds; it did not block this upload.
 
 ## Build
 
@@ -147,6 +157,7 @@ and check App Store Connect's build warnings before selecting the build.
 ## Release Checks
 
 - Check `UIDeviceFamily` is `[1]` in the archived Barbu.app/Info.plist.
+- Check `MinimumOSVersion` is `15.0` in the next archived Barbu.app/Info.plist.
 - Confirm the archive has the intended version and build number, an opaque
   1024-pixel icon, and a root-level `PrivacyInfo.xcprivacy`.
 - Confirm distribution export succeeds and the exported app's `get-task-allow`

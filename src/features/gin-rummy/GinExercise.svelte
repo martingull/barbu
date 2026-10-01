@@ -6,7 +6,8 @@
   import type { CustomExerciseContext } from "../featureServices";
   import { ginExercises, ginExerciseAnswer, ginSelectsDiscard, ginExerciseChoices, ginExercisePrompts } from "../../lessons/gin-rummy/exercises";
   import { bestMeldLayout, deadwoodValue } from "../../domain/rummyMelds";
-  import { formatCardList, formatCardLabel, formatCardText } from "../../presentation/cardDisplay";
+  import { formatCardLabel, formatCardText } from "../../presentation/cardDisplay";
+  import { formatRummyMeld } from "../../presentation/rummyDisplay";
   import type { DrillResult } from "../../lessons/drillDecision";
   let { context }: { context: CustomExerciseContext } = $props();
   let index = $state(0), selected = $state(""), checked = $state(false);
@@ -40,7 +41,7 @@
       isPressed={card => selected === card.id} getCardClasses={card => ({ legal: true, selected: selected === card.id })} />
     {#if checked && context.action !== "draw"}
       <div class="meld-count" role="region" aria-label="Deadwood breakdown">
-        {#each layout.melds as meld}<p><strong>{meld.kind === "set" ? "Set" : "Run"}:</strong> {formatCardList(meld.cards)} = 0</p>{/each}
+        {#each layout.melds as meld}<p><strong>{meld.kind === "set" ? "Set" : "Run"}:</strong> {formatRummyMeld(meld)} = 0</p>{/each}
         <p><strong>Unmatched:</strong> {layout.deadwood.length ? layout.deadwood.map(card => `${formatCardLabel(card)} (${deadwoodValue(card)})`).join(" + ") : "None"}</p>
         <p><strong>Deadwood: {layout.points} points</strong></p>
       </div>

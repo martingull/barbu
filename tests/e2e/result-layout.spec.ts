@@ -5,7 +5,7 @@ import { createBarbuSession, transitionBarbuSession, barbuSessionComplete, barbu
 import { formatSignedScore } from "../../src/presentation/scorePresentation";
 import { saveBarbuSession, barbuSaveKey } from "../../src/persistence/barbuSave";
 import { applyBrowserBridgeAuction } from "../../src/domain/trickTakingHand";
-import { createGinSession, transitionGinSession, ginComplete } from "../../src/domain/ginRummySession";
+import { createGinSession, transitionGinSession, ginComplete, ginScoreBreakdown } from "../../src/domain/ginRummySession";
 import { chooseGinAction, ginObservation } from "../../src/domain/ginRummyPolicy";
 import { saveGinSession, ginSaveKey } from "../../src/persistence/ginRummySave";
 import type { FullHandContract } from "../../src/domain/types";
@@ -44,14 +44,22 @@ async function auditResult(page: Page, info: TestInfo, lastContent: string, next
   expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
   const finalRow = result.locator(lastContent).last();
   await finalRow.scrollIntoViewIfNeeded();
+  const actions = result.locator(".action-row");
+  // Gin uses document scrolling; other results scroll inside the app shell.
+  await actions.scrollIntoViewIfNeeded();
   await page.locator(".app-shell").evaluate(element => { element.scrollTop = element.scrollHeight; });
   await expect(finalRow).toBeInViewport({ ratio: 1 });
-  const actions = result.locator(".action-row");
   const actionBox = (await actions.boundingBox())!;
   const rowBox = (await finalRow.boundingBox())!;
   expect(rowBox.y + rowBox.height, "Last score row must not sit behind the buttons").toBeLessThanOrEqual(actionBox.y + 1);
   expect(actionBox.y + actionBox.height).toBeLessThanOrEqual(page.viewportSize()!.height);
   for (const button of await actions.getByRole("button").all()) await expect(button).toBeInViewport({ ratio: 1 });
+  const grid = await actions.evaluate(element => ({
+    display: getComputedStyle(element).display,
+    columns: getComputedStyle(element).gridTemplateColumns.split(" ").length,
+    buttons: element.querySelectorAll("button").length,
+  }));
+  if (grid.display === "grid") expect(grid.columns, "No empty action column").toBe(grid.buttons);
   const overflow = await result.locator(".hearts-hand-breakdown-row > *, .run-scorecard-row > *, .run-final-summary span, .run-final-summary strong, .bridge-result-details dt, .bridge-result-details dd, .action-row button").evaluateAll(cells =>
     cells.filter(cell => cell.scrollWidth > cell.clientWidth + 1).map(cell => cell.textContent));
   expect(overflow, "Score labels and actions must fit their columns").toEqual([]);
@@ -60,7 +68,7 @@ async function auditResult(page: Page, info: TestInfo, lastContent: string, next
   await expect(result).toHaveCount(0);
 }
 
-const viewports = [{ width: 320, height: 568 }, { width: 360, height: 740 },
+const viewports = [{ width: 320, height: 568 }, { width: 360, height: 740 }, { width: 393, height: 852 },
   { width: 414, height: 736 }, { width: 820, height: 1180 }, { width: 1180, height: 820 }];
 
 for (const viewport of viewports) {
@@ -150,6 +158,20 @@ for (const viewport of viewports) {
       }
       expect(session.hand.phase).toBe("complete");
       await resume(page, "Gin Rummy", saveGinSession(session, new Date().toISOString()), ginSaveKey);
+      await expect(page.getByLabel("Gin Rummy score").locator("strong")).toHaveText([
+        String(session.scores[0]), String(session.scores[1]), "100", session.hand.dealer === 0 ? "You" : "Barbu",
+      ]);
+      const scoring = page.getByRole("region", { name: "Gin Rummy final scoring", exact: true });
+      if (mode === "game") {
+        const breakdown = ginScoreBreakdown(session);
+        await expect(scoring).toBeVisible();
+        for (const [label, field] of [["From hands", "handPoints"], ["Hands won", "handsWon"], ["Box bonus", "boxBonus"], ["Game bonus", "gameBonus"], ["Final total", "total"]] as const) {
+          const prefix = field === "boxBonus" || field === "gameBonus" ? "+" : "";
+          await expect(scoring.getByRole("row").filter({ hasText: label }).getByRole("cell"))
+            .toHaveText(breakdown.map(score => `${prefix}${score[field]}`));
+        }
+        await expect(scoring).toContainText("First to 100 hand points wins");
+      } else await expect(scoring).toHaveCount(0);
       await auditResult(page, info, ".meld-review p", mode === "game" ? "New game" : "Next hand");
     });
 
