@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
   import type { Card, Seat, TableCard } from "../domain/types";
-  import { drillDecision, drillOutcomeLabels, type DrillStep, type DrillResult } from "../lessons/drillDecision";
+  import { drillDecision, drillTableCards, drillOutcomeLabels, type DrillStep, type DrillResult } from "../lessons/drillDecision";
   import TablePlaySurface from "./TablePlaySurface.svelte";
   import CardChoiceHand from "./CardChoiceHand.svelte";
   import ExerciseFeedback from "./ExerciseFeedback.svelte";
@@ -17,8 +17,7 @@
   let legal = $derived(new Set(trick.legalCardIds));
   let checked = $derived(trick.hand.find(card => card.id === checkedCardId));
   let decision = $derived(checked ? drillDecision(step, checked) : null);
-  let tableCards: TableCard[] = $derived(checked && legal.has(checked.id)
-    ? [...trick.tableBeforeChoice, { seat: step.playingSeat ?? "You", card: checked }, ...trick.tableAfterChoice] : trick.tableBeforeChoice);
+  let tableCards = $derived(drillTableCards(step, checked));
   let last = $derived(index >= total - 1);
 </script>
 

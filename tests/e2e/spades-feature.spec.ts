@@ -29,9 +29,10 @@ test("Spades bidding survives other games and every guided lesson", async ({ pag
     for (let i = 0; i < 3; i++) {
       await page.locator(".drill-hand .hand-card.legal").first().click();
       await page.getByRole("button", { name: "Check answer", exact: true }).click();
-      await page.getByRole("button", { name: i === 2 ? "Review session" : "Next decision", exact: true }).click();
+      await page.getByRole("button", { name: i === 2 ? "Finish topic" : "Next decision", exact: true }).click();
     }
-    await page.getByRole("button", { name: "Finish Spades", exact: true }).click();
+    await expect(page.getByRole("status")).toHaveText("Topic complete.");
+    await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
     await expect(page.getByLabel("Spades course progress")).toContainText(`${index + 1} / 5 complete`);
     expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), key)).toEqual(saved);
   }

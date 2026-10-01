@@ -25,8 +25,8 @@ test("Whist survives another game's play and a lesson without sharing hand state
   await page.locator(".drill-hand .hand-card.legal").first().click();
   await page.getByRole("button", { name: "Check answer", exact: true }).click();
   await page.getByRole("button", { name: "Finish session", exact: true }).click();
-  await expect(page.getByLabel("Next drill step")).toBeVisible();
-  await expect(page.getByLabel("Recent quick drill attempts")).toContainText("Whist");
+  await expect(page.getByLabel("Learning summary")).toContainText("Topic paused. Finish all 3 decisions to complete it.");
+  await expect(page.getByRole("button", { name: "Try again", exact: true })).toBeVisible();
   await page.screenshot({ path: info.outputPath("whist-learn-review.png"), fullPage: true });
   await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
   await page.getByRole("tab", { name: "Play", exact: true }).click();

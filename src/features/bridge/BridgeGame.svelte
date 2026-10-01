@@ -7,7 +7,6 @@
   import BridgeContractExercise from "./BridgeContractExercise.svelte";
   import { bridgeDef } from "../../games/bridge";
   import { bridgeDeclarerDrillPool, bridgeDefenseDrillPool, bridgeDummyDrillPool } from "../../lessons/bridge/exercises";
-  import { orderPracticePool } from "../../lessons/drillDecision";
   import { compassSeatLabels } from "../../presentation/cardDisplay";
   import { savedBridgeRunSummary } from "./bridgePresentation";
   import type { FeatureServices } from "../featureServices";
@@ -31,8 +30,8 @@
   <GameLearning {...services} definition={bridgeDef} gameName="Bridge" tab={$feature.tab}
     onPlay={() => $feature.saved ? feature.resume() : void feature.start()} playLabel={$feature.saved ? "Continue Bridge" : "Play Bridge"}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
-    loadExercise={(action, seed) => action === "bidding" || action === "contracts" ? { seed: 0 }
-      : action === "dummy" ? bridgeDummyDrillPool : orderPracticePool(action === "defense" ? bridgeDefenseDrillPool : bridgeDeclarerDrillPool, seed())}
+    loadExercise={action => action === "bidding" || action === "contracts" ? { seed: 0 }
+      : action === "dummy" ? bridgeDummyDrillPool : action === "defense" ? bridgeDefenseDrillPool : bridgeDeclarerDrillPool}
     exerciseTitle={action => `Bridge practice: ${names[action]}`} drillTitle={() => "Bridge lesson"} drillEyebrow="Bridge" seatLabels={compassSeatLabels}
     resultMessage={clean => clean ? "Clean Bridge practice. Keep planning declarer play, using dummy, and defending 1NT." : "Repeat the Bridge pattern until dummy, declarer, and defensive plans feel automatic."}>
     {#snippet customExercise(context)}

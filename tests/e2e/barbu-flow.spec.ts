@@ -1376,8 +1376,8 @@ test("Bridge practice starts three short scripted decisions", async ({ page }) =
   await page.getByRole("button", { name: "Try cards: Declarer play" }).click();
 
   await expect(page.getByRole("heading", { name: "Bridge lesson" })).toBeVisible();
-  await expect(page.getByLabel("Drill progress")).toContainText("0 / 3");
-  await expect(page.getByLabel("Drill decision")).toContainText(/Try the finesse|Force out the ace|Break defender communication/);
+  await expect(page.getByLabel("North dummy (excerpt)", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Drill decision")).toContainText("Try your queen");
 
   await completeVisibleDrillSession(page);
 

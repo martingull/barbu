@@ -77,7 +77,8 @@ const courses: CourseContent[] = [
       points: [
         { marker: "Target", text: "Add six to the contract level to find the tricks needed." },
         { marker: "Count", text: "Count sure winners before spending high cards." },
-        { marker: "Plan", text: "Use long suits, finesses, and entries to develop extra tricks." }
+        { marker: "Plan", text: "Use long suits and finesses to develop extra tricks." },
+        { marker: "Access", text: "A high card in the shorter hand can block the longer hand. Sometimes you must play it under dummy's higher card to keep dummy on lead." }
       ]
     },
     example: {

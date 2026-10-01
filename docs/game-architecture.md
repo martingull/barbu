@@ -155,6 +155,11 @@ Whist, Hearts, Spades, Bridge and Barbu have isolated frontends under their resp
   decision screen; declarer and defense exercises use the shared drill screen
   with compass labels. The five-topic path adds contract targets and dedicated
   dummy decisions while retaining the four existing progress keys.
+  Keep all five topics in authored order: a worked decision, a guided decision,
+  then an independent question. Dummy excerpts supply visible information;
+  the final declarer position gives both remaining hands and the trick target.
+  `DrillStep.tableAfterByCard` supplies choice-specific scripted responses through
+  the shared `drillTableCards` helper; other drills retain their default response.
   `bridgeFeature.ts` delegates auction, passed-out boards, replay and settlement
   to `bridgeSession.ts` and preserves the version-1 save. Its active-hand adapter
   lets the shared controller select and play either South's cards or the dummy,

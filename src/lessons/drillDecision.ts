@@ -1,11 +1,19 @@
-import type { Card, GuidedCardOutcome, GuidedTrick, PracticeReason, Seat } from "../domain/types";
+import type { Card, GuidedCardOutcome, GuidedTrick, PracticeReason, Seat, TableCard } from "../domain/types";
 import { formatCardLabel } from "../presentation/cardDisplay";
 
 export type DrillStep = { scenarioId?: string; contract: string; title: string; trick: GuidedTrick;
-  playingSeat?: Seat; handLabel?: string; referenceHand?: { label: string; cards: Card[] } };
+  playingSeat?: Seat; handLabel?: string; referenceHand?: { label: string; cards: Card[] };
+  tableAfterByCard?: Partial<Record<string, TableCard[]>> };
 export type DrillResult = { contract: string; cardLabel: string; outcome: GuidedCardOutcome | "illegal";
   reason: PracticeReason | "meld_count" | "contract_target" | "bid_selection"; clean: boolean };
 export const drillOutcomeLabels = { good: "Good", risky: "Risky", penalty: "Penalty", illegal: "Illegal" } as const;
+
+export function drillTableCards(step: DrillStep, checked?: Card): TableCard[] {
+  const trick = step.trick;
+  if (!checked || !trick.legalCardIds.includes(checked.id)) return trick.tableBeforeChoice;
+  return [...trick.tableBeforeChoice, { seat: step.playingSeat ?? "You", card: checked },
+    ...(step.tableAfterByCard?.[checked.id] ?? trick.tableAfterChoice)];
+}
 
 export function drillDecision(step: DrillStep, card: Card) {
   const legal = step.trick.legalCardIds.includes(card.id);

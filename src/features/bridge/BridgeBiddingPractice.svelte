@@ -16,7 +16,7 @@
   let last = $derived(index >= bridgeBiddingPracticeSteps.length - 1);
   let feedback = $derived(checked
     ? step.explanations[checked] ?? "Compare your call with basic natural bidding."
-    : "Choose the call that best describes South's hand for basic natural bidding.");
+    : step.hint);
   let outcome = $derived(checked ? checked === step.correctCall ? "Good" : "Risky" : "");
   function select(call: BridgeCallOption) { if (!checked) selected = call; }
   function check() {
@@ -88,6 +88,7 @@
           class:recommended={checked && step.correctCall === call}
           class:selected={selected === call}
           class="secondary-action"
+          disabled={!!checked}
           onclick={() => select(call)}
           type="button"
         >

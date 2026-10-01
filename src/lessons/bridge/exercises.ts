@@ -33,7 +33,7 @@ export const bridgeDummyDrillPool: DrillStep[] = [
     playingSeat: "Tutor", handLabel: "North dummy: choose a card",
     referenceHand: { label: "South declarer", cards: [card("A", "H"), card("3", "C"), card("4", "S")] },
     trick: {
-      title: "Dummy has no hearts", beforeResult: "West leads a heart in 1NT. North has no hearts, but South does. Choose a legal card from North dummy.",
+      title: "Separate hands", beforeResult: "West leads a heart in 1NT. Choose a legal card from North dummy, using the two hands shown.",
       emptyExplanation: "Follow-suit applies to the hand playing, not to the combined cards of the partnership.",
       afterResult: "North can discard; South must still follow hearts on South's turn.",
       hand: [card("2", "C"), card("4", "D"), card("5", "S")], legalCardIds: ["2C", "4D", "5S"],
@@ -77,13 +77,13 @@ const bridgeFinesseDrillStep: DrillStep = {
     hand: [card("A", "C"), card("Q", "C"), card("7", "C"), card("7", "D")],
     tableBeforeChoice: [{ seat: "Tutor", card: card("3", "C") }, { seat: "Right", card: card("5", "C") }],
     tableAfterChoice: [
-      { seat: "Left", card: card("4", "C") }
+      { seat: "Left", card: card("J", "C") }
     ],
     pendingBySeat: { Tutor: "North Dummy", Right: "East", You: "South", Left: "West" },
     playedExplanations: {
-      QC: "Good. The queen wins this round while you retain the ace. East could not win cheaply with the king after playing low.",
-      AC: "Risky. The ace wins but spends your sure entry without trying the finesse.",
-      "7C": "Risky. The seven happens to win this round, but would lose to a higher spot card in West's hand.",
+      QC: "Good. West plays the jack, so the queen wins and the ace remains. This finesse would lose if West held the king; it is a chance for an extra trick, not a guarantee.",
+      AC: "Legal and it wins, but you spend the ace without testing whether the queen can win a separate trick.",
+      "7C": "Risky. West's jack beats the seven. Trying the queen would win this trick while keeping the ace for later.",
       "7D": "Illegal. Clubs were led and you can follow clubs."
     },
     cardOutcomes: { QC: "good", AC: "risky", "7C": "risky" },
@@ -96,11 +96,14 @@ const bridgeEstablishSuitDrillStep: DrillStep = {
   title: "Establish the long suit",
   handLabel: "South declarer: choose a card",
   referenceHand: { label: "North dummy (excerpt)", cards: [card("10", "D"), card("9", "D"), card("8", "D"), card("6", "D"), card("3", "D")] },
+  tableAfterByCard: {
+    "4S": [{ seat: "Left", card: card("A", "S") }, { seat: "Tutor", card: card("2", "S") }, { seat: "Right", card: card("3", "S") }]
+  },
   trick: {
     title: "Force out the ace",
-    beforeResult: "You need extra tricks in 1NT. Lead the king to drive out the ace and set up dummy's diamonds.",
+    beforeResult: "You need extra tricks in 1NT. Diamonds have not been played. Which lead starts developing dummy's long suit?",
     afterResult: "Declarer often gives up one trick early to establish a long suit for later winners.",
-    emptyExplanation: "Only the relevant cards are shown. South's KQJ faces five diamonds in dummy; start the sequence to force out the ace.",
+    emptyExplanation: "These are excerpts. Look for a suit with length in dummy and touching honors in South. You may need to concede a trick before collecting winners.",
     legalCardIds: ["KD", "QD", "JD", "4S"],
     hand: [card("K", "D"), card("Q", "D"), card("J", "D"), card("4", "S")],
     tableBeforeChoice: [],
@@ -111,54 +114,56 @@ const bridgeEstablishSuitDrillStep: DrillStep = {
     ],
     pendingBySeat: { You: "South", Left: "West", Tutor: "North Dummy", Right: "East" },
     playedExplanations: {
-      KD: "Good. The king starts the work of knocking out the ace so the suit can run later.",
-      QD: "Good. The queen also forces out the ace; the touching honors are equivalent here. Leading the king makes the sequence clearest.",
-      JD: "Good. The jack also forces out the ace; the touching honors are equivalent here. Leading the king makes the sequence clearest.",
-      "4S": "Legal, but it ignores the long diamond source of tricks."
+      KD: "Good. West takes the ace in this line, promoting your remaining diamonds. Losing this trick develops later winners; keep a way to reach dummy's long suit.",
+      QD: "Good. West takes the ace in this line. The king, queen and jack are touching honors, so any starts developing diamonds. A defender could instead delay taking the ace.",
+      JD: "Good. West takes the ace in this line. The touching honors do the same job: start developing diamonds. A defender could instead delay taking the ace.",
+      "4S": "Legal, but West wins with the spade ace and the diamond ace is still outstanding. A diamond honor would start developing your long suit."
     },
     cardOutcomes: { KD: "good", QD: "good", JD: "good", "4S": "risky" },
-    cardReasons: { KD: "won_clean_trick", QD: "won_clean_trick", JD: "won_clean_trick", "4S": "void_discard" }
+    cardReasons: { KD: "followed_suit", QD: "followed_suit", JD: "followed_suit", "4S": "followed_suit" }
   }
 };
-const bridgeHoldUpDrillStep: DrillStep = {
-  scenarioId: "bridge-hold-up-notrump",
+const bridgeUnblockDrillStep: DrillStep = {
+  scenarioId: "bridge-unblock-dummy",
   contract: "Bridge",
-  title: "Hold up once",
+  title: "Reach the remaining winners",
   handLabel: "South declarer: choose a card",
-  referenceHand: { label: "North dummy (excerpt)", cards: [card("7", "H"), card("3", "H"), card("J", "C"), card("6", "D")] },
+  referenceHand: { label: "North dummy (all remaining cards)", cards: [card("A", "H"), card("Q", "H"), card("3", "H")] },
   trick: {
-    title: "Break defender communication",
-    beforeResult: "West leads a long-suit king in 1NT. Duck the first round to make the defenders spend an entry.",
-    afterResult: "Holding up can cut communication between defenders in no-trump contracts.",
-    emptyExplanation: "In no trump, you do not always take the first winner. Sometimes you duck to exhaust one defender's suit.",
-    legalCardIds: ["4H", "AH"],
-    hand: [card("A", "H"), card("4", "H"), card("Q", "C"), card("8", "S")],
+    title: "Plan the last three tricks",
+    beforeResult: "In 3NT, you have six tricks and three remain. Hearts J through 6 are gone; South's diamond is a loser. North leads the ace. Which card keeps all three tricks available?",
+    afterResult: "A high card can block access to winners in the other hand.",
+    emptyExplanation: "",
+    legalCardIds: ["KH", "2H"],
+    hand: [card("K", "H"), card("2", "H"), card("4", "D")],
     tableBeforeChoice: [
-      { seat: "Left", card: card("K", "H") },
-      { seat: "Tutor", card: card("7", "H") },
-      { seat: "Right", card: card("2", "H") }
+      { seat: "Tutor", card: card("A", "H") },
+      { seat: "Right", card: card("4", "H") }
     ],
-    tableAfterChoice: [],
-    pendingBySeat: { You: "South", Tutor: "North Dummy", Right: "East" },
+    tableAfterChoice: [{ seat: "Left", card: card("5", "H") }],
+    pendingBySeat: { You: "South Declarer", Tutor: "North Dummy", Right: "East Defender", Left: "West Defender" },
     playedExplanations: {
-      "4H": "Good. Ducking once can leave the defense without an easy way back to the long hearts.",
-      AH: "Risky. Taking immediately may leave West's long hearts live if East still has an entry.",
-      QC: "Illegal. Hearts were led and you still have hearts.",
-      "8S": "Illegal. Hearts were led and you still have hearts."
+      KH: "Good. Let the king go under the ace. Next, play South's two under North's queen. North then leads the three, now a winner. That is three tricks for 3NT.",
+      "2H": "Legal, but the king is now South's only heart. It must overtake North's queen next, leaving South on lead with a losing diamond and no way to reach North's three.",
+      "4D": "Illegal. South has hearts and must follow suit."
     },
-    cardOutcomes: { "4H": "good", AH: "risky" },
-    cardReasons: { "4H": "followed_suit", AH: "won_clean_trick", QC: "off_suit", "8S": "off_suit" }
+    cardOutcomes: { KH: "good", "2H": "risky" },
+    cardReasons: { KH: "followed_suit", "2H": "followed_suit", "4D": "off_suit" }
   }
 };
 const bridgeOpeningLeadDrillStep: DrillStep = {
   scenarioId: "bridge-defense-fourth-best",
   contract: "Bridge",
   title: "Lead fourth best",
+  handLabel: "South defender: choose a card",
+  tableAfterByCard: {
+    QD: [{ seat: "Left", card: card("2", "D") }, { seat: "Tutor", card: card("A", "D") }, { seat: "Right", card: card("3", "D") }]
+  },
   trick: {
     title: "Defend 1NT",
-    beforeResult: "Against 1NT, lead from your longest useful suit. Choose the fourth-best spade.",
-    afterResult: "A fourth-best lead from length is a standard no-trump defensive habit.",
-    emptyExplanation: "No-trump defense often starts by building tricks in the longest suit.",
+    beforeResult: "East declares 1NT. Your partnership leads fourth best from a long suit without a top sequence. From K-J-8-4 of spades, lead the four.",
+    afterResult: "Lead agreements help partner interpret the card, but depend on the holding and auction.",
+    emptyExplanation: "Only relevant cards are shown; spades are your longest suit. Dummy is not exposed until after your opening lead.",
     legalCardIds: ["KS", "JS", "8S", "4S", "QD"],
     hand: [card("K", "S"), card("J", "S"), card("8", "S"), card("4", "S"), card("Q", "D")],
     tableBeforeChoice: [],
@@ -170,23 +175,29 @@ const bridgeOpeningLeadDrillStep: DrillStep = {
     pendingBySeat: { You: "South Defender", Tutor: "North Partner", Right: "East Declarer", Left: "West Dummy" },
     playedExplanations: {
       "4S": "Good. Fourth best starts your long suit without spending the king.",
-      KS: "Risky. The king may give declarer a clear read and spend your stopper early.",
-      JS: "Risky. The jack is not the standard lead from this holding.",
-      "8S": "Risky. The eight muddies partner's count and attitude read.",
-      QD: "Legal, but it abandons your longest suit."
+      KS: "Legal, but partner's ace wins over your king. The agreed low lead preserves your honor for later.",
+      JS: "Legal, but partner's ace wins over your jack. The four follows your fourth-best agreement without spending an honor.",
+      "8S": "Legal, but the eight is third best here. The four communicates the agreed lead from length.",
+      QD: "Legal. Partner wins with the diamond ace in this line, but you have spent the queen without starting your long spades."
     },
     cardOutcomes: { "4S": "good", KS: "risky", JS: "risky", "8S": "risky", QD: "risky" },
-    cardReasons: { "4S": "won_clean_trick", KS: "won_clean_trick", JS: "won_clean_trick", "8S": "won_clean_trick", QD: "void_discard" }
+    cardReasons: { "4S": "followed_suit", KS: "followed_suit", JS: "followed_suit", "8S": "followed_suit", QD: "followed_suit" }
   }
 };
-export const bridgeDeclarerDrillPool = [bridgeFinesseDrillStep, bridgeEstablishSuitDrillStep, bridgeHoldUpDrillStep];
+export const bridgeDeclarerDrillPool = [bridgeFinesseDrillStep, bridgeEstablishSuitDrillStep, bridgeUnblockDrillStep];
 const bridgeThirdHandDrillStep: DrillStep = {
   scenarioId: "bridge-defense-third-hand", contract: "Bridge", title: "Third hand high",
+  handLabel: "South defender: choose a card",
+  referenceHand: { label: "East dummy (excerpt)", cards: [card("8", "S"), card("6", "S"), card("2", "D")] },
+  tableAfterByCard: {
+    JS: [{ seat: "Left", card: card("Q", "S") }],
+    "3S": [{ seat: "Left", card: card("2", "S") }]
+  },
   trick: {
     title: "Help partner's lead",
-    beforeResult: "North leads a low spade against West's 1NT. East dummy plays the eight. Play high enough to make declarer spend an honor.",
+    beforeResult: "North leads a low spade against West's 1NT. East dummy plays the eight. Which card best supports partner's lead?",
     afterResult: "Third hand usually plays high when partner's low lead is not winning.",
-    emptyExplanation: "North is your partner; East is dummy and West declares.",
+    emptyExplanation: "Partner's low card is not winning. Consider how cheaply declarer could beat each of your cards.",
     hand: [card("K", "S"), card("J", "S"), card("3", "S"), card("6", "D")],
     legalCardIds: ["KS", "JS", "3S"],
     tableBeforeChoice: [{ seat: "Tutor", card: card("4", "S") }, { seat: "Right", card: card("8", "S") }],
@@ -194,8 +205,8 @@ const bridgeThirdHandDrillStep: DrillStep = {
     pendingBySeat: { You: "South Defender", Tutor: "North Partner", Right: "East Dummy", Left: "West Declarer" },
     playedExplanations: {
       KS: "Good. The king forces out the ace and can establish partner's remaining spades.",
-      JS: "Risky. The jack could let declarer win cheaply with the queen.",
-      "3S": "Risky. Playing low leaves dummy's eight winning before declarer plays.",
+      JS: "Risky. West takes your jack with the queen and keeps the ace. The king would make West spend the ace instead.",
+      "3S": "Risky. West follows low and dummy's eight wins. The king would make declarer spend an honor to win this trick.",
       "6D": "Illegal. Spades were led and you can follow spades."
     },
     cardOutcomes: { KS: "good", JS: "risky", "3S": "risky" },
@@ -204,11 +215,13 @@ const bridgeThirdHandDrillStep: DrillStep = {
 };
 const bridgePartnerWinnerDrillStep: DrillStep = {
   scenarioId: "bridge-defense-partner-winner", contract: "Bridge", title: "Keep partner's winner",
+  handLabel: "South defender: choose a card",
+  referenceHand: { label: "East dummy (excerpt)", cards: [card("4", "C"), card("6", "C"), card("7", "D")] },
   trick: {
     title: "Save your ace",
-    beforeResult: "West leads a club, North partner plays the king, and East dummy follows low. You play last: keep the ace for another trick.",
+    beforeResult: "Against West's 1NT, North plays the king on West's club lead and East follows low. You play last. Which card keeps the most partnership winners?",
     afterResult: "When partner already wins and you play last, there is no need to overtake without a specific plan.",
-    emptyExplanation: "North is winning. Follow low and preserve your ace.",
+    emptyExplanation: "",
     hand: [card("A", "C"), card("2", "C"), card("9", "D")], legalCardIds: ["AC", "2C"],
     tableBeforeChoice: [{ seat: "Left", card: card("3", "C") }, { seat: "Tutor", card: card("K", "C") }, { seat: "Right", card: card("4", "C") }],
     tableAfterChoice: [],
@@ -224,6 +237,7 @@ type BridgeBiddingPracticeStep = {
   id: string;
   title: string;
   prompt: string;
+  hint: string;
   hand: Card[];
   dealer: Seat;
   vulnerability: BridgeVulnerability;
@@ -236,7 +250,8 @@ export const bridgeBiddingPracticeSteps: BridgeBiddingPracticeStep[] = [
   {
     id: "bridge-bid-pass-light-balanced",
     title: "Pass a light hand",
-    prompt: "You are South with 8 HCP and no six-card preempt. In basic natural bidding, do not open just because you like the shape.",
+    prompt: "You are South, the dealer, with 8 HCP and no long suit. Pass this hand: it is below opening strength in basic natural bidding.",
+    hint: "Count A = 4, K = 3, Q = 2, J = 1. The ace and two queens total eight points.",
     hand: [
       card("3", "C"),
       card("5", "C"),
@@ -265,8 +280,9 @@ export const bridgeBiddingPracticeSteps: BridgeBiddingPracticeStep[] = [
   },
   {
     id: "bridge-bid-one-notrump",
-    title: "Open 1NT",
-    prompt: "You are South with 16 HCP and a balanced hand. Show the range immediately.",
+    title: "Describe strength and shape",
+    prompt: "You are South, the dealer. Which opening describes this hand's strength and shape?",
+    hint: "A 4-3-3-3 hand is balanced. Compare the point total with the 15-17 range for 1NT.",
     hand: [
       card("A", "C"),
       card("Q", "C"),
@@ -297,6 +313,7 @@ export const bridgeBiddingPracticeSteps: BridgeBiddingPracticeStep[] = [
     id: "bridge-bid-five-card-major",
     title: "Your opening decision",
     prompt: "You are South and the dealer. Which opening describes your strength and shape in basic natural bidding?",
+    hint: "",
     hand: [
       card("A", "S"),
       card("K", "S"),
@@ -320,7 +337,7 @@ export const bridgeBiddingPracticeSteps: BridgeBiddingPracticeStep[] = [
       Pass: "Too cautious. 13 HCP with a five-card major opens.",
       "1C": "The club suit is not the message. Show the five-card major first.",
       "1NT": "1NT needs a balanced 15-17 HCP hand.",
-      "1S": "Good. With opening strength and five spades, open 1S."
+      "1S": "Good. A-K-Q of spades and the heart ace total 13 HCP. With opening strength and five spades, open 1S."
     }
   }
 ];
