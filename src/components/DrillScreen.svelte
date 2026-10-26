@@ -5,12 +5,14 @@
   import TablePlaySurface from "./TablePlaySurface.svelte";
   import CardChoiceHand from "./CardChoiceHand.svelte";
   import ExerciseFeedback from "./ExerciseFeedback.svelte";
+  import type { LearningCharacterId } from "../presentation/learningCharacters";
   let { step, selectedCardId, checkedCardId, results, total, index, title, eyebrow, topic,
-    seatLabels = {}, customTable, allowEarlyFinish = true, finishLabel = "Review session", onBack, onSelect, onCheck, onNext, onFinish }: {
+    seatLabels = {}, customTable, coach, allowEarlyFinish = true, finishLabel = "Review session", onBack, onSelect, onCheck, onNext, onFinish }: {
     step: DrillStep; selectedCardId: string; checkedCardId: string; results: DrillResult[];
     total: number; index: number; title: string; eyebrow: string; topic: string;
     seatLabels?: Partial<Record<Seat, string>>; customTable?: Snippet<[TableCard[]]>;
     allowEarlyFinish?: boolean; finishLabel?: string;
+    coach?: LearningCharacterId;
     onBack: () => void; onSelect: (card: Card) => void; onCheck: () => void; onNext: () => void; onFinish: () => void;
   } = $props();
   let trick = $derived(step.trick);
@@ -21,7 +23,7 @@
   let last = $derived(index >= total - 1);
 </script>
 
-<TablePlaySurface mode="play" flowLayout ariaLabel={title} {title} {eyebrow}
+<TablePlaySurface mode="play" flowLayout stableFeedback={!!coach} ariaLabel={title} {title} {eyebrow}
   surfaceClassName={customTable ? "learning-play-surface domino-play-surface" : "learning-play-surface"}
   statusLabel={step.contract} statusValue={`Decision ${checked ? results.length : results.length + 1} of ${total}`}
   tableAriaLabel="Drill card table" pendingBySeat={trick.pendingBySeat} {seatLabels}
@@ -45,7 +47,7 @@
     {/if}
   {/snippet}
   {#snippet panel()}
-    <ExerciseFeedback eyebrow={step.contract} title={trick.title} result={checked ? "" : trick.beforeResult}
+    <ExerciseFeedback {coach} reserveSpace={!!coach} eyebrow={step.contract} title={trick.title} result={checked ? "" : trick.beforeResult}
       explanation={decision?.feedback ?? trick.emptyExplanation}
       outcome={decision ? drillOutcomeLabels[decision.result.outcome] : ""}
       warning={decision ? decision.result.outcome !== "good" : false} />
@@ -58,7 +60,7 @@
     <div class="action-row">
       <button class="secondary-action" onclick={allowEarlyFinish && checked && !last ? onFinish : onBack} type="button">{allowEarlyFinish && checked && !last ? "Finish session" : "Table"}</button>
       {#if checked}
-        <button class="primary-action" onclick={onNext} type="button">{last ? finishLabel : "Next decision"}</button>
+        <button class="primary-action" onclick={onNext} type="button">{step.followUp && !decision?.result.clean ? "Try another example" : last ? finishLabel : "Next decision"}</button>
       {:else}
         <button class="primary-action" disabled={!trick.hand.some(card => card.id === selectedCardId)} onclick={onCheck} type="button">Check answer</button>
       {/if}

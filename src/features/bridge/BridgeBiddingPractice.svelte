@@ -7,7 +7,8 @@
   import { bridgeCallLabel, type BridgeCallOption } from "../../domain/bridgeAuction";
   import { bridgeHandShapeLabel, bridgeSeatLabel } from "./bridgePresentation";
   import type { DrillResult } from "../../lessons/drillDecision";
-  let { onBack, onComplete }: { onBack: () => void; onComplete: (results?: DrillResult[]) => void } = $props();
+  import type { LearningCharacterId } from "../../presentation/learningCharacters";
+  let { onBack, onComplete, coach }: { onBack: () => void; onComplete: (results?: DrillResult[]) => void; coach?: LearningCharacterId } = $props();
   let results = $state<DrillResult[]>([]);
   let index = $state(0);
   let selected = $state<BridgeCallOption>("");
@@ -62,6 +63,7 @@
   {/snippet}
   {#snippet panel()}
     <ExerciseFeedback
+      {coach}
       eyebrow="Opening bid"
       title={step.title}
       result={checked ? "" : step.prompt}

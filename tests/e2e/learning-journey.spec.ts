@@ -32,7 +32,7 @@ async function finish(page: Page) {
     await answer(page);
     const done = page.getByRole("button", { name: "Finish topic", exact: true });
     if (await done.isVisible()) { await done.click(); return; }
-    await page.getByRole("button", { name: "Next decision", exact: true }).click();
+    await page.getByRole("button", { name: /^(Next decision|Try another example)$/ }).click();
   }
   throw Error("Exercise did not finish");
 }
@@ -58,12 +58,13 @@ for (const [game, topic, saveKey] of [
     await finish(page);
     expect(await progress(page)).toEqual({ [topic]: true });
     await expect(page.getByRole("status")).toHaveText("Topic complete.");
-    const resume = page.getByRole("button", { name: `Continue ${game}`, exact: true });
-    await expect(page.getByRole("group", { name: "Game navigation", exact: true }).getByRole("button")).toHaveText(["Back to Learn", `Continue ${game}`]);
-    await expect(resume).toBeInViewport();
-    await expect(page.getByRole("button", { name: "Next topic", exact: true })).toBeInViewport();
+    const play = page.getByRole("button", { name: "Go to Play", exact: true });
+    await expect(page.getByRole("group", { name: "Game navigation", exact: true }).getByRole("button")).toHaveText(["Back to Learn", "Go to Play"]);
+    await expect(play).toBeInViewport();
+    await expect(page.getByRole("button", { name: "Next lesson", exact: true })).toBeInViewport();
     await page.screenshot({ path: info.outputPath(`${game}-learn-result.png`) });
-    await resume.click();
+    await play.click();
+    await page.getByRole("button", { name: game === "Barbu" ? "Continue Play Barbu" : `Continue ${game}`, exact: true }).click();
     expect(await savedState(page, saveKey)).toEqual(saved);
     await expect(page.getByLabel("Learning summary")).toHaveCount(0);
     expect(errors).toEqual([]);
@@ -72,18 +73,16 @@ for (const [game, topic, saveKey] of [
 
 test("leaving the course after one decision does not complete the topic", async ({ page }) => {
   await openLearn(page, "Hearts");
-  await page.getByRole("button", { name: "Start learning", exact: true }).click();
-  await page.getByRole("button", { name: "See example", exact: true }).click();
-  await page.getByRole("button", { name: "Try cards", exact: true }).click();
+  await page.getByRole("button", { name: "Start lesson", exact: true }).click();
   await answer(page);
   await page.getByRole("button", { name: "Finish session", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("Topic paused.");
   expect(await progress(page)).toEqual({});
-  await expect(page.getByRole("button", { name: "Next topic", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Next lesson", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Try again", exact: true }).click();
   await finish(page);
   expect(await progress(page)).toEqual({ "hearts-object": true });
-  await page.getByRole("button", { name: "Next topic", exact: true }).click();
+  await page.getByRole("button", { name: "Next lesson", exact: true }).click();
   await expect(page.getByLabel("Drill decision")).toBeVisible();
   await expect(page.getByText("Decision 1 of 3", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Table", exact: true }).first().click();
@@ -120,15 +119,13 @@ for (const [game, definition, saveKey] of [
     await expect(page.getByLabel(definition.table.learn.progressAriaLabel)).toContainText(`0 / ${definition.learnSteps.length} complete`);
     await page.screenshot({ path: info.outputPath(`${game}-lessons-reset.png`) });
     if (game === "Hearts") {
-      await page.getByRole("button", { name: "Start learning", exact: true }).click();
-      await page.getByRole("button", { name: "See example", exact: true }).click();
-      await page.getByRole("button", { name: "Try cards", exact: true }).click();
+      await page.getByRole("button", { name: "Start lesson", exact: true }).click();
       await finish(page);
-      await page.getByRole("button", { name: "Next topic", exact: true }).click();
+      await page.getByRole("button", { name: "Next lesson", exact: true }).click();
       await finish(page);
       expect(await progress(page)).toEqual({ ...otherProgress, "hearts-object": true, "hearts-queen": true });
       expect(await savedState(page, saveKey)).toEqual(saved);
-    } else await expect(page.getByRole("button", { name: "Start learning", exact: true })).toBeVisible();
+    } else await expect(page.getByRole("button", { name: "Start lesson", exact: true })).toBeVisible();
   });
 }
 
@@ -153,7 +150,8 @@ test("the last topic offers play instead of looping back to completed lessons", 
   await openLearn(page, "Hearts");
   await page.locator('[data-skill="hearts-score"] .exercise-shortcut').click();
   await finish(page);
-  await expect(page.getByRole("button", { name: "Next topic", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Next lesson", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Go to Play", exact: true }).click();
   await page.getByRole("button", { name: "Play Hearts", exact: true }).click();
   await expect(page.getByLabel("Your Hearts passing hand")).toBeVisible();
 });
@@ -164,11 +162,11 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 820, height: 1180 
     await openLearn(page, "Hearts");
     await page.locator('[data-skill="hearts-avoid"] .exercise-shortcut').click();
     await finish(page);
-    await expect(page.getByRole("button", { name: "Play Hearts", exact: true })).toBeInViewport();
+    await expect(page.getByRole("button", { name: "Go to Play", exact: true })).toBeInViewport();
     const lessonActions = page.getByRole("group", { name: "Lesson actions", exact: true });
     const navigation = page.getByRole("group", { name: "Game navigation", exact: true });
-    await expect(lessonActions.getByRole("button")).toHaveText(["Try again", "Next topic"]);
-    await expect(navigation.getByRole("button")).toHaveText(["Back to Learn", "Play Hearts"]);
+    await expect(lessonActions.getByRole("button")).toHaveText(["Try again", "Next lesson"]);
+    await expect(navigation.getByRole("button")).toHaveText(["Back to Learn", "Go to Play"]);
     for (const row of [lessonActions, navigation]) {
       const boxes = await row.getByRole("button").evaluateAll(buttons => buttons.map(button => {
         const { x, y, right, width } = button.getBoundingClientRect();

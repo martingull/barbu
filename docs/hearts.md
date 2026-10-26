@@ -48,6 +48,30 @@ Other legal passes are labelled risky for the exercise's plan, not illegal or
 universally wrong. Incoming cards can refill a void or change the hand's risks.
 These replace the two legacy exercises that both required QS, KH and AH.
 
+## Guided Learning
+
+Learn offers a separate unsaved guided hand. Before a turn, rule text is separated
+from tactical advice. After each trick, the coach identifies the highest card of
+the led suit, explains the heart/queen points and names the next leader. Feedback
+describes the player's actual card without treating a forced penalty or a clean
+win as a tactical error. The final trick remains available in the hand result.
+Review facts come from `domain/heartsLearning.ts` using the shared winner and point
+rules; display copy stays in `features/hearts/heartsGuidance.ts`.
+
+The extra opening exercise is labelled "Opening trick rules". Its three goals
+are following clubs, leaving the next lead to another player, and choosing a legal
+non-penalty discard when void. Only the second is a tactical preference. A legal
+high club still wins for zero points, even when it misses that exercise's goal.
+Per-topic takeaways live in `lessons/hearts/takeaways.ts` and appear in the shared
+lesson result. Existing progress and match-save keys are unchanged. Completion
+and latest-attempt results do not claim independent mastery.
+
+For the next beginner test, observe without explaining the controls: can the
+player find a guided hand, explain the winner and points after a trick, apply the
+rule to different cards, and return to their next lesson or saved match? Record
+where they hesitate and what they misunderstood. Automated flow tests cannot
+establish whether a new player understood the lesson.
+
 ## Remaining Strength Gaps
 
 - Match-score-aware decisions, including late-match risk and leader targeting.

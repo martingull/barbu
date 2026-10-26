@@ -7,6 +7,8 @@
   import { drillOutcomeLabels as outcomeLabels, type DrillResult } from "../../lessons/drillDecision";
   import { barbuGuidedDecision, barbuGuidedResult } from "../../lessons/barbu/guidedFeedback";
   import type { Card, Suit } from "../../domain/types";
+  import type { LearningCharacterId } from "../../presentation/learningCharacters";
+  export let coach: LearningCharacterId | undefined = undefined;
   export let lessonId: string;
   export let onBack: () => void;
   export let onComplete: (results: DrillResult[]) => void;
@@ -132,6 +134,7 @@
   {/snippet}
   {#snippet panel()}
     <ExerciseFeedback
+      {coach}
       eyebrow={contractLabel}
       title={currentTrick.title}
       result={resultText}

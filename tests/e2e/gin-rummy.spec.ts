@@ -148,7 +148,7 @@ test("Gin teaches fifteen decisions and persists progress separately from play",
   await page.getByRole("button", { name: "Table", exact: true }).first().click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
   for (const [topic, steps] of Object.entries(ginExercises)) {
-    await page.getByRole("button", { name: /^(Start learning|Continue learning)$/ }).click();
+    await page.getByRole("button", { name: /^(Start lesson|Continue lesson)$/ }).click();
     await page.getByRole("button", { name: "See example", exact: true }).click();
     await page.getByRole("button", { name: "Try cards", exact: true }).click();
     for (let index = 0; index < steps.length; index++) {
@@ -168,10 +168,11 @@ test("Gin teaches fifteen decisions and persists progress separately from play",
       await page.getByRole("button", { name: index === 2 ? "Finish topic" : "Next decision", exact: true }).click();
     }
     await expect(page.getByRole("status")).toHaveText("Topic complete.");
-    await expect(page.getByRole("button", { name: "Continue Gin Rummy", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Go to Play", exact: true })).toBeVisible();
     await expect(page.getByLabel("Learning summary")).toContainText("3 of 3 decisions");
     if (topic === "gin") {
-      await expect(page.getByRole("button", { name: "Next topic", exact: true })).toHaveCount(0);
+      await expect(page.getByRole("button", { name: "Next lesson", exact: true })).toHaveCount(0);
+      await page.getByRole("button", { name: "Go to Play", exact: true }).click();
       await page.getByRole("button", { name: "Continue Gin Rummy", exact: true }).click();
       expect(await saved(page)).toEqual(before);
       await page.getByRole("button", { name: "Table", exact: true }).first().click();

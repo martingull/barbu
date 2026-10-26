@@ -60,8 +60,9 @@ export const heartsDef: GameDefinition<HeartsLearnPathAction | HeartsPracticeAct
       id: "hearts-object",
       step: "Concept",
       title: "Object of Hearts",
-      summary: "Avoid penalty points. Hearts are small; Queen of Spades is large.",
-      action: "object"
+      summary: "Follow suit, find the winner, then avoid penalty points.",
+      action: "object",
+      decisionFirst: true
     },
     {
       id: "hearts-queen",
@@ -125,8 +126,8 @@ export const heartsDef: GameDefinition<HeartsLearnPathAction | HeartsPracticeAct
         {
           id: "first-trick",
           label: "Opening",
-          title: "First trick",
-          summary: "Follow clubs on the opening trick instead of dumping penalties.",
+          title: "Opening trick rules",
+          summary: "Follow clubs, or choose a legal discard when you have none.",
           action: "first",
           group: "fixed-drills"
         },

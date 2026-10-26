@@ -4,14 +4,20 @@ import { evaluateHeartsPass, generateHeartsPassPractice, generateHeartsPracticeS
 import { legalHeartsCards } from "../../src/domain/heartsRules";
 import type { Card } from "../../src/domain/types";
 
-test("unchanged Hearts topics retain their native migration coverage", () => {
+test("Hearts topics retain native gameplay coverage apart from deliberate lesson revisions", () => {
   native.sets.forEach((expected, seed) => {
     const actual = generateHeartsPracticeSet(seed);
-    // Break-hearts and passing lessons were deliberately revised after migration.
+    // Opening copy changed, but its cards, legality, scores and outcome tags must not drift.
     const unchanged = (s: { id: string }) => !s.id.startsWith("hearts-break-hearts-");
     for (const scenario of expected.scenarios.filter(unchanged)) {
+      const actualScenario = actual.scenarios.find(s => s.id === scenario.id)!;
+      if (scenario.id.startsWith("hearts-first-trick-")) {
+        actualScenario.title = scenario.title;
+        actualScenario.prompt = scenario.prompt;
+      }
       for (const outcome of scenario.outcomes) {
-        const replacement = actual.scenarios.find(s => s.id === scenario.id)!.outcomes.find(o => o.cardId === outcome.cardId)!;
+        const replacement = actualScenario.outcomes.find(o => o.cardId === outcome.cardId)!;
+        if (scenario.id.startsWith("hearts-first-trick-") && outcome.isLegal) replacement.explanation = outcome.explanation;
         if (scenario.id.startsWith("hearts-first-trick-void-safe-discard") && !outcome.isLegal) {
           expect(replacement.explanation).toBe(`${outcome.cardId} is not legal on the first trick while you have a non-penalty discard.`);
           replacement.explanation = outcome.explanation;
@@ -24,6 +30,17 @@ test("unchanged Hearts topics retain their native migration coverage", () => {
   for (let seed = 0; seed < 2; seed++) {
     expect(generateHeartsPassPractice(seed).playerHand).toEqual(native.passes[seed].playerHand);
   }
+});
+
+test("opening feedback separates compulsory play from the exercise's tactical goal", () => {
+  const scenarios = generateHeartsPracticeSet(0, "first-trick").scenarios;
+  const duck = scenarios.find(s => s.playerHand.some(c => c.id === "AC"))!;
+  expect(duck.outcomes.find(o => o.cardId === "AC")).toMatchObject({ isLegal: true, penalty: 0, winner: "You", outcomeKind: "risky" });
+  expect(duck.outcomes.find(o => o.cardId === "AC")!.explanation).toContain("not a rules mistake");
+  expect(duck.outcomes.find(o => o.cardId === "4C")!.explanation).toContain("playing low is a tactic");
+  const discard = scenarios.find(s => s.playerHand.some(c => c.id === "8D"))!;
+  expect(discard.outcomes.find(o => o.cardId === "QS")).toMatchObject({ isLegal: false, outcomeKind: "illegal" });
+  expect(discard.outcomes.find(o => o.cardId === "8D")!.explanation).toContain("non-penalty discard");
 });
 
 test("every topic supplies three distinct decisions for every seed, with fresh state", () => {

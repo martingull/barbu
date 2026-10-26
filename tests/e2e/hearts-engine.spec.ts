@@ -105,17 +105,17 @@ test("Hearts practice uses TypeScript and cannot overwrite a passing match", asy
     }
     await page.getByRole("button", { name: "Check pass", exact: true }).click();
     await expect(page.getByLabel("Hearts pass practice cards")).toContainText("Good pass");
-    await page.getByRole("button", { name: i < heartsPassPracticeCount - 1 ? "Next pass" : "Complete exercise", exact: true }).click();
+    await page.getByRole("button", { name: i < heartsPassPracticeCount - 1 ? "Next pass" : "Finish topic", exact: true }).click();
   }
   expect(await commands(page)).toEqual([]);
   expect(await page.evaluate(key => localStorage.getItem(key), key)).toBe(saved);
-  await page.getByRole("tab", { name: "Play", exact: true }).click();
+  await page.getByRole("button", { name: "Go to Play", exact: true }).click();
   await page.getByRole("button", { name: "Continue Hearts", exact: true }).click();
   await expect(page.getByLabel("Your Hearts passing hand").getByRole("button", { pressed: true })).toHaveCount(1);
 });
 
 for (const nativeRuntime of [false, true]) {
-  for (const title of ["First trick", "Avoid hearts", "Queen of Spades danger", "Break hearts", "Stop the moon", "Score a hand"]) {
+  for (const title of ["Opening trick rules", "Avoid hearts", "Queen of Spades danger", "Break hearts", "Stop the moon", "Score a hand"]) {
     test(`Hearts completes all three ${title} decisions in ${nativeRuntime ? "native" : "browser"} runtime`, async ({ page }, info) => {
       if (nativeRuntime) await mockNative(page);
       const errors: string[] = [];
@@ -123,7 +123,7 @@ for (const nativeRuntime of [false, true]) {
       await page.goto("/");
       await openHearts(page);
       await page.getByRole("tab", { name: "Learn", exact: true }).click();
-      await page.getByRole("button", { name: title === "First trick" ? /^First trick\b/ : `Try cards: ${title}`, exact: title !== "First trick" }).click();
+      await page.getByRole("button", { name: title === "Opening trick rules" ? /^Opening trick rules\b/ : `Try cards: ${title}`, exact: title !== "Opening trick rules" }).click();
       const seen = new Set<string>();
       for (let i = 0; i < 3; i++) {
         await expect(page.getByLabel("Drill progress")).toContainText(`${i} / 3`);
@@ -143,9 +143,9 @@ for (const nativeRuntime of [false, true]) {
         await page.getByRole("button", { name: "Check answer", exact: true }).click();
         await expect(page.getByLabel("Drill decision")).toContainText("Good");
         if (i === 0 && title === "Break hearts") await page.screenshot({ path: info.outputPath("hearts-practice.png"), fullPage: true });
-        await page.getByRole("button", { name: i === 2 ? "Review session" : "Next decision", exact: true }).click();
+        await page.getByRole("button", { name: i === 2 ? "Finish topic" : "Next decision", exact: true }).click();
       }
-      await expect(page.getByRole("heading", { name: "Session complete", exact: true })).toBeVisible();
+      await expect(page.getByRole("status")).toHaveText(/^(Topic|Exercise) complete\.$/);
       if (nativeRuntime) expect(await commands(page)).toEqual([]);
       expect(errors).toEqual([]);
     });

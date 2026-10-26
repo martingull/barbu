@@ -106,8 +106,12 @@ function evaluateChoice(s: GeneratedPracticeScenario, template: Template, topic:
   const reason = won && penalty > 0 ? "captured_penalty" : !won && penalty > 0 ? "avoided_penalty"
     : won ? "won_clean_trick" : topic !== "stop-moon" && card.suit !== s.ledSuit ? "void_discard" : "followed_suit";
   let explanation: string;
-  if (topic === "first-trick" && !won && penalty === 0) {
-    explanation = `${card.id} keeps the first trick clean and avoids taking control.`;
+  if (topic === "first-trick") {
+    explanation = won
+      ? `${card.id} is legal and wins this clean trick for 0 points. You lead next. Playing low would meet this exercise's goal of leaving the lead to someone else; winning is not a rules mistake.`
+      : card.suit !== s.ledSuit
+        ? `${card.id} is a legal non-penalty discard because you have no clubs. ${winner} wins for 0 points and leads next.`
+        : `${card.id} follows clubs without winning. ${winner} takes 0 points and leads next. Following suit is required; playing low is a tactic.`;
   } else if (missedHeart) {
     explanation = `${card.id} is legal, but you missed a chance to move a heart while ${winner} controls the trick.`;
   } else if (missedQueen) {

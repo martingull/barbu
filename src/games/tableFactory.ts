@@ -88,6 +88,7 @@ export type LearnPathStep<Action extends string = string> = {
   action: Action;
   lessonId?: string;
   exerciseAction?: string;
+  decisionFirst?: boolean;
 };
 
 export type PracticeEntry<Action extends string = string> = {

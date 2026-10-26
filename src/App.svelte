@@ -24,7 +24,11 @@
   import "./games";
   import { referenceCatalog, type GameReference } from "./games/referenceCatalog";
   import { getCatalogCategories, type ActiveGameTable, type CatalogGameId } from "./games/tableFactory";
-  import type { GuidedCardOutcome, PracticeReason } from "./domain/types";
+  import type { GuidedCardOutcome } from "./domain/types";
+  import { createLearningEvidenceStore } from "./persistence/learningEvidence";
+  import { recordLearningAttempt } from "./domain/learningEvidence";
+  import type { DrillResult } from "./lessons/drillDecision";
+  import { formatCardText } from "./presentation/cardDisplay";
 
   type AppView = "catalog" | "barbuFeature" | "heartsFeature" | "whistFeature" | "spadesFeature" | "bridgeFeature" | "ginFeature" | "canastaFeature" | "cardCountingFeature" | "reference";
   const catalogCategories = getCatalogCategories();
@@ -42,6 +46,8 @@
   let activeReferenceId = referenceCatalog[0].id;
   let practiceSeed = loadPracticeSeed();
   let completedPathSteps = loadCourseProgress();
+  const evidenceStore = createLearningEvidenceStore(() => typeof localStorage === "undefined" ? undefined : localStorage);
+  let learningEvidence = evidenceStore.load()?.skills ?? {};
   let playBarbuHistory = loadPlayBarbuHistory();
   let barbuEntry: LearningEntry | undefined;
   let heartsEntry: LearningEntry | undefined;
@@ -90,6 +96,20 @@
   function resetCourseSteps(ids: string[]) {
     const resetIds = new Set(ids);
     saveCourseProgress(Object.fromEntries(Object.entries(completedPathSteps).filter(([id]) => !resetIds.has(id))));
+    learningEvidence = Object.fromEntries(Object.entries(learningEvidence).filter(([id]) => !resetIds.has(id)));
+    persistLearningEvidence();
+  }
+
+  function completeCourseStep(id: string, results: DrillResult[] = []) {
+    saveCourseProgress({ ...completedPathSteps, [id]: true });
+    if (!results.length) return;
+    learningEvidence = recordLearningAttempt(learningEvidence, id, results);
+    persistLearningEvidence();
+  }
+
+  function persistLearningEvidence() {
+    try { evidenceStore.write({ version: 1, skills: learningEvidence }); }
+    catch { /* Evidence remains available in this session when storage is blocked. */ }
   }
 
 
@@ -134,14 +154,15 @@
   }
 
 
-  function normalizeStoredReason(reason: string | undefined, outcome: GuidedCardOutcome | "illegal"): PracticeReason {
+  function normalizeStoredReason(reason: string | undefined, outcome: GuidedCardOutcome | "illegal"): DrillResult["reason"] {
     if (
       reason === "followed_suit" ||
       reason === "void_discard" ||
       reason === "avoided_penalty" ||
       reason === "captured_penalty" ||
       reason === "won_clean_trick" ||
-      reason === "off_suit"
+      reason === "off_suit" || reason === "trick_winner" || reason === "meld_count" ||
+      reason === "contract_target" || reason === "bid_selection" || reason === "pass_selection"
     ) {
       return reason;
     }
@@ -384,50 +405,50 @@
   {:else if appView === "barbuFeature"}
     <BarbuGame feature={barbuFeature} initialEntry={barbuEntry} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onBack={openCatalog} onReference={() => openReference("barbu")}
-      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })} onResetSteps={resetCourseSteps}
+      {learningEvidence} onCompleteStep={completeCourseStep} onResetSteps={resetCourseSteps}
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
       onSurfaceChange={fixed => { barbuFixedSurface = fixed; }} />
   {:else if appView === "bridgeFeature"}
     <BridgeGame feature={bridgeFeature} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onBack={openCatalog} onReference={() => openReference("bridge")}
-      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })} onResetSteps={resetCourseSteps}
+      {learningEvidence} onCompleteStep={completeCourseStep} onResetSteps={resetCourseSteps}
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
       onSurfaceChange={fixed => { bridgeFixedSurface = fixed; }} />
   {:else if appView === "spadesFeature"}
     <SpadesGame feature={spadesFeature} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onBack={openCatalog} onReference={() => openReference("spades")}
-      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })} onResetSteps={resetCourseSteps}
+      {learningEvidence} onCompleteStep={completeCourseStep} onResetSteps={resetCourseSteps}
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
       onSurfaceChange={fixed => { spadesFixedSurface = fixed; }} />
   {:else if appView === "heartsFeature"}
     <HeartsGame feature={heartsFeature} initialEntry={heartsEntry} onEntryConsumed={() => { heartsEntry = undefined; }} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onExploreBarbu={() => { openBarbuTable(); barbuFeature.openTable("learn"); }}
       onBack={openCatalog} onReference={() => openReference("hearts")}
-      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })} onResetSteps={resetCourseSteps}
+      {learningEvidence} onCompleteStep={completeCourseStep} onResetSteps={resetCourseSteps}
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
       onSurfaceChange={fixed => { heartsFixedSurface = fixed; }} />
   {:else if appView === "whistFeature"}
     <WhistGame feature={whistFeature} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onBack={openCatalog} onReference={() => openReference("whist")}
-      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })} onResetSteps={resetCourseSteps}
+      {learningEvidence} onCompleteStep={completeCourseStep} onResetSteps={resetCourseSteps}
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
       onSurfaceChange={fixed => { whistFixedSurface = fixed; }} />
   {:else if appView === "ginFeature"}
     <GinRummyGame feature={ginFeature} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onBack={openCatalog} onReference={() => openReference("gin-rummy")}
-      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })} onResetSteps={resetCourseSteps}
+      {learningEvidence} onCompleteStep={completeCourseStep} onResetSteps={resetCourseSteps}
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
       onSurfaceChange={fixed => { ginFixedSurface = fixed; }} />
   {:else if appView === "canastaFeature"}
     <CanastaGame feature={canastaFeature} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onBack={openCatalog} onReference={() => openReference("canasta")}
-      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })} onResetSteps={resetCourseSteps}
+      {learningEvidence} onCompleteStep={completeCourseStep} onResetSteps={resetCourseSteps}
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
       onSurfaceChange={fixed => { canastaFixedSurface = fixed; }} />
   {:else if appView === "cardCountingFeature"}
     <CardCountingGame completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onBack={openCatalog} onReference={() => {}}
-      onCompleteStep={id => saveCourseProgress({ ...completedPathSteps, [id]: true })} onResetSteps={resetCourseSteps}
+      {learningEvidence} onCompleteStep={completeCourseStep} onResetSteps={resetCourseSteps}
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
       onSurfaceChange={fixed => { cardCountingFixedSurface = fixed; }} />
   {:else if appView === "reference"}
@@ -447,20 +468,20 @@
       <section class="reference-overview" aria-label={`${activeReference.title} overview`}>
         <p class="eyebrow">Reference source</p>
         <h2>{activeReference.baseline}</h2>
-        <p>{activeReference.overview}</p>
+        <p>{formatCardText(activeReference.overview)}</p>
       </section>
 
       <section class="reference-sections" aria-label={`${activeReference.title} reference sections`}>
         {#each activeReference.sections as section}
           <article class="reference-card">
             <p class="eyebrow">{section.title}</p>
-            <p>{section.body}</p>
+            <p>{formatCardText(section.body)}</p>
             {#if factsForSection(section).length}
               <dl>
                 {#each factsForSection(section) as fact}
                   <div>
                     <dt>{fact.label}</dt>
-                    <dd>{fact.value}</dd>
+                    <dd>{formatCardText(fact.value)}</dd>
                   </div>
                 {/each}
               </dl>
@@ -479,9 +500,9 @@
           {#each activeReference.contracts as contract}
             <article class="reference-card compact">
               <p class="eyebrow">{contract.title}</p>
-              <h3>{contract.objective}</h3>
-              <p>{contract.scoring}</p>
-              <small>{contract.lesson}</small>
+              <h3>{formatCardText(contract.objective)}</h3>
+              <p>{formatCardText(contract.scoring)}</p>
+              <small>{formatCardText(contract.lesson)}</small>
             </article>
           {/each}
         </div>
@@ -497,7 +518,7 @@
           {#each activeReference.variants as variant}
             <article class="reference-card compact">
               <p class="eyebrow">{variant.title}</p>
-              <p>{variant.note}</p>
+              <p>{formatCardText(variant.note)}</p>
             </article>
           {/each}
         </div>

@@ -33,7 +33,7 @@
     {#if step.upcard}<div class="exercise-upcard"><span>Upcard</span><div><CardFace card={step.upcard} /></div></div>{/if}
   {/snippet}
   {#snippet panel()}
-    <ExerciseFeedback eyebrow="Gin Rummy" title={step.title} result={checked ? "" : ginExercisePrompts[context.action]}
+    <ExerciseFeedback coach={context.coach} eyebrow="Gin Rummy" title={step.title} result={checked ? "" : ginExercisePrompts[context.action]}
       explanation={feedback?.text} outcome={feedback ? feedback.good ? "Good" : feedback.illegal ? "Illegal" : "Risky" : ""} warning={feedback ? !feedback.good : false} />
     {#if !checked && step.hint}<p class="count-hint">{formatCardText(step.hint)}</p>{/if}
     <CardChoiceHand cards={step.hand} readonly={!discardChoice} ariaLabel="Your Gin Rummy exercise hand" className="hand full-hand-cards"

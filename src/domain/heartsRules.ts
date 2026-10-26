@@ -1,8 +1,12 @@
-import type { Card, Suit } from "./types";
+import type { Card, Suit, FullHandState } from "./types";
 import { legalCards } from "./trickTakingRules";
 
 export function heartsPoints(card: Card): number {
   return card.suit === "H" ? 1 : card.id === "QS" ? 13 : 0;
+}
+
+export function heartsHaveBeenBroken(state: Pick<FullHandState, "completedTricks" | "currentTrick">): boolean {
+  return [...state.completedTricks.flatMap(trick => trick.cards), ...state.currentTrick].some(play => play.card.suit === "H");
 }
 
 export function legalHeartsCards(hand: Card[], led: Suit | undefined, firstTrick: boolean, heartsBroken: boolean): Card[] {

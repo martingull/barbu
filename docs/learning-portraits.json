@@ -1,0 +1,17 @@
+{
+  "generator": "Built-in image_gen",
+  "background": "opaque",
+  "existingBarbuLogo": "src-tauri/icons/128x128@2x.png",
+  "assets": [
+    {
+      "file": "public/characters/queen-of-spades.png",
+      "references": ["src-tauri/icons/icon.png", "public/cards/cards/queen_of_spades.png"],
+      "prompt": "Use case: logo-brand. Create one polished square learning-avatar asset for Barbu, a traditional card-game learning product. Image 1 is the existing Barbu King of Hearts app logo: match its exact visual family, bold navy ink outlines, clean white face, flowing engraved navy hair lines, flat rich gold, red and black regalia, gently warm off-white background, soft rounded-square tile. Image 2 is the Queen of Spades custom playing card: preserve this queen's identity, hair, crown, black spade motifs and black/gold/red robe, translated into the bust composition of image 1. Single upright Queen of Spades, head and shoulders, centered close-up, face large and very legible at 36-64px, calm welcoming slight smile and direct gaze. Entire crown visible with modest top clearance, shoulders extend to lower edge. One clear black spade pendant on chest and spade detail in crown. Simplify tiny ornament to match the logo's clarity. No playing-card rectangle, rank letters, corner suit labels, mirrored or upside-down figure, additional characters, text, watermark, speech bubble, hands or props. The output is the Queen portrait only, not a comparison or mockup. Square 1024x1024."
+    },
+    {
+      "file": "public/characters/jack-of-clubs.png",
+      "references": ["src-tauri/icons/icon.png", "public/cards/cards/jack_of_clubs.png"],
+      "prompt": "Use case: logo-brand. Create one polished square learning-avatar asset for Barbu, a traditional card-game learning product. Image 1 is the existing Barbu King of Hearts app logo: match its exact visual family, bold navy ink outlines, clean white face, flowing engraved navy hair lines, flat rich gold, red and black regalia, gently warm off-white background, soft rounded-square tile. Image 2 is our Jack of Clubs custom playing card: preserve this youthful clean-shaven jack's identity, shoulder-length wavy hair, distinctive low gold-banded red-and-black court cap (NOT a king's tall crown), club motifs and robe, translated into the bust composition of image 1. Single upright Jack of Clubs, head and shoulders, centered close-up, face large and very legible at 36-64px, friendly attentive slight smile and direct gaze. Entire court cap visible with modest top clearance; shoulders extend to lower edge. One clear black club medallion on chest and black clubs on gold hatband. Simplify tiny ornament to match the logo's clarity. No playing-card rectangle, rank letters, corner suit labels, mirrored or upside-down figure, beard, additional characters, text, watermark, speech bubble, hands, flower or staff. The output is the Jack portrait only, not a comparison or mockup. Square 1024x1024."
+    }
+  ]
+}

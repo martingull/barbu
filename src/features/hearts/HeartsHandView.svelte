@@ -3,12 +3,14 @@
   import CardChoiceHand from "../../components/CardChoiceHand.svelte";
   import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
   import GameResult from "../../components/GameResult.svelte";
+  import { heartsGuidance, heartsGuidedReview } from "./heartsGuidance";
   import { heartsSessionSettlement, heartsMoonShooter, heartsScoredSeatPenalties, heartsMatchTarget, type HeartsSession } from "../../domain/heartsSession";
   import { seatPenaltiesForTricks } from "../../domain/trickTakingScore";
   import { heartsDef } from "../../games/hearts";
   import { scoreSeats, scoreSeatLabel, scoreSeatRunLabel, formatOrdinal, seatTricksWonForTricks } from "../../presentation/scorePresentation";
-  import { heartsScorecardStandings, heartsResultCopy, heartsPlayerHandResult, heartsHandResultLabel, heartsTrickFeedback } from "./heartsPresentation";
-  let { session, selectedCardId, error, dealing, onBack, onSelect, onPlay, onNextTrick, onNextHand, onReplay }: {
+  import { heartsScorecardStandings, heartsResultCopy, heartsPlayerHandResult, heartsHandResultLabel, heartsTrickFeedback, heartsMoonResultText } from "./heartsPresentation";
+  let { session, selectedCardId, error, dealing, guided = false, onBack, onSelect, onPlay, onNextTrick, onNextHand, onReplay }: {
+    guided?: boolean;
     session: HeartsSession; selectedCardId: string; error: string; dealing: boolean;
     onBack: () => void; onSelect: (id: string) => void; onPlay: () => void;
     onNextTrick: () => void; onNextHand: () => void; onReplay: () => void;
@@ -19,12 +21,17 @@
   let review = $derived(!complete && session.fullHandReviewTrickCount > 0
     ? hand.completedTricks[session.fullHandReviewTrickCount - 1] : undefined);
   let tableCards = $derived(review?.cards ?? hand.currentTrick);
+  let guidance = $derived(guided ? heartsGuidance(hand) : null);
+  let guidedReview = $derived(guided && review ? heartsGuidedReview(review) : null);
+  let finalReview = $derived(guided && complete ? heartsGuidedReview(hand.completedTricks.at(-1)!, true) : null);
   let legal = $derived(new Set(hand.legalCardIds));
   let settlement = $derived(heartsSessionSettlement(session));
   let heartsVisibleScores = $derived(settlement.scores);
   let heartsStandings = $derived(heartsScorecardStandings(heartsVisibleScores));
   let heartsPlayerPlaceLabel = $derived(formatOrdinal(heartsStandings.find(item => item.seat === "You")?.rank ?? 1));
   let raw = $derived(seatPenaltiesForTricks(hand.completedTricks));
+  let moonShooter = $derived(heartsMoonShooter(raw));
+  let guidedSummary = $derived(`All 13 tricks are played. ${moonShooter ? heartsMoonResultText(moonShooter) : "Lowest score wins. Each heart counts 1; Q♠ counts 13."} Your saved match is unchanged.`);
   let heartsCurrentScoredSeatPenalties = $derived(heartsScoredSeatPenalties(raw));
   let fullHandSeatTrickCounts = $derived(seatTricksWonForTricks(hand.completedTricks));
   let results = $derived(settlement.result ? [...session.results, settlement.result] : session.results);
@@ -65,8 +72,8 @@
   </div>
 {/snippet}
 
-<TablePlaySurface flowLayout mode={complete ? "result" : "play"} ariaLabel="Hearts full hand"
-  title="Hearts hand" eyebrow="Hearts" statusLabel={complete ? (settlement.complete ? "Match over" : "Hand scored") : `Trick ${review ? session.fullHandReviewTrickCount : hand.trickNumber}`}
+<TablePlaySurface flowLayout stableFeedback={guided} mode={complete ? "result" : "play"} ariaLabel="Hearts full hand"
+  title={guided ? "Guided Hearts hand" : "Hearts hand"} eyebrow="Hearts" statusLabel={complete ? (settlement.complete ? "Match over" : "Hand scored") : `Trick ${review ? session.fullHandReviewTrickCount : hand.trickNumber}`}
   statusValue={`Hand ${session.results.length + 1}`} tableAriaLabel="Hearts hand table" {tableCards}
   showTable={!complete} pendingBySeat={!review && !complete && hand.currentPlayer === "You" ? { You: "You" } : {}}
   panelAriaLabel="Hearts hand decision" {onBack} onSurfaceClick={review ? onNextTrick : undefined}>
@@ -78,7 +85,7 @@
         <div><span>Points taken</span><strong>{hand.totalPenalty} / 26</strong></div>
         <div><span>Tricks</span><strong>{hand.completedTricks.length} / 13</strong></div>
       </div>
-      <div class="full-hand-summary-row table-score" aria-label="Hearts table score">
+      {#if !guided}<div class="full-hand-summary-row table-score" aria-label="Hearts table score">
         <span class="summary-row-label">Match including this hand</span>
         {#each scoreSeats as seat}
           <div>
@@ -86,15 +93,22 @@
             <strong>{heartsVisibleScores[seat]}</strong>
           </div>
         {/each}
-      </div>
+      </div>{/if}
 
     </div>
   {/snippet}
   {#snippet panel()}
     {#if complete}
-      <GameResult game="Hearts" completion={settlement.complete ? "match" : null} title={heartsResult.heading} summary={heartsResult.summary} />
+      <GameResult game="Hearts" completion={settlement.complete ? "match" : null} title={guided ? "Guided hand complete" : heartsResult.heading} summary={guided ? guidedSummary : heartsResult.summary} />
+      {#if finalReview}
+        <details class="guided-final-trick">
+          <summary>Last trick explained</summary>
+          <p>{finalReview.winning} {finalReview.scoring}</p>
+          <p>{finalReview.choice}</p>
+        </details>
+      {/if}
       <div class="hearts-result-stack" aria-label="Hearts hand score">
-        {@render heartsScorecard("Hearts final scorecard")}
+        {#if !guided}{@render heartsScorecard("Hearts final scorecard")}{/if}
         <div class="hearts-hand-breakdown" aria-label="This hand breakdown">
           <div class="hearts-hand-breakdown-row header">
             <span>This hand</span>
@@ -132,10 +146,18 @@
       {/if}
 
     {:else if review}
-      <div class="lesson-heading"><p class="eyebrow">Trick complete</p><h2>Read the table</h2></div>
-      <p class:warning={review.outcome === "captured_penalty"} class="outcome">{heartsTrickFeedback(review, hand)}</p>
+      {#if guidedReview}
+        <ExerciseFeedback coach="queen" reserveSpace eyebrow="Trick complete" title="Why this trick ended this way"
+          result={guidedReview.winning} resultAriaLabel="Trick winner explained"
+          explanation={`${guidedReview.scoring} ${guidedReview.choice}`} outcome={guidedReview.next} />
+      {:else}
+        <div class="lesson-heading"><p class="eyebrow">Trick complete</p><h2>Read the table</h2></div>
+        <p class:warning={review.outcome === "captured_penalty"} class="outcome">{heartsTrickFeedback(review, hand)}</p>
+      {/if}
     {:else}
-      <ExerciseFeedback eyebrow="Your turn" title="Choose your card" result={hand.prompt} {error} />
+      <ExerciseFeedback coach={guided ? "queen" : undefined} reserveSpace={guided} eyebrow="Your turn" title="Choose your card"
+        result={guidance ? `Rule: ${guidance.rule}` : hand.prompt}
+        explanation={guidance ? `Tactic: ${guidance.tip}` : ""} {error} />
       <CardChoiceHand cards={hand.playerHand} ariaLabel="Your Hearts hand" className="hand full-hand-cards"
         cardClassName="card hand-card full-hand-card"
         getCardClasses={card => ({ heart: card.suit === "H", legal: legal.has(card.id), illegal: !legal.has(card.id), selected: selectedCardId === card.id })}
@@ -143,10 +165,10 @@
     {/if}
     {#if error && (review || complete)}<p class="outcome warning">{error}</p>{/if}
     <div class="action-row">
-      <button class="secondary-action" onclick={onBack} type="button">Table</button>
+      {#if !guided || !complete}<button class="secondary-action" onclick={onBack} type="button">Table</button>{/if}
       {#if complete}
         {#if !settlement.complete}<button class="secondary-action" onclick={onReplay} type="button">Replay</button>{/if}
-        <button class="primary-action" disabled={dealing} onclick={onNextHand} type="button">{settlement.complete ? "New match" : "Next hand"}</button>
+        <button class="primary-action" disabled={dealing} onclick={onNextHand} type="button">{guided ? "Back to Learn" : settlement.complete ? "New match" : "Next hand"}</button>
       {:else if review}
         <button class="primary-action" onclick={onNextTrick} type="button">Next trick</button>
       {:else}
@@ -155,3 +177,9 @@
     </div>
   {/snippet}
 </TablePlaySurface>
+
+<style>
+  .guided-final-trick { border-block: 1px solid #ffffff26; padding: 4px 0; }
+  .guided-final-trick summary { min-height: 44px; align-content: center; cursor: pointer; }
+  .guided-final-trick p { font-size: 0.875rem; line-height: 1.5; }
+</style>

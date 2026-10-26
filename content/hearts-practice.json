@@ -5,8 +5,8 @@
       "scenarios": [
         {
           "id": "hearts-first-trick-follow-clubs",
-          "title": "First trick",
-          "prompt": "This is the first trick. Barbu led 2C, and you still have a club. Choose the legal play.",
+          "title": "Follow clubs on the opening trick",
+          "prompt": "Goal: follow the led suit. Barbu opened with 2C. You have a club, so you must play it.",
           "ledSuit": "C",
           "hand": [
             "3C",
@@ -32,8 +32,8 @@
         },
         {
           "id": "hearts-first-trick-duck-clubs",
-          "title": "First trick",
-          "prompt": "The opening trick is clean so far. Follow clubs without taking control if you can.",
+          "title": "Choose who leads next",
+          "prompt": "Goal: leave the lead to someone else. You must follow clubs; playing low is this exercise's tactic, not a rule.",
           "ledSuit": "C",
           "hand": [
             "4C",
@@ -59,8 +59,8 @@
         },
         {
           "id": "hearts-first-trick-void-safe-discard",
-          "title": "First trick",
-          "prompt": "Clubs were led on the first trick, but you have no clubs. Choose the safe discard before dumping points.",
+          "title": "Discard without points",
+          "prompt": "Goal: choose a legal opening discard. You have no clubs. On the first trick, you must avoid discarding points when another card is available.",
           "ledSuit": "C",
           "hand": [
             "8D",

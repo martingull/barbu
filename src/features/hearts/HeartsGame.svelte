@@ -4,8 +4,10 @@
   import HeartsPassing from "./HeartsPassing.svelte";
   import HeartsHandView from "./HeartsHandView.svelte";
   import HeartsPassExercise from "./HeartsPassExercise.svelte";
+  import HeartsGuidedHand from "./HeartsGuidedHand.svelte";
   import { heartsDef, heartsIntroduction, type HeartsPracticeAction } from "../../games/hearts";
   import { heartsIntroductionSteps } from "../../lessons/hearts/introduction";
+  import { heartsLessonTakeaway } from "../../lessons/hearts/takeaways";
   import { generateHeartsPracticeSet, type HeartsPracticeFocus } from "../../domain/heartsPractice";
   import { orderPracticePool } from "../../lessons/drillDecision";
   import { drillStepFromGeneratedScenario } from "../../lessons/generatedDrill";
@@ -17,17 +19,20 @@
     feature: HeartsFeature; initialEntry?: LearningEntry; onEntryConsumed?: () => void; onExploreBarbu?: () => void;
   } = $props();
   let learningFixed = $state(false);
-  $effect(() => { services.onSurfaceChange($feature.view === "hand" || learningFixed); });
+  let guidedSeed = $state<number | null>(null);
+  $effect(() => { services.onSurfaceChange(guidedSeed !== null || $feature.view === "hand" || learningFixed); });
+  function startGuidedHand() { guidedSeed = services.nextSeed(); }
+  function endGuidedHand() { guidedSeed = null; learningFixed = false; feature.openTable("learn"); }
   const focuses: Record<Exclude<HeartsPracticeAction, "pass">, HeartsPracticeFocus> = {
     first: "first-trick", avoid: "avoid-hearts", queen: "queen-danger", break: "break-hearts", moon: "stop-moon", score: "score-hand"
   };
   const names: Record<HeartsPracticeAction, string> = {
-    pass: "pass three", first: "first trick", avoid: "avoid hearts", queen: "Queen of Spades danger",
+    pass: "pass three", first: "opening trick rules", avoid: "avoid hearts", queen: "Queen of Spades danger",
     break: "break hearts", moon: "stop the moon", score: "score a hand"
   };
   function loadExercise(action: string, nextSeed: () => number) {
     const seed = nextSeed();
-    if (action === "introduction") return heartsIntroductionSteps(seed);
+    if (action === "introduction" || action === "object") return heartsIntroductionSteps(seed);
     if (action === "pass") return { seed };
     const focus = focuses[action as Exclude<HeartsPracticeAction, "pass">];
     const steps = generateHeartsPracticeSet(seed, focus).scenarios.map(drillStepFromGeneratedScenario);
@@ -35,7 +40,9 @@
   }
 </script>
 
-{#if $feature.view === "hand" && $feature.session}
+{#if guidedSeed !== null}
+  <HeartsGuidedHand seed={guidedSeed} onBack={endGuidedHand} />
+{:else if $feature.view === "hand" && $feature.session}
   {#if $feature.session.phase === "passing"}
     <HeartsPassing session={$feature.session} error={$feature.error} onBack={() => feature.openTable()}
       onSelect={feature.selectPass} onPass={feature.pass} />
@@ -46,14 +53,14 @@
   {/if}
 {:else}
   <GameLearning {...services} definition={heartsDef} gameName="Hearts" tab={$feature.tab}
-    entry={initialEntry} {onEntryConsumed} onPlay={() => $feature.saved ? feature.resume() : void feature.start()}
+    onGuidedPlay={startGuidedHand}
+    entry={initialEntry} {onEntryConsumed}
     onIntroductionComplete={() => services.onCompleteStep(heartsIntroduction.id)}
     introductionRecommendation={onExploreBarbu ? { ...heartsIntroduction.recommendation, onOpen: onExploreBarbu } : undefined}
-    playLabel={$feature.saved ? "Continue Hearts" : "Play Hearts"}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
-    {loadExercise} exerciseTitle={action => `Hearts practice: ${names[action as HeartsPracticeAction]}`}
+    {loadExercise} exerciseTitle={action => action === "object" ? "Hearts basics" : `Hearts practice: ${names[action as HeartsPracticeAction]}`}
     drillTitle={step => step.trick.title}
-    resultMessage={clean => clean ? "Each decision matched this lesson's goal. Try the same skill in a full Hearts hand." : "Review the feedback for the decisions you missed, then try this Hearts skill again."}>
+    resultMessage={(clean, action) => heartsLessonTakeaway(action, clean)}>
     {#snippet customExercise(context)}<HeartsPassExercise {context} />{/snippet}
     {#snippet play()}
       <PlayTabPanel table={heartsDef.table} {...heartsDef.playTabConfig}

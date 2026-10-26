@@ -19,7 +19,7 @@
       {#if context.action === "pile"}<div class="upcard"><CardFace card={step.session.hand.discards.at(-1)!} /></div>{/if}</div>
   {/snippet}
   {#snippet panel()}
-    <ExerciseFeedback eyebrow="Canasta" title={step.title} result={checked ? "" : step.prompt} explanation={feedback?.text}
+    <ExerciseFeedback coach={context.coach} eyebrow="Canasta" title={step.title} result={checked ? "" : step.prompt} explanation={feedback?.text}
       outcome={feedback ? feedback.good ? "Good" : feedback.illegal ? "Illegal" : "Risky" : ""} warning={feedback ? !feedback.good : false} />
     <CanastaCards cards={step.session.hand.hands[0]} selected={context.action === "discard" && selected ? [selected] : []}
       onSelect={card => { if (!checked && context.action === "discard") selected = card.id; }} label="Canasta exercise hand" />

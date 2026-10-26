@@ -7,14 +7,15 @@ async function home(page: Page) {
 }
 
 async function finishIntroduction(page: Page) {
-  const titles = ["Follow suit", "Avoid a heart", "Move the queen"];
-  for (let decision = 0; decision < 3; decision++) {
+  const titles = ["Follow suit", "Who wins the trick?", "Who takes the point?", "Avoid a heart", "Avoid the queen"];
+  const answers = ["3 C", "K C", "J D", "3 C", "2 D"];
+  for (let decision = 0; decision < 5; decision++) {
     await expect(page.locator("h1")).toHaveText(titles[decision]);
-    await expect(page.locator(".contract-status")).toContainText(`Decision ${decision + 1} of 3`);
-    await page.locator(".drill-hand .hand-card.legal").first().click();
+    await expect(page.locator(".contract-status")).toContainText(`Decision ${decision + 1} of 5`);
+    await page.locator(".drill-hand").getByRole("button", { name: answers[decision], exact: true }).click();
     await page.getByRole("button", { name: "Check answer", exact: true }).click();
     await expect(page.getByRole("button", { name: "Finish session", exact: true })).toHaveCount(0);
-    await page.getByRole("button", { name: decision === 2 ? "Finish introduction" : "Next decision", exact: true }).click();
+    await page.getByRole("button", { name: decision === 4 ? "Finish introduction" : "Next decision", exact: true }).click();
   }
   await expect(page.getByLabel("Introduction result", { exact: true })).toBeVisible();
   await expect(page.getByRole("status")).toHaveText("Introduction complete.");
@@ -27,6 +28,7 @@ test("Hearts introduction leads through a full hand and a saved second hand", as
   await page.goto("/");
   await page.getByRole("button", { name: "Try Hearts", exact: true }).click();
   await finishIntroduction(page);
+  await page.getByRole("button", { name: "Go to Play", exact: true }).click();
   await page.getByRole("button", { name: "Play Hearts", exact: true }).click();
   const passing = page.getByLabel("Your Hearts passing hand").getByRole("button");
   for (let i = 0; i < 3; i++) await passing.nth(i).click();
@@ -106,7 +108,7 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 740 }
     await expect(page.getByRole("button", { name: "Check answer", exact: true })).toBeInViewport();
     await page.screenshot({ path: info.outputPath("introduction.png"), fullPage: true });
     await finishIntroduction(page);
-    await expect(page.getByRole("button", { name: "Play Hearts", exact: true })).toBeInViewport();
+    await expect(page.getByRole("button", { name: "Go to Play", exact: true })).toBeInViewport();
     await expect(page.getByRole("button", { name: "Learn Hearts", exact: true })).toBeInViewport();
     await expect(page.getByRole("button", { name: "Learn Barbu", exact: true })).toBeInViewport();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -140,6 +142,7 @@ test("introduction never overwrites a saved match and is consumed after leaving"
   await finishIntroduction(page);
   await expect(page.getByRole("button", { name: "Play Hearts", exact: true })).toHaveCount(0);
   expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), key)).toEqual(saved);
+  await page.getByRole("button", { name: "Go to Play", exact: true }).click();
   await page.getByRole("button", { name: "Continue Hearts", exact: true }).click();
   await expect(page.getByLabel("Your Hearts passing hand").locator('[aria-pressed="true"]')).toHaveCount(1);
   await home(page);
@@ -201,6 +204,7 @@ test("new player can start play after introduction with unavailable storage", as
   await page.goto("/");
   await page.getByRole("button", { name: "Try Hearts", exact: true }).click();
   await finishIntroduction(page);
+  await page.getByRole("button", { name: "Go to Play", exact: true }).click();
   await page.getByRole("button", { name: "Play Hearts", exact: true }).click();
   await expect(page.getByLabel("Your Hearts passing hand")).toBeVisible();
   await home(page);

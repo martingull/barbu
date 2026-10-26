@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { GameTableDefinition } from "../games/tableFactory";
   import type { Snippet } from "svelte";
+  import { formatCardText } from "../presentation/cardDisplay";
 
   type Props = {
     table: GameTableDefinition;
@@ -45,7 +46,7 @@
   <div class="barbu-mode-copy">
     <p class="eyebrow">{table.tabs.play.intro.eyebrow}</p>
     <h2>{table.tabs.play.intro.title}</h2>
-    <p>{supportingCopy ?? table.tabs.play.intro.summary}</p>
+    <p>{formatCardText(supportingCopy ?? table.tabs.play.intro.summary)}</p>
   </div>
 
   <div class="table-action-groups" aria-label={actionAriaLabel}>
@@ -57,11 +58,11 @@
       {#if hasResume}
         <button class="drill-action" onclick={() => onResume?.()} type="button">{resumeLabel}</button>
         {#if resumeNote}
-          <small class="saved-run-note">{resumeNote}</small>
+          <small class="saved-run-note">{formatCardText(resumeNote)}</small>
         {/if}
       {/if}
       {#if primaryWarning}
-        <small class="play-action-warning" role="status">{primaryWarning}</small>
+        <small class="play-action-warning" role="status">{formatCardText(primaryWarning)}</small>
       {/if}
       <button
         class:resume-secondary={hasResume}
@@ -73,7 +74,7 @@
         {primaryLabel}
       </button>
       {#if footerNote}
-        <small class="saved-run-note">{footerNote}</small>
+        <small class="saved-run-note">{formatCardText(footerNote)}</small>
       {/if}
     </section>
 

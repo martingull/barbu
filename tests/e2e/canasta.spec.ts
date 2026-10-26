@@ -128,7 +128,7 @@ test("Canasta teaches twelve decisions without changing a saved match", async ({
   await page.getByRole("button", { name: "Table", exact: true }).first().click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
   for (const [topic, steps] of Object.entries(canastaExercises)) {
-    await page.getByRole("button", { name: /^(Start learning|Continue learning)$/ }).click();
+    await page.getByRole("button", { name: /^(Start lesson|Continue lesson)$/ }).click();
     await page.getByRole("button", { name: "See example", exact: true }).click();
     await page.getByRole("button", { name: "Try cards", exact: true }).click();
     for (let index = 0; index < steps.length; index++) {

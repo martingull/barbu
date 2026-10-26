@@ -3,7 +3,7 @@ import { shuffledDeck } from "./deck";
 import { chooseBarbuCard } from "./barbuPolicy";
 import { barbuTrickPoints, isBarbuTrickContract, type BarbuTrickContract } from "./barbuRules";
 import { originalSpadesCards, spadesBidFromId, suggestedSpadesBidForCards } from "./spadesBidding";
-import { heartsPoints, legalHeartsCards } from "./heartsRules";
+import { heartsPoints, legalHeartsCards, heartsHaveBeenBroken } from "./heartsRules";
 import { chooseWhistCard, whistPositionFromHand } from "./whistPolicy";
 import { bridgeBoardConditions } from "./bridgeBoard";
 import { chooseHeartsCard, chooseHeartsPass, heartsPositionFromHand } from "./heartsPolicy";
@@ -951,12 +951,6 @@ function legalSpadesCardsForState(state: FullHandState, basicLegal: Card[]) {
 function spadesHaveBeenBroken(state: FullHandState) {
   return [...state.completedTricks.flatMap((trick) => trick.cards), ...state.currentTrick].some(
     (played) => played.card.suit === "S"
-  );
-}
-
-function heartsHaveBeenBroken(state: FullHandState) {
-  return [...state.completedTricks.flatMap((trick) => trick.cards), ...state.currentTrick].some(
-    (played) => played.card.suit === "H"
   );
 }
 

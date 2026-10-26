@@ -56,7 +56,6 @@
   <BarbuPlay {feature} onBack={table} onStandaloneHand={standalone} />
 {:else}
   <GameLearning {...services} definition={barbuDef} gameName="Barbu" tab={$feature.tab} {entry} {lessonEntries}
-    onPlay={() => $feature.saved ? feature.resume() : void feature.start()} playLabel={$feature.saved ? "Continue Barbu" : "Play Barbu"}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
     resources={[
       { id: "review-results", title: "Review results", summary: "Return to your previous contract decisions.", onClick: () => { route = "review"; } },
@@ -74,7 +73,7 @@
     {#snippet customExercise(context)}
       {#key context.action}
         {#if context.fromCourse}
-          <BarbuGuidedLesson lessonId={context.action} onBack={context.onBack} onComplete={context.onComplete} />
+          <BarbuGuidedLesson coach={context.coach} lessonId={context.action} onBack={context.onBack} onComplete={context.onComplete} />
         {:else}
           <BarbuPracticeHand initialContract="Domino" initialSeed={context.seed} nextSeed={services.nextSeed} onBack={context.onBack} />
         {/if}

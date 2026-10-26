@@ -38,7 +38,7 @@ test("every table shares Learn and Play and keeps exercises inside Learn", async
     await expect(page.getByLabel("Continue learning")).toBeVisible();
     await expect(page.getByRole("button", { name: /Quick drill/ })).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Guided lessons", exact: true })).toHaveCount(0);
-    const expectedSkills: Record<string, number> = { Barbu: 7, Hearts: 8, Whist: 7, Spades: 5, Bridge: 4, "Gin Rummy": 3, "Card Counting I": 5 };
+    const expectedSkills: Record<string, number> = { Barbu: 7, Hearts: 8, Whist: 7, Spades: 5, Bridge: 5, "Gin Rummy": 5, "Card Counting I": 5 };
     await expect(page.locator(".learn-skill")).toHaveCount(expectedSkills[game]);
     const skillIds = await page.locator(".learn-skill").evaluateAll(rows => rows.map(row => row.getAttribute("data-skill")));
     expect(new Set(skillIds).size).toBe(skillIds.length);
@@ -73,9 +73,9 @@ test("Hearts breaking lesson stays ordered, fits small screens and replays the s
       ][index]);
       await expectLearningLayout(page);
       await page.screenshot({ path: info.outputPath(`hearts-breaking-${viewport.width}-${index}.png`), fullPage: true });
-      await page.getByRole("button", { name: index === 2 ? "Review session" : "Next decision", exact: true }).click();
+      await page.getByRole("button", { name: index === 2 ? "Finish topic" : "Next decision", exact: true }).click();
     }
-    await page.getByRole("button", { name: "Practice Hearts again", exact: true }).click();
+    await page.getByRole("button", { name: "Try again", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Only hearts remain", exact: true })).toBeVisible();
     await expect(page.getByLabel("Drill progress")).toContainText("0 / 3");
   }
@@ -91,7 +91,7 @@ test("legacy Barbu review flags do not add skills or reset completed lessons", a
   await expect(page.getByLabel("Barbu course progress")).toContainText("1 / 7 complete");
   await expect(page.locator('[data-skill="meet-contract"]')).toContainText("Complete");
   await expect(page.locator('[data-skill="generated-drill"], [data-skill="review"]')).toHaveCount(0);
-  await page.getByRole("button", { name: "Continue learning", exact: true }).click();
+  await page.getByRole("button", { name: "Continue lesson", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Spot the danger", exact: true })).toBeVisible();
 });
 
@@ -153,7 +153,7 @@ test("Bridge guided topics use the common lesson loop and preserve progress on r
   await expect(page.getByLabel("Bridge course progress")).toContainText("5 / 5 complete");
   await page.getByRole("button", { name: "Reset lessons", exact: true }).click();
   await expect(page.getByLabel("Bridge course progress")).toContainText("0 / 5 complete");
-  await page.getByRole("button", { name: "Start learning", exact: true }).click();
+  await page.getByRole("button", { name: "Start lesson", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Read the contract", exact: true })).toBeVisible();
 });
 
@@ -167,7 +167,7 @@ test("existing progress survives the merged menu and short hands stay beside act
     await page.getByRole("button", { name: "Open Hearts", exact: true }).click();
     await page.getByRole("tab", { name: "Learn", exact: true }).click();
     await expect(page.getByLabel("Hearts course progress")).toContainText("1 / 7 complete");
-    await expect(page.getByRole("button", { name: "Continue learning", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Continue lesson", exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Try cards: Avoid hearts", exact: true }).click();
     await expectLearningLayout(page);
     const hand = await page.locator(".drill-hand").boundingBox();

@@ -34,7 +34,7 @@
     </section>
   {/snippet}
   {#snippet panel()}
-    <ExerciseFeedback eyebrow={step.contract.longLabel} title={step.title}
+    <ExerciseFeedback coach={context.coach} eyebrow={step.contract.longLabel} title={step.title}
       result={checked ? "" : `In ${step.contract.label}, how many tricks must declarer and dummy win together?`}
       explanation={checked ? `Six base tricks + level ${step.contract.level} = ${step.contract.target} tricks. ${step.contract.strain === "NT" ? "No suit is trump." : `${suitSymbol(step.contract.strain)} is trump.`}` : step.hint}
       outcome={checked ? good ? "Good" : "Risky" : ""} warning={checked && !good} />

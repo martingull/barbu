@@ -25,7 +25,6 @@
     onBid={feature.setBid} onToggleBids={feature.toggleBids} onStartPlay={feature.startPlay} />
 {:else}
   <GameLearning {...services} definition={spadesDef} gameName="Spades" tab={$feature.tab}
-    onPlay={() => $feature.saved ? feature.resume() : void feature.start()} playLabel={$feature.saved ? "Continue Spades" : "Play Spades"}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
     loadExercise={(action, seed) => orderPracticePool(pools[action as SpadesPracticeAction], seed())}
     exerciseTitle={action => `Spades practice: ${names[action as SpadesPracticeAction]}`} drillTitle={() => "Spades lesson"} drillEyebrow="Spades"

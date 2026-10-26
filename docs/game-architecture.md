@@ -47,6 +47,19 @@ new game prose. `lessons/courseTypes.ts` owns their shared structure. Generated
 exercise templates stay in `content/` and deterministic generators in `domain/`.
 Do not duplicate the authored TypeScript courses as JSON merely for symmetry.
 
+Lesson result callbacks receive both the attempt outcome and exercise action so
+game content can supply a topic-specific takeaway through the shared result
+surface. Guided Hearts reuses `ExerciseFeedback` for rule/advice and trick review;
+its public-card review facts belong in `domain/heartsLearning.ts`. Do not add
+game-name branches to shared UI or infer tactical mistakes from penalty totals.
+Coached card decisions can opt into `TablePlaySurface.stableFeedback` paired with
+`ExerciseFeedback.reserveSpace`. This reserves a viewport-responsive feedback
+height plus the hand/action area across turns and reviews. Longer text scrolls
+inside a keyboard-accessible guidance region and resets to its start on the next
+decision; it must not resize the board. Ordinary Play and results keep their
+existing layouts. Browser checks compare board and card-slot geometry throughout
+all 13 tricks and after viewport resizing.
+
 Scoring and display copy have separate owners. For example, `domain/whistScoring.ts`
 settles the game, while `features/whist/whistPresentation.ts` formats the result.
 Partnership trick totals are shared domain calculations in `trickTakingScore.ts`;
@@ -217,6 +230,52 @@ Catalog metadata stays in `games/tableFactory.ts`.
 Pure decision/review and generated-scenario adapters live under `src/lessons/`.
 Keep shared card layout and CSS in the existing components; do not copy them
 into each feature or add game-specific viewport calculations.
+
+Learning characters are presentation metadata in `presentation/learningCharacters.ts`.
+`CharacterPortrait` displays purpose-made portraits without zooming into playing
+cards: the existing Barbu logo and matching Queen/Jack artwork under
+`public/characters/`. `LearningCoach` and `ExerciseFeedback` reuse it for
+explanations and decision feedback. Barbu is
+the default guide, with the Queen of Spades for Hearts and the Jack of Clubs on
+the Card Counting menu. These guides do not represent player seats or change
+opponent policy. Full-game avatars and character animation are not implemented.
+
+`LearnPanel` shows an open, numbered path and the next unfinished topic; it never
+locks other lessons. The next lesson and its Start/Continue lesson action come
+first, followed by a separate Play with guidance section when the game supplies
+an unsaved guided hand. Progress and the numbered path follow those choices.
+`GuidedHandEntry` is shared by the menu, introduction result and lesson result;
+it remains available after the path is complete. Saved-match resume belongs to
+Play, not Learn. Results group Try again/Next lesson together and route to the
+Play tab through Go to Play instead of silently starting or resuming a match.
+Existing boolean completion in `barbu.courseProgress.v1`
+remains navigation progress, not mastery. Completed attempts with decision results
+also record their latest correct/total counts and attempt count through
+`domain/learningEvidence.ts` and `persistence/learningEvidence.ts`, under the separate
+`barbu.learningEvidence.v1` key. Earlier completions remain unscored. Early exits
+do not record a full attempt; Hearts passing supplies all three decisions too.
+The finished path recommends revisiting a topic whose latest attempt missed its
+goal. This is not a spaced-repetition or mastery model. Resetting a game's lessons
+clears only its completion flags and evidence, never its saved match or other games.
+
+Hearts' introduction and first topic share five decision-first foundations:
+follow suit, identify the winner, assign a heart point, avoid a heart, then avoid
+the queen. `lessons/hearts/introduction.ts` authors these reduced positions;
+`domain/heartsLearning.ts` evaluates them using the normal Hearts legality and
+trick-scoring primitives. Winner questions keep all four cards on the table and
+never play the selected answer as a fifth card. Each missed concept adds one
+different follow-up through `domain/learningSequence.ts`; both answers count in
+the attempt evidence. Follow-ups do not recursively add more questions.
+The shared `decisionFirst` step metadata keeps the written explanation available
+through Read lesson without making it a prerequisite for playing cards.
+
+`HeartsGuidedHand` offers an optional unsaved 13-trick hand after the introduction
+and from Learn. It composes the existing passing/hand views and normal
+`heartsSession` transitions, with contextual coaching instead of a separate engine.
+It returns to Learn after one hand, does not award topic completion, and never
+overwrites a saved match. This is rules guidance, not expert tactical analysis.
+The presentation dependency check permits the existing launcher PNG as shared
+artwork; native code remains outside the presentation layer.
 
 This is an incremental frontend refactor, not another engine migration.
 All five game features and Card Counting are isolated; the shell launches them

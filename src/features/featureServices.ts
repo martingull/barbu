@@ -1,19 +1,23 @@
 import type { DrillResult } from "../lessons/drillDecision";
 import type { PlayBarbuAttempt } from "../lessons/drillReview";
+import type { LearningEvidence } from "../domain/learningEvidence";
+import type { LearningCharacterId } from "../presentation/learningCharacters";
 
 export type FeatureServices = {
   completedSteps: Record<string, boolean>;
+  learningEvidence?: LearningEvidence;
   history: PlayBarbuAttempt[];
   nextSeed: () => number;
   onBack: () => void;
   onReference: () => void;
-  onCompleteStep: (id: string) => void;
+  onCompleteStep: (id: string, results?: DrillResult[]) => void;
   onResetSteps: (ids: string[]) => void;
   onExerciseComplete: (results: DrillResult[]) => void;
   onSurfaceChange: (fixed: boolean) => void;
 };
 
 export type CustomExerciseContext = {
+  coach?: LearningCharacterId;
   action: string;
   seed: number;
   fromCourse: boolean;

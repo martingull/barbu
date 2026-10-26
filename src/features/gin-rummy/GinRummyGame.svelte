@@ -17,7 +17,6 @@
     onReplay={feature.replay} onNew={() => void feature.start()} />
 {:else}
   <GameLearning {...services} definition={ginRummyDef} gameName="Gin Rummy" tab={$feature.tab}
-    onPlay={() => $feature.saved ? feature.resume() : void feature.start()} playLabel={$feature.saved ? "Continue Gin Rummy" : "Play Gin Rummy"}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
     loadExercise={() => ({ seed: 0 })} exerciseTitle={() => "Gin Rummy"} drillTitle={step => step.trick.title}
     resultMessage={clean => clean ? "Take this skill into a full hand, or continue learning." : "Check the decisions you missed, then try this topic again."}>

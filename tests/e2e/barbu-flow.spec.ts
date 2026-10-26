@@ -1671,7 +1671,7 @@ test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testI
   await expect(page.getByRole("tab", { name: "Learn" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("button", { name: "Quick drill", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Try cards: Pass three" })).toBeVisible();
-  await expect(page.getByRole("button", { name: /^First trick\b/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Opening trick rules\b/ })).toBeVisible();
   await expect(page.getByRole("button", { name: "Try cards: Avoid hearts" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Try cards: Queen of Spades danger" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Try cards: Break hearts" })).toBeVisible();
@@ -1892,8 +1892,8 @@ test("Hearts micro drills teach broken hearts moon defense and score reading", a
   await page.getByRole("button", { name: "Open Hearts" }).click();
   await page.getByRole("tab", { name: "Learn" }).click();
 
-  await page.getByRole("button", { name: /^First trick\b/ }).click();
-  await expect(page.getByLabel("Drill decision")).toContainText(/first trick/i);
+  await page.getByRole("button", { name: /^Opening trick rules\b/ }).click();
+  await expect(page.getByLabel("Drill decision")).toContainText("Goal:");
   await expect(page.getByLabel("Drill progress")).toContainText("0 / 3");
   await completeHeartsFirstTrickDecision(page);
   await expect(page.getByLabel("Drill decision")).toContainText("Good");

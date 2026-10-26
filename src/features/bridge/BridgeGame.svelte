@@ -28,7 +28,6 @@
   {/if}
 {:else}
   <GameLearning {...services} definition={bridgeDef} gameName="Bridge" tab={$feature.tab}
-    onPlay={() => $feature.saved ? feature.resume() : void feature.start()} playLabel={$feature.saved ? "Continue Bridge" : "Play Bridge"}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
     loadExercise={action => action === "bidding" || action === "contracts" ? { seed: 0 }
       : action === "dummy" ? bridgeDummyDrillPool : action === "defense" ? bridgeDefenseDrillPool : bridgeDeclarerDrillPool}
@@ -36,7 +35,7 @@
     resultMessage={clean => clean ? "Clean Bridge practice. Keep planning declarer play, using dummy, and defending 1NT." : "Repeat the Bridge pattern until dummy, declarer, and defensive plans feel automatic."}>
     {#snippet customExercise(context)}
       {#if context.action === "contracts"}<BridgeContractExercise {context} />
-      {:else}<BridgeBiddingPractice onBack={context.onBack} onComplete={context.onComplete} />{/if}
+      {:else}<BridgeBiddingPractice coach={context.coach} onBack={context.onBack} onComplete={context.onComplete} />{/if}
     {/snippet}
     {#snippet play()}
       <PlayTabPanel table={bridgeDef.table} {...bridgeDef.playTabConfig}

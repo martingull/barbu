@@ -3,12 +3,18 @@
   import TablePlaySurface from "./TablePlaySurface.svelte";
   import { drillOutcomeLabels, type DrillResult } from "../lessons/drillDecision";
   import type { CourseContent } from "../lessons/courseTypes";
+  import LearningCoach from "./LearningCoach.svelte";
+  import GuidedHandEntry from "./GuidedHandEntry.svelte";
+  import type { LearningCharacterId } from "../presentation/learningCharacters";
+  import { formatCardText } from "../presentation/cardDisplay";
 
-  let { title, results, message, complete, total, kind, review, onBack, actions, playAction }: {
+  let { title, results, message, complete, total, kind, review, onBack, actions, playAction, coach, guidedHand }: {
     title: string; results: DrillResult[]; message: string; complete: boolean; total: number;
     kind: "Topic" | "Exercise";
     review?: CourseContent["review"]; onBack: () => void; actions: Snippet;
     playAction?: Snippet;
+    coach?: LearningCharacterId;
+    guidedHand?: { gameName: string; onStart: () => void };
   } = $props();
 </script>
 
@@ -20,22 +26,23 @@
     {#if results.length}
       <p class="result">{results.filter(result => result.clean).length} of {results.length} decisions matched the lesson's goal.</p>
     {/if}
-    <p class="result">{message}</p>
+    {#if coach}<LearningCoach character={coach} {message} compact />{:else}<p class="result">{formatCardText(message)}</p>{/if}
     <div class="learning-actions" role="group" aria-label="Lesson actions">{@render actions()}</div>
+    {#if guidedHand}<GuidedHandEntry {...guidedHand} />{/if}
     {#if results.length || review}
       <details>
         <summary>Review decisions</summary>
         {#if results.length}
           <ol aria-label="Decision results">
             {#each results as result}
-              <li><strong>{result.cardLabel}</strong><span>{drillOutcomeLabels[result.outcome]}</span></li>
+              <li><strong>{formatCardText(result.cardLabel)}</strong><span>{drillOutcomeLabels[result.outcome]}</span></li>
             {/each}
           </ol>
         {/if}
         {#if review}
-          <h2>{review.heading}</h2>
-          <p>{review.body}</p>
-          <ul>{#each review.points as point}<li>{point.text}</li>{/each}</ul>
+          <h2>{formatCardText(review.heading)}</h2>
+          <p>{formatCardText(review.body)}</p>
+          <ul>{#each review.points as point}<li>{formatCardText(point.text)}</li>{/each}</ul>
         {/if}
       </details>
     {/if}

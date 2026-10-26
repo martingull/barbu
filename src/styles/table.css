@@ -55,6 +55,13 @@
   flex: none;
 }
 
+/* Reserve the same guidance, two-row hand and action space for decisions and
+   reviews. Only viewport changes, not the length of a message, resize the board. */
+.app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play.stable-feedback {
+  --flow-feedback-height: clamp(88px, 22dvh, 160px);
+  --flow-panel-space: calc(var(--flow-feedback-height) + 60px);
+}
+
 .app-shell.fixed-play-screen .table-play-surface.flow-play.bridge-play-surface {
   --flow-panel-space: 106px;
 }

@@ -30,7 +30,6 @@
     onNextTrick={feature.nextTrick} onNextHand={() => void feature.start(true)} onReplay={feature.replay} />
 {:else}
   <GameLearning {...services} definition={whistDef} gameName="Whist" tab={$feature.tab}
-    onPlay={() => $feature.saved ? feature.resume() : void feature.start()} playLabel={$feature.saved ? "Continue Whist" : "Play Whist"}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
     loadExercise={(action, seed, fromCourse) => action === "lead" && !fromCourse ? { seed: 0 } : orderPracticePool(pools[action as WhistPracticeAction], seed())}
     exerciseTitle={action => `Whist practice: ${names[action as WhistPracticeAction]}`} drillTitle={() => "Whist lesson"} drillEyebrow="Whist"

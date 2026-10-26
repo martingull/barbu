@@ -5,7 +5,7 @@ export const heartsCourses: CourseContent[] = [
     id: "hearts-object",
     game: "hearts",
     pathStepId: "hearts-object",
-    practiceTarget: { kind: "practice", game: "hearts", action: "avoid" },
+    practiceTarget: { kind: "practice", game: "hearts", action: "object" },
     contract: "Hearts",
     title: "Object of Hearts",
     concept: {
@@ -13,27 +13,27 @@ export const heartsCourses: CourseContent[] = [
       body:
         "Hearts is a trick-avoidance game in the Black Lady style. Each heart is one penalty point, the queen of spades is thirteen, and the low score wins.",
       points: [
-        { marker: "1", text: "Duck tricks when hearts or the queen of spades are likely to land there." },
-        { marker: "2", text: "Follow suit when you can; danger cards matter when someone is void." },
-        { marker: "3", text: "Sometimes taking a small penalty stops one player from taking all of them." }
+        { marker: "1", text: "A trick is one card from each player. Play the same suit as the first card if you have it." },
+        { marker: "2", text: "The highest card of that suit wins all four cards. Ace is highest, then king, queen, jack, 10 down to 2." },
+        { marker: "3", text: "The winner takes the points: 1 for each heart and 13 for the queen of spades. Lowest score wins." }
       ]
     },
     example: {
-      heading: "Right leads clubs and a heart lands off-suit.",
+      heading: "Left leads clubs and a heart lands off-suit.",
       body:
         "The heart is a penalty point, but it only hurts the player who wins the trick. First find the current winner, then choose a card that keeps the point away from you.",
       sequence: [
-        { label: "Lead", text: "Right plays 9C, so clubs are led." },
-        { label: "Danger", text: "Left is void and discards 7H into the trick." },
-        { label: "Your turn", text: "Follow clubs low if it keeps you under the winner." }
+        { label: "Lead", text: "Left plays 9C, so clubs are led." },
+        { label: "Danger", text: "Barbu has no clubs and plays 7H into the trick." },
+        { label: "Your turn", text: "Right plays KC. Follow clubs with a lower card to avoid winning the point." }
       ],
       ariaLabel: "Hearts object example table",
       tableCards: [
-        { seat: "Right", card: { id: "9C", rank: "9", suit: "C", label: "9C" } },
-        { seat: "Left", card: { id: "7H", rank: "7", suit: "H", label: "7H" } },
-        { seat: "Tutor", card: { id: "KC", rank: "K", suit: "C", label: "KC" } }
+        { seat: "Left", card: { id: "9C", rank: "9", suit: "C", label: "9C" } },
+        { seat: "Tutor", card: { id: "7H", rank: "7", suit: "H", label: "7H" } },
+        { seat: "Right", card: { id: "KC", rank: "K", suit: "C", label: "KC" } }
       ],
-      pendingBySeat: { You: "duck" }
+      pendingBySeat: { You: "Your turn" }
     },
     review: {
       heading: "Hearts starts with locating the penalty and the winner.",

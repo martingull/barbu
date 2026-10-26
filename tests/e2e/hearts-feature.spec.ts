@@ -23,7 +23,7 @@ test("Hearts match survives Card Counting, a lesson and a reload", async ({ page
   await page.getByRole("button", { name: "Games", exact: true }).click();
   await page.getByRole("button", { name: "Open Hearts", exact: true }).click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
-  await page.locator('[data-skill="hearts-object"] .lesson-topic').click();
+  await page.locator('[data-skill="hearts-avoid"] .lesson-topic').click();
   await page.getByRole("button", { name: "See example", exact: true }).click();
   await page.getByRole("button", { name: "Try cards", exact: true }).click();
   for (let i = 0; i < 3; i++) {

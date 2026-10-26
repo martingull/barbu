@@ -1,10 +1,12 @@
 <script lang="ts">
   import TablePlaySurface from "../../components/TablePlaySurface.svelte";
   import CardChoiceHand from "../../components/CardChoiceHand.svelte";
+  import LearningCoach from "../../components/LearningCoach.svelte";
   import { formatCardList } from "../../presentation/cardDisplay";
   import { heartsPassDirectionLabel, heartsPassTargetLabel, heartsPassReceiveLabel } from "./heartsPresentation";
   import type { HeartsSession } from "../../domain/heartsSession";
-  let { session, error: heartsPassError, onBack, onSelect, onPass }: {
+  let { session, error: heartsPassError, guided = false, onBack, onSelect, onPass }: {
+    guided?: boolean;
     session: HeartsSession; error: string; onBack: () => void; onSelect: (id: string) => void; onPass: () => void;
   } = $props();
   let heartsPassingHand = $derived(session.fullHand);
@@ -58,6 +60,7 @@
       Choose exactly three cards to pass to {heartsPassTargetLabel(heartsPassDirection)}. You will receive three cards
       from {heartsPassReceiveLabel(heartsPassDirection)}.
     </p>
+    {#if guided}<LearningCoach character="queen" compact message="Before the tricks, exchange three cards. High cards can force you to win points later. Keep some low cards as safer choices. This practice hand will not change your saved match." />{/if}
     {#if heartsPassSelectedCards.length}
       <p class="explanation">
         Passing: {formatCardList(heartsPassSelectedCards)}

@@ -12,6 +12,7 @@
     eyebrow?: string;
     mode?: TablePlayMode;
     flowLayout?: boolean;
+    stableFeedback?: boolean;
     onBack: () => void;
     onSurfaceClick?: () => void;
     panel: Snippet;
@@ -39,6 +40,7 @@
     eyebrow = "",
     mode = "play",
     flowLayout = false,
+    stableFeedback = false,
     onBack,
     onSurfaceClick,
     panel,
@@ -95,6 +97,7 @@
   class:compact-result={mode === "result"}
   class:table-hidden={!showTable}
   class:flow-play={flowLayout && mode === "play"}
+  class:stable-feedback={stableFeedback && flowLayout && mode === "play"}
   class={`table-play-surface ${surfaceClassName}`.trim()}
   use:fitBridgeCardSize={flowLayout && mode === "play" && tableVariant === "bridge"}
   aria-label={ariaLabel}

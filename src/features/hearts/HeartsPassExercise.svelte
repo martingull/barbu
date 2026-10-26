@@ -5,8 +5,11 @@
   import { generateHeartsPassPractice, evaluateHeartsPass, heartsPassPracticeCount as heartsPassPracticeTotalSteps } from "../../domain/heartsPractice";
   import type { Card } from "../../domain/types";
   import type { CustomExerciseContext } from "../featureServices";
+  import type { DrillResult } from "../../lessons/drillDecision";
+  import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
   let { context }: { context: CustomExerciseContext } = $props();
   let heartsPassPracticeStepIndex = $state(0);
+  let results = $state<DrillResult[]>([]);
   let heartsPassPractice = $derived(generateHeartsPassPractice(context.seed + heartsPassPracticeStepIndex));
   let heartsPassPracticeSelectedCardIds = $state<string[]>([]);
   let heartsPassPracticeChecked = $state(false);
@@ -35,7 +38,9 @@
   }
   function nextHeartsPassPracticeStep() {
     if (!heartsPassPracticeChecked) return;
-    if (heartsPassPracticeIsLastStep) { context.onComplete(); return; }
+    results = [...results, { contract: "Hearts", cardLabel: formatCardList(heartsPassPracticeSelectedCards),
+      outcome: heartsPassPracticeGood ? "good" : "risky", clean: heartsPassPracticeGood, reason: "pass_selection" }];
+    if (heartsPassPracticeIsLastStep) { context.onComplete(results); return; }
     heartsPassPracticeStepIndex += 1;
     heartsPassPracticeSelectedCardIds = [];
     heartsPassPracticeChecked = false;
@@ -78,31 +83,14 @@
   {/snippet}
 
   {#snippet panel()}
-    <div class="lesson-heading">
-      <p class="eyebrow">Before the hand</p>
-      <h2>{heartsPassPractice.title}</h2>
-    </div>
-
-    {#if !heartsPassPracticeChecked}
-      <p class="result">{heartsPassPractice.prompt}</p>
-    {/if}
-    {#if heartsPassPracticeError}
-      <p class="outcome warning">{heartsPassPracticeError}</p>
-    {:else if heartsPassPracticeChecked}
-      <p class:warning={!heartsPassPracticeGood} class="outcome">
-        {heartsPassPracticeGood ? "Good pass." : "Risky pass."}
-        {heartsPassPracticeOutcome?.explanation}
-      </p>
-      {#if !heartsPassPracticeGood}
-        <p class="explanation pass-recommendation">
-          Suggested: {formatCardList(heartsPassPractice.recommendedPass)}.
-        </p>
-      {/if}
-    {:else if heartsPassPracticeSelectedCards.length}
-      <p class="explanation">
-        Passing: {formatCardList(heartsPassPracticeSelectedCards)}
-      </p>
-    {/if}
+    <ExerciseFeedback coach={context.coach} eyebrow="Before the hand" title={heartsPassPractice.title}
+      result={heartsPassPracticeChecked ? "" : heartsPassPractice.prompt}
+      error={heartsPassPracticeError} warning={!heartsPassPracticeGood}
+      outcome={!heartsPassPracticeError && heartsPassPracticeChecked
+        ? `${heartsPassPracticeGood ? "Good pass." : "Risky pass."} ${heartsPassPracticeOutcome.explanation}` : ""}
+      explanation={heartsPassPracticeError ? "" : heartsPassPracticeChecked
+        ? heartsPassPracticeGood ? "" : `Suggested: ${formatCardList(heartsPassPractice.recommendedPass)}.`
+        : heartsPassPracticeSelectedCards.length ? `Passing: ${formatCardList(heartsPassPracticeSelectedCards)}` : ""} />
 
     <CardChoiceHand
       cards={heartsPassPractice.playerHand}
