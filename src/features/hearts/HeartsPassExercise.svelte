@@ -4,21 +4,20 @@
   import CardChoiceHand from "../../components/CardChoiceHand.svelte";
   import { formatCardList } from "../../presentation/cardDisplay";
   import { evaluateHeartsPass } from "../../domain/heartsPractice";
-  import { heartsPassingSteps } from "../../lessons/hearts/exercises";
-  import { insertLearningFollowUp } from "../../domain/learningSequence";
+  import { heartsPassingSteps, heartsPassBreakdown, type HeartsPassStep } from "../../lessons/hearts/exercises";
+  import { createLearningSession, checkLearningAnswer, advanceLearningSession } from "../../domain/learningSession";
   import type { Card } from "../../domain/types";
   import type { CustomExerciseContext } from "../featureServices";
   import type { DrillResult } from "../../lessons/drillDecision";
   import type { DecisionReview } from "../../lessons/decisionReview";
   import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
   let { context }: { context: CustomExerciseContext } = $props();
-  let heartsPassPracticeStepIndex = $state(0);
-  let results = $state<DrillResult[]>([]);
-  let reviews = $state<DecisionReview[]>([]);
-  let steps = $state(untrack(() => heartsPassingSteps(context.seed)));
+  let session = $state(untrack(() => createLearningSession<HeartsPassStep, DrillResult, DecisionReview>(heartsPassingSteps(context.seed))));
+  let heartsPassPracticeStepIndex = $derived(session.index);
+  let steps = $derived(session.steps);
   let heartsPassPractice = $derived(steps[heartsPassPracticeStepIndex]);
   let heartsPassPracticeSelectedCardIds = $state<string[]>([]);
-  let heartsPassPracticeChecked = $state(false);
+  let heartsPassPracticeChecked = $derived(session.phase !== "answer");
   let heartsPassPracticeError = $state("");
   let heartsPassPracticeSelectedCards = $derived(heartsPassPractice.playerHand.filter(card => heartsPassPracticeSelectedCardIds.includes(card.id)));
   let heartsPassPracticeOutcome = $derived(evaluateHeartsPass(heartsPassPractice, heartsPassPracticeSelectedCardIds));
@@ -41,21 +40,19 @@
     if (heartsPassPracticeChecked) return;
     if (!heartsPassPracticeCanCheck) { heartsPassPracticeError = "Choose exactly three cards to pass."; return; }
     heartsPassPracticeError = "";
-    heartsPassPracticeChecked = true;
+    session = checkLearningAnswer(session, { contract: "Hearts", cardLabel: formatCardList(heartsPassPracticeSelectedCards),
+      outcome: heartsPassPracticeGood ? "good" : "risky", clean: heartsPassPracticeGood, reason: "pass_selection" },
+      { title: heartsPassPractice.title, prompt: heartsPassPractice.prompt,
+      explanation: heartsPassPracticeOutcome.explanation + (heartsPassPracticeGood ? "" : ` Suggested: ${formatCardList(heartsPassPractice.recommendedPass)}.`),
+      breakdown: heartsPassBreakdown(heartsPassPractice, heartsPassPracticeSelectedCardIds),
+      selectedCardIds: [...heartsPassPracticeSelectedCardIds],
+      groups: [{ label: "Your hand before passing", cards: heartsPassPractice.playerHand }] });
   }
   function nextHeartsPassPracticeStep() {
-    if (!heartsPassPracticeChecked || results.length !== heartsPassPracticeStepIndex) return;
-    results = [...results, { contract: "Hearts", cardLabel: formatCardList(heartsPassPracticeSelectedCards),
-      outcome: heartsPassPracticeGood ? "good" : "risky", clean: heartsPassPracticeGood, reason: "pass_selection" }];
-    reviews = [...reviews, { title: heartsPassPractice.title, prompt: heartsPassPractice.prompt,
-      explanation: heartsPassPracticeOutcome.explanation + (heartsPassPracticeGood ? "" : ` Suggested: ${formatCardList(heartsPassPractice.recommendedPass)}.`),
-      selectedCardIds: [...heartsPassPracticeSelectedCardIds],
-      groups: [{ label: "Your hand before passing", cards: heartsPassPractice.playerHand }] }];
-    steps = insertLearningFollowUp(steps, heartsPassPracticeStepIndex, heartsPassPracticeGood, heartsPassPractice.followUp);
-    if (heartsPassPracticeStepIndex === steps.length - 1) { context.onComplete(results, reviews); return; }
-    heartsPassPracticeStepIndex += 1;
+    if (session.phase !== "feedback") return;
+    session = advanceLearningSession(session);
+    if (session.phase === "complete") { context.onComplete(session.results, session.reviews); return; }
     heartsPassPracticeSelectedCardIds = [];
-    heartsPassPracticeChecked = false;
     heartsPassPracticeError = "";
   }
 </script>
@@ -96,6 +93,8 @@
 
   {#snippet panel()}
     <ExerciseFeedback coach={context.coach} eyebrow="Before the hand" title={heartsPassPractice.title}
+      teaching={!heartsPassPracticeChecked ? heartsPassPractice.teaching : undefined}
+      breakdown={heartsPassPracticeChecked ? heartsPassBreakdown(heartsPassPractice, heartsPassPracticeSelectedCardIds) : undefined}
       result={heartsPassPracticeChecked ? "" : heartsPassPractice.prompt}
       error={heartsPassPracticeError} warning={!heartsPassPracticeGood}
       outcome={!heartsPassPracticeError && heartsPassPracticeChecked

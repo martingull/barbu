@@ -1,6 +1,7 @@
 import type { Card, Seat } from "../domain/types";
 import { drillDecision, type DrillStep } from "./drillDecision";
 import { scoreSeatLabel } from "../presentation/scorePresentation";
+import type { FeedbackBreakdown } from "./learningPresentation";
 
 // These visible-position snapshots live only for the current lesson, not in saves.
 export type DecisionReview = {
@@ -8,6 +9,7 @@ export type DecisionReview = {
   prompt: string;
   explanation: string;
   context?: string;
+  breakdown?: FeedbackBreakdown;
   selectedCardIds?: string[];
   groups: { label: string; cards: Card[]; captions?: Record<string, string> }[];
 };
@@ -19,6 +21,7 @@ export function drillDecisionReview(step: DrillStep, card: Card, seatLabels: Par
     title: step.trick.title,
     prompt: step.trick.beforeResult,
     explanation: drillDecision(step, card).feedback,
+    breakdown: step.breakdownByCard?.[card.id],
     selectedCardIds: [card.id],
     groups: [
       ...(table.length ? [{ label: layout ? "Layout before your choice" : "Table before your choice", cards: table.map(play => play.card),

@@ -4,6 +4,7 @@
   import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
   import GameResult from "../../components/GameResult.svelte";
   import HeartsGuidedRecap from "./HeartsGuidedRecap.svelte";
+  import GuidedHandActions from "../../components/GuidedHandActions.svelte";
   import { heartsGuidance, heartsGuidedReview } from "./heartsGuidance";
   import { heartsSessionSettlement, heartsMoonShooter, heartsScoredSeatPenalties, heartsMatchTarget, type HeartsSession } from "../../domain/heartsSession";
   import { seatPenaltiesForTricks } from "../../domain/trickTakingScore";
@@ -158,17 +159,20 @@
         isPressed={card => selectedCardId === card.id} onSelect={card => onSelect(card.id)} />
     {/if}
     {#if error && (review || complete)}<p class="outcome warning">{error}</p>{/if}
+    {#if guided && complete}
+      <GuidedHandActions {onReplay} {onBack} onIndependentPlay={onNextHand} />
+    {:else}
     <div class="action-row">
-      {#if !guided || !complete}<button class="secondary-action" onclick={onBack} type="button">Table</button>{/if}
+      <button class="secondary-action" onclick={onBack} type="button">Table</button>
       {#if complete}
         {#if !settlement.complete}<button class="secondary-action" onclick={onReplay} type="button">Replay</button>{/if}
-        <button class="primary-action" disabled={dealing} onclick={onNextHand} type="button">{guided ? "Play without guidance" : settlement.complete ? "New match" : "Next hand"}</button>
+        <button class="primary-action" disabled={dealing} onclick={onNextHand} type="button">{settlement.complete ? "New match" : "Next hand"}</button>
       {:else if review}
         <button class="primary-action" onclick={onNextTrick} type="button">Next trick</button>
       {:else}
         <button class="primary-action" disabled={dealing || !legal.has(selectedCardId)} onclick={onPlay} type="button">Play card</button>
       {/if}
     </div>
-    {#if guided && complete}<button class="secondary-action" onclick={onBack} type="button">Back to Learn</button>{/if}
+    {/if}
   {/snippet}
 </TablePlaySurface>

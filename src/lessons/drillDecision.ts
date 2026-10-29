@@ -1,7 +1,9 @@
 import type { Card, GuidedCardOutcome, GuidedTrick, PracticeReason, Seat, TableCard } from "../domain/types";
 import { formatCardLabel } from "../presentation/cardDisplay";
+import type { Teaching, FeedbackBreakdown } from "./learningPresentation";
 
 export type DrillStep = { scenarioId?: string; contract: string; title: string; trick: GuidedTrick;
+  teaching?: Teaching; breakdownByCard?: Record<string, FeedbackBreakdown>;
   choiceMode?: "identify" | "select"; followUp?: DrillStep;
   playingSeat?: Seat; handLabel?: string; referenceHand?: { label: string; cards: Card[] };
   tableAfterByCard?: Partial<Record<string, TableCard[]>> };

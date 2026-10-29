@@ -2,6 +2,8 @@
   import { formatCardText } from "../presentation/cardDisplay";
   import CharacterPortrait from "./CharacterPortrait.svelte";
   import { learningCharacters, type LearningCharacterId } from "../presentation/learningCharacters";
+  import { teachingLabels, type Teaching, type FeedbackBreakdown as Breakdown } from "../lessons/learningPresentation";
+  import FeedbackBreakdown from "./FeedbackBreakdown.svelte";
 
   type Props = {
     eyebrow: string;
@@ -14,6 +16,8 @@
     error?: string;
     coach?: LearningCharacterId;
     reserveSpace?: boolean;
+    teaching?: Teaching;
+    breakdown?: Breakdown;
   };
 
   let {
@@ -26,7 +30,9 @@
     warning = false,
     error = "",
     coach,
-    reserveSpace = false
+    reserveSpace = false,
+    teaching,
+    breakdown
   }: Props = $props();
   let feedbackRegion: HTMLDivElement | undefined = $state();
   $effect(() => {
@@ -42,6 +48,9 @@
 </div>
 
 {#snippet feedback()}
+{#if teaching}
+  <p class="teaching-stage">{teachingLabels[teaching.stage]}</p>
+{/if}
 {#if result}
   <p class="result" aria-label={resultAriaLabel || undefined}>{formatCardText(result)}</p>
 {/if}
@@ -57,6 +66,8 @@
 {#if outcome}
   <p class:warning class="outcome">{formatCardText(outcome)}</p>
 {/if}
+{#if teaching?.guidance}<p class="explanation">{formatCardText(teaching.guidance)}</p>{/if}
+{#if breakdown}<FeedbackBreakdown {breakdown} />{/if}
 {/snippet}
 
 {#if coach}
@@ -75,6 +86,7 @@
 {/if}
 
 <style>
+  .teaching-stage { margin: 2px 0; font-size: 0.7rem; font-weight: 700; color: #e7c766; }
   .coach-feedback { display: flex; gap: 8px; align-items: flex-start; min-width: 0; }
   .feedback-copy { min-width: 0; flex: 1; }
   .coach-name { font-size: 0.65rem; color: #e7c766; font-weight: 700; }

@@ -1,13 +1,16 @@
 import { standardDeck } from "../../domain/deck";
-import { bestMeldLayout } from "../../domain/rummyMelds";
+import { bestMeldLayout, deadwoodValue } from "../../domain/rummyMelds";
 import type { Card } from "../../domain/types";
+import { formatCardLabel } from "../../presentation/cardDisplay";
+import { formatRummyMeld } from "../../presentation/rummyDisplay";
+import { teachingStages, type Teaching, type FeedbackBreakdown } from "../learningPresentation";
 
 export const ginCards = (ids: string) => ids.split(" ").map(id => {
   const card = standardDeck().find(card => card.id === id);
   if (!card) throw Error(`Unknown Gin example card: ${id}`);
   return card;
 });
-export type GinExerciseStep = { title: string; hand: Card[]; upcard?: Card; hint?: string; options?: string[]; followUp?: GinExerciseStep };
+export type GinExerciseStep = { title: string; hand: Card[]; upcard?: Card; hint?: string; teaching?: Teaching; options?: string[]; followUp?: GinExerciseStep };
 export const ginExercises: Record<string, GinExerciseStep[]> = {
   melds: [
     { title: "Keep your three combinations", hand: ginCards("3C 4C 5C 7D 7H 7S 9H 10H JH 2D KS") },
@@ -70,7 +73,32 @@ const ginFollowUps: Record<string, GinExerciseStep[]> = {
 };
 
 export function ginLearningSteps(action: string): GinExerciseStep[] {
-  return ginExercises[action].map((step, index) => ({ ...step, followUp: ginFollowUps[action][index] }));
+  return ginExercises[action].map((step, index) => {
+    const choice = ginExerciseChoices(action, step).find(choice => ginExerciseAnswer(action, step, choice.id).good)!;
+    const guidance = index === 0 ? step.hint ?? `${ginSelectsDiscard(action) ? "Discard" : "Choose"} ${choice.label}. ${ginExerciseAnswer(action, step, choice.id).text}`
+      : index === 1 ? step.hint ?? (action === "draw" ? "Look for a complete set or run after taking the upcard and discarding a different card."
+        : "Keep complete sets and runs together. Only unmatched cards count as deadwood.") : undefined;
+    return { ...step, teaching: { stage: teachingStages[index], guidance },
+      followUp: { ...ginFollowUps[action][index], teaching: { stage: "reinforcement" } } };
+  });
+}
+
+export function ginFeedbackBreakdown(action: string, step: GinExerciseStep, selected: string): FeedbackBreakdown {
+  if (action === "draw" && step.upcard) {
+    const withUpcard = [...step.hand, step.upcard];
+    const best = Math.min(...step.hand.map(card => bestMeldLayout(withUpcard.filter(item => item.id !== card.id)).points));
+    return { label: "Draw breakdown", rows: [
+      { label: "Current deadwood", value: `${bestMeldLayout(step.hand).points} points` },
+      { label: "With upcard", value: `${best} points after the best permitted discard` },
+      { label: "Stock", value: "Unknown card" }
+    ] };
+  }
+  const layout = bestMeldLayout(step.hand.filter(card => !ginSelectsDiscard(action) || card.id !== selected));
+  return { label: "Deadwood breakdown", rows: [
+    ...layout.melds.map(meld => ({ label: meld.kind === "set" ? "Set" : "Run", value: `${formatRummyMeld(meld)} = 0` })),
+    { label: "Unmatched", value: layout.deadwood.length ? layout.deadwood.map(card => `${formatCardLabel(card)} (${deadwoodValue(card)})`).join(" + ") : "None" },
+    { label: "Deadwood", value: `${layout.points} points` }
+  ] };
 }
 
 export const ginSelectsDiscard = (action: string) => action === "melds" || action === "gin";

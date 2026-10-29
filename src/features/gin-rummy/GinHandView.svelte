@@ -4,23 +4,33 @@
   import CardBack from "../../components/CardBack.svelte";
   import CardChoiceHand from "../../components/CardChoiceHand.svelte";
   import GameResult from "../../components/GameResult.svelte";
+  import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
+  import GuidedHandActions from "../../components/GuidedHandActions.svelte";
+  import GinGuidedRecap from "./GinGuidedRecap.svelte";
+  import { ginGuidance, ginGuidedReview } from "./ginGuidance";
+  import { ginObservation } from "../../domain/ginRummyPolicy";
+  import type { GinGuidedSession } from "../../domain/ginRummyLearning";
   import { bestMeldLayout } from "../../domain/rummyMelds";
   import { ginComplete, ginDiscardLayout, ginScoreBreakdown, ginRules, type GinSession, type GinAction } from "../../domain/ginRummySession";
   import { formatCardList, formatCardText } from "../../presentation/cardDisplay";
   import { formatRummyMeld } from "../../presentation/rummyDisplay";
 
-  let { session, selectedCardId, error, onSelect, onAction, onBack, onNext, onReplay, onNew }: {
+  let { session, selectedCardId, error, guided, onContinue, onSelect, onAction, onBack, onNext, onReplay, onNew }: {
+    guided?: GinGuidedSession; onContinue?: () => void;
     session: GinSession; selectedCardId: string; error: string; onSelect: (id: string) => void;
     onAction: (action: GinAction) => void; onBack: () => void; onNext: () => void; onReplay: () => void; onNew: () => void;
   } = $props();
   let hand = $derived(session.hand);
   let finished = $derived(hand.phase === "complete");
-  let gameOver = $derived(ginComplete(session));
+  let gameOver = $derived(!guided && ginComplete(session));
+  let reviewing = $derived(Boolean(guided?.review));
+  let guidance = $derived(guided && !finished ? ginGuidance(ginObservation(session), selectedCardId) : null);
+  let review = $derived(guided?.review ? ginGuidedReview(guided.review) : null);
   let layout = $derived(bestMeldLayout(hand.hands[0]));
   let preview = $derived(ginDiscardLayout(hand, selectedCardId));
   let upcard = $derived(hand.discards.at(-1));
-  let canDrawStock = $derived(hand.turn === 0 && hand.phase === "draw");
-  let canTakeUpcard = $derived(hand.turn === 0 && (hand.phase === "offer" || hand.phase === "draw") && !hand.forcedStock && Boolean(upcard));
+  let canDrawStock = $derived(!reviewing && hand.turn === 0 && hand.phase === "draw");
+  let canTakeUpcard = $derived(!reviewing && hand.turn === 0 && (hand.phase === "offer" || hand.phase === "draw") && !hand.forcedStock && Boolean(upcard));
   let settlement = $derived(ginScoreBreakdown(session));
   let result = $derived(hand.result);
   let handCalculation = $derived(result?.knocker == null ? "" : result.kind === "gin"
@@ -35,21 +45,27 @@
     : hand.result?.kind === "draw" ? "Hand drawn" : `${hand.result?.winner === 0 ? "You" : "Barbu"} ${hand.result?.kind === "gin" ? "went gin" : hand.result?.kind === "undercut" ? "undercut" : "won the hand"}`);
 </script>
 
-<TablePlaySurface flowLayout mode={finished ? "result" : "play"} title="Gin Rummy" ariaLabel="Gin Rummy hand"
+<TablePlaySurface flowLayout stableFeedback={Boolean(guided)} mode={finished ? "result" : "play"} title={guided ? "Guided Gin Rummy" : "Gin Rummy"} ariaLabel="Gin Rummy hand"
   statusLabel="Hand" statusValue={String(session.handNumber)} {onBack} showTable={!finished} useCustomTable
   tableAriaLabel="Gin Rummy piles" tableCards={[]} panelAriaLabel="Gin Rummy decisions" surfaceClassName="gin-play-surface">
   {#snippet summary()}
-    <div class="full-hand-summary grouped-play-summary" aria-label="Gin Rummy score">
+    <div class="full-hand-summary grouped-play-summary" aria-label={guided && !finished ? "Gin Rummy hand summary" : "Gin Rummy score"}>
       <div class="full-hand-summary-row current-hand" style="grid-template-columns: repeat(4, minmax(0, 1fr))">
+        {#if guided && !finished}
+        <div><span>Deadwood</span><strong>{layout.points}</strong></div>
+        <div><span>Melds</span><strong>{layout.melds.length}</strong></div>
+        <div><span>Cards</span><strong>{hand.hands[0].length}</strong></div>
+        {:else}
         <div><span>You</span><strong>{session.scores[0]}</strong></div>
         <div><span>Barbu</span><strong>{session.scores[1]}</strong></div>
-        <div><span>Target</span><strong>{ginRules.target}</strong></div>
+        <div><span>{guided ? "Format" : "Target"}</span><strong>{guided ? "One hand" : ginRules.target}</strong></div>
+        {/if}
         <div><span>Dealer</span><strong>{hand.dealer === 0 ? "You" : "Barbu"}</strong></div>
       </div>
     </div>
   {/snippet}
   {#snippet table()}
-    <div class="gin-table">
+    <div class="gin-table" class:guided-table={Boolean(guided)}>
       <p class="opponent">Barbu <span>10 cards</span></p>
       <div class="piles">
         <button class="pile" disabled={!canDrawStock} onclick={() => onAction({ type: "draw", source: "stock" })} aria-label="Draw stock" type="button">
@@ -59,15 +75,19 @@
           <span class="upcard">{#if upcard}<CardFace card={upcard} />{:else}<span class="empty-pile">Empty</span>{/if}</span><strong>Upcard</strong>
         </button>
       </div>
-      <p class="last-action" aria-live="polite">{formatCardText(hand.message)}</p>
+      {#if !guided}<p class="last-action" aria-live="polite">{formatCardText(hand.message)}</p>{/if}
     </div>
   {/snippet}
   {#snippet panel()}
     {#if finished && hand.result}
-      <GameResult game="Gin Rummy" title={resultTitle} completion={gameOver ? "game" : null}
+      <GameResult game="Gin Rummy" title={guided ? "Guided hand complete" : resultTitle} completion={gameOver ? "game" : null}
         summary={hand.result.kind === "draw" ? "Two stock cards remain. No points; the same dealer deals again."
           : `${hand.result.winner === 0 ? "You score" : "Barbu scores"} ${hand.result.points} points ${hand.result.kind === "gin" ? "for gin" : hand.result.kind === "undercut" ? "for an undercut" : "after knocking"}.`} />
       {#if handCalculation}<p class="hand-calculation">{handCalculation}</p>{/if}
+      {#if guided}
+        <p class="hand-calculation">Your saved match is unchanged.</p>
+        <GinGuidedRecap moments={guided.moments} />
+      {/if}
       {#if gameOver}
         <section class="gin-settlement" aria-label="Gin Rummy final scoring">
           <h2>Final scoring</h2>
@@ -92,22 +112,35 @@
           <p>Deadwood: {final.deadwood.length ? formatCardList(final.deadwood) : "None"}</p>
         </section>
       {/each}
-      <div class="action-row">
+      {#if guided}
+        <GuidedHandActions {onReplay} {onBack} onIndependentPlay={onNext} />
+      {:else}<div class="action-row">
         <button class="secondary-action" onclick={onReplay} type="button">Replay hand</button>
         <button class="primary-action" onclick={gameOver ? onNew : onNext} type="button">{gameOver ? "New game" : "Next hand"}</button>
-      </div>
+      </div>{/if}
     {:else}
+      {#if guided && guidance}
+        <ExerciseFeedback coach="barbu" reserveSpace eyebrow={review ? "Decision review" : "Your turn"}
+          title={review ? "What changed" : "Choose your move"}
+          result={review ? review.title : `Rule: ${guidance.rule}`}
+          explanation={review ? review.explanation : `Tactic: ${guidance.tip}`}
+          outcome={review ? guided.review?.action.type === "draw" ? undefined : formatCardText(hand.message) : guidance.facts} />
+      {:else}
       <p class="result turn-prompt">{prompt}</p>
       <div class="hand-analysis" aria-label="Your Gin Rummy melds">
         <strong>Deadwood: {preview ? preview.points : layout.points}{preview ? " after discard" : ""}</strong>
         <span>{layout.melds.length ? layout.melds.map(formatRummyMeld).join(" / ") : "No complete melds yet"}</span>
       </div>
+      {/if}
       <CardChoiceHand cards={hand.hands[0]} ariaLabel="Your Gin Rummy hand" className="hand full-hand-cards"
+        readonly={reviewing}
         cardClassName="card hand-card full-hand-card" onSelect={card => onSelect(card.id)} isPressed={card => card.id === selectedCardId}
         getCardClasses={card => ({ legal: card.id !== hand.blockedDiscard, illegal: card.id === hand.blockedDiscard, selected: card.id === selectedCardId })} />
       <div class="action-row gin-actions" aria-label="Gin turn actions">
         <button class="secondary-action" onclick={onBack} type="button">Table</button>
-        {#if hand.phase === "offer"}
+        {#if reviewing}
+          <button class="primary-action" onclick={onContinue} type="button">Continue</button>
+        {:else if hand.phase === "offer"}
           <button class="secondary-action" onclick={() => onAction({ type: "pass" })} type="button">Pass upcard</button>
           <button class="primary-action" disabled={!canTakeUpcard} onclick={() => onAction({ type: "draw", source: "discard" })} type="button">Take upcard</button>
         {:else if hand.phase === "draw"}
@@ -125,12 +158,14 @@
 
 <style>
   :global(.gin-play-surface.flow-play > .play-board-region) { min-height: 168px; flex-basis: 168px; }
+  :global(.gin-play-surface.flow-play.stable-feedback > .play-board-region) { min-height: 140px; flex-basis: 140px; }
   .gin-table {
     /* Reserve room for both labels and the two-line turn message. */
     --gin-pile-width: clamp(45px, min(24cqw, calc((100cqh - 100px) / 1.452)), 72px);
     height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 6px; background: #285342; color: #f7faf3; border-block: 1px solid #718d77;
   }
   .opponent, .last-action { margin: 0; font-size: 0.8rem; line-height: 1.3; text-align: center; }
+  .guided-table { --gin-pile-width: clamp(45px, min(24cqw, calc((100cqh - 60px) / 1.452)), 72px); }
   .opponent { font-weight: 700; }.opponent span { margin-left: 8px; font-weight: 400; color: #d8e1d5; }
   .last-action { min-height: 2.6em; }
   .turn-prompt { min-height: calc(2.08rem + 8px); }

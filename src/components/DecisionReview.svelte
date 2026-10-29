@@ -1,5 +1,6 @@
 <script lang="ts">
   import CardFace from "./CardFace.svelte";
+  import FeedbackBreakdown from "./FeedbackBreakdown.svelte";
   import type { DecisionReview } from "../lessons/decisionReview";
   import type { DrillResult } from "../lessons/drillDecision";
   import { drillOutcomeLabels } from "../lessons/drillDecision";
@@ -31,6 +32,7 @@
       </div>
     {/each}
     <p class="review-explanation"><strong>Your choice: {formatCardText(result.cardLabel)}.</strong> {formatCardText(review.explanation)}</p>
+    {#if review.breakdown}<FeedbackBreakdown breakdown={review.breakdown} />{/if}
   </div>
 </details>
 

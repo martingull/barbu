@@ -48,6 +48,7 @@
   {/snippet}
   {#snippet panel()}
     <ExerciseFeedback {coach} reserveSpace={!!coach} eyebrow={step.contract} title={trick.title} result={checked ? "" : trick.beforeResult}
+      teaching={!checked ? step.teaching : undefined} breakdown={checked ? step.breakdownByCard?.[checked.id] : undefined}
       explanation={decision?.feedback ?? trick.emptyExplanation}
       outcome={decision ? drillOutcomeLabels[decision.result.outcome] : ""}
       warning={decision ? decision.result.outcome !== "good" : false} />

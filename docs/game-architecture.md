@@ -166,6 +166,13 @@ Whist, Hearts, Spades, Bridge and Barbu have isolated frontends under their resp
 - `GameLearning.svelte` owns the common concept/example/exercise/review flow,
   topic replay and history display. Game definitions supply metadata; each
   feature supplies its exercise loader and any custom decision surface.
+  Standard drills, Hearts passing and Gin exercises use `domain/learningSession.ts`
+  for answer/feedback/completion transitions, checked-answer locking and bounded
+  follow-ups. This controller accepts evaluated results and review snapshots; it
+  knows neither cards nor UI/storage. Custom selection and grading stay in the
+  game adapter. Retrying creates a fresh session, and leaving early cannot mark
+  the session complete. Other custom game exercises retain their current controllers
+  until migrated; this is not yet a catalog-wide custom-exercise migration.
 - `SpadesGame.svelte` uses that Learn flow for all five courses and the existing
   four three-decision exercise pools. `SpadesHandView.svelte` and `SpadesBids.svelte`
   preserve the deal-first table, bid toggle, player-only adjustment and hand review.
@@ -298,6 +305,34 @@ attempts count toward evidence without modifying a saved match.
 The shared `decisionFirst` step metadata keeps the written explanation available
 through Read lesson without making it a prerequisite for playing cards.
 
+Hearts topic exercises (including passing) and all five Gin topics carry explicit
+`Teaching` metadata: worked, supported, independent, with reinforcement for a
+missed goal. The five-decision Hearts introduction keeps its existing foundation
+sequence. Hearts topic positions use their authored order; passing can vary its
+starting plan, but teaching stages are assigned before play and never shuffled.
+All existing positions and their paired follow-ups remain available. This does
+not change the domain generators or old saved games. Worked examples give a
+concrete evaluated choice, supported decisions give a principle, and independent
+decisions keep the question but omit advance guidance. Every answer gets feedback.
+This is separate from the full guided hand, whose coaching remains always visible.
+
+`lessons/learningPresentation.ts` defines teaching metadata and labelled feedback
+rows. `ExerciseFeedback` and `DecisionReview` render the same `FeedbackBreakdown`:
+Hearts adapters supply real winners/penalties or a before-receiving pass summary;
+Gin supplies meld/deadwood calculations and marks stock draws as unknown. These
+are factual breakdowns, not a shared scoring algorithm. No new progress keys,
+mastery claims, hint toggles or generic card-game engine are introduced.
+
+Guided play is part of the shared learning platform, alongside short lessons.
+Hearts and Gin Rummy use `features/guidedHandFeature.ts` for an isolated session,
+selection, errors and replay. The adapter supplies normal domain transitions;
+the controller has no storage or course-completion dependency. Both enter through
+`GuidedHandEntry`, use `TablePlaySurface` with reserved `ExerciseFeedback`, and
+finish with `GuidedHandActions` (Replay, Play without guidance, Back to Learn).
+New guided games should supply game-specific coaching and review facts, not clone
+the lifecycle or add a second rules engine. Other games have not yet adopted this
+guided-hand flow; do not expose a guided entry until its adapter is implemented.
+
 `HeartsGuidedHand` offers an optional unsaved 13-trick hand after the introduction
 and from Learn. It composes the existing passing/hand views and normal
 `heartsSession` transitions, with contextual coaching instead of a separate engine.
@@ -310,6 +345,18 @@ cards or tactical grading. Replay repeats the deal; Play without guidance opens
 the normal Play menu, preserving its existing Continue option. Back to Learn is
 still available. The hand does not award topic completion or overwrite a saved
 match. This is rules guidance, not expert tactical analysis.
+
+`GinGuidedHand` uses the normal Gin engine and public-information opponent policy.
+`domain/ginRummyLearning.ts` pauses after each player action for review, records
+only that player's observed card/deadwood changes, and stops after one hand.
+The last action remains in the recap even when it ends the hand. Coaching accepts
+`GinObservation`, never the opponent's hidden cards or stock order. It distinguishes
+10-card counts from the temporary 11-card count, previews legal discards, explains
+the opening offer and blocked upcard, and warns that a legal knock may be undercut.
+Normal settlement supplies the final scores, layoffs and exposed melds. Replay
+returns to the same opening offer; no new saved game or learning evidence is written.
+The guided table moves its public turn message into feedback so the same reserved
+two-row hand and controls fit small viewports without the board changing per move.
 The presentation dependency check permits the existing launcher PNG as shared
 artwork; native code remains outside the presentation layer.
 

@@ -16,7 +16,7 @@
   import LearningCoach from "../components/LearningCoach.svelte";
   import GuidedHandEntry from "../components/GuidedHandEntry.svelte";
   import { learningGuide } from "../presentation/learningCharacters";
-  import { insertLearningFollowUp } from "../domain/learningSequence";
+  import { createLearningSession, checkLearningAnswer, advanceLearningSession, type LearningSession } from "../domain/learningSession";
   import { drillDecisionReview, type DecisionReview } from "../lessons/decisionReview";
 
   let { definition, gameName, tab, onTab, play, customExercise, loadExercise, exerciseTitle, drillTitle, drillEyebrow, seatLabels = {}, resultMessage,
@@ -44,12 +44,15 @@
   let stage = $state<CourseStage>("concept");
   let action = $state("");
   let seed = $state(0);
-  let steps = $state<DrillStep[]>([]);
-  let index = $state(0);
+  let drillSession = $state<LearningSession<DrillStep, DrillResult, DecisionReview> | null>(null);
+  let steps = $derived(drillSession?.steps ?? []);
+  let index = $derived(drillSession?.index ?? 0);
   let selected = $state("");
-  let checked = $state("");
-  let results = $state<DrillResult[]>([]);
-  let decisionReviews = $state<DecisionReview[]>([]);
+  let checked = $derived(drillSession?.phase === "feedback" ? selected : "");
+  let customResults = $state<DrillResult[]>([]);
+  let customReviews = $state<DecisionReview[]>([]);
+  let results = $derived(drillSession?.results ?? customResults);
+  let decisionReviews = $derived(drillSession?.reviews ?? customReviews);
   let error = $state("");
   let introduction = $state("");
   let activeStep = $state<LearnPathStep | null>(null);
@@ -124,11 +127,10 @@
       introduction = introductionTitle;
       action = nextAction;
       seed = Array.isArray(exercise) ? 0 : exercise.seed;
-      steps = nextSteps ?? [];
-      index = 0;
-      selected = checked = "";
-      results = [];
-      decisionReviews = [];
+      drillSession = nextSteps ? createLearningSession(nextSteps) : null;
+      selected = "";
+      customResults = [];
+      customReviews = [];
       exerciseComplete = false;
       exerciseFromCourse = fromCourse;
       error = "";
@@ -137,10 +139,9 @@
   }
   function check() {
     const card = steps[index].trick.hand.find(card => card.id === selected);
-    if (!card || checked) return;
-    results = [...results, drillDecision(steps[index], card).result];
-    decisionReviews = [...decisionReviews, drillDecisionReview(steps[index], card, seatLabels)];
-    checked = card.id;
+    if (!card || !drillSession) return;
+    drillSession = checkLearningAnswer(drillSession, drillDecision(steps[index], card).result,
+      drillDecisionReview(steps[index], card, seatLabels));
   }
   function retry() {
     const step = activeStep, lesson = course;
@@ -150,7 +151,7 @@
   }
   function finish() {
     if (view !== "drill") return;
-    exerciseComplete = steps.length > 0 && results.length === steps.length;
+    exerciseComplete = drillSession?.phase === "complete";
     try { if (results.length) onExerciseComplete(results); } catch { /* Review remains available without storage. */ }
     if (introduction && exerciseComplete) {
       try { onIntroductionComplete?.(); } catch { /* Completion remains visible without storage. */ }
@@ -165,19 +166,18 @@
   }
   function finishCustom(decisions: DrillResult[] = [], reviews: DecisionReview[] = []) {
     if (view !== "custom") return;
-    results = decisions;
-    decisionReviews = reviews;
+    customResults = decisions;
+    customReviews = reviews;
     try { if (results.length) onExerciseComplete(results); } catch { /* Results remain available without storage. */ }
     exerciseComplete = true;
     completeTopic();
     view = "result";
   }
   function next() {
-    if (view !== "drill" || !checked || results.length !== index + 1) return;
-    steps = insertLearningFollowUp(steps, index, results[index].clean, steps[index].followUp);
-    if (index >= steps.length - 1) { finish(); return; }
-    index += 1;
-    selected = checked = "";
+    if (view !== "drill" || !drillSession || drillSession.phase !== "feedback") return;
+    drillSession = advanceLearningSession(drillSession);
+    if (drillSession.phase === "complete") { finish(); return; }
+    selected = "";
   }
 </script>
 
