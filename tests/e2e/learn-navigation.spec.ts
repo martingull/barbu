@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { bridgeCourses } from "../../src/lessons/bridge/courses";
 import { bridgeBiddingPracticeSteps, bridgeContractSteps } from "../../src/lessons/bridge/exercises";
 import { bridgeCallLabel } from "../../src/domain/bridgeAuction";
+import { bridgeLearningSteps } from "../../src/lessons/bridge/learning";
 
 async function expectLearningLayout(page: Page) {
   const surface = page.locator(".table-play-surface.flow-play");
@@ -76,7 +77,7 @@ test("Hearts breaking lesson stays ordered, fits small screens and replays the s
       await page.getByRole("button", { name: index === 2 ? "Finish topic" : "Next decision", exact: true }).click();
     }
     await page.getByRole("button", { name: "Try again", exact: true }).click();
-    await expect(page.getByRole("heading", { name: "Only hearts remain", exact: true })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Turn guidance" })).toContainText("have only hearts left");
     await expect(page.getByLabel("Drill progress")).toContainText("0 / 3");
   }
 });
@@ -136,14 +137,17 @@ test("Bridge guided topics use the common lesson loop and preserve progress on r
           ? `${bridgeContractSteps[decision].contract.target} tricks` : bridgeCallLabel(bridgeBiddingPracticeSteps[decision].correctCall), exact: true }).click();
         await page.getByRole("button", { name: "Check answer", exact: true }).click();
       } else {
-        await page.locator(".drill-hand .hand-card.legal").first().click();
+        const topic = course.id === "bridge-dummy" ? "dummy" : course.id === "bridge-defense" ? "defense" : "declarer";
+        const step = bridgeLearningSteps(topic)[decision];
+        const card = step.trick.hand.find(card => step.trick.cardOutcomes?.[card.id] === "good")!;
+        await page.locator(".drill-hand").getByRole("button", { name: `${card.rank} ${card.suit}`, exact: true }).click();
         await page.getByRole("button", { name: "Check answer", exact: true }).click();
       }
       await expectLearningLayout(page);
       await page.screenshot({ path: info.outputPath(`${course.id}-${decision}-feedback.png`), fullPage: true });
       await page.getByRole("button", { name: /^(Next decision|Finish practice|Finish topic)$/ }).click();
     }
-    await expect(page.getByRole("status")).toHaveText("Topic complete.");
+    await expect(page.getByRole("status")).toHaveText(index === bridgeCourses.length - 1 ? "Bridge learning path complete." : "Topic complete.");
     await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
     await expect(page.getByLabel("Bridge course progress")).toContainText(`${index + 1} / 5 complete`);
   }

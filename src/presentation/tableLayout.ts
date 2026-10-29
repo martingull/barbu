@@ -20,11 +20,14 @@ export function fitBridgeCardSize(surface: HTMLElement, enabled: boolean) {
       );
       const feedbackHeight = feedback.reduce((total, child) => total + child.getBoundingClientRect().height, 0);
       const actionsHeight = panel.querySelector(".action-row")?.getBoundingClientRect().height ?? 44;
-      const reservedSpace = parseFloat(surfaceStyle.getPropertyValue("--flow-panel-space"));
+      const stableFeedback = surface.classList.contains("stable-feedback");
+      const reservedSpace = stableFeedback ? 0 : parseFloat(surfaceStyle.getPropertyValue("--flow-panel-space"));
       const hasHand = Boolean(panel.querySelector(".full-hand-cards"));
       const handSpace = hasHand ? 0 : Math.max(0, parseFloat(panelStyle.minHeight) - reservedSpace);
       const contentSpace = feedbackHeight + actionsHeight + (feedback.length + 1) * parseFloat(panelStyle.rowGap);
-      const panelSpace = Math.max(reservedSpace, contentSpace - handSpace);
+      // Guided decisions and reviews reserve identical space. Their CSS budget
+      // is a calc(), so measure the fixed feedback viewport instead of parsing it.
+      const panelSpace = stableFeedback ? contentSpace : Math.max(reservedSpace, contentSpace - handSpace);
       const surfaceGap = parseFloat(surfaceStyle.rowGap);
       const available = surface.clientHeight - summary.getBoundingClientRect().height - panelSpace - surfaceGap * 2 - 2;
       // Reserve board labels/gaps and 8px between hand rows before sizing six rows.

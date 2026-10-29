@@ -1,15 +1,18 @@
 <script lang="ts">
   import CardChoiceHand from "../../components/CardChoiceHand.svelte";
   import GameResult from "../../components/GameResult.svelte";
+  import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
+  import GuidedHandActions from "../../components/GuidedHandActions.svelte";
   import { bridgeHighCardPoints } from "../../domain/bridgeBidding";
   import { explainBridgeCall } from "./bridgeBidExplanation";
   import { bridgeAuctionStatus, bridgeLegalCallOptions, bridgeSuggestedCallForHand, bridgeFinalizeContract,
     bridgeBidOptions, bridgeCallLongLabel, type BridgeCallOption } from "../../domain/bridgeAuction";
   import type { BridgeSession } from "../../domain/bridgeSession";
   import { bridgeSeatLabel, bridgeDealerSeat, bridgeDealerIndex, bridgeVulnerabilityForHand } from "./bridgePresentation";
-  let { session, error, dealing, onBack, onSelectCall, onConfirm }: {
+  let { session, error, dealing, guided = false, onReplay, onIndependentPlay, onBack, onSelectCall, onConfirm }: {
     session: BridgeSession; error: string; dealing: boolean; onBack: () => void;
     onSelectCall: (call: BridgeCallOption) => void; onConfirm: () => void;
+    guided?: boolean; onReplay?: () => void; onIndependentPlay?: () => void;
   } = $props();
   let fullHand = $derived(session.fullHand);
   let bridgeAuctionCalls = $derived(session.auctionCalls);
@@ -38,19 +41,29 @@
 <section class="bridge-auction-screen" aria-label="Bridge auction">
   <section class="lesson-panel bridge-auction-panel" aria-label="Bridge bidding box">
     {#if bridgeAuctionCurrentStatus.passedOut}
-      <GameResult game="Bridge" completion="board" title="Auction complete" summary="All four players passed. No contract was played and neither side scores." />
+      <GameResult game="Bridge" completion={guided ? null : "board"} title="Auction complete" summary="All four players passed. No contract was played and neither side scores." />
     {:else}
     <div class="lesson-heading">
       <p class="eyebrow">Before dummy appears</p>
       <h2>{bridgeAuctionCurrentStatus.complete ? "Auction complete" : bridgeAuctionCurrentStatus.currentSeat === "You" ? "Choose your call" : "Auction in progress"}</h2>
     </div>
 
-    <p class="result">
+    {#if !guided}<p class="result">
       You are South. The auction uses basic natural bidding: five-card majors, better minor, 15-17 1NT, strong 2C,
       and weak twos. The final contract sets declarer, dummy, opening lead, vulnerability, and scoring.
-    </p>
+    </p>{/if}
     {/if}
 
+    {#if guided && !bridgeAuctionCurrentStatus.passedOut}
+      <ExerciseFeedback coach="barbu" eyebrow="Guided board" title="From auction to play"
+        result={bridgeAuctionReadyToPlay && bridgeVisibleContract
+          ? `${bridgeSeatLabel(bridgeVisibleContract.declarer)} declares; ${bridgeSeatLabel(bridgeVisibleContract.dummy)} is dummy. Six + ${bridgeVisibleContract.level} = ${bridgeVisibleContract.target} tricks needed.`
+          : "Rule: Bid higher than the last bid, pass, or choose a legal double or redouble. Your call describes your own hand; partner's cards are still hidden."}
+        explanation={bridgeAuctionReadyToPlay ? "Dummy appears after the opening lead. Declarer directs dummy; defenders keep their own hands hidden."
+          : "Tactic: Count high-card points and suit lengths. Compare the suggested call with the natural system, then make your choice. Passing is often correct."} />
+    {/if}
+
+    {#if !guided || !bridgeAuctionCurrentStatus.passedOut}
     <div class="bridge-auction-metrics" aria-label="Bridge hand estimate">
       <div>
         <span>HCP</span>
@@ -192,5 +205,8 @@
         {bridgeAuctionActionLabel}
       </button>
     </div>
+    {:else if onReplay && onIndependentPlay}
+      <GuidedHandActions {onReplay} {onBack} {onIndependentPlay} />
+    {/if}
   </section>
 </section>

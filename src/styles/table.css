@@ -62,8 +62,14 @@
   --flow-panel-space: calc(var(--flow-feedback-height) + 68px);
 }
 
-.app-shell.fixed-play-screen .table-play-surface.flow-play.bridge-play-surface {
+.app-shell.fixed-play-screen .table-play-surface.flow-play.bridge-play-surface:not(.stable-feedback) {
   --flow-panel-space: 106px;
+}
+
+/* Bridge also reserves an exposed hand above the trick. Keep guidance scrollable
+   within a smaller budget so six card rows and the actions fit short viewports. */
+.app-shell.fixed-play-screen .table-play-surface.flow-play.bridge-play-surface.stable-feedback {
+  --flow-feedback-height: clamp(88px, 18dvh, 140px);
 }
 
 .flow-play .bridge-play-feedback {

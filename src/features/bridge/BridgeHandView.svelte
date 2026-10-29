@@ -4,13 +4,17 @@
   import CardChoiceHand from "../../components/CardChoiceHand.svelte";
   import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
   import GameResult from "../../components/GameResult.svelte";
+  import GuidedHandActions from "../../components/GuidedHandActions.svelte";
+  import BridgeGuidedRecap from "./BridgeGuidedRecap.svelte";
+  import { bridgeLearningPosition } from "../../domain/bridgeLearning";
+  import { bridgeGuidance, bridgeGuidedReview } from "./bridgeGuidance";
   import { bridgeSessionSettlement, type BridgeSession } from "../../domain/bridgeSession";
   import { bridgeDeclarerTrickCounts } from "../../domain/bridgeScoring";
   import { bridgeSideForSeat } from "../../domain/bridgeAuction";
   import { formatSignedScore } from "../../presentation/scorePresentation";
   import { bridgeActiveHand, bridgeSeatLabel, bridgeResultCopy, bridgeReviewFeedback } from "./bridgePresentation";
-  let { session, selectedCardId, error, dealing, onBack, onSelect, onPlay, onNextTrick, onNextHand, onReplay }: {
-    session: BridgeSession; selectedCardId: string; error: string; dealing: boolean;
+  let { session, selectedCardId, error, dealing, guided = false, onBack, onSelect, onPlay, onNextTrick, onNextHand, onReplay }: {
+    session: BridgeSession; selectedCardId: string; error: string; dealing: boolean; guided?: boolean;
     onBack: () => void; onSelect: (id: string) => void; onPlay: () => void;
     onNextTrick: () => void; onNextHand: () => void; onReplay: () => void;
   } = $props();
@@ -32,10 +36,12 @@
   let prompt = $derived(ledSuit ? `Led: ${suitNames[ledSuit]}. Follow suit if you can.`
     : hand.completedTricks.length === 0 ? "Make the opening lead." : "Lead any card.");
   let activeLabel = $derived(`${bridgeSeatLabel(active.isDummyTurn ? active.dummySeat : "You")} · ${active.isDummyTurn || active.dummySeat === "You" ? "Dummy" : active.declares ? "Declarer" : "Defender"}`);
+  let guidance = $derived(guided ? bridgeGuidance(bridgeLearningPosition(hand)) : null);
+  let guidedReview = $derived(guided && review ? bridgeGuidedReview(hand.completedTricks.slice(0, session.fullHandReviewTrickCount), contract) : null);
 </script>
 
-<TablePlaySurface flowLayout mode={complete ? "result" : "play"} ariaLabel="Bridge full hand"
-  title="Bridge hand" eyebrow="Play Bridge" statusLabel={complete ? `Board ${hand.bridgeBoardNumber ?? session.results.length + 1}` : "Contract"} statusValue={contract.label}
+<TablePlaySurface flowLayout stableFeedback={guided} mode={complete ? "result" : "play"} ariaLabel="Bridge full hand"
+  title={guided ? "Guided Bridge" : "Bridge hand"} eyebrow="Play Bridge" statusLabel={complete ? `Board ${hand.bridgeBoardNumber ?? session.results.length + 1}` : "Contract"} statusValue={contract.label}
   tableAriaLabel="Bridge hand table" pendingBySeat={pending} surfaceClassName="bridge-play-surface"
   showTable={!complete} {tableCards} tableVariant="bridge" panelAriaLabel="Bridge hand decision"
   {onBack} onSurfaceClick={review ? onNextTrick : undefined} useCustomTable>
@@ -53,18 +59,18 @@
           <div><span>Tricks</span><strong>{hand.completedTricks.length} / 13</strong></div>
           <div><span>Target</span><strong>{contract.target}</strong></div>
         </div>
-        <div class="full-hand-summary-row table-score bridge-duplicate-row" aria-label="Bridge score">
+        {#if !guided}<div class="full-hand-summary-row table-score bridge-duplicate-row" aria-label="Bridge score">
           <div><span>NS</span><strong>{formatSignedScore(settlement.scores.ns)}</strong></div>
           <div><span>EW</span><strong>{formatSignedScore(settlement.scores.ew)}</strong></div>
           <div><span>Board</span><strong>{hand.bridgeBoardNumber ?? session.results.length + 1}</strong></div>
           <div><span>Score</span><strong>{settlement.result ? formatSignedScore(settlement.result.score) : "Playing"}</strong></div>
-        </div>
+        </div>{/if}
       </div>
     {/if}
   {/snippet}
   {#snippet panel()}
     {#if complete}
-      <GameResult game="Bridge" completion="board" title={result.heading} summary={result.summary} />
+      <GameResult game="Bridge" completion={guided ? null : "board"} title={guided ? "Guided board complete" : result.heading} summary={result.summary} />
       <div class="hearts-result-stack" aria-label="Bridge hand score">
         <div class="hearts-hand-breakdown" aria-label="Bridge contract breakdown">
           <div class="hearts-hand-breakdown-row whist-score-row header">
@@ -83,15 +89,23 @@
           <div><dt>EW total</dt><dd>{formatSignedScore(settlement.scores.ew)}</dd></div>
         </dl>
       </div>
+      {#if guided}<BridgeGuidedRecap {hand} />{/if}
     {:else if review}
+      {#if guided}
+        <ExerciseFeedback coach="barbu" reserveSpace eyebrow="Trick complete" title="Why this trick ended this way"
+          result={guidedReview?.winning} resultAriaLabel="Trick winner explained"
+          explanation={guidedReview?.scoring} outcome={guidedReview?.next} />
+      {:else}
       <div class="lesson-heading"><p class="eyebrow">Trick complete</p><h2>Read the table</h2></div>
       <p class="outcome">{bridgeReviewFeedback(review, contract)}</p>
       <p class="explanation">Check who won and press Next trick when ready.</p>
+      {/if}
     {:else}
       <div class:bridge-dummy-turn-feedback={active.isDummyTurn} class="bridge-play-feedback">
         <ExerciseFeedback eyebrow="Your turn" title={active.isDummyTurn ? "Play from dummy" : active.declares ? "Play as declarer" : "Defend the contract"}
-          result={prompt} {error} />
-        <div class="bridge-active-hand-label">{activeLabel}</div>
+          coach={guided ? "barbu" : undefined} reserveSpace={guided}
+          result={guidance ? `Rule: ${guidance.rule}` : prompt} explanation={guidance ? `Tactic: ${guidance.tip}` : ""} {error} />
+        {#if !guided}<div class="bridge-active-hand-label">{activeLabel}</div>{/if}
       </div>
       <CardChoiceHand cards={active.cards} ariaLabel={active.isDummyTurn ? `${bridgeSeatLabel(active.dummySeat)} dummy hand` : "South Bridge hand"}
         className="hand full-hand-cards bridge-thumb-hand" cardClassName="card hand-card full-hand-card"
@@ -99,7 +113,9 @@
         isPressed={card => selectedCardId === card.id} onSelect={card => onSelect(card.id)} />
     {/if}
     {#if error && (complete || review)}<p class="outcome warning">{error}</p>{/if}
-    <div class="action-row">
+    {#if guided && complete}
+      <GuidedHandActions {onReplay} {onBack} onIndependentPlay={onNextHand} />
+    {:else}<div class="action-row">
       <button class="secondary-action" onclick={onBack} type="button">Table</button>
       {#if complete}
         <button class="secondary-action" onclick={onReplay} type="button">Replay</button>
@@ -109,7 +125,7 @@
       {:else}
         <button class="primary-action" disabled={dealing || !legal.has(selectedCardId)} onclick={onPlay} type="button">Play card</button>
       {/if}
-    </div>
+    </div>{/if}
   {/snippet}
 </TablePlaySurface>
 

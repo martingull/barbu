@@ -3,21 +3,29 @@
   import PlayTabPanel from "../../components/PlayTabPanel.svelte";
   import BridgeAuction from "./BridgeAuction.svelte";
   import BridgeHandView from "./BridgeHandView.svelte";
-  import BridgeBiddingPractice from "./BridgeBiddingPractice.svelte";
-  import BridgeContractExercise from "./BridgeContractExercise.svelte";
+  import BridgeChoiceExercise from "./BridgeChoiceExercise.svelte";
+  import BridgeGuidedHand from "./BridgeGuidedHand.svelte";
   import { bridgeDef } from "../../games/bridge";
-  import { bridgeDeclarerDrillPool, bridgeDefenseDrillPool, bridgeDummyDrillPool } from "../../lessons/bridge/exercises";
+  import { bridgeLearningSteps, bridgeTakeaway } from "../../lessons/bridge/learning";
   import { compassSeatLabels } from "../../presentation/cardDisplay";
   import { savedBridgeRunSummary } from "./bridgePresentation";
   import type { FeatureServices } from "../featureServices";
   import type { BridgeFeature } from "./bridgeFeature";
   let { feature, ...services }: FeatureServices & { feature: BridgeFeature } = $props();
   let learningFixed = $state(false);
-  $effect(() => { services.onSurfaceChange($feature.view === "hand" ? $feature.session?.view === "fullHand" : learningFixed); });
+  let guidedSeed = $state<number | null>(null);
+  let guidedFixed = $state(false);
+  $effect(() => { services.onSurfaceChange(guidedSeed !== null ? guidedFixed : $feature.view === "hand" ? $feature.session?.view === "fullHand" : learningFixed); });
+  function leaveGuided(tab: "learn" | "play") {
+    guidedSeed = null; guidedFixed = false; learningFixed = false; feature.openTable(tab);
+  }
   const names: Record<string, string> = { contracts: "contracts", dummy: "dummy", bidding: "bidding", declarer: "declarer play", defense: "defense" };
 </script>
 
-{#if $feature.view === "hand" && $feature.session}
+{#if guidedSeed !== null}
+  <BridgeGuidedHand seed={guidedSeed} onBack={() => leaveGuided("learn")}
+    onIndependentPlay={() => leaveGuided("play")} onSurfaceChange={fixed => { guidedFixed = fixed; }} />
+{:else if $feature.view === "hand" && $feature.session}
   {#if $feature.session.view === "bridgeAuction"}
     <BridgeAuction session={$feature.session} error={$feature.error} dealing={$feature.dealing}
       onBack={() => feature.openTable()} onSelectCall={feature.selectCall} onConfirm={() => void feature.confirmAuction()} />
@@ -30,12 +38,11 @@
   <GameLearning {...services} definition={bridgeDef} gameName="Bridge" tab={$feature.tab}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
     loadExercise={action => action === "bidding" || action === "contracts" ? { seed: 0 }
-      : action === "dummy" ? bridgeDummyDrillPool : action === "defense" ? bridgeDefenseDrillPool : bridgeDeclarerDrillPool}
+      : bridgeLearningSteps(action === "dummy" ? "dummy" : action === "defense" ? "defense" : "declarer")}
     exerciseTitle={action => `Bridge practice: ${names[action]}`} drillTitle={() => "Bridge lesson"} drillEyebrow="Bridge" seatLabels={compassSeatLabels}
-    resultMessage={clean => clean ? "Clean Bridge practice. Keep planning declarer play, using dummy, and defending 1NT." : "Repeat the Bridge pattern until dummy, declarer, and defensive plans feel automatic."}>
+    onGuidedPlay={() => { guidedSeed = services.nextSeed(); }} resultMessage={(_, action) => bridgeTakeaway(action)}>
     {#snippet customExercise(context)}
-      {#if context.action === "contracts"}<BridgeContractExercise {context} />
-      {:else}<BridgeBiddingPractice coach={context.coach} onBack={context.onBack} onComplete={context.onComplete} />{/if}
+      <BridgeChoiceExercise {context} />
     {/snippet}
     {#snippet play()}
       <PlayTabPanel table={bridgeDef.table} {...bridgeDef.playTabConfig}

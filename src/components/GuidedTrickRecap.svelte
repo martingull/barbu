@@ -1,8 +1,9 @@
 <script lang="ts">
   import CardFace from "./CardFace.svelte";
-  import type { TableCard } from "../domain/types";
+  import type { Seat, TableCard } from "../domain/types";
   import { scoreSeatLabel } from "../presentation/scorePresentation";
-  let { moments }: { moments: { number: number; title: string; summary: string; explanation: string; cards: TableCard[] }[] } = $props();
+  let { moments, seatLabels = {} }: { moments: { number: number; title: string; summary: string; explanation: string; cards: TableCard[] }[];
+    seatLabels?: Partial<Record<Seat, string>> } = $props();
 </script>
 
 <section class="guided-recap" aria-label="Your hand in review">
@@ -16,7 +17,7 @@
         <p>{moment.explanation}</p>
         <div class="recap-cards" aria-label={`Trick ${moment.number} cards in play order`}>
           {#each moment.cards as play}
-            <div><div class="recap-card"><CardFace card={play.card} /></div><span>{scoreSeatLabel(play.seat)}</span></div>
+            <div><div class="recap-card"><CardFace card={play.card} /></div><span>{seatLabels[play.seat] ?? scoreSeatLabel(play.seat)}</span></div>
           {/each}
         </div>
       </details>

@@ -188,12 +188,13 @@ Whist, Hearts, Spades, Bridge and Barbu have isolated frontends under their resp
   Its feature controller delegates bid locking, nil, bags and completion to
   `spadesSession.ts`; lessons never write the match save.
 - `BridgeGame.svelte` composes `BridgeAuction.svelte`, `BridgeHandView.svelte`
-  and the same `GameLearning` flow. Its bidding exercise is an unsaved custom
-  decision screen; declarer and defense exercises use the shared drill screen
-  with compass labels. The five-topic path adds contract targets and dedicated
-  dummy decisions while retaining the four existing progress keys.
-  Keep all five topics in authored order: a worked decision, a guided decision,
-  then an independent question. Dummy excerpts supply visible information;
+  and the same `GameLearning` flow. All five topics use shared fading stages,
+  decision review and bounded reinforcement through `lessons/bridge/learning.ts`:
+  fifteen base decisions plus fifteen distinct follow-ups. Contract targets and
+  bidding share `BridgeChoiceExercise` and `learningSession`; card decisions use
+  the common drill screen with compass labels. The five progress keys are unchanged.
+  Keep topics in authored order: worked, supported, then independent.
+  Dummy excerpts supply visible information;
   the final declarer position gives both remaining hands and the trick target.
   `DrillStep.tableAfterByCard` supplies choice-specific scripted responses through
   the shared `drillTableCards` helper; other drills retain their default response.
@@ -201,6 +202,18 @@ Whist, Hearts, Spades, Bridge and Barbu have isolated frontends under their resp
   to `bridgeSession.ts` and preserves the version-1 save. Its active-hand adapter
   lets the shared controller select and play either South's cards or the dummy,
   without duplicating rules or exposing the reference hand as selectable cards.
+  `BridgeGuidedHand` uses `guidedHandFeature` and the normal session, from the
+  natural auction through thirteen tricks or a passed-out board. Always-visible
+  coaching receives a public observation from `bridgeLearningPosition`, never
+  hidden hands or the shuffle seed. The normal declarer/dummy convention remains:
+  South declarer directs North dummy; when North declares, North plays automatically
+  and the learner chooses South dummy's cards. Guidance explains this training
+  convention rather than implying that club dummy chooses independently.
+  `GuidedTrickRecap` accepts compass labels and reviews actual opening, decisive
+  and final tricks. Replay restarts the same auction and deal; exit opens Learn
+  or the Play menu. Guided boards never write saves or completion evidence.
+  This remains basic natural bidding and introductory coaching, not expert-strength
+  auction analysis, a complete bidding curriculum or a new rules variant.
 - `BarbuPlay.svelte` owns contract introductions, trick hands, Domino and session
   results. `barbuFeature.ts` dispatches the existing seven-contract session;
   it does not add dealer-driven contract choice or change settlement.
