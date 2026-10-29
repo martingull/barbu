@@ -3,6 +3,7 @@
   import CardChoiceHand from "../../components/CardChoiceHand.svelte";
   import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
   import GameResult from "../../components/GameResult.svelte";
+  import HeartsGuidedRecap from "./HeartsGuidedRecap.svelte";
   import { heartsGuidance, heartsGuidedReview } from "./heartsGuidance";
   import { heartsSessionSettlement, heartsMoonShooter, heartsScoredSeatPenalties, heartsMatchTarget, type HeartsSession } from "../../domain/heartsSession";
   import { seatPenaltiesForTricks } from "../../domain/trickTakingScore";
@@ -23,7 +24,6 @@
   let tableCards = $derived(review?.cards ?? hand.currentTrick);
   let guidance = $derived(guided ? heartsGuidance(hand) : null);
   let guidedReview = $derived(guided && review ? heartsGuidedReview(review) : null);
-  let finalReview = $derived(guided && complete ? heartsGuidedReview(hand.completedTricks.at(-1)!, true) : null);
   let legal = $derived(new Set(hand.legalCardIds));
   let settlement = $derived(heartsSessionSettlement(session));
   let heartsVisibleScores = $derived(settlement.scores);
@@ -100,13 +100,7 @@
   {#snippet panel()}
     {#if complete}
       <GameResult game="Hearts" completion={settlement.complete ? "match" : null} title={guided ? "Guided hand complete" : heartsResult.heading} summary={guided ? guidedSummary : heartsResult.summary} />
-      {#if finalReview}
-        <details class="guided-final-trick">
-          <summary>Last trick explained</summary>
-          <p>{finalReview.winning} {finalReview.scoring}</p>
-          <p>{finalReview.choice}</p>
-        </details>
-      {/if}
+      {#if guided}<HeartsGuidedRecap tricks={hand.completedTricks} />{/if}
       <div class="hearts-result-stack" aria-label="Hearts hand score">
         {#if !guided}{@render heartsScorecard("Hearts final scorecard")}{/if}
         <div class="hearts-hand-breakdown" aria-label="This hand breakdown">
@@ -146,10 +140,10 @@
       {/if}
 
     {:else if review}
-      {#if guidedReview}
+      {#if guided}
         <ExerciseFeedback coach="queen" reserveSpace eyebrow="Trick complete" title="Why this trick ended this way"
-          result={guidedReview.winning} resultAriaLabel="Trick winner explained"
-          explanation={`${guidedReview.scoring} ${guidedReview.choice}`} outcome={guidedReview.next} />
+          result={guidedReview?.winning ?? heartsTrickFeedback(review, hand)} resultAriaLabel={guidedReview ? "Trick winner explained" : undefined}
+          explanation={guidedReview ? `${guidedReview.scoring} ${guidedReview.choice}` : ""} outcome={guidedReview?.next} />
       {:else}
         <div class="lesson-heading"><p class="eyebrow">Trick complete</p><h2>Read the table</h2></div>
         <p class:warning={review.outcome === "captured_penalty"} class="outcome">{heartsTrickFeedback(review, hand)}</p>
@@ -168,18 +162,13 @@
       {#if !guided || !complete}<button class="secondary-action" onclick={onBack} type="button">Table</button>{/if}
       {#if complete}
         {#if !settlement.complete}<button class="secondary-action" onclick={onReplay} type="button">Replay</button>{/if}
-        <button class="primary-action" disabled={dealing} onclick={onNextHand} type="button">{guided ? "Back to Learn" : settlement.complete ? "New match" : "Next hand"}</button>
+        <button class="primary-action" disabled={dealing} onclick={onNextHand} type="button">{guided ? "Play without guidance" : settlement.complete ? "New match" : "Next hand"}</button>
       {:else if review}
         <button class="primary-action" onclick={onNextTrick} type="button">Next trick</button>
       {:else}
         <button class="primary-action" disabled={dealing || !legal.has(selectedCardId)} onclick={onPlay} type="button">Play card</button>
       {/if}
     </div>
+    {#if guided && complete}<button class="secondary-action" onclick={onBack} type="button">Back to Learn</button>{/if}
   {/snippet}
 </TablePlaySurface>
-
-<style>
-  .guided-final-trick { border-block: 1px solid #ffffff26; padding: 4px 0; }
-  .guided-final-trick summary { min-height: 44px; align-content: center; cursor: pointer; }
-  .guided-final-trick p { font-size: 0.875rem; line-height: 1.5; }
-</style>

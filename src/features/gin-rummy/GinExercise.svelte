@@ -1,18 +1,22 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import TablePlaySurface from "../../components/TablePlaySurface.svelte";
   import CardChoiceHand from "../../components/CardChoiceHand.svelte";
   import CardFace from "../../components/CardFace.svelte";
   import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
   import type { CustomExerciseContext } from "../featureServices";
-  import { ginExercises, ginExerciseAnswer, ginSelectsDiscard, ginExerciseChoices, ginExercisePrompts } from "../../lessons/gin-rummy/exercises";
+  import { ginLearningSteps, ginExerciseAnswer, ginSelectsDiscard, ginExerciseChoices, ginExercisePrompts } from "../../lessons/gin-rummy/exercises";
+  import { insertLearningFollowUp } from "../../domain/learningSequence";
   import { bestMeldLayout, deadwoodValue } from "../../domain/rummyMelds";
   import { formatCardLabel, formatCardText } from "../../presentation/cardDisplay";
   import { formatRummyMeld } from "../../presentation/rummyDisplay";
   import type { DrillResult } from "../../lessons/drillDecision";
+  import type { DecisionReview } from "../../lessons/decisionReview";
   let { context }: { context: CustomExerciseContext } = $props();
   let index = $state(0), selected = $state(""), checked = $state(false);
   let decisions = $state<DrillResult[]>([]);
-  let steps = $derived(ginExercises[context.action]);
+  let reviews = $state<DecisionReview[]>([]);
+  let steps = $state(untrack(() => ginLearningSteps(context.action)));
   let step = $derived(steps[index]);
   let feedback = $derived(checked ? ginExerciseAnswer(context.action, step, selected) : null);
   let discardChoice = $derived(ginSelectsDiscard(context.action));
@@ -22,9 +26,18 @@
     const answer = ginExerciseAnswer(context.action, step, selected);
     decisions = [...decisions, { contract: "Gin Rummy", cardLabel: ginExerciseChoices(context.action, step).find(choice => choice.id === selected)!.label,
       outcome: answer.good ? "good" : answer.illegal ? "illegal" : "risky", clean: answer.good, reason: "meld_count" }];
+    reviews = [...reviews, { title: step.title, prompt: ginExercisePrompts[context.action], explanation: answer.text,
+      context: step.hint, selectedCardIds: discardChoice ? [selected] : [],
+      groups: [...(step.upcard ? [{ label: "Upcard", cards: [step.upcard] }] : []),
+        { label: "Your hand before your choice", cards: step.hand }] }];
     checked = true;
   }
-  function next() { if (!checked) return; if (index === steps.length - 1) { context.onComplete(decisions); return; } index++; selected = ""; checked = false; }
+  function next() {
+    if (!checked || decisions.length !== index + 1) return;
+    steps = insertLearningFollowUp(steps, index, decisions[index].clean, step.followUp);
+    if (index === steps.length - 1) { context.onComplete(decisions, reviews); return; }
+    index++; selected = ""; checked = false;
+  }
 </script>
 
 <TablePlaySurface flowLayout showTable={false} surfaceClassName="learning-play-surface" title={step.title} ariaLabel="Gin Rummy exercise"
@@ -55,7 +68,7 @@
     {/if}
     <div class="action-row">
       <button class="secondary-action" onclick={context.onBack} type="button">Table</button>
-      {#if checked}<button class="primary-action" onclick={next} type="button">{index === steps.length - 1 ? "Finish topic" : "Next decision"}</button>
+      {#if checked}<button class="primary-action" onclick={next} type="button">{step.followUp && !feedback?.good ? "Try another example" : index === steps.length - 1 ? "Finish topic" : "Next decision"}</button>
       {:else}<button class="primary-action" disabled={!selected} onclick={check} type="button">Check answer</button>{/if}
     </div>
   {/snippet}

@@ -144,16 +144,60 @@ test("an extra first-trick exercise does not complete unrelated Hearts topics", 
   expect(await progress(page)).toEqual({});
 });
 
-test("the last topic offers play instead of looping back to completed lessons", async ({ page }) => {
+for (const [game, definition, topic, saveKey] of [
+  ["Hearts", heartsDef, "hearts-score", "barbu.savedHeartsRun.v1"],
+  ["Whist", whistDef, "whist-follow-suit", "barbu.savedWhistRun.v1"],
+] as const) {
+  test(`${game} final unfinished topic celebrates the path and promotes play without replacing a save`, async ({ page }, info) => {
+    await openLearn(page, game);
+    await page.getByRole("tab", { name: "Play", exact: true }).click();
+    await page.getByRole("button", { name: `Play ${game}`, exact: true }).click();
+    const saved = await savedState(page, saveKey);
+    expect(saved).not.toBeNull();
+    await page.evaluate(({ key, ids }) => localStorage.setItem(key, JSON.stringify(Object.fromEntries(ids.map(id => [id, true])))),
+      { key: progressKey, ids: definition.learnSteps.filter(step => step.id !== topic).map(step => step.id) });
+    await openLearn(page, game);
+    await page.locator(`[data-skill="${topic}"] .exercise-shortcut`).click();
+    await finish(page);
+    await expect(page.getByRole("status")).toHaveText(`${game} learning path complete.`);
+    await expect(page.getByRole("button", { name: "Next lesson", exact: true })).toHaveCount(0);
+    const play = page.getByRole("button", { name: "Go to Play", exact: true });
+    await expect(play).toHaveCount(1);
+    await expect(play).toHaveClass(/\bprimary-action\b/);
+    await expect(page.getByRole("group", { name: "Lesson actions", exact: true }).getByRole("button"))
+      .toHaveText(["Go to Play", "Try again"]);
+    await expect(page.getByRole("button", { name: "Start guided hand", exact: true })).toHaveCount(game === "Hearts" ? 1 : 0);
+    for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { width: 820, height: 1180 }]) {
+      await page.setViewportSize(viewport);
+      await expect(play).toBeInViewport({ ratio: 1 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await page.screenshot({ path: info.outputPath(`${game}-path-complete-${viewport.width}.png`), fullPage: true });
+    }
+    await play.click();
+    await expect(page.getByRole("tab", { name: "Play", exact: true })).toHaveAttribute("aria-selected", "true");
+    expect(await savedState(page, saveKey)).toEqual(saved);
+    await page.getByRole("button", { name: `Continue ${game}`, exact: true }).click();
+    expect(await savedState(page, saveKey)).toEqual(saved);
+  });
+}
+
+test("replaying a completed path keeps retry and guidance usable without celebrating a paused attempt", async ({ page }) => {
   await page.addInitScript(({ key, ids }) => localStorage.setItem(key, JSON.stringify(Object.fromEntries(ids.map(id => [id, true])))),
-    { key: progressKey, ids: heartsDef.learnSteps.filter(step => step.id !== "hearts-score").map(step => step.id) });
+    { key: progressKey, ids: heartsDef.learnSteps.map(step => step.id) });
   await openLearn(page, "Hearts");
   await page.locator('[data-skill="hearts-score"] .exercise-shortcut').click();
+  await answer(page);
+  await page.getByRole("button", { name: "Finish session", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("Topic paused.");
+  await page.getByRole("button", { name: "Try again", exact: true }).click();
   await finish(page);
-  await expect(page.getByRole("button", { name: "Next lesson", exact: true })).toHaveCount(0);
-  await page.getByRole("button", { name: "Go to Play", exact: true }).click();
-  await page.getByRole("button", { name: "Play Hearts", exact: true }).click();
+  await expect(page.getByRole("status")).toHaveText("Hearts learning path complete.");
+  await page.getByRole("button", { name: "Try again", exact: true }).click();
+  await expect(page.getByLabel("Drill decision")).toBeVisible();
+  await finish(page);
+  await page.getByRole("button", { name: "Start guided hand", exact: true }).click();
   await expect(page.getByLabel("Your Hearts passing hand")).toBeVisible();
+  expect(await savedState(page, "barbu.savedHeartsRun.v1")).toBeNull();
 });
 
 for (const viewport of [{ width: 320, height: 568 }, { width: 820, height: 1180 }]) {

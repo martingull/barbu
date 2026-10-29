@@ -8,9 +8,8 @@
   import { heartsDef, heartsIntroduction, type HeartsPracticeAction } from "../../games/hearts";
   import { heartsIntroductionSteps } from "../../lessons/hearts/introduction";
   import { heartsLessonTakeaway } from "../../lessons/hearts/takeaways";
-  import { generateHeartsPracticeSet, type HeartsPracticeFocus } from "../../domain/heartsPractice";
-  import { orderPracticePool } from "../../lessons/drillDecision";
-  import { drillStepFromGeneratedScenario } from "../../lessons/generatedDrill";
+  import type { HeartsPracticeFocus } from "../../domain/heartsPractice";
+  import { heartsPracticeSteps } from "../../lessons/hearts/exercises";
   import { savedHeartsRunSummary } from "../../persistence/heartsSave";
   import type { FeatureServices, LearningEntry } from "../featureServices";
   import type { HeartsFeature } from "./heartsFeature";
@@ -23,6 +22,7 @@
   $effect(() => { services.onSurfaceChange(guidedSeed !== null || $feature.view === "hand" || learningFixed); });
   function startGuidedHand() { guidedSeed = services.nextSeed(); }
   function endGuidedHand() { guidedSeed = null; learningFixed = false; feature.openTable("learn"); }
+  function playWithoutGuidance() { guidedSeed = null; learningFixed = false; feature.openTable("play"); }
   const focuses: Record<Exclude<HeartsPracticeAction, "pass">, HeartsPracticeFocus> = {
     first: "first-trick", avoid: "avoid-hearts", queen: "queen-danger", break: "break-hearts", moon: "stop-moon", score: "score-hand"
   };
@@ -35,13 +35,12 @@
     if (action === "introduction" || action === "object") return heartsIntroductionSteps(seed);
     if (action === "pass") return { seed };
     const focus = focuses[action as Exclude<HeartsPracticeAction, "pass">];
-    const steps = generateHeartsPracticeSet(seed, focus).scenarios.map(drillStepFromGeneratedScenario);
-    return focus === "break-hearts" ? steps : orderPracticePool(steps, seed);
+    return heartsPracticeSteps(seed, focus);
   }
 </script>
 
 {#if guidedSeed !== null}
-  <HeartsGuidedHand seed={guidedSeed} onBack={endGuidedHand} />
+  <HeartsGuidedHand seed={guidedSeed} onBack={endGuidedHand} onIndependentPlay={playWithoutGuidance} />
 {:else if $feature.view === "hand" && $feature.session}
   {#if $feature.session.phase === "passing"}
     <HeartsPassing session={$feature.session} error={$feature.error} onBack={() => feature.openTable()}
@@ -59,7 +58,7 @@
     introductionRecommendation={onExploreBarbu ? { ...heartsIntroduction.recommendation, onOpen: onExploreBarbu } : undefined}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
     {loadExercise} exerciseTitle={action => action === "object" ? "Hearts basics" : `Hearts practice: ${names[action as HeartsPracticeAction]}`}
-    drillTitle={step => step.trick.title}
+    drillTitle={step => step.title}
     resultMessage={(clean, action) => heartsLessonTakeaway(action, clean)}>
     {#snippet customExercise(context)}<HeartsPassExercise {context} />{/snippet}
     {#snippet play()}

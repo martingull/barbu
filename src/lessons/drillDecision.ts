@@ -2,7 +2,7 @@ import type { Card, GuidedCardOutcome, GuidedTrick, PracticeReason, Seat, TableC
 import { formatCardLabel } from "../presentation/cardDisplay";
 
 export type DrillStep = { scenarioId?: string; contract: string; title: string; trick: GuidedTrick;
-  choiceMode?: "identify"; followUp?: DrillStep;
+  choiceMode?: "identify" | "select"; followUp?: DrillStep;
   playingSeat?: Seat; handLabel?: string; referenceHand?: { label: string; cards: Card[] };
   tableAfterByCard?: Partial<Record<string, TableCard[]>> };
 export type DrillResult = { contract: string; cardLabel: string; outcome: GuidedCardOutcome | "illegal";
@@ -11,7 +11,7 @@ export const drillOutcomeLabels = { good: "Good", risky: "Risky", penalty: "Pena
 
 export function drillTableCards(step: DrillStep, checked?: Card): TableCard[] {
   const trick = step.trick;
-  if (step.choiceMode === "identify" || !checked || !trick.legalCardIds.includes(checked.id)) return trick.tableBeforeChoice;
+  if (step.choiceMode || !checked || !trick.legalCardIds.includes(checked.id)) return trick.tableBeforeChoice;
   return [...trick.tableBeforeChoice, { seat: step.playingSeat ?? "You", card: checked },
     ...(step.tableAfterByCard?.[checked.id] ?? trick.tableAfterChoice)];
 }

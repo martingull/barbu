@@ -2,6 +2,7 @@ import type { DrillResult } from "../lessons/drillDecision";
 import type { PlayBarbuAttempt } from "../lessons/drillReview";
 import type { LearningEvidence } from "../domain/learningEvidence";
 import type { LearningCharacterId } from "../presentation/learningCharacters";
+import type { DecisionReview } from "../lessons/decisionReview";
 
 export type FeatureServices = {
   completedSteps: Record<string, boolean>;
@@ -22,7 +23,7 @@ export type CustomExerciseContext = {
   seed: number;
   fromCourse: boolean;
   onBack: () => void;
-  onComplete: (results?: DrillResult[]) => void;
+  onComplete: (results?: DrillResult[], reviews?: DecisionReview[]) => void;
 };
 
 export type LearningEntry =

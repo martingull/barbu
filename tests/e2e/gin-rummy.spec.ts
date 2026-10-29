@@ -167,7 +167,7 @@ test("Gin teaches fifteen decisions and persists progress separately from play",
       if (index === 0) await page.screenshot({ path: info.outputPath(`gin-${topic}.png`), fullPage: true });
       await page.getByRole("button", { name: index === 2 ? "Finish topic" : "Next decision", exact: true }).click();
     }
-    await expect(page.getByRole("status")).toHaveText("Topic complete.");
+    await expect(page.getByRole("status")).toHaveText(topic === "gin" ? "Gin Rummy learning path complete." : "Topic complete.");
     await expect(page.getByRole("button", { name: "Go to Play", exact: true })).toBeVisible();
     await expect(page.getByLabel("Learning summary")).toContainText("3 of 3 decisions");
     if (topic === "gin") {

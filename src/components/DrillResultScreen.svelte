@@ -7,22 +7,27 @@
   import GuidedHandEntry from "./GuidedHandEntry.svelte";
   import type { LearningCharacterId } from "../presentation/learningCharacters";
   import { formatCardText } from "../presentation/cardDisplay";
+  import DecisionReview from "./DecisionReview.svelte";
+  import type { DecisionReview as DecisionReviewData } from "../lessons/decisionReview";
 
-  let { title, results, message, complete, total, kind, review, onBack, actions, playAction, coach, guidedHand }: {
+  let { title, results, message, complete, total, kind, review, decisionReviews = [], onBack, actions, playAction, coach, guidedHand, completedPath }: {
     title: string; results: DrillResult[]; message: string; complete: boolean; total: number;
     kind: "Topic" | "Exercise";
     review?: CourseContent["review"]; onBack: () => void; actions: Snippet;
     playAction?: Snippet;
     coach?: LearningCharacterId;
     guidedHand?: { gameName: string; onStart: () => void };
+    completedPath?: string;
+    decisionReviews?: DecisionReviewData[];
   } = $props();
 </script>
 
 <TablePlaySurface mode="result" showTable={false} {title} ariaLabel="Learning result"
-  statusLabel={kind} statusValue={complete ? "Complete" : "Paused"} {onBack}
+  statusLabel={completedPath ? "Learning path" : kind} statusValue={complete ? "Complete" : "Paused"} {onBack}
   tableAriaLabel="Learning table" tableCards={[]} panelAriaLabel="Learning summary">
   {#snippet panel()}
-    <p class="result" role="status">{complete ? `${kind} complete.` : `${kind} paused. Finish all ${total} decisions to complete it.`}</p>
+    <p class="result" role="status">{completedPath ? `${completedPath} learning path complete.`
+      : complete ? `${kind} complete.` : `${kind} paused. Finish all ${total} decisions to complete it.`}</p>
     {#if results.length}
       <p class="result">{results.filter(result => result.clean).length} of {results.length} decisions matched the lesson's goal.</p>
     {/if}
@@ -33,9 +38,12 @@
       <details>
         <summary>Review decisions</summary>
         {#if results.length}
-          <ol aria-label="Decision results">
-            {#each results as result}
-              <li><strong>{formatCardText(result.cardLabel)}</strong><span>{drillOutcomeLabels[result.outcome]}</span></li>
+          <ol role="list" aria-label="Decision results" class:detailed-decisions={decisionReviews.length > 0}>
+            {#each results as result, index}
+              <li>
+                {#if decisionReviews[index]}<DecisionReview review={decisionReviews[index]} {result} {index} />
+                {:else}<strong>{formatCardText(result.cardLabel)}</strong><span>{drillOutcomeLabels[result.outcome]}</span>{/if}
+              </li>
             {/each}
           </ol>
         {/if}
@@ -62,6 +70,7 @@
   h2 { font-size: 1rem; }
   p, li { font-size: 0.875rem; line-height: 1.5; }
   ol { padding-left: 24px; }
+  .detailed-decisions { list-style: none; padding-left: 0; }
   ol li { padding: 4px 0; }
   ol span { margin-left: 12px; }
 </style>

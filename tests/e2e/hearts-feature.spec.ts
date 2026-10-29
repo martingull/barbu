@@ -26,10 +26,12 @@ test("Hearts match survives Card Counting, a lesson and a reload", async ({ page
   await page.locator('[data-skill="hearts-avoid"] .lesson-topic').click();
   await page.getByRole("button", { name: "See example", exact: true }).click();
   await page.getByRole("button", { name: "Try cards", exact: true }).click();
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 6; i++) {
     await page.locator(".drill-hand .hand-card.legal").first().click();
     await page.getByRole("button", { name: "Check answer", exact: true }).click();
-    await page.getByRole("button", { name: i === 2 ? "Finish topic" : "Next decision", exact: true }).click();
+    const finish = page.getByRole("button", { name: "Finish topic", exact: true });
+    if (await finish.isVisible()) { await finish.click(); break; }
+    await page.getByRole("button", { name: /^(Next decision|Try another example)$/ }).click();
   }
   await expect(page.getByRole("status")).toHaveText("Topic complete.");
   await page.getByRole("button", { name: "Back to Learn", exact: true }).click();

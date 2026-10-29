@@ -5,20 +5,25 @@
   import { suitSymbol } from "../../presentation/cardDisplay";
   import type { CustomExerciseContext } from "../featureServices";
   import type { DrillResult } from "../../lessons/drillDecision";
+  import type { DecisionReview } from "../../lessons/decisionReview";
   let { context }: { context: CustomExerciseContext } = $props();
   let index = $state(0), selected = $state(""), checked = $state(false);
   let results = $state<DrillResult[]>([]);
+  let reviews = $state<DecisionReview[]>([]);
   let step = $derived(bridgeContractSteps[index]);
   let good = $derived(selected === String(step.contract.target));
+  let prompt = $derived(`In ${step.contract.label}, how many tricks must declarer and dummy win together?`);
+  let explanation = $derived(`Six base tricks + level ${step.contract.level} = ${step.contract.target} tricks. ${step.contract.strain === "NT" ? "No suit is trump." : `${suitSymbol(step.contract.strain)} is trump.`}`);
   function check() {
     if (!selected || checked) return;
     results = [...results, { contract: "Bridge", cardLabel: `${step.contract.label}: ${selected} tricks`,
       outcome: good ? "good" : "risky", clean: good, reason: "contract_target" }];
+    reviews = [...reviews, { title: step.title, prompt, explanation, context: step.contract.longLabel, groups: [] }];
     checked = true;
   }
   function next() {
     if (!checked) return;
-    if (index === bridgeContractSteps.length - 1) { context.onComplete(results); return; }
+    if (index === bridgeContractSteps.length - 1) { context.onComplete(results, reviews); return; }
     index++; selected = ""; checked = false;
   }
 </script>
@@ -35,8 +40,8 @@
   {/snippet}
   {#snippet panel()}
     <ExerciseFeedback coach={context.coach} eyebrow={step.contract.longLabel} title={step.title}
-      result={checked ? "" : `In ${step.contract.label}, how many tricks must declarer and dummy win together?`}
-      explanation={checked ? `Six base tricks + level ${step.contract.level} = ${step.contract.target} tricks. ${step.contract.strain === "NT" ? "No suit is trump." : `${suitSymbol(step.contract.strain)} is trump.`}` : step.hint}
+      result={checked ? "" : prompt}
+      explanation={checked ? explanation : step.hint}
       outcome={checked ? good ? "Good" : "Risky" : ""} warning={checked && !good} />
     <div class="contract-choices" role="group" aria-label="Trick targets">
       {#each step.options as option}

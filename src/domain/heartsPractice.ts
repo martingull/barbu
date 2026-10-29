@@ -1,4 +1,5 @@
 import content from "../../content/hearts-practice.json" with { type: "json" };
+import followUps from "../../content/hearts-follow-ups.json" with { type: "json" };
 import type { Card, GeneratedDrillSet, GeneratedPracticeOutcome, GeneratedPracticeScenario, HeartsPassScenario, Seat, Suit, TableCard } from "./types";
 import { heartsPoints, legalHeartsCards } from "./heartsRules";
 import { cardRank, trickWinner } from "./trickTakingRules";
@@ -53,6 +54,14 @@ function createScenario(template: Template, topic: HeartsPracticeFocus, seed: bi
   };
   scenario.outcomes = hand.map(card => evaluateChoice(scenario, template, topic, card));
   return scenario;
+}
+
+export function generateHeartsPracticeFollowUp(parentId: string, focus: HeartsPracticeFocus): GeneratedPracticeScenario {
+  const template = followUps.find(item => item.parentId === parentId);
+  if (!template || !content.topics.find(topic => topic.topic === focus)?.scenarios.some(item => item.id === parentId)) {
+    throw Error("Unknown Hearts follow-up.");
+  }
+  return createScenario(template, focus, 0n);
 }
 
 function evaluateChoice(s: GeneratedPracticeScenario, template: Template, topic: HeartsPracticeFocus, card: Card): GeneratedPracticeOutcome {
@@ -141,7 +150,21 @@ export const heartsPassPracticeCount = content.passes.length;
 export function generateHeartsPassPractice(seed: number): HeartsPassScenario {
   checkSeed(seed);
   const template = content.passes[seed % heartsPassPracticeCount];
-  return { ...template, id: `${template.id}-${seed}`, playerHand: template.playerHand.map(card),
+  return passScenario(template, seed);
+}
+
+export function generateHeartsPassFollowUp(seed: number): HeartsPassScenario {
+  checkSeed(seed);
+  const parent = content.passes[seed % heartsPassPracticeCount];
+  const template = content.passFollowUps.find(item => item.parentId === parent.id);
+  if (!template) throw Error("Missing Hearts passing follow-up.");
+  return passScenario(template, seed);
+}
+
+function passScenario(template: typeof content.passes[number], seed: number): HeartsPassScenario {
+  return { id: `${template.id}-${seed}`, title: template.title, prompt: template.prompt,
+    explanation: template.explanation, missedPlanExplanation: template.missedPlanExplanation,
+    playerHand: template.playerHand.map(card),
     recommendedPass: template.recommendedPass.map(card),
     alternatives: template.alternatives.map(option => ({ ...option, cardIds: [...option.cardIds] })) };
 }

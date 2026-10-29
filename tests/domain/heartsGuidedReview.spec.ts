@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { heartsLearningTrick } from "../../src/domain/heartsLearning";
+import { heartsLearningRecap, heartsLearningTrick } from "../../src/domain/heartsLearning";
 import { heartsGuidedReview } from "../../src/features/hearts/heartsGuidance";
 import { heartsLessonTakeaway } from "../../src/lessons/hearts/takeaways";
 import { trickWinner } from "../../src/domain/trickTakingRules";
@@ -54,4 +54,27 @@ test("every Hearts activity has a distinct takeaway without claiming mastery", (
     expect(heartsLessonTakeaway(action, true)).not.toMatch(/mastered|expert|independently/i);
     expect(heartsLessonTakeaway(action, false)).toContain("Remember:");
   }
+});
+
+test("guided recap selects actual queen, heart and void moments in chronological order", () => {
+  const tricks = [trick(["2C", "KC", "AC", "4C"]), trick(["2S", "QS", "3S", "AS"]),
+    trick(["3D", "KD", "4C", "AD"]), trick(["2H", "3H", "4H", "AH"])];
+  const before = JSON.stringify(tricks);
+  const recap = heartsLearningRecap(tricks);
+  expect(recap.map(moment => moment.number)).toEqual([2, 3, 4]);
+  expect(recap[0].facts).toMatchObject({ queen: true, points: 13, winner: { seat: "Left" } });
+  expect(recap[1].facts).toMatchObject({ followedSuit: false, playerLed: false, points: 0 });
+  expect(recap[2].facts).toMatchObject({ hearts: 4, points: 4 });
+  expect(JSON.stringify(tricks)).toBe(before);
+  expect(recap.every(moment => moment.trick === tricks[moment.number - 1])).toBe(true);
+});
+
+test("recap merges overlapping moments and never invents a void discard", () => {
+  const combined = trick(["9C", "QS", "AH", "KC"]);
+  expect(heartsLearningRecap([combined])).toHaveLength(1);
+  const followed = heartsLearningRecap([trick(["2S", "QS", "3S", "AS"]), trick(["2H", "3H", "4H", "AH"])]);
+  expect(followed).toHaveLength(2);
+  expect(followed.every(moment => moment.facts.followedSuit)).toBe(true);
+  expect(heartsLearningRecap([])).toEqual([]);
+  expect(heartsLearningRecap([trick(["2C", "KC", "AC", "4C"])])).toEqual([]);
 });

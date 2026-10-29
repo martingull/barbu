@@ -27,3 +27,18 @@ export function heartsLearningTrick(trick: CompletedHandTrick) {
     followedSuit: player.card.suit === lead.card.suit
   };
 }
+
+// Select distinct, observable moments, not an assessment of the player's tactics.
+export function heartsLearningRecap(tricks: readonly CompletedHandTrick[]) {
+  const moments = tricks.flatMap((trick, index) => {
+    const facts = heartsLearningTrick(trick);
+    return facts ? [{ trick, number: index + 1, facts }] : [];
+  });
+  const queen = moments.find(moment => moment.facts.queen);
+  const hearts = moments.filter(moment => moment.facts.hearts > 0)
+    .sort((a, b) => b.facts.hearts - a.facts.hearts)[0];
+  const discard = moments.find(moment => !moment.facts.playerLed && !moment.facts.followedSuit);
+  return [...new Set([queen, hearts, discard])]
+    .filter((moment): moment is typeof moments[number] => moment !== undefined)
+    .sort((a, b) => a.number - b.number);
+}

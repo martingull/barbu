@@ -7,7 +7,7 @@ export const ginCards = (ids: string) => ids.split(" ").map(id => {
   if (!card) throw Error(`Unknown Gin example card: ${id}`);
   return card;
 });
-export type GinExerciseStep = { title: string; hand: Card[]; upcard?: Card; hint?: string; options?: string[] };
+export type GinExerciseStep = { title: string; hand: Card[]; upcard?: Card; hint?: string; options?: string[]; followUp?: GinExerciseStep };
 export const ginExercises: Record<string, GinExerciseStep[]> = {
   melds: [
     { title: "Keep your three combinations", hand: ginCards("3C 4C 5C 7D 7H 7S 9H 10H JH 2D KS") },
@@ -41,6 +41,38 @@ export const ginExercises: Record<string, GinExerciseStep[]> = {
     { title: "Find a gin finish", hand: ginCards("AC 2C 3C 4C 5D 5H 5S 9D 10D JD KH") }
   ]
 };
+const ginFollowUps: Record<string, GinExerciseStep[]> = {
+  melds: [
+    { title: "Protect another three melds", hand: ginCards("4D 5D 6D 8C 8H 8S 10S JS QS 3H KC") },
+    { title: "Keep the low run together", hand: ginCards("2H 3H 4H 6C 6D 6S 10C JC QC AD 9S") },
+    { title: "Find the smaller remainder", hand: ginCards("5S 6S 7S 9C 9D 9H 2C 3C 4C 2D KH") }
+  ],
+  deadwood: [
+    { title: "Set aside the melds again", hand: ginCards("4D 5D 6D 8C 8H 8S 10S JS QS 3H"), options: ["3", "11", "30"] },
+    { title: "Count another picture card", hand: ginCards("2H 3H 4H 6C 6D 6S 10C JC QC KH"), options: ["0", "10", "13"] },
+    { title: "Two cards are not a run", hand: ginCards("5S 6S 7S 9C 9D 9H 2C 3C KD AD"), options: ["6", "15", "16"] }
+  ],
+  draw: [
+    { title: "Complete a different run", hand: ginCards("4D 5D 8C 8H 8S 10S JS QS 3H KC"), upcard: ginCards("6D")[0] },
+    { title: "Does this king help?", hand: ginCards("2H 3H 4H 6C 6D 6S 10C JC QC AD"), upcard: ginCards("KH")[0] },
+    { title: "Finish the clubs", hand: ginCards("5S 6S 7S 9C 9D 9H 2C 3C 2D KH"), upcard: ginCards("4C")[0] }
+  ],
+  knock: [
+    { title: "Check another possible finish", hand: ginCards("4D 5D 6D 8C 8H 8S 10S JS QS 3H") },
+    { title: "Count before you knock", hand: ginCards("5S 6S 7S 9C 9D 9H 2C 3C KD AD") },
+    { title: "At the knock limit", hand: ginCards("2H 3H 4H 6C 6D 6S 10C JC QC KH") }
+  ],
+  gin: [
+    { title: "Find another zero-point finish", hand: ginCards("4D 5D 6D 7D 8C 8H 8S 10S JS QS KC") },
+    { title: "Keep the four-card run", hand: ginCards("2H 3H 4H 5H 6C 6D 6S 10C JC QC AD") },
+    { title: "Leave every card in a meld", hand: ginCards("5S 6S 7S 8S 9C 9D 9H 2C 3C 4C KH") }
+  ]
+};
+
+export function ginLearningSteps(action: string): GinExerciseStep[] {
+  return ginExercises[action].map((step, index) => ({ ...step, followUp: ginFollowUps[action][index] }));
+}
+
 export const ginSelectsDiscard = (action: string) => action === "melds" || action === "gin";
 export function ginExerciseChoices(action: string, step: GinExerciseStep) {
   if (ginSelectsDiscard(action)) return step.hand.map(card => ({ id: card.id, label: card.label }));

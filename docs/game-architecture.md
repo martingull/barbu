@@ -49,7 +49,15 @@ Do not duplicate the authored TypeScript courses as JSON merely for symmetry.
 
 Lesson result callbacks receive both the attempt outcome and exercise action so
 game content can supply a topic-specific takeaway through the shared result
-surface. Guided Hearts reuses `ExerciseFeedback` for rule/advice and trick review;
+surface. `DecisionReview` expands each available decision inside Review decisions:
+the original prompt, visible card groups, selected cards and the exact explanation.
+`lessons/decisionReview.ts` adapts shared drills; custom passing, bidding, contract,
+Gin and authored Barbu exercises supply the same presentation data. Keep these
+snapshots in the current lesson only, separate from persisted `DrillResult` history
+and completion evidence. Review is read-only: it neither replays cards nor awards
+progress. Show only the original visible position, not scripted later plays or
+concealed hands; winner questions do not duplicate their answer cards as a hand.
+Guided Hearts reuses `ExerciseFeedback` for rule/advice and trick review;
 its public-card review facts belong in `domain/heartsLearning.ts`. Do not add
 game-name branches to shared UI or infer tactical mistakes from penalty totals.
 Coached card decisions can opt into `TablePlaySurface.stableFeedback` paired with
@@ -248,6 +256,11 @@ an unsaved guided hand. Progress and the numbered path follow those choices.
 it remains available after the path is complete. Saved-match resume belongs to
 Play, not Learn. Results group Try again/Next lesson together and route to the
 Play tab through Go to Play instead of silently starting or resuming a match.
+After a fully finished topic leaves every path step complete, the shared result
+acknowledges the game's learning path and promotes Go to Play beside the secondary
+retry action. Guided hands remain available where supported. Paused attempts and
+standalone extra exercises do not announce path completion; saved matches are
+still opened only through Play.
 Existing boolean completion in `barbu.courseProgress.v1`
 remains navigation progress, not mastery. Completed attempts with decision results
 also record their latest correct/total counts and attempt count through
@@ -266,14 +279,37 @@ trick-scoring primitives. Winner questions keep all four cards on the table and
 never play the selected answer as a fifth card. Each missed concept adds one
 different follow-up through `domain/learningSequence.ts`; both answers count in
 the attempt evidence. Follow-ups do not recursively add more questions.
+The same bounded sequence is used by the six Hearts practice topics and the
+five Gin Rummy topics. `content/hearts-follow-ups.json` pairs fresh positions
+with each original pattern, graded by `heartsPractice.ts`; the lesson adapter
+attaches them without changing the seeded base generator. Gin pairs authored
+hands in `lessons/gin-rummy/exercises.ts` and grades them with the existing meld
+solver. A missed goal offers **Try another example**; correct answers keep the
+original three-decision route. Legal-but-risky choices remain distinct from
+illegal plays. Both attempts appear in decision review and completion evidence;
+an early exit does not complete a topic. This is immediate reinforcement, not
+adaptive mastery, and does not yet cover the other games.
+Hearts passing uses the same sequence helper: each of its three defensive plans
+has a fresh thirteen-card companion in `content/hearts-practice.json`. Checked
+passes become read-only, preserving the original choice in review. A risky pass
+offers one companion; a sound alternative advances normally. The passing
+evaluator distinguishes legal passes from the lesson's defensive goal, and both
+attempts count toward evidence without modifying a saved match.
 The shared `decisionFirst` step metadata keeps the written explanation available
 through Read lesson without making it a prerequisite for playing cards.
 
 `HeartsGuidedHand` offers an optional unsaved 13-trick hand after the introduction
 and from Learn. It composes the existing passing/hand views and normal
 `heartsSession` transitions, with contextual coaching instead of a separate engine.
-It returns to Learn after one hand, does not award topic completion, and never
-overwrites a saved match. This is rules guidance, not expert tactical analysis.
+Passing, every card decision and every trick review show guidance automatically;
+there are no hint or explanation toggles during guided play.
+Help stays inside the reserved feedback region, so it cannot resize the board.
+The result selects up to three distinct, actual tricks (Q♠, heart points and an
+off-suit discard where one occurred), using `heartsLearningRecap` without hidden
+cards or tactical grading. Replay repeats the deal; Play without guidance opens
+the normal Play menu, preserving its existing Continue option. Back to Learn is
+still available. The hand does not award topic completion or overwrite a saved
+match. This is rules guidance, not expert tactical analysis.
 The presentation dependency check permits the existing launcher PNG as shared
 artwork; native code remains outside the presentation layer.
 

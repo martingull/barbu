@@ -6,16 +6,18 @@
   import { guidedLessons } from "../../lessons/catalog";
   import { drillOutcomeLabels as outcomeLabels, type DrillResult } from "../../lessons/drillDecision";
   import { barbuGuidedDecision, barbuGuidedResult } from "../../lessons/barbu/guidedFeedback";
+  import { drillDecisionReview, type DecisionReview } from "../../lessons/decisionReview";
   import type { Card, Suit } from "../../domain/types";
   import type { LearningCharacterId } from "../../presentation/learningCharacters";
   export let coach: LearningCharacterId | undefined = undefined;
   export let lessonId: string;
   export let onBack: () => void;
-  export let onComplete: (results: DrillResult[]) => void;
+  export let onComplete: (results: DrillResult[], reviews?: DecisionReview[]) => void;
   let trickIndex = 0;
   let selectedCardId = "";
   let playedCardId = "";
   let results: DrillResult[] = [];
+  let reviews: DecisionReview[] = [];
   const suitNames: Record<Suit, string> = { C: "clubs", D: "diamonds", H: "hearts", S: "spades" };
   $: selectedLesson = guidedLessons.find(lesson => lesson.id === lessonId) ?? guidedLessons[0];
   $: activeTricks = selectedLesson.tricks;
@@ -60,7 +62,8 @@
   function nextTrick() {
     if (!playedCard) return;
     results = [...results, barbuGuidedDecision(contractLabel, currentTrick, playedCard).result];
-    if (isLastTrick) { onComplete(results); return; }
+    reviews = [...reviews, drillDecisionReview({ contract: contractLabel, title: currentTrick.title, trick: currentTrick }, playedCard)];
+    if (isLastTrick) { onComplete(results, reviews); return; }
     trickIndex++;
     resetTrick();
   }

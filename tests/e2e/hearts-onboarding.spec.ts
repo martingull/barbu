@@ -96,8 +96,10 @@ for (const size of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { 
     for (let trick = 0; trick < 13; trick++) {
       const hand = page.getByLabel("Your Hearts hand");
       const actions = page.locator(".table-play-panel .action-row");
-      await expect(page.getByLabel("Hearts hand decision")).toContainText("Rule:");
-      await expect(page.getByLabel("Hearts hand decision")).toContainText("Tactic:");
+      const panelCopy = page.getByLabel("Hearts hand decision");
+      await expect(panelCopy).toContainText("Rule:");
+      await expect(panelCopy).toContainText("Tactic:");
+      await expect(panelCopy.getByRole("checkbox")).toHaveCount(0);
       await expect(actions.getByRole("button", { name: "Play card", exact: true })).toBeInViewport({ ratio: 1 });
       await expectStableBoard(page, baseline);
       const handBox = (await hand.boundingBox())!, actionBox = (await actions.boundingBox())!;
@@ -108,6 +110,7 @@ for (const size of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { 
       await page.getByRole("button", { name: "Play card", exact: true }).click();
       if (trick < 12) {
         await expectStableBoard(page, baseline);
+        await expect(panelCopy.getByRole("checkbox")).toHaveCount(0);
         await expect(page.getByLabel("Trick winner explained")).toContainText("the highest card in");
         await expect(page.getByLabel("Hearts hand decision")).toContainText(/points|point/);
         await expect(page.getByLabel("Hearts hand decision")).toContainText(/leads? next/);
@@ -131,15 +134,23 @@ for (const size of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { 
       }
     }
     await expect(page.getByRole("heading", { name: "Guided hand complete", exact: true })).toBeVisible();
-    await expect(page.locator(".table-play-panel .action-row button")).toHaveText(["Replay", "Back to Learn"]);
+    await expect(page.locator(".table-play-panel .action-row button")).toHaveText(["Replay", "Play without guidance"]);
     await expect(page.getByRole("button", { name: "Next hand", exact: true })).toHaveCount(0);
-    await page.getByText("Last trick explained", { exact: true }).click();
-    await expect(page.locator(".guided-final-trick")).toContainText("the highest card in");
+    const recap = page.getByRole("region", { name: "Your hand in review", exact: true });
+    await expect(recap).toContainText("Q♠ (13)");
+    expect(await recap.locator("details").count()).toBeLessThanOrEqual(3);
+    await recap.locator("summary").first().click();
+    await expect(recap.locator("details[open]")).toContainText("the highest card in");
+    await expect(recap.locator("details[open] img")).toHaveCount(4);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     const points = await page.getByLabel("This hand breakdown").locator(".hearts-hand-breakdown-row:not(.header) strong:last-child").allTextContents();
     expect([26, 78]).toContain(points.reduce((sum, value) => sum + Number(value), 0));
     expect(await page.evaluate(key => localStorage.getItem(key), saveKey)).toBe(saved);
     await page.screenshot({ path: info.outputPath("guided-result.png") });
-    await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
+    await page.getByRole("button", { name: "Play without guidance", exact: true }).click();
+    await expect(page.getByRole("tab", { name: "Play", exact: true })).toHaveAttribute("aria-selected", "true");
+    expect(await page.evaluate(key => localStorage.getItem(key), saveKey)).toBe(saved);
+    await page.getByRole("tab", { name: "Learn", exact: true }).click();
     await expect(page.getByLabel("Hearts course progress")).toContainText("0 / 7 complete");
     await page.getByRole("tab", { name: "Play", exact: true }).click();
     await page.getByRole("button", { name: "Continue Hearts", exact: true }).click();
@@ -166,6 +177,12 @@ test("opening exercise states its objective and explains legal tactical alternat
       await expect(page.getByLabel("Drill decision")).toContainText("not a rules mistake");
       await expect(page.getByLabel("Drill decision")).toContainText("0 points");
       await page.screenshot({ path: info.outputPath("legal-tactic-feedback.png") });
+      await expectStableBoard(page, baseline);
+      await page.getByRole("button", { name: "Try another example", exact: true }).click();
+      await expect(page.getByLabel("Drill decision")).toContainText("this is a tactic, not a rule");
+      await page.getByLabel("Your drill hand").getByRole("button", { name: "6 C", exact: true }).click();
+      await page.getByRole("button", { name: "Check answer", exact: true }).click();
+      await expect(page.locator(".outcome")).toHaveText("Good");
     } else {
       await page.locator(".drill-hand .legal").first().click();
       await page.getByRole("button", { name: "Check answer", exact: true }).click();
@@ -201,4 +218,34 @@ test("guided board adapts to a resized viewport but not the next explanation", a
   }
   expect(heights[1]).toBeGreaterThan(heights[0]);
   expect(heights[2]).toBeGreaterThan(heights[1]);
+});
+
+test("replaying a guided hand restores its deal and opening guidance without saving progress", async ({ page }) => {
+  await learn(page);
+  await page.getByRole("button", { name: "Start guided hand", exact: true }).click();
+  for (let i = 0; i < 3; i++) await page.getByLabel("Your Hearts passing hand").getByRole("button").nth(i).click();
+  await page.getByRole("button", { name: "Pass cards", exact: true }).click();
+  const hand = page.getByLabel("Your Hearts hand");
+  const original = await hand.getByRole("button").evaluateAll(cards => cards.map(card => card.getAttribute("aria-label")));
+  for (let trick = 0; trick < 13; trick++) {
+    await hand.locator(".legal").first().click();
+    await page.getByRole("button", { name: "Play card", exact: true }).click();
+    if (trick < 12) await page.getByRole("button", { name: "Next trick", exact: true }).click();
+  }
+  await page.getByRole("button", { name: "Back to Learn", exact: true }).scrollIntoViewIfNeeded();
+  await expect(page.getByRole("button", { name: "Back to Learn", exact: true })).toBeInViewport();
+  await page.getByRole("button", { name: "Replay", exact: true }).click();
+  expect(await hand.getByRole("button").evaluateAll(cards => cards.map(card => card.getAttribute("aria-label")))).toEqual(original);
+  await expect(page.getByLabel("Hearts hand decision")).toContainText("Rule:");
+  await expect(page.getByRole("checkbox")).toHaveCount(0);
+  for (let trick = 0; trick < 3; trick++) {
+    await hand.locator(".legal").first().click();
+    await page.getByRole("button", { name: "Play card", exact: true }).click();
+    await page.getByRole("button", { name: "Next trick", exact: true }).click();
+  }
+  await expect(page.getByLabel("Hearts hand decision")).toContainText("Tactic:");
+  await expect(page.getByRole("checkbox")).toHaveCount(0);
+  expect(await page.evaluate(key => localStorage.getItem(key), saveKey)).toBeNull();
+  await page.getByRole("button", { name: "Table", exact: true }).first().click();
+  await expect(page.getByLabel("Hearts course progress")).toContainText("0 / 7 complete");
 });

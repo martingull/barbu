@@ -7,9 +7,11 @@
   import { bridgeCallLabel, type BridgeCallOption } from "../../domain/bridgeAuction";
   import { bridgeHandShapeLabel, bridgeSeatLabel } from "./bridgePresentation";
   import type { DrillResult } from "../../lessons/drillDecision";
+  import type { DecisionReview } from "../../lessons/decisionReview";
   import type { LearningCharacterId } from "../../presentation/learningCharacters";
-  let { onBack, onComplete, coach }: { onBack: () => void; onComplete: (results?: DrillResult[]) => void; coach?: LearningCharacterId } = $props();
+  let { onBack, onComplete, coach }: { onBack: () => void; onComplete: (results?: DrillResult[], reviews?: DecisionReview[]) => void; coach?: LearningCharacterId } = $props();
   let results = $state<DrillResult[]>([]);
+  let reviews = $state<DecisionReview[]>([]);
   let index = $state(0);
   let selected = $state<BridgeCallOption>("");
   let checked = $state<BridgeCallOption | "">("");
@@ -25,10 +27,14 @@
     checked = selected;
     const good = checked === step.correctCall;
     results = [...results, { contract: "Bridge", cardLabel: bridgeCallLabel(checked), outcome: good ? "good" : "risky", clean: good, reason: "bid_selection" }];
+    reviews = [...reviews, { title: step.title, prompt: step.prompt,
+      explanation: step.explanations[checked] ?? "Compare your call with basic natural bidding.",
+      context: `Dealer: ${bridgeSeatLabel(step.dealer)}. Vulnerability: ${step.vulnerability}. HCP: ${bridgeHighCardPoints(step.hand)}. Shape: ${bridgeHandShapeLabel(step.hand)}.`,
+      groups: [{ label: "Your bidding hand", cards: step.hand }] }];
   }
   function next() {
     if (!checked) return;
-    if (last) { onComplete(results); return; }
+    if (last) { onComplete(results, reviews); return; }
     index += 1;
     selected = "";
     checked = "";

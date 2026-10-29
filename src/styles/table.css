@@ -59,7 +59,7 @@
    reviews. Only viewport changes, not the length of a message, resize the board. */
 .app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play.stable-feedback {
   --flow-feedback-height: clamp(88px, 22dvh, 160px);
-  --flow-panel-space: calc(var(--flow-feedback-height) + 60px);
+  --flow-panel-space: calc(var(--flow-feedback-height) + 68px);
 }
 
 .app-shell.fixed-play-screen .table-play-surface.flow-play.bridge-play-surface {
@@ -237,6 +237,11 @@
   font-size: 0.88rem;
   line-height: 1.2;
   overflow-wrap: anywhere;
+}
+
+/* A two-line continuation label must not take space away from the board. */
+.app-shell.fixed-play-screen .flow-play.stable-feedback .action-row > button {
+  min-height: 52px;
 }
 
 .app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play.table-hidden .table-play-panel {

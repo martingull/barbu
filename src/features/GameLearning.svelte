@@ -17,6 +17,7 @@
   import GuidedHandEntry from "../components/GuidedHandEntry.svelte";
   import { learningGuide } from "../presentation/learningCharacters";
   import { insertLearningFollowUp } from "../domain/learningSequence";
+  import { drillDecisionReview, type DecisionReview } from "../lessons/decisionReview";
 
   let { definition, gameName, tab, onTab, play, customExercise, loadExercise, exerciseTitle, drillTitle, drillEyebrow, seatLabels = {}, resultMessage,
     entry, onEntryConsumed, onIntroductionComplete, onGuidedPlay, introductionRecommendation, resources, lessonEntries = [], customExample: renderExample, drillTableFor, drillTopic,
@@ -48,6 +49,7 @@
   let selected = $state("");
   let checked = $state("");
   let results = $state<DrillResult[]>([]);
+  let decisionReviews = $state<DecisionReview[]>([]);
   let error = $state("");
   let introduction = $state("");
   let activeStep = $state<LearnPathStep | null>(null);
@@ -55,6 +57,7 @@
   let exerciseFromCourse = $state(false);
   let completedCount = $derived(definition.learnSteps.filter(step => completedSteps[step.id]).length);
   let nextStep = $derived(definition.learnSteps.find(step => !completedSteps[step.id]));
+  let pathComplete = $derived(!!activeStep && exerciseComplete && definition.learnSteps.length > 0 && !nextStep);
   let guidedHand = $derived(onGuidedPlay ? { gameName, onStart: onGuidedPlay } : undefined);
   let actions = $derived(Object.fromEntries(definition.practiceGroups.flatMap(group => group.entries ?? []).map(entry => [entry.action, () => startExercise(entry.action)])));
   $effect(() => { onSurfaceChange(view === "course" || view === "drill" || view === "custom" || (view === "result" && !!introduction)); });
@@ -125,6 +128,7 @@
       index = 0;
       selected = checked = "";
       results = [];
+      decisionReviews = [];
       exerciseComplete = false;
       exerciseFromCourse = fromCourse;
       error = "";
@@ -135,6 +139,7 @@
     const card = steps[index].trick.hand.find(card => card.id === selected);
     if (!card || checked) return;
     results = [...results, drillDecision(steps[index], card).result];
+    decisionReviews = [...decisionReviews, drillDecisionReview(steps[index], card, seatLabels)];
     checked = card.id;
   }
   function retry() {
@@ -158,9 +163,10 @@
     try { onCompleteStep(activeStep.id, results); }
     catch { /* The result remains usable when progress cannot be saved. */ }
   }
-  function finishCustom(decisions: DrillResult[] = []) {
+  function finishCustom(decisions: DrillResult[] = [], reviews: DecisionReview[] = []) {
     if (view !== "custom") return;
     results = decisions;
+    decisionReviews = reviews;
     try { if (results.length) onExerciseComplete(results); } catch { /* Results remain available without storage. */ }
     exerciseComplete = true;
     completeTopic();
@@ -210,19 +216,23 @@
   </TablePlaySurface>
 {:else if view === "result"}
   <DrillResultScreen title={activeStep?.title ?? exerciseTitle(action)} {results} complete={exerciseComplete}
+    {decisionReviews}
+    completedPath={pathComplete ? gameName : undefined}
     {guidedHand}
     coach={learningGuide(definition.table.id)}
     kind={activeStep ? "Topic" : "Exercise"}
     total={steps.length} onBack={table} review={course?.review}
-    message={results.length ? resultMessage(results.every(result => result.clean), action) : "Try this skill in a full hand, or continue learning."}>
+    message={pathComplete ? "You've covered the foundations. Put them into practice in Play, and revisit lessons whenever you need a reminder."
+      : results.length ? resultMessage(results.every(result => result.clean), action) : "Try this skill in a full hand, or continue learning."}>
     {#snippet actions()}
+      {#if pathComplete}<button class="primary-action" onclick={openPlay} type="button">Go to Play</button>{/if}
       <button class="secondary-action" onclick={retry} type="button">Try again</button>
       {#if exerciseComplete && nextStep}
         <button class="primary-action" onclick={() => practiceStep(nextStep!)} type="button">Next lesson</button>
       {/if}
     {/snippet}
     {#snippet playAction()}
-      <button class="secondary-action" onclick={openPlay} type="button">Go to Play</button>
+      {#if !pathComplete}<button class="secondary-action" onclick={openPlay} type="button">Go to Play</button>{/if}
     {/snippet}
   </DrillResultScreen>
 {:else}

@@ -1,16 +1,22 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import TablePlaySurface from "../../components/TablePlaySurface.svelte";
   import CardChoiceHand from "../../components/CardChoiceHand.svelte";
   import { formatCardList } from "../../presentation/cardDisplay";
-  import { generateHeartsPassPractice, evaluateHeartsPass, heartsPassPracticeCount as heartsPassPracticeTotalSteps } from "../../domain/heartsPractice";
+  import { evaluateHeartsPass } from "../../domain/heartsPractice";
+  import { heartsPassingSteps } from "../../lessons/hearts/exercises";
+  import { insertLearningFollowUp } from "../../domain/learningSequence";
   import type { Card } from "../../domain/types";
   import type { CustomExerciseContext } from "../featureServices";
   import type { DrillResult } from "../../lessons/drillDecision";
+  import type { DecisionReview } from "../../lessons/decisionReview";
   import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
   let { context }: { context: CustomExerciseContext } = $props();
   let heartsPassPracticeStepIndex = $state(0);
   let results = $state<DrillResult[]>([]);
-  let heartsPassPractice = $derived(generateHeartsPassPractice(context.seed + heartsPassPracticeStepIndex));
+  let reviews = $state<DecisionReview[]>([]);
+  let steps = $state(untrack(() => heartsPassingSteps(context.seed)));
+  let heartsPassPractice = $derived(steps[heartsPassPracticeStepIndex]);
   let heartsPassPracticeSelectedCardIds = $state<string[]>([]);
   let heartsPassPracticeChecked = $state(false);
   let heartsPassPracticeError = $state("");
@@ -18,10 +24,11 @@
   let heartsPassPracticeOutcome = $derived(evaluateHeartsPass(heartsPassPractice, heartsPassPracticeSelectedCardIds));
   let heartsPassPracticeGood = $derived(heartsPassPracticeOutcome.outcomeKind === "good");
   let heartsPassPracticeCanCheck = $derived(heartsPassPracticeOutcome.isComplete);
-  let heartsPassPracticeIsLastStep = $derived(heartsPassPracticeStepIndex >= heartsPassPracticeTotalSteps - 1);
+  let heartsPassPracticeIsLastStep = $derived(heartsPassPracticeStepIndex >= steps.length - 1);
   let heartsPassPracticeRecommendedIds = $derived(new Set(heartsPassPracticeGood
     ? heartsPassPracticeSelectedCardIds : heartsPassPractice.recommendedPass.map(card => card.id)));
   function toggleHeartsPassPracticeCard(card: Card) {
+    if (heartsPassPracticeChecked) return;
     heartsPassPracticeError = "";
     if (heartsPassPracticeSelectedCardIds.includes(card.id)) {
       heartsPassPracticeSelectedCardIds = heartsPassPracticeSelectedCardIds.filter(id => id !== card.id);
@@ -29,18 +36,23 @@
       heartsPassPracticeError = "Remove one card before choosing another.";
       return;
     } else heartsPassPracticeSelectedCardIds = [...heartsPassPracticeSelectedCardIds, card.id];
-    heartsPassPracticeChecked = false;
   }
   function checkHeartsPassPractice() {
+    if (heartsPassPracticeChecked) return;
     if (!heartsPassPracticeCanCheck) { heartsPassPracticeError = "Choose exactly three cards to pass."; return; }
     heartsPassPracticeError = "";
     heartsPassPracticeChecked = true;
   }
   function nextHeartsPassPracticeStep() {
-    if (!heartsPassPracticeChecked) return;
+    if (!heartsPassPracticeChecked || results.length !== heartsPassPracticeStepIndex) return;
     results = [...results, { contract: "Hearts", cardLabel: formatCardList(heartsPassPracticeSelectedCards),
       outcome: heartsPassPracticeGood ? "good" : "risky", clean: heartsPassPracticeGood, reason: "pass_selection" }];
-    if (heartsPassPracticeIsLastStep) { context.onComplete(results); return; }
+    reviews = [...reviews, { title: heartsPassPractice.title, prompt: heartsPassPractice.prompt,
+      explanation: heartsPassPracticeOutcome.explanation + (heartsPassPracticeGood ? "" : ` Suggested: ${formatCardList(heartsPassPractice.recommendedPass)}.`),
+      selectedCardIds: [...heartsPassPracticeSelectedCardIds],
+      groups: [{ label: "Your hand before passing", cards: heartsPassPractice.playerHand }] }];
+    steps = insertLearningFollowUp(steps, heartsPassPracticeStepIndex, heartsPassPracticeGood, heartsPassPractice.followUp);
+    if (heartsPassPracticeStepIndex === steps.length - 1) { context.onComplete(results, reviews); return; }
     heartsPassPracticeStepIndex += 1;
     heartsPassPracticeSelectedCardIds = [];
     heartsPassPracticeChecked = false;
@@ -55,7 +67,7 @@
   title="Pass three"
   eyebrow="Hearts practice"
   statusLabel="Exercise"
-  statusValue={`${heartsPassPracticeStepIndex + 1} of ${heartsPassPracticeTotalSteps}`}
+  statusValue={`${heartsPassPracticeStepIndex + 1} of ${steps.length}`}
   tableAriaLabel="Hearts pass practice table"
   tableCards={[]}
   showTable={false}
@@ -94,6 +106,7 @@
 
     <CardChoiceHand
       cards={heartsPassPractice.playerHand}
+      readonly={heartsPassPracticeChecked}
       ariaLabel="Your Hearts pass practice hand"
       className="hand full-hand-cards hearts-pass-cards"
       cardClassName="card hand-card full-hand-card"
@@ -111,7 +124,7 @@
       <button class="secondary-action" onclick={context.onBack} type="button">Table</button>
       {#if heartsPassPracticeChecked}
         <button class="primary-action" onclick={nextHeartsPassPracticeStep} type="button">
-          {heartsPassPracticeIsLastStep ? "Finish topic" : "Next pass"}
+          {heartsPassPractice.followUp && !heartsPassPracticeGood ? "Try another example" : heartsPassPracticeIsLastStep ? "Finish topic" : "Next pass"}
         </button>
       {:else}
         <button

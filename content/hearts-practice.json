@@ -480,6 +480,35 @@
       ]
     }
   ],
+  "passFollowUps": [
+    {
+      "parentId": "hearts-pass", "id": "hearts-pass-exposed-again", "title": "Remove exposed spades",
+      "prompt": "A new hand, with no low spades to protect the queen. Choose three cards that remove the exposed spade holding.",
+      "playerHand": ["3C", "5C", "8C", "2D", "6D", "10D", "QS", "KS", "AS", "4H", "6H", "QH", "AH"],
+      "recommendedPass": ["QS", "KS", "AS"],
+      "explanation": "The queen, king and ace leave together. You no longer hold an exposed high spade. High hearts remain a risk, and incoming cards can change your plan.",
+      "missedPlanExplanation": "The goal is to remove the three high spades together. Other passes leave high spades that can catch the queen.",
+      "alternatives": []
+    },
+    {
+      "parentId": "hearts-pass-long-clubs", "id": "hearts-pass-exits-again", "title": "Keep low exits",
+      "prompt": "Keep your club exits in this new hand. Which three cards remove danger or empty diamonds?",
+      "playerHand": ["2C", "3C", "5C", "6C", "7C", "9C", "3D", "6D", "8S", "QS", "JH", "KH", "AH"],
+      "recommendedPass": ["QS", "KH", "AH"],
+      "explanation": "You move the queen and your two highest hearts while keeping the clubs. The jack of hearts still needs care; this pass reduces danger rather than removing every risk.",
+      "missedPlanExplanation": "Keep the club exits and move the exposed queen with the two highest hearts, or with both diamonds to create a void.",
+      "alternatives": [{ "cardIds": ["QS", "3D", "6D"], "explanation": "A sound alternative: the queen leaves and diamonds are empty. Your high hearts remain risky, but a diamond lead may let you discard one if no diamonds arrive." }]
+    },
+    {
+      "parentId": "hearts-pass-diamond-void", "id": "hearts-pass-club-void", "title": "Create a void",
+      "prompt": "This time clubs are your short suit, headed by ace and queen. Empty clubs with your pass while keeping the low spades.",
+      "playerHand": ["3C", "QC", "AC", "2D", "4D", "7D", "9D", "3S", "6S", "9S", "3H", "QH", "AH"],
+      "recommendedPass": ["3C", "QC", "AC"],
+      "explanation": "All three clubs leave together. If no clubs arrive, a later club lead lets you discard danger. Your low spades stay available to duck the queen.",
+      "missedPlanExplanation": "For this exercise, pass all three clubs. Leaving even the low club means you must still follow clubs; passing a high card alone does not create a void.",
+      "alternatives": []
+    }
+  ],
   "passes": [
     {
       "explanation": "Passing all three high spades removes the queen and the ace/king that could catch it later. High hearts remain a risk; incoming cards may change the plan.",

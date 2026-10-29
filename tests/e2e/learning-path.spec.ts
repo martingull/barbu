@@ -81,15 +81,19 @@ test("legacy completion stays unscored; full attempts persist separately and ear
   await page.getByRole("button", { name: "Finish session", exact: true }).click();
   expect(await evidence(page)).toBeNull();
   await page.getByRole("button", { name: "Try again", exact: true }).click();
-  for (let i = 0; i < 3; i++) {
+  let total = 0;
+  for (let i = 0; i < 6; i++) {
     await page.locator(".drill-hand .hand-card.legal").first().click();
     await page.getByRole("button", { name: "Check answer", exact: true }).click();
-    await page.getByRole("button", { name: i === 2 ? "Finish topic" : "Next decision", exact: true }).click();
+    total++;
+    const finish = page.getByRole("button", { name: "Finish topic", exact: true });
+    if (await finish.isVisible()) { await finish.click(); break; }
+    await page.getByRole("button", { name: /^(Next decision|Try another example)$/ }).click();
   }
   const stored = await evidence(page);
-  expect(stored.skills["hearts-avoid"]).toMatchObject({ attempts: 1, total: 3 });
+  expect(stored.skills["hearts-avoid"]).toMatchObject({ attempts: 1, total });
   await openLearn(page);
-  await expect(page.locator('[data-skill="hearts-avoid"]')).toContainText(`${stored.skills["hearts-avoid"].correct}/3 on last attempt`);
+  await expect(page.locator('[data-skill="hearts-avoid"]')).toContainText(`${stored.skills["hearts-avoid"].correct}/${total} on last attempt`);
   await expect(page.locator('[data-skill="hearts-queen"]')).not.toContainText("last attempt");
 });
 
@@ -144,15 +148,19 @@ test("completed path offers a revisit and resetting lessons clears only this gam
   await expect(page.getByRole("button", { name: "Start lesson", exact: true })).toBeVisible();
 });
 
-test("Hearts passing records all three checked decisions", async ({ page }) => {
+test("Hearts passing records checked decisions and any follow-ups", async ({ page }) => {
   await openLearn(page);
   await page.locator('[data-skill="hearts-pass"] .exercise-shortcut').click();
-  for (let i = 0; i < 3; i++) {
+  let total = 0;
+  for (let i = 0; i < 6; i++) {
     const cards = page.getByLabel("Your Hearts pass practice hand").getByRole("button");
     for (let c = 0; c < 3; c++) await cards.nth(c).click();
     await page.getByRole("button", { name: "Check pass", exact: true }).click();
-    await page.getByRole("button", { name: i === 2 ? "Finish topic" : "Next pass", exact: true }).click();
+    total++;
+    const finish = page.getByRole("button", { name: "Finish topic", exact: true });
+    if (await finish.isVisible()) { await finish.click(); break; }
+    await page.getByRole("button", { name: /^(Next pass|Try another example)$/ }).click();
   }
-  expect((await evidence(page)).skills["hearts-pass"]).toMatchObject({ attempts: 1, total: 3 });
-  await expect(page.getByLabel("Decision results").locator("li")).toHaveCount(3);
+  expect((await evidence(page)).skills["hearts-pass"]).toMatchObject({ attempts: 1, total });
+  await expect(page.getByLabel("Decision results").locator("li")).toHaveCount(total);
 });

@@ -1821,9 +1821,9 @@ test("Hearts passing drill accepts a different sound plan and explains risky sel
   await expectFeedbackAboveHand(page, ".hearts-pass-cards");
   await expectNoPageScroll(page);
   await page.screenshot({ path: testInfo.outputPath("hearts-pass-risky.png"), fullPage: true });
-  await page.getByRole("button", { name: "2 C", exact: true }).click();
-  await page.getByRole("button", { name: "4 C", exact: true }).click();
-  await chooseHeartsPracticePass(page, ["2D", "4D"]);
+  await expect(page.getByLabel("Your Hearts pass practice hand").getByRole("button")).toHaveCount(0);
+  await page.getByRole("button", { name: "Try another example", exact: true }).click();
+  await chooseHeartsPracticePass(page, ["QS", "3D", "6D"]);
 
   await expect(page.getByLabel("Hearts pass practice cards")).toContainText("Good pass");
   await expect(page.getByLabel("Hearts pass practice cards")).toContainText("A sound alternative");
@@ -1875,7 +1875,7 @@ test("Hearts passing feedback stays beside the hand on compact and wide screens"
     await expectHandNearActionRow(page, ".hearts-pass-cards");
     const panel = page.getByLabel("Hearts pass practice cards");
     const hand = await panel.locator(".hearts-pass-cards").boundingBox();
-    const feedback = await panel.locator(".explanation").last().boundingBox();
+    const feedback = await panel.locator(".coach-feedback").boundingBox();
     expect(hand!.y - (feedback!.y + feedback!.height)).toBeLessThanOrEqual(12);
     const cards = panel.locator(".hand-card");
     const topRow = await cards.nth(0).boundingBox();
