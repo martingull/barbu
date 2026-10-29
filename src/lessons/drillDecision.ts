@@ -5,6 +5,7 @@ import type { Teaching, FeedbackBreakdown } from "./learningPresentation";
 export type DrillStep = { scenarioId?: string; contract: string; title: string; trick: GuidedTrick;
   teaching?: Teaching; breakdownByCard?: Record<string, FeedbackBreakdown>;
   choiceMode?: "identify" | "select"; followUp?: DrillStep;
+  acceptedCardIds?: string[];
   playingSeat?: Seat; handLabel?: string; referenceHand?: { label: string; cards: Card[] };
   tableAfterByCard?: Partial<Record<string, TableCard[]>> };
 export type DrillResult = { contract: string; cardLabel: string; outcome: GuidedCardOutcome | "illegal";
@@ -23,7 +24,8 @@ export function drillDecision(step: DrillStep, card: Card) {
   const outcome = legal ? step.trick.cardOutcomes?.[card.id] ?? "good" : "illegal";
   const reason = step.choiceMode === "identify" ? "trick_winner" : !legal ? "off_suit" : step.trick.cardReasons?.[card.id]
     ?? (outcome === "penalty" ? "captured_penalty" : outcome === "risky" ? "won_clean_trick" : "followed_suit");
-  const result: DrillResult = { contract: step.contract, cardLabel: card.label, outcome, reason, clean: outcome === "good" };
+  const result: DrillResult = { contract: step.contract, cardLabel: card.label, outcome, reason,
+    clean: outcome === "good" || (legal && !!step.acceptedCardIds?.includes(card.id)) };
   return { result, feedback: step.trick.playedExplanations[card.id]
     ?? (legal ? "That legal play completes the trick." : `${formatCardLabel(card)} is not legal while you still have a legal card.`) };
 }

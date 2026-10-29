@@ -4,7 +4,7 @@
   import PlayTabPanel from "../../components/PlayTabPanel.svelte";
   import BarbuPlay from "./BarbuPlay.svelte";
   import BarbuPracticeHand from "./BarbuPracticeHand.svelte";
-  import BarbuGuidedLesson from "./BarbuGuidedLesson.svelte";
+  import BarbuGuidedSetup from "./BarbuGuidedSetup.svelte";
   import BarbuContracts from "./BarbuContracts.svelte";
   import BarbuReview from "./BarbuReview.svelte";
   import DominoLessonTable from "./DominoLessonTable.svelte";
@@ -19,9 +19,9 @@
   let { feature, initialEntry, ...services }: FeatureServices & {
     feature: BarbuFeature; initialEntry?: LearningEntry;
   } = $props();
-  let route = $state<"table" | "contracts" | "review" | "hand">("table");
+  let route = $state<"table" | "contracts" | "review" | "hand" | "guided-setup">("table");
   let entry = $state<LearningEntry | undefined>(untrack(() => initialEntry));
-  let practice = $state<{ contract: FullHandContract; seed: number } | null>(null);
+  let practice = $state<{ contract: FullHandContract; seed: number; guided?: boolean } | null>(null);
   let learningFixed = $state(false);
   const loader = createBarbuPracticeLoader(() => typeof localStorage === "undefined" ? undefined : localStorage, () => services.nextSeed());
   const lessonEntries = guidedLessons.filter(lesson => lesson.contract !== "Domino");
@@ -29,7 +29,8 @@
   $effect(() => services.onSurfaceChange(route === "hand" || (route === "table"
     && ($feature.view === "hand" || learningFixed))));
 
-  function table() { route = "table"; entry = undefined; feature.openTable(); }
+  function table() { route = "table"; entry = undefined; learningFixed = false; feature.openTable(); }
+  function leaveGuided(tab: "learn" | "play") { table(); feature.openTable(tab); }
   function learn(nextEntry: LearningEntry) { feature.openTable("learn"); entry = nextEntry; route = "table"; }
   function standalone(contract: FullHandContract) {
     practice = { contract, seed: services.nextSeed() };
@@ -40,7 +41,10 @@
 {#snippet dominoTable(cards)}
   <DominoLessonTable {cards} label="Domino drill layout" />
 {/snippet}
-{#if route === "contracts"}
+{#if route === "guided-setup"}
+  <BarbuGuidedSetup onBack={() => leaveGuided("learn")}
+    onStart={contract => { practice = { contract, seed: services.nextSeed(), guided: true }; route = "hand"; }} />
+{:else if route === "contracts"}
   <BarbuContracts completedPathSteps={services.completedSteps} onBack={table} onStep={id => learn({ kind: "step", id })} />
 {:else if route === "review"}
   <BarbuReview recentPlayBarbuAttempts={attempts} onBack={table}
@@ -51,7 +55,9 @@
       table();
     }} />
 {:else if route === "hand" && practice}
-  <BarbuPracticeHand initialContract={practice.contract} initialSeed={practice.seed} nextSeed={services.nextSeed} onBack={table} />
+  <BarbuPracticeHand initialContract={practice.contract} initialSeed={practice.seed} nextSeed={services.nextSeed}
+    guided={practice.guided} onBack={practice.guided ? () => leaveGuided("learn") : table}
+    onIndependentPlay={() => leaveGuided("play")} />
 {:else if $feature.view === "hand"}
   <BarbuPlay {feature} onBack={table} onStandaloneHand={standalone} />
 {:else}
@@ -63,7 +69,8 @@
       { id: "contracts", title: "Barbu contracts", summary: "See the contract roster and what each table asks you to notice.", onClick: () => { route = "contracts"; } }
     ]}
     loadExercise={(action, _seed, fromCourse) => loader.load(action, fromCourse)}
-    exerciseTitle={barbuExerciseTitle} drillTitle={step => step.trick.title}
+    onGuidedPlay={() => { learningFixed = false; route = "guided-setup"; }}
+    exerciseTitle={barbuExerciseTitle} drillTitle={step => step.contract}
     drillTopic={exerciseContract} drillTableFor={step => step.contract === "Domino" ? dominoTable : undefined}
     resultMessage={clean => clean
       ? "Clean session. Barbu is ready to raise the pressure." : "Use the next repetition to make the weak decision automatic."}>
@@ -72,11 +79,7 @@
     {/snippet}
     {#snippet customExercise(context)}
       {#key context.action}
-        {#if context.fromCourse}
-          <BarbuGuidedLesson coach={context.coach} lessonId={context.action} onBack={context.onBack} onComplete={context.onComplete} />
-        {:else}
-          <BarbuPracticeHand initialContract="Domino" initialSeed={context.seed} nextSeed={services.nextSeed} onBack={context.onBack} />
-        {/if}
+        <BarbuPracticeHand initialContract="Domino" initialSeed={context.seed} nextSeed={services.nextSeed} onBack={context.onBack} />
       {/key}
     {/snippet}
     {#snippet play()}

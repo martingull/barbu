@@ -6,7 +6,14 @@ import type { DrillStep } from "../../src/lessons/drillDecision";
 import { legalCards, trickWinner } from "../../src/domain/trickTakingRules";
 import { isLegalDominoPlacement } from "../../src/domain/dominoRules";
 import { barbuTrickPoints, isBarbuTrickContract } from "../../src/domain/barbuRules";
-import { barbuGuidedDecision, barbuGuidedResult } from "../../src/lessons/barbu/guidedFeedback";
+import { barbuGuidedResult } from "../../src/lessons/barbu/guidedFeedback";
+import { barbuLearningSteps } from "../../src/lessons/barbu/learning";
+import { drillDecision } from "../../src/lessons/drillDecision";
+import { createLearningSession, checkLearningAnswer, advanceLearningSession } from "../../src/domain/learningSession";
+import { createBarbuLearningHand, transitionBarbuLearningHand, barbuLearningPosition, dominoLearningPosition, barbuLearningRecap } from "../../src/domain/barbuLearning";
+import { barbuGuidance, barbuGuidedReview, dominoGuidance } from "../../src/features/barbu/barbuGuidance";
+import { createGuidedHandFeature } from "../../src/features/guidedHandFeature";
+import { get } from "svelte/store";
 
 test("all seven Barbu topics have three valid positions with fading guidance", () => {
   expect(guidedLessons).toHaveLength(7);
@@ -51,15 +58,16 @@ test("feedback follows alternative cards and does not mark forced penalties as m
   const late = guidedLessons.find(lesson => lesson.contract === "No Last Two")!.tricks;
   const high = late[0].hand.find(card => card.id === "QS")!;
   expect(barbuGuidedResult("No Last Two", late[0], high)).toBe("You win with QS. 10 penalty points for you.");
-  expect(barbuGuidedDecision("No Last Two", late[0], high).result.clean).toBe(false);
-  expect(barbuGuidedDecision("No Last Two", late[1], late[1].hand[0]).result).toMatchObject({ outcome: "penalty", clean: true });
+  const steps = barbuLearningSteps("barbu-no-last-two");
+  expect(drillDecision(steps[0], high).result.clean).toBe(false);
+  expect(drillDecision(steps[1], late[1].hand[0]).result).toMatchObject({ outcome: "penalty", clean: true });
 });
 
 test("Barbu preserves authored courses, seeded four-pattern drills and standalone Domino", () => {
   let seed = 40;
   const loader = createBarbuPracticeLoader(() => undefined, () => seed++);
   for (const lesson of guidedLessons) {
-    expect(loader.load(lesson.id, true)).toEqual({ seed: 0 });
+    expect(loader.load(lesson.id, true)).toEqual(barbuLearningSteps(lesson.id));
     expect(seed).toBe(40);
   }
   for (const lesson of guidedLessons.filter(lesson => lesson.contract !== "Domino")) {
@@ -73,6 +81,89 @@ test("Barbu preserves authored courses, seeded four-pattern drills and standalon
   expect(loader.load("domino")).toEqual({ seed: 46 });
   expect(() => loader.load("unknown")).toThrow("Unknown Barbu exercise");
   expect(seed).toBe(47);
+});
+
+test("shared Barbu lessons have valid, bounded companions and accept forced penalties", () => {
+  for (const lesson of guidedLessons) {
+    const steps = barbuLearningSteps(lesson.id);
+    expect(steps.map(step => step.teaching?.stage)).toEqual(["worked", "supported", "independent"]);
+    for (const step of steps) {
+      const follow = step.followUp!;
+      expect(follow.followUp).toBeUndefined();
+      expect(follow.trick.hand).not.toEqual(step.trick.hand);
+      for (const example of [step, follow]) {
+        const trick = example.trick;
+        const cards = [...trick.hand, ...trick.tableBeforeChoice.map(play => play.card), ...trick.tableAfterChoice.map(play => play.card)];
+        expect(new Set(cards.map(card => card.id)).size).toBe(cards.length);
+        const legal = example.contract === "Domino" ? trick.hand.filter(card => isLegalDominoPlacement(
+          trick.tableBeforeChoice.filter(play => play.card.suit === card.suit).map(play => play.card), card))
+          : legalCards(trick.hand, trick.tableBeforeChoice[0]?.card.suit);
+        expect([...trick.legalCardIds].sort()).toEqual(legal.map(card => card.id).sort());
+        expect(legal.some(card => drillDecision(example, card).result.clean)).toBe(true);
+        for (const card of trick.hand) {
+          const decision = drillDecision(example, card);
+          if (!trick.legalCardIds.includes(card.id)) expect(decision.result).toMatchObject({ outcome: "illegal", clean: false });
+          else {
+            expect(example.breakdownByCard?.[card.id].rows[0].value).toBe(barbuGuidedResult(lesson.contract, trick, card));
+            if (legal.length === 1) expect(decision.result.clean).toBe(true);
+          }
+        }
+      }
+      let session = createLearningSession<DrillStep, { clean: boolean }, string>([step]);
+      session = advanceLearningSession(checkLearningAnswer(session, { clean: false }, "mistake"));
+      expect(session.steps).toHaveLength(2);
+      session = advanceLearningSession(checkLearningAnswer(session, { clean: false }, "another mistake"));
+      expect(session.phase).toBe("complete");
+      expect(session.results).toHaveLength(2);
+    }
+  }
+});
+
+test("guided contracts finish through normal engines, review gating and exact replay", () => {
+  for (const contract of fullHandContracts) {
+    const feature = createGuidedHandFeature(28, { create: seed => createBarbuLearningHand(contract, seed),
+      transition: transitionBarbuLearningHand, replay: () => createBarbuLearningHand(contract, 28) });
+    const initial = get(feature).session;
+    let completed = false;
+    for (let turn = 0; turn < 150; turn++) {
+      const state = get(feature).session;
+      const hand = state.kind === "trick" ? state.reviewed.fullHand : state.hand;
+      if (hand.status === "complete") { completed = true; break; }
+      if (state.kind === "trick") {
+        const position = barbuLearningPosition(state.reviewed.fullHand);
+        expect(position).not.toHaveProperty("hands");
+        expect(position).not.toHaveProperty("id");
+        expect(barbuGuidance(position).rule).toBeTruthy();
+        if (state.reviewed.fullHandReviewTrickCount) {
+          const before = JSON.stringify(state);
+          feature.dispatch({ type: "play-card", cardId: hand.playerHand[0].id });
+          expect(JSON.stringify(get(feature).session)).toBe(before);
+          const number = state.reviewed.fullHandReviewTrickCount;
+          expect(barbuGuidedReview(position, number)?.scoring).toContain(String(position.completedTricks[number - 1].penalty));
+          feature.dispatch({ type: "next-trick" });
+          continue;
+        }
+      } else {
+        const position = dominoLearningPosition(state.hand);
+        expect(position).not.toHaveProperty("hands");
+        expect(position).not.toHaveProperty("initialHands");
+        expect(dominoGuidance(position).rule).toContain("Pass only");
+      }
+      feature.dispatch(hand.legalCardIds.length ? { type: "play-card", cardId: hand.legalCardIds[0] } : { type: "pass" });
+      expect(get(feature).error).toBe("");
+    }
+    expect(completed).toBe(true);
+    const final = get(feature).session;
+    if (final.kind === "trick") {
+      expect(final.reviewed.fullHand.completedTricks).toHaveLength(13);
+      const recap = barbuLearningRecap(barbuLearningPosition(final.reviewed.fullHand));
+      expect(recap.at(-1)?.number).toBe(13);
+      if (contract === "No Last Two") expect(recap.map(moment => moment.number)).toEqual([1, 12, 13]);
+    } else expect(final.hand.outOrder).toHaveLength(4);
+    feature.replay();
+    expect(get(feature).session).toEqual(initial);
+    expect(get(feature).selectedCardId).toBe("");
+  }
 });
 
 test("mixed review retains seven contracts and pattern memory even when storage fails", () => {

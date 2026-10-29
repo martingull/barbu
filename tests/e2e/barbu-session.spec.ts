@@ -23,7 +23,9 @@ test("Barbu resumes an intro and practice cannot overwrite the saved session", a
   const saved = await page.evaluate(key => localStorage.getItem(key), key);
   await returnToTable(page);
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
-  await page.getByRole("button", { name: /^Try cards: Domino\b/ }).click();
+  await page.getByRole("button", { name: "Start guided hand", exact: true }).click();
+  await page.getByRole("radio", { name: "Domino", exact: true }).check();
+  await page.getByRole("button", { name: "Deal guided hand", exact: true }).click();
   const place = page.getByRole("button", { name: "Place card", exact: true });
   if (await place.isEnabled()) await place.click();
   else await page.getByRole("button", { name: "Pass", exact: true }).click();

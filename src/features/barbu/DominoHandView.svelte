@@ -2,15 +2,21 @@
   import TablePlaySurface from "../../components/TablePlaySurface.svelte";
   import CardChoiceHand from "../../components/CardChoiceHand.svelte";
   import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
+  import GuidedHandActions from "../../components/GuidedHandActions.svelte";
+  import FeedbackBreakdown from "../../components/FeedbackBreakdown.svelte";
+  import { dominoLearningPosition } from "../../domain/barbuLearning";
+  import { dominoGuidance } from "./barbuGuidance";
+  import { formatCardLabel } from "../../presentation/cardDisplay";
   import BarbuSessionResult from "./BarbuSessionResult.svelte";
   import { barbuSessionComplete, barbuSeatTotals, dominoSeatScores, type BarbuSession } from "../../domain/barbuSession";
   import { fullHandContracts } from "../../domain/contractRegistry";
   import { scoreSeats, scoreSeatRunLabel, formatSignedScore } from "../../presentation/scorePresentation";
-  import type { Card, DominoHandState } from "../../domain/types";
+  import type { Card, DominoHandState, Seat } from "../../domain/types";
   import { dominoOrderScores, dominoResultHeading, dominoResultText, dominoSuitLabel, dominoLaneText,
     dominoStartRank, dominoOutOrderText, dominoMoveExplanation } from "./barbuPresentation";
   export let dominoHand: DominoHandState;
   export let session: BarbuSession | undefined = undefined;
+  export let guided = false;
   export let dominoSelectedCardId = "";
   export let dominoError = "";
   export let dominoLastMoveReason = "";
@@ -38,6 +44,7 @@
   $: dominoResultTitle = dominoResultHeading(dominoHand);
   $: dominoResultSummary = dominoResultText(dominoHand);
   $: dominoNextOutScore = dominoOrderScores[dominoHand.outOrder.length] ?? -5;
+  $: guidance = guided ? dominoGuidance(dominoLearningPosition(dominoHand)) : null;
   $: dominoMoveReason = dominoSelectedCard ? dominoMoveExplanation(dominoHand, dominoSelectedCard)
     : dominoLastMoveReason || dominoMoveExplanation(dominoHand, undefined);
   function dominoCardClasses(card: Card) {
@@ -49,15 +56,16 @@
       <TablePlaySurface
         mode={dominoHand.status === "complete" ? "result" : "play"}
         ariaLabel="Domino hand"
-        title={fullHandRunIsComplete ? "Barbu session" : "Domino hand"}
+        title={fullHandRunIsComplete ? "Barbu session" : guided ? "Guided Domino" : "Domino hand"}
         eyebrow={fullHandRunActive ? "Play Barbu" : "Contract hand"}
-        statusLabel={fullHandRunStatusLabel}
-        statusValue={`${formatSignedScore(resultScores.You)} points`}
+        statusLabel={guided && dominoHand.status !== "complete" ? "Cards left" : fullHandRunStatusLabel}
+        statusValue={guided && dominoHand.status !== "complete" ? String(dominoHand.cardsRemaining) : `${formatSignedScore(resultScores.You)} points`}
         tableAriaLabel="Domino layout"
         tableCards={[]}
         flowLayout
+        stableFeedback={guided}
         useCustomTable
-        surfaceClassName="domino-play-surface"
+        surfaceClassName={guided ? "domino-play-surface guided-domino" : "domino-play-surface"}
         showTable={dominoHand.status !== "complete"}
         panelAriaLabel="Domino hand decision"
         onBack={onBack}
@@ -80,8 +88,8 @@
                 <strong>{formatSignedScore(dominoNextOutScore)}</strong>
               </div>
                 <div>
-                  <span>Order</span>
-                  <strong>{dominoOutOrderText(dominoHand)}</strong>
+                  <span>{guided ? "Finished" : "Order"}</span>
+                  <strong>{guided ? `${dominoHand.outOrder.length} / 4` : dominoOutOrderText(dominoHand)}</strong>
                 </div>
               </div>
               {#if fullHandRunActive}
@@ -113,7 +121,7 @@
             {#each dominoHand.layout as lane, index}
               <div>
                 <span>{dominoSuitLabel(index)}</span>
-                <strong>{dominoLaneText(lane, dominoStartRank(dominoHand))}</strong>
+                <strong>{guided && lane.length > 1 ? `${formatCardLabel(lane[0])} to ${formatCardLabel(lane.at(-1)!)}` : dominoLaneText(lane, dominoStartRank(dominoHand))}</strong>
               </div>
             {/each}
           </div>
@@ -127,7 +135,7 @@
               <div class="domino-result-card">
                 <div class="lesson-heading">
                   <p class="eyebrow">Result</p>
-                  <h2>{dominoResultTitle}</h2>
+                  <h2>{guided ? "Guided hand complete" : dominoResultTitle}</h2>
                 </div>
 
                 <p class="result" aria-label="Domino result summary">{dominoResultSummary}</p>
@@ -147,14 +155,23 @@
                   </div>
                 </div>
               </div>
+              {#if guided}
+                <FeedbackBreakdown breakdown={{ label: "Domino finishing order", rows: [
+                  ...dominoHand.outOrder.map((seat, index) => ({ label: `${index + 1}. ${scoreSeatRunLabel(seat as Seat)}`,
+                    value: `${formatSignedScore(dominoScoreMap[seat as Seat])} points` })),
+                  { label: "In Play", value: "Domino is the final contract of the seven-contract training session. This guided hand leaves your saved session unchanged." }
+                ] }} />
+              {/if}
             {/if}
           {:else}
             <ExerciseFeedback
+              coach={guided ? "barbu" : undefined}
+              reserveSpace={guided}
               eyebrow="Your turn"
               title="Place a card"
-              result={dominoHand.prompt}
+              result={guidance ? `Rule: ${guidance.rule}` : dominoHand.prompt}
               error={dominoError}
-              explanation={dominoMoveReason}
+              explanation={guidance ? `Tactic: ${guidance.tip} ${dominoMoveReason}` : dominoMoveReason}
             />
 
             <CardChoiceHand
@@ -171,7 +188,9 @@
             />
           {/if}
 
-          <div class="action-row">
+          {#if guided && dominoHand.status === "complete"}
+            <GuidedHandActions {onReplay} {onBack} onIndependentPlay={onNextHand} />
+          {:else}<div class="action-row">
             {#if dominoHand.status === "complete"}
               <button class="secondary-action" onclick={onBack} type="button">Table</button>
               {#if fullHandRunIsComplete}
@@ -200,6 +219,6 @@
                 Place card
               </button>
             {/if}
-          </div>
+          </div>{/if}
         {/snippet}
       </TablePlaySurface>

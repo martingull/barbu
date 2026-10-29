@@ -3,6 +3,10 @@
   import CardChoiceHand from "../../components/CardChoiceHand.svelte";
   import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
   import GameResult from "../../components/GameResult.svelte";
+  import GuidedHandActions from "../../components/GuidedHandActions.svelte";
+  import BarbuGuidedRecap from "./BarbuGuidedRecap.svelte";
+  import { barbuLearningPosition } from "../../domain/barbuLearning";
+  import { barbuGuidance, barbuGuidedReview } from "./barbuGuidance";
   import BarbuSessionResult from "./BarbuSessionResult.svelte";
   import type { FullHandState } from "../../domain/types";
   import { barbuSessionComplete, barbuSeatTotals, type BarbuSession } from "../../domain/barbuSession";
@@ -12,9 +16,9 @@
   import { noLastTwoPhaseLabel, noLastTwoPhaseValue, fullHandTrickFeedback, fullHandResultHeading,
     fullHandResultText, fullHandBestTrickLabel, fullHandWorstTrickLabel, formatHandValue } from "./barbuPresentation";
 
-  let { hand, session, reviewCount = 0, selectedCardId = "", error = "", dealing = false,
+  let { hand, session, reviewCount = 0, selectedCardId = "", error = "", dealing = false, guided = false,
     onBack, onSelect, onPlay, onNextTrick, onNextHand, onReplay, onReplayWeakest, onNewGame }: {
-    hand: FullHandState; session?: BarbuSession; reviewCount?: number; selectedCardId?: string; error?: string; dealing?: boolean;
+    hand: FullHandState; session?: BarbuSession; reviewCount?: number; selectedCardId?: string; error?: string; dealing?: boolean; guided?: boolean;
     onBack: () => void; onSelect: (cardId: string) => void; onPlay: () => void; onNextTrick: () => void;
     onNextHand: () => void; onReplay: () => void; onReplayWeakest?: () => void; onNewGame?: () => void;
   } = $props();
@@ -26,13 +30,16 @@
   let tableCards = $derived(review?.cards ?? (hand.currentTrick.length ? hand.currentTrick
     : complete ? hand.completedTricks.at(-1)?.cards ?? [] : []));
   let legal = $derived(new Set(hand.legalCardIds));
+  let position = $derived(barbuLearningPosition(hand));
+  let guidance = $derived(guided ? barbuGuidance(position) : null);
+  let guidedReview = $derived(guided && review ? barbuGuidedReview(position, reviewCount) : null);
   let statusLabel = $derived(runComplete ? "Game complete" : session
     ? `Contract ${fullHandContracts.indexOf(hand.contract) + 1} of ${fullHandContracts.length}`
     : complete ? "Complete" : `Trick ${hand.trickNumber}`);
 </script>
 
-<TablePlaySurface flowLayout mode={complete ? "result" : "play"} ariaLabel={`${hand.contract} full hand`}
-  title={`${hand.contract} hand`} eyebrow={session ? "Play Barbu" : "Contract hand"} {statusLabel}
+<TablePlaySurface flowLayout stableFeedback={guided} mode={complete ? "result" : "play"} ariaLabel={`${hand.contract} full hand`}
+  title={`${guided ? "Guided " : ""}${hand.contract}${guided ? "" : " hand"}`} eyebrow={session ? "Play Barbu" : "Contract hand"} {statusLabel}
   statusValue={formatHandValue(hand.playerPenalty, hand.contract)} tableAriaLabel={`${hand.contract} hand table`}
   {tableCards} showTable={!complete}
   pendingBySeat={!review && !complete && hand.currentTrick.length < 4 && hand.currentPlayer === "You" ? { You: "You" } : {}}
@@ -67,26 +74,36 @@
       {#if runComplete && session}
         <BarbuSessionResult {session} />
       {:else}
-        <GameResult game={hand.contract} completion={null} title={fullHandResultHeading(hand)} summary={fullHandResultText(hand)} />
+        <GameResult game={hand.contract} completion={null} title={guided ? "Guided hand complete" : fullHandResultHeading(hand)} summary={fullHandResultText(hand)} />
+        {#if guided}<BarbuGuidedRecap {hand} />{:else}
         <div class="full-hand-result-tricks" aria-label={`${hand.contract} key tricks`}>
           <div><span>{meta.bestLabel}</span><strong>{fullHandBestTrickLabel(hand)}</strong></div>
           <div><span>{meta.weakestLabel}</span><strong>{fullHandWorstTrickLabel(hand)}</strong></div>
         </div>
+        {/if}
       {/if}
     {:else if review}
+      {#if guided}
+        <ExerciseFeedback coach="barbu" reserveSpace eyebrow="Trick complete" title="Why this trick ended this way"
+          result={guidedReview?.winning} resultAriaLabel="Trick winner explained"
+          explanation={guidedReview ? `${guidedReview.scoring} ${guidedReview.choice}` : ""} outcome={guidedReview?.next} />
+      {:else}
       <div class="lesson-heading"><p class="eyebrow">Trick complete</p><h2>Read the table</h2></div>
       <p class:warning={meta.kind === "avoidance" && review.outcome === "captured_penalty"} class="outcome">{fullHandTrickFeedback(review, hand)}</p>
       <p class="explanation">{hand.contract === "No Last Two"
         ? "Check the trick number first. Tap the table or press Next trick when you are ready."
         : "Left's card is on the table. Tap the table or press Next trick when you are ready."}</p>
+      {/if}
     {:else}
-      <ExerciseFeedback eyebrow="Your turn" title="Choose your card" result={hand.prompt} {error} />
+      <ExerciseFeedback coach={guided ? "barbu" : undefined} reserveSpace={guided} eyebrow="Your turn" title="Choose your card"
+        result={guidance ? `Rule: ${guidance.rule}` : hand.prompt} explanation={guidance ? `Tactic: ${guidance.tip}` : ""} {error} />
       <CardChoiceHand cards={hand.playerHand} ariaLabel={`Your ${hand.contract} hand`} className="hand full-hand-cards"
         cardClassName="card hand-card full-hand-card"
         getCardClasses={card => ({ heart: card.suit === "H", legal: legal.has(card.id), illegal: !legal.has(card.id), selected: selectedCardId === card.id })}
         isPressed={card => selectedCardId === card.id} onSelect={card => onSelect(card.id)} />
     {/if}
     {#if error && (complete || review)}<p class="error" role="alert">{error}</p>{/if}
+    {#if guided && complete}<GuidedHandActions {onReplay} {onBack} onIndependentPlay={onNextHand} />{:else}
     <div class="action-row">
       <button class="secondary-action" onclick={onBack} type="button">Table</button>
       {#if complete}
@@ -103,5 +120,6 @@
         <button class="primary-action" disabled={dealing || !legal.has(selectedCardId)} onclick={onPlay} type="button">Play card</button>
       {/if}
     </div>
+    {/if}
   {/snippet}
 </TablePlaySurface>

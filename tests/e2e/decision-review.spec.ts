@@ -116,9 +116,9 @@ test("authored Barbu lessons use the same decision review", async ({ page }) => 
   await page.getByRole("button", { name: "See example", exact: true }).click();
   await page.getByRole("button", { name: "Try cards", exact: true }).click();
   for (let i = 0; i < 3; i++) {
-    await page.getByLabel("Your hand", { exact: true }).locator(".legal").first().click();
-    await page.getByRole("button", { name: "Play selected", exact: true }).click();
-    await page.getByRole("button", { name: i === 2 ? "Finish lesson" : "Next trick", exact: true }).click();
+    await page.getByLabel("Your drill hand", { exact: true }).locator(".legal").first().click();
+    await page.getByRole("button", { name: "Check answer", exact: true }).click();
+    await page.getByRole("button", { name: i === 2 ? "Finish topic" : "Next decision", exact: true }).click();
   }
   const review = await openReview(page);
   await expect(page.locator(".decision-review")).toHaveCount(3);

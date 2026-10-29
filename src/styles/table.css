@@ -118,6 +118,21 @@
   overflow-wrap: anywhere;
 }
 
+.flow-play.guided-domino > .play-board-region {
+  container-type: size;
+  flex-basis: 140px;
+  min-height: 140px;
+}
+
+.flow-play.guided-domino .hand-domino-layout {
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.flow-play.guided-domino .hand-domino-layout > div {
+  min-height: 0;
+  overflow: auto;
+}
+
 .app-shell.fixed-play-screen .flow-play .play-board-region :is(.card-table, .table-tap-target) {
   grid-row: auto;
   height: 100%;

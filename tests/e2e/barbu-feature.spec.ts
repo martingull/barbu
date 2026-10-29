@@ -18,9 +18,9 @@ test("Barbu review survives learning hands and other games without sharing their
   await page.getByRole("button", { name: "Table", exact: true }).first().click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
   await page.getByRole("button", { name: /^Try cards: Domino\b/ }).click();
-  await expect(page.getByLabel("Domino lesson layout")).toBeVisible();
-  await page.getByLabel("Your hand", { exact: true }).getByRole("button", { name: "7 H", exact: true }).click();
-  await page.getByRole("button", { name: "Play selected", exact: true }).click();
+  await expect(page.getByLabel("Domino drill layout")).toBeVisible();
+  await page.getByLabel("Your drill hand", { exact: true }).getByRole("button", { name: "7 H", exact: true }).click();
+  await page.getByRole("button", { name: "Check answer", exact: true }).click();
   await page.screenshot({ path: info.outputPath("barbu-domino.png"), fullPage: true });
   expect(await page.evaluate(key => localStorage.getItem(key), key)).toBe(saved);
   await page.getByRole("button", { name: "Table", exact: true }).first().click();
@@ -63,19 +63,18 @@ test("Barbu courses retain progress through reference navigation and compact-scr
     await page.getByRole("button", { name: "Try cards", exact: true }).click();
     const lesson = guidedLessons.find(lesson => lesson.id === step.lessonId)!;
     for (const [decision, trick] of lesson.tricks.entries()) {
-      await expect(page.getByText(`Decision`, { exact: true })).toBeVisible();
       await expect(page.locator(".contract-status")).toContainText(`${decision + 1} of 3`);
       await expect(page.locator(".full-hand-card.selected")).toHaveCount(0);
-      const card = trick.hand.find(card => trick.legalCardIds.includes(card.id))!;
-      await page.getByLabel("Your hand", { exact: true }).getByRole("button", { name: `${card.rank} ${card.suit}`, exact: true }).click();
-      await page.getByRole("button", { name: "Play selected", exact: true }).click();
-      const next = page.getByRole("button", { name: decision === lesson.tricks.length - 1 ? "Finish lesson" : "Next trick", exact: true });
+      const card = trick.hand.find(card => trick.cardOutcomes[card.id] === "good") ?? trick.hand.find(card => trick.legalCardIds.includes(card.id))!;
+      await page.getByLabel("Your drill hand", { exact: true }).getByRole("button", { name: `${card.rank} ${card.suit}`, exact: true }).click();
+      await page.getByRole("button", { name: "Check answer", exact: true }).click();
+      const next = page.getByRole("button", { name: decision === lesson.tricks.length - 1 ? "Finish topic" : "Next decision", exact: true });
       await expect(next).toBeInViewport();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       if (decision === 0) await page.screenshot({ path: info.outputPath(`${step.id}-guided.png`), fullPage: true });
       await next.click();
     }
-    await expect(page.getByRole("status")).toHaveText("Topic complete.");
+    await expect(page.getByRole("status")).toHaveText(index === 6 ? "Barbu learning path complete." : "Topic complete.");
     await expect(page.getByLabel("Learning summary")).toContainText("of 3 decisions matched the lesson's goal");
     await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
     await expect(page.getByLabel("Barbu course progress")).toContainText(`${index + 1} / 7 complete`);

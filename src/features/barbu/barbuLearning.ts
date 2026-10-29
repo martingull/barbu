@@ -5,6 +5,7 @@ import { orderPracticePool, type DrillStep } from "../../lessons/drillDecision";
 import type { PlayBarbuAttempt } from "../../lessons/drillReview";
 import type { SaveStorage } from "../../persistence/saveStore";
 import { guidedLessons } from "../../lessons/catalog";
+import { barbuLearningSteps } from "../../lessons/barbu/learning";
 
 export function isBarbuAttempt(attempt: PlayBarbuAttempt) {
   return attempt.results.length > 0 && attempt.results.every(result => fullHandContracts.some(contract => contract === result.contract));
@@ -110,7 +111,7 @@ export function createBarbuPracticeLoader(storage: () => SaveStorage | undefined
 
   return {
     load(action: string, fromCourse = false) {
-      if (fromCourse) return { seed: 0 };
+      if (fromCourse) return barbuLearningSteps(action);
       if (action === "domino") return { seed: usePracticeSeed() };
       const contract = exerciseContract(action);
       if (!contract && action !== "mixed") throw Error("Unknown Barbu exercise.");

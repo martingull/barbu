@@ -235,11 +235,23 @@ Whist, Hearts, Spades, Bridge and Barbu have isolated frontends under their resp
   Each of the seven authored courses has three separate positions: a worked
   example, a hinted decision and an unassisted decision (21 in total). Guided
   feedback derives the actual winner and points from the gameplay rules, and
-  decisions feed the shared result/history surface. Forced legal penalties are
+  decisions run through `learningSession`, `DrillScreen` and the shared result/history
+  surface. Each has one distinct companion for a missed decision (21 companions);
+  companions cannot recursively add more work. Forced legal penalties are
   shown as penalties but count as following the lesson correctly. Selecting a
   legal card does not reveal its explanation until the player commits it.
   `DominoLessonTable` supplies a shared layout for examples and decisions;
-  `BarbuPracticeHand` reuses the Play views without writing a saved run.
+  `BarbuPracticeHand` uses `guidedHandFeature` and the `domain/barbuLearning`
+  single-contract adapter, reusing normal hand engines and reviewed transitions.
+  Learn's guided entry offers all seven contracts. Trick contracts automatically
+  explain legality, the contract objective, winner and points, then recap actual
+  opening, significant and final tricks. Domino keeps its lane layout, explains
+  placements and forced passes, and reviews the actual finishing order/scores.
+  Coaching sees public projections only; the existing Domino opponent policy's
+  hidden-hand limitation is unchanged. Guided hands preserve the original deal on
+  replay and never write saved sessions, course progress or completion evidence.
+  Both hand views reserve guidance/hand/action space; compact Domino ranges and
+  a fixed-size finished count prevent layout growth during play.
   Shared Learn extensions are optional entry points, resource actions and
   presentation snippets, not game-specific rules inside `GameLearning`.
 
@@ -346,14 +358,14 @@ are factual breakdowns, not a shared scoring algorithm. No new progress keys,
 mastery claims, hint toggles or generic card-game engine are introduced.
 
 Guided play is part of the shared learning platform, alongside short lessons.
-Hearts, Gin Rummy, Spades and Whist use `features/guidedHandFeature.ts` for an isolated session,
+Hearts, Gin Rummy, Spades, Whist, Bridge and Barbu use `features/guidedHandFeature.ts` for an isolated session,
 selection, errors and replay. The adapter supplies normal domain transitions;
 the controller has no storage or course-completion dependency. All enter through
 `GuidedHandEntry`, use `TablePlaySurface` with reserved `ExerciseFeedback`, and
 finish with `GuidedHandActions` (Replay, Play without guidance, Back to Learn).
 New guided games should supply game-specific coaching and review facts, not clone
-the lifecycle or add a second rules engine. Other games have not yet adopted this
-guided-hand flow; do not expose a guided entry until its adapter is implemented.
+the lifecycle or add a second rules engine. Do not expose a guided entry for a new
+game until its adapter is implemented. Adaptive cross-topic review is still future work.
 
 `HeartsGuidedHand` offers an optional unsaved 13-trick hand after the introduction
 and from Learn. It composes the existing passing/hand views and normal
