@@ -1,6 +1,4 @@
-import type { GuidedTrick } from "../../domain/types";
-
-type DrillStep = { scenarioId?: string; contract: string; title: string; trick: GuidedTrick };
+import type { DrillStep } from "../drillDecision";
 
 const spadesFollowSuitDrillStep: DrillStep = {
   scenarioId: "spades-follow-suit-clubs",
@@ -19,10 +17,11 @@ const spadesFollowSuitDrillStep: DrillStep = {
     ],
     tableBeforeChoice: [
       { seat: "Left", card: { id: "9C", rank: "9", suit: "C", label: "9C" } },
-      { seat: "Tutor", card: { id: "KC", rank: "K", suit: "C", label: "KC" } }
+      { seat: "Tutor", card: { id: "KC", rank: "K", suit: "C", label: "KC" } },
+      { seat: "Right", card: { id: "5C", rank: "5", suit: "C", label: "5C" } }
     ],
-    tableAfterChoice: [{ seat: "Right", card: { id: "5C", rank: "5", suit: "C", label: "5C" } }],
-    pendingBySeat: { You: "follow clubs", Right: "follows" },
+    tableAfterChoice: [],
+    pendingBySeat: { You: "follow clubs" },
     playedExplanations: {
       "3C": "3C is good. You follow clubs and avoid spending a spade illegally.",
       AC: "AC follows suit and wins, but first notice that clubs are the legal suit.",
@@ -55,10 +54,11 @@ const spadesFollowSuitDuckDrillStep: DrillStep = {
     ],
     tableBeforeChoice: [
       { seat: "Left", card: { id: "9D", rank: "9", suit: "D", label: "9D" } },
-      { seat: "Tutor", card: { id: "KD", rank: "K", suit: "D", label: "KD" } }
+      { seat: "Tutor", card: { id: "KD", rank: "K", suit: "D", label: "KD" } },
+      { seat: "Right", card: { id: "7D", rank: "7", suit: "D", label: "7D" } }
     ],
-    tableAfterChoice: [{ seat: "Right", card: { id: "7D", rank: "7", suit: "D", label: "7D" } }],
-    pendingBySeat: { You: "follow diamonds", Right: "follows" },
+    tableAfterChoice: [],
+    pendingBySeat: { You: "follow diamonds" },
     playedExplanations: {
       "4D": "4D is good. You follow suit and let partner keep the trick.",
       AD: "AD is legal, but it overtakes Barbu and spends a winner your side may need later.",
@@ -80,7 +80,7 @@ const spadesFollowSuitCoverDrillStep: DrillStep = {
   title: "Follow suit",
   trick: {
     title: "Cover the opponent",
-    beforeResult: "Hearts were led. Right is winning with QH, and you can follow hearts.",
+    beforeResult: "Your side still needs a book and neither partner bid nil. Hearts were led. Right is winning with QH, and you can follow hearts.",
     afterResult: "A follow-suit card can still win a needed book when it beats the opponent.",
     emptyExplanation: "Hearts were led. Follow hearts and decide whether your side needs to win.",
     legalCardIds: ["4H", "KH"],
@@ -117,7 +117,7 @@ const spadesTrumpCutDrillStep: DrillStep = {
   title: "Trump or discard",
   trick: {
     title: "Cut with the low spade",
-    beforeResult: "Hearts were led. You are void in hearts, and Right is winning with AH.",
+    beforeResult: "Your side still needs a book and neither partner bid nil. Hearts were led. You are void in hearts, and Right is winning with AH.",
     afterResult: "Any spade beats a plain-suit card. Use the lowest spade that wins.",
     emptyExplanation: "You are void in hearts. Choose whether to cut the trick.",
     legalCardIds: ["4S", "QS", "7D"],
@@ -195,7 +195,7 @@ const spadesTrumpOvertrumpDrillStep: DrillStep = {
   title: "Trump or discard",
   trick: {
     title: "Overtrump the opponent",
-    beforeResult: "Diamonds were led. You are void, and Right has cut with 7S.",
+    beforeResult: "Your side still needs a book and neither partner bid nil. Diamonds were led. You are void, and Right has cut with 7S.",
     afterResult: "If an opponent has already trumped, a higher spade can win the book back.",
     emptyExplanation: "Beat Right's spade if taking this book helps your bid.",
     legalCardIds: ["9S", "KS", "5H"],

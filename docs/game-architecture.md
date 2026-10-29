@@ -173,8 +173,13 @@ Whist, Hearts, Spades, Bridge and Barbu have isolated frontends under their resp
   game adapter. Retrying creates a fresh session, and leaving early cannot mark
   the session complete. Other custom game exercises retain their current controllers
   until migrated; this is not yet a catalog-wide custom-exercise migration.
-- `SpadesGame.svelte` uses that Learn flow for all five courses and the existing
-  four three-decision exercise pools. `SpadesHandView.svelte` and `SpadesBids.svelte`
+- `SpadesGame.svelte` uses that Learn flow for all five courses. The four
+  three-decision exercise pools now run in authored worked/supported/independent
+  order through `lessons/spades/learning.ts`, with twelve distinct bounded
+  reinforcement examples and shared winner/legality breakdowns. Bidding questions
+  identify cards rather than playing a fictitious trick. The introductory course
+  still reuses the follow-suit activity; the five existing progress keys remain.
+  `SpadesHandView.svelte` and `SpadesBids.svelte`
   preserve the deal-first table, bid toggle, player-only adjustment and hand review.
   Its feature controller delegates bid locking, nil, bags and completion to
   `spadesSession.ts`; lessons never write the match save.
@@ -324,9 +329,9 @@ are factual breakdowns, not a shared scoring algorithm. No new progress keys,
 mastery claims, hint toggles or generic card-game engine are introduced.
 
 Guided play is part of the shared learning platform, alongside short lessons.
-Hearts and Gin Rummy use `features/guidedHandFeature.ts` for an isolated session,
+Hearts, Gin Rummy and Spades use `features/guidedHandFeature.ts` for an isolated session,
 selection, errors and replay. The adapter supplies normal domain transitions;
-the controller has no storage or course-completion dependency. Both enter through
+the controller has no storage or course-completion dependency. All enter through
 `GuidedHandEntry`, use `TablePlaySurface` with reserved `ExerciseFeedback`, and
 finish with `GuidedHandActions` (Replay, Play without guidance, Back to Learn).
 New guided games should supply game-specific coaching and review facts, not clone
@@ -345,6 +350,19 @@ cards or tactical grading. Replay repeats the deal; Play without guidance opens
 the normal Play menu, preserving its existing Continue option. Back to Learn is
 still available. The hand does not award topic completion or overwrite a saved
 match. This is rules guidance, not expert tactical analysis.
+
+`SpadesGuidedHand` uses normal `spadesSession` transitions, starting with the full
+deal before the player edits their own bid. `SpadesBids` has a compact variant
+that occupies the same reserved hand space; guidance and the board do not move
+when toggling cards/bids. Coaching accepts `SpadesLearningPosition`, which omits
+opponents' hands. It uses the existing bid heuristic, follow-suit/breaking rules,
+partnership target and intact/failed nil state, without claiming optimal play.
+`domain/spadesLearning.ts` supplies public trick facts and a score breakdown
+backed by normal settlement: contract points, extra books, nil, ten-bag penalties
+and carried bags. Up to three actual tricks highlight nil failure, reaching the
+bid, or a first bag. Hearts and Spades render these with `GuidedTrickRecap`.
+Replay starts the same deal at bidding again; this one-hand activity cannot
+advance a match, award course completion or overwrite a saved game.
 
 `GinGuidedHand` uses the normal Gin engine and public-information opponent policy.
 `domain/ginRummyLearning.ts` pauses after each player action for review, records

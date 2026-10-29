@@ -948,7 +948,7 @@ function legalSpadesCardsForState(state: FullHandState, basicLegal: Card[]) {
   return nonSpades.length ? nonSpades : basicLegal;
 }
 
-function spadesHaveBeenBroken(state: FullHandState) {
+export function spadesHaveBeenBroken(state: Pick<FullHandState, "completedTricks" | "currentTrick">) {
   return [...state.completedTricks.flatMap((trick) => trick.cards), ...state.currentTrick].some(
     (played) => played.card.suit === "S"
   );

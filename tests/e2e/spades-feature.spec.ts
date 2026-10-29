@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { courseCatalog } from "../../src/lessons/courses";
+import { spadesLearningSteps, type SpadesLearningTopic } from "../../src/lessons/spades/learning";
 
 test("Spades bidding survives other games and every guided lesson", async ({ page }, info) => {
   test.setTimeout(60_000);
@@ -26,12 +27,14 @@ test("Spades bidding survives other games and every guided lesson", async ({ pag
     await page.locator(`[data-skill="${course.pathStepId}"] .lesson-topic`).click();
     await page.getByRole("button", { name: "See example", exact: true }).click();
     await page.getByRole("button", { name: "Try cards", exact: true }).click();
+    const steps = spadesLearningSteps((course.practiceTarget as { action: SpadesLearningTopic }).action);
     for (let i = 0; i < 3; i++) {
-      await page.locator(".drill-hand .hand-card.legal").first().click();
+      const card = steps[i].trick.hand.find(card => steps[i].trick.cardOutcomes?.[card.id] === "good")!;
+      await page.getByLabel("Your drill hand").getByRole("button", { name: `${card.rank} ${card.suit}`, exact: true }).click();
       await page.getByRole("button", { name: "Check answer", exact: true }).click();
       await page.getByRole("button", { name: i === 2 ? "Finish topic" : "Next decision", exact: true }).click();
     }
-    await expect(page.getByRole("status")).toHaveText("Topic complete.");
+    await expect(page.getByRole("status")).toHaveText(index === 4 ? "Spades learning path complete." : "Topic complete.");
     await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
     await expect(page.getByLabel("Spades course progress")).toContainText(`${index + 1} / 5 complete`);
     expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), key)).toEqual(saved);

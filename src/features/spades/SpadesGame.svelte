@@ -2,33 +2,35 @@
   import GameLearning from "../GameLearning.svelte";
   import PlayTabPanel from "../../components/PlayTabPanel.svelte";
   import SpadesHandView from "./SpadesHandView.svelte";
+  import SpadesGuidedHand from "./SpadesGuidedHand.svelte";
   import { spadesDef, type SpadesPracticeAction } from "../../games/spades";
   import { spadesMatchTarget } from "../../domain/spadesScoring";
-  import { orderPracticePool, type DrillStep } from "../../lessons/drillDecision";
-  import { spadesFollowSuitDrillPool, spadesTrumpOrDiscardDrillPool, spadesBidBooksDrillPool, spadesAvoidBagsDrillPool } from "../../lessons/spades/exercises";
+  import { spadesLearningSteps, spadesTakeaway } from "../../lessons/spades/learning";
   import { savedSpadesRunSummary } from "./spadesPresentation";
   import type { FeatureServices } from "../featureServices";
   import type { SpadesFeature } from "./spadesFeature";
   let { feature, ...services }: FeatureServices & { feature: SpadesFeature } = $props();
   let learningFixed = $state(false);
-  $effect(() => { services.onSurfaceChange($feature.view === "hand" || learningFixed); });
-  const pools: Record<SpadesPracticeAction, DrillStep[]> = {
-    follow: spadesFollowSuitDrillPool, trump: spadesTrumpOrDiscardDrillPool, bid: spadesBidBooksDrillPool, bags: spadesAvoidBagsDrillPool
-  };
+  let guidedSeed = $state<number | null>(null);
+  $effect(() => { services.onSurfaceChange(guidedSeed !== null || $feature.view === "hand" || learningFixed); });
+  function endGuidedHand(tab: "learn" | "play") { guidedSeed = null; learningFixed = false; feature.openTable(tab); }
   const names: Record<SpadesPracticeAction, string> = { follow: "follow suit", trump: "trump or discard", bid: "bid books", bags: "avoid bags" };
 </script>
 
-{#if $feature.view === "hand" && $feature.session}
+{#if guidedSeed !== null}
+  <SpadesGuidedHand seed={guidedSeed} onBack={() => endGuidedHand("learn")} onIndependentPlay={() => endGuidedHand("play")} />
+{:else if $feature.view === "hand" && $feature.session}
   <SpadesHandView session={$feature.session} selectedCardId={$feature.selectedCardId} error={$feature.error}
     dealing={$feature.dealing} onBack={() => feature.openTable()} onSelect={feature.select} onPlay={() => feature.play()}
     onNextTrick={feature.nextTrick} onNextHand={() => void feature.start(true)} onReplay={feature.replay}
     onBid={feature.setBid} onToggleBids={feature.toggleBids} onStartPlay={feature.startPlay} />
 {:else}
   <GameLearning {...services} definition={spadesDef} gameName="Spades" tab={$feature.tab}
+    onGuidedPlay={() => { guidedSeed = services.nextSeed(); }}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
-    loadExercise={(action, seed) => orderPracticePool(pools[action as SpadesPracticeAction], seed())}
+    loadExercise={action => spadesLearningSteps(action as SpadesPracticeAction)}
     exerciseTitle={action => `Spades practice: ${names[action as SpadesPracticeAction]}`} drillTitle={() => "Spades lesson"} drillEyebrow="Spades"
-    resultMessage={clean => clean ? "Try reading bids, trump, nil, and bags in a full Spades hand." : "Review the feedback, then try this Spades topic again."}>
+    resultMessage={(_clean, action) => spadesTakeaway(action)}>
     {#snippet play()}
       <PlayTabPanel table={spadesDef.table} {...spadesDef.playTabConfig}
         footerNote={`Individual bids, nil, bags, and ten-bag penalties score locally. Play to ${spadesMatchTarget}.`}
