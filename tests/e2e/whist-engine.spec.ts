@@ -83,8 +83,8 @@ test("Whist practice leaves the saved match untouched", async ({ page }) => {
   await page.getByRole("button", { name: "Table", exact: true }).first().click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
   await page.getByRole("button", { name: /^Try cards: Opening lead/ }).click();
-  await page.getByLabel("Your Whist hand").getByRole("button", { name: "5 S", exact: true }).click();
-  await page.getByRole("button", { name: "Play card", exact: true }).click();
+  await page.getByLabel("Your drill hand").getByRole("button", { name: "5 S", exact: true }).click();
+  await page.getByRole("button", { name: "Check answer", exact: true }).click();
   expect(await page.evaluate(key => localStorage.getItem(key), saveKey)).toBe(saved);
   await page.getByRole("button", { name: "Table", exact: true }).first().click();
   await page.getByRole("tab", { name: "Play", exact: true }).click();

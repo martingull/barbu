@@ -121,7 +121,7 @@ test("guided play stays prominent with a saved match and a completed learning pa
 });
 
 test("games without a guided hand share lesson choices without offering unsupported guidance", async ({ page }) => {
-  for (const game of ["Barbu", "Whist", "Bridge", "Card Counting I"]) {
+  for (const game of ["Barbu", "Bridge", "Card Counting I"]) {
     await openLearn(page, game);
     await expect(page.getByRole("button", { name: "Start lesson", exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Learning path", exact: true })).toBeVisible();

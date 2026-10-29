@@ -1,6 +1,8 @@
 import { test, expect, type Page } from "@playwright/test";
 import { startBrowserWhistHand, playBrowserWhistCard } from "../../src/domain/trickTakingHand";
 import { courseCatalog } from "../../src/lessons/courses";
+import { whistLearningSteps } from "../../src/lessons/whist/learning";
+import type { WhistPracticeAction } from "../../src/games/whist";
 
 const saveKey = "barbu.savedWhistRun.v1";
 const pair = (scores: number[]) => ({ playerSide: scores[0], opponentSide: scores[1] });
@@ -46,14 +48,16 @@ test("Whist Learn and Play stay reachable on small screens and complete each les
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: info.outputPath(`${course.id}-example-320.png`), fullPage: true });
     await page.getByRole("button", { name: "Try cards" }).click();
-    for (let decision = 0; decision < 3; decision++) {
-      await page.locator(".drill-hand .hand-card.legal").first().click();
+    const action = course.practiceTarget.kind === "practice" ? course.practiceTarget.action as WhistPracticeAction : "follow";
+    for (const [decision, step] of whistLearningSteps(action).entries()) {
+      const card = step.trick.hand.find(card => step.trick.cardOutcomes?.[card.id] === "good")!;
+      await page.getByLabel("Your drill hand").getByRole("button", { name: `${card.rank} ${card.suit}`, exact: true }).click();
       await page.getByRole("button", { name: "Check answer", exact: true }).click();
       await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      await page.getByRole("button", { name: decision === 2 ? "Review session" : "Next decision", exact: true }).click();
+      await page.getByRole("button", { name: decision === 2 ? "Finish topic" : "Next decision", exact: true }).click();
     }
-    await expect(page.getByRole("heading", { name: "Review", exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "Finish Whist", exact: true }).click();
+    await expect(page.getByLabel("Learning summary")).toBeVisible();
+    await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
   }
 });
 

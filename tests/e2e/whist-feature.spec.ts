@@ -22,7 +22,7 @@ test("Whist survives another game's play and a lesson without sharing hand state
   await page.getByRole("button", { name: /Open Whist/ }).click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
   await page.getByRole("button", { name: /^Try cards: Follow suit/ }).click();
-  await page.locator(".drill-hand .hand-card.legal").first().click();
+  await page.getByLabel("Your drill hand").getByRole("button", { name: "A C", exact: true }).click();
   await page.getByRole("button", { name: "Check answer", exact: true }).click();
   await page.getByRole("button", { name: "Finish session", exact: true }).click();
   await expect(page.getByLabel("Learning summary")).toContainText("Topic paused. Finish all 3 decisions to complete it.");

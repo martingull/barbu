@@ -149,15 +149,19 @@ Whist, Hearts, Spades, Bridge and Barbu have isolated frontends under their resp
 `src/features/<game>/` directories:
 
 - `WhistGame.svelte` composes the existing table metadata, Learn/Play panels,
-  courses and exercises. Opening-lead practice has ephemeral state separate from
-  the saved match.
+  courses and exercises. Its six topic pools use the shared worked/supported/
+  independent sequence through `lessons/whist/learning.ts`, with eighteen distinct
+  bounded follow-ups and engine-derived legality, winner and odd-trick breakdowns.
+  The seven progress keys remain; the introductory course still reuses follow suit.
 - `whistFeature.ts` creates an instance-local store for the match, selected card,
   mode, saving and resume. It dispatches existing domain session events rather
   than implementing rules. Storage and the seed source are injected.
 - `WhistHandView.svelte` presents a session through `TablePlaySurface` and
   `CardChoiceHand`. Its callbacks belong to either the match controller or the
-  unsaved opening-lead exercise.
-- `openingLeadPractice.ts` holds the existing authored deals and their feedback.
+  shared unsaved guided-hand controller. The separate opening-lead controller
+  and duplicate full-deal fixtures are removed: both lesson and Try cards now use
+  the same three authored reduced-hand decisions. Lead/return choices identify
+  a plan without inventing opponents' responses to an alternative lead suit.
 - `HeartsGame.svelte` composes the same Learn template with Hearts passing and
   hand views. `heartsFeature.ts` owns the saved match, pass selection and resume,
   delegating pass rotation and settlement to `heartsSession.ts`.
@@ -291,8 +295,8 @@ trick-scoring primitives. Winner questions keep all four cards on the table and
 never play the selected answer as a fifth card. Each missed concept adds one
 different follow-up through `domain/learningSequence.ts`; both answers count in
 the attempt evidence. Follow-ups do not recursively add more questions.
-The same bounded sequence is used by the six Hearts practice topics and the
-five Gin Rummy topics. `content/hearts-follow-ups.json` pairs fresh positions
+The same bounded sequence is used by Hearts, Gin Rummy, Spades and Whist topics.
+`content/hearts-follow-ups.json` pairs fresh positions
 with each original pattern, graded by `heartsPractice.ts`; the lesson adapter
 attaches them without changing the seeded base generator. Gin pairs authored
 hands in `lessons/gin-rummy/exercises.ts` and grades them with the existing meld
@@ -300,7 +304,7 @@ solver. A missed goal offers **Try another example**; correct answers keep the
 original three-decision route. Legal-but-risky choices remain distinct from
 illegal plays. Both attempts appear in decision review and completion evidence;
 an early exit does not complete a topic. This is immediate reinforcement, not
-adaptive mastery, and does not yet cover the other games.
+adaptive mastery, and does not yet cover every game.
 Hearts passing uses the same sequence helper: each of its three defensive plans
 has a fresh thirteen-card companion in `content/hearts-practice.json`. Checked
 passes become read-only, preserving the original choice in review. A risky pass
@@ -329,7 +333,7 @@ are factual breakdowns, not a shared scoring algorithm. No new progress keys,
 mastery claims, hint toggles or generic card-game engine are introduced.
 
 Guided play is part of the shared learning platform, alongside short lessons.
-Hearts, Gin Rummy and Spades use `features/guidedHandFeature.ts` for an isolated session,
+Hearts, Gin Rummy, Spades and Whist use `features/guidedHandFeature.ts` for an isolated session,
 selection, errors and replay. The adapter supplies normal domain transitions;
 the controller has no storage or course-completion dependency. All enter through
 `GuidedHandEntry`, use `TablePlaySurface` with reserved `ExerciseFeedback`, and
@@ -363,6 +367,20 @@ and carried bags. Up to three actual tricks highlight nil failure, reaching the
 bid, or a first bag. Hearts and Spades render these with `GuidedTrickRecap`.
 Replay starts the same deal at bidding again; this one-hand activity cannot
 advance a match, award course completion or overwrite a saved game.
+
+`WhistGuidedHand` composes normal `whistSession` transitions and the shared
+guided-hand lifecycle. Public-only `WhistLearningPosition` supplies the player's
+cards, visible plays, dealer and turned trump, not concealed hands or a deal seed.
+Coaching explains the dealer's last card setting trump, compulsory follow suit,
+optional trumping/overtrumping, partnership habits and the six-trick scoring
+baseline. Advice is a guideline, not an expert grade or guaranteed winner.
+Every trick is explained automatically in the reserved coaching region.
+`domain/whistLearning.ts` supplies actual winners, normal odd-trick points and up
+to three distinct recap tricks: trump, the first scoring trick, and the last trick.
+`GuidedTrickRecap` renders the cards and `GuidedHandActions` handles exits.
+Replay recreates the same deal even if that hand would win a normal game; this
+activity ends after thirteen tricks and neither settles a saved match nor awards
+lesson completion. Normal single-game/rubber Play and version-1 saves are unchanged.
 
 `GinGuidedHand` uses the normal Gin engine and public-information opponent policy.
 `domain/ginRummyLearning.ts` pauses after each player action for review, records

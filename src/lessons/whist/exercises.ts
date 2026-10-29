@@ -1,9 +1,11 @@
-import type { GuidedTrick } from "../../domain/types";
+import type { Suit } from "../../domain/types";
+import type { DrillStep as SharedDrillStep } from "../drillDecision";
 
-type DrillStep = { scenarioId?: string; contract: string; title: string; trick: GuidedTrick };
+type DrillStep = SharedDrillStep & { trump: Suit; playerTricksBefore?: number };
 
 const whistFollowSuitDrillStep: DrillStep = {
   scenarioId: "whist-follow-suit-third-hand",
+  trump: "S",
   contract: "Whist",
   title: "Follow suit",
   trick: {
@@ -40,6 +42,7 @@ const whistFollowSuitDrillStep: DrillStep = {
 };
 const whistFollowSuitLowDrillStep: DrillStep = {
   scenarioId: "whist-follow-suit-second-hand",
+  trump: "H",
   contract: "Whist",
   title: "Follow suit",
   trick: {
@@ -76,6 +79,7 @@ const whistFollowSuitLowDrillStep: DrillStep = {
 };
 const whistFollowSuitCoverDrillStep: DrillStep = {
   scenarioId: "whist-follow-suit-cover-opponent",
+  trump: "H",
   contract: "Whist",
   title: "Follow suit",
   trick: {
@@ -113,6 +117,7 @@ const whistFollowSuitCoverDrillStep: DrillStep = {
 };
 const whistTrumpToWinDrillStep: DrillStep = {
   scenarioId: "whist-trump-to-win",
+  trump: "S",
   contract: "Whist",
   title: "Trump or discard",
   trick: {
@@ -152,6 +157,7 @@ const whistTrumpToWinDrillStep: DrillStep = {
 };
 const whistPreserveTrumpDrillStep: DrillStep = {
   scenarioId: "whist-preserve-trump",
+  trump: "C",
   contract: "Whist",
   title: "Trump or discard",
   trick: {
@@ -191,6 +197,7 @@ const whistPreserveTrumpDrillStep: DrillStep = {
 };
 const whistOvertrumpOpponentDrillStep: DrillStep = {
   scenarioId: "whist-overtrump-opponent",
+  trump: "H",
   contract: "Whist",
   title: "Trump or discard",
   trick: {
@@ -230,6 +237,7 @@ const whistOvertrumpOpponentDrillStep: DrillStep = {
 };
 const whistThirdHandHighDrillStep: DrillStep = {
   scenarioId: "whist-third-hand-high-over-queen",
+  trump: "S",
   contract: "Whist",
   title: "Third hand high",
   trick: {
@@ -266,6 +274,7 @@ const whistThirdHandHighDrillStep: DrillStep = {
 };
 const whistThirdHandSaveStrengthDrillStep: DrillStep = {
   scenarioId: "whist-third-hand-high-save-strength",
+  trump: "H",
   contract: "Whist",
   title: "Third hand high",
   trick: {
@@ -302,6 +311,7 @@ const whistThirdHandSaveStrengthDrillStep: DrillStep = {
 };
 const whistThirdHandEnoughDrillStep: DrillStep = {
   scenarioId: "whist-third-hand-high-enough",
+  trump: "C",
   contract: "Whist",
   title: "Third hand high",
   trick: {
@@ -338,6 +348,7 @@ const whistThirdHandEnoughDrillStep: DrillStep = {
 };
 const whistReturnPartnerSuitDrillStep: DrillStep = {
   scenarioId: "whist-return-partner-spades",
+  trump: "H",
   contract: "Whist",
   title: "Return partner's suit",
   trick: {
@@ -377,6 +388,7 @@ const whistReturnPartnerSuitDrillStep: DrillStep = {
 };
 const whistReturnPartnerSuitLowDrillStep: DrillStep = {
   scenarioId: "whist-return-partner-clubs",
+  trump: "S",
   contract: "Whist",
   title: "Return partner's suit",
   trick: {
@@ -416,6 +428,7 @@ const whistReturnPartnerSuitLowDrillStep: DrillStep = {
 };
 const whistReturnAvoidTrumpDrillStep: DrillStep = {
   scenarioId: "whist-return-partner-not-trump",
+  trump: "H",
   contract: "Whist",
   title: "Return partner's suit",
   trick: {
@@ -455,6 +468,7 @@ const whistReturnAvoidTrumpDrillStep: DrillStep = {
 };
 const whistOpeningLongSuitLessonStep: DrillStep = {
   scenarioId: "whist-opening-long-suit",
+  trump: "H",
   contract: "Whist",
   title: "Opening leads",
   trick: {
@@ -516,6 +530,7 @@ const whistOpeningLongSuitLessonStep: DrillStep = {
 };
 const whistOpeningTopSequenceLessonStep: DrillStep = {
   scenarioId: "whist-opening-top-sequence",
+  trump: "D",
   contract: "Whist",
   title: "Opening leads",
   trick: {
@@ -568,6 +583,7 @@ const whistOpeningTopSequenceLessonStep: DrillStep = {
 };
 const whistOpeningAvoidTrumpLessonStep: DrillStep = {
   scenarioId: "whist-opening-avoid-trump",
+  trump: "S",
   contract: "Whist",
   title: "Opening leads",
   trick: {
@@ -620,6 +636,7 @@ const whistOpeningAvoidTrumpLessonStep: DrillStep = {
 };
 const whistOddTrickWinSeventhDrillStep: DrillStep = {
   scenarioId: "whist-odd-trick-seventh",
+  trump: "S", playerTricksBefore: 6,
   contract: "Whist",
   title: "Count odd tricks",
   trick: {
@@ -659,6 +676,7 @@ const whistOddTrickWinSeventhDrillStep: DrillStep = {
 };
 const whistOddTrickNinthDrillStep: DrillStep = {
   scenarioId: "whist-odd-trick-ninth",
+  trump: "C", playerTricksBefore: 8,
   contract: "Whist",
   title: "Count odd tricks",
   trick: {
@@ -698,6 +716,7 @@ const whistOddTrickNinthDrillStep: DrillStep = {
 };
 const whistOddTrickPreserveWinnerDrillStep: DrillStep = {
   scenarioId: "whist-odd-trick-preserve",
+  trump: "C", playerTricksBefore: 7,
   contract: "Whist",
   title: "Count odd tricks",
   trick: {

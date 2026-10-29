@@ -35,6 +35,17 @@ remain necessary before making claims about opponent strength.
   Learn covers the same clockwise deal/play, exposed trump, five-point games,
   honours-off scoring and optional rubber as Play. Tests check all 18 authored
   decisions against the public-information policy and complete all seven lessons.
+- Shared learning adapter: `src/lessons/whist/learning.ts`. Each three-decision
+  topic follows worked, supported and independent stages, with one fresh
+  reinforcement per missed decision (18 base positions plus 18 follow-ups).
+  Opening leads and suit returns identify a plan rather than showing fabricated
+  responses to a different lead. The old standalone opening-lead controller is
+  removed; both Learn entry points now use the same feedback and attempt evidence.
+- Guided hand: `WhistGuidedHand` uses the shared unsaved controller and normal
+  session transitions. Public-only coaching explains trump, legality and partnership
+  play automatically. A recap shows actual tricks and points above six, including
+  the honours-off and single-game/rubber distinction. Replay repeats the same deal;
+  exiting never replaces a match save or completes a lesson.
 - Common tactical and scoring fixtures: `tests/fixtures/whist-*.json`.
 - Domain tests cover golden policy/scoring fixtures, seeded full deals,
   hidden-hand independence, dealer metadata, native-save compatibility and replay.
