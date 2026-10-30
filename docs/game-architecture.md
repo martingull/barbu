@@ -484,6 +484,6 @@ completion and compact-screen play before migrating the next game.
    Remove legacy implementations and dispatch routes after their replacements
    are verified. Keep golden fixtures; do not maintain two production engines.
 
-See [the prototype record](typescript-engine-prototype.md) for the migration's current
-scope and verification commands. Use this checklist as a review gate for future
+See [the migration record](typescript-engine-prototype.md) for historical scope
+and compatibility evidence. Use this checklist as a review gate for future
 games, not as a requirement to build speculative abstractions in advance.

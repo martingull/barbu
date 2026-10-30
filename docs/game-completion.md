@@ -8,6 +8,7 @@ provisional score during a trick does not terminate the deal.
 | Hearts | Any seat reaches 100 after moon settlement; lowest score wins, including tied winners | New match |
 | Whist, single game | A partnership reaches five points | New match |
 | Whist, rubber | Each game ends at five; two game wins finish the rubber | Next game, then New match |
+| Gin Rummy | A player reaches 100 hand points; game/box/shutout bonuses are then applied | New game |
 | Canasta (hidden prototype) | A partnership reaches 8500 after a hand; higher total wins, equal totals tie | New match |
 | Spades | At least 500 after nil and bag penalties; higher score wins | New match; tied totals play another hand |
 | Barbu | All seven training-table contracts completed | New game |

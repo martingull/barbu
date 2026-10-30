@@ -62,6 +62,20 @@ cards render at North, and South's cards remain separate. Contract targets use
 the auction engine's bid metadata. Bidding choices start unselected. Existing
 progress keys and match saves are retained.
 
+`src/lessons/bridge/learning.ts` adapts the five topics into worked, supported
+and independent decisions, with fifteen base positions and fifteen distinct
+reinforcement positions. Shared feedback and decision review preserve the
+original visible information. Contract/bidding questions use the shared learning
+session controller rather than maintaining a separate completion model.
+
+Learn also offers an unsaved guided board using the normal auction and hand
+engine. Coaching is always visible and uses public information; the recap reviews
+actual tricks. Replay preserves the original auction/deal, and guided play never
+overwrites a match save or awards lesson completion. When South declares, the
+learner controls South and North dummy. When North declares, North plays
+automatically and the learner chooses South dummy's cards: this is a training
+convention, not the club rule that dummy makes independent decisions.
+
 Responder auctions, multi-trick planning sequences and interactive duplicate
 score explanation remain curriculum gaps, not completed lessons.
 

@@ -85,7 +85,7 @@ not yet be described as expert or validated club-strength players.
 ## Implementation And Verification
 
 - Shared browser/native gameplay: `src/domain/heartsPolicy.ts`, `src/domain/handEngine.ts`,
-  and `src/domain/trickTakingHand.ts` on the TypeScript prototype branch.
+  and `src/domain/trickTakingHand.ts` on main; the migration is complete.
 - The duplicate Rust full-hand engine and opponent policy have been removed.
 - Match progression: `src/domain/heartsSession.ts`; legacy save compatibility:
   `src/persistence/heartsSave.ts`. Replay restarts the actual post-pass deal.

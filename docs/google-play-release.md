@@ -2,29 +2,99 @@
 
 ## Current Status
 
-The October 30 rebuilt candidate is version `1.0.5`, Android code `1000006`. Martin
-reconfirmed `1000005` is the highest uploaded code and that Google granted
-production access. This candidate is for the existing closed-testing track;
-production publication is deliberately on hold for further polish. No upload
-or rollout of `1000006` has been performed or verified yet.
+On October 30, a direct read of the `alpha` release-lifecycle endpoint confirmed
+`1.0.6` / `1000007` as `RELEASE_LIFECYCLE_STATE_PUBLISHED`, named
+`1.0.6 - Share Barbu and Find Card Clubs` (the Console label uses an en dash).
+Martin uploaded and submitted the verified bundle manually after the API attempts
+below were blocked. This update includes Share Barbu and the external Google Maps
+card-club search and is available to eligible closed testers, not the public.
 
-The rebuilt AAB includes the browser audit's Bridge contract/trump context and
-bidding shape fixes. Its signature and package checks passed. The older candidate
-and matching verification files are archived under the ignored
-`release/google-play/superseded-before-oct30-browser-fixes/` directory.
-The current Google CLI token lacks the Android Publisher OAuth scope, so direct
-API upload is not configured. Upload through the existing closed-testing track
-in Play Console; do not publish to production yet.
+Production and open testing were empty at the earlier October 30 inspection;
+the later check queried alpha only. No production rollout was performed here.
+A Play-signed saved-game upgrade and native sharing/Maps checks remain to be
+verified on a physical device before a production release.
 
-The candidate includes the shared learning and guided-hand improvements across
-Hearts, Gin Rummy, Spades, Whist, Bridge and Barbu. Community/club discovery is
-not included in this packaged candidate. The subsequent catalog Share Barbu
-and external Maps-search changes are source-only and require a new build and
-native handoff check before release. If `1000006` has been uploaded by then,
-the next bundle must use a higher code. Package verification and remaining release
-checks are recorded below.
+Before the manual submission, API submission stopped before upload:
+one transient HTTP 503, followed by HTTP 403 `Listing releases quota exceeded`
+on the release-lifecycle endpoint, including a retry after a pause. No new bundle
+upload, track update or commit was attempted. The temporary inspection edits
+were discarded. The last successful inspection still showed `1000006` unsent
+and `1000005` published. Do not interpret authentication success as upload success.
+That state was superseded by the manual upload and published confirmation above.
+Do not reuse code `1000007` or rerun the old replacement request. Avoid repeated
+all-track polling when release-list quota errors occur; do not bypass safeguards.
 
-## Previous Release
+API access now works through the dedicated Barbu service account in the existing
+ISV project. See the CLI workflow below. Read lifecycle state with `task play:status`
+before making release decisions; local artifacts and upload success are not
+evidence that an update is available to testers.
+
+The older pre-browser-fix candidate remains archived under
+`release/google-play/superseded-before-oct30-browser-fixes/`. Never upload it.
+
+## API Workflow
+
+`scripts/google-play.mjs` uses the current `gcloud` login to mint an in-memory,
+short-lived token for
+`barbu-release@plenary-magpie-170009.iam.gserviceaccount.com`. No downloaded
+service-account key is required. The ISV project (`plenary-magpie-170009`) has
+Android Publisher and IAM Credentials enabled. Martin has Token Creator on this
+service account only; the broader project-level grant was removed. Play access
+is configured separately in Play Console. Never add secrets to Git.
+
+Read-only status and offline checks:
+
+```sh
+task play:status
+task play:status -- --json
+task play:test
+```
+
+Historical commands used to prepare/preview the now-published 1.0.6 candidate
+(not instructions to upload it again):
+
+```sh
+caffeinate -di task play:prepare PREVIOUS_AAB=release/google-play/barbu-google-play-v1.0.5-code1000006.aab
+task play:upload -- \
+  --bundle release/google-play/barbu-google-play-v1.0.6-code1000007.aab \
+  --verification release/google-play/verification-v1.0.6-code1000007.json \
+  --notes release/google-play/release-notes-v1.0.6-code1000007.txt \
+  --name '1.0.6 - Share and find card clubs' \
+  --replace-unsent 1000006
+```
+
+Upload defaults to preview only; append `--submit` only with approval to submit
+that exact closed-test release. The replacement flag is a one-time authorization
+for the exact pending code; omit it on normal future releases. Pending reviews,
+unknown lifecycle states and other unpublished releases stop the command.
+Production publishing, tester editing and country changes are not supported.
+Commit uses `ERROR_IF_IN_REVIEW` instead of cancelling an existing review.
+
+`play:status` creates a temporary edit to list tracks/bundles, reads release
+lifecycle separately and deletes the edit without committing changes. Do not run
+release commands concurrently or edit Play Console during an upload. Status
+reports the highest *visible* code; Google remains authoritative for any
+historically consumed code. A failed or uncertain upload must be inspected before
+retrying, not automatically repeated.
+
+`play:prepare` uses the documented Mac SDK/Java/NDK setup below, the existing
+private upload key/password files, and bundletool (set `BUNDLETOOL_JAR` if not at
+`/private/tmp/bundletool-all-1.18.1.jar`). It refuses to overwrite a signed bundle
+or symbols. The previous AAB provides the expected upload certificate. It hashes
+production source before building and checks it before signing. Verification
+records include that fingerprint, native checks, matching mapping and symbols.
+Upload rejects changed source/build inputs, mismatching checksums, wrong package
+or version, missing verification, and reused codes. Package verification does
+not assert tests or physical-device checks ran; those are recorded separately.
+
+References: [Publishing edits](https://developers.google.com/android-publisher/edits),
+[release lifecycle](https://developers.google.com/android-publisher/api-ref/rest/v3/applications.tracks.releases),
+[commit review protection](https://developers.google.com/android-publisher/api-ref/rest/v3/edits/commit).
+
+## Previous Release (October 1 Observation)
+
+The paragraph below records the October 1 submission. A subsequent October 30
+API check confirmed `1000005` published before the newer release replaced it.
 
 The October 1 candidate is version `1.0.4`, Android code `1000005`. Martin
 confirmed the highest uploaded code is `1000004` or lower. Play Console was
@@ -156,6 +226,35 @@ Release bundles, symbols, signing material, and release notes live in the ignore
    after saving. The additional group was then included in Changes in review.
 
 ## Candidate Verification
+
+### October 30: 1.0.6 / 1000007 (Published To Closed Testing)
+
+Candidate: `release/google-play/barbu-google-play-v1.0.6-code1000007.aab`.
+Size: `129510934` bytes. SHA-256:
+`52314e7a5e04be2e58aa61ed2e23e1470ff30e1b060aac3c9e8c36e678a45751`.
+
+Includes the committed sharing/club-search changes plus the version bump.
+Full four-ABI Android build and frontend build passed. The signed bundle matches
+the previous upload certificate and passes bundletool validation, manifest
+version checks, stripped libraries, matching native symbol build IDs, R8 mapping,
+and 16 KB native/bundle alignment checks. Verification includes a production
+source fingerprint so a changed working tree cannot silently reuse this bundle.
+
+Fresh social/privacy browser checks: 60 passed across six profiles. The earlier
+full browser/domain audit remains recorded below; it was not rerun for this
+version-only production-source change. Twelve offline release-tool tests cover
+stale packages, checksums, code reuse, pending releases, exact unsent replacement,
+production blocking, cleanup and quota failures. Native sharing/Maps handoff and
+a Play-signed device upgrade still need physical-device verification.
+
+The preview of replacing unsent `1000006` with `1000007` passed. API submission
+was blocked by Google's release-list quota before upload. Martin then uploaded
+through Play Console; its review screenshot and the later published lifecycle
+response confirm the release progressed. Logs and matching package/symbol/
+mapping/verification files remain in the ignored release directory. The original
+package-verification receipt describes local checks, not subsequent store state.
+Production was not changed. The CLI submission path has offline test coverage,
+but has not yet completed a real upload/commit end to end.
 
 ### October 30: Rebuilt 1.0.5 / 1000006 (Testing Only)
 

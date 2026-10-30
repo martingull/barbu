@@ -46,6 +46,14 @@ if the loser never scored. These bonuses do not advance the 100-point target.
   feed the shared result summary and never modify match saves. Existing topic
   progress remains valid; new topics begin incomplete.
 
+All five topics use the shared worked/supported/independent sequence, bounded
+reinforcement and read-only decision review. `domain/learningSession.ts` owns
+checked-answer locking and progression; game-specific grading stays with Gin.
+The separate guided hand reuses the normal session and table with automatic
+public-information coaching and a recap of actual decisions and settlement.
+It preserves the deal on replay and writes neither match saves nor course
+completion. See [game architecture](game-architecture.md) for shared contracts.
+
 The first curriculum expansion focuses on counting and finishing eligibility.
 Linked draw-then-discard turns and interactive layoff/undercut settlement are
 still curriculum gaps; the knock exercises do not claim to teach optimal timing.

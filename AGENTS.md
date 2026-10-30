@@ -4,11 +4,11 @@ Guidance for coding agents working in this repository.
 
 ## Project
 
-Barbu is an iPhone-first card-game app for learning, practicing, and exploring classic card games. The first curriculum is Barbu in the Hearts family of card games, with room to expand to more games later.
+Barbu is an iPhone-first card-game collection with Android builds and a browser development runtime. The active catalog is Hearts, Barbu, Whist, Spades, Bridge, Gin Rummy and Card Counting I. Canasta is paused and hidden. Hearts provides the first-use introduction; Learn and Play are the shared visible tabs.
 
 The product concept is that the player learns by sitting down against Barbu, a "King of Cards" figure who introduces games, sets contracts, reacts to play, and gradually raises the difficulty. Treat this persona as a teaching and progression device, not as an excuse to hide rules or make the interface theatrical at the cost of clarity.
 
-Treat Barbu as the first game in a broader card-game catalog, not as the permanent product boundary. Hearts is the second active starter table, using shared Hearts-family and trick-taking foundations rather than a cloned implementation. Favor structures that can later support other Hearts variants, then other families such as Whist and Bridge.
+Treat Barbu as one game in a broader catalog, not as the permanent product boundary. Reuse Hearts-family and trick-taking foundations where appropriate. Rummy games share cards, learning and presentation foundations but retain their own draw/meld/discard state model.
 
 Hearts is the current Hearts-family starter game, in the Black Lady style: rotate the pass left, right, across, and hold, then play local hands with hearts and the queen of spades as penalties until one seat reaches a 100-point target. The current opening convention is intentionally the Wikipedia-style Hearts rule where the holder of 2C leads 2C to the first trick; treat that as a documented product choice rather than a Parlett-derived assumption. Source note: Wikipedia, "Hearts (card game)", Modern rules, Minor rule variants, https://en.wikipedia.org/wiki/Hearts_(card_game)#Minor_rule_variants. Shooting the moon is active as a match scoring rule: all 26 hand points captured by one seat score 0 for that seat and 26 for every other seat. The queen of spades is passable by default; locked danger spades and bonus-jack rules are later house-rule variants unless explicitly requested. Document simplifications clearly instead of hiding them.
 
@@ -59,9 +59,9 @@ do not reintroduce gameplay command routes or a second Rust rules engine.
 
 ## Architecture
 
-### TypeScript Engine Prototype
+### TypeScript Engines
 
-On the `prototype/typescript-game-engine` branch, Barbu trick-taking contracts,
+The TypeScript migration is merged into main. Barbu trick-taking contracts,
 Whist, Hearts, Spades and Bridge hand play all use TypeScript. Route them through
 `src/domain/handEngine.ts` on browser and native builds. Match progression belongs
 in `src/domain/whistSession.ts`, `src/domain/heartsSession.ts`, `src/domain/spadesSession.ts` and `src/domain/bridgeSession.ts`, with save
@@ -98,7 +98,8 @@ Svelte. Reuse the reviewed-hand and storage factories; retain the version-1 save
 key and actual deals. This is still the fixed-order training format, not canonical
 dealer-selected Barbu settlement.
 Register future games through the shared factories. See `docs/typescript-engine-prototype.md`
-for scope, compatibility checks, and remaining work. Run `task domain:test` after
+for historical scope and compatibility checks, and `docs/game-architecture.md`
+for current ownership. Run `task domain:test` after
 engine changes, in addition to the existing verification commands.
 
 ### Shared Foundations
@@ -186,8 +187,8 @@ See `docs/game-architecture.md` for boundaries and remaining curriculum limitati
 If a new table needs an existing visual layout, use shared components before
 adding another large inline branch. Rules, scoring, generated practice, and
 opponent policy belong in the domain layer selected for that game's migration
-scope, never in Svelte. Existing native games remain on their current routes
-until explicitly migrated.
+scope, never in Svelte. All gameplay already uses TypeScript on both runtimes;
+do not add new native gameplay routes.
 
 ## UI Direction
 

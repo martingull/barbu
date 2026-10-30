@@ -2,6 +2,10 @@
 
 Audited 2026-09-29 against the local working tree, not submitted iOS build 1.0.3 (4).
 
+This is historical evidence. Subsequent guided-hand and learning-flow changes
+are described in [game architecture](game-architecture.md) and the current
+[screen plan](../SCREEN_PLAN.md); rerun relevant tests for a new release.
+
 ## Coverage
 
 Playwright WebKit and Chromium at 320x568, 360x740, 414x736, 820x1180,

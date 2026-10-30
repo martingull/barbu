@@ -1,454 +1,152 @@
 # Barbu Feature Map
 
-This document controls product growth. It is a place to decide what belongs in the app now, what comes next, what is deliberately later, and what should not be built yet.
-
-Use [SCREEN_PLAN.md](./SCREEN_PLAN.md) for screen ownership, navigation boundaries, game-family catalog structure, and UI separation between learning, practice, full-game play, reference, and future multiplayer.
+Current product scope, checked against the implementation on October 30, 2026.
+This is a working product document, not store copy or proof of release approval.
+See [SCREEN_PLAN.md](SCREEN_PLAN.md) for navigation and
+[game architecture](docs/game-architecture.md) for implementation boundaries.
+Earlier incremental feature lists remain in Git history.
 
 ## Product North Star
 
-Barbu is an iPhone-first learning app for classic card games. The first playable path is Barbu in the Hearts family: the player sits at Barbu's table against Barbu, the King of Cards, learns one decision at a time, and gradually moves from guided tricks to confident play. Barbu teaches many card games because he is the King of Cards; his visual identity should present him as a King of Hearts.
+Help beginners and card-club players learn and enjoy a growing catalog of
+traditional games. Barbu, the King of Cards, is the King of Hearts teaching
+persona, not a requirement that every game share Barbu's rules or objectives.
+The first-use introduction starts with Hearts; players can explore other games
+without following a mandatory route to Bridge.
 
-Barbu is the first complete curriculum, not the app boundary. The product should grow through reusable game-family foundations, starting with Hearts-family overlap such as follow-suit trick taking, contract scoring, penalty cards, reward tricks, and clockwise table play.
+The learning loop is a card decision, immediate feedback, a short explanation,
+then another decision or a guided hand. Reference supports that loop instead of
+replacing it. Use David Parlett's *The Penguin Book of Card Games* as the starting
+reference, document deliberate variants, and write original explanations.
 
-Whist is the next intended free starter after Hearts and Barbu because it can reuse the shared trick-taking foundations while introducing partnerships and trump tracking. Spades has started as the next Whist-family table: it reuses the partnership table, fixes spades as trump, and now adds simple side bids, made/failed bid scoring, visible bags, and a score-to-500 shell. Nil, blind nil, and advanced bag penalties remain later variants. Bridge is an important later family, but it should wait until Barbu, Hearts, Whist, and Spades have a strong learning, practice, and play loop.
+Club quality is an ambition, not a claim of universal club rules or expert
+opponents. Keep game-specific limitations explicit.
 
-David Parlett's *The Penguin Book of Card Games* is the baseline reference for how supported games are played and described. Product variants are allowed only when they are deliberate and documented.
+## Active Catalog
 
-The app should feel like a real tutor:
-
-- Short sessions.
-- Clear next step.
-- Immediate feedback.
-- Rules explained through decisions.
-- Reference material available when needed, not used as the main experience.
-
-The default loop is: play first, get fast feedback, read a tiny explanation, repeat, then consult reference only when useful. Duolingo and strong chess tutor apps are the feel benchmark: active, progressive, lightly playful, and built around doing rather than reading.
-
-The broader ambition is to make players stronger with a 52-card deck, not only to teach individual rule sets. Barbu should train transferable card skills: suit counting, danger-card memory, void inference, trump awareness, safe exits, table-strength reading, and knowing when to win or duck. Learning explains games; practice builds card sense; Play modes should feel like trying to beat the table.
-
-The intended monetization model is free starter tables first, then paid packs with limited free usage. A paid pack should allow a small number of free usage units per time window, such as a three-hour window, before asking the player to buy that pack or subscribe to unlock the full catalog. Entitlement and usage-meter checks should stay centralized when implemented; do not scatter subscription or payment logic through game screens.
-
-## Current Feature Set
-
-- Game catalog structured into semantic groups: "The Bridge Path" (Hearts, Whist, Spades, Bridge), "Club Games" (Barbu, Gin Rummy, Canasta), and "Skill Packs & Solitaire".
-- Game catalog metadata now comes from a shared table/catalog factory, clearly pushing the product's narrative toward Bridge.
-- Learn tab shell metadata now comes from the shared table/catalog factory: each active game declares its path title, progress label, continue summary, complete summary, and reference summary before screen-specific content is added.
-- Table tab intro metadata now comes from the shared table/catalog factory: Learn, Practice, Play, and Pro each declare their heading copy in one place before game-specific controls render underneath.
-- Barbu and Hearts Learn tabs now render through a shared Svelte LearnPanel template backed by the table factory, so future games can reuse the same path/progress/action structure instead of cloning the tab markup.
-- Hearts Learn path metadata now comes from the shared table/catalog factory, so lesson order, progress labels, and continuation behavior have one source of truth before more games add their own paths.
-- Hearts Learn coverage now includes break-hearts legality and moon-defense tactics, reusing the existing practice drills as path steps instead of creating separate implementations.
-- Barbu Learn path metadata now comes from the shared table/catalog factory, so the first curriculum uses the same scalable pattern as Hearts.
-- Hearts Practice entry metadata now comes from the shared table/catalog factory, so practice buttons, tab metadata, and action keys stay aligned as more games add practice sets.
-- Barbu Practice entry metadata now comes from the shared table/catalog factory for Quick Drill, fixed drills, and Domino full-hand practice.
-- Hearts table with the shared Learn, Practice, Play, and Pro structure; Play opens with rotating passes and then a local multi-hand Black Lady-style match to 100 points with 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, and shoot-the-moon scoring, while Practice covers avoiding hearts and the queen-of-spades pattern.
-- Spades table with the shared Learn, Practice, Play, and Pro structure; Play starts a local partnership hand using the Whist-family table with spades fixed as trump, simple side bids, made/failed bid scoring, visible bags, 10-bag penalties, and a score-to-500 shell. Nil bids are fully implemented. Blind nil remains a planned variant.
-- Hearts Passing Drill v1 teaches the beginner pass-three habit: identify the queen of spades, high hearts, and dangerous high spades before hand play begins.
-- Hearts Practice Scenario Pool v1 adds a small authored pool behind Quick Drill, varying first-trick restrictions, avoid-hearts, safe and dangerous queen-of-spades play, break-hearts, moon-defense, and score-reading decisions without expanding the Learn path. Pass-three practice now covers both danger-card passing and a long-suit preservation pattern.
-- Hearts practice covers first-trick, avoid-hearts, queen-of-spades danger, break-hearts legality, stop-the-moon defense, and score-reading through shared TypeScript logic and structured templates on browser and native builds. Focused Hearts practice buttons run through their small scenario pool once instead of showing a single repeated sample.
-- Hearts opponent policy v1 has started: local opponents avoid queen-of-spades wins when possible, dump the queen of spades before hearts when void, dump the queen of spades safely under higher spades, lead from short safe suits to create pressure, and lead hearts once hearts are broken.
-- Hearts opponent policy now pressures the player on clean tricks: opponents can take a cheap non-penalty winner from the player to regain lead control, while still ducking tricks already loaded with hearts or the queen of spades unless moon defense requires intervention.
-- Phone play surfaces now suppress double-tap zoom, tap highlights, text selection, and iOS callouts on card/button controls so selecting a card does not break game flow.
-- Hearts trick feedback now calls out queen-of-spades danger, hearts moving, and opponent-loaded tricks so harder hands feel explainable rather than random.
-- Barbu table with grouped Learn, Practice, Play, and Pro entry points; Reference and contract map actions live inside Learn.
-- Nine-step Barbu training path that moves through concept, example, guided trick, contract concepts, Domino layout, practice, and review.
-- Quick Drill mode as a generated practice loop: one decision at a time, immediate feedback, optional next decision, and a compact session result.
-- Quick Drill result loop with next-repetition guidance, focused replay, recent rhythm, and local attempt history after the learner finishes a generated session.
-- No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps playable full hands with deterministic local deals, legal-card play, contract-aware auto opponents, hand scoring, and short per-trick feedback.
-- Generic trick-taking hand engine for deal, turn order, follow-suit legality, trick completion, and hand completion, with No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps as the first contract adapters.
-- Opponent policy v2 baseline for avoidance contracts: auto seats now duck clean tricks with the highest safe card instead of winning avoidable tricks without a reason.
-- Domino playable hand v1 with deterministic local deals, configurable opening-rank state currently defaulted to fixed-seven starts, adjacent suit building, legal pass handling, four-player order-out scoring, Practice full-hand entry instead of a one-card fixed drill, and Play Barbu roster support.
-- Domino clarity pass adds an in-hand order-out point counter and move reasoning for opening sevens, extending lanes, blocked cards, and follow-up cards.
-- Shared table-play surface for quick drills, Play Barbu, and full-hand contracts so active games keep one compact mobile layout.
-- Play Barbu v1 with a local sequence through playable full-hand contracts, four-player contract values, per-contract score rows, and a compact game-complete summary.
-- Local Play Barbu save/resume for unfinished runs, with a Continue Play Barbu action on the Play tab.
-- Play Barbu contract intro before each hand, where Barbu sets the next contract and the current game score stays visible.
-- Four-player Play Barbu score tracking for You, Barbu, Left, and Right.
-- Play Barbu settlement summary with four-player placement, best contract, weakest contract, and focused replay.
-- Play Barbu scorecard with signed score cells, contract rows, four-player columns, current/completed/pending states, and totals.
-- Play Barbu session summary with current leader, player place, and contracts remaining before each hand.
-- Play Barbu session framing with contract sequence roles, surface cues for trick-taking versus Domino layout, and a compact winner/strongest/weakest end summary.
-- Local full-hand contract value tracking with contract-specific point values for the currently playable contracts. Full settlement rules are a later feature.
-- Shared frontend contract score model that separates avoidance, reward, and layout contracts for labels, run-score direction, and contract totals.
-- Compact full-hand result panel with contract result, Barbu/player penalty split, key tricks, replay, and next-contract actions.
-- Full-hand tactical feedback v1 with structured trick tags for followed suit, void discards, moved danger cards, No Last Two setup/final tricks, trump wins, and overtrumps.
-- Training path practice step connected to Quick Drill completion.
-- Review step with latest Quick Drill score, weakest-contract advice, recent attempts, and replay actions.
-- Card Counting I pack started with its own Learn/Play table plus Count Trumps, Trump Memory Hand, Three Amigos Memory, and Danger Cards. Card Counting II is visible as a planned subscriber pack for Bridge-oriented counting. Pro tabs now point to paid AI play and Competitive Play instead of embedding card-counting exercises.
-- Reason-based review advice that turns recent practice tags into one short next-step correction.
-- Local Quick Drill result history with contract-level summaries and focused replay for the weakest contract.
-- Local course progress for the playable Barbu path.
-- Continue action for the next unfinished step.
-- Completed-course state with review and reset actions.
-- Shared learner-facing outcome model: good, risky, penalty/reward, and illegal, with separate reason tags for review and future tutor explanations.
-- Shared course content flow for No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino with concept, example, guided play, and review screens.
-- Domino learning examples and guided placement use a layout surface instead of the trick-taking card table.
-- Shared card table renderer for course examples and guided play.
-- Barbu reference screen with Parlett baseline, play direction, core contracts, scoring, and documented varieties.
-- Guided trick table for authored Barbu lessons.
-- Authored lessons for No Hearts, No Queens, and King of Hearts.
-- Structured outcome metadata for authored guided card choices.
-- Compact outcome labels for guided decisions.
-- Generated No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino Quick Drill set via the shared TypeScript domain engine and structured content on browser and native builds. Every Barbu practice contract retains four seeded scenario families with dynamic card choices, and focused replays run through the generated contract pool instead of a single repeated trick. The Rust/Tauri generator and browser mirror are removed. All six trick-taking full hands use the shared TypeScript hand factory. Domino also has one TypeScript layout engine, preserving native/browser saves and actual-deal replay. The seven-contract run now uses a TypeScript session/save boundary for progression, review, results and replay, sharing the existing factories.
-- Generated practice quality pass started with safe-dump scenarios for No Hearts, No Queens, King of Hearts, and No Tricks that teach when a void player can unload danger under a locked winner.
-- Practice Scenario Pool v1 expands Quick Drill from a fixed generated roster into a larger deterministic pool, so mixed practice and weak-contract replays can draw from several scenario shapes.
-- Quick Drill has short-term pattern memory, so recent scenario shapes are avoided before falling back to the full pool.
-- Practice templates use the shared TypeScript domain and structured content to map playable contracts to scenario families before a broader scenario-template DSL is justified.
-- Browser generated fallback for Quick Drill when Tauri is unavailable.
-- Playwright smoke tests for catalog, Barbu table, lesson flow, generated fallback, course-complete behavior, and current Hearts/Barbu table navigation.
-- Individual Playwright full-hand smoke tests now cover every playable Barbu contract from the Play Barbu hand path: No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino.
-- Focused active-table stability checks cover iPhone no-scroll, safe-area controls, pinned bottom actions, thumb-card spacing, and feedback/card collision checks across Quick Drill, Play Barbu, Hearts, Domino, and Pro table games.
-
-## Launch Feature List
-
-The launch target is an iPhone-first local card tutor and practice app. It should prove that the player can learn, practice, and play real card decisions on a phone without accounts, servers, multiplayer, or monetization plumbing.
-
-Must ship:
-
-1. Free starter catalog
-   - Hearts, Barbu, Whist, and Spades visible first.
-   - Barbu and Hearts are active playable tables. Whist is an active starter table with a Parlett-style reference baseline, Learning Path v1, and first playable practice drills for follow-suit and trump decisions. Spades is an active starter table that reuses the Whist-family partnership hand with spades fixed as trump, simple bids, bags, and match scoring.
-   - Paid/future packs such as Card Counting II, Solitaire, Bridge, Gin Rummy, and Canasta can stay visible as roadmap signals only.
-
-2. Barbu
-   - Learn path for the core contracts.
-   - Quick Drill mixed practice.
-   - Play Barbu local run with save/resume, current playable contract roster, four-player scoring, contract intros, and end summary.
-   - Full-hand contract coverage for No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino through Play Barbu, focused replay, and active full-hand smoke tests. Standalone Practice currently exposes Domino full-hand practice; trick-taking full hands are reached through Play Barbu.
-   - Reference page documenting the core game, contracts, current simplifications, and varieties.
-
-3. Hearts / Black Lady-style starter
-   - Hearts is a real free starter game, not only a placeholder.
-   - The current playable rules are a Black Lady-style Hearts variety: rotating pass directions, then a local multi-hand match on the shared trick-taking table.
-   - Current scoring: hearts are penalty cards and the queen of spades is the main danger card.
-   - Current Hearts rules should include the Wikipedia-style Hearts 2C opening convention where the holder of 2C leads it to the first trick, no first-trick penalty dump when avoidable, no heart leads until hearts are broken, and shoot-the-moon match scoring. Source note: https://en.wikipedia.org/wiki/Hearts_(card_game)#Minor_rule_variants.
-   - The current match target is 100 points. The queen of spades is passable by default; locked danger spades and bonus-jack scoring remain later named variants unless added deliberately.
-   - Hearts Practice can reuse Hearts-family avoidance drills while Hearts-specific drills grow.
-   - Hearts Learn/Reference should explain the current rule boundary clearly.
-
-4. Pro / Card Sense
-   - Keep the current memory mini-games small and tied to real play.
-   - Prioritize trumps, court cards, and danger-card tracking because they transfer to Barbu, Hearts, Whist, and Bridge.
-
-5. Whist starter table
-   - Define classic Whist before variants: four players, fixed partnerships, 52 cards, dealer's last card as trump, follow-suit play, highest trump or led suit wins, and odd-trick scoring above six.
-   - Learning Path v1 covers winning tricks together, follow suit, trump wins, reading partner, inviting a suit, and counting odd tricks.
-   - Practice v1B has playable starter drills for follow suit, trump or discard, third hand high, return partner's suit, and odd-trick counting.
-   - Play Surface v1 starts a local partnership hand with You + Barbu against Left + Right, visible trump, follow-suit validation, trump trick resolution, and odd-trick score display.
-   - Treat silent partnership communication as part of the learning goal: lead a strong or long suit, return partner's suit when useful, second hand low, and third hand high.
-   - Partnership Policy v1 is mature: automated seats handle silent communication perfectly (lead strong suits, return partner's suits, third hand high, and avoid overtaking their partner when unnecessary).
-   - Match v1A has a cumulative local match shell: odd tricks carry into a You + Barbu vs Left + Right score to 5, with Next hand / New match flow.
-   - Deal v1B derives trump from the dealer's last card and starts the hand from dealer-left; fuller dealer rotation controls remain planned.
-   - Whist-family bidding games should wait until Whist and Spades feel good, then reuse the same partnership table plus an auction/contract layer.
-
-6. Spades starter table
-   - Start from the Whist-family partnership table: You + Barbu against Left + Right.
-   - Keep spades fixed as trump in the first playable hand.
-   - Teach follow-suit, trumping when void, counting books, making the bid, and watching bags.
-   - Score made bids, failed bids, visible bags, and a local score to 500.
-   - Nil bids, bags, and 10-bag penalties are fully implemented. Blind nil remains planned.
-
-7. Mobile quality
-   - Active table screens should be stable on the physical iPhone.
-   - No accidental active-game page scroll.
-   - Bottom actions stay pinned and reachable.
-   - Thumb cards stay visible.
-   - Safe areas are respected after route changes.
-
-Not launch scope:
-
-- Accounts, cloud sync, or backend.
-- Multiplayer.
-- Subscription or StoreKit implementation.
-- Additional Hearts variants beyond the current Black Lady-style starter.
-- Full Bridge, Gin Rummy, Canasta, or Solitaire implementations.
-- Full Spades bidding, nil, bag scoring, and match settlement.
-- Additional narrow regional Whist-family bidding games.
-- Barbu character animation.
-- Advanced AI opponent strategy beyond useful local training behavior.
-
-## Launch Rounding-Off Roadmap
-
-This section is the short list for getting from the current app to something that can be tested seriously on an iPhone. Prefer finishing these items before adding new game families, new monetization surfaces, or larger visual systems.
-
-0. Separate shared mechanics from game policy
-   - Share reusable mechanics: card model, deal, turn order, follow-suit legality, trick winner, played-card memory, scoring primitives, table layout, and common feedback plumbing.
-   - Keep decision policy game-specific. Barbu is a contract game where each contract defines whether seats should win, duck, avoid cards, chase rewards, use trumps, or build Domino. Hearts is a trick-avoidance penalty game where seats normally avoid hearts and the queen of spades unless defending against or attempting a moon.
-   - Do not improve Hearts opponents by copying Barbu "take control" behavior unless the move reduces penalty risk or serves a clear moon-defense purpose.
-   - Do not improve Barbu opponents by assuming every contract is Hearts-style avoidance; Positive Tricks, Hearts Trumps, No Tricks, No Queens, No Last Two, King of Hearts, No Hearts, and Domino need different policy hooks.
-   - Before changing more opponent behavior, identify the shared TypeScript primitives versus the Barbu contract-policy layer and the Hearts/Black Lady avoidance-policy layer.
-
-1. Stabilize the active phone table
-   - Keep Quick Drill, full-hand practice, Play Barbu, Hearts, Domino, and Pro mini-games on stable iPhone layouts.
-   - Prevent active-game scrolling, safe-area collisions, shifting score boxes, and thumb-card/action collisions.
-   - Keep the shared table surface consistent across Barbu practice, Barbu play, Hearts play, and realistic mini-games.
-   - Current gate: `task ui:test:tables` runs the focused iPhone table-stability suite.
-
-2. Finish Barbu v1 play
-   - Keep the current playable roster: No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, Hearts Trumps, and Domino.
-   - Tighten full-hand feedback so the player understands why a trick was good, risky, or costly.
-   - Improve local opponent policy only where bad table behavior damages the feel of the hand.
-   - Keep the individual full-hand contract smoke tests active as the focused production gate for every playable contract; the full Play Barbu roster test remains the end-to-end sequence gate.
-   - Decide whether v1 Play Barbu stays fixed-order or adds a simple contract-choice step.
-   - Defer full historical/Parlett settlement details unless they block a believable local session.
-
-3. Finish Hearts / Black Lady-style play
-   - Keep Hearts as the second active free starter game.
-   - Treat the current implementation as a Black Lady-style Hearts variety, not as the final word on every Hearts-family rule set.
-   - Maintain the current v1 rules: rotating pass directions, 2C opening, first-trick penalty restrictions, hearts-broken lead restrictions, hearts plus queen-of-spades scoring.
-   - Add only the Hearts-specific practice needed to support the play mode: passing, queen-of-spades danger, safe heart avoidance, and basic score reading.
-   - Defer locked danger spades, bonus-jack scoring, and richer Hearts-family varieties unless the current Hearts loop feels incomplete without them.
-
-4. Keep Pro small but useful
-   - Treat Pro as paid AI play and Competitive Play, not a second game catalog.
-   - Keep Card Counting I and Card Counting II as separate game packs.
-   - Stop adding mini-games until each active one has clear feedback and a reason to return.
-
-5. Product shell and launch readiness
-  - Keep the catalog free-first: Hearts, Barbu, Whist, Spades, then paid/future packs.
-   - Whist can remain lighter than Barbu and Hearts for launch if those games feel good, but it should keep receiving practice coverage before Solitaire.
-   - Make app icon, launch screen, iPhone safe areas, and local Tauri/iOS packaging reliable.
-   - Add a short manual smoke checklist for physical iPhone testing before each TestFlight-style build.
-
-6. Documentation and verification gate
-   - Keep README, FEATURES, SCREEN_PLAN, and AGENTS aligned with launch scope.
-   - Every completed feature should include a "Try it yourself" path.
-   - Before calling the launch build ready, run TypeScript domain tests, UI tests on phone profiles, Tauri check, and at least one physical-device smoke pass.
-
-## Barbu Contract Roadmap
-
-Barbu should be presented as one core game first, then as documented teaching modes and varieties. The user should always be able to tell which rules belong to core Barbu and which screens are app-specific ways to learn or practice it.
-
-Product layers:
-
-- **Core Barbu**: Parlett baseline for object, players, cards, deal, play, contracts, scoring, and full-game settlement.
-- **App teaching modes**: guided lessons, quick drills, contract-hand practice, and Play Barbu.
-- **Varieties of play**: documented changes to contract order, scoring, deal customs, or beginner simplifications.
-
-Current Play Barbu boundary: v1 is a fixed-order local training-table session through the playable contract roster. It is meant to feel like sitting at Barbu's table and experiencing each contract, but it does not yet claim canonical full Barbu settlement or dealer-driven contract choice. Keep product copy and tests honest about that boundary until full settlement is implemented.
-
-Core contract status:
-
-| Contract | Core status | App status | Notes |
-| --- | --- | --- | --- |
-| No Hearts | Core | Playable | Reference, lesson, generated practice, full hand, and run support exist. |
-| No Queens | Core | Playable | Reference, lesson, generated practice, full hand, and run support exist. |
-| King of Hearts / Barbu | Core | Playable | The app currently uses "King of Hearts" for beginner clarity. |
-| No Last Two | Core | Playable | Guided course, generated practice, full-hand, and run support exist. |
-| No Tricks | Core | Playable | Guided course, generated practice, full-hand, and run support exist. |
-| Hearts Trumps | Core | Playable | Hearts are fixed as trumps for v1; guided course, generated practice, full-hand, and run support exist. |
-| Domino | Core | Playable | Opening-rank state exists but the app currently defaults to fixed-seven layout v1; chooser/declarer-selected starting rank is later. |
-
-### Barbu Rules Audit
-
-Last audited against the current implementation: Play Barbu, full-hand contracts, generated practice, reference copy, and Playwright full-hand smoke tests. The latest scoring pass aligned Barbu generated-practice point values with full-hand scoring for No Hearts, No Queens, King of Hearts, No Last Two, No Tricks, and Hearts Trumps.
-
-Implemented and internally consistent:
-
-| Area | Current rule | Implementation status |
+| Collection | Available tables | Play scope |
 | --- | --- | --- |
-| Players and pack | Four players, standard 52-card pack. | Implemented in full-hand trick-taking and Domino engines. |
-| Trick play | Leader opens, play proceeds around the table, players must follow suit when able. | Implemented in shared trick-taking legality. |
-| No Hearts | Ordinary hearts score 2 penalty points; AH scores 6. | Full hand, reference, run score model, guided lesson, and generated practice align. |
-| No Queens | Each queen captured by the trick winner scores 6 penalty points. | Full hand, reference, run score model, and generated practice align. |
-| King of Hearts | Capturing KH scores 20 penalty points. | Full hand, reference, run score model, and generated practice align. |
-| No Last Two | Trick 12 scores 10 penalty points; trick 13 scores 20. | Full hand, reference, run score model, and generated practice align. |
-| No Tricks | Each trick scores 2 penalty points for the trick winner. | Full hand, reference, run score model, and generated practice align. |
-| Hearts Trumps | Hearts are fixed trumps for v1; each trick won scores 5 positive points. | Full hand, reference, run score model, and generated practice align. |
-| Domino | Open suits from sevens, build adjacent ranks, pass only when blocked, score order out as +45, +20, +5, -5. | Playable in full hand and practice; fixed-seven v1 is documented as a simplification. |
+| Hearts & changing contracts | Hearts, Barbu | Black Lady-style Hearts matches; a seven-contract Barbu training session including Domino |
+| Partners & tricks | Whist, Spades, Bridge | Partnership Whist, bidding/nil/bags in Spades, natural Bridge auctions into scored boards |
+| Rummy games | Gin Rummy | Two-player draw/discard, melds, knock/gin, layoffs and match scoring |
+| Card Skills | Card Counting I | Unsaved observation and memory exercises using shared card and hand mechanics |
 
-Production readiness gaps:
+All visible tables are currently free. Canasta remains a paused prototype;
+Canasta, Card Counting II and Solitaire are hidden from the player catalog.
+Future pack/Pro metadata is not an entitlement system or a visible paywall.
 
-| Gap | Current state | Production action |
-| --- | --- | --- |
-| Full Barbu settlement | Play Barbu runs the playable contract roster and totals signed contract values as a fixed-order training-table session. It does not claim exact historical/Parlett full-game settlement. | Keep this boundary explicit in product copy, or implement full settlement before claiming canonical Barbu. |
-| Contract selection/declarer custom | Play Barbu currently uses a fixed contract sequence. | Accept as v1 training flow, or add explicit contract choice later as a named variety. |
-| Domino start rank | Engine supports configurable start rank, but app defaults to sevens. | Keep fixed-seven v1 documented, or add chooser/declarer-selected start rank later. |
-| Source verification | Reference says Parlett baseline, but implementation-level constants need a final source check before store copy claims exactness. | Before launch text says "canonical Barbu", verify contract roster, point values, order, and settlement directly against the chosen source. |
-| Opponent policy | Opponents are legal and contract-aware. A first per-contract audit exists, but several policies are still v1 heuristics rather than polished table play. | Improve No Last Two, Hearts Trumps, and Domino policy first; keep No Queens as the model for reusable policy extraction. |
+## Shared Learning Experience
 
-### Barbu Opponent Policy Audit
+- Each table exposes Learn and Play. Practice is an activity within Learn, not
+  a third tab; Pro is hidden.
+- Learn separates the next lesson, individual skills, guided hands and reference.
+  Topic exercises are attached to skills rather than duplicated in a Quick Drill menu.
+- Shared lessons use worked, supported and independent decisions where authored,
+  with game-specific evaluation and bounded reinforcement after mistakes.
+- Feedback explains the actual choice. Review decisions preserves the visible
+  position, selected cards and explanation without revealing hidden hands.
+- Completion offers retry and the next lesson together; Play and return-to-Learn
+  actions remain secondary. Finishing a path leads onward rather than repeating
+  its first lesson. Reset lessons allows an intentional restart.
+- Hearts, Gin Rummy, Spades, Whist, Bridge and Barbu have unsaved guided hands
+  using their normal engines. Hints and explanations are shown automatically;
+  recaps use actual play. Guided hands do not replace saved matches or award
+  course completion merely for playing a hand.
+- Shared coach portraits use the custom deck identity. Coaching should clarify
+  decisions, not obscure cards or become long dialogue.
+- Card Counting shares the Learn/Play surfaces but does not have authored course
+  completion keys. Do not imply identical curriculum depth across every table.
 
-Originally audited against Rust; Barbu trick-taking choices now live in `src/domain/barbuPolicy.ts`, with compact native fixtures verifying continuation of 18 complete hands. Domino auto-play lives in `src/domain/dominoPolicy.ts`, with native fixtures for twelve full hands and three starting ranks. Its native priority ordering replaces the browser fallback's weighted approximation. The existing Domino policy reads the next player's hidden hand; migration preserves this known limitation, not an expert-strength or public-information claim. The first remediation pass improved No Last Two setup play, Hearts Trumps trump preservation and Domino lane selection.
+Content ownership and detailed learning contracts are in
+[content/README.md](content/README.md) and [game architecture](docs/game-architecture.md).
 
-Shared baseline:
+## Play Boundaries
 
-- Trick-taking contracts enforce follow-suit legality through shared hand state before opponent choice.
-- Opponents auto-play until the user's turn, so policy mistakes are visible immediately in phone play.
-- Current policies are contract-aware heuristics, not full inference engines. They do not yet remember inferred voids, count all remaining danger cards, or plan several tricks ahead.
-- One TypeScript domain implementation is the source of truth on browser and native builds; do not retain separate fallback policies.
+- **Hearts:** rotating left/right/across/hold passing; holder of 2C opens with it;
+  follow suit, first-trick penalty restrictions and hearts-broken restrictions
+  (including an all-hearts hand exception). Hearts and the queen of spades score
+  penalties. Shooting the moon gives the shooter zero and others 26; reaching
+  100 ends the match, lowest score wins. The 2C opening is a documented product
+  convention, not a claim that every club uses it. See [Hearts](docs/hearts.md).
+- **Whist:** trump comes from the dealer's last card; dealer-left opens; odd tricks
+  above six score. Single-game and rubber modes, dealer rotation, settlement and
+  completion are implemented. Opponent partnership habits are heuristics, not
+  perfect communication. See [Whist](docs/whist.md).
+- **Spades:** see the deal before bidding; only the player's own bid is adjustable.
+  Individual bids contribute to partnership targets. Nil, bags, ten-bag penalties
+  and match completion are implemented; blind nil is not. Shared bidding logic
+  lives in `src/domain/spadesBidding.ts`, settlement in `spadesScoring.ts`.
+- **Bridge:** rotating legal auctions, doubles/redoubles, declarer/dummy roles,
+  vulnerability, passed-out boards and duplicate contract scoring. Barbu Natural
+  is a limited natural bidding system, not SAYC or expert play. Session totals
+  are contract points, not matchpoints or IMP comparisons. The South-dummy
+  training convention is documented. See [Bridge](docs/bridge.md).
+- **Gin Rummy:** classic scoring with automatic meld/layoff selection, not every
+  regional rummy variant. See [Gin Rummy](docs/gin-rummy.md).
+- **Barbu:** fixed-order training through all seven contracts, not canonical
+  dealer-selected contracts, doubling or full historical settlement. Domino
+  starts at sevens; its opponent policy still consults the next player's hidden
+  hand. Do not claim public-information-only Domino opponents.
 
-| Contract | Current opponent behavior | Production readiness | Next action |
-| --- | --- | --- | --- |
-| No Hearts | Leads lowest non-heart when possible, discards highest heart when void, and ducks with the highest non-winning card when following suit. | Acceptable v1. It behaves like a basic avoidance player. | Add tests around void dumping so opponents do not appear to feed penalties blindly in edge cases. |
-| No Queens | Extracted policy leads lowest non-queen, dumps queens when void, and ducks queen-loaded tricks with the highest safe queen or safe loser. | Strongest current policy and best template for future Barbu contract policy extraction. | Use this `TrickPolicyContext` pattern when extracting the other avoidance contracts. |
-| King of Hearts | Leads away from KH, discards KH when void, and ducks when KH appears in the trick. | Acceptable v1, but narrow because it only reasons about the single danger card. | Add pressure tests for high-heart leads before KH is played and preserving low-heart exits. |
-| No Last Two | Before the final two tricks it sheds high cards; on trick 11 and the final two penalty tricks it leads low and ducks when possible. | Better v1 setup behavior, but still not a full endgame planner. | Add broader endgame tests over the last 3-5 tricks before tuning again. |
-| No Tricks | Leads low, discards high when void, and ducks with the highest non-winning card when following suit. | Acceptable v1. | Add forced-win recovery behavior: after being forced to win, lead low and avoid taking control again. |
-| Hearts Trumps | Leads high hearts when possible, plays the lowest winning card, and preserves hearts when it cannot overtrump. | Functional v1 positive trick-taking policy. | Improve trump strategy later: draw trumps deliberately and conserve high trumps across multiple tricks. |
-| Domino | Auto seats choose among legal placements by preferring lanes they can keep extending and avoiding easy unlocks for the next player. Pass remains forced-only. | Better v1 layout policy, still local rather than table-inference based. | Add stronger tests around blocking, suit-lane choice, and endgame pass/block behavior. |
+### Barbu Contract Values
 
-Policy extraction direction:
+These are the implemented training-table values, not a fresh source audit.
+Full-hand and generated-practice scoring must stay aligned.
 
-- Keep Barbu contract policy separate from Hearts/Black Lady trick-avoidance policy. They share trick mechanics, but their objectives differ enough that a single "avoidance" brain creates confusing play.
-- Extract one contract at a time into policy-context functions, starting with No Hearts or No Last Two. Do not create a large generic opponent engine until at least Barbu, Hearts, and Whist have exposed the repeated shape.
-- Add focused domain tests for each extracted policy before changing table feel. Manual phone play should validate flow, not be the only guardrail.
+| Contract | Implemented scoring |
+| --- | --- |
+| No Hearts | Ordinary hearts: 2 penalty points; ace: 6 |
+| No Queens | Each queen: 6 penalty points |
+| King of Hearts | King of hearts: 20 penalty points |
+| No Last Two | Trick 12: 10 penalty points; trick 13: 20 |
+| No Tricks | Each trick: 2 penalty points |
+| Hearts Trumps | Hearts fixed as trump; each trick: +5 |
+| Domino | Forced-only passes; order out: +45, +20, +5, -5 |
 
-## Near-Term Roadmap
+## Shared Product Foundations
 
-These are the next product increments that keep the app coherent.
+- TypeScript domain rules, policies, lessons and sessions run locally on both
+  browser and native builds. Rust is only the Tauri shell/native integrations.
+- Shared metadata factories, table components, learning controllers and save
+  adapters support expansion without duplicating whole games.
+- Saved matches resume independently of lessons. Learning progress and exercise
+  history are local; failed persistence must not silently claim a successful save.
+- Stable table geometry, readable cards and reachable thumb controls are shared
+  layout requirements. Feedback must not move the board between decisions.
+- Catalog actions offer Share Barbu and an external Google Maps search for card
+  clubs. These are not multiplayer, a club directory or a membership service.
+  Sharing currently targets Google Play; verify public listing availability
+  before advertising it to people outside the test.
 
-1. Hearts / Black Lady-style play
-   - Hearts is now an active starter table with a Black Lady-style local multi-hand match using the shared trick-taking engine and table surface.
-   - Current scoring covers hearts plus the queen of spades.
-   - Current legality covers the Wikipedia-style holder-of-2C opening, first-trick penalty restrictions, and hearts-broken lead restrictions.
-   - Shooting the moon is active: if one seat captures all 26 hand points, that seat scores 0 and every other seat scores 26 for that hand.
-   - Hearts opponent policy now treats the queen of spades as the main danger card in void discards and spade-following decisions, uses short-suit/heart-broken leads so passive zero-point play is harder, and has moon awareness so seats avoid feeding a moon candidate or deliberately take loaded tricks to stop one. Trick feedback also calls out an active moon threat before the hand ends.
-   - Hearts match v1 tracks cumulative table scores until someone reaches 100, then shows the winner, your place, and your best/worst hand.
-   - Hearts Passing Drill v1 teaches the first pass-three heuristic.
-   - Hearts Learn now gives a Barbu-like path through object, queen-of-spades danger, avoiding hearts, passing, score reading, and reference.
-   - Hearts Practice covers pass-three, avoid-hearts, queen-of-spades danger, break-hearts, stop-the-moon, and score-a-hand entry points.
-   - Hearts practice backs first-trick, avoid-hearts, queen-of-spades danger, break-hearts legality, stop-the-moon defense, and score-reading drills through structured templates, with three decisions per focused topic.
-   - Hearts micro-drills use the same TypeScript logic and content on browser and native builds; frozen native outputs verify all 18 decisions and both passing patterns.
-   - Next: tune the generated Hearts scenario mix after phone testing and decide whether pass-three needs a larger generated pool.
+## Next Priorities
 
-2. Drill Loop v2
-   - Quick Drill now generates a continuing practice loop instead of a fixed seven-exercise roster.
-   - Result screen now shows next repetition, focus contract, and recent rhythm after the learner finishes the session.
-   - Use stored reason tags to refine replay recommendations and review timing.
-   - Next: improve review timing and focused replay selection after more real play.
-   - Keep explanations to one sentence unless the player asks for more.
+1. Release polish: physical-device upgrades, resume, native links/sharing and
+   small-screen layout checks. Store approval and rollout state belong in the
+   dated [Google Play](docs/google-play-release.md) and
+   [App Store](docs/app-store-release.md) runbooks, not inferred from local builds.
+2. Learning quality: observe where players stall; improve explanations, independent
+   transfer decisions and reinforcement without adding competing entry points.
+3. Card Counting: broaden boss-card answers and void-spotting evaluation, then
+   connect useful memory skills to real game decisions.
+4. Opponent quality: strengthen game-specific policies with reproducible cases,
+   including Domino's hidden-information limitation and Barbu endgame choices.
+5. Catalog growth: resume additional games only after existing journeys are
+   dependable; use the architecture checklist and document each rules profile.
 
-3. Generated Practice Expansion v2
-   - Hearts Trumps and Domino now rotate through multiple scenario families.
-   - No Hearts, No Queens, King of Hearts, and No Tricks now include void-discard quality scenarios focused on unloading safely when another player already controls the trick.
-   - Quick Drill now samples from a larger deterministic scenario pool and avoids immediate repeats when possible.
-   - Short-term practice memory now avoids recently seen scenario patterns when the filtered pool has alternatives.
-   - Practice Template Model v1 should continue gradually by extracting repeated table/hand construction patterns only after two or three more scenario families prove the shape.
-   - Add more scenario families for each supported contract as testing reveals repetition. Barbu practice currently has four scenario families per playable contract, including late ducking, safe danger-card shedding, follow-before-trump, and Domino gap decisions.
-   - Keep domain transitions deterministic and independent of UI and storage.
-   - Add TypeScript domain tests for every drill generator.
-   - Current generated baseline covers the playable roster; remaining work is breadth and balancing rather than first coverage.
+## Later And Non-Goals
 
-4. Contract Score Model v2
-   - Move point-value definitions into shared content/core metadata instead of duplicating them across UI and scoring code.
-   - Frontend score metadata now separates avoidance, reward, and layout contracts for labels and run-score direction.
-   - Keep hand scoring, generated practice, and UI labels aligned through shared TypeScript domain/content metadata.
-   - Next: fold Domino's order-out score table into the same shared model.
+Accounts, cloud sync, multiplayer, tournaments, subscriptions, usage meters and
+paid packs are not implemented. Monetization remains a future product decision;
+centralize access checks if introduced. Do not describe metadata as paid functionality.
 
-5. Core Game And Variety Model v2
-   - Move catalog metadata toward content-backed data as more games are added.
-   - Keep core rules separate from rule/scoring/table-custom variations.
-   - Let varieties link to their parent core game instead of becoming separate top-level products.
+Other candidates include spaced review, adaptive difficulty, achievements,
+additional varieties, sound/haptics and character animation. They are not release
+promises. In-product reference should describe rules and varieties, not completed
+development work or upcoming features.
 
-6. Full-Hand Play v2
-   - Keep the current Barbu contract roster stable on top of the generic hand engine before adding more contracts.
-   - Improve Domino from configurable-start-rank fixed-seven v1 to the baseline Barbu chooser/declarer shape once contract selection is modeled.
-   - Add full Barbu settlement scoring across contracts once the playable contracts are broader.
-   - Continue expanding opponent policy beyond the first v2 baseline with endgame timing, trump preservation, and clearer table-strength decisions.
-   - Continue strengthening tactical feedback after each completed trick, especially when the player had a better legal alternative.
-   - Decide when full hands should enter the learning path instead of living as separate practice.
+## Feature Intake
 
-7. Play Barbu Flow v2
-   - Keep contract intros short and score-aware.
-   - Keep local resume reliable for unfinished runs before adding accounts or cloud sync.
-   - Clarify fixed order versus chosen/dealer-driven contract order before full settlement scoring.
-   - Make Barbu feel like the contract setter without adding long dialogue.
-
-8. Play Barbu Settlement v2
-   - Refine placement copy once full Barbu settlement scoring is implemented.
-   - Compare best and worst contracts relative to table strength, not only raw event count.
-   - Connect focused replay back into review history.
-
-9. Progress Model v2
-   - Store completion by lesson node, not only path step.
-   - Track attempts, last result, and review due state.
-   - Keep Play Barbu run resume local and simple until sync or accounts are justified.
-   - Keep it local until the app needs sync or accounts.
-
-10. Card Sense Training v1
-   - Started as the separate Card Counting I catalog pack.
-   - Product framing: each exercise should feel like playing a real hand with one extra memory job, not like a detached flash-card drill.
-   - Count Trumps reveals all thirteen tricks in segments, hides the segment, then asks either how many hearts appeared or whether a specific heart appeared.
-   - Heart Memory Hand is the lead Card Counting I exercise: play a full Black Lady Hearts hand, make normal avoidance decisions, then answer heart-memory checks during the hand.
-   - Three Amigos Memory is the third active exercise and uses a real Whist hand to track jacks, queens, and kings.
-   - Danger Cards is the fourth active exercise and tracks Barbu-specific danger cards: queens and the king of hearts. Danger Cards v2 now uses a small memory-exercise config for tracked cards, prompts, targets, and return behavior so later Queen Watch / King Watch variants can reuse the same shape.
-   - Add short mini-games for serious 52-card-deck skills and practical card-counting habits: Suit Count, Danger Card Tracker, Trump Count, Void Finder, High Card Memory, and Safe Exit Trainer.
-   - Next: connect card-counting exercises back to Play Barbu feedback and focused replay.
-   - Trump Memory Hand now starts sharing table-aware trump behavior with the core game: opponents can overtrump a player's low trump when void in the led suit and able to beat it. Continue extending this only where it improves the skill being trained.
-   - Specific future Whist idea: bake a tracking mini-game into Whist or a Whist variety where the player follows remaining trumps and court cards during play.
-   - Keep each mini-game tied to real play, with one-sentence feedback explaining how the skill helps in Barbu, Hearts-family games, Whist, Bridge, or other classic card games.
-   - Do not let these become disconnected brain-training toys; every exercise should make the player better at reading a table.
-
-11. Local Opponent Policy v3
-   - Improve Barbu and table seats as training opponents before any real multiplayer work.
-   - Focus on believable card-player habits: avoid obvious penalties, count endgame danger, preserve exits, use trumps sensibly, and pursue reward tricks when the contract asks for it.
-   - Initial explicit overtrump behavior exists in Hearts Trumps and realistic Trump Count: when a seat is void in the led suit and a trump is already winning, it can play the lowest trump that beats it. Continue refining when seats should discard or conserve trumps according to the contract goal.
-   - No Queens has an explicit avoidance-policy slice in `src/domain/barbuPolicy.ts`: avoid queen leads, duck queen-loaded tricks when possible, dump queens when void, and shed a queen under a locked winner instead of wasting another safe high card.
-   - Great card games are often played against real people, but better local opponents are the right bridge from solo learning to real table play.
-
-12. Reference Layer v1
-   - Add structured reference pages for the next supported games using Parlett as the baseline source.
-   - Continue expanding object, players, cards, deal, play, scoring, variants, and tactical ideas.
-   - Link reference sections from lessons without making rules pages the main flow.
-
-## Later Roadmap
-
-- Barbu opponent behavior and table persona.
-- Real-person play or multiplayer once local play, scoring, and opponent behavior are strong.
-- Card-sense mini-game expansion beyond the first training set.
-- More Barbu contracts beyond the current playable roster.
-- Hearts-family expansion.
-- Whist-family expansion after Barbu is stable.
-- Bridge-family expansion after Barbu is stable.
-- Entitlements and paid packs.
-- iOS simulator smoke tests.
-- StoreKit sandbox tests.
-- Individual pack purchases and an all-access subscription.
-
-## Explicit Non-Goals For Now
-
-- No full multiplayer.
-- No account system.
-- No cloud sync.
-- No server backend for progress or practice history.
-- No subscription plumbing.
-- No large decorative redesign.
-- No AI opponent until rules, scoring, and lesson progression are stable.
-- No copying wording, characters, art direction, or lesson content from Duolingo, chess apps, or books.
-
-## Design Rules
-
-- The first screen is always the learning experience, not marketing.
-- Every new feature should answer: what is the next useful card decision?
-- Rules, terminology, and play order should start from Parlett before local assumptions.
-- Keep core games distinct from varieties of play; varieties should document what changes from the core game.
-- Reference material should support the lesson path, not replace learn-by-doing.
-- Add game logic to the shared TypeScript domain when it affects legality, scoring, outcomes, generation, or reusable lesson state.
-- Keep Svelte focused on presentation and interaction.
-- Keep Barbu's voice concise. Personality should clarify, not distract.
-- Prefer one strong path over many disconnected screens.
-
-## Feature Intake Checklist
-
-Before adding a feature, answer:
-
-1. Does this help a beginner learn a card game faster?
-2. Does it fit the concept, example, guided play, practice, review loop?
-3. Does it belong in the TypeScript domain, content, persistence, native integration, or Svelte?
-4. Can it be tested with domain tests, Playwright, or a native integration check?
-5. Is it needed before full Barbu hand practice?
-
-If the answer is unclear, put the idea in the parking lot.
-
-## Parking Lot
-
-- Streaks and daily goals.
-- Achievements.
-- Cosmetic card backs.
-- Animated Barbu avatar.
-- Sound effects and haptics.
-- Leaderboards.
-- Social sharing.
-- Adaptive difficulty.
-- Spaced repetition scheduling.
-- Monetized expansion packs.
+Before adding a feature, identify its player benefit, game objective, shared
+foundation, domain/UI/content owner, verification plan and next useful card
+decision. Keep teaching brief, rules honest and new abstractions justified by
+actual reuse. Never copy proprietary teaching text or visual identities.

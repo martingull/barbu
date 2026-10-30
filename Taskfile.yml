@@ -53,6 +53,7 @@ tasks:
       - build
       - ui:test
       - tauri:check
+      - play:test
 
   tauri:dev:
     desc: Run the Tauri development app
@@ -163,3 +164,28 @@ tasks:
     desc: Sync tracked Android activity and icons into the generated project
     cmds:
       - npm run prepare:android
+
+  play:status:
+    desc: Inspect Google Play tracks and review states; never publishes changes
+    cmds:
+      - node scripts/google-play.mjs status {{.CLI_ARGS}}
+
+  play:upload:
+    desc: Preview a verified closed-test upload; pass --submit explicitly to send it
+    cmds:
+      - node scripts/google-play.mjs upload {{.CLI_ARGS}}
+
+  play:prepare:
+    desc: Build, sign and verify the current Android version (Mac Android toolchain)
+    requires:
+      vars: [PREVIOUS_AAB]
+    cmds:
+      - mkdir -p release/google-play
+      - node scripts/google-play.mjs fingerprint > release/google-play/build-source-fingerprint.txt
+      - env PATH=/opt/homebrew/opt/rustup/bin:$PATH JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ANDROID_HOME={{.HOME}}/Library/Android/sdk NDK_HOME={{.HOME}}/Library/Android/sdk/ndk/26.1.10909125 CARGO_PROFILE_RELEASE_DEBUG=1 RUSTFLAGS='-C link-arg=-Wl,-z,max-page-size=16384 -C link-arg=-Wl,-z,common-page-size=16384 -C link-arg=-Wl,--build-id=sha1' npm run tauri -- android build --aab --ci
+      - node scripts/verify-google-play.mjs '{{.PREVIOUS_AAB}}' release/google-play/build-source-fingerprint.txt
+
+  play:test:
+    desc: Test Google Play release safeguards without network access
+    cmds:
+      - node --test tests/tooling/google-play.test.mjs

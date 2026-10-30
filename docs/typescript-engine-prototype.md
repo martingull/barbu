@@ -1,6 +1,15 @@
 # TypeScript Engine Migration
 
-Branch: `prototype/typescript-game-engine`.
+Historical branch: `prototype/typescript-game-engine`, since merged into `main`.
+
+The migration and Rust gameplay cleanup are complete. This document preserves
+the September 2026 migration decisions, fixture provenance and checks at each
+step; counts, curriculum observations and device/release status below are dated
+evidence, not the current roadmap. Use [game architecture](game-architecture.md)
+for current implementation and learning behavior, and the
+[Google Play](google-play-release.md) / [App Store](app-store-release.md)
+runbooks for subsequent release evidence. Gin Rummy was added in TypeScript
+after this migration; it was not a Rust engine port.
 
 The [shared club-game architecture](game-architecture.md) remains the product
 requirement. Reuse factories, shared mechanics and presentation, with explicit
@@ -17,6 +26,7 @@ game-specific rules and opponent policy. This is not a mobile-shell migration.
 | Barbu seven-contract run and saves | TypeScript session and save adapter using shared factories |
 | Domino full hands | Shared TypeScript layout engine and save validation |
 | Bridge auction, duplicate scoring and authored practice | Shared TypeScript domain and content; native duplicate removed |
+| Gin Rummy and Card Counting | TypeScript sessions and learning logic; no Rust gameplay counterpart |
 | Packaging and native integrations | Tauri/Rust shell |
 
 There is no hosted gameplay backend. TypeScript runs locally in the browser or
@@ -48,7 +58,15 @@ Settlement and the next deal occur in one event to prevent double scoring.
 Practice and memory exercises do not overwrite a saved match.
 Table factories, catalog registration and presentation remain unchanged.
 
-## Deduplication Completed
+## Historical Migration Record
+
+The remaining sections describe the migration as performed, including then-current
+exercise counts and UI paths. In today's interface, practice is inside Learn;
+there is no separate Practice tab. Hearts passing and other curricula have since
+been expanded. Do not restore obsolete exact-match grading or old navigation
+merely to reproduce a historical description.
+
+### Deduplication Completed
 
 The Rust Hearts, Whist and Spades full-hand implementations, opponent policies,
 Whist settlement, ruleset registration and Hearts passing commands are removed.
@@ -274,7 +292,7 @@ The same eight seeded sessions are tested through every save/restore transition;
 existing frozen hand fixtures provide compatibility evidence without new large
 snapshot files.
 
-## Verification And Device Status
+## Historical Verification And Device Status
 
 Run:
 
@@ -394,7 +412,12 @@ an installed-device opener check. Existing release-version edits were preserved.
 The existing large-bundle warning remains. No phone installation or store upload
 was performed for this cleanup.
 
-## Next Migration Work
+## Follow-Up Recorded At Migration Completion
+
+The list below was recorded in September, not an outstanding migration checklist.
+The branch has since merged and updated packages have been built and submitted.
+Each new release still needs its own physical-device checks; consult the release
+runbooks rather than treating these old observations as present store status.
 
 1. Verify installed-save upgrades and the privacy-policy opener on physical
    iPhone and Android builds before release.

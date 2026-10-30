@@ -3,7 +3,12 @@
 The first Apple release targets iPhone only. Device installs are not App Store
 packages. Do not upload the IPA produced by `ios:install:device`.
 
-## Current Candidate (October 1, 2026)
+## Last Recorded Submission (October 1, 2026)
+
+This is the last confirmed Apple submission in this runbook, not a live status
+check. The repository is now at version `1.0.6`; that does not mean an Apple
+build of it has been uploaded. Confirm the current App Store Connect state and
+highest build number before preparing another submission.
 
 Version `1.0.4`, build `5`, was built from `08d406b` and refreshed dependency
 notices, then uploaded successfully on October 1 at 16:27 Europe/Oslo. TestFlight
