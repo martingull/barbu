@@ -119,10 +119,18 @@ seven-contract progression, result recording, review and replay; `barbuSave.ts`
 validates and restores the existing version-1 run through the save-store factory.
 Svelte dispatches events and presents the resulting session, just as for Whist.
 The unused `barbu-core` crate and `current_game` metadata command are removed.
-Rust now owns only Tauri startup and the native privacy-policy opener. Future
+Rust now owns only Tauri startup and native external-link openers. Future
 game rules belong in the shared TypeScript domain, not new native command routes.
 The metadata registry remains separate from engine selection. These references
 do not imply that every game can be added using configuration alone.
+
+`features/catalog/CommunityActions` owns the catalog's Share Barbu and Get out
+and play actions. Sharing uses Web Share when available, then an explicit
+copy/selectable-link fallback; the only shared content is the public Google Play
+listing and description. Club discovery is an external Google Maps search, not
+a curated directory or membership service. The native `open_card_clubs` command
+opens a fixed HTTPS destination, not arbitrary frontend URLs. Neither action
+uses gameplay state, contacts, location permissions, accounts or a server.
 
 Share deck, deal, turn-order, legality, and trick mechanics where appropriate.
 Keep each game's objectives, opponent policy, bidding, scoring, and variants

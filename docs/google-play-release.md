@@ -1,6 +1,30 @@
-# Google Play Closed Testing
+# Google Play Releases
 
 ## Current Status
+
+The October 30 rebuilt candidate is version `1.0.5`, Android code `1000006`. Martin
+reconfirmed `1000005` is the highest uploaded code and that Google granted
+production access. This candidate is for the existing closed-testing track;
+production publication is deliberately on hold for further polish. No upload
+or rollout of `1000006` has been performed or verified yet.
+
+The rebuilt AAB includes the browser audit's Bridge contract/trump context and
+bidding shape fixes. Its signature and package checks passed. The older candidate
+and matching verification files are archived under the ignored
+`release/google-play/superseded-before-oct30-browser-fixes/` directory.
+The current Google CLI token lacks the Android Publisher OAuth scope, so direct
+API upload is not configured. Upload through the existing closed-testing track
+in Play Console; do not publish to production yet.
+
+The candidate includes the shared learning and guided-hand improvements across
+Hearts, Gin Rummy, Spades, Whist, Bridge and Barbu. Community/club discovery is
+not included in this packaged candidate. The subsequent catalog Share Barbu
+and external Maps-search changes are source-only and require a new build and
+native handoff check before release. If `1000006` has been uploaded by then,
+the next bundle must use a higher code. Package verification and remaining release
+checks are recorded below.
+
+## Previous Release
 
 The October 1 candidate is version `1.0.4`, Android code `1000005`. Martin
 confirmed the highest uploaded code is `1000004` or lower. Play Console was
@@ -61,6 +85,12 @@ Build and dev hooks sync the tracked activity and icons automatically. This foll
 Run `task verify` before packaging. Avoid running native compilation alongside
 the browser suite on a busy machine: the long multi-hand and viewport tests can
 exceed their 30-second timeout. Investigate and rerun any failures in isolation.
+
+On macOS, keep the lid open and prevent idle sleep during long browser runs:
+`caffeinate -di task ui:test`. The sleep assertion ends with the command; it
+does not change system settings. If a run spans a sleep/wake event, preserve
+the failure logs and rerun every affected case while awake rather than raising
+timeouts or marking the interrupted run as passed.
 
 The current generated Android project uses Gradle 8.14.3. Use the installed
 Java 21 runtime, not Android Studio's Java 25 runtime. On this Mac:
@@ -126,6 +156,100 @@ Release bundles, symbols, signing material, and release notes live in the ignore
    after saving. The additional group was then included in Changes in review.
 
 ## Candidate Verification
+
+### October 30: Rebuilt 1.0.5 / 1000006 (Testing Only)
+
+Candidate: `release/google-play/barbu-google-play-v1.0.5-code1000006.aab`.
+Size: `129421710` bytes. SHA-256:
+`0bbf7f82629df6359e43cbeae4b5799393f561eff2bdb911bf9f232f6f592d98`.
+
+Built from the verified working tree including the Bridge browser fixes below.
+Signed with the existing upload key; certificate matches the previous release.
+Bundletool 1.18.1 validation passed: package `com.martin.barbu`, version
+`1.0.5` / `1000006`, minimum SDK 24 and target SDK 36. All four native libraries
+are stripped, have matching full debug-symbol build IDs, and pass 16 KB LOAD
+and RELRO alignment checks. Bundle configuration specifies `PAGE_ALIGNMENT_16K`.
+Matching symbols, embedded R8 mapping, release notes and the refreshed
+`verification-v1.0.5-code1000006.json` accompany the AAB.
+
+No upload or rollout has been verified. A Play-signed physical-device upgrade
+and the Play pre-launch report remain release gates before production.
+
+### October 30: Browser Reverification
+
+The previous edits were intact. A fresh six-profile `task ui:test` run finished
+with 2432 passed, 16 timeouts and 72 existing conditional skips. macOS power
+logs confirmed sleep periods matching two clusters of eight interrupted workers:
+11:40:43-11:57:30 and 11:59:05-12:09:05, Europe/Oslo. All 16 affected cases
+then passed three separate awake reruns (48 passes), with unchanged source,
+assertions and timeouts. This is a recovered interrupted run, not a claim that
+the initial run had zero failures. All 2448 active cases passed across the run
+and its rechecks; the S9 profile passed all 413 active cases on the initial run.
+
+Fresh `task domain:test` passed 222 tests; `task build` and `task tauri:check`
+passed. A separate preview server serving the built `dist/` files passed 26
+targeted browser checks on iPhone 16/WebKit and Galaxy S9/Chromium, including
+Bridge image rendering, contract/bidding context, mistake recovery, Hearts
+progression and Domino guided-hand entry.
+
+Logs, the original interrupted-test IDs, sleep/wake evidence, rerun results
+and production screenshots are under the ignored
+`release/google-play/browser-audit-2026-10-30/` directory. No gameplay or test
+assertion changes were needed during this recheck. This does not verify a
+physical-device upgrade. The subsequent AAB rebuild is recorded above.
+
+### October 29: 1.0.5 / 1000006 (Superseded)
+
+Candidate: `release/google-play/barbu-google-play-v1.0.5-code1000006.aab`.
+Source: `f58b02f` plus the release version changes. No gameplay changes were
+made during packaging. Martin confirmed the highest uploaded code is `1000005`.
+
+Size: `129422825` bytes. SHA-256:
+`922281e8b52cf6701d056f9557ea32b78483bb41dd3ac975ff9e38968dbeb2c3`.
+
+Verified package `com.martin.barbu`, version `1.0.5` / `1000006`, minimum SDK
+24 and target SDK 36. The signed AAB passes bundletool 1.18.1 validation and
+signature verification against the previous release's upload certificate.
+All four native libraries are stripped, have matching full debug-symbol build
+IDs, and have 16 KB LOAD alignment and aligned RELRO ends. Bundle configuration
+requests `PAGE_ALIGNMENT_16K`. This is package verification, not a 16 KB device
+runtime test. Tauri selected NDK 27.1.12297006; Gradle retains its NDK 26 pin.
+
+Matching symbols, the embedded R8 mapping, release notes, signature output,
+browser test log and `verification-v1.0.5-code1000006.json` are preserved beside
+the AAB. Symbols and mapping are also embedded in the AAB.
+
+Initial packaging checks: 221 domain tests, frontend build and `task tauri:check`
+passed, but the Galaxy S9 browser run had 21 failures. The initial full matrix
+was interrupted after failures. Those results did not establish release readiness.
+
+The subsequent browser repair audit passed **2448 tests with zero failures**
+across all six phone profiles (`task ui:test`, 23 minutes). The 72 existing skips
+cover hidden Canasta and viewport checks that run only in the Galaxy S9 project;
+no skips were added by the repair. The S9 project passed all 413 active tests.
+The updated domain suite passed 222 tests, and `task build` passed with the
+existing JavaScript chunk-size warning.
+
+The repair restores Bridge's always-visible contract/trump context and bidding
+hand shape. Tests now follow current learning menus, Hearts' five decisions,
+Domino's guided-hand entry, detailed reviews and bounded reinforcement examples.
+The Bridge image check waits for images to load after transitions instead of
+reading `naturalWidth` immediately. WebKit and Chromium guided-hand tests pass.
+Browser screenshots and audit logs are saved under the ignored
+`release/google-play/browser-audit-2026-10-29/` directory.
+
+These results apply to the working tree, not the older AAB above. Before upload:
+
+- Rebuild the bundle with the browser fixes and regenerate its matching symbols,
+  mapping, checksum and verification record. The version code can remain
+  `1000006` only while it has not been uploaded.
+- Test a Play-signed upgrade on a physical phone without uninstalling or
+  clearing saved games/progress.
+- Inspect the Play pre-launch report and manually check small-screen learning,
+  guided hands, offline startup and resume before considering production.
+
+No upload, phone installation or production rollout was performed for this
+candidate. Keep it in testing while these checks are outstanding.
 
 ### October 1: 1.0.4 / 1000005
 

@@ -120,12 +120,12 @@ test("guided play stays prominent with a saved match and a completed learning pa
   await expect(page.getByLabel("Your Hearts passing hand").locator('[aria-pressed="true"]')).toHaveCount(1);
 });
 
-test("games without a guided hand share lesson choices without offering unsupported guidance", async ({ page }) => {
+test("games share lesson choices and offer guided hands only when supported", async ({ page }) => {
   for (const game of ["Barbu", "Bridge", "Card Counting I"]) {
     await openLearn(page, game);
     await expect(page.getByRole("button", { name: "Start lesson", exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Learning path", exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Start guided hand", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Start guided hand", exact: true })).toHaveCount(game === "Card Counting I" ? 0 : 1);
     await expect(page.getByRole("button", { name: new RegExp(`^(Continue|Play) ${game}$`) })).toHaveCount(0);
   }
 });

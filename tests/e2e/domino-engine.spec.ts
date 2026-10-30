@@ -101,8 +101,10 @@ for (const native of [false, true]) {
     await page.goto("/");
     await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
     await page.getByRole("tab", { name: "Learn", exact: true }).click();
-    await page.getByRole("button", { name: /^Try cards: Domino\b/ }).click();
-    await expect(page.getByRole("heading", { name: "Domino hand", exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Start guided hand", exact: true }).click();
+    await page.getByRole("radio", { name: "Domino", exact: true }).check();
+    await page.getByRole("button", { name: "Deal guided hand", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Guided Domino", exact: true })).toBeVisible();
     const legal = page.locator(".domino-cards .full-hand-card.legal");
     if (await legal.count()) {
       await legal.first().click();

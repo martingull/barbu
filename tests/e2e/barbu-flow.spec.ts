@@ -648,7 +648,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByLabel("Whist lesson path")).toContainText("Count odd tricks");
   await expect(page.getByLabel("Learning resources").getByRole("button", { name: "Reference" })).toBeVisible();
   await page.getByRole("tab", { name: "Learn" }).click();
-  await expect(page.getByRole("heading", { name: "Choose a topic" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Learning path" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Try cards: Opening lead" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Try cards: Follow suit" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Try cards: Trump or discard" })).toBeVisible();
@@ -664,7 +664,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByLabel("Spades lesson path")).toContainText("Spades always trump");
   await expect(page.getByLabel("Learning resources").getByRole("button", { name: "Reference" })).toBeVisible();
   await page.getByRole("tab", { name: "Learn" }).click();
-  await expect(page.getByRole("tabpanel", { name: "Learn" })).toContainText("Choose a topic");
+  await expect(page.getByRole("tabpanel", { name: "Learn" })).toContainText("Learning path");
   await expect(page.getByRole("button", { name: "Try cards: Follow suit" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Try cards: Trump or discard" })).toBeVisible();
   await page.getByRole("button", { name: "Games", exact: true }).click();
@@ -677,7 +677,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByLabel("Bridge lesson path")).toContainText("The Dummy");
   await expect(page.getByLabel("Learning resources").getByRole("button", { name: "Reference" })).toBeVisible();
   await page.getByRole("tab", { name: "Learn" }).click();
-  await expect(page.getByRole("tabpanel", { name: "Learn" })).toContainText("Choose a topic");
+  await expect(page.getByRole("tabpanel", { name: "Learn" })).toContainText("Learning path");
   await expect(page.getByRole("button", { name: "Try cards: Declarer play" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Try cards: Defense" })).toBeVisible();
   await page.getByRole("button", { name: "Games", exact: true }).click();
@@ -706,7 +706,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await page.getByRole("button", { name: "Table" }).click();
 
   await openBarbuTab(page, "Learn");
-  await expect(page.getByRole("heading", { name: "Choose a topic" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Learning path" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Quick drill", exact: true })).toHaveCount(0);
   await expect(page.getByLabel("Barbu table actions").getByRole("button", { name: "Contract hands" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Try cards: No Hearts" })).toBeVisible();
@@ -1380,7 +1380,7 @@ test("Bridge practice starts three short scripted decisions", async ({ page }) =
   await expect(page.getByLabel("Learning summary")).toBeVisible();
 });
 
-test("Bridge bidding practice teaches the basic natural openings", async ({ page }) => {
+test("Bridge bidding practice teaches the basic natural openings", async ({ page }, info) => {
   await gotoWithPracticeSeed(page, 9);
   await page.getByRole("button", { name: /Open Bridge/ }).click();
   await page.getByRole("tab", { name: "Learn" }).click();
@@ -1395,9 +1395,11 @@ test("Bridge bidding practice teaches the basic natural openings", async ({ page
   await expect(hand.getByRole("img").nth(2)).toHaveAttribute("alt", "2♥");
   await expect(hand.getByRole("img").nth(5)).toHaveAttribute("alt", "5♦");
   await expect(hand.getByRole("img").nth(9)).toHaveAttribute("alt", "3♣");
+  await expect.poll(() => hand.getByRole("img").evaluateAll(images => images.every(image => (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
+  await page.screenshot({ path: info.outputPath("bridge-bidding-question.png"), fullPage: true });
   for (const [expected, points] of [["Pass", 8], ["1NT", 16], ["1♠", 13]] as const) {
     await expect(page.getByRole("button", { name: "Check answer", exact: true })).toBeDisabled();
-    await expect(page.getByLabel("Bridge bidding estimate").locator("strong").first()).toHaveText(String(points));
+    await expect(page.getByLabel("Bridge bidding estimate")).toContainText(`HCP: ${points}.`);
     await page.getByLabel("Bridge bidding choices").getByRole("button", { name: expected }).click();
     await page.getByRole("button", { name: "Check answer" }).click();
     await expect(page.getByLabel("Bridge bidding exercise")).toContainText("Good");
@@ -1692,7 +1694,7 @@ test("Hearts learn start advances through learning stages instead of play loop",
   await page.getByRole("button", { name: "Open Hearts" }).click();
   await page.getByRole("tab", { name: "Learn" }).click();
 
-  await page.locator('[data-skill="hearts-object"] .lesson-topic').click();
+  await page.getByRole("button", { name: "Read lesson: Object of Hearts", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Object of Hearts" })).toBeVisible();
   await expect(page.getByLabel("Hearts course content")).toContainText("trick-avoidance game");
   await expect(page.getByRole("heading", { name: "Pass cards" })).toHaveCount(0);
@@ -1702,18 +1704,21 @@ test("Hearts learn start advances through learning stages instead of play loop",
   await page.getByRole("button", { name: "Try cards" }).click();
   await expect(page.getByLabel("Drill decision")).toBeVisible();
   await expect(page.getByLabel("Drill decision")).toContainText("Hearts");
-  await expect(page.getByText("Decision 1 of 3")).toBeVisible();
+  await expect(page.getByText("Decision 1 of 5")).toBeVisible();
 
-  await completeVisibleDrillSession(page);
+  for (const [index, card] of ["3 C", "K C", "J D", "3 C", "2 D"].entries()) {
+    await page.locator(".drill-hand").getByRole("button", { name: card, exact: true }).click();
+    await page.getByRole("button", { name: "Check answer", exact: true }).click();
+    await page.getByRole("button", { name: index === 4 ? "Finish topic" : "Next decision", exact: true }).click();
+  }
   await expect(page.getByRole("status")).toHaveText("Topic complete.");
-  await page.getByText("Review decisions", { exact: true }).click();
-  await expect(page.getByText("Hearts starts with locating the penalty and the winner.")).toBeVisible();
+  await expect(page.getByLabel("Learning summary")).toContainText("5 of 5 decisions");
 
   await page.getByRole("button", { name: "Back to Learn" }).click();
   await expect(page.getByRole("heading", { name: "Hearts table", exact: true })).toBeVisible();
   await expect(page.getByLabel("Hearts course progress")).toContainText("1 / 7 complete");
 
-  await page.getByLabel("Hearts lesson path").getByRole("button", { name: /^2 Example Queen of Spades/ }).click();
+  await page.locator('[data-skill="hearts-queen"] .lesson-topic').click();
   await expect(page.getByRole("heading", { name: "Queen of Spades" })).toBeVisible();
   await page.getByRole("button", { name: "See example" }).click();
   await expect(page.getByLabel("Queen of Spades example table")).toBeVisible();
@@ -2659,7 +2664,7 @@ test("Learn starts a fixed contract drill pool", async ({ page }) => {
   await page.getByRole("button", { name: /^Try cards: No Last Two\b/ }).click();
 
   await expect(page.getByLabel("Drill decision")).toBeVisible();
-  await expect(page.locator("header").getByText("No Last Two", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No Last Two", exact: true })).toBeVisible();
 
   for (let decision = 1; decision <= 4; decision += 1) {
     await expect(page.getByText(`Decision ${decision} of 4`)).toBeVisible();
@@ -2729,10 +2734,10 @@ test("No Hearts example shows clockwise order after Barbu leads", async ({ page 
   const sequence = page.getByLabel("No Hearts trick sequence");
 
   await expect(page.getByRole("heading", { name: "Barbu leads clubs. Right discards a heart into that trick." })).toBeVisible();
-  await expect(sequence).toContainText("Barbu plays 9C");
-  await expect(sequence).toContainText("Right has no club and discards 4H");
+  await expect(sequence).toContainText("Barbu plays 9♣");
+  await expect(sequence).toContainText("Right has no club and discards 4♥");
   await expect(sequence).toContainText("You still have clubs, so you must follow clubs");
-  await expect(sequence).not.toContainText("Left has no club and discards 4H");
+  await expect(sequence).not.toContainText("Left has no club and discards 4♥");
 });
 
 test("Barbu reference exposes baseline rules and varieties", async ({ page }, testInfo) => {
@@ -2772,7 +2777,7 @@ test("Quick drill runs as a generated learning loop", async ({ page }, testInfo)
   await page.getByRole("button", { name: "Mixed contract review", exact: true }).click();
 
   await expect(page.getByLabel("Drill decision")).toBeVisible();
-  await expect(page.getByText("Decision 1")).toBeVisible();
+  await expect(page.getByText("Decision 1 of 7", { exact: true })).toBeVisible();
 
   for (let index = 0; index < 5; index += 1) {
     if ((await page.getByLabel("Domino drill layout").count()) > 0) {
@@ -2804,7 +2809,7 @@ test("Quick drill runs as a generated learning loop", async ({ page }, testInfo)
   await expect(page.getByLabel("Next drill step")).toHaveCount(0);
   await page.getByText("Review decisions", { exact: true }).click();
   await expect(page.getByLabel("Decision results").locator("li")).toHaveCount(5);
-  await expect(page.getByRole("button", { name: "Play Barbu", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Go to Play", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
   const replayButton = page.getByRole("button", {
     name: "Try again", exact: true
@@ -2826,7 +2831,7 @@ test("Quick drill runs as a generated learning loop", async ({ page }, testInfo)
 
   await replayButton.click();
   await expect(page.getByLabel("Drill decision")).toBeVisible();
-  await expect(page.getByText("Decision 1")).toBeVisible();
+  await expect(page.getByText("Decision 1 of 7", { exact: true })).toBeVisible();
   await expect(page.locator(".contract-status").filter({ hasText: /No Hearts|No Queens|King of Hearts|No Last Two|No Tricks|Hearts Trumps|Domino/ })).toBeVisible();
   await expectNoPageScroll(page);
 });

@@ -71,6 +71,12 @@ test("Bridge's five topics share three fading stages and distinct bounded follow
   expect(bridgeChoiceSteps("bidding").map(step => bridgeHighCardPoints(step.followUp!.hand))).toEqual([7, 16, 13]);
 });
 
+test("contract exercises retain trump context even when teaching hints fade", () => {
+  const steps = bridgeChoiceSteps("contracts");
+  expect(steps.map(step => step.contextDetail)).toEqual(["♥ is trump", "No trump suit", "♠ is trump"]);
+  expect(steps.map(step => step.followUp!.contextDetail)).toEqual(["♣ is trump", "No trump suit", "♦ is trump"]);
+});
+
 test("guided Bridge uses normal transitions for all roles, recaps actual tricks and replays the auction", () => {
   for (let declarer = 0; declarer < 4; declarer++) {
     const initial = { ...createBridgeSession(18, declarer + 1), auctionCalls: ["1NT", "Pass", "Pass", "Pass"].map((call, index) => ({ call, seat: seats[(declarer + index) % 4] })) };

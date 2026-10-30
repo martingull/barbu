@@ -166,7 +166,7 @@ for (const [game, definition, topic, saveKey] of [
     await expect(play).toHaveClass(/\bprimary-action\b/);
     await expect(page.getByRole("group", { name: "Lesson actions", exact: true }).getByRole("button"))
       .toHaveText(["Go to Play", "Try again"]);
-    await expect(page.getByRole("button", { name: "Start guided hand", exact: true })).toHaveCount(game === "Hearts" ? 1 : 0);
+    await expect(page.getByRole("button", { name: "Start guided hand", exact: true })).toHaveCount(1);
     for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { width: 820, height: 1180 }]) {
       await page.setViewportSize(viewport);
       await expect(play).toBeInViewport({ ratio: 1 });

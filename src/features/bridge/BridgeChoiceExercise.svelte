@@ -8,6 +8,7 @@
   import type { DrillResult } from "../../lessons/drillDecision";
   import type { DecisionReview } from "../../lessons/decisionReview";
   import type { CustomExerciseContext } from "../featureServices";
+  import { bridgeHandShapeLabel } from "./bridgePresentation";
   let { context }: { context: CustomExerciseContext } = $props();
   let session = $state(untrack(() => createLearningSession<BridgeChoiceStep, DrillResult, DecisionReview>(
     bridgeChoiceSteps(context.action === "contracts" ? "contracts" : "bidding"))));
@@ -43,7 +44,11 @@
   onBack={context.onBack} statusLabel="Decision" statusValue={`${session.index + 1} of ${session.steps.length}`}
   tableAriaLabel="Bridge exercise" tableCards={[]} panelAriaLabel={bidding ? "Bridge bidding exercise" : "Bridge contract choices"}>
   {#snippet summary()}
-    <p class="choice-context">{step.context}</p>
+    <section class="choice-context" aria-label={bidding ? "Bridge bidding estimate" : "Contract to read"}>
+      <p>{step.context}</p>
+      {#if bidding}<p>Shape (♠ ♥ ♦ ♣): {bridgeHandShapeLabel(step.hand)}</p>
+      {:else if step.contextDetail}<p>{step.contextDetail}</p>{/if}
+    </section>
   {/snippet}
   {#snippet panel()}
     <ExerciseFeedback coach={context.coach} reserveSpace eyebrow={bidding ? "Opening bid" : "Contract target"} title={step.title}
@@ -72,6 +77,7 @@
 
 <style>
   .choice-context { margin: 0; font-size: 0.875rem; color: #f7faf3; }
+  .choice-context p { margin: 0; }
   .bridge-learning-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap: 8px; }
   button { min-width: 0; min-height: 44px; white-space: normal; }
   button[aria-pressed="true"] { background: #f5f1cf; color: #173728; }

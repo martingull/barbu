@@ -100,14 +100,15 @@ export function bridgeLearningSteps(topic: CardTopic): DrillStep[] {
 }
 
 export type BridgeChoiceStep = {
-  id: string; title: string; prompt: string; context: string; hand: Card[]; options: { id: string; label: string }[];
+  id: string; title: string; prompt: string; context: string; contextDetail?: string; hand: Card[]; options: { id: string; label: string }[];
   correct: string; explanations: Record<string, string>; teaching: Teaching; followUp?: BridgeChoiceStep;
 };
 function targetChoice(bid: string, title: string, options: string[], teaching: Teaching): BridgeChoiceStep {
   const contract = bridgeBidById(bid);
   const explanation = `Six base tricks + level ${contract.level} = ${contract.target} tricks. ${contract.strain === "NT" ? "No suit is trump." : `${suitSymbol(contract.strain)} is trump.`}`;
   return { id: `bridge-target-${bid}`, title, prompt: `In ${contract.label}, how many tricks must declarer and dummy win together?`,
-    context: contract.longLabel, hand: [], options: options.map(id => ({ id, label: `${id} ${id === "1" ? "trick" : "tricks"}` })),
+    context: contract.longLabel, contextDetail: contract.strain === "NT" ? "No trump suit" : `${suitSymbol(contract.strain)} is trump`,
+    hand: [], options: options.map(id => ({ id, label: `${id} ${id === "1" ? "trick" : "tricks"}` })),
     correct: String(contract.target), explanations: Object.fromEntries(options.map(id => [id, explanation])), teaching };
 }
 export function bridgeChoiceSteps(topic: "contracts" | "bidding"): BridgeChoiceStep[] {

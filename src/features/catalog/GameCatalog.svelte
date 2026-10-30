@@ -1,5 +1,6 @@
 <script lang="ts">
   import CardFace from "../../components/CardFace.svelte";
+  import CommunityActions from "./CommunityActions.svelte";
   import barbuLogo from "../../../src-tauri/icons/128x128@2x.png";
   import type { CatalogCategory, CatalogGameId } from "../../games/tableFactory";
   import type { ContinueGame, SavedGameId } from "./catalogPresentation";
@@ -73,6 +74,7 @@
       </div>
     </section>
   {/each}
+  <CommunityActions />
 </div>
 
 <style>

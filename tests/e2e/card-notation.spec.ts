@@ -33,7 +33,13 @@ test("Hearts uses suit symbols in Play, every lesson example, and decision revie
   }
   await page.getByText("Review decisions", { exact: true }).click();
   const labels = await page.evaluate(() => JSON.parse(localStorage.getItem("barbu.playHistory.v1")!)[0].results.map((r: { cardLabel: string }) => r.cardLabel));
-  await expect(page.getByLabel("Decision results").locator("strong")).toHaveText(labels.map(formatCardText));
+  const reviews = page.getByLabel("Decision results").locator(".decision-review");
+  await expect(reviews).toHaveCount(labels.length);
+  for (const [index, label] of labels.entries()) {
+    await expect(reviews.nth(index).locator("summary")).toContainText(formatCardText(label));
+    await reviews.nth(index).locator("summary").click();
+    await expect(reviews.nth(index).getByRole("region", { name: `Decision ${index + 1} review`, exact: true })).toContainText(`Your choice: ${formatCardText(label)}.`);
+  }
   await noRawCardCodes(page);
   await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
   await page.getByRole("button", { name: /^Reference/ }).click();

@@ -54,7 +54,7 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 740 }
       const active = page.getByLabel("South declarer: choose a card", { exact: true });
       await expect(active.locator("img.card-face")).toHaveCount(i === 2 ? 3 : 4);
       if (i === 2) {
-        await expect(page.locator(".explanation")).toHaveCount(0);
+        await expect(page.locator(".explanation")).toHaveText("Choose your card, then check the result.");
         await expect(page.locator(".result")).toContainText("three remain");
       }
       await expect.poll(() => page.locator("img.card-face").evaluateAll(images => images.every(image => (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
@@ -81,7 +81,7 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 740 }
         await expect(page.getByLabel("East dummy (excerpt)", { exact: true })).toBeInViewport();
         await expect(page.getByLabel("Reference cards").getByRole("button")).toHaveCount(0);
       }
-      if (i === 2) await expect(page.locator(".explanation")).toHaveCount(0);
+      if (i === 2) await expect(page.locator(".explanation")).toHaveText("Choose your card, then check the result.");
       await page.screenshot({ path: info.outputPath(`bridge-defense-${i}-question.png`), fullPage: true });
       await page.getByLabel("South defender: choose a card", { exact: true }).getByRole("button", { name: choice, exact: true }).click();
       await expect(page.locator(".outcome")).toHaveCount(0);
@@ -160,9 +160,15 @@ test("Bridge mistakes show matching responses and illegal cards never enter the 
       await expect(page.locator(".you-slot img")).toHaveCount(0);
       await expect(page.locator(".left-slot img")).toHaveCount(0);
     }
+    if (i > 0) {
+      await page.getByRole("button", { name: "Try another example", exact: true }).click();
+      await page.getByRole("button", { name: i === 1 ? "K H" : "K S", exact: true }).click();
+      await page.getByRole("button", { name: "Check answer", exact: true }).click();
+      await expect(page.locator(".outcome")).toHaveText("Good");
+    }
     await page.getByRole("button", { name: i === 2 ? "Finish topic" : "Next decision", exact: true }).click();
   }
-  await expect(page.getByLabel("Learning summary")).toContainText("1 of 3 decisions");
+  await expect(page.getByLabel("Learning summary")).toContainText("3 of 5 decisions");
   await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
   await page.locator('[data-skill="bridge-defense"] .exercise-shortcut').click();
   for (const [i, choice] of ["Q D", "J S"].entries()) {
@@ -170,6 +176,10 @@ test("Bridge mistakes show matching responses and illegal cards never enter the 
     await page.getByRole("button", { name: "Check answer", exact: true }).click();
     await expect(page.locator(".outcome")).toHaveText("Risky");
     await expect(page.locator(i === 0 ? ".tutor-slot img" : ".left-slot img")).toHaveAttribute("alt", i === 0 ? "A♦" : "Q♠");
+    await page.getByRole("button", { name: "Try another example", exact: true }).click();
+    await page.getByRole("button", { name: i === 0 ? "5 H" : "A H", exact: true }).click();
+    await page.getByRole("button", { name: "Check answer", exact: true }).click();
+    await expect(page.locator(".outcome")).toHaveText("Good");
     await page.getByRole("button", { name: "Next decision", exact: true }).click();
   }
 });

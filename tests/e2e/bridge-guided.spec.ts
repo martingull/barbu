@@ -60,7 +60,7 @@ for (const { width, height, role } of [
       await expect(page.locator(".table-play-panel .action-row")).toBeInViewport({ ratio: 1 });
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       const images = page.locator(".play-board-region img, .bridge-thumb-hand img");
-      expect(await images.evaluateAll(images => images.every(image => (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
+      await expect.poll(() => images.evaluateAll(images => images.every(image => (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
     }
     await fits();
     await page.screenshot({ path: info.outputPath("bridge-guided-deal.png") });
