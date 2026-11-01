@@ -31,6 +31,42 @@ async function commands(page: Page) {
   return page.evaluate(() => (window as unknown as { nativeCommands: string[] }).nativeCommands);
 }
 
+for (const passOpeningCard of [false, true]) {
+  test(`Hearts holding 2C can select and exchange three cards ${passOpeningCard ? "including" : "without"} 2C after reload`, async ({ page }, info) => {
+    const seed = Array.from({ length: 128 }, (_, index) => index + 1).find(seed =>
+      createHeartsSession(seed).fullHand.playerHand.some(card => card.id === "2C"))!;
+    expect(seed).toBeDefined();
+    await page.goto("/");
+    await page.evaluate(seed => localStorage.setItem("barbu.practiceSeed.v1", String(seed)), seed);
+    await page.reload();
+    await openHearts(page);
+    await page.getByRole("button", { name: "Play Hearts", exact: true }).click();
+    const hand = page.getByLabel("Your Hearts passing hand");
+    await expect(hand.getByRole("button")).toHaveCount(13);
+    await expect(hand.getByRole("button", { name: "2 C", exact: true })).toBeVisible();
+    const others = createHeartsSession(seed).fullHand.playerHand.filter(card => card.id !== "2C");
+    const ids = passOpeningCard ? ["2C", ...others.slice(0, 2).map(card => card.id)] : others.slice(0, 3).map(card => card.id);
+    const buttonFor = (id: string) => hand.getByRole("button", { name: `${id.slice(0, -1)} ${id.at(-1)}`, exact: true });
+    await buttonFor(ids[0]).click();
+    await page.reload();
+    await openHearts(page);
+    await page.getByRole("button", { name: "Continue Hearts", exact: true }).click();
+    await expect(buttonFor(ids[0])).toHaveAttribute("aria-pressed", "true");
+    for (const id of ids.slice(1)) await buttonFor(id).click();
+    await expect(hand.getByRole("button", { pressed: true })).toHaveCount(3);
+    await expect(page.getByRole("button", { name: "Pass cards", exact: true })).toBeEnabled();
+    await page.screenshot({ path: info.outputPath("2c-three-cards-selected.png"), fullPage: true });
+    await page.getByRole("button", { name: "Pass cards", exact: true }).click();
+    await expect(page.getByLabel("Your Hearts hand").getByRole("button")).toHaveCount(13);
+    const saved = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), key);
+    expect(saved.view).toBe("fullHand");
+    for (const id of ids) expect(saved.fullHand.playerHand.some((card: { id: string }) => card.id === id)).toBe(false);
+    if (passOpeningCard) expect(saved.fullHand.currentTrick[0].card.id).toBe("2C");
+    else expect(saved.fullHand.legalCardIds).toEqual(["2C"]);
+    await page.screenshot({ path: info.outputPath("2c-after-exchange.png"), fullPage: true });
+  });
+}
+
 test("Hearts passes, plays and resumes review in TypeScript with a native runtime", async ({ page }, info) => {
   await mockNative(page);
   await page.goto("/");

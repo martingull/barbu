@@ -55,6 +55,44 @@ test("Hearts passing gates play, validates three owned cards, and cannot be repe
   }
 });
 
+for (const [direction, offset] of [["left", 1], ["right", 3], ["across", 2]] as const) {
+  for (const passOpeningCard of [false, true]) {
+    test(`Hearts can ${passOpeningCard ? "pass" : "keep"} 2C while exchanging three cards ${direction}`, () => {
+      const dealt = Array.from({ length: 128 }, (_, seed) => createHeartsSession(seed))
+        .find(session => session.fullHand.playerHand.some(card => card.id === "2C"))!;
+      expect(dealt).toBeDefined();
+      let session: HeartsSession = { ...dealt, passDirection: direction };
+      const others = session.fullHand.playerHand.filter(card => card.id !== "2C");
+      const ids = passOpeningCard ? ["2C", ...others.slice(0, 2).map(card => card.id)] : others.slice(0, 3).map(card => card.id);
+      for (const cardId of ids) {
+        session = transitionHeartsSession(freeze(session), { type: "select-pass", cardId });
+        session = restoreHeartsSession(normalizeHeartsSave(saveHeartsSession(session, "now"))!);
+        expect(session.phase).toBe("passing");
+        expect(session.fullHand.currentTrick).toEqual([]);
+        expect(session.fullHand.hands.every(hand => hand.length === 13)).toBe(true);
+      }
+      expect(session.selectedPassCardIds).toEqual(ids);
+      const playing = transitionHeartsSession(freeze(session), { type: "pass" });
+      expect(playing.phase).toBe("playing");
+      expect(playing.selectedPassCardIds).toEqual([]);
+      const hand = playing.fullHand;
+      const recipient = (2 + offset) % 4;
+      const recipientCards = [...hand.hands[recipient], ...hand.currentTrick
+        .filter(play => play.seat === ["Tutor", "Right", "You", "Left"][recipient]).map(play => play.card)];
+      expect(recipientCards.map(card => card.id)).toEqual(expect.arrayContaining(ids));
+      expect(hand.playerHand).toHaveLength(13);
+      for (const id of ids) expect(hand.playerHand.some(card => card.id === id)).toBe(false);
+      if (passOpeningCard) {
+        expect(hand.currentTrick[0].card.id).toBe("2C");
+        expect(hand.currentTrick[0].seat).toBe(["Tutor", "Right", "You", "Left"][recipient]);
+      } else {
+        expect(hand.currentTrick).toEqual([]);
+        expect(hand.legalCardIds).toEqual(["2C"]);
+      }
+    });
+  }
+}
+
 for (const fixture of native.cases) {
   test(`Hearts native pass, continuation and replay agree for direction ${fixture.direction}`, () => {
     if (fixture.direction) {
