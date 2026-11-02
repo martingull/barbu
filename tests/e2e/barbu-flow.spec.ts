@@ -1171,7 +1171,7 @@ for (const gameName of ["Barbu", "Whist", "Spades"]) {
         name: "barbu",
         handSelector: ".full-hand-cards",
         start: async () => {
-          await page.getByRole("button", { name: /Barbu/ }).click();
+          await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
           await openBarbuTab(page, "Play");
           await page.getByRole("button", { name: "Play Barbu" }).click();
           await page.getByRole("button", { name: "Start hand" }).click({ force: true });
@@ -2605,7 +2605,7 @@ test("Whist memory finish screen keeps the next hand action reachable", async ({
 
 test("Learn keeps contract hands hidden while fixed drills are public", async ({ page }, testInfo) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await openBarbuTab(page, "Learn");
 
   await expect(page.getByLabel("Barbu table actions").getByRole("button", { name: "Contract hands" })).toHaveCount(0);
@@ -2618,7 +2618,7 @@ test("Learn keeps contract hands hidden while fixed drills are public", async ({
 
 test("Domino shortcut completes its guided topic without starting a full hand", async ({ page }, testInfo) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await openBarbuTab(page, "Learn");
   await page.getByRole("button", { name: /^Try cards: Domino\b/ }).click();
 
@@ -2635,7 +2635,7 @@ test("Domino shortcut completes its guided topic without starting a full hand", 
 
 test("quick drill is a fixed iPhone screen without page scroll", async ({ page }, testInfo) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await openBarbuTab(page, "Learn");
   await page.getByRole("button", { name: /^Review results/ }).click();
   await page.getByRole("button", { name: "Mixed contract review", exact: true }).click();
@@ -2659,7 +2659,7 @@ test("quick drill is a fixed iPhone screen without page scroll", async ({ page }
 
 test("Learn starts a fixed contract drill pool", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await openBarbuTab(page, "Learn");
   await page.getByRole("button", { name: /^Try cards: No Last Two\b/ }).click();
 
@@ -2680,7 +2680,7 @@ test("Learn starts a fixed contract drill pool", async ({ page }) => {
 
 test("quick drill finishes after one decision per Barbu contract", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await openBarbuTab(page, "Learn");
   await page.getByRole("button", { name: /^Review results/ }).click();
   await page.getByRole("button", { name: "Mixed contract review", exact: true }).click();
@@ -2704,7 +2704,7 @@ test("quick drill finishes after one decision per Barbu contract", async ({ page
 
 test("guided lesson accepts a legal card play", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await startContractLesson(page, "No Hearts");
   await page.getByRole("button", { name: "See example" }).click();
   await page.getByRole("button", { name: "Try cards" }).click();
@@ -2726,7 +2726,7 @@ test("guided lesson accepts a legal card play", async ({ page }) => {
 
 test("No Hearts example shows clockwise order after Barbu leads", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await openBarbuTab(page, "Learn");
   await page.getByRole("button", { name: /^1 Meet the contract/ }).click();
   await page.getByRole("button", { name: "See example" }).click();
@@ -2742,7 +2742,7 @@ test("No Hearts example shows clockwise order after Barbu leads", async ({ page 
 
 test("Barbu reference exposes baseline rules and varieties", async ({ page }, testInfo) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await openBarbuTab(page, "Learn");
   await page.getByLabel("Learning resources").getByRole("button", { name: "Reference" }).click();
 
@@ -2771,7 +2771,7 @@ test("Barbu reference exposes baseline rules and varieties", async ({ page }, te
 
 test("Quick drill runs as a generated learning loop", async ({ page }, testInfo) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await openBarbuTab(page, "Learn");
   await page.getByRole("button", { name: /^Review results/ }).click();
   await page.getByRole("button", { name: "Mixed contract review", exact: true }).click();
@@ -2838,7 +2838,7 @@ test("Quick drill runs as a generated learning loop", async ({ page }, testInfo)
 
 test("active game tables share one compact surface", async ({ page }, testInfo) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await expectControlBelowSafeArea(page, ".table-topbar .back-button");
   await openBarbuTab(page, "Learn");
   await page.getByRole("button", { name: /^Review results/ }).click();
@@ -2988,7 +2988,7 @@ test("Play Barbu advances full-hand contracts with a running total", async ({ pa
   const contracts = ["No Hearts", "No Queens", "King of Hearts", "No Last Two", "No Tricks", "Hearts Trumps", "Domino"];
 
   await page.goto("/");
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await openBarbuTab(page, "Play");
   await page.getByRole("button", { name: "Play Barbu" }).click();
 
@@ -3148,7 +3148,7 @@ test("Domino full-hand contract smoke", async ({ page }, testInfo) => {
 
 test("finishing a lesson advances course progress", async ({ page }, testInfo) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await openBarbuTab(page, "Learn");
   await page.getByRole("button", { name: /^1 Meet the contract/ }).click();
 
@@ -3186,7 +3186,7 @@ test("finishing a lesson advances course progress", async ({ page }, testInfo) =
 test("No Queens course has concept example play and review", async ({ page }) => {
   await gotoWithCourseProgress(page, { "meet-contract": true });
 
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await openBarbuTab(page, "Learn");
   await page.getByRole("button", { name: /^2 Spot the danger/ }).click();
 
@@ -3225,7 +3225,7 @@ test("King of Hearts course has concept example play and review", async ({ page 
     "spot-danger": true
   });
 
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await openBarbuTab(page, "Learn");
   await page.getByRole("button", { name: /^3 Play the trick/ }).click();
 
@@ -3260,7 +3260,7 @@ test("King of Hearts course has concept example play and review", async ({ page 
 
 test("No Last Two course has concept example play and review", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await startContractLesson(page, "No Last Two");
 
   await expect(page.getByRole("heading", { name: "Avoid the final tricks" })).toBeVisible();
@@ -3293,7 +3293,7 @@ test("No Last Two course has concept example play and review", async ({ page }) 
 
 test("No Tricks course has concept example play and review", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await startContractLesson(page, "No Tricks");
 
   await expect(page.getByRole("heading", { name: "Avoid every trick" })).toBeVisible();
@@ -3326,7 +3326,7 @@ test("No Tricks course has concept example play and review", async ({ page }) =>
 
 test("Hearts Trumps course has concept example play and review", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await startContractLesson(page, "Hearts Trumps");
 
   await expect(page.getByRole("heading", { name: "Use trumps" })).toBeVisible();
@@ -3354,7 +3354,7 @@ test("Hearts Trumps course has concept example play and review", async ({ page }
 
 test("Domino course uses a layout example and guided placement", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await startContractLesson(page, "Domino");
 
   await expect(page.getByRole("heading", { name: "Build Domino" })).toBeVisible();
@@ -3395,7 +3395,7 @@ test("completed course does not loop back to the first lesson", async ({ page })
     review: true
   });
 
-  await page.getByRole("button", { name: /Barbu/ }).click();
+  await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await openBarbuTab(page, "Learn");
 
   await expect(page.getByText("7 / 7 complete")).toBeVisible();

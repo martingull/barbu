@@ -3,12 +3,58 @@
 The first Apple release targets iPhone only. Device installs are not App Store
 packages. Do not upload the IPA produced by `ios:install:device`.
 
-## Last Recorded Submission (October 1, 2026)
+## TestFlight Update (November 2, 2026)
 
-This is the last confirmed Apple submission in this runbook, not a live status
-check. The repository is now at version `1.0.6`; that does not mean an Apple
-build of it has been uploaded. Confirm the current App Store Connect state and
-highest build number before preparing another submission.
+Version `1.0.6`, build `6`, was archived from `4f3a590` with refreshed dependency
+notice lockfile hashes. Browser test selectors were also narrowed to the exact
+`Open Barbu` button so they do not match `Share Barbu`.
+This update is for TestFlight only, not an App Review submission.
+
+The initial distribution export was blocked by `PLA Update available` and a
+missing distribution certificate. After the Account Holder accepted the updated
+agreement, automatic signing and App Store export succeeded without changing
+certificates manually. Explicit export settings use `app-store-connect`; do not
+use the generated default `ExportOptions.plist`, which currently says `debugging`.
+
+The preserved IPA passed distribution-signature, provisioning, entitlement,
+version, iPhone-only device-family, iOS 15.0 minimum, privacy-manifest, dependency
+notice, opaque-icon and bundled frontend asset checks (133 assets).
+
+- `release/app-store/barbu-app-store-v1.0.6-build6.ipa`
+- `release/app-store/Barbu-v1.0.6-build6.xcarchive`
+- `release/app-store/verification-v1.0.6-build6.json`
+
+IPA SHA-256: `14b1c1f695e65343a734684b6655b7b862be7a4dbc966d5d603d377420f1cf99`.
+Upload succeeded on November 2 at 09:47 Europe/Oslo. The Account Holder completed
+the encryption questionnaire after processing. TestFlight shows `Ready to Submit`
+and the existing Barbu Internal Testing Group confirms `Installed 1.0.6 (6)` on
+Martin's iPhone 16. No tester groups or public-release settings were changed.
+Martin reports that initial iPhone testing works; broader physical testing is
+still in progress. No fresh native simulator run was performed for this update.
+
+Verification: 228 domain tests and 12 release-tool tests passed; frontend build
+and native shell check passed. The six-profile browser matrix finished with
+2,499 passed, 72 skipped and three iPhone XR timeouts. All three passed when
+rerun with one worker, unchanged assertions and unchanged timeouts (18 seconds
+total). The original matrix is not a clean pass: two startup timeouts occurred
+during overlapping test runs, and the full seven-contract Barbu journey exceeded
+30 seconds under load. The isolated run completed that journey in 10.9 seconds.
+The initial broader verification attempt was stopped after ambiguous Barbu
+selectors matched the new sharing action; those selectors are now exact.
+
+Logs: `/private/tmp/barbu-testflight-build6-verify-fixed.log` and
+`/private/tmp/barbu-testflight-build6-rerun.log`. The ignored release receipt
+records the package and upload checks. Generated binaries and signing files
+remain untracked.
+
+App Store Connect was checked on November 2: `1.0.4` shows Ready for Distribution
+but also a removed-from-sale notice. Public availability was left unchanged.
+
+## Previous Submission (October 1, 2026)
+
+This section records the October submission, not its live status. Confirm the
+current App Store Connect state and highest build number before preparing
+another submission.
 
 Version `1.0.4`, build `5`, was built from `08d406b` and refreshed dependency
 notices, then uploaded successfully on October 1 at 16:27 Europe/Oslo. TestFlight
@@ -137,7 +183,7 @@ signed in, Rust iOS target, Node dependencies, Task, Ruby, and XcodeGen.
 task ios:init # Only when src-tauri/gen/apple is missing.
 node scripts/generate-ios-notices.mjs # Regenerate after either lockfile changes.
 task verify
-task ios:store:build IOS_BUILD_NUMBER=6 # Next candidate; confirm this number is unused before upload.
+task ios:store:build IOS_BUILD_NUMBER=7 # Next candidate; confirm this number is unused before upload.
 ```
 
 Use a new build number for each upload; check App Store Connect before choosing
