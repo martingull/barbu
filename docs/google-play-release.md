@@ -2,6 +2,79 @@
 
 ## Current Status
 
+**November 4: first production release submitted and IN REVIEW.**
+After Martin enabled the app-scoped production-release permission, promotion of
+`1.0.6` / `1000007` passed validation and committed successfully as
+`1.0.6 - First production release`. A fresh lifecycle read returned
+`RELEASE_LIFECYCLE_STATE_IN_REVIEW` for production. This confirms submission,
+not public availability. Do not submit a duplicate while review is pending;
+check Publishing overview or the production lifecycle before announcing launch.
+
+The rollout covers the 177 selected countries/regions plus rest of world, using
+the same bundle already published to closed testing. No rebuild or new upload
+was needed. Post-commit verification confirmed unchanged testing tracks,
+countries, listing copy, screenshots, feature graphic, icon, tablet images and
+app details. Receipts are ignored under
+`release/google-play/production-submission-2026-11-04.json` and
+`release/google-play/production-post-commit-2026-11-04.json`.
+
+### Launch Checks and Initial Attempt
+
+On November 4, Martin requested the first production launch and confirmed that
+the Google Play-installed `1.0.6` works on Samsung, including saved-game resume,
+a Learn lesson, sharing and the external club search. This supersedes the
+previous pending physical Android check; it is user-reported device verification,
+not an automated test result or a 16 KB runtime check.
+
+Martin then confirmed no blocking errors in the Play pre-launch report and
+saved production markets. A fresh API read confirmed 177 countries/regions plus
+rest-of-world availability. The attempted promotion used the existing verified
+`1000007` bundle, named `1.0.6 - First production release`, with full rollout to
+those saved markets. Testing tracks, listing text, screenshots, feature graphic,
+icon, tablet images and app details were checked unchanged.
+
+The initial production track update was accepted only inside a temporary edit, but
+`:validate` returned HTTP 403, `The caller does not have permission`. No commit
+was attempted and the edit was deleted. Martin then enabled app-scoped
+**Release to production, exclude devices and use Play app signing** permission;
+the successful retry is recorded above. Validation and review protection were
+not bypassed. The failed receipt is preserved as
+`release/google-play/production-submission-2026-11-04-permission-denied.json`.
+The pre-promotion snapshot is `release/google-play/production-ready-2026-11-04.json`.
+
+### Initial November 4 Preflight
+
+Preflight confirmed `1000007` is still the highest visible version code and is
+published on `alpha`; production and open testing remain empty. Its server-side
+bundle checksum matches the verified release package. The new store copy is
+saved. However, production country availability returned an empty object (no
+countries or rest-of-world availability). Launch markets must be saved under
+Production > Countries / regions in Play Console before promotion. The API only
+supports reading this setting. The Console inspection timed out, so confirmation
+of the pre-launch report was requested separately. No production release was
+created, committed or launched during this preflight. The ignored snapshot is
+`release/google-play/production-preflight-2026-11-04.json`.
+
+Later on November 3, the `en-GB` listing was updated to **Barbu: Learn Card Games**,
+with benefit-led descriptions and a new King of Cards feature graphic bearing
+"Learn here. Play together." Copy explicitly describes single-player practice,
+in-person social play and external Google Maps club search. The API edit passed
+validation and committed; a fresh read verified the saved text and graphic,
+unchanged screenshots, icon, tablet images, app details and release tracks.
+Source copy and artwork are under `docs/store-assets/google-play/`.
+This listing update did not launch production or confirm review completion.
+
+On November 3, eight replacement phone screenshots were captured from the exact
+`1.0.6` / `1000007` Android release on an emulator. See
+[the screenshot set and upload status](store-assets/google-play/README.md).
+The first API edit failed validation with HTTP 403 and was discarded. After
+Martin enabled listing access, the screenshot-only retry validated and committed
+successfully. A fresh API read verified all eight saved checksums in order and
+unchanged release tracks. Listing copy and other image types were also verified
+unchanged before commit. Production was still empty then; this was not a production
+rollout or confirmation that Google has finished reviewing the listing update.
+Check Publishing overview for review/publication status.
+
 On October 30, a direct read of the `alpha` release-lifecycle endpoint confirmed
 `1.0.6` / `1000007` as `RELEASE_LIFECYCLE_STATE_PUBLISHED`, named
 `1.0.6 - Share Barbu and Find Card Clubs` (the Console label uses an en dash).
@@ -11,8 +84,8 @@ card-club search and is available to eligible closed testers, not the public.
 
 Production and open testing were empty at the earlier October 30 inspection;
 the later check queried alpha only. No production rollout was performed here.
-A Play-signed saved-game upgrade and native sharing/Maps checks remain to be
-verified on a physical device before a production release.
+A Play-signed saved-game upgrade and native sharing/Maps checks were still
+pending at that point; see the November 4 device confirmation above.
 
 Before the manual submission, API submission stopped before upload:
 one transient HTTP 503, followed by HTTP 403 `Listing releases quota exceeded`

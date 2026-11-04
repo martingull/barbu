@@ -1,0 +1,96 @@
+{
+  "capturedOn": "2026-11-03",
+  "packageName": "com.martin.barbu",
+  "version": "1.0.6",
+  "versionCode": 1000007,
+  "sourceBundleSha256": "52314e7a5e04be2e58aa61ed2e23e1470ff30e1b060aac3c9e8c36e678a45751",
+  "device": "Android API 35 arm64 emulator",
+  "resolution": "1080x1920",
+  "densityDpi": 420,
+  "language": "en-GB",
+  "imageType": "phoneScreenshots",
+  "capture": "adb screencap; real release UI; Android demo status bar",
+  "processing": "Lossless PNG encoding with unused alpha channel removed; no crop, resize, overlays or UI changes",
+  "files": [
+    {
+      "file": "phone/01-learn-by-playing.png",
+      "description": "Hearts lesson feedback explains following suit after a card decision.",
+      "width": 1080,
+      "height": 1920,
+      "bytes": 344909,
+      "sha256": "313a12e8c334aebca2258bd3b3a3c7ad0017f4db36e8028b4fc1473f7acb112a",
+      "originalSha256": "ae1c08fb8ebeef28c5d8137912ca25e4349416bed05aa60a9c46ba5f5b570e2e",
+      "rgbPixelsUnchanged": true
+    },
+    {
+      "file": "phone/02-hearts-learning-path.png",
+      "description": "Hearts learning path introduces penalties, passing, breaking hearts and stopping the moon.",
+      "width": 1080,
+      "height": 1920,
+      "bytes": 195853,
+      "sha256": "4f58946b3088617d0b79f16003a990e076d7dbac81680f47a78fb4eb433f6524",
+      "originalSha256": "729e135cdbb5595711997369afbd4a4315fc45b49cdbab2fd5330d87e72be0bb",
+      "rgbPixelsUnchanged": true
+    },
+    {
+      "file": "phone/03-guided-hearts-hand.png",
+      "description": "A guided Hearts hand shows legal cards, the current trick, rules and tactical advice.",
+      "width": 1080,
+      "height": 1920,
+      "bytes": 364245,
+      "sha256": "15ee3da811e4797032a7edfc9f1b123803c0edec274dc445a6e9307032b4d38d",
+      "originalSha256": "d701cf3897bfe3a43b3f008e592841c616980380f359200e33cf0ef2c035952a",
+      "rgbPixelsUnchanged": true
+    },
+    {
+      "file": "phone/04-gin-rummy.png",
+      "description": "Gin Rummy shows the stock, upcard, a diamond run and the hand deadwood total.",
+      "width": 1080,
+      "height": 1920,
+      "bytes": 461486,
+      "sha256": "625b6c35028b7ea6fb0f367b28b4287ae5f56222d7fccd09f673b38c64a3ab91",
+      "originalSha256": "4e398ab6b3be418476d9657331342ff7175d7ef3cb60ee9b065b8fcc60516492",
+      "rgbPixelsUnchanged": true
+    },
+    {
+      "file": "phone/05-bridge-contract-and-dummy.png",
+      "description": "Bridge shows the contract, exposed dummy, defender roles and legal cards.",
+      "width": 1080,
+      "height": 1920,
+      "bytes": 507019,
+      "sha256": "d3bb9dbbbd69d2771f26d948134fbafe125fe563121155ea740ff298a8849b9b",
+      "originalSha256": "4cf556b9e84a6d7f614e0b775646e6040e62144652a3feed5a8a7c8fe58f1acf",
+      "rgbPixelsUnchanged": true
+    },
+    {
+      "file": "phone/06-spades-partnership.png",
+      "description": "Spades partnership play shows the team bids, bags, scores and a live trick.",
+      "width": 1080,
+      "height": 1920,
+      "bytes": 406769,
+      "sha256": "527e56346acaf0f0626fde4b53521f424734d5caf8d0f329d343fd4f57f35478",
+      "originalSha256": "ebc9b9423c946e4a08b3b997f212cfb89f1cfc9a188a46f0c278c7af4139d15f",
+      "rgbPixelsUnchanged": true
+    },
+    {
+      "file": "phone/07-barbu-contracts.png",
+      "description": "The first contract in a seven-contract Barbu session shows No Hearts gameplay.",
+      "width": 1080,
+      "height": 1920,
+      "bytes": 404188,
+      "sha256": "1398facd29670784477c2ef2ef2c84f04f8035efe9a567355d8784be9284f95c",
+      "originalSha256": "9a5cc18aedea6c930a94341eb6f6c168025e487f83bbb93b441b9b6c4c62bca0",
+      "rgbPixelsUnchanged": true
+    },
+    {
+      "file": "phone/08-whist-partnership.png",
+      "description": "Whist partnership play shows the trump suit, turned trump card, scores and legal cards.",
+      "width": 1080,
+      "height": 1920,
+      "bytes": 407132,
+      "sha256": "3234bcd3dc9c4bd72055722a7a2bf2f4c8ac56412b80fa6974e7ba7db12caab1",
+      "originalSha256": "d2a1fb18493ad759f50ed6e25311f0e70697d723205cfba4111bd04c9fb4c84a",
+      "rgbPixelsUnchanged": true
+    }
+  ]
+}
