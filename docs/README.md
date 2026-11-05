@@ -46,6 +46,8 @@ GitHub Pages serves these static pages from this directory:
   ([source](privacy-policy.html)).
 - [Support](https://martingull.github.io/barbu/support.html)
   ([source](support.html)), including contact and GitHub Issues.
+- [Terms of Service](https://martingull.github.io/barbu/terms-of-service.html)
+  ([source](terms-of-service.html)), naming Martin Gullaksen as provider.
 
 Verify the published pages after deploying changes; editing a local file does not
 publish it or update a store listing.
