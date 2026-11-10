@@ -1,0 +1,28 @@
+[
+  {
+    "id": "hearts-dont-play-the-ace",
+    "game": "Hearts",
+    "hook": "Would you play\nthe ace?",
+    "question": "The king is winning.\nWhich club would you play?",
+    "answer": "Play low.\nLeave the penalty behind.",
+    "choice": "2 C",
+    "expectedFeedback": "Right wins the trick",
+    "narration": "Would you play the ace? In Hearts, winning can cost you. The king is already winning this trick. Play the two of clubs. The other player takes the heart, and you avoid the penalty. Learn by playing with Barbu. Follow for launch.",
+    "title": "Would you play the ace in Hearts?",
+    "caption": "Winning isn't always winning. In this Hearts exercise, the low club keeps the penalty away from you. What would you have played? Barbu: learn and play classic card games. Follow for launch. #Hearts #CardGames #Barbu",
+    "capturePath": "Try Hearts > complete Follow suit > Avoid a heart"
+  },
+  {
+    "id": "gin-find-the-discard",
+    "game": "Gin Rummy",
+    "hook": "One card\nhas to go.",
+    "question": "Keep your sets and runs.\nWhich card would you discard?",
+    "answer": "Discard the king.\nJust 2 deadwood points left.",
+    "choice": "K S",
+    "expectedFeedback": "That leaves 2 deadwood points",
+    "narration": "One card has to go. Which would you discard in Gin Rummy? Keep the three sevens, and both runs. Discard the king of spades. That leaves just two deadwood points. Learn by playing with Barbu. Follow for launch.",
+    "title": "Find the Gin Rummy discard",
+    "caption": "Keep the runs. Keep the set. Lose the king. This guided Gin Rummy exercise leaves just 2 deadwood points. Did you spot it? Barbu: learn and play classic card games. Development preview. Follow for launch. #GinRummy #CardGames #Barbu",
+    "capturePath": "Gin Rummy > Learn > Try cards: Sets and runs"
+  }
+]

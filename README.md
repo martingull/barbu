@@ -68,6 +68,7 @@ The [Taskfile](Taskfile.yml) is the canonical command surface. Browser tests sta
 - **[Game architecture](docs/game-architecture.md)**: Source ownership, shared factories and the new-game checklist.
 - **[Content](content/README.md)**: Lesson, reference and generated-exercise sources.
 - **[Documentation index](docs/README.md)**: Game rules, release runbooks, public pages and historical audits.
+- **[Market-entry strategy](docs/marketing/strategy.md)**: Audiences, competition, distribution experiments, measurement and monetisation boundaries.
 - **[THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md)**: Dependency licenses and attribution.
 - **[Google Play releases](./docs/google-play-release.md)**: Android packaging, API workflow and dated release evidence.
 - **[App Store releases](docs/app-store-release.md)**: iPhone packaging, review and dated submission evidence.

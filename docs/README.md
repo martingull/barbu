@@ -38,6 +38,15 @@ scope there and in the domain modules; neither has a dedicated rules runbook her
 Keep signed artifacts and credentials outside Git. Check the live store before
 making release decisions; documented submission states are dated observations.
 
+## Marketing and Distribution
+
+- [Market-entry strategy](marketing/strategy.md): positioning, initial audiences,
+  competitor evidence, four-week acquisition experiment and measurement limits.
+- [Shorts pilot](marketing/README.md): video scripts, capture workflow and organic
+  distribution checks; one channel within the strategy, not a complete campaign.
+- [Google Play store assets](store-assets/google-play/README.md): listing copy,
+  feature graphic and release screenshot provenance.
+
 ## Public Pages
 
 GitHub Pages serves these static pages from this directory:

@@ -1,0 +1,53 @@
+[
+  {
+    "id": "hearts-pass-three", "game": "Hearts", "number": "01",
+    "title": "Hearts: which three would you pass?", "topic": "Pass three", "heading": "Pass three",
+    "handLabel": "Your Hearts pass practice hand", "handCount": 13,
+    "choiceFromHand": true, "choices": ["Q S", "K S", "A S"],
+    "checkLabel": "Check pass", "nextLabel": "Next pass",
+    "feedbackContains": ["Good pass.", "High hearts remain a risk"],
+    "hookCard": "queen_of_spades", "hook": "This queen costs", "hookAccent": "13 points.",
+    "hookBottom": "In Hearts, you usually\nwant fewer points.",
+    "question": "Which three\nwould you pass?", "context": "Q♠ K♠ A♠ are your only spades.",
+    "questionBottom": "Look at the whole hand.\nChoose before the reveal.", "countPrompt": "Your three-card pass?",
+    "selectionTitle": "In this hand,", "selectionAccent": "pass all three.", "selectionContext": "Q♠   K♠   A♠",
+    "selectionBottom": "No low spades to hide behind.",
+    "answerTitle": "The queen leaves.", "answerAccent": "So does the risk\nof catching her\nwith K♠ or A♠.",
+    "answerBottom": "High hearts still need care.\nRecheck after receiving cards.",
+    "caption": "Q♠, K♠ and A♠ are your only spades. What would you pass? In this hand, passing all three removes the queen and the two cards that could catch her later. Recheck after receiving cards. Learn Hearts with Barbu, free on Google Play. #Hearts #CardGames #Barbu"
+  },
+  {
+    "id": "gin-find-the-discard", "game": "Gin Rummy", "number": "02",
+    "title": "Gin Rummy: which card would you discard?", "topic": "Sets and runs", "heading": "Keep your three combinations",
+    "handLabel": "Your Gin Rummy exercise hand", "handCount": 11,
+    "choiceFromHand": true, "choices": ["K S"],
+    "checkLabel": "Check answer", "nextLabel": "Next decision",
+    "feedbackContains": ["That leaves 2 deadwood points", "Good", "Deadwood: 2 points"],
+    "hookCard": "king_of_spades", "hook": "One card", "hookAccent": "has to go.",
+    "hookBottom": "Keep complete sets and runs.\nUnmatched cards add points.",
+    "question": "Which card\nwould you discard?", "context": "Eleven cards. Keep your combinations.",
+    "questionBottom": "Deadwood means the points\nin your unmatched cards.", "countPrompt": "Your discard?",
+    "selectionTitle": "Keep the melds.", "selectionAccent": "Discard K♠.", "selectionContext": "The king is outside every set and run.",
+    "selectionBottom": "Keep the sevens and both runs.",
+    "answerTitle": "Only 2♦ is left", "answerAccent": "unmatched.",
+    "answerBottom": "Three complete combinations.\nJust 2 deadwood points.",
+    "caption": "Which card would you discard? Keep the three sevens and both runs. In this Gin Rummy exercise, discarding K♠ leaves only 2♦ unmatched: two deadwood points. Learn by playing with Barbu, free on Google Play. #GinRummy #CardGames #Barbu"
+  },
+  {
+    "id": "gin-knock-or-gin", "game": "Gin Rummy", "number": "03",
+    "title": "Gin Rummy: can you knock or go gin?", "topic": "Knock or keep playing", "heading": "Can you end the hand?",
+    "handLabel": "Your Gin Rummy exercise hand", "handCount": 10,
+    "choiceFromHand": false, "choices": ["Knock"],
+    "checkLabel": "Check answer", "nextLabel": "Next decision",
+    "feedbackContains": ["you may knock, but not go gin", "Good", "A knock is not a guaranteed win"],
+    "hookCard": "2_of_diamonds", "hook": "Almost gin?", "hookAccent": "Not quite.",
+    "hookBottom": "One unmatched card\ncan change your finish.",
+    "question": "Can you knock\nor go gin?", "context": "Ten cards after your discard.",
+    "questionBottom": "Only 2♦ is unmatched.\nWhich finish is available?", "countPrompt": "Which finish is available?",
+    "selectionTitle": "You may knock.", "selectionAccent": "But this isn't gin.", "selectionContext": "Two unmatched points remain.",
+    "selectionBottom": "Knock: up to 10. Gin: exactly 0.",
+    "answerTitle": "Gin needs", "answerAccent": "zero deadwood.",
+    "answerBottom": "Knocking is optional.\nIt does not guarantee a win.",
+    "caption": "Can you knock or go gin? These ten cards have two deadwood points after the discard. In classic Gin Rummy you may knock with ten or fewer; gin requires zero. Continuing is legal too, and knocking does not guarantee a win. Learn with Barbu, free on Google Play. #GinRummy #CardGames #Barbu"
+  }
+]
