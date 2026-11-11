@@ -1,28 +1,155 @@
-# Barbu Shorts: First Pilot
+# Barbu Marketing Videos
 
-Status: local drafts, not published. English, vertical, silent-first. No paid
-advertising or external uploads are performed by the capture script.
+Status: the three quiz Shorts and piano-backed store trailer are public on
+YouTube. The trailer's Google Play listing update was submitted November 11,
+2026; the last observed status was pre-review checks. No paid advertising or
+external uploads are performed by the capture script.
 
 This is one execution channel within the [market-entry strategy](strategy.md).
 That strategy owns audiences, organiser outreach, budgets, measurement and
-monetisation decisions. The videos are candidates for that experiment, not
-evidence that a campaign has already run.
+monetisation decisions. The videos form the initial organic publishing
+experiment; publication alone is not evidence of audience reach or acquisition.
+
+## Google Play Store Trailer
+
+Published on the dedicated [Barbu channel](https://www.youtube.com/@BarbuLearnCardGames):
+[Barbu: Learn Card Games | Official Preview](https://www.youtube.com/watch?v=dCkYZDe2oN4).
+YouTube categorises this portrait upload as a Short; Play uses the standard watch
+URL without sharing parameters. Studio confirmed public visibility, embedding
+enabled, no age restriction and no copyright claims. The audience setting was
+corrected to not Made for Kids with Martin's approval, and the description
+includes the recording credit below.
+
+The Play API validated, committed and freshly verified the `en-GB` video URL on
+November 11. Listing text, images, app details and release tracks were unchanged.
+Martin also approved submitting the existing pending trader-status declaration.
+Publishing overview subsequently showed pre-review checks, with automatic review
+submission after successful checks. This is not confirmation of public listing
+availability. Receipts are in ignored
+`release/google-play/store-video-1794397303061/`.
+
+Separate from the quiz shorts: a 36-second, 1080 x 1920 portrait trailer with
+actual Hearts decisions and feedback, the learning path, a guided Hearts trick,
+a Gin Rummy discard and scoring explanation, and the game catalog. The final
+three seconds carry the Barbu identity and "Learn here. Play together."
+
+With the local server running on port 1420:
+
+```sh
+node scripts/marketing/render-store-trailer.mjs
+```
+
+Preview: `http://localhost:1420/release/marketing/store-trailer/preview.html`.
+The MP4, source recording, full-resolution UI captures, sampled video frames and
+provenance are generated under ignored `release/marketing/store-trailer/`.
+The editable timing and headlines are in [store-trailer.json](store-trailer.json).
+This command rebuilds from the current UI, not an old local export. Review any
+recapture against the production version before publishing.
+
+The edit keeps the real UI intact, apart from making its outer background match
+the full-bleed green. The guided-hand sequence (12-20.5 seconds) uses the entire
+frame without an additional trailer heading: a 360 x 640 capture instead of
+360 x 560, giving the responsive table and hand more room without cropping or
+shrinking them. The renderer checks table-slot spacing and visible controls.
+Each shot has one editorial spotlight: the table, the selected card, or the
+explanation. Unrelated interface elements are dimmed in the same green, and a
+gold outline identifies the focus. Focus bounds come from actual DOM elements,
+not hand-positioned coordinates. The highlights are video annotations, not
+features added to the game. Selection holds last 1.5-2 seconds; captions describe
+the specific action instead of repeating generic feature claims.
+Both Hearts explanations last 4.5 seconds, and the Gin score breakdown lasts
+5 seconds. The extra six seconds compared with the first cut go to reading and
+card decisions, not the catalog or end card. Export length, frame count and
+preview copy follow the storyboard's declared duration; each stage gets a
+midpoint inspection frame named `preview-<stage-id>.png`.
+Only chapter boundaries dissolve; card selections and
+feedback are actual browser states. It does not change phone saves or game code.
+The trailer has quiet piano music and remains understandable when muted. No
+third-party video footage, price claims, store badges or download prompts are included. The Tricky
+Bridge reference informed pacing, not artwork or copy.
+
+Google Play supports portrait previews and recommends early gameplay, at least
+80% representative experience, and short videos that work muted. This trailer
+shows the interface for 33 of 36 seconds. For future replacements, upload to
+YouTube as public or unlisted, enable embedding, disable monetization and avoid
+age restrictions. Add that video's URL to the main listing. The renderer does
+not upload anything or alter Play Console.
+
+Source checked November 11, 2026:
+[Google Play preview-video requirements](https://support.google.com/googleplay/android-developer/answer/9866151?hl=en).
+
+### Store Trailer Music
+
+Beethoven's *Für Elise*, WoO 59, performed by V. Gao (Gaodifan), recorded July 18,
+2006. The [recording's Commons page](https://commons.wikimedia.org/wiki/File:FurElise.ogg)
+lists a worldwide public-domain release and CC0 1.0, including commercial reuse.
+This is clearance information for this recording, not an assumption that every
+recording of Beethoven is free to use. Checked November 11, 2026; the reviewed
+page revision, download URL, licence and SHA-256 are in `store-trailer.json`.
+
+The renderer downloads the original Ogg only when absent, validates its pinned
+checksum, and caches it alongside the ignored export. A clone needs network
+access for the first render; no music binary or credentials are stored in Git.
+The opening 36 seconds are trimmed, normalised towards -24 LUFS, faded in over
+0.8 seconds and out over the final 3 seconds, and encoded as stereo AAC at 48 kHz.
+The main MP4 contains music; `barbu-store-trailer-silent.mp4` preserves the same
+picture without audio. The preview provides both downloads and music credits.
+
+Suggested YouTube description credit: "Music: Für Elise, WoO 59, by Ludwig van
+Beethoven. Performed by V. Gao (Gaodifan), via Wikimedia Commons, CC0 1.0.
+Excerpt with loudness adjustment and fades. https://commons.wikimedia.org/wiki/File:FurElise.ogg"
+
+Check YouTube's copyright checks before adding the trailer to Play Console.
+The public-domain dedication does not guarantee that an automated Content ID
+claim will never occur; retain the source and licence evidence if one does.
 
 ## Current Three-Video Pilot
 
-All three drafts use one borderless layout and capture/render pipeline. The
-storyboards, exercise selectors, expected feedback and proposed post captions
+All three published Shorts use one borderless layout and capture/render pipeline. The
+storyboards, exercise selectors, expected feedback and base post captions
 live in [learning-shorts.json](learning-shorts.json).
 
-| Video | Lesson idea | Local preview (under `release/marketing/`) |
-| --- | --- | --- |
-| 01 Hearts | Pass the exposed queen, king and ace of spades in this hand | `hearts-pass-three/preview.html` |
-| 02 Gin Rummy | Discard K♠, keep three melds, leave two deadwood points | `gin-find-the-discard/preview.html` |
-| 03 Gin Rummy | Two deadwood points allow a knock, but not gin | `gin-knock-or-gin/preview.html` |
+| Video | Lesson idea | Local preview (under `release/marketing/`) | Published Short |
+| --- | --- | --- | --- |
+| 01 Hearts | Pass the exposed queen, king and ace of spades in this hand | `hearts-pass-three/preview.html` | [Watch](https://www.youtube.com/shorts/L0XjoP9RTyI) |
+| 02 Gin Rummy | Discard K♠, keep three melds, leave two deadwood points | `gin-find-the-discard/preview.html` | [Watch](https://www.youtube.com/shorts/IxSzRsMINXw) |
+| 03 Gin Rummy | Two deadwood points allow a knock, but not gin | `gin-knock-or-gin/preview.html` | [Watch](https://www.youtube.com/shorts/zBTSt8WoQ5s) |
 
 Each preview includes an MP4 download, draft caption and links to the other
 videos. Each video stands alone; the two Gin videos also form a small sequence.
-No posts, scheduling or paid promotion have been authorised or performed.
+All three were published publicly on `@BarbuLearnCardGames` on November 11,
+2026, with the recipe titles and captions plus Google Play and trailer URLs.
+The videos are set to not Made for Kids, consistent with the confirmed general
+audience. YouTube's upload checks reported no issues; Studio listed all three
+as Public/Published and anonymous oEmbed requests resolved their titles and
+channel. No paid promotion, scheduled posts or community outreach was performed.
+
+The channel profile now has a saved "Get Barbu on Google Play" link to
+`https://play.google.com/store/apps/details?id=com.martin.barbu`.
+URLs in Shorts descriptions are not clickable; direct viewers to the channel
+profile rather than claiming a clickable description link. A related-video link
+to the trailer could not be added: YouTube requested one-time advanced-feature
+verification. Martin must complete that verification before we add those links.
+No identity verification or channel-wide audience changes were performed.
+
+### Distribution and Measurement
+
+- Treat these three posts as a first organic test, not a promise of Shorts-feed reach.
+- Share the relevant quiz with existing testers and club organisers; disclose
+  authorship and ask permission before posting in moderated groups. Avoid mass
+  posting, paid engagement or requests for positive ratings.
+- Review Shorts analytics after roughly 48 hours and again after seven days:
+  engaged views, stayed-to-watch versus swiped-away, average viewing duration,
+  percentage viewed, subscribers and useful comments. Do not judge by raw views alone.
+- Compare Google Play acquisition over the same period, but do not claim installs
+  were caused by YouTube without attribution evidence. The current profile link
+  is a plain store URL, not a per-video attribution setup.
+- Make the next quiz based on the clearest response; a Whist decision would test
+  the audience behind our "learn whist" discovery concern. Do not buy ads yet.
+
+Platform guidance checked November 11, 2026:
+[Shorts uploads](https://support.google.com/youtube/answer/12779649),
+[clickable-link rules](https://support.google.com/youtube/answer/13748639).
 
 With the local Barbu server available on port 1420:
 

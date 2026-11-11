@@ -1,0 +1,37 @@
+{
+  "title": "Barbu: Learn Card Games",
+  "durationSeconds": 36,
+  "background": "#102b22",
+  "reference": "https://www.youtube.com/watch?v=yWnfgUClH9c",
+  "music": {
+    "title": "Für Elise, WoO 59",
+    "composer": "Ludwig van Beethoven",
+    "performer": "V. Gao (Gaodifan)",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:FurElise.ogg",
+    "sourceRevision": "https://commons.wikimedia.org/w/index.php?title=File:FurElise.ogg&oldid=1263085569",
+    "sourceURL": "https://upload.wikimedia.org/wikipedia/commons/7/7b/FurElise.ogg",
+    "license": "CC0-1.0",
+    "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "verifiedOn": "2026-11-11",
+    "sha256": "8deefb57df989a2b53a6bdd3e59813b6c34d61dca666caa39e53fa9597b378e3",
+    "startSeconds": 0,
+    "loudnessLUFS": -24,
+    "fadeInSeconds": 0.8,
+    "fadeOutSeconds": 3
+  },
+  "stages": [
+    { "id": "hearts-question", "heading": "Clubs were led.", "focus": ".card-table", "duration": 2.5 },
+    { "id": "hearts-choice", "heading": "Choose a club.", "focus": ".drill-hand [aria-pressed=true]", "duration": 2 },
+    { "id": "hearts-answer", "heading": "Understand why it works.", "focus": ".coach-feedback .feedback-copy", "duration": 4.5 },
+    { "id": "learn-path", "heading": "One skill at a time.", "focus": ".learn-skill.current", "duration": 3 },
+    { "id": "hearts-play", "heading": "Practise a full hand.", "focus": ".card-table", "layout": "full-screen", "duration": 2 },
+    { "id": "hearts-play-selected", "heading": "Practise a full hand.", "focus": ".full-hand-cards [aria-pressed=true]", "layout": "full-screen", "duration": 2 },
+    { "id": "hearts-trick", "heading": "Get help along the way.", "focus": ".coach-feedback .feedback-copy", "layout": "full-screen", "duration": 4.5 },
+    { "id": "gin-hand", "heading": "Build sets and runs.", "focus": "[aria-label='Your Gin Rummy exercise hand']", "duration": 2 },
+    { "id": "gin-discard", "heading": "Discard the spare king.", "focus": "[aria-label='Your Gin Rummy exercise hand'] [aria-pressed=true]", "duration": 1.5 },
+    { "id": "gin-answer", "heading": "Just two deadwood points.", "focus": "[aria-label='Deadwood breakdown']", "duration": 5 },
+    { "id": "catalog-first", "heading": "Find your next card game.", "focus": "[data-collection='hearts-contracts'] .catalog-games", "duration": 2 },
+    { "id": "catalog-partners", "heading": "Explore partnership games.", "focus": "[data-collection='partners-tricks'] .catalog-games", "duration": 2 },
+    { "id": "outro", "heading": "Learn here. Play together.", "duration": 3 }
+  ]
+}

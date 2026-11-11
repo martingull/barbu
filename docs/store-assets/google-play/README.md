@@ -19,10 +19,26 @@ Google's exact dimensions; this artwork is not presented as a gameplay screensho
 On November 3, 2026, a separate API edit validated and committed the new title,
 descriptions and feature graphic. A fresh API read verified the saved copy and
 graphic checksum, unchanged screenshots, icon, tablet images, app details and
-release tracks. Production was empty then; the November 4 production submission
-is now in review (see [release status](../../google-play-release.md)). Review/publication status must still
+release tracks. Production was empty then; the production API reported 1.0.6
+(1000007) published on November 11 (see [release status](../../google-play-release.md)).
+Review/publication status of later listing edits must still
 be checked in Play Console's Publishing overview. API receipts and the prior
 listing backup are in `release/google-play/screenshots-2026-11-03/` (ignored).
+
+## Preview Video
+
+The `en-GB` listing now stores
+[`https://www.youtube.com/watch?v=dCkYZDe2oN4`](https://www.youtube.com/watch?v=dCkYZDe2oN4).
+This is the 36-second portrait trailer on `@BarbuLearnCardGames`, with actual
+gameplay, editorial focus highlights and credited Beethoven piano music.
+See [the video recipe and provenance](../../marketing/README.md#google-play-store-trailer).
+
+On November 11, 2026, the video-only API edit validated and committed. A fresh
+read verified the URL and unchanged listing text, images, app details and release
+tracks. The existing pending trader-status declaration was also authorised for
+submission. Play Console showed pre-review checks after the commit, not completed
+review or confirmed public availability. The backup and receipts are in ignored
+`release/google-play/store-video-1794397303061/`.
 
 ## Phone Screenshots
 
