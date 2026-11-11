@@ -1,0 +1,80 @@
+{
+  "id": "christmas-2026-dilemmas",
+  "format": "table-talk",
+  "label": "Christmas card-table dilemmas",
+  "backgroundImage": "docs/marketing/assets/christmas-felt.png",
+  "brandLabel": "CHRISTMAS CARD TABLE",
+  "music": {
+    "title": "Vltava (The Moldau), from Ma vlast",
+    "composer": "Bedrich Smetana",
+    "performer": "Czech National Symphony Orchestra / Musopen Symphony Orchestra",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Smetana,_M%C3%A1_vlast_-_Vltava_-_The_Moldau.ogg",
+    "sourceURL": "https://upload.wikimedia.org/wikipedia/commons/3/39/Smetana%2C_M%C3%A1_vlast_-_Vltava_-_The_Moldau.ogg",
+    "sha256": "84663550a99ba8f7069cd58e0c3fcc1ca143f5ed4c6121da76f3fecd64a9f067",
+    "license": "CC0-1.0",
+    "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "startSeconds": 0,
+    "loudnessLUFS": -26,
+    "fadeInSeconds": 0.8,
+    "fadeOutSeconds": 2.5,
+    "credit": "Music: Vltava (The Moldau), from Ma vlast, by Bedrich Smetana. Czech National Symphony Orchestra / Musopen Symphony Orchestra. Recording released under CC0 1.0: https://creativecommons.org/publicdomain/zero/1.0/ . Source: https://commons.wikimedia.org/wiki/File:Smetana,_M%C3%A1_vlast_-_Vltava_-_The_Moldau.ogg . Opening 32-second excerpt with loudness adjustment and fades."
+  },
+  "pacing": { "question": 7, "selection": 6, "feedback": 7, "outro": 5 },
+  "shorts": [
+    {
+      "lessonId": "hearts-pass-three",
+      "id": "christmas-hearts-dilemma",
+      "title": "Christmas Hearts: which three would you pass?",
+      "question": "Which three\nwould you pass?",
+      "context": "A Hearts hand for your Christmas table.",
+      "questionBottom": "The queen of spades costs 13 points.\nEach heart costs one.",
+      "selectionTitle": "One option:",
+      "selectionAccent": "pass Q♠ K♠ A♠.",
+      "selectionContext": "Those are your only spades.",
+      "selectionBottom": "Get rid of the queen\nand your two highest spades.",
+      "answerTitle": "No small spades\nto hide behind.",
+      "answerBottom": "Keeping K♠ or A♠ could mean\nwinning the queen later.",
+      "caveat": {
+        "duration": 7,
+        "heading": "But look at\nthose hearts.",
+        "context": "K♥ and A♥ are still dangerous.",
+        "explanation": "Passing spades does not solve everything.\nReconsider after receiving your cards."
+      },
+      "discussion": {
+        "heading": "What would your\nfamily pass?",
+        "context": "The same hand can start a debate.",
+        "question": "Spades, hearts, or a mix?\nTell us your three cards and why."
+      },
+      "caption": "A Hearts dilemma for the Christmas card table: which three would you pass? The high spades are dangerous, but so are the high hearts. There is a reason for this choice, not a rule to always pass Q♠ K♠ A♠. What would your family do? Actual lesson cards from Barbu. #Hearts #CardGames #Christmas",
+      "conversationPrompt": "Which three would you pass, and why? Would anyone at your Christmas table disagree?"
+    },
+    {
+      "lessonId": "gin-find-the-discard",
+      "id": "christmas-gin-dilemma",
+      "title": "Christmas Gin Rummy: would you discard this king?",
+      "question": "One card must go.\nWhich one?",
+      "context": "A Gin Rummy hand for two this Christmas.",
+      "questionBottom": "Keep your sets and runs.\nUnmatched cards count against you.",
+      "selectionTitle": "For this hand:",
+      "selectionAccent": "discard K♠.",
+      "selectionContext": "The king is outside your combinations.",
+      "selectionBottom": "Keep the three sevens\nand both complete runs.",
+      "answerTitle": "Only 2♦ remains\nunmatched.",
+      "answerContext": "That leaves two deadwood points.",
+      "answerBottom": "Deadwood is the value\nof cards outside your sets and runs.",
+      "caveat": {
+        "duration": 7,
+        "heading": "But watch your\nopponent too.",
+        "context": "If you keep playing, they can take it.",
+        "explanation": "You could knock on two deadwood.\nIf you play on, watch their pickups."
+      },
+      "discussion": {
+        "heading": "Would you still\nthrow the king?",
+        "context": "If you play on: suppose they took Q♠.",
+        "question": "Does that change your choice?\nWhat would you watch for?"
+      },
+      "caption": "A two-player Christmas card-table dilemma: which card would you discard in Gin Rummy? Two deadwood points let you knock. If you choose to keep playing instead, consider a hypothetical twist: what if your opponent just picked up Q♠? Would you change your discard? Actual lesson cards from Barbu; the opponent pickup is a discussion scenario, not a recorded move. #GinRummy #CardGames #Christmas",
+      "conversationPrompt": "Would you knock on two deadwood or play on? If you play on, would an opponent picking up Q♠ change your discard?"
+    }
+  ]
+}

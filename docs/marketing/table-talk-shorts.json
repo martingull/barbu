@@ -1,0 +1,52 @@
+{
+  "id": "table-talk",
+  "format": "table-talk",
+  "label": "Card-table dilemmas",
+  "brandLabel": "HEARTS DILEMMA",
+  "music": {
+    "title": "Morning Mood (Peer Gynt Suite No. 1, Op. 46)",
+    "composer": "Edvard Grieg",
+    "performer": "Czech National Symphony Orchestra / Musopen Symphony Orchestra",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Musopen_-_Morning.ogg",
+    "sourceURL": "https://upload.wikimedia.org/wikipedia/commons/1/1a/Musopen_-_Morning.ogg",
+    "sha256": "3207072ffef9f65f9a4a78c2ddc5afdd1c5b4c61b83ab092da3d6a87852e4996",
+    "license": "PD-author",
+    "licenseURL": "https://commons.wikimedia.org/wiki/File:Musopen_-_Morning.ogg#Licensing",
+    "startSeconds": 0,
+    "loudnessLUFS": -26,
+    "fadeInSeconds": 0.8,
+    "fadeOutSeconds": 2.5,
+    "credit": "Music: Morning Mood, from Peer Gynt Suite No. 1, Op. 46, by Edvard Grieg. Performed by the Czech National Symphony Orchestra as the Musopen Symphony Orchestra. Recording released into the public domain by Musopen. Source: https://commons.wikimedia.org/wiki/File:Musopen_-_Morning.ogg . Opening 32-second excerpt, with loudness adjustment and fades."
+  },
+  "pacing": { "question": 7, "selection": 6, "feedback": 7, "outro": 5 },
+  "shorts": [
+    {
+      "lessonId": "hearts-pass-three",
+      "id": "hearts-pass-dilemma",
+      "title": "Hearts: pass the spades or the hearts?",
+      "question": "Which three\nwould you pass?",
+      "context": "Hearts. Choose three cards.",
+      "questionBottom": "The queen of spades costs 13 points.\nEach heart costs one.",
+      "selectionTitle": "One option:",
+      "selectionAccent": "pass Q♠ K♠ A♠.",
+      "selectionContext": "Those are your only spades.",
+      "selectionBottom": "Get rid of the queen\nand your two highest spades.",
+      "answerTitle": "No small spades\nto hide behind.",
+      "answerAccent": "",
+      "answerBottom": "Keeping K♠ or A♠ could mean\nwinning the queen later.",
+      "caveat": {
+        "duration": 7,
+        "heading": "But look at\nthose hearts.",
+        "context": "K♥ and A♥ are still dangerous.",
+        "explanation": "Passing spades does not solve everything.\nReconsider after receiving your cards."
+      },
+      "discussion": {
+        "heading": "Would you pass\nthe hearts instead?",
+        "context": "Same hand. Different priorities.",
+        "question": "Which three would you choose,\nand why?"
+      },
+      "caption": "Hearts players: which three cards would you pass from this hand? There are no small spades to shelter behind, but the high hearts are a problem too. Watch the choice, then tell us what you would do differently. This is one hand, not a rule to always pass your highest spades. Actual lesson cards from Barbu. #Hearts #CardGames",
+      "conversationPrompt": "Would you keep the queen here, or pass her? Tell us your three cards and your reasoning."
+    }
+  ]
+}

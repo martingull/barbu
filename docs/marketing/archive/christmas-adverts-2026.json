@@ -1,0 +1,47 @@
+{
+  "id": "christmas-2026-retired-adverts",
+  "label": "Christmas card table",
+  "backgroundImage": "docs/marketing/assets/christmas-felt.png",
+  "brandLabel": "CHRISTMAS",
+  "music": {
+    "title": "Jingle Bells (90bpm)",
+    "performer": "Kevin MacLeod",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Jingle_Bells.ogg",
+    "sourceURL": "https://upload.wikimedia.org/wikipedia/commons/f/f0/Jingle_Bells_%2890bpm%29_%28Kevin_MacLeod%29_%28ISRC_USUAN1100187%29.oga",
+    "sha256": "67216c89aa23862960d51d4593c6f3a7a00b34f6a0f525589299ebb3f2847080",
+    "license": "CC-BY-3.0",
+    "licenseURL": "https://creativecommons.org/licenses/by/3.0/",
+    "startSeconds": 0,
+    "loudnessLUFS": -24,
+    "fadeInSeconds": 0.8,
+    "fadeOutSeconds": 2,
+    "credit": "Music: Jingle Bells (90bpm) by Kevin MacLeod (incompetech.com), licensed under CC BY 3.0: https://creativecommons.org/licenses/by/3.0/ . Source: https://commons.wikimedia.org/wiki/File:Jingle_Bells.ogg . Edited to a 30-second excerpt with volume adjustment and fades."
+  },
+  "pacing": { "hook": 4, "question": 5, "selection": 4, "feedback": 8, "outro": 6 },
+  "shorts": [
+    {
+      "lessonId": "hearts-pass-three",
+      "id": "christmas-hearts",
+      "title": "Bring Hearts to the Christmas table",
+      "hook": "Christmas plans?",
+      "hookAccent": "Bring out\nthe cards.",
+      "hookBottom": "Four around the table?\nMake it a Hearts night.",
+      "tagline": "Learn it now.\nPlay this Christmas.",
+      "outroBottom": "One deck. Four players.\nA Christmas card table.",
+      "caption": "Bring a deck to the Christmas table. In this Hearts hand, Q♠, K♠ and A♠ are your only spades. Which three would you pass? Learn the decisions with Barbu, then put the phone down and play together. Barbu is single-player practice, not online multiplayer. Find Barbu: Learn Card Games on Google Play through our channel profile. #Hearts #CardGames #Christmas",
+      "conversationPrompt": "Who taught you Hearts? What is the one rule you would explain before dealing at Christmas?"
+    },
+    {
+      "lessonId": "gin-find-the-discard",
+      "id": "christmas-gin",
+      "title": "Just two of you this Christmas? Try Gin Rummy",
+      "hook": "Just two of you?",
+      "hookAccent": "Deal a little\nChristmas rivalry.",
+      "hookBottom": "Gin Rummy is made for two.\nTry one decision before you deal.",
+      "tagline": "Learn a new game.\nPlay this Christmas.",
+      "outroBottom": "Two players. One deck.\nMake time for a card game.",
+      "caption": "Just two of you at the Christmas card table? Try Gin Rummy. Keep your sets and runs, then choose a discard: in this hand, K♠ leaves just two deadwood points. Practise with Barbu before playing together with a real deck. Barbu is single-player practice, not online multiplayer. Google Play link on our channel profile. #GinRummy #CardGames #Christmas",
+      "conversationPrompt": "What is your favourite two-player card game? Would this help you teach Gin Rummy to someone over Christmas?"
+    }
+  ]
+}

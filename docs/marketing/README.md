@@ -1,7 +1,9 @@
 # Barbu Marketing Videos
 
-Status: the three quiz Shorts and piano-backed store trailer are public on
-YouTube. The trailer's Google Play listing update was submitted November 11,
+Status: the three evergreen quiz Shorts, Grieg-backed Hearts dilemma and
+piano-backed store trailer are public on YouTube. The original Christmas adverts
+are now Private; both teaching-first seasonal replacements are public.
+The trailer's Google Play listing update was submitted November 11,
 2026; the last observed status was pre-review checks. No paid advertising or
 external uploads are performed by the capture script.
 
@@ -105,6 +107,11 @@ claim will never occur; retain the source and licence evidence if one does.
 
 ## Current Three-Video Pilot
 
+The original Christmas adverts were made Private on November 11, 2026.
+For their published, teaching-first replacements, see
+[Christmas card-table Shorts](christmas-shorts.md). The evergreen videos
+below and the public Grieg-backed Hearts dilemma are unchanged.
+
 All three published Shorts use one borderless layout and capture/render pipeline. The
 storyboards, exercise selectors, expected feedback and base post captions
 live in [learning-shorts.json](learning-shorts.json).
@@ -131,6 +138,53 @@ profile rather than claiming a clickable description link. A related-video link
 to the trailer could not be added: YouTube requested one-time advanced-feature
 verification. Martin must complete that verification before we add those links.
 No identity verification or channel-wide audience changes were performed.
+
+### Teaching-First Experiment
+
+Published November 11, 2026: [Hearts: pass the spades or the hearts?](https://www.youtube.com/shorts/upRR_KVTZhg).
+This format tests a useful card-table
+discussion rather than another seasonal advert. Cards appear in the first frame
+and remain visible through the reasoning. There is no download pitch, countdown,
+large logo ending. The small Barbu mark identifies the source.
+
+The first draft asks which three cards to pass in Hearts. It demonstrates one
+defensible choice, explains the lack of low spades, then brings the remaining
+high hearts back into focus and invites alternative reasoning. It does not
+claim that every player should always pass Q♠, K♠ and A♠.
+
+Recipe: [table-talk-shorts.json](table-talk-shorts.json), reusing the original
+lesson capture and the same renderer, not a separate gameplay implementation.
+
+```sh
+node scripts/marketing/render-learning-short.mjs hearts-pass-dilemma --campaign table-talk
+```
+
+Preview: http://localhost:1420/release/marketing/hearts-pass-dilemma/preview.html
+
+The 32-second edit has seven seconds to inspect the hand, six seconds of
+selection, seven seconds of reasoning, seven seconds on the remaining risk and
+five seconds for the discussion question. Outputs stay under ignored
+`release/marketing/hearts-pass-dilemma/`. Additional render assertions require
+cards in every stage and prohibit store calls to action in the teaching format.
+The earlier published videos are unchanged. This upload is public, with comments
+enabled (basic moderation, anyone can comment), not Made for Kids, and the full
+Grieg/Musopen credit in its description. Studio reported copyright checks complete
+with no issues at publication. No comments, paid promotion or store-listing changes
+were made. Unlike the Christmas remixes, this edit has no generated photographic
+backdrop; its AI-use setting is No for the realistic-alteration categories shown
+in Studio. Future renders remain local drafts, not automatic YouTube replacements.
+
+The soundtrack is the opening of Grieg's *Morning Mood* from *Peer Gynt*,
+performed by the Czech National Symphony Orchestra as the Musopen Symphony
+Orchestra. The [specific recording](https://commons.wikimedia.org/wiki/File:Musopen_-_Morning.ogg#Licensing)
+was released into the public domain by Musopen; this is separate from the
+composition's copyright status. The source URL, checksum and courtesy credit
+are retained in the recipe. The renderer downloads the recording on first use
+and checks its hash, normalizes the excerpt to -26 LUFS before fades, and adds
+a 0.8-second fade-in and 2.5-second fade-out. Source audio stays in ignored
+render output. A silent alternative is available on the preview page. Check
+YouTube's copyright results before publishing; a public-domain recording can
+still encounter an automated claim.
 
 ### Distribution and Measurement
 
