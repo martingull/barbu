@@ -18,6 +18,8 @@ release evidence have different roles; an old audit is not a current release gat
 
 ## Game Profiles
 
+- [Game expansion shortlist](game-roadmap.md): eight agreed game candidates,
+  priorities, rules profiles and release expectations.
 - [Hearts](hearts.md)
 - [Whist](whist.md)
 - [Bridge](bridge.md)
