@@ -1,3 +1,7 @@
+> November 13, 2026: Martin confirmed the app is available on Google Play.
+> Earlier in-review notes below are historical. The product page is
+> https://siliciumveritas.com/, maintained in website/.
+
 # Barbu Market Entry and Distribution Strategy
 
 Date: November 4, 2026. Status: working plan, not a launched campaign.

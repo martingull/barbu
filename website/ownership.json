@@ -1,0 +1,12 @@
+{
+  "domain": "siliciumveritas.com",
+  "repository": "barbu",
+  "previous_repository": "isv-mainpage",
+  "bucket": "isv-mainpage-site-dev",
+  "cloudfront_distribution": "E2AY5UWD1JLG7B",
+  "pulumi_project": "isv-mainpage-infra",
+  "stack": "dev",
+  "moved_on": "2026-11-13",
+  "screenshot_source": "release/marketing/store-trailer-v2/preview-pass-answer.png",
+  "public_availability": "Martin confirmed Google Play availability November 13, 2026. iPhone availability is separate."
+}

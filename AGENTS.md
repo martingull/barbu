@@ -265,3 +265,18 @@ Preferred automation path:
 - Keep frozen native fixtures as migration regression evidence, not a second engine.
 - iOS simulator smoke tests before TestFlight.
 - StoreKit sandbox tests once paid features are introduced.
+
+## Silicium Veritas product website
+
+`https://siliciumveritas.com/` now introduces Barbu. Source is in `website/public`,
+with existing hosting ownership recorded in `website/ownership.json` and Pulumi
+source in `website/infra`. Use `task website:serve` for local preview and
+`task website:deploy` for a backed-up content release. Retain existing AWS/Pulumi
+resource identities; the old isv-mainpage deployment is retired. The ISV repo
+retains its newsletter drafting tools but no longer owns this domain.
+
+The page explains learning and computer-opponent practice, with an organiser
+contact route for clubs, teachers and community hosts. Do not imply online
+multiplayer, club-management software, public iPhone availability or measured
+customer results. Explee campaign sending/settings are managed separately;
+editing this site does not authorize outreach or spending.

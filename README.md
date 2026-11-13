@@ -1,3 +1,7 @@
+> November 13, 2026: Martin confirmed the app is available on Google Play.
+> Earlier in-review notes below are historical. The product page is
+> https://siliciumveritas.com/, maintained in website/.
+
 # Barbu
 
 **Learn here. Play together.**
@@ -76,3 +80,18 @@ The [Taskfile](Taskfile.yml) is the canonical command surface. Browser tests sta
 ## License
 
 This repository is proprietary and all rights are reserved. See [LICENSE](./LICENSE).
+
+## Silicium Veritas product website
+
+`https://siliciumveritas.com/` now introduces Barbu. Source is in `website/public`,
+with existing hosting ownership recorded in `website/ownership.json` and Pulumi
+source in `website/infra`. Use `task website:serve` for local preview and
+`task website:deploy` for a backed-up content release. Retain existing AWS/Pulumi
+resource identities; the old isv-mainpage deployment is retired. The ISV repo
+retains its newsletter drafting tools but no longer owns this domain.
+
+The page explains learning and computer-opponent practice, with an organiser
+contact route for clubs, teachers and community hosts. Do not imply online
+multiplayer, club-management software, public iPhone availability or measured
+customer results. Explee campaign sending/settings are managed separately;
+editing this site does not authorize outreach or spending.

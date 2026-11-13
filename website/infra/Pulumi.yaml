@@ -1,0 +1,10 @@
+name: isv-mainpage-infra
+runtime:
+  name: nodejs
+  options:
+    packagemanager: npm
+description: Barbu marketing site; existing isv-mainpage-infra identity retained for resource continuity
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-typescript

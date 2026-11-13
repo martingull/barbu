@@ -1,6 +1,21 @@
 version: "3"
 
 tasks:
+  website:serve:
+    desc: Preview the Silicium Veritas Barbu landing page
+    cmds:
+      - python3 -m http.server 4178 --bind 127.0.0.1 --directory website/public
+
+  website:deploy:
+    desc: Back up and publish the Barbu landing page to existing AWS hosting
+    cmds:
+      - python3 website/deploy.py --apply
+
+  website:preview:
+    desc: Describe the landing page release without changing AWS
+    cmds:
+      - python3 website/deploy.py
+
   install:
     desc: Install frontend dependencies
     cmds:
