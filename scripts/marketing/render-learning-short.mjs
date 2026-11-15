@@ -10,8 +10,11 @@ import sharp from "sharp";
 // Actual lesson content with a transparent capture backdrop for compositing.
 // The temporary screenshot style never changes game state or production CSS.
 const root = resolve(import.meta.dirname, "../..");
-const { values, positionals } = parseArgs({ options: { campaign: { type: "string" } }, allowPositionals: true });
+const { values, positionals } = parseArgs({ options: {
+  campaign: { type: "string" }, "large-cards": { type: "boolean", default: false }, music: { type: "string" }
+}, allowPositionals: true });
 assert(positionals.length <= 1, "Provide one short id");
+assert(!values.music || values.music === "morning-mood", "Supported music override: morning-mood");
 const campaigns = { christmas: "christmas-shorts.json", "table-talk": "table-talk-shorts.json" };
 assert(!values.campaign || Object.hasOwn(campaigns, values.campaign), "Supported campaigns: christmas, table-talk");
 const lessons = JSON.parse(await readFile(resolve(root, "docs/marketing/learning-shorts.json"), "utf8"));
@@ -27,10 +30,17 @@ const short = shorts.find(short => short.id === (positionals[0] ?? shorts[0].id)
 assert(short, "Choose a short id from the selected campaign or learning-shorts.json");
 const pacing = { hook: 3, question: 3, selection: 3.6, feedback: 6.4, outro: 5, ...campaign?.pacing };
 assert(Object.values(pacing).every(value => Number.isFinite(value) && value > 0));
-const output = resolve(root, "release/marketing", short.id);
-const filename = `barbu-${short.id}.mp4`;
-const silentFilename = `barbu-${short.id}-silent.mp4`;
-const music = campaign?.music;
+const largeCards = values["large-cards"];
+const outputId = `${short.id}${largeCards ? "-large-cards" : ""}`;
+const output = resolve(root, "release/marketing", outputId);
+const filename = `barbu-${outputId}.mp4`;
+const silentFilename = `barbu-${outputId}-silent.mp4`;
+let music = campaign?.music;
+if (values.music === "morning-mood") {
+  // Reuse the reviewed recording and checksum without coupling the edit to Hearts.
+  music = JSON.parse(await readFile(resolve(root, "docs/marketing/table-talk-shorts.json"), "utf8")).music;
+  music = { ...music, credit: `Music: ${music.title}, by ${music.composer}. Performed by ${music.performer}. Recording released into the public domain by Musopen. Source: ${music.sourcePage} . Opening excerpt, with loudness adjustment and fades.` };
+}
 const capturePath = `${short.game} > Learn > Try cards: ${short.topic}`;
 const escape = text => text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");
 const lines = text => escape(text).replaceAll("\n", "<br>");
@@ -75,7 +85,7 @@ const errors = [];
 const timings = [];
 try {
   // Give the shared responsive hand room to use readable cards in the video crop.
-  const captureHeight = tableTalk ? 850 : 560;
+  const captureHeight = tableTalk || largeCards ? 850 : 560;
   const context = await browser.newContext({ viewport: { width: 390, height: captureHeight }, deviceScaleFactor: 3,
     recordVideo: { dir: resolve(output, "source"), size: { width: 780, height: captureHeight * 2 } } });
   const page = await context.newPage();
@@ -93,10 +103,11 @@ try {
   await expect(hand.locator(".card-face")).toHaveCount(short.handCount);
   await expect(page.getByRole("button", { name: short.checkLabel, exact: true })).toBeInViewport();
   const handBox = await hand.boundingBox();
-  if (tableTalk) {
-    const cardBox = await hand.locator(".card-face").first().boundingBox();
-    assert(cardBox.width * 864 / (handBox.width + 8) >= 100, "Video cards must remain at least 100px wide");
-  }
+  const cardBox = await hand.locator(".card-face").first().boundingBox();
+  const renderedCardWidth = cardBox.width * 864 / (handBox.width + 8);
+  if (tableTalk || largeCards) assert(renderedCardWidth >= 100, "Video cards must remain at least 100px wide");
+  const handTop = largeCards && !tableTalk ? 620 : 704;
+  const choiceTop = largeCards ? handTop + (handBox.height + 8) * 864 / (handBox.width + 8) + 32 : 1040;
   const captureHand = async name => page.screenshot({ ...isolatedBackdrop, path: resolve(output, `${name}.png`), clip: {
     x: handBox.x - 4, y: handBox.y - 4, width: handBox.width + 8, height: handBox.height + 8
   } });
@@ -104,6 +115,8 @@ try {
   await page.screenshot({ path: resolve(output, "lesson-before.png") });
   await captureHand("hand-0");
   const choices = short.choiceFromHand ? hand : page.getByLabel("Gin choices", { exact: true });
+  const choicesBox = !short.choiceFromHand ? await choices.boundingBox() : null;
+  const countTop = largeCards && choicesBox ? choiceTop + choicesBox.height * 864 / choicesBox.width + 24 : short.choiceFromHand ? 1120 : 1200;
   if (!short.choiceFromHand) await choices.screenshot({ ...isolatedBackdrop, path: resolve(output, "choices-0.png") });
   await page.waitForTimeout(5000);
   for (const [index, card] of short.choices.entries()) {
@@ -173,11 +186,11 @@ try {
       em { color: #efd281; font-style: normal; } p { margin: 0; }
       .queen { position: absolute; width: 358px; height: 520px; object-fit: contain; top: 610px; left: 321px; transform: rotate(-5deg); filter: drop-shadow(0 18px 18px #0006); }
       .context { position: absolute; left: 78px; top: 518px; width: 840px; font-size: 36px; color: #efd281; }
-      .hand { position: absolute; left: 66px; top: 704px; width: 864px; height: auto; }
+      .hand { position: absolute; left: 66px; top: ${handTop}px; width: 864px; height: auto; }
       .bottom { position: absolute; left: 78px; top: 1376px; width: 840px; font-size: 48px; line-height: 1.25; }
       .small { font-size: 36px; color: #d2dfd6; }
-      .count { position: absolute; left: 78px; top: ${short.choiceFromHand ? 1120 : 1200}px; font-size: 96px; font-weight: 700; color: #efd281; }
-      .choice-capture { position: absolute; left: 66px; top: 1040px; width: 864px; height: auto; }
+      .count { position: absolute; left: 78px; top: ${countTop}px; font-size: 96px; font-weight: 700; color: #efd281; }
+      .choice-capture { position: absolute; left: 66px; top: ${choiceTop}px; width: 864px; height: auto; }
       .selected { position: absolute; left: 78px; top: 1150px; font-size: 48px; font-weight: 700; color: #efd281; }
       .feedback { position: absolute; left: 78px; top: 786px; width: 840px; height: auto; }
       .outro-logo { position: absolute; left: 78px; top: 360px; width: 230px; height: 230px; border-radius: 50%; }
@@ -245,6 +258,7 @@ try {
   }
   await writeFile(resolve(output, "capture.json"), JSON.stringify({ revision, sourceStatus, capturedAt: new Date().toISOString(),
     baseURL, capturePath, seed: 12, handBox, timings, raw, short, campaign,
+    layout: { largeCards, captureHeight, renderedCardWidth, handTop: tableTalk ? 660 : handTop, choiceTop, countTop },
     audio: music ? { ...music, sourceFile: musicPath, filter: audioFilter, silentAlternative: silentFilename } : "silent", generatedVideo: false, editedLessonCapture: true, transparentCaptureBackdrop: true,
     background, published: false, pageErrors: errors,
     stages: stages.map(({ id, start, end }) => ({ id, start, end })),

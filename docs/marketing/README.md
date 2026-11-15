@@ -3,8 +3,9 @@
 Status: the three evergreen quiz Shorts, Grieg-backed Hearts dilemma and
 piano-backed store trailer are public on YouTube. The original Christmas adverts
 are now Private; both teaching-first seasonal replacements are public.
-The trailer's Google Play listing update was submitted November 11,
-2026; the last observed status was pre-review checks. No paid advertising or
+Version 2 was published and its Google Play listing update submitted November 12,
+2026; the last observed status was pre-review checks with automatic submission
+after successful checks. Version 1 remains public during review. No paid advertising or
 external uploads are performed by the capture script.
 
 This is one execution channel within the [market-entry strategy](strategy.md).
@@ -14,7 +15,10 @@ experiment; publication alone is not evidence of audience reach or acquisition.
 
 ## Google Play Store Trailer
 
-Published on the dedicated [Barbu channel](https://www.youtube.com/@BarbuLearnCardGames):
+The current submitted trailer is
+[version 2: Learn here. Play together.](https://www.youtube.com/watch?v=FeuhyBNAAv0).
+See its publication record below. The following recipe describes version 1,
+which remains public on the dedicated [Barbu channel](https://www.youtube.com/@BarbuLearnCardGames):
 [Barbu: Learn Card Games | Official Preview](https://www.youtube.com/watch?v=dCkYZDe2oN4).
 YouTube categorises this portrait upload as a Short; Play uses the standard watch
 URL without sharing parameters. Studio confirmed public visibility, embedding
@@ -80,6 +84,54 @@ not upload anything or alter Play Console.
 Source checked November 11, 2026:
 [Google Play preview-video requirements](https://support.google.com/googleplay/android-developer/answer/9866151?hl=en).
 
+### Version 2 Trailer
+
+Approved November 11 and published November 12, 2026:
+[Barbu: Learn Card Games | Learn here. Play together.](https://www.youtube.com/watch?v=FeuhyBNAAv0).
+The first attempt hit YouTube's daily upload limit; Martin chose to wait rather
+than perform channel verification. The retry succeeded. Studio confirmed Public,
+not Made for Kids, no age restriction, embedding enabled and copyright checks
+with no issues found. Anonymous oEmbed returned the correct title and channel.
+The description credits the Beethoven recording and links to Google Play.
+
+The Play API validated, committed and freshly verified the replacement `en-GB`
+video URL on November 12. Listing text, images, app details and release tracks
+were verified unchanged. With Martin's approval to replace the video during
+review, the commit used `CANCEL_IN_REVIEW_AND_SUBMIT`, retaining the previously
+approved trader-status declaration. Publishing overview showed those two changes
+under pre-review checks, with automatic submission after successful checks.
+This does not confirm approval or public listing availability. Version 1 remains
+public while the replacement is reviewed. Backups and receipts are in ignored
+`release/google-play/store-video-1794490533632/`.
+
+```sh
+node scripts/marketing/render-store-trailer.mjs --version 2
+```
+
+Preview: http://localhost:1420/release/marketing/store-trailer-v2/preview.html
+
+This 30-second trailer follows one learning journey: inspect a Hearts pass
+hand (0-4s), select three cards (4-10s), read the actual feedback (10-16s), see a
+guided decision and trick explanation (16-23s), then explore the partnership
+catalog (23-27s) and close with "Learn here. Play together." over that same
+interface (27-30s). It omits the separate Gin scoring demonstration and the
+full-screen logo ending. The opening crops to the hand and real action buttons;
+the coach is revealed after the choice rather than competing with it upfront.
+
+The versioned storyboard is [store-trailer-v2.json](store-trailer-v2.json).
+It inherits the existing background and verified Beethoven recording from the
+original recipe. The shared renderer handles encoding, audio, provenance and
+checks; `capture-store-journey.mjs` owns only the new real-browser capture flow.
+The 390 x 850 capture uses actual responsive cards, with at least 100-pixel card
+widths in the hand close-ups. The three selection shots retain the same crop
+and scale. UI text, controls, selection states and rule outcomes are not rewritten.
+
+Outputs, silent alternative and per-scene inspection frames stay in ignored
+`release/marketing/store-trailer-v2/`. The preview links back to version 1 for
+comparison. Review pacing and readability with sound off as well as on; verify
+the footage against the public build and rerun YouTube copyright checks before
+any future store submission. Do not reuse the disputed Vltava recording here.
+
 ### Store Trailer Music
 
 Beethoven's *Für Elise*, WoO 59, performed by V. Gao (Gaodifan), recorded July 18,
@@ -92,7 +144,7 @@ page revision, download URL, licence and SHA-256 are in `store-trailer.json`.
 The renderer downloads the original Ogg only when absent, validates its pinned
 checksum, and caches it alongside the ignored export. A clone needs network
 access for the first render; no music binary or credentials are stored in Git.
-The opening 36 seconds are trimmed, normalised towards -24 LUFS, faded in over
+The opening 36 seconds (30 seconds for version 2) are trimmed, normalised towards -24 LUFS, faded in over
 0.8 seconds and out over the final 3 seconds, and encoded as stereo AAC at 48 kHz.
 The main MP4 contains music; `barbu-store-trailer-silent.mp4` preserves the same
 picture without audio. The preview provides both downloads and music credits.
@@ -109,8 +161,9 @@ claim will never occur; retain the source and licence evidence if one does.
 
 The original Christmas adverts were made Private on November 11, 2026.
 For their published, teaching-first replacements, see
-[Christmas card-table Shorts](christmas-shorts.md). The evergreen videos
-below and the public Grieg-backed Hearts dilemma are unchanged.
+[Christmas card-table Shorts](christmas-shorts.md). The evergreen quiz videos
+below are unchanged; the Grieg-backed Hearts dilemma has its own replacement
+record below.
 
 All three published Shorts use one borderless layout and capture/render pipeline. The
 storyboards, exercise selectors, expected feedback and base post captions
@@ -139,9 +192,53 @@ to the trailer could not be added: YouTube requested one-time advanced-feature
 verification. Martin must complete that verification before we add those links.
 No identity verification or channel-wide audience changes were performed.
 
+### Gin Knock or Gin: Larger-Card Version
+
+Published November 15, 2026:
+[Gin Rummy: can you knock or go gin?](https://www.youtube.com/shorts/YSz8LAFvlD0).
+This is a separate larger-card version of
+the original [Gin Rummy quiz](https://www.youtube.com/shorts/zBTSt8WoQ5s).
+The original export and public video remain unchanged. This version retains
+the same lesson, wording and 24-second timing, with cards
+roughly 40% wider (109 pixels in the 1080-pixel export).
+
+```sh
+node scripts/marketing/render-learning-short.mjs gin-knock-or-gin --large-cards --music morning-mood
+```
+
+Preview: http://localhost:1420/release/marketing/gin-knock-or-gin-large-cards/preview.html
+
+The optional shared-renderer flag uses the newer 390 x 850 capture viewport,
+requires card widths of at least 100 pixels in the export, and positions the
+answer buttons below the measured hand crop with a 32-pixel gap. Stage overlap,
+safe-margin, real lesson feedback and video decoding checks still apply.
+The MP4 and inspection frames remain under ignored
+`release/marketing/gin-knock-or-gin-large-cards/`. Subsequent renders are local
+drafts and do not replace the published video automatically.
+The main MP4 uses the opening of Grieg's *Morning Mood*, reusing the reviewed
+Musopen recording and checksum from the Hearts dilemma. It is mixed quietly
+at a -26 LUFS normalization target with a 0.8-second fade-in and 2.5-second
+fade-out. The preview includes the source credit and a separate silent MP4.
+The recording's public-domain dedication was rechecked on November 15, 2026;
+check YouTube's copyright results before publishing.
+
+Studio confirmed publication with copyright checks complete and no issues found.
+The new Short is not Made for Kids, has no age restriction, permits embedding,
+and has comments enabled with basic moderation. The description credits the
+recording, links to Google Play and asks whether viewers would knock or continue.
+Anonymous oEmbed verified the title and Barbu channel. The original remains
+public to preserve its views and comments; no comments were posted or paid
+promotion started.
+
 ### Teaching-First Experiment
 
-Published November 11, 2026: [Hearts: pass the spades or the hearts?](https://www.youtube.com/shorts/upRR_KVTZhg).
+Published November 11, 2026: [Hearts: pass the spades or the hearts?](https://www.youtube.com/shorts/pnhAxxTyEWI).
+This is the larger-card replacement: cards are about 40% larger, using the same
+390 x 850 capture viewport as the Christmas dilemmas. Timing, wording and the
+Grieg recording are unchanged. The [original small-card upload](https://www.youtube.com/shorts/upRR_KVTZhg)
+is now Private, not deleted. The replacement passed render layout/decoding checks,
+390px and 1280px browser playback checks, and YouTube's copyright checks with no
+issues found at publication. No comments were reposted or created.
 This format tests a useful card-table
 discussion rather than another seasonal advert. Cards appear in the first frame
 and remain visible through the reasoning. There is no download pitch, countdown,

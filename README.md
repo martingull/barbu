@@ -85,8 +85,9 @@ This repository is proprietary and all rights are reserved. See [LICENSE](./LICE
 
 `https://siliciumveritas.com/` now introduces Barbu. Source is in `website/public`,
 with existing hosting ownership recorded in `website/ownership.json` and Pulumi
-source in `website/infra`. Use `task website:serve` for local preview and
-`task website:deploy` for a backed-up content release. Retain existing AWS/Pulumi
+source in `website/infra`. Use `task website:serve` for local preview at
+`http://localhost:4178`, `task website:test` for the phone/desktop browser checks,
+and `task website:deploy` for a backed-up content release. Retain existing AWS/Pulumi
 resource identities; the old isv-mainpage deployment is retired. The ISV repo
 retains its newsletter drafting tools but no longer owns this domain.
 
@@ -95,3 +96,10 @@ contact route for clubs, teachers and community hosts. Do not imply online
 multiplayer, club-management software, public iPhone availability or measured
 customer results. Explee campaign sending/settings are managed separately;
 editing this site does not authorize outreach or spending.
+
+The site is buildless HTML/CSS with a small click-to-play video enhancement.
+YouTube is loaded only after pressing Play; a direct video link remains available
+without JavaScript. Website tests cover Chromium and WebKit, including narrow
+screens, navigation, FAQ controls and the embed handoff (not external playback).
+The logo and King of Hearts in `website/public/assets` are copies of the existing
+app artwork, kept here so the website deploys independently of the game bundle.

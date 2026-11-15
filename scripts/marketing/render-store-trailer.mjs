@@ -3,12 +3,19 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { parseArgs } from "node:util";
 import { chromium, expect } from "@playwright/test";
 import sharp from "sharp";
+import { captureStoreJourney } from "./capture-store-journey.mjs";
 
 const root = resolve(import.meta.dirname, "../..");
-const output = resolve(root, "release/marketing/store-trailer");
-const storyboard = JSON.parse(await readFile(resolve(root, "docs/marketing/store-trailer.json"), "utf8"));
+const { values } = parseArgs({ options: { version: { type: "string", default: "1" } } });
+assert(["1", "2"].includes(values.version), "Supported trailer versions: 1, 2");
+const journey = values.version === "2";
+const output = resolve(root, `release/marketing/store-trailer${journey ? "-v2" : ""}`);
+const original = JSON.parse(await readFile(resolve(root, "docs/marketing/store-trailer.json"), "utf8"));
+const storyboard = journey ? { ...original,
+  ...JSON.parse(await readFile(resolve(root, "docs/marketing/store-trailer-v2.json"), "utf8")) } : original;
 const { stages, background, durationSeconds, music } = storyboard;
 const baseURL = process.env.BARBU_CAPTURE_URL ?? "http://localhost:1420";
 assert(["localhost", "127.0.0.1", "[::1]"].includes(new URL(baseURL).hostname));
@@ -43,8 +50,9 @@ assert(Number(musicInfo.format.duration) >= music.startSeconds + durationSeconds
 
 const browser = await chromium.launch();
 const errors = [], captures = [];
-const context = await browser.newContext({ viewport: { width: 360, height: 560 }, deviceScaleFactor: 3,
-  recordVideo: { dir: resolve(output, "source"), size: { width: 720, height: 1120 } } });
+const viewport = journey ? { width: 390, height: 850 } : { width: 360, height: 560 };
+const context = await browser.newContext({ viewport, deviceScaleFactor: 3,
+  recordVideo: { dir: resolve(output, "source"), size: { width: viewport.width * 2, height: viewport.height * 2 } } });
 const page = await context.newPage();
 page.on("pageerror", error => errors.push(error.message));
 page.on("requestfailed", request => errors.push(`${request.url()}: ${request.failure()?.errorText}`));
@@ -92,6 +100,24 @@ try {
       focus, visibleText: await page.locator("body").innerText() });
     console.log(`Captured ${id}`);
   }
+  if (journey) {
+    captures.push(...await captureStoreJourney({ page, baseURL, output, background }));
+    // Keep the pass sequence's crop and scale stable as feedback changes height.
+    for (const capture of captures) {
+      const group = captures.filter(other => other.group === capture.group);
+      const crop = { x: Math.min(...group.map(c => c.crop.x)), y: Math.min(...group.map(c => c.crop.y)),
+        right: Math.max(...group.map(c => c.crop.right)), bottom: Math.max(...group.map(c => c.crop.bottom)) };
+      capture.frameCrop = crop;
+      const scale = Math.min(960 / (crop.right - crop.x), 1160 / (crop.bottom - crop.y));
+      capture.display = { width: (crop.right - crop.x) * scale, height: (crop.bottom - crop.y) * scale };
+      if (capture.cardWidth && capture.id !== "hearts-trick") {
+        assert(capture.cardWidth * scale >= 100, `${capture.id}: cards too small`);
+      }
+      await sharp(resolve(output, `${capture.id}-source.png`)).extract({ left: crop.x * 3, top: crop.y * 3,
+        width: (crop.right - crop.x) * 3, height: (crop.bottom - crop.y) * 3 }).png()
+        .toFile(resolve(output, `${capture.id}-ui.png`));
+    }
+  } else {
   await page.goto(baseURL);
   await page.evaluate(() => localStorage.setItem("barbu.practiceSeed.v1", "12"));
   await page.reload();
@@ -147,6 +173,7 @@ try {
   await page.locator('[data-collection="partners-tricks"]').evaluate(element => element.scrollIntoView({ block: "start" }));
   await expect(page.getByRole("button", { name: "Open Bridge", exact: true })).toBeInViewport();
   await capture("catalog-partners");
+  }
   const video = page.video();
   await context.close();
   const rawRecording = await video.path();
@@ -155,10 +182,11 @@ try {
   const art = await browser.newPage({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 1 });
   let elapsed = 0;
   for (const stage of stages) {
-    const outro = stage.id === "outro";
+    const outro = stage.id === "outro" && !journey;
     const fullScreen = stage.layout === "full-screen";
-    const ui = outro ? "" : await dataImage(resolve(output, `${stage.id}-ui.png`));
-    const focus = captures.find(capture => capture.id === stage.id)?.focus;
+    const ui = outro ? "" : await dataImage(resolve(output, `${stage.uiFrom ?? stage.id}-ui.png`));
+    const captured = captures.find(capture => capture.id === (stage.uiFrom ?? stage.id));
+    const focus = captured?.focus;
     await art.setContent(`<!doctype html><html lang="en"><head><meta charset="utf-8"><style>
       * { box-sizing: border-box; } body { margin: 0; width: 1080px; height: 1920px; background: ${background}; color: #fafbf7; font-family: Arial, sans-serif; letter-spacing: 0; }
       header { height: 240px; padding: 35px 48px 22px; }
@@ -175,18 +203,36 @@ try {
       .ending h2 { font-size: 60px; margin: 0; font-weight: 500; color: #efd281; }
       .tagline { font-size: 76px; line-height: 1.16; margin: 100px 0 0; }
       .detail { font-size: 32px; line-height: 1.5; color: #c1d4c8; margin: 70px 0 0; }
-    </style></head><body>${outro
+      ${journey ? `header { position: absolute; left: 70px; top: 140px; padding: 0; height: auto; width: 910px; }
+      .brand { font-size: 32px; } h1 { font-size: 70px; line-height: 1.15; margin-top: 72px; white-space: pre-line; }
+      .context { position: absolute; left: 70px; top: 580px; font-size: 36px; color: #efd281; margin: 0; }
+      .footage { position: absolute; left: ${(1080 - captured.display.width) / 2}px; top: ${stage.footageTop ?? 510}px; }
+      .ui { width: ${captured.display.width}px; height: ${captured.display.height}px; }
+      footer { position: absolute; top: 1760px; left: 70px; font-size: 28px; color: #c1d4c8; }` : ""}
+    </style></head><body>${journey
+      ? `<header><div class="brand"><img src="${logo}" alt=""><strong>Barbu: Learn Card Games</strong></div><h1>${escape(stage.heading)}</h1></header>${stage.context ? `<p class="context">${escape(stage.context)}</p>` : ""}<div class="footage"><img class="ui" src="${ui}" alt="Actual Barbu interface, close-up"></div><footer>${stage.id === "outro" ? "Practise solo. Bring your skills to a real table." : "Actual gameplay · Close-up"}</footer>`
+      : outro
       ? `<main class="ending"><img src="${logo}" alt="Barbu"><h1>Barbu</h1><h2>Learn Card Games</h2><p class="tagline">Learn here.<br>Play together.</p><p class="detail">Practise solo.<br>Bring your skills to a real table.</p></main>`
       : `${fullScreen ? "" : `<header><div class="brand"><img src="${logo}" alt=""><strong>Barbu</strong></div><h1>${escape(stage.heading)}</h1></header>`}<div class="footage"><img class="ui" src="${ui}" alt="Actual Barbu interface"><div class="spotlight" aria-hidden="true" style="left:${focus.x}px;top:${focus.y}px;width:${focus.width}px;height:${focus.height}px"></div></div>`}
     </body></html>`);
     await expect.poll(() => art.locator("img").evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0))).toBe(true);
     assert(await art.evaluate(() => document.documentElement.scrollWidth === 1080 && document.documentElement.scrollHeight === 1920));
-    if (!outro && !fullScreen) {
+    if (journey) {
+      const heading = await art.locator("h1").boundingBox();
+      const footage = await art.locator(".footage").boundingBox();
+      assert(heading.y + heading.height < footage.y - 30, `${stage.id}: heading overlaps footage`);
+      assert(footage.y + footage.height < 1730, `${stage.id}: footage overlaps footer`);
+      assert(await art.locator("h1,footer,.brand,.context").evaluateAll(elements => elements.every(e => e.scrollWidth <= e.clientWidth)));
+      if (stage.context) {
+        const context = await art.locator(".context").boundingBox();
+        assert(context.y > heading.y + heading.height + 30 && context.y + context.height < footage.y - 30);
+      }
+    } else if (!outro && !fullScreen) {
       const bounds = await art.locator("h1").boundingBox();
       assert(bounds.y + bounds.height <= 218, `${stage.id}: heading collides with footage`);
       assert(await art.locator("h1").evaluate(element => element.scrollWidth <= element.clientWidth));
     }
-    if (!outro) {
+    if (!outro && !journey) {
       const bounds = await art.locator(".ui").boundingBox();
       assert.equal(bounds.y, fullScreen ? 0 : 240);
       assert.equal(bounds.height, fullScreen ? 1920 : 1680);
@@ -203,7 +249,7 @@ try {
   }
 
   // Short dissolves join chapters; decision/selection/result changes retain the real UI's instant transitions.
-  const chapterStarts = new Set(["learn-path", "hearts-play", "gin-hand", "catalog-first", "outro"]);
+  const chapterStarts = new Set(["learn-path", "hearts-play", "gin-hand", "catalog-first", ...(journey ? ["catalog-partners"] : ["outro"])]);
   const frames = [];
   for (const [index, stage] of stages.entries()) {
     const transition = index > 0 && chapterStarts.has(stage.id);
@@ -231,6 +277,7 @@ try {
     `afade=t=in:st=0:d=${music.fadeInSeconds},afade=t=out:st=${durationSeconds - music.fadeOutSeconds}:d=${music.fadeOutSeconds}`;
   ffmpeg(["-i", silent, "-i", musicPath, "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy",
     "-af", audioFilter, "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2", "-t", String(durationSeconds),
+    "-map_metadata", "-1", "-map_metadata:s:a", "-1",
     "-metadata", `comment=Music: ${music.title}; ${music.performer}; ${music.license}; ${music.sourcePage}`,
     "-movflags", "+faststart", final]);
   const metadata = JSON.parse(execFileSync("ffprobe", ["-v", "error", "-show_streams", "-show_format", "-of", "json", final], { encoding: "utf8" }));
@@ -248,21 +295,23 @@ try {
   await writeFile(resolve(output, "capture.json"), JSON.stringify({ revision, sourceStatus, capturedAt: new Date().toISOString(),
     baseURL, rawRecording, storyboard, captures, pageErrors: errors, published: false,
     audio: { ...music, sourceFile: musicPath, filter: audioFilter, silentAlternative: silentFilename },
-    edits: "Real UI states, editorial headings and spotlights, chapter dissolves, uniform outer backdrop; no gameplay or feedback invented. Spotlights are video annotations, not in-game effects.",
+    edits: journey ? "Real UI close-ups, stable pass-sequence crop, editorial headings and chapter dissolves; no gameplay or feedback invented."
+      : "Real UI states, editorial headings and spotlights, chapter dissolves, uniform outer backdrop; no gameplay or feedback invented. Spotlights are video annotations, not in-game effects.",
     format: { width: 1080, height: 1920, fps: 30, seconds: durationSeconds, bytes: Number(metadata.format.size) }
   }, null, 2) + "\n");
   await writeFile(resolve(output, "preview.html"), `<!doctype html><html lang="en"><head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1"><title>Barbu | Store trailer draft</title><style>
     *{box-sizing:border-box}body{margin:0;background:${background};color:#fafbf7;font-family:system-ui,sans-serif}
     .screen{height:100svh;display:grid;place-items:center}video{display:block;width:min(100vw,56.25svh);height:auto;aspect-ratio:9/16;background:${background}}
-    main{max-width:720px;margin:auto;padding:24px}h1{font-size:26px}p{line-height:1.5}a{color:#efd281}
+    main{max-width:720px;margin:auto;padding:24px;overflow-wrap:anywhere}h1{font-size:26px}p{line-height:1.5}a{color:#efd281}
     </style></head><body><section class="screen" aria-label="Store trailer preview"><video controls playsinline preload="metadata"
-    poster="hearts-question.png" aria-label="${durationSeconds}-second Barbu store trailer with Beethoven piano music"><source src="${filename}?v=${Date.now()}" type="video/mp4"></video></section>
-    <main><h1>Barbu: Learn Card Games</h1><p>${durationSeconds}-second store-trailer draft with quiet piano music. Actual Hearts and Gin Rummy lessons, guided play, and the game catalog. Nothing has been uploaded.</p>
+    poster="${stages[0].id}.png?v=${Date.now()}" aria-label="${durationSeconds}-second Barbu store trailer with Beethoven piano music"><source src="${filename}?v=${Date.now()}" type="video/mp4"></video></section>
+    <main><h1>Barbu: Learn Card Games${journey ? " / Version 2" : ""}</h1><p>${durationSeconds}-second store-trailer draft with quiet piano music. ${escape(storyboard.description ?? "Actual Hearts and Gin Rummy lessons, guided play, and the game catalog.")} Nothing has been uploaded.</p>
     <p><a href="${filename}" download>Download MP4 with music</a> · <a href="${silentFilename}" download>Download silent version</a></p>
     <p>Music: ${escape(music.title)} by ${escape(music.composer)}, performed by ${escape(music.performer)}.
     <a href="${music.sourcePage}">Source recording</a> · <a href="${music.licenseURL}">${music.license}</a>. Excerpt, loudness adjustment and fades.</p>
-    <p>Real interface captures, edited with headings, focus highlights and short dissolves. Highlights are video annotations, not in-game effects. No third-party video footage.</p>
+    <p>${journey ? "Real interface close-ups, larger cards, editorial headings and short dissolves. No interface elements or feedback were invented." : "Real interface captures, edited with headings, focus highlights and short dissolves. Highlights are video annotations, not in-game effects."} No third-party video footage.</p>
+    ${journey ? '<p><a href="../store-trailer/preview.html">Compare the current store trailer</a></p>' : ""}
     <p>After approval: upload to YouTube as public or unlisted, allow embedding, disable monetization, and add the video URL to the Play listing.</p></main></body></html>`);
   console.log(`Exported ${final} (${metadata.format.size} bytes)`);
 } finally {

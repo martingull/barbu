@@ -1,0 +1,17 @@
+{
+  "title": "Barbu: Learn Card Games",
+  "durationSeconds": 30,
+  "format": "learning-journey",
+  "description": "One Hearts decision, its explanation, guided play and the wider game collection.",
+  "stages": [
+    { "id": "pass-question", "heading": "Learn card games\nby playing.", "context": "Hearts: choose three cards to pass.", "footageTop": 700, "duration": 4 },
+    { "id": "pass-select-1", "heading": "Make a choice.", "context": "Hearts: choose three cards to pass.", "footageTop": 700, "duration": 1.5 },
+    { "id": "pass-select-2", "heading": "Make a choice.", "context": "Hearts: choose three cards to pass.", "footageTop": 700, "duration": 1.5 },
+    { "id": "pass-select-3", "heading": "Make a choice.", "context": "Hearts: choose three cards to pass.", "footageTop": 700, "duration": 3 },
+    { "id": "pass-answer", "heading": "Understand why.", "duration": 6 },
+    { "id": "hearts-play", "heading": "Practise with guidance.", "duration": 3.5 },
+    { "id": "hearts-trick", "heading": "See why the trick was won.", "duration": 3.5 },
+    { "id": "catalog-partners", "heading": "Discover your next game.", "duration": 4 },
+    { "id": "outro", "uiFrom": "catalog-partners", "heading": "Learn here.\nPlay together.", "duration": 3 }
+  ]
+}

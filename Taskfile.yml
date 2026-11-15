@@ -6,6 +6,11 @@ tasks:
     cmds:
       - python3 -m http.server 4178 --bind 127.0.0.1 --directory website/public
 
+  website:test:
+    desc: Check the product website layout, navigation and video on phone and desktop
+    cmds:
+      - npx playwright test --config website/playwright.config.ts
+
   website:deploy:
     desc: Back up and publish the Barbu landing page to existing AWS hosting
     cmds:

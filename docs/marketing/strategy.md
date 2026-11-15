@@ -22,6 +22,10 @@ Decisions agreed with Martin:
 
 - Keep the current experience free and without ads while building an audience.
 - Prioritise useful learning and repeat use over immediate monetisation.
+- November 14 decision: build an initial user base before introducing optional
+  paid content. Keep the starter learning experience free; a one-time unlock,
+  additional learning packs or a subscription remain later choices, not current
+  offers. Do not plan to convert the existing free download into a paid download.
 - Keep the distinction between computer opponents and in-person social play
   explicit. Do not imply online multiplayer.
 - Describe Get out and play as an external Google Maps search, not a verified
@@ -85,6 +89,9 @@ Being free is an acquisition aid, not a durable differentiator by itself.
 
 Google Play is the initial public acquisition destination:
 [Barbu listing](https://play.google.com/store/apps/details?id=com.martin.barbu).
+Include this direct link in download invitations, organiser outreach and video
+descriptions where links are supported. Do not rely on people finding Barbu by
+searching the Play directory. The website already links directly to this listing.
 As last verified November 4, production version 1.0.6 (1000007) is **in review**.
 Before public download calls to action, confirm publication and open the listing
 using an eligible non-tester account. A tester's successful install is not proof
@@ -121,6 +128,8 @@ Suggested message, to customise rather than mass-send:
 > table. Would you be willing to try the [game] learning path and tell me whether
 > it would help your newcomers? It currently has no ads or charges. I would be
 > happy to give a short demonstration; there is no obligation to recommend it.
+>
+> Try Barbu on Android: https://play.google.com/store/apps/details?id=com.martin.barbu
 
 Keep personal contact details and interview notes out of this public repository.
 Respect a refusal; do not automate unsolicited bulk messages.
@@ -224,9 +233,11 @@ At the four-week review, diagnose before expanding:
 
 Remain free and ad-free through this initial experiment. Revisit monetisation
 once we have repeat-use evidence and understand what users value, not merely when
-an install counter reaches a number. Possible later experiments are restrained
-ads in ordinary Play with permanent ad removal, substantial paid learning packs,
-or subscriptions backed by recurring value. None is approved or implemented here.
+an install counter reaches a number. The November 14 direction is optional paid
+content, such as a one-time premium unlock, substantial learning packs or a
+subscription backed by recurring value. Pricing and implementation are undecided;
+advertising is not part of the current plan. Preserve a useful free starter
+experience rather than abruptly locking existing free lessons.
 Protect lessons and guided explanations; do not create cooldowns or charge for
 correcting mistakes. Club licences would require a validated organiser need.
 

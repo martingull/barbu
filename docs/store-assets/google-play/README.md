@@ -28,16 +28,24 @@ listing backup are in `release/google-play/screenshots-2026-11-03/` (ignored).
 ## Preview Video
 
 The `en-GB` listing now stores
-[`https://www.youtube.com/watch?v=dCkYZDe2oN4`](https://www.youtube.com/watch?v=dCkYZDe2oN4).
-This is the 36-second portrait trailer on `@BarbuLearnCardGames`, with actual
-gameplay, editorial focus highlights and credited Beethoven piano music.
+[`https://www.youtube.com/watch?v=FeuhyBNAAv0`](https://www.youtube.com/watch?v=FeuhyBNAAv0).
+This is the 30-second version 2 portrait trailer on `@BarbuLearnCardGames`, with
+one focused Hearts learning journey, guided play, the game catalog and credited
+Beethoven piano music. YouTube confirmed public visibility, embedding enabled,
+no age restriction and copyright checks with no issues found.
 See [the video recipe and provenance](../../marketing/README.md#google-play-store-trailer).
 
-On November 11, 2026, the video-only API edit validated and committed. A fresh
+On November 12, 2026, the video-only API edit validated and committed. A fresh
 read verified the URL and unchanged listing text, images, app details and release
-tracks. The existing pending trader-status declaration was also authorised for
-submission. Play Console showed pre-review checks after the commit, not completed
-review or confirmed public availability. The backup and receipts are in ignored
+tracks. Martin approved replacing the video during review; the commit explicitly
+cancelled the pending review and resubmitted the replacement alongside the
+previously approved trader-status declaration. Play Console showed pre-review
+checks with automatic submission after successful checks, not completed review
+or confirmed public availability. The backup and receipts are in ignored
+`release/google-play/store-video-1794490533632/`.
+
+Version 1 (`dCkYZDe2oN4`) was submitted November 11 and remains public while the
+replacement is reviewed. Its earlier receipts remain in ignored
 `release/google-play/store-video-1794397303061/`.
 
 ## Phone Screenshots
