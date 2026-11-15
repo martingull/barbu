@@ -1,12 +1,10 @@
-> November 13, 2026: Martin confirmed the app is available on Google Play.
-> Earlier in-review notes below are historical. The product page is
-> https://siliciumveritas.com/, maintained in website/.
-
 # Barbu
 
 **Learn here. Play together.**
 
 Barbu helps players learn classic card games through short interactive lessons, guided hands and single-player practice, then take that confidence to a real table with friends, family or a local card club. It is designed for phones, with Android and iPhone builds and a browser development runtime.
+
+Barbu is available on [Google Play](https://play.google.com/store/apps/details?id=com.martin.barbu). Visit the [product website](https://siliciumveritas.com/) for a preview and an introduction to the games; its source lives in [`website/`](website/).
 
 The active catalog contains Hearts, Barbu (including Domino), Whist, Spades, Bridge, Gin Rummy and Card Counting I. Each table uses shared **Learn | Play** navigation; short exercises and guided hands belong inside Learn. Canasta is a paused, hidden prototype, not a released game.
 
@@ -16,18 +14,15 @@ Play is against computer opponents, not online multiplayer. **Share Barbu** shar
 
 ## Release Status
 
-As verified on **November 4, 2026**, Google Play's first production release is
-**in review**, not yet confirmed publicly available:
+Google Play production is live. The first production release is:
 
 - Store title: **Barbu: Learn Card Games**.
 - Version: **1.0.6**, Android version code **1000007**.
 - Release: **1.0.6 - First production release**, promoting the existing closed-test bundle.
-- Target availability: 177 selected countries/regions plus rest of world.
-- The updated descriptions, eight Android screenshots and feature graphic are saved in the listing.
 
 Physical Samsung testing and no blocking pre-launch report errors were confirmed
-by the developer. Check Play Console's **Publishing overview** before announcing
-public availability; submission is not approval. See the
+by the developer. Later store-listing updates have their own review status; check
+Play Console's **Publishing overview** before announcing those changes. See the
 [Google Play release runbook](docs/google-play-release.md) for dated evidence and
 the [store assets](docs/store-assets/google-play/README.md) for copy, artwork and
 screenshot provenance. iPhone distribution is tracked separately in the
