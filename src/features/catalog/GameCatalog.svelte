@@ -60,8 +60,12 @@
       </header>
       <div class="catalog-games">
         {#each category.entries as game (game.id)}
-          <button class="catalog-game" aria-label={`Open ${game.title}`} onclick={() => onOpen(game.id)} type="button">
-            <span class="game-copy"><strong>{game.title}</strong><span>{game.summary}</span></span>
+          <button class="catalog-game" aria-label={`Open ${game.title}`} aria-describedby={game.access === "Premium" ? `catalog-access-${game.id}` : undefined} onclick={() => onOpen(game.id)} type="button">
+            <span class="game-copy">
+              <strong>{game.title}</strong>
+              <span>{game.summary}</span>
+              {#if game.access === "Premium"}<small class="premium-badge" id={`catalog-access-${game.id}`}>Premium</small>{/if}
+            </span>
             {#if game.id === "barbu"}
               <span class="table-mark" aria-hidden="true">
                 {#each tableMarkCards as card}<span><CardFace {card} decorative /></span>{/each}
@@ -109,14 +113,15 @@
   .collection-heading h2 { color: #f5f1cf; font-family: Georgia, "Times New Roman", serif; font-size: 1.25rem; line-height: 1.3; }
   .collection-heading p { font-size: 0.8rem; }
   .catalog-games { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px 12px; }
-  .catalog-game { display: grid; grid-template-columns: minmax(0, 1fr) 84px; align-items: center; gap: 12px; min-height: 90px; width: 100%; padding: 12px; border: 1px solid #728a70; border-radius: 6px; background: #285342; color: #f7faf3; text-align: left; }
+  .catalog-game { display: flex; align-items: center; gap: 12px; min-height: 90px; width: 100%; padding: 12px; border: 1px solid #728a70; border-radius: 6px; background: #285342; color: #f7faf3; text-align: left; }
   .catalog-game:hover { background: #305e4b; }
   .saved-game:hover { background: #ffffff08; }
-  .game-art { display: grid; place-items: center; width: 84px; height: 64px; }
+  .game-art { display: grid; place-items: center; flex: none; width: 84px; height: 64px; }
   .game-art > span { display: block; width: 34px; height: 48px; transform: rotate(8deg); filter: drop-shadow(0 2px 3px #08130d66); }
-  .game-copy { display: grid; gap: 4px; min-width: 0; }
+  .game-copy { display: flex; flex: 1; flex-direction: column; gap: 4px; min-width: 0; }
   .game-copy strong { font-size: 1rem; line-height: 1.25; }
   .game-copy > span { color: #e0e9d9; font-size: 0.8rem; line-height: 1.4; }
+  .premium-badge { align-self: flex-start; margin-top: 4px; padding: 3px 8px; border-radius: 4px; background: #efd382; color: #283023; font-size: 0.7rem; font-weight: 700; line-height: 1.4; }
   .table-mark { position: relative; display: block; flex: none; width: 84px; height: 64px; }
   .table-mark > span { position: absolute; display: block; width: 28px; height: 39.2px; filter: drop-shadow(0 2px 3px #08130d66); }
   .table-mark > span:nth-child(1) { left: 5px; top: 14px; transform: rotate(-12deg); }

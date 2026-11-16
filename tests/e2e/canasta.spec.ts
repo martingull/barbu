@@ -2,11 +2,9 @@ import { expect, test, type Page } from "@playwright/test";
 import { createCanastaSession, transitionCanastaSession, type CanastaSession } from "../../src/domain/canastaSession";
 import { advanceCanastaOpponents, canastaObservation, chooseCanastaAction, suggestedCanastaMelds } from "../../src/domain/canastaPolicy";
 import { canastaSaveKey, restoreCanastaSession, saveCanastaSession } from "../../src/persistence/canastaSave";
-import { canastaExercises, answerCanastaExercise } from "../../src/lessons/canasta/exercises";
+import { canastaExercises, canastaLearningSteps, canastaExerciseChoices, answerCanastaExercise } from "../../src/lessons/canasta/exercises";
 import { formatCardLabel } from "../../src/presentation/cardDisplay";
-import { isCatalogGameAvailable } from "../../src/games/tableFactory";
-
-test.skip(!isCatalogGameAvailable("canasta"), "Canasta is paused and hidden from the player catalog.");
+test.skip(process.env.VITE_CANASTA_PREVIEW !== "1", "Run with playwright.canasta.config.ts to test the development preview.");
 
 const label = (card: { rank: string; suit: "C" | "D" | "H" | "S"; id: string }) => `${formatCardLabel(card)}, pack ${Number(card.id[0]) + 1}`;
 async function saved(page: Page) { return restoreCanastaSession(await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), canastaSaveKey)); }
@@ -122,28 +120,27 @@ test("Canasta crowded hands scroll without shifting the board or controls", asyn
   }
 });
 
-test("Canasta teaches twelve decisions without changing a saved match", async ({ page }, info) => {
+test("Canasta teaches eighteen decisions without changing a saved match", async ({ page }, info) => {
   await page.setViewportSize({ width: 360, height: 740 }); await seed(page);
   const before = await saved(page);
   await page.getByRole("button", { name: "Table", exact: true }).first().click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
-  for (const [topic, steps] of Object.entries(canastaExercises)) {
+  for (const topic of Object.keys(canastaExercises)) {
+    const steps = canastaLearningSteps(topic);
     await page.getByRole("button", { name: /^(Start lesson|Continue lesson)$/ }).click();
-    await page.getByRole("button", { name: "See example", exact: true }).click();
-    await page.getByRole("button", { name: "Try cards", exact: true }).click();
     for (let index = 0; index < steps.length; index++) {
-      const step = steps[index], answers = topic === "discard" ? step.session.hand.hands[0].map(card => card.id) : ["yes", "no"];
+      const step = steps[index], choices = canastaExerciseChoices(topic, step), answers = choices.map(choice => choice.id);
       const correct = answers.find(answer => answerCanastaExercise(topic, step, answer).good)!;
       if (topic === "discard") await page.getByLabel("Canasta exercise hand", { exact: true }).getByRole("button", { name: label(step.session.hand.hands[0].find(card => card.id === correct)!), exact: true }).click();
-      else await page.getByLabel("Canasta choices").getByRole("button").nth(correct === "yes" ? 0 : 1).click();
+      else await page.getByLabel("Canasta choices").getByRole("button", { name: choices.find(choice => choice.id === correct)!.label, exact: true }).click();
       await page.getByRole("button", { name: "Check answer", exact: true }).click();
       await expect(page.locator(".outcome")).toHaveText("Good");
       if (!index) await page.screenshot({ path: info.outputPath(`canasta-${topic}.png`), fullPage: true });
-      await page.getByRole("button", { name: index === 2 ? "Finish practice" : "Next decision", exact: true }).click();
+      await page.getByRole("button", { name: index === 2 ? "Finish topic" : "Next decision", exact: true }).click();
     }
-    await page.getByRole("button", { name: "Finish Canasta", exact: true }).click();
+    await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
   }
-  await expect(page.getByLabel("Canasta course progress")).toContainText("4 / 4 complete");
+  await expect(page.getByLabel("Canasta course progress")).toContainText("6 / 6 complete");
   expect(await saved(page)).toEqual(before);
   await page.getByRole("button", { name: /^Reference/ }).click();
   await expect(page.getByRole("heading", { name: "Canasta reference", exact: true })).toBeVisible();

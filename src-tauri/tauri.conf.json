@@ -3,6 +3,12 @@
   "productName": "Barbu",
   "version": "1.0.6",
   "identifier": "com.martin.barbu",
+  "plugins": {
+    "barbu-purchases": {
+      "androidApiKey": "",
+      "purchasesEnabled": false
+    }
+  },
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://127.0.0.1:1420",

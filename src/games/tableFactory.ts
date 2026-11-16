@@ -1,4 +1,7 @@
+/// <reference types="vite/client" />
 import type { Card } from "../domain/types";
+import { gameAccess, hasReleasedGameAccess, type GameAccess } from "./accessPolicy";
+import type { PremiumSnapshot } from "../domain/premiumAccess";
 
 export const tableTabIds = ["learn", "play", "perfect"] as const;
 
@@ -13,8 +16,6 @@ export type CatalogGameId =
   | "gin-rummy"
   | "canasta";
 export type CatalogStatus = "Ready" | "Planned";
-export type CatalogAccess = "Free" | "Pack";
-export type CatalogAccessModel = "free-starter" | "metered-pack";
 
 export type TableActionDefinition = {
   id: string;
@@ -74,8 +75,7 @@ export type CatalogEntry = {
   family: string;
   title: string;
   status: CatalogStatus;
-  access: CatalogAccess;
-  accessModel: CatalogAccessModel;
+  access: GameAccess;
   summary: string;
   card: Pick<Card, "rank" | "suit">;
 };
@@ -112,16 +112,6 @@ export type PracticeGroup<Action extends string = string> = {
   lessonSource?: "barbu-fixed-lessons";
 };
 
-export const monetizationPolicy = {
-  model: "free-usage-then-unlock",
-  freeStarterIds: ["hearts", "barbu", "whist", "spades", "bridge", "gin-rummy", "card-counting"],
-  paidUnlocks: ["individual-pack", "subscription"],
-  meteredFreeUsage: {
-    unitLimit: "tbd",
-    windowHours: 3
-  }
-} as const;
-
 const tabLabels: Record<TableTabId, string> = {
   learn: "Learn",
   play: "Play",
@@ -154,8 +144,12 @@ export function tableTabsFor(table: GameTableDefinition) {
   return tableTabIds.filter(tab => tab !== "perfect").map((tab) => table.tabs[tab]);
 }
 
-function createCatalogEntry(entry: CatalogEntry): CatalogEntry {
-  return entry;
+function createCatalogEntry(entry: Omit<CatalogEntry, "access">): CatalogEntry {
+  return { ...entry, access: gameAccess(entry.id) };
+}
+
+function isCanastaPreview(): boolean {
+  return import.meta.env?.DEV === true && import.meta.env?.VITE_CANASTA_PREVIEW === "1";
 }
 
 export type CatalogCategory = {
@@ -165,7 +159,9 @@ export type CatalogCategory = {
   entries: CatalogEntry[];
 };
 
-export function getCatalogCategories(): CatalogCategory[] {
+export type CatalogAccessContext = { customer?: PremiumSnapshot | null; premiumAvailable?: boolean };
+
+export function getCatalogCategories(context: CatalogAccessContext = {}): CatalogCategory[] {
   const categories: CatalogCategory[] = [
     {
       id: "hearts-contracts",
@@ -178,8 +174,6 @@ export function getCatalogCategories(): CatalogCategory[] {
           title: "Hearts",
           card: { rank: "Q", suit: "S" },
           status: "Ready",
-          access: "Free",
-          accessModel: "free-starter",
           summary: "Keep hearts and the queen of spades out of your tricks."
         }),
         createCatalogEntry({
@@ -188,8 +182,6 @@ export function getCatalogCategories(): CatalogCategory[] {
           title: "Barbu",
           card: { rank: "K", suit: "H" },
           status: "Ready",
-          access: "Free",
-          accessModel: "free-starter",
           summary: "Seven contracts, with a new objective each hand."
         })
       ]
@@ -205,8 +197,6 @@ export function getCatalogCategories(): CatalogCategory[] {
           title: "Whist",
           card: { rank: "A", suit: "C" },
           status: "Ready",
-          access: "Free",
-          accessModel: "free-starter",
           summary: "Win tricks together with a partner."
         }),
         createCatalogEntry({
@@ -215,8 +205,6 @@ export function getCatalogCategories(): CatalogCategory[] {
           title: "Spades",
           card: { rank: "A", suit: "S" },
           status: "Ready",
-          access: "Free",
-          accessModel: "free-starter",
           summary: "Bid your tricks. Spades are always trump."
         }),
         createCatalogEntry({
@@ -225,8 +213,6 @@ export function getCatalogCategories(): CatalogCategory[] {
           title: "Bridge",
           card: { rank: "K", suit: "D" },
           status: "Ready",
-          access: "Free",
-          accessModel: "free-starter",
           summary: "Bid a contract, then play as declarer or defend."
         })
       ]
@@ -242,8 +228,6 @@ export function getCatalogCategories(): CatalogCategory[] {
           title: "Gin Rummy",
           card: { rank: "7", suit: "D" },
           status: "Ready",
-          access: "Free",
-          accessModel: "free-starter",
           summary: "Build sets and runs. Knock before your opponent."
         }),
         createCatalogEntry({
@@ -251,9 +235,7 @@ export function getCatalogCategories(): CatalogCategory[] {
           family: "Rummy",
           title: "Canasta",
           card: { rank: "2", suit: "H" },
-          status: "Planned",
-          access: "Free",
-          accessModel: "free-starter",
+          status: isCanastaPreview() || context.premiumAvailable ? "Ready" : "Planned",
           summary: "Build canastas with your partner. Take the pile at the right moment."
         })
       ]
@@ -269,8 +251,6 @@ export function getCatalogCategories(): CatalogCategory[] {
           title: "Card Counting I",
           card: { rank: "J", suit: "C" },
           status: "Ready",
-          access: "Free",
-          accessModel: "free-starter",
           summary: "Remember trumps, high cards and danger cards."
         }),
         createCatalogEntry({
@@ -279,8 +259,6 @@ export function getCatalogCategories(): CatalogCategory[] {
           title: "Card Counting II",
           card: { rank: "J", suit: "S" },
           status: "Planned",
-          access: "Pack",
-          accessModel: "metered-pack",
           summary: "Bridge-oriented counting for suits, high cards, and table inference."
         }),
         createCatalogEntry({
@@ -289,8 +267,6 @@ export function getCatalogCategories(): CatalogCategory[] {
           title: "Solitaire",
           card: { rank: "A", suit: "D" },
           status: "Planned",
-          access: "Pack",
-          accessModel: "metered-pack",
           summary: "Solo card play for practicing order, suits, and patience habits."
         })
       ]
@@ -305,6 +281,7 @@ export function getCatalogCategories(): CatalogCategory[] {
     .filter((category) => category.entries.length > 0);
 }
 
-export function isCatalogGameAvailable(id: string): boolean {
-  return getCatalogCategories().some(category => category.entries.some(entry => entry.id === id));
+export function isCatalogGameAvailable(id: string, context: CatalogAccessContext = {}, now = Date.now()): boolean {
+  return getCatalogCategories(context).some(category => category.entries.some(entry => entry.id === id))
+    && (hasReleasedGameAccess(id, context.customer, now) || (id === "canasta" && isCanastaPreview()));
 }

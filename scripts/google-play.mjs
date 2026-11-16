@@ -69,6 +69,41 @@ export async function inspect(client) {
   }
 }
 
+export async function inspectMonetization(client) {
+  async function list(path, key) {
+    const items = [];
+    const seen = new Set();
+    let pageToken;
+    do {
+      const query = new URLSearchParams({ pageSize: "100" });
+      if (pageToken) query.set("pageToken", pageToken);
+      const page = await client(`${path}?${query}`);
+      assert(page && typeof page === "object", "Invalid product-list response.");
+      assert(page[key] === undefined || Array.isArray(page[key]), `Invalid ${key} response.`);
+      items.push(...(page[key] ?? []));
+      pageToken = page.nextPageToken;
+      if (pageToken) {
+        assert(typeof pageToken === "string" && !seen.has(pageToken), "Invalid or repeated product-list page token.");
+        seen.add(pageToken);
+      }
+    } while (pageToken);
+    return items;
+  }
+
+  const subscriptions = await list("/subscriptions", "subscriptions");
+  const products = await list("/oneTimeProducts", "oneTimeProducts");
+  return {
+    packageName,
+    subscriptions: subscriptions.map(product => ({
+      productId: product.productId,
+      basePlans: (product.basePlans ?? []).map(plan => ({ basePlanId: plan.basePlanId, state: plan.state }))
+    })),
+    oneTimeProducts: products.map(product => ({ productId: product.productId })),
+    paymentsProfile: "Not checked: inspect Payments profile in Play Console.",
+    note: "Product configuration is not evidence of merchant verification or a working purchase integration. No changes made."
+  };
+}
+
 export function validateCandidate(record, bytes, config, fingerprint, notes) {
   assert.equal(record.package, packageName, "Wrong package in verification record.");
   assert.equal(config.identifier, packageName, "Wrong package in Tauri configuration.");
@@ -162,7 +197,12 @@ export async function main(args) {
     "replace-unsent": { type: "string" }, submit: { type: "boolean", default: false }, json: { type: "boolean", default: false }
   } });
   const command = positionals[0];
-  assert(positionals.length === 1 && ["status", "upload", "fingerprint"].includes(command), "Usage: google-play.mjs status [--json] | fingerprint | upload --bundle PATH --verification PATH --notes PATH --name NAME [--replace-unsent CODE] [--submit]");
+  assert(positionals.length === 1 && ["status", "monetization", "upload", "fingerprint"].includes(command), "Usage: google-play.mjs status [--json] | monetization | fingerprint | upload --bundle PATH --verification PATH --notes PATH --name NAME [--replace-unsent CODE] [--submit]");
+  if (command === "monetization") {
+    assert(args.length === 1, "Monetization inspection accepts no options and never changes products.");
+    console.log(JSON.stringify(await inspectMonetization(createClient(await authenticate())), null, 2));
+    return;
+  }
   if (command === "fingerprint") {
     assert(args.length === 1, "Fingerprint accepts no options.");
     console.log(sourceFingerprint());

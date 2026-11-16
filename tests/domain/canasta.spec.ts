@@ -204,7 +204,7 @@ test("each Canasta topic has three engine-checked decisions", () => {
   for (const [topic, steps] of Object.entries(canastaExercises)) {
     expect(steps).toHaveLength(3);
     for (const step of steps) {
-      const options = topic === "discard" ? step.session.hand.hands[0].map(card => card.id) : ["yes", "no"];
+      const options = topic === "discard" ? step.session.hand.hands[0].map(card => card.id) : step.options ?? ["yes", "no"];
       expect(options.some(answer => answerCanastaExercise(topic, step, answer).good)).toBe(true);
     }
   }

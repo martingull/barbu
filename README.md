@@ -6,9 +6,14 @@ Barbu helps players learn classic card games through short interactive lessons, 
 
 Barbu is available on [Google Play](https://play.google.com/store/apps/details?id=com.martin.barbu). Visit the [product website](https://siliciumveritas.com/) for a preview and an introduction to the games; its source lives in [`website/`](website/).
 
-The active catalog contains Hearts, Barbu (including Domino), Whist, Spades, Bridge, Gin Rummy and Card Counting I. Each table uses shared **Learn | Play** navigation; short exercises and guided hands belong inside Learn. Canasta is a paused, hidden prototype, not a released game.
+The active catalog contains Hearts, Barbu (including Domino), Whist, Spades, Bridge, Gin Rummy and Card Counting I. Each table uses shared **Learn | Play** navigation; short exercises and guided hands belong inside Learn. [Canasta](docs/canasta.md) has an opt-in development preview with shared lessons and guided play; it remains hidden in release builds.
 
-All gameplay runs locally in TypeScript, shared by browser and installed builds. Svelte owns presentation and interaction; Tauri packages the native application. Rust handles startup and native external-link openers, not rules or scoring. Saves and learning progress are local; there is no gameplay server, account system or active payment layer.
+All gameplay runs locally in TypeScript, shared by browser and installed builds. Svelte owns presentation and interaction; Tauri packages the native application. Rust handles startup and native integrations, not rules or scoring. Saves and learning progress are local; there is no gameplay server or player login. The Android billing test integration uses Google Play and RevenueCat.
+
+The existing seven games remain free. Additional games, starting with Canasta,
+are intended for an optional Premium subscription. Billing is disabled in the
+public build; Norway-only purchase testing is in progress locally. See
+the [premium setup and release gates](docs/premium.md).
 
 Play is against computer opponents, not online multiplayer. **Share Barbu** shares the Google Play listing, and **Get out and play** opens an external Google Maps search for card clubs. Barbu does not operate a verified club directory, membership service or tournament booking system. Local tables may use different rules and conventions.
 

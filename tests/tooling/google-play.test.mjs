@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { inspect, main, packageName, planUpload, submitUpload, validateCandidate } from "../../scripts/google-play.mjs";
+import { inspect, inspectMonetization, main, packageName, planUpload, submitUpload, validateCandidate } from "../../scripts/google-play.mjs";
 
 const bytes = Buffer.from("signed bundle fixture");
 const record = { package: packageName, versionName: "1.0.6", versionCode: 1000007, bytes: bytes.length,
@@ -131,7 +131,34 @@ test("release-list quota failure stops before upload and cleans up the edit", as
 });
 
 test("invalid CLI options fail before authentication", async () => {
-  for (const args of [["production"], ["status", "--submit"], ["upload"], ["upload", "--track", "production"]]) {
+  for (const args of [["production"], ["status", "--submit"], ["monetization", "--submit"], ["upload"], ["upload", "--track", "production"]]) {
     await assert.rejects(main(args));
   }
+});
+
+test("monetization inspection only reads products and follows pagination", async () => {
+  const calls = [];
+  const result = await inspectMonetization(async (path, options) => {
+    assert.equal(options, undefined);
+    calls.push(path);
+    if (path.startsWith("/oneTimeProducts")) return { oneTimeProducts: [{ productId: "pack" }] };
+    if (path.includes("pageToken=")) return { subscriptions: [{ productId: "second", basePlans: [{ basePlanId: "annual", state: "ACTIVE" }] }] };
+    return { subscriptions: [{ productId: "premium", basePlans: [{ basePlanId: "monthly", state: "DRAFT" }] }], nextPageToken: "next&token" };
+  });
+  assert.equal(calls.length, 3);
+  assert(calls[1].includes("pageToken=next%26token"));
+  assert.equal(result.subscriptions.length, 2);
+  assert.equal(result.subscriptions[0].basePlans[0].state, "DRAFT");
+  assert.equal(result.subscriptions[1].basePlans[0].state, "ACTIVE");
+  assert.deepEqual(result.oneTimeProducts, [{ productId: "pack" }]);
+  assert(result.paymentsProfile.startsWith("Not checked"));
+});
+
+test("empty products are distinct from API failures or invalid pagination", async () => {
+  const empty = await inspectMonetization(async () => ({}));
+  assert.deepEqual(empty.subscriptions, []);
+  assert.deepEqual(empty.oneTimeProducts, []);
+  await assert.rejects(inspectMonetization(async () => { throw new Error("Permission denied"); }), /Permission denied/);
+  await assert.rejects(inspectMonetization(async () => ({ nextPageToken: "repeated" })), /repeated/);
+  await assert.rejects(inspectMonetization(async () => ({ subscriptions: {} })), /Invalid subscriptions/);
 });

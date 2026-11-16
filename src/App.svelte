@@ -1,4 +1,8 @@
 <script lang="ts">
+  import { onMount } from "svelte";
+  import PremiumScreen from "./features/premium/PremiumScreen.svelte";
+  import { createPremiumFeature } from "./features/premium/premiumFeature";
+  import { nativeBilling } from "./features/premium/nativeBilling";
   import BarbuGame from "./features/barbu/BarbuGame.svelte";
   import BridgeGame from "./features/bridge/BridgeGame.svelte";
   import SpadesGame from "./features/spades/SpadesGame.svelte";
@@ -30,8 +34,24 @@
   import type { DrillResult } from "./lessons/drillDecision";
   import { formatCardText } from "./presentation/cardDisplay";
 
-  type AppView = "catalog" | "barbuFeature" | "heartsFeature" | "whistFeature" | "spadesFeature" | "bridgeFeature" | "ginFeature" | "canastaFeature" | "cardCountingFeature" | "reference";
-  const catalogCategories = getCatalogCategories();
+  type AppView = "catalog" | "premium" | "barbuFeature" | "heartsFeature" | "whistFeature" | "spadesFeature" | "bridgeFeature" | "ginFeature" | "canastaFeature" | "cardCountingFeature" | "reference";
+  const premium = createPremiumFeature(nativeBilling);
+  onMount(() => {
+    void premium.initialize();
+    const refresh = () => { if (document.visibilityState === "visible") void premium.refresh(); };
+    const timer = window.setInterval(refresh, 60_000);
+    const expiryTimer = window.setInterval(() => premium.tick(), 1_000);
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.clearInterval(expiryTimer);
+      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("focus", refresh);
+    };
+  });
+  $: accessContext = { customer: $premium.customer, premiumAvailable: $premium.available };
+  $: catalogCategories = getCatalogCategories(accessContext);
   const privacyPolicyUrl = "https://martingull.github.io/barbu/privacy-policy.html";
   let privacyPolicyError = "";
   let openingPrivacyPolicy = false;
@@ -69,7 +89,9 @@
   const canastaFeature = createCanastaFeature(services);
   const playFeatures = { barbu: barbuFeature, hearts: heartsFeature, whist: whistFeature, spades: spadesFeature, bridge: bridgeFeature, "gin-rummy": ginFeature, canasta: canastaFeature };
   $: savedGames = continueGames({ barbu: $barbuFeature.saved, hearts: $heartsFeature.saved,
-    whist: $whistFeature.saved, spades: $spadesFeature.saved, bridge: $bridgeFeature.saved, "gin-rummy": $ginFeature.saved, canasta: $canastaFeature.saved });
+    whist: $whistFeature.saved, spades: $spadesFeature.saved, bridge: $bridgeFeature.saved, "gin-rummy": $ginFeature.saved, canasta: $canastaFeature.saved }, accessContext);
+  $: gameAccessBlocked = appView !== "catalog" && appView !== "premium" && appView !== "reference"
+    && !isCatalogGameAvailable(activeGameTable, accessContext);
   $: activeReference = referenceCatalog.find(reference => reference.id === activeReferenceId) ?? referenceCatalog[0];
   $: activeReferenceIsBarbu = activeReference.id === "barbu";
   $: heartsIntroductionComplete = completedPathSteps[heartsIntroduction.id] === true;
@@ -220,6 +242,10 @@
     appView = "catalog";
   }
 
+  function openPremium() {
+    appView = "premium";
+  }
+
 
   async function openPrivacyPolicy(event: MouseEvent) {
     if (!isTauri()) return;
@@ -315,7 +341,10 @@
 
 
   function openGame(gameId: CatalogGameId) {
-    if (!isCatalogGameAvailable(gameId)) return;
+    if (!isCatalogGameAvailable(gameId, accessContext)) {
+      if ($premium.available && catalogCategories.some(category => category.entries.some(entry => entry.id === gameId))) openPremium();
+      return;
+    }
     if (gameId === "canasta") {
       activeGameTable = "canasta";
       canastaFeature.openTable();
@@ -369,7 +398,7 @@
   }
 
   function continueGame(id: SavedGameId) {
-    if (!isCatalogGameAvailable(id)) return;
+    if (!isCatalogGameAvailable(id, accessContext)) { openGame(id); return; }
     openGame(id);
     playFeatures[id].resume();
   }
@@ -389,11 +418,14 @@
 
 </script>
 
-<main class:fixed-play-screen={(appView === "whistFeature" && whistFixedSurface) || (appView === "heartsFeature" && heartsFixedSurface) || (appView === "spadesFeature" && spadesFixedSurface) || (appView === "bridgeFeature" && bridgeFixedSurface) || (appView === "barbuFeature" && barbuFixedSurface) || (appView === "cardCountingFeature" && cardCountingFixedSurface) || (appView === "ginFeature" && ginFixedSurface) || (appView === "canastaFeature" && canastaFixedSurface)} class="app-shell">
+<main class:fixed-play-screen={!gameAccessBlocked && ((appView === "whistFeature" && whistFixedSurface) || (appView === "heartsFeature" && heartsFixedSurface) || (appView === "spadesFeature" && spadesFixedSurface) || (appView === "bridgeFeature" && bridgeFixedSurface) || (appView === "barbuFeature" && barbuFixedSurface) || (appView === "cardCountingFeature" && cardCountingFixedSurface) || (appView === "ginFeature" && ginFixedSurface) || (appView === "canastaFeature" && canastaFixedSurface))} class="app-shell">
   {#if appView === "catalog"}
     <GameCatalog categories={catalogCategories} {savedGames} introduction={heartsIntroductionComplete ? heartsIntroduction.completed : heartsIntroduction} onOpen={openGame} onContinue={continueGame} onIntroduction={tryHearts} />
 
     <footer class="catalog-footer">
+      {#if $premium.available}
+        <button class="catalog-premium" type="button" onclick={openPremium}>{$premium.active ? "Manage Premium" : "Premium"}</button>
+      {/if}
       <a href={privacyPolicyUrl} rel="noopener noreferrer" target="_blank" onclick={openPrivacyPolicy} aria-busy={openingPrivacyPolicy}>Privacy policy</a>
       {#if privacyPolicyError}
         <p role="alert">
@@ -402,6 +434,8 @@
         </p>
       {/if}
     </footer>
+  {:else if appView === "premium" || gameAccessBlocked}
+    <PremiumScreen feature={premium} onBack={openCatalog} />
   {:else if appView === "barbuFeature"}
     <BarbuGame feature={barbuFeature} initialEntry={barbuEntry} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onBack={openCatalog} onReference={() => openReference("barbu")}

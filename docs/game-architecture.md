@@ -73,8 +73,14 @@ settles the game, while `features/whist/whistPresentation.ts` formats the result
 Partnership trick totals are shared domain calculations in `trickTakingScore.ts`;
 Spades and Card Counting must not import Whist presentation to count tricks.
 
-The source-root `ProTabPanel` was unused and removed. Future monetization metadata
-remains in the definitions, but there is no active subscription screen. Native
+The source-root `ProTabPanel` was unused and removed. `games/accessPolicy.ts`
+owns the free catalog and future Premium classification; the catalog factory
+derives access metadata and gates entry/resume without per-game purchase checks.
+Canasta's development-only preview does not grant paid access. Configured Android
+test builds use `features/premium`, `domain/premiumAccess.ts` and the native
+RevenueCat plugin for purchase UI and verified-access checks. Real purchase
+testing is outstanding; public release defaults keep billing disabled. See
+[premium setup](premium.md). Native
 packaging, public assets, release artifacts and compatibility fixtures retain their
 existing locations. The stylesheet move preserves CSS rules and load order; a
 future stylesheet decomposition must be verified independently of file organization.
@@ -366,7 +372,7 @@ are factual breakdowns, not a shared scoring algorithm. No new progress keys,
 mastery claims, hint toggles or generic card-game engine are introduced.
 
 Guided play is part of the shared learning platform, alongside short lessons.
-Hearts, Gin Rummy, Spades, Whist, Bridge and Barbu use `features/guidedHandFeature.ts` for an isolated session,
+Hearts, Gin Rummy, Spades, Whist, Bridge, Barbu and the Canasta preview use `features/guidedHandFeature.ts` for an isolated session,
 selection, errors and replay. The adapter supplies normal domain transitions;
 the controller has no storage or course-completion dependency. All enter through
 `GuidedHandEntry`, use `TablePlaySurface` with reserved `ExerciseFeedback`, and
@@ -446,12 +452,17 @@ Add the next game using the same boundaries. Reuse the common Learn flow and gen
 controller behavior only where it removes real complexity. Do not add a
 universal controller or replace the existing metadata/engine factories.
 
-The paused Canasta prototype (hidden from players) extends the rummy collection with its own Modern American session and
+The opt-in Canasta preview (hidden in production) extends the rummy collection with its own Modern American session and
 meld rules, not Gin's knock/deadwood model. It shares deterministic shuffling,
 the save-store/session controller, Learn/Play shell, card faces and completion
 events. Double-pack identities are local to Canasta; existing single-deck IDs
 and saves remain stable. Its policy projection removes hidden cards and stock
-order. Large hands and public melds scroll in bounded regions rather than shrinking
+order. Six topics use `learningSession`, worked/supported/independent teaching,
+bounded companions, decision review and completion evidence. `canastaLearning.ts`
+adapts the ordinary engine to a single unsaved guided hand with public-only
+coaching and observed action recaps. Use immutable/raw lesson state when domain
+transitions clone positions; do not pass Svelte proxies into `structuredClone`.
+Large hands and public melds scroll in bounded regions rather than shrinking
 the shared cards. See [Canasta](canasta.md) for the selected table agreements,
 source differences and verification requirements.
 

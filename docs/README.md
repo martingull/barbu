@@ -24,7 +24,7 @@ release evidence have different roles; an old audit is not a current release gat
 - [Whist](whist.md)
 - [Bridge](bridge.md)
 - [Gin Rummy](gin-rummy.md)
-- [Canasta prototype](canasta.md), paused and hidden from players
+- [Canasta preview](canasta.md), opt-in development access; hidden in release builds
 
 Barbu's training boundaries and contract values are in the
 [feature map](../FEATURES.md#play-boundaries). Spades currently documents its
@@ -33,6 +33,7 @@ scope there and in the domain modules; neither has a dedicated rules runbook her
 ## Release Operations
 
 - [Google Play](google-play-release.md): packaging, API safeguards and dated track status.
+- [Premium and billing](premium.md): free/premium boundaries, payment setup and launch gates.
 - [App Store](app-store-release.md): iPhone packaging and last recorded submission.
 - [App Review response](app-review-response.md): submission-specific correspondence,
   not reusable claims about an untested new build.

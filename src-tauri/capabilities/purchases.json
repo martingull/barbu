@@ -1,0 +1,6 @@
+{
+  "identifier": "purchases",
+  "description": "Local Barbu purchase and subscription-management commands",
+  "windows": ["main"],
+  "permissions": ["barbu-purchases:default"]
+}

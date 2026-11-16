@@ -1,7 +1,7 @@
 import type { SavedPlayBarbuRun } from "../../persistence/barbuSave";
 import type { SavedGinRun } from "../../persistence/ginRummySave";
 import type { SavedCanastaRun } from "../../persistence/canastaSave";
-import { isCatalogGameAvailable } from "../../games/tableFactory";
+import { isCatalogGameAvailable, type CatalogAccessContext } from "../../games/tableFactory";
 import { savedPlayBarbuRunSummary } from "../../persistence/barbuSave";
 import type { SavedHeartsRun } from "../../persistence/heartsSave";
 import { savedHeartsRunSummary } from "../../persistence/heartsSave";
@@ -25,7 +25,7 @@ export type SavedGameId = keyof SavedGames;
 export type ContinueGame = { id: SavedGameId; title: string; summary: string; savedAt: string };
 
 // Use the feature controllers' validated saves, including their in-memory updates.
-export function continueGames(saved: SavedGames): ContinueGame[] {
+export function continueGames(saved: SavedGames, access: CatalogAccessContext = {}): ContinueGame[] {
   const entries: ContinueGame[] = [];
   if (saved.canasta) {
     const game = saved.canasta;
@@ -41,6 +41,6 @@ export function continueGames(saved: SavedGames): ContinueGame[] {
   if (saved.bridge) entries.push({ id: "bridge", title: "Bridge", summary: savedBridgeRunSummary(saved.bridge), savedAt: saved.bridge.savedAt });
   if (saved.barbu) entries.push({ id: "barbu", title: "Barbu", summary: savedPlayBarbuRunSummary(saved.barbu), savedAt: saved.barbu.savedAt });
   const timestamp = (value: string) => Number.isFinite(Date.parse(value)) ? Date.parse(value) : 0;
-  return entries.filter(entry => isCatalogGameAvailable(entry.id))
+  return entries.filter(entry => isCatalogGameAvailable(entry.id, access))
     .sort((a, b) => timestamp(b.savedAt) - timestamp(a.savedAt));
 }

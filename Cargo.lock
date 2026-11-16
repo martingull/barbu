@@ -217,8 +217,10 @@ checksum = "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53"
 name = "barbu-app"
 version = "1.0.6"
 dependencies = [
+ "serde_json",
  "tauri",
  "tauri-build",
+ "tauri-plugin-barbu-purchases",
  "tauri-plugin-opener",
 ]
 
@@ -3444,6 +3446,16 @@ dependencies = [
  "serde_json",
  "tauri-utils",
  "walkdir",
+]
+
+[[package]]
+name = "tauri-plugin-barbu-purchases"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
 ]
 
 [[package]]

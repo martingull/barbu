@@ -21,7 +21,7 @@ are not yet quantified; this is a product shortlist, not market-size research.
 
 | Order | Game and initial profile | Why it belongs | Status / main work |
 | --- | --- | --- | --- |
-| 1 | Canasta, Modern American, four-player partnerships | Adds partnership meld-building beyond Gin Rummy. | Agreed candidate. Resume the paused prototype only after rules, learning and mobile-layout audits. |
+| 1 | Canasta, Modern American, four-player partnerships | Adds partnership meld-building beyond Gin Rummy. | Opt-in development preview: six shared learning topics and guided hand. Production stays hidden pending device/play-quality review and premium access work. |
 | 2 | Euchre, four-player North American partnership profile | Five-card hands and compact trump decisions offer an approachable partnership game. | Agreed candidate. Specify bowers, trump selection, going alone and table agreements. |
 | 3 | Schnapsen, two players | Twenty-card deck and five-card hands provide compact decisions with substantial depth. | Agreed candidate. Teach card points, marriages, stock closure and changing follow-suit obligations. |
 | 4 | Cribbage, two-player six-card game | Adds a distinct scoring family and a strong reason for interactive teaching. | Agreed candidate. Needs crib selection, pegging, hand scoring and a readable scoring display. |

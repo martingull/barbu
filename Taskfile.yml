@@ -51,6 +51,11 @@ tasks:
     cmds:
       - npm run test:e2e -- --grep "active game tables share|quick drill is a fixed|Hearts passing drill teaches|Hearts play starts|Hearts next hand carries|practice tab starts a full Domino|Perfect mode starts|Trump memory hand starts"
 
+  ui:test:canasta:
+    desc: Verify the opt-in Canasta preview without exposing it in release builds
+    cmds:
+      - npm run test:e2e -- --config playwright.canasta.config.ts --project=galaxy-s9 --project=iphone-xr --workers 2
+
   domain:test:
     desc: Type-check and test the shared TypeScript engine without a browser
     cmds:
@@ -189,6 +194,11 @@ tasks:
     desc: Inspect Google Play tracks and review states; never publishes changes
     cmds:
       - node scripts/google-play.mjs status {{.CLI_ARGS}}
+
+  play:monetization:
+    desc: Read Google Play product configuration; never creates or activates purchases
+    cmds:
+      - node scripts/google-play.mjs monetization {{.CLI_ARGS}}
 
   play:upload:
     desc: Preview a verified closed-test upload; pass --submit explicitly to send it

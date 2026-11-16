@@ -4,7 +4,7 @@ Guidance for coding agents working in this repository.
 
 ## Project
 
-Barbu is an iPhone-first card-game collection with Android builds and a browser development runtime. The active catalog is Hearts, Barbu, Whist, Spades, Bridge, Gin Rummy and Card Counting I. Canasta is paused and hidden. Hearts provides the first-use introduction; Learn and Play are the shared visible tabs.
+Barbu is an iPhone-first card-game collection with Android builds and a browser development runtime. The active catalog is Hearts, Barbu, Whist, Spades, Bridge, Gin Rummy and Card Counting I. Canasta has an opt-in development preview (`VITE_CANASTA_PREVIEW=1`) and remains hidden in release builds. Hearts provides the first-use introduction; Learn and Play are the shared visible tabs.
 
 The product concept is that the player learns by sitting down against Barbu, a "King of Cards" figure who introduces games, sets contracts, reacts to play, and gradually raises the difficulty. Treat this persona as a teaching and progression device, not as an excuse to hide rules or make the interface theatrical at the cost of clarity.
 

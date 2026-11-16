@@ -2,11 +2,17 @@
 
 ## Release Status
 
-Paused and hidden from players. The catalog marks Canasta as `Planned`, so it
-cannot be opened or resumed from the home screen. Existing saves are retained.
-The implementation and domain tests remain; UI tests skip while it is hidden.
-To revisit it, change its catalog status to `Ready`, restore its free-starter
-policy entry, and run the full verification below before shipping it.
+Development preview; still hidden in production builds. Start it with
+`VITE_CANASTA_PREVIEW=1 npm run dev -- --port 1421` and open Canasta in the
+catalog. The flag only works in Vite development mode. Default browser sessions
+and release builds retain the seven-game catalog; existing Canasta saves are retained.
+
+Canasta is classified as Premium by the shared catalog access policy. Its
+development preview does not grant a purchase or permanent free unlock. The
+Android billing integration is under device testing, with purchase verification
+still outstanding. Configured native test builds expose Canasta through Premium.
+Do not expose it in a public store build before the device/play-quality and
+[commercial release gates](premium.md) are satisfied.
 
 ## Rules Profile
 
@@ -79,8 +85,37 @@ penalties even when a partnership has exactly one canasta.
 - `features/canasta/`: composes the saved-session controller, shared table shell,
   card artwork, learning flow and result/completion event. Meld edits stay local
   until confirmed. No rule implementation lives in Svelte.
-- `lessons/canasta/`: four courses, each with three short decisions evaluated
-  through the same session engine as Play. Exercises never write the match save.
+- `domain/canastaLearning.ts`: one unsaved guided hand using normal transitions
+  and opponents. Public-only coaching, checked-move review, observed hand-count
+  changes, one-hand completion and exact replay; no lesson progress or storage.
+- `lessons/canasta/`: six courses (melds, opening, pile, discard, going out,
+  scoring), each with three short decisions and three distinct bounded companions.
+  Legality and score questions use the same session/rules as Play. The four
+  original progress keys remain; opening and score add two new keys.
+
+## Shared Learning And Table
+
+`CanastaExercise` uses `learningSession` for immutable answer locking, feedback,
+bounded reinforcement and completion. Each topic follows worked, supported,
+independent teaching stages. The shared result records all decisions, supplies
+read-only position snapshots and score breakdowns, and offers the next lesson,
+retry, guided play or ordinary Play. Lessons never overwrite the saved match.
+Public/proposed melds are shown alongside the cards needed to answer each question.
+These are reduced teaching positions, not simulated full deals.
+
+`CanastaGuidedHand` uses `createGuidedHandFeature`, just like Gin. It composes
+`CanastaHandView`, `ExerciseFeedback` and `GuidedHandActions`; no separate game
+engine or bespoke learning shell is introduced. Rules and tactical context are
+always present. Every accepted action pauses for review; cards and pile actions
+are locked until Continue. The final action is retained in a bounded recap even
+when it ends the hand. Completion neither advances a match nor awards a lesson.
+
+The table uses the shared flow surface with a stable feedback region and a
+seven-column hand. Stock/pile cards are larger than in the paused prototype.
+Large hands and public melds scroll within their reserved areas. Meld details
+can be expanded without resizing the board. On short screens the hand window
+shows fewer rows; cards stay selectable by scrolling rather than overlapping
+the action row. The meld editor stages changes until confirmation.
 
 Existing jokers in `public/cards/PNG-cards-1.3/` are used rather than introducing
 new artwork. Shared card display keeps the existing suit ordering, with jokers at
@@ -94,6 +129,10 @@ permission dialogue, verbal/table signals, expert search and CLA-specific specia
 hands are not included. Suggestions are legal candidate groups, not a claim of
 optimal strategy. Invalid attempts do not incur physical-table procedural penalties.
 Manual card exposure beyond the rules is not simulated.
+The six topics teach foundations, not a complete advanced Canasta curriculum.
+Special-hand construction, partnership strategy, and more nuanced discard choices
+still need dedicated lessons and club-player feedback before selling this as an
+advanced course. Guidance explains legal possibilities, not optimal strategy.
 
 The hand area scrolls independently when a pile pickup creates many rows; neither
 card count nor selection changes board geometry. On short viewports the hand
@@ -105,12 +144,14 @@ Focused commands:
 
 ```sh
 npm run test:domain -- tests/domain/canasta.spec.ts
-npm run test:e2e -- tests/e2e/canasta.spec.ts --project=galaxy-s9 --project=iphone-xr
+task domain:test
+task ui:test:canasta
 npm run build
 ```
 
 Verify complete matches, 108-card conservation, hidden-information independence,
 initial meld and pickup edge cases, target completion, exact replay/resume,
-blocked storage, twelve learning decisions, narrow-screen layout and a 48-card
+blocked storage, eighteen base decisions and eighteen bounded companions,
+full guided-hand review/replay, narrow-screen layout and a 48-card
 hand. Physical-device testing is required before including this game in a store
 release; browser coverage does not replace that check.

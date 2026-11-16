@@ -18,7 +18,8 @@ Player-facing references are assembled in
 [referenceCatalog.ts](../src/games/referenceCatalog.ts), with separate Gin Rummy
 and Canasta reference modules. Catalog collections and Learn/Play metadata belong
 in [src/games](../src/games/). A reference or registered definition alone does not
-make a game available: planned entries, including Canasta, are hidden.
+make a game available: planned entries, including Canasta, are hidden in release
+builds. Canasta's explicit development preview is documented in `docs/canasta.md`.
 
 Use family metadata for classification and keep varieties attached to the core
 game. Record rule sources and deliberate limitations in `docs/<game>.md`; use

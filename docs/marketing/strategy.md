@@ -234,10 +234,12 @@ At the four-week review, diagnose before expanding:
 Remain free and ad-free through this initial experiment. Revisit monetisation
 once we have repeat-use evidence and understand what users value, not merely when
 an install counter reaches a number. The November 14 direction is optional paid
-content, such as a one-time premium unlock, substantial learning packs or a
-subscription backed by recurring value. Pricing and implementation are undecided;
-advertising is not part of the current plan. Preserve a useful free starter
-experience rather than abruptly locking existing free lessons.
+content. The subsequent agreed direction is one optional Premium subscription
+for additional games, starting with Canasta, while the existing seven games stay
+free. Approved prices are EUR 2.50/month and EUR 19.99/year; Android billing is
+under controlled Norway-only testing and is not publicly launched. See the
+[premium delivery gates](../premium.md). Advertising is not part of the current
+plan. Do not abruptly lock existing free lessons.
 Protect lessons and guided explanations; do not create cooldowns or charge for
 correcting mistakes. Club licences would require a validated organiser need.
 
