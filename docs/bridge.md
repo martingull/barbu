@@ -50,20 +50,20 @@ history. Declarer may additionally use the other declaring hand. Defenders must
 not use partner's hidden cards. Tests check information independence, follow-suit
 legality, card conservation, and completion across all declarer seats and strains.
 
-Authored short exercises live in `src/lessons/bridge/exercises.ts`, not the screen.
+Authored short exercises live under `src/lessons/bridge/`, not in the screen.
 Each topic has three decisions; defense exercises remain defensive. Legal cards
 are checked separately from tactical grades, and scripts must contain four unique
 seats in clockwise order with no duplicated cards.
-The five-topic path now starts with reading contracts and controlling dummy,
-before opening bids, declarer tactics and defense. Dummy has its own three
+The six-topic path starts with reading contracts and controlling dummy,
+before opening bids, responding to 1NT, declarer tactics and defense. Dummy has its own three
 reduced-hand positions, not a replay of declarer tactics. The shared drill view
 supports an explicit playing seat and a read-only reference hand; selected dummy
 cards render at North, and South's cards remain separate. Contract targets use
 the auction engine's bid metadata. Bidding choices start unselected. Existing
 progress keys and match saves are retained.
 
-`src/lessons/bridge/learning.ts` adapts the five topics into worked, supported
-and independent decisions, with fifteen base positions and fifteen distinct
+`src/lessons/bridge/learning.ts` adapts the six topics into worked, supported
+and independent decisions, with eighteen base positions and eighteen distinct
 reinforcement positions. Shared feedback and decision review preserve the
 original visible information. Contract/bidding questions use the shared learning
 session controller rather than maintaining a separate completion model.
@@ -76,7 +76,22 @@ learner controls South and North dummy. When North declares, North plays
 automatically and the learner chooses South dummy's cards: this is a training
 convention, not the club rule that dummy makes independent decisions.
 
-Responder auctions, multi-trick planning sequences and interactive duplicate
+The `bridge-responding` lesson adds three full-hand choices after North's 1NT
+and East's pass: pass with 7 HCP, invite with 9, and bid 3NT with 10. Fresh
+reinforcement hands use 6, 8 and 12 HCP. These balanced hands have no four-card
+major, keeping Stayman and transfers outside the question. Feedback explains
+combined strength, invitations and the nine-trick game target. All choices are
+checked against the live auction policy. Existing completion keys remain intact;
+the new lesson receives its own key.
+
+This is Barbu Natural (15-17 1NT), not Acol. The lesson explicitly describes the
+current opener's simplified invitation policy: pass with 15-16, accept with 17.
+The 25-point game guide is not a guarantee of tricks or a universal system rule.
+Supplementary teaching reference: [ACBL School Bridge Lesson Series, responding
+to 1NT](https://web2.acbl.org/documentlibrary/teachers/SBLSTeacherManual.pdf).
+Lesson wording and examples are original.
+
+Responses to suit openings, competitive auctions, multi-trick planning and interactive duplicate
 score explanation remain curriculum gaps, not completed lessons.
 
 ## Remaining Strength Boundaries

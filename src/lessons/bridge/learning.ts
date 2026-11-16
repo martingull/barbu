@@ -13,6 +13,7 @@ type CardTopic = keyof typeof pools;
 const principles = {
   contracts: "Read the level and strain: six base tricks plus the level is the partnership target. NT means no trump suit.",
   bidding: "Describe your own strength and shape: weak balanced hands pass, 15-17 balanced opens 1NT, opening strength with a five-card major shows that major.",
+  responding: "After partner's 15-17 1NT, balanced hands without a four-card major pass with 0-7 HCP, invite with 2NT on 8-9, and bid 3NT on 10-15. Points guide the target; they do not guarantee tricks.",
   dummy: "Declarer directs two separate hands. Follow suit from the hand whose turn it is, not from the partnership's combined cards.",
   declarer: "Plan partnership winners and entries. Finesses, developing length and unblocking can create tricks, but hidden cards still matter.",
   defense: "Defenders work together: support partner's lead, use exposed dummy, and preserve partnership winners."
@@ -111,7 +112,51 @@ function targetChoice(bid: string, title: string, options: string[], teaching: T
     hand: [], options: options.map(id => ({ id, label: `${id} ${id === "1" ? "trick" : "tricks"}` })),
     correct: String(contract.target), explanations: Object.fromEntries(options.map(id => [id, explanation])), teaching };
 }
-export function bridgeChoiceSteps(topic: "contracts" | "bidding"): BridgeChoiceStep[] {
+function responseChoices(): BridgeChoiceStep[] {
+  const examples = [
+    { title: "You can stop here", correct: "Pass",
+      hand: "KS 7S 2S QH 8H 3H JD 9D 4D JC 10C 6C 2C",
+      followHand: "QS 8S 3S KH 9H 2H JD 8D 4D 10C 7C 5C 2C" },
+    { title: "Let partner judge", correct: "2NT",
+      hand: "AS 8S 3S QH 7H 2H KD 9D 4D 10C 8C 6C 2C",
+      followHand: "KS 8S 2S QH 6H 3H JD 9D 5D QC 8C 4C 2C" },
+    { title: "Choose your response", correct: "3NT",
+      hand: "KS 9S 4S AH 8H 2H QD 7D 3D JC 9C 5C 2C",
+      followHand: "AS 9S 3S KH 7H 2H QD 8D 4D KC 10C 6C 2C" }
+  ];
+  return examples.map((example, index) => {
+    const make = (ids: string, followUp: boolean): BridgeChoiceStep => {
+      const hand = cards(ids);
+      const points = bridgeHighCardPoints(hand);
+      const total = `${points + 15}-${points + 17}`;
+      const why = example.correct === "Pass"
+        ? `${points} + partner's 15-17 = ${total} HCP. Pass: below the usual 25-point game guide, keep the seven-trick target.`
+        : example.correct === "2NT"
+          ? `${points} + 15-17 = ${total} HCP. Invite with 2NT: game is possible, not certain. Partner may pass or bid 3NT with a maximum.`
+          : `${points} + 15-17 = ${total} HCP. Bid 3NT: even partner's minimum reaches the usual game guide. Nine tricks are still needed.`;
+      const objections: Record<string, string> = {
+        Pass: "Passing would stop short of exploring game.",
+        "2NT": example.correct === "Pass" ? "An invitation overstates this hand." : "An invitation understates this hand.",
+        "3NT": "Jumping to game asks for nine tricks without enough evidence."
+      };
+      return {
+        id: `bridge-responding-${index}${followUp ? "-follow-up" : ""}`, title: example.title,
+        prompt: "Partner opened 1NT. With this balanced hand, what should you call?",
+        context: "North (partner): 1NT. East: Pass. South (you) to call.",
+        contextDetail: `Partner: 15-17 HCP. You: ${points} HCP.`, hand,
+        correct: example.correct, options: ["Pass", "2NT", "3NT"].map(id => ({ id, label: bridgeCallLabel(id) })),
+        explanations: Object.fromEntries(["Pass", "2NT", "3NT"].map(id => [id, `${id === example.correct ? "Good." : objections[id]} ${why}`])),
+        teaching: { stage: followUp ? "reinforcement" : teachingStages[index],
+          guidance: followUp ? principles.responding : index === 0 ? `Try Pass. ${why}`
+            : index === 1 ? "Add your points to both ends of partner's range. Does game depend on partner having a maximum?" : undefined }
+      };
+    };
+    return { ...make(example.hand, false), followUp: make(example.followHand, true) };
+  });
+}
+
+export function bridgeChoiceSteps(topic: "contracts" | "bidding" | "responding"): BridgeChoiceStep[] {
+  if (topic === "responding") return responseChoices();
   if (topic === "contracts") return bridgeContractSteps.map((step, index) => ({
     ...targetChoice(step.bid, step.title, step.options, { stage: teachingStages[index], guidance: step.hint || undefined }),
     followUp: targetChoice(["2C", "2NT", "5D"][index], "Read another contract", [["2", "8", "10"], ["2", "6", "8"], ["5", "10", "11"]][index], { stage: "reinforcement", guidance: principles.contracts })

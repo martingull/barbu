@@ -1,8 +1,8 @@
 import type { GameDefinition } from "./gameRegistry";
 import { createGameTableDefinition } from "./tableFactory";
 
-export type BridgeLearnPathAction = "contracts" | "bidding" | "declarer" | "dummy" | "defense";
-export type BridgePracticeAction = "bidding" | "declarer" | "defense";
+export type BridgeLearnPathAction = "contracts" | "bidding" | "responding" | "declarer" | "dummy" | "defense";
+export type BridgePracticeAction = "bidding" | "responding" | "declarer" | "defense";
 
 export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAction> = {
   table: createGameTableDefinition({
@@ -22,7 +22,7 @@ export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAct
       pathTitle: "Learn the Bridge table",
       progressAriaLabel: "Bridge course progress",
       nextSummary: "Open a compact Bridge decision, then repeat the same habit in practice.",
-      completeSummary: "You have tried the first Bridge habits: opening bids, declarer play, the dummy, and defense.",
+      completeSummary: "You have tried opening bids, responding to partner, declarer play, the dummy, and defense.",
       referenceSummary: "Check the Bridge baseline: basic natural bidding, declarer play, the dummy, and defense."
     },
     tabIntros: {
@@ -49,6 +49,7 @@ export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAct
       learn: [
         { id: "reference", label: "Reference", destination: "Bridge reference" },
         { id: "bidding", label: "Bidding", destination: "Bridge bidding concept" },
+        { id: "responding", label: "Respond to 1NT", destination: "Bridge responding concept" },
         { id: "declarer", label: "Declarer play", destination: "Bridge declarer concept" },
         { id: "dummy", label: "The Dummy", destination: "Bridge dummy concept" },
         { id: "defense", label: "Defense", destination: "Bridge defense concept" }
@@ -71,6 +72,10 @@ export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAct
       title: "Opening bids",
       summary: "Use basic natural bidding: 15-17 balanced opens 1NT, five-card majors open first, and weak hands pass.",
       action: "bidding"
+    },
+    {
+      id: "bridge-responding", step: "Partnership", title: "Respond to 1NT",
+      summary: "Add your strength to partner's range: pass, invite, or bid game.", action: "responding"
     },
     {
       id: "bridge-declarer",
@@ -102,6 +107,11 @@ export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAct
           summary: "Practice pass, 1NT, and five-card-major openings from the Bridge table.",
           action: "bidding",
           group: "bridge-drills"
+        },
+        {
+          id: "responding", label: "Respond", title: "Respond to 1NT",
+          summary: "Choose a partnership target after a 15-17 1NT opening.",
+          action: "responding", group: "bridge-drills"
         },
         {
           id: "declarer-play",

@@ -9,7 +9,7 @@ import type { Seat, TableCard } from "../../src/domain/types";
 
 test("Bridge starts with contracts and separate hands without reusing declarer questions", () => {
   expect(bridgeDef.learnSteps.map(step => step.id)).toEqual([
-    "bridge-contracts", "bridge-dummy", "bridge-bidding", "bridge-declarer", "bridge-defense"
+    "bridge-contracts", "bridge-dummy", "bridge-bidding", "bridge-responding", "bridge-declarer", "bridge-defense"
   ]);
   expect(bridgeCourses.map(course => course.pathStepId)).toEqual(bridgeDef.learnSteps.map(step => step.id));
   expect(bridgeCourses.find(course => course.pathStepId === "bridge-dummy")!.practiceTarget).toMatchObject({ action: "dummy" });

@@ -34,7 +34,7 @@ const courses: CourseContent[] = [
     contract: "Bridge", title: "Opening bids",
     concept: {
       heading: "Describe your hand to partner.",
-      body: "An opening bid describes strength and shape, not a promise to win that many tricks alone. Barbu uses a basic natural bidding system.",
+      body: "An opening bid describes strength and shape, not a promise to win that many tricks alone. Barbu Natural uses five-card majors and a 15-17 1NT opening, not Acol. Check your club's partnership agreements before applying these ranges.",
       points: [
         { marker: "Count", text: "Ace = 4, king = 3, queen = 2, jack = 1 high-card points." },
         { marker: "Shape", text: "Open 1NT with 15-17 points and a balanced hand." },
@@ -64,6 +64,44 @@ const courses: CourseContent[] = [
         { marker: "Points", text: "Count your honors before choosing an opening." },
         { marker: "Shape", text: "Distinguish a balanced hand from a long-suit hand." },
         { marker: "Pass", text: "Passing a weak hand is a useful, legal call." }
+      ]
+    }
+  },
+  {
+    id: "bridge-responding", game: "bridge", pathStepId: "bridge-responding",
+    practiceTarget: { kind: "practice", game: "bridge", action: "responding" },
+    contract: "Bridge", title: "Respond to 1NT",
+    concept: {
+      heading: "Count the partnership, not just yourself.",
+      body: "In Barbu Natural, partner's 1NT shows 15-17 high-card points. With a balanced hand and no four-card major, add your points to that range. Around 25 combined points is a guide to 3NT, not a guarantee of nine tricks.",
+      points: [
+        { marker: "Pass", text: "With 0-7 points and a balanced hand, stay in 1NT. You do not need to bid just because partner did." },
+        { marker: "Invite", text: "With 8-9 points, bid 2NT: ask partner to choose between stopping and bidding game." },
+        { marker: "Game", text: "With 10-15 points, bid 3NT. Making it earns a game bonus, but requires nine tricks." }
+      ]
+    },
+    example: {
+      heading: "Nine plus 15-17 leaves a choice.",
+      body: "North opens 1NT and East passes. You are South with a balanced nine points and no four-card major. The partnership has 24-26 points: enough for game only at the stronger end.",
+      ariaLabel: "Bridge response example", pendingBySeat: {},
+      tableCards: [
+        { seat: "You", card: { id: "AS", rank: "A", suit: "S", label: "AS" } },
+        { seat: "You", card: { id: "KD", rank: "K", suit: "D", label: "KD" } },
+        { seat: "You", card: { id: "QH", rank: "Q", suit: "H", label: "QH" } }
+      ],
+      sequence: [
+        { label: "Count", text: "An ace, king and queen total nine points: 4 + 3 + 2." },
+        { label: "Invite", text: "Respond 2NT. Unlike 3NT, this lets partner pass rather than commit to game." },
+        { label: "Partner", text: "Barbu's opener passes with 15-16 and bids 3NT with 17. This is a simplified strength rule; real pairs also judge their card quality." }
+      ]
+    },
+    review: {
+      heading: "Use partner's bid as information.",
+      body: "These choices assume an uncontested 15-17 1NT opening, balanced hands and no four-card major. Different systems, long suits and stronger hands need different responses.",
+      points: [
+        { marker: "Range", text: "Partner has shown a range, not an exact point count or their hidden cards." },
+        { marker: "Target", text: "1NT needs seven tricks, 2NT eight, and 3NT nine. Points help choose a target; they are not tricks." },
+        { marker: "Agree", text: "Barbu Natural is not Acol. Agree the 1NT range and responses with your partner before playing at a club." }
       ]
     }
   },

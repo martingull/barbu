@@ -19,7 +19,7 @@
   function leaveGuided(tab: "learn" | "play") {
     guidedSeed = null; guidedFixed = false; learningFixed = false; feature.openTable(tab);
   }
-  const names: Record<string, string> = { contracts: "contracts", dummy: "dummy", bidding: "bidding", declarer: "declarer play", defense: "defense" };
+  const names: Record<string, string> = { contracts: "contracts", dummy: "dummy", bidding: "bidding", responding: "respond to 1NT", declarer: "declarer play", defense: "defense" };
 </script>
 
 {#if guidedSeed !== null}
@@ -37,7 +37,7 @@
 {:else}
   <GameLearning {...services} definition={bridgeDef} gameName="Bridge" tab={$feature.tab}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
-    loadExercise={action => action === "bidding" || action === "contracts" ? { seed: 0 }
+    loadExercise={action => action === "bidding" || action === "responding" || action === "contracts" ? { seed: 0 }
       : bridgeLearningSteps(action === "dummy" ? "dummy" : action === "defense" ? "defense" : "declarer")}
     exerciseTitle={action => `Bridge practice: ${names[action]}`} drillTitle={() => "Bridge lesson"} drillEyebrow="Bridge" seatLabels={compassSeatLabels}
     onGuidedPlay={() => { guidedSeed = services.nextSeed(); }} resultMessage={(_, action) => bridgeTakeaway(action)}>

@@ -11,14 +11,14 @@
   import { bridgeHandShapeLabel } from "./bridgePresentation";
   let { context }: { context: CustomExerciseContext } = $props();
   let session = $state(untrack(() => createLearningSession<BridgeChoiceStep, DrillResult, DecisionReview>(
-    bridgeChoiceSteps(context.action === "contracts" ? "contracts" : "bidding"))));
+    bridgeChoiceSteps(context.action === "contracts" ? "contracts" : context.action === "responding" ? "responding" : "bidding"))));
   let selected = $state("");
   let step = $derived(session.steps[session.index]);
   let checked = $derived(session.phase === "feedback");
   let good = $derived(selected === step.correct);
   let followUp = $derived(checked && !good && !!step.followUp);
   let last = $derived(session.index === session.steps.length - 1);
-  let bidding = $derived(context.action === "bidding");
+  let bidding = $derived(context.action !== "contracts");
   let breakdown = $derived({ label: "Bridge decision breakdown", rows: [
     { label: "Your choice", value: step.options.find(option => option.id === selected)?.label ?? "" },
     { label: "Suggested answer", value: step.options.find(option => option.id === step.correct)!.label },
@@ -47,11 +47,12 @@
     <section class="choice-context" aria-label={bidding ? "Bridge bidding estimate" : "Contract to read"}>
       <p>{step.context}</p>
       {#if bidding}<p>Shape (♠ ♥ ♦ ♣): {bridgeHandShapeLabel(step.hand)}</p>
-      {:else if step.contextDetail}<p>{step.contextDetail}</p>{/if}
+      {/if}
+      {#if step.contextDetail}<p>{step.contextDetail}</p>{/if}
     </section>
   {/snippet}
   {#snippet panel()}
-    <ExerciseFeedback coach={context.coach} reserveSpace eyebrow={bidding ? "Opening bid" : "Contract target"} title={step.title}
+    <ExerciseFeedback coach={context.coach} reserveSpace eyebrow={context.action === "responding" ? "Respond to partner" : bidding ? "Opening bid" : "Contract target"} title={step.title}
       result={checked ? "" : step.prompt} teaching={checked ? { stage: step.teaching.stage } : step.teaching}
       explanation={checked ? step.explanations[selected] : ""}
       outcome={checked ? good ? "Good" : "Risky" : ""} warning={checked && !good}

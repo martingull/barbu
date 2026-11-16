@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { bridgeCourses } from "../../src/lessons/bridge/courses";
 import { bridgeBiddingPracticeSteps, bridgeContractSteps } from "../../src/lessons/bridge/exercises";
 import { bridgeCallLabel } from "../../src/domain/bridgeAuction";
-import { bridgeLearningSteps } from "../../src/lessons/bridge/learning";
+import { bridgeChoiceSteps, bridgeLearningSteps } from "../../src/lessons/bridge/learning";
 
 async function expectLearningLayout(page: Page) {
   const surface = page.locator(".table-play-surface.flow-play");
@@ -39,7 +39,7 @@ test("every table shares Learn and Play and keeps exercises inside Learn", async
     await expect(page.getByLabel("Continue learning")).toBeVisible();
     await expect(page.getByRole("button", { name: /Quick drill/ })).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Guided lessons", exact: true })).toHaveCount(0);
-    const expectedSkills: Record<string, number> = { Barbu: 7, Hearts: 8, Whist: 7, Spades: 5, Bridge: 5, "Gin Rummy": 5, "Card Counting I": 5 };
+    const expectedSkills: Record<string, number> = { Barbu: 7, Hearts: 8, Whist: 7, Spades: 5, Bridge: 6, "Gin Rummy": 5, "Card Counting I": 5 };
     await expect(page.locator(".learn-skill")).toHaveCount(expectedSkills[game]);
     const skillIds = await page.locator(".learn-skill").evaluateAll(rows => rows.map(row => row.getAttribute("data-skill")));
     expect(new Set(skillIds).size).toBe(skillIds.length);
@@ -131,10 +131,11 @@ test("Bridge guided topics use the common lesson loop and preserve progress on r
     await page.screenshot({ path: info.outputPath(`${course.id}-example.png`), fullPage: true });
     await page.getByRole("button", { name: "Try cards", exact: true }).click();
     for (let decision = 0; decision < 3; decision++) {
-      if (course.id === "bridge-contracts" || course.id === "bridge-bidding") {
+      if (course.id === "bridge-contracts" || course.id === "bridge-bidding" || course.id === "bridge-responding") {
         await expect(page.getByRole("button", { name: "Check answer", exact: true })).toBeDisabled();
         await page.getByRole("button", { name: course.id === "bridge-contracts"
-          ? `${bridgeContractSteps[decision].contract.target} tricks` : bridgeCallLabel(bridgeBiddingPracticeSteps[decision].correctCall), exact: true }).click();
+          ? `${bridgeContractSteps[decision].contract.target} tricks` : course.id === "bridge-responding"
+            ? bridgeChoiceSteps("responding")[decision].correct : bridgeCallLabel(bridgeBiddingPracticeSteps[decision].correctCall), exact: true }).click();
         await page.getByRole("button", { name: "Check answer", exact: true }).click();
       } else {
         const topic = course.id === "bridge-dummy" ? "dummy" : course.id === "bridge-defense" ? "defense" : "declarer";
@@ -149,14 +150,14 @@ test("Bridge guided topics use the common lesson loop and preserve progress on r
     }
     await expect(page.getByRole("status")).toHaveText(index === bridgeCourses.length - 1 ? "Bridge learning path complete." : "Topic complete.");
     await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
-    await expect(page.getByLabel("Bridge course progress")).toContainText(`${index + 1} / 5 complete`);
+    await expect(page.getByLabel("Bridge course progress")).toContainText(`${index + 1} / 6 complete`);
   }
   await page.reload();
   await page.getByRole("button", { name: "Open Bridge", exact: true }).click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
-  await expect(page.getByLabel("Bridge course progress")).toContainText("5 / 5 complete");
+  await expect(page.getByLabel("Bridge course progress")).toContainText("6 / 6 complete");
   await page.getByRole("button", { name: "Reset lessons", exact: true }).click();
-  await expect(page.getByLabel("Bridge course progress")).toContainText("0 / 5 complete");
+  await expect(page.getByLabel("Bridge course progress")).toContainText("0 / 6 complete");
   await page.getByRole("button", { name: "Start lesson", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Read the contract", exact: true })).toBeVisible();
 });
