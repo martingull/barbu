@@ -31,6 +31,12 @@ keeps Canasta hidden: its Android RevenueCat SDK key is empty and
 this is separate from enabling checkout. Never use the developer preview as
 evidence that purchase verification works.
 
+The separate iOS `canasta-internal` build mode also enables Canasta without a
+purchase, only for internal TestFlight gameplay testing. It uses a separate asset
+directory and internal-only Apple export; it never fabricates or persists a
+Premium entitlement. See [the preview runbook](app-store-release.md#internal-canasta-preview).
+This does not implement iOS billing or change the normal release defaults.
+
 The local Android plugin under `src-tauri/plugins/purchases` wraps RevenueCat's
 SDK. `src/features/premium` owns the shared purchase UI and service; the pure
 access check lives in `src/domain/premiumAccess.ts`. These are implementation

@@ -8,6 +8,8 @@ import sharp from "sharp";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const apple = resolve(root, "src-tauri/gen/apple");
 const buildNumber = process.argv[2];
+const preview = process.argv[3] === "--canasta-preview";
+if (process.argv.length > 4 || (process.argv[3] && !preview)) throw new Error("Unknown iOS preparation option.");
 if (!/^[1-9][0-9]{0,3}$/.test(buildNumber ?? "")) {
   throw new Error("Supply an unused App Store build number (1-9999).");
 }
@@ -44,6 +46,7 @@ target.settings.base.TARGETED_DEVICE_FAMILY = "1";
 target.settings.base.ENABLE_USER_SCRIPT_SANDBOXING = "NO";
 target.info.properties.CFBundleShortVersionString = config.version;
 target.info.properties.CFBundleVersion = buildNumber;
+target.info.properties.BarbuBuildChannel = preview ? "canasta-internal" : "production";
 
 const manifest = resolve(apple, "PrivacyInfo.xcprivacy");
 copyFileSync(resolve(root, "src-tauri/ios/PrivacyInfo.xcprivacy"), manifest);
@@ -62,6 +65,8 @@ for (const filename of new Set(icons.images.map((icon) => icon.filename).filter(
 }
 
 writeFileSync(resolve(apple, "appstore-config.json"), JSON.stringify({
+  ...(preview ? JSON.parse(readFileSync(resolve(root, "src-tauri/tauri.canasta-preview.conf.json"), "utf8"))
+    : { build: { beforeBuildCommand: "npm run build:ios-assets" } }),
   bundle: { iOS: { bundleVersion: buildNumber } },
 }, null, 2) + "\n");
-console.log(`Prepared iPhone-only Barbu ${config.version} (${buildNumber}) for App Store distribution.`);
+console.log(`Prepared iPhone-only Barbu ${config.version} (${buildNumber}) for ${preview ? "internal Canasta testing only" : "App Store distribution"}.`);

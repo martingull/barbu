@@ -7,6 +7,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:canasta-preview": "vite build --mode canasta-internal --outDir dist-canasta-preview",
+    "build:ios-canasta-preview-assets": "npm run build:canasta-preview && rsync -a --delete dist-canasta-preview/ src-tauri/gen/apple/assets/",
     "build:ios-assets": "vite build && rsync -a --delete dist/ src-tauri/gen/apple/assets/",
     "cards:process": "node scripts/process-cards.mjs",
     "prepare:ios": "npm run build:ios-assets",

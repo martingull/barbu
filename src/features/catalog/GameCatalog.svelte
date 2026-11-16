@@ -64,7 +64,7 @@
             <span class="game-copy">
               <strong>{game.title}</strong>
               <span>{game.summary}</span>
-              {#if game.access === "Premium"}<small class="premium-badge" id={`catalog-access-${game.id}`}>Premium</small>{/if}
+              {#if game.access === "Premium"}<small class="premium-badge" id={`catalog-access-${game.id}`}>{game.preview ? "Internal preview" : "Premium"}</small>{/if}
             </span>
             {#if game.id === "barbu"}
               <span class="table-mark" aria-hidden="true">

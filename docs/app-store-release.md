@@ -12,6 +12,80 @@ testing. A future universal/tablet release needs its own layout and windowing
 audit rather than stretching the phone table. Run `task mobile:check`, then
 verify the built application's Info.plist and physical rotation before release.
 
+## Internal Canasta Preview
+
+Canasta can be tested without an Apple subscription in a separate internal-only
+build. This is not a paid entitlement and must not be submitted for App Review.
+The default store build still hides Canasta and uses `dist/`. The preview uses
+`canasta-internal` Vite mode, requires the iOS build platform, writes to
+`dist-canasta-preview/`, and labels Canasta `Internal preview` in the catalog.
+No purchase service is enabled on iOS and no Premium unlock is saved.
+Both store and preview preparation set an iOS-specific build hook that copies
+fresh frontend files into Xcode's `assets/` resource folder. Do not rely on the
+Rust asset build alone to refresh those separately bundled resources.
+
+```sh
+node scripts/generate-ios-notices.mjs
+task ios:preview:archive IOS_BUILD_NUMBER=7 # Confirm unused before upload.
+task ios:preview:export IOS_ARCHIVE_PATH=/path/to/archive.xcarchive IOS_EXPORT_PATH=/path/to/export
+```
+
+The archive must have `BarbuBuildChannel=canasta-internal`, the expected version
+and build number, portrait-only orientations, and `UIDeviceFamily=[1]`. Export
+only with `src-tauri/ios/ExportOptions.canasta-preview.plist`, which sets
+`testFlightInternalTestingOnly=true`. For Xcode upload, retain all those settings
+and change only `destination` to `upload` in an ignored copy of the export plist.
+Do not use the normal App Store export options for this archive.
+Apple internal-only builds cannot be submitted to the App Store or external
+TestFlight groups. The existing internal group can test it after processing.
+
+Packaged browser checks (WebKit); do not run while archiving the same assets:
+
+```sh
+task ui:test:ios-preview
+```
+
+The second build deliberately retains preview environment variables to check
+that production mode does not unlock Canasta. The crowded-hand component fixture
+requires Vite's module server and remains covered by `task ui:test:canasta`, not
+the packaged suite. On the phone, test all six Learn topics, a guided hand,
+ordinary play/resume, a large pile pickup, offline startup and rotation. Preview
+progress and matches use the existing save keys; a later public build preserves
+Canasta saves but hides them until access is available.
+
+[Apple's internal testing restrictions](https://developer.apple.com/help/app-store-connect/test-a-beta-version/add-internal-testers).
+
+### November 16 Candidate
+
+Uploaded `1.0.6 (7)` at 18:23 Europe/Oslo for internal-only TestFlight testing.
+Apple accepted the upload and finished processing it as an `Internal` build.
+The Account Holder completed the encryption questionnaire. App Store Connect
+now shows `Ready to Test`, and the existing Barbu Internal Testing Group lists
+`1.0.6 (7)` as `Testing`. The tester still reports installed build 6; installation
+and physical iPhone testing of build 7 remain pending.
+No App Review submission or public availability change was made. The existing
+Barbu Internal Testing Group has automatic distribution for Xcode builds enabled.
+
+The first archive inspection caught stale files in Xcode's resource folder;
+the iOS build hooks now explicitly sync assets and the rebuilt export passed
+all 133 file comparisons, refreshed dependency notices, distribution signing,
+provisioning, opaque icons, iOS 15 minimum, iPhone-only targeting and portrait checks.
+Preserved artifacts:
+
+- `release/app-store/canasta-preview-v1.0.6-build7/Barbu.ipa`
+- `release/app-store/Barbu-canasta-preview-v1.0.6-build7.xcarchive`
+- `release/app-store/canasta-preview-v1.0.6-build7/verification.json`
+
+IPA SHA-256: `39fdd6061a15d48cc83c1c42ec18859bf964b032d15b4e025e30cc2b133106aa`.
+The preview includes uncommitted source changes over `1127b23`, recorded in the
+verification receipt. Verification passed: 243 domain tests, 24 Canasta browser
+tests, 14 Premium/catalog browser checks, three mobile-config checks and native
+shell compilation. The packaged WebKit preview suite passed 11 tests, with the
+development-only component fixture skipped; the packaged public catalog check
+also passed. An earlier packaged run had one startup timeout while its assets
+were being rebuilt; the complete rerun used stable files and unchanged timeouts.
+Screenshot checks covered lessons and guided play at compact phone sizes.
+
 ## TestFlight Update (November 2, 2026)
 
 Version `1.0.6`, build `6`, was archived from `4f3a590` with refreshed dependency

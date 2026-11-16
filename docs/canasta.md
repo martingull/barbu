@@ -7,6 +7,10 @@ Development preview; still hidden in production builds. Start it with
 catalog. The flag only works in Vite development mode. Default browser sessions
 and release builds retain the seven-game catalog; existing Canasta saves are retained.
 
+A separate [internal iPhone preview](app-store-release.md#internal-canasta-preview)
+also unlocks Canasta for TestFlight gameplay testing, without granting Premium.
+It must be exported as TestFlight internal-only, never as a public store candidate.
+
 Canasta is classified as Premium by the shared catalog access policy. Its
 development preview does not grant a purchase or permanent free unlock. The
 Android billing integration is under device testing, with purchase verification

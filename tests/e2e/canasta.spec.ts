@@ -4,7 +4,16 @@ import { advanceCanastaOpponents, canastaObservation, chooseCanastaAction, sugge
 import { canastaSaveKey, restoreCanastaSession, saveCanastaSession } from "../../src/persistence/canastaSave";
 import { canastaExercises, canastaLearningSteps, canastaExerciseChoices, answerCanastaExercise } from "../../src/lessons/canasta/exercises";
 import { formatCardLabel } from "../../src/presentation/cardDisplay";
-test.skip(process.env.VITE_CANASTA_PREVIEW !== "1", "Run with playwright.canasta.config.ts to test the development preview.");
+test.skip(process.env.VITE_CANASTA_PREVIEW !== "1" && process.env.BARBU_PACKAGED_PREVIEW !== "1", "Run a Canasta preview configuration.");
+
+test("Canasta preview opens without purchasing or granting Premium", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "Open Canasta", exact: true })).toContainText("Internal preview");
+  await expect(page.getByRole("button", { name: "Premium", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Open Canasta", exact: true }).click();
+  await expect(page.getByRole("tab", { name: "Learn", exact: true })).toBeVisible();
+});
+
 
 const label = (card: { rank: string; suit: "C" | "D" | "H" | "S"; id: string }) => `${formatCardLabel(card)}, pack ${Number(card.id[0]) + 1}`;
 async function saved(page: Page) { return restoreCanastaSession(await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), canastaSaveKey)); }
@@ -83,6 +92,7 @@ test("Canasta stages melds without changing the match until confirmed", async ({
 });
 
 test("Canasta crowded hands scroll without shifting the board or controls", async ({ page }, info) => {
+  test.skip(process.env.BARBU_PACKAGED_PREVIEW === "1", "Component stress fixture requires the Vite module server; covered by ui:test:canasta.");
   for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { width: 1280, height: 800 }]) {
     await page.setViewportSize(viewport); await page.goto("/");
     await page.evaluate(async () => {

@@ -1,0 +1,12 @@
+{
+  "build": {
+    "beforeBuildCommand": "npm run build:ios-canasta-preview-assets",
+    "frontendDist": "../dist-canasta-preview"
+  },
+  "plugins": {
+    "barbu-purchases": {
+      "androidApiKey": "",
+      "purchasesEnabled": false
+    }
+  }
+}

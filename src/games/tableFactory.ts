@@ -76,6 +76,7 @@ export type CatalogEntry = {
   title: string;
   status: CatalogStatus;
   access: GameAccess;
+  preview?: boolean;
   summary: string;
   card: Pick<Card, "rank" | "suit">;
 };
@@ -145,11 +146,12 @@ export function tableTabsFor(table: GameTableDefinition) {
 }
 
 function createCatalogEntry(entry: Omit<CatalogEntry, "access">): CatalogEntry {
-  return { ...entry, access: gameAccess(entry.id) };
+  return { ...entry, access: gameAccess(entry.id), preview: entry.id === "canasta" && isCanastaPreview() };
 }
 
 function isCanastaPreview(): boolean {
-  return import.meta.env?.DEV === true && import.meta.env?.VITE_CANASTA_PREVIEW === "1";
+  return (import.meta.env?.DEV === true && import.meta.env?.VITE_CANASTA_PREVIEW === "1")
+    || (import.meta.env?.MODE === "canasta-internal" && import.meta.env?.TAURI_ENV_PLATFORM === "ios");
 }
 
 export type CatalogCategory = {

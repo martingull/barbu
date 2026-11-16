@@ -5,7 +5,7 @@ import { createCanastaSession } from "../../src/domain/canastaSession";
 import { canastaSaveKey, saveCanastaSession } from "../../src/persistence/canastaSave";
 import { formatCardLabel } from "../../src/presentation/cardDisplay";
 
-test.skip(process.env.VITE_CANASTA_PREVIEW !== "1", "Run with playwright.canasta.config.ts for Canasta preview.");
+test.skip(process.env.VITE_CANASTA_PREVIEW !== "1" && process.env.BARBU_PACKAGED_PREVIEW !== "1", "Run a Canasta preview configuration.");
 
 for (const size of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { width: 820, height: 1180 }]) {
   test(`guided Canasta finishes and preserves saves at ${size.width}x${size.height}`, async ({ page }, info) => {
