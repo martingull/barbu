@@ -66,6 +66,11 @@ tasks:
     cmds:
       - cargo check -p barbu-app
 
+  mobile:check:
+    desc: Check native orientation declarations (requires xmllint)
+    cmds:
+      - node --test tests/tooling/mobile-config.test.mjs
+
   fmt:
     desc: Format Rust code
     cmds:
@@ -78,6 +83,7 @@ tasks:
       - build
       - ui:test
       - tauri:check
+      - mobile:check
       - play:test
 
   tauri:dev:

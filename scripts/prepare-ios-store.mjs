@@ -32,6 +32,10 @@ const targets = Object.values(project.targets).filter(
 );
 if (targets.length !== 1) throw new Error("Expected one generated iOS application target.");
 const target = targets[0];
+// XcodeGen must preserve the same tracked overrides that Tauri merges for builds.
+Object.assign(target.info.properties, JSON.parse(execFileSync("plutil", [
+  "-convert", "json", "-o", "-", resolve(root, "src-tauri/Info.ios.plist"),
+], { encoding: "utf8" })));
 // Existing debug/release archives must be linked, not copied as app resources.
 for (const source of target.sources) {
   if (source.path === "Externals") source.buildPhase = "none";

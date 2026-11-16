@@ -120,8 +120,13 @@ Read-only status and offline checks:
 ```sh
 task play:status
 task play:status -- --json
+task play:monetization
 task play:test
 ```
+
+`play:monetization` lists subscription/base-plan states and one-time products
+without creating an edit or changing store settings. It does not verify merchant
+or payout readiness. See [Premium and billing](premium.md) for those release gates.
 
 Historical commands used to prepare/preview the now-published 1.0.6 candidate
 (not instructions to upload it again):
@@ -190,6 +195,28 @@ The September 22 migration build was installed and launched on iPhone 16.
 That does not verify the Android package or a Google Play saved-game upgrade.
 
 ## Repository Boundaries
+
+Native Barbu currently requests upright portrait only. The tracked manifest at
+`src-tauri/android/AndroidManifest.xml` owns `screenOrientation="portrait"` and
+`appCategory="game"`; `android:prepare` copies it into generated builds. Keep
+the game category: Android 16 exempts games from the default large-screen
+orientation override. Device/OEM settings and windowing modes can still override
+orientation, so this is not a universal tablet-layout guarantee. Browser previews
+remain resizable. Run `task mobile:check` and test phone rotation after shell changes.
+
+Dedicated tablet/foldable/desktop layouts remain a separate validation task:
+check bounded table/hand sizes, both window orientations, resizing, system insets,
+lesson scrolling and saved-hand continuity before advertising native support.
+Do not change Play device targeting or publish new tablet screenshots merely
+because the portrait lock is present.
+
+Reference: [Android 16 orientation exceptions](https://developer.android.com/about/versions/16/behavior-changes-16).
+
+November 16 local verification: the rebuilt APK contains portrait orientation
+and game category declarations and was installed on the Galaxy S9. With Barbu
+confirmed as the foreground window, both left/right landscape requests retained
+a nonblank 1080x2220 portrait screen. Original auto-rotate/user-rotation settings
+were restored afterward. This does not verify Android tablet/OEM behavior.
 
 - Keep this runbook in Git; keep packages, symbols and signing material under
   the ignored `release/google-play/` directory.

@@ -12,4 +12,5 @@ if (!readFileSync(source, "utf8").startsWith(`package ${identifier}\n`)) {
   throw new Error("Android activity package must match the Tauri identifier.");
 }
 cpSync(source, target);
+cpSync(resolve("src-tauri/android/AndroidManifest.xml"), resolve("src-tauri/gen/android/app/src/main/AndroidManifest.xml"));
 console.log("Synced Barbu Android activity and system-bar handling.");

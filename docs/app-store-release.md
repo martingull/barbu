@@ -3,6 +3,15 @@
 The first Apple release targets iPhone only. Device installs are not App Store
 packages. Do not upload the IPA produced by `ios:install:device`.
 
+Native orientation is upright portrait only, declared in tracked
+`src-tauri/Info.ios.plist`. Tauri merges this override; `prepare-ios-store.mjs`
+also applies it before XcodeGen so regeneration cannot restore landscape.
+Keep `TARGETED_DEVICE_FAMILY=1` for distribution. The iPad orientation override
+does not enable a native iPad edition; compatibility-mode review still needs
+testing. A future universal/tablet release needs its own layout and windowing
+audit rather than stretching the phone table. Run `task mobile:check`, then
+verify the built application's Info.plist and physical rotation before release.
+
 ## TestFlight Update (November 2, 2026)
 
 Version `1.0.6`, build `6`, was archived from `4f3a590` with refreshed dependency
