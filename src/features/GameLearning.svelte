@@ -239,7 +239,7 @@
   <GameTableShell table={definition.table} activeTab={tab} {onBack} onTabSelect={onTab}>
     {#if tab === "learn"}
       <LearnPanel table={definition.table} steps={definition.learnSteps} {completedSteps} {learningEvidence} {completedCount} {nextStep} {guidedHand}
-        actions={resources ?? [{ id: "reference", title: "Reference", summary: definition.table.learn.referenceSummary, onClick: onReference }]}
+        actions={resources ?? [{ id: "reference", title: definition.table.learn.referenceTitle ?? "Reference", summary: definition.table.learn.referenceSummary, onClick: onReference }]}
         {lessonEntries}
         onStepSelect={step => startStep(step)} onStepRead={step => startStep(step, true)} onStepPractice={shortcutStep} onReset={() => onResetSteps(definition.learnSteps.map(step => step.id))}
         groups={definition.practiceGroups} exerciseActions={actions} />

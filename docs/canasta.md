@@ -92,10 +92,10 @@ penalties even when a partnership has exactly one canasta.
 - `domain/canastaLearning.ts`: one unsaved guided hand using normal transitions
   and opponents. Public-only coaching, checked-move review, observed hand-count
   changes, one-hand completion and exact replay; no lesson progress or storage.
-- `lessons/canasta/`: six courses (melds, opening, pile, discard, going out,
-  scoring), each with three short decisions and three distinct bounded companions.
+- `lessons/canasta/`: seven courses (card values, melds, opening, pile, discard,
+  going out, scoring), each with three short decisions and three distinct bounded companions.
   Legality and score questions use the same session/rules as Play. The four
-  original progress keys remain; opening and score add two new keys.
+  original progress keys remain; opening, score and card values add three new keys.
 
 ## Shared Learning And Table
 
@@ -106,6 +106,16 @@ read-only position snapshots and score breakdowns, and offers the next lesson,
 retry, guided play or ordinary Play. Lessons never overwrite the saved match.
 Public/proposed melds are shown alongside the cards needed to answer each question.
 These are reduced teaching positions, not simulated full deals.
+
+The shared Learn template places rules/reference resources first for all games.
+Canasta labels its entry Rules and card values.
+The reference starts with the value key and a worked 150-point total. The first
+lesson, Count card points, opens with a short explanation and a worked example
+before its three counting decisions. It distinguishes card values, meld legality,
+opening minimums and hand-score bonuses. Other Canasta topics remain decision-first,
+and the existing progress ids and match saves are unchanged. Reading rules is
+encouraged by placement, not enforced as a gate. The shared template prioritizes
+the rules/reference action before any other learning resources.
 
 `CanastaGuidedHand` uses `createGuidedHandFeature`, just like Gin. It composes
 `CanastaHandView`, `ExerciseFeedback` and `GuidedHandActions`; no separate game
@@ -133,7 +143,7 @@ permission dialogue, verbal/table signals, expert search and CLA-specific specia
 hands are not included. Suggestions are legal candidate groups, not a claim of
 optimal strategy. Invalid attempts do not incur physical-table procedural penalties.
 Manual card exposure beyond the rules is not simulated.
-The six topics teach foundations, not a complete advanced Canasta curriculum.
+The seven topics teach foundations, not a complete advanced Canasta curriculum.
 Special-hand construction, partnership strategy, and more nuanced discard choices
 still need dedicated lessons and club-player feedback before selling this as an
 advanced course. Guidance explains legal possibilities, not optimal strategy.
@@ -155,7 +165,7 @@ npm run build
 
 Verify complete matches, 108-card conservation, hidden-information independence,
 initial meld and pickup edge cases, target completion, exact replay/resume,
-blocked storage, eighteen base decisions and eighteen bounded companions,
+blocked storage, twenty-one base decisions and twenty-one bounded companions,
 full guided-hand review/replay, narrow-screen layout and a 48-card
 hand. Physical-device testing is required before including this game in a store
 release; browser coverage does not replace that check.

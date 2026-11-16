@@ -48,7 +48,16 @@ function scoring(title: string, count: number, ids: string, threes: string, opti
   return { title, session, options, prompt: "The stock has ended the hand; nobody went out. Your partner holds no cards. What is your partnership's hand score?",
     explanation: `${score.bonuses} bonuses + ${score.melds} meld values + ${score.threes} for threes - ${score.penalties} penalties - ${score.inHand} held cards = ${score.total}.` };
 }
+function values(title: string, ids: string, options: string[], explanation: string): CanastaExercise {
+  return { title, session: position(ids), options,
+    prompt: "Add the point values of the cards shown. What is their total? This is counting practice, not a proposed meld.", explanation };
+}
 export const canastaExercises: Record<string, CanastaExercise[]> = {
+  values: [
+    values("Start with ordinary cards", "0-4C 0-7D 0-8H 0-QS", ["20", "30", "40"], "The four and seven count 5 each. The eight and queen count 10 each: 5 + 5 + 10 + 10 = 30 points."),
+    values("Count wild cards at their own value", "0-AC 0-2D 0-JR", ["60", "70", "90"], "The ace counts 20, the two counts 20, and the joker counts 50: 20 + 20 + 50 = 90 points. Wilds keep their own point value."),
+    values("Where 150 comes from", "0-QC 0-QD 0-QH 0-KC 0-KD 0-JR 0-JB", ["70", "125", "150"], "Three queens count 30. Two kings count 20, and two jokers count 100. Together: 30 + 20 + 100 = 150 card points. The opening lesson checks the meld rules separately.")
+  ],
   melds: [
     meld("Match the rank", "0-QC 0-QD 0-QH 0-4C 0-5C", "Q", "0-QC 0-QD 0-QH", "Three natural queens make a legal meld. Two cards remain, so you can discard and continue."),
     meld("Keep sevens natural", "0-7C 0-7D 0-2C 0-4C 0-5C", "7", "0-7C 0-7D 0-2C", "Sevens cannot use wild cards. Keep this pair until another natural seven arrives."),
@@ -82,6 +91,11 @@ export const canastaExercises: Record<string, CanastaExercise[]> = {
 };
 
 const companions: Record<string, CanastaExercise[]> = {
+  values: [
+    values("Count another four cards", "0-5D 0-6S 0-9C 0-KH", ["20", "30", "40"], "The five and six count 5 each; the nine and king count 10 each: 5 + 5 + 10 + 10 = 30 points."),
+    values("Another wild-card total", "1-AD 1-2C 1-2S 1-JB", ["60", "90", "110"], "The ace and both twos count 20 each; the joker counts 50: 20 + 20 + 20 + 50 = 110 points."),
+    values("Add another collection", "0-JC 0-JD 0-JH 0-10C 0-10D 1-JR 1-JB", ["70", "125", "150"], "Three jacks count 30, two tens count 20, and two jokers count 100: 30 + 20 + 100 = 150 points.")
+  ],
   melds: [
     meld("Another natural group", "0-JC 0-JD 0-JH 0-5D 0-6D", "J", "0-JC 0-JD 0-JH", "Three natural jacks make a meld; leave cards for your discard and later turn."),
     meld("Another pair of sevens", "1-7H 1-7S 1-JR 0-5D 0-6D", "7", "1-7H 1-7S 1-JR", "A joker cannot complete a sevens meld. Sevens stay natural."),
@@ -116,7 +130,7 @@ const companions: Record<string, CanastaExercise[]> = {
 
 export function canastaExerciseChoices(topic: string, step: CanastaExercise) {
   if (topic === "discard") return step.session.hand.hands[0].map(card => ({ id: card.id, label: card.label }));
-  if (topic === "score") return step.options!.map(id => ({ id, label: `${id} points` }));
+  if (topic === "score" || topic === "values") return step.options!.map(id => ({ id, label: `${id} points` }));
   return [{ id: "yes", label: topic === "pile" ? "Take pile" : topic === "finish" ? "Go out" : "Meld" },
     { id: "no", label: topic === "pile" ? "Draw stock" : "Keep cards" }];
 }
@@ -124,7 +138,8 @@ export function canastaExerciseChoices(topic: string, step: CanastaExercise) {
 export function canastaLearningSteps(topic: string): CanastaExercise[] {
   return canastaExercises[topic].map((step, index) => ({ ...step,
     teaching: { stage: teachingStages[index], guidance: index === 0 ? step.explanation : index === 1
-      ? topic === "opening" ? "Count the staged groups and check the opening minimum at this score."
+      ? topic === "values" ? "Aces and twos count 20; jokers count 50. Add their own values, even when wild."
+        : topic === "opening" ? "Count the staged groups and check the opening minimum at this score."
         : "Check the partnership's public position as well as your own cards." : undefined },
     followUp: { ...companions[topic][index], teaching: { stage: "reinforcement", guidance: "Apply the same rule to this position." } }
   }));
@@ -132,6 +147,10 @@ export function canastaLearningSteps(topic: string): CanastaExercise[] {
 
 export function canastaFeedbackBreakdown(topic: string, step: CanastaExercise): FeedbackBreakdown {
   const { hand, scores } = step.session;
+  if (topic === "values") return { label: "Card points, not meld legality", rows: [
+    ...hand.hands[0].map(card => ({ label: card.rank === "Joker" ? "Joker" : card.rank, value: `${canastaValue(card)} points` })),
+    { label: "Total", value: `${hand.hands[0].reduce((sum, card) => sum + canastaValue(card), 0)} points` }
+  ] };
   if (topic === "score") {
     const score = scoreCanastaSide(hand.sides[0], [hand.hands[0], hand.hands[2]], false);
     return { label: "Partnership hand score", rows: [
@@ -149,6 +168,7 @@ export function canastaFeedbackBreakdown(topic: string, step: CanastaExercise): 
 
 export function answerCanastaExercise(topic: string, step: CanastaExercise, answer: string) {
   if (!canastaExerciseChoices(topic, step).some(choice => choice.id === answer)) return { good: false, illegal: true, text: "Choose one of the available answers." };
+  if (topic === "values") return { good: answer === String(step.session.hand.hands[0].reduce((sum, card) => sum + canastaValue(card), 0)), illegal: false, text: step.explanation };
   if (topic === "score") return { good: answer === String(scoreCanastaSide(step.session.hand.sides[0], [step.session.hand.hands[0], step.session.hand.hands[2]], false).total), illegal: false, text: step.explanation };
   let legal = false, ends = false;
   try {

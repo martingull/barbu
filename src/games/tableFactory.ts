@@ -52,6 +52,7 @@ export type TableLearnDefinition = {
   nextSummary: string;
   completeSummary: string;
   referenceSummary: string;
+  referenceTitle?: string;
 };
 
 export type GameTableDefinition = {

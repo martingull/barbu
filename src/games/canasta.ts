@@ -2,6 +2,7 @@ import type { GameDefinition } from "./gameRegistry";
 import { createGameTableDefinition } from "./tableFactory";
 
 export const canastaTopics = [
+  { id: "canasta-values", action: "values", title: "Count card points", summary: "Learn what each card is worth before counting an opening." },
   { id: "canasta-melds", action: "melds", title: "Build a canasta", summary: "Match ranks, use wilds, and reach seven cards." },
   { id: "canasta-opening", action: "opening", title: "Open together", summary: "Combine groups to meet your partnership's opening minimum." },
   { id: "canasta-pile", action: "pile", title: "Take the pile", summary: "Use a natural pair and meet your opening requirement." },
@@ -13,11 +14,13 @@ export const canastaDef: GameDefinition = {
   table: createGameTableDefinition({ id: "canasta", title: "Canasta table", family: "Rummy", referenceId: "canasta", defaultTab: "play",
     scorecard: { label: "Canasta score", unitLabel: "Points", objective: "First to 8500", leaderRule: "high-score" },
     learn: { pathAriaLabel: "Canasta lessons", pathEyebrow: "Learn", pathTitle: "Learn Canasta", progressAriaLabel: "Canasta course progress",
-      nextSummary: "Return to your next Canasta decision.", completeSummary: "Bring your partnership skills to the table.", referenceSummary: "Modern American rules, special hands, and scoring." },
+      nextSummary: "Return to your next Canasta decision.", completeSummary: "Bring your partnership skills to the table.",
+      referenceTitle: "Rules and card values",
+      referenceSummary: "Start with the Modern American rules: the aim, card points, turns and scoring." },
     tabIntros: { learn: { eyebrow: "Rummy", title: "Learn Canasta", summary: "Build melds together. Know when to take the pile." },
       play: { eyebrow: "Modern American", title: "Canasta", summary: "You and Barbu against West and East. First to 8500 points." },
       perfect: { eyebrow: "Canasta", title: "Competitive Canasta", summary: "Partnership play." } }, actionsByTab: {} }),
-  learnSteps: canastaTopics.map((topic, index) => ({ ...topic, step: String(index + 1), decisionFirst: true })),
+  learnSteps: canastaTopics.map((topic, index) => ({ ...topic, step: String(index + 1), decisionFirst: topic.action !== "values" })),
   practiceGroups: [{ id: "canasta-skills", ariaLabel: "Canasta exercises", eyebrow: "Cards", title: "Try cards", layout: "action-list",
     entries: canastaTopics.map(topic => ({ ...topic, label: topic.title, group: "canasta-skills" })) }],
   playTabConfig: { actionAriaLabel: "Canasta actions", groupAriaLabel: "Play Canasta actions", groupEyebrow: "Modern American",

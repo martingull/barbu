@@ -2,6 +2,11 @@ import type { CourseContent } from "../courseTypes";
 import { canastaTopics } from "../../games/canasta";
 import { canastaCards } from "./exercises";
 const content = [
+  { heading: "Each card has a point value.", body: "Points are the values of the cards, not the number of cards. Add them to count a proposed opening. Suits do not change a card's value.",
+    points: ["4, 5, 6 and 7: 5 points each. 8, 9, 10, J, Q and K: 10 points each.", "Aces and twos: 20 points each. Jokers: 50 points each, even when used as another rank.", "Threes are special: expose and replace them, rather than counting them in an opening. A three left in hand costs 5 points; exposed threes score separately."],
+    example: "Three queens: 3 x 10 = 30. Two kings and two jokers: 10 + 10 + 50 + 50 = 120. Together: 30 + 120 = 150 card points. This is not a canasta bonus or your match score.",
+    cards: "0-QC 0-QD 0-QH 0-KC 0-KD 0-JR 0-JB",
+    review: "Count card values first. The opening lesson then checks whether the proposed melds meet every opening rule; a point total alone does not make a legal opening." },
   { heading: "Build together, rank by rank.", body: "You and your partner share melds. Seven cards complete a canasta; suits do not matter.",
     points: ["Open with 125, 155, or 180 points according to your partnership score, including a natural or wild meld.", "Twos and jokers are wild. Sevens and natural aces must stay natural.", "After opening, reach five natural cards before adding wilds to other ranks."],
     example: "Three queens begin a natural meld. Add four more queens to complete it.", cards: "0-QC 0-QD 1-QC", review: "Your partner can add to your melds. Do not start costly ace, seven, or wild melds without a plan to finish them." },

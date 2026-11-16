@@ -37,6 +37,15 @@ test("every table shares Learn and Play and keeps exercises inside Learn", async
     await expect(page.getByRole("tab")).toHaveText(["Learn", "Play"]);
     await page.getByRole("tab", { name: "Learn", exact: true }).click();
     await expect(page.getByLabel("Continue learning")).toBeVisible();
+    if (game !== "Card Counting I") {
+      const resources = page.getByRole("region", { name: "Learning resources", exact: true });
+      await expect(resources).toHaveCount(1);
+      expect(await page.locator(".learn-panel > section").first().getAttribute("aria-label")).toBe("Learning resources");
+      await expect(resources.getByRole("button").first()).toContainText("Reference");
+      const resourcesBox = (await resources.boundingBox())!;
+      const nextBox = (await page.getByLabel("Continue learning").boundingBox())!;
+      expect(resourcesBox.y + resourcesBox.height).toBeLessThanOrEqual(nextBox.y);
+    }
     await expect(page.getByRole("button", { name: /Quick drill/ })).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Guided lessons", exact: true })).toHaveCount(0);
     const expectedSkills: Record<string, number> = { Barbu: 7, Hearts: 8, Whist: 7, Spades: 5, Bridge: 6, "Gin Rummy": 5, "Card Counting I": 5 };

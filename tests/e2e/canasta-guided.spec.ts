@@ -74,7 +74,7 @@ for (const size of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { 
     await page.getByRole("button", { name: "Replay", exact: true }).click();
     expect(await hand.getByRole("button").evaluateAll(cards => cards.map(card => card.getAttribute("aria-label")))).toEqual(opening);
     await page.getByRole("button", { name: "Table", exact: true }).first().click();
-    await expect(page.getByLabel("Canasta course progress")).toContainText("0 / 6 complete");
+    await expect(page.getByLabel("Canasta course progress")).toContainText("0 / 7 complete");
     expect(await page.evaluate(key => localStorage.getItem(key), canastaSaveKey)).toBe(saved);
     expect(await page.evaluate(() => (window as any).completions)).toEqual([]);
     expect(errors).toEqual([]);
@@ -85,7 +85,7 @@ test("a missed Canasta lesson adds one example and records review evidence", asy
   await page.goto("/");
   await page.getByRole("button", { name: "Open Canasta", exact: true }).click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
-  await page.getByRole("button", { name: "Start lesson", exact: true }).click();
+  await page.locator('[data-skill="canasta-melds"] .lesson-topic').click();
   await expect(page.getByText("Worked example", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Keep cards", exact: true }).click();
   await page.getByRole("button", { name: "Check answer", exact: true }).click();

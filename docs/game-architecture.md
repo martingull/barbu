@@ -457,7 +457,7 @@ meld rules, not Gin's knock/deadwood model. It shares deterministic shuffling,
 the save-store/session controller, Learn/Play shell, card faces and completion
 events. Double-pack identities are local to Canasta; existing single-deck IDs
 and saves remain stable. Its policy projection removes hidden cards and stock
-order. Six topics use `learningSession`, worked/supported/independent teaching,
+order. Seven topics use `learningSession`, worked/supported/independent teaching,
 bounded companions, decision review and completion evidence. `canastaLearning.ts`
 adapts the ordinary engine to a single unsaved guided hand with public-only
 coaching and observed action recaps. Use immutable/raw lesson state when domain
@@ -465,6 +465,11 @@ transitions clone positions; do not pass Svelte proxies into `structuredClone`.
 Large hands and public melds scroll in bounded regions rather than shrinking
 the shared cards. See [Canasta](canasta.md) for the selected table agreements,
 source differences and verification requirements.
+
+`LearnPanel` places learning resources before the next lesson and learning path
+for every game, with the rules/reference action first. Games provide reference
+copy through table metadata; do not add game-specific resource-position branches.
+Card Counting currently has no separate rules reference and supplies no resources.
 
 Save keys, schemas, course progress identifiers, rules and native commands are
 unchanged. Verify feature isolation, blocked storage, old-save resume, course

@@ -5,10 +5,13 @@ import { createCanastaGuidedSession, transitionCanastaGuidedSession, replayCanas
 import { canastaObservation, chooseCanastaAction } from "../../src/domain/canastaPolicy";
 import { canastaLearningSteps, canastaExerciseChoices, answerCanastaExercise, canastaFeedbackBreakdown } from "../../src/lessons/canasta/exercises";
 import { canastaTopics } from "../../src/games/canasta";
+import { canastaDef } from "../../src/games/canasta";
+import { canastaCourses } from "../../src/lessons/canasta/courses";
+import { canastaValue, canastaDeck } from "../../src/domain/canastaRules";
 import { createLearningSession, checkLearningAnswer, advanceLearningSession } from "../../src/domain/learningSession";
 
 test("Canasta topics have staged decisions and bounded, different companions", () => {
-  expect(canastaTopics).toHaveLength(6);
+  expect(canastaTopics).toHaveLength(7);
   for (const { action } of canastaTopics) {
     const steps = canastaLearningSteps(action);
     expect(steps.map(step => step.teaching?.stage)).toEqual(["worked", "supported", "independent"]);
@@ -33,6 +36,25 @@ test("Canasta topics have staged decisions and bounded, different companions", (
     lesson = advanceLearningSession(checkLearningAnswer(lesson, { clean: false }, "companion"));
     expect(lesson.steps).toHaveLength(4);
   }
+});
+
+test("Canasta introduces card values before melds and preserves existing progress ids", () => {
+  expect(canastaTopics.map(topic => topic.id)).toEqual(["canasta-values", "canasta-melds", "canasta-opening", "canasta-pile", "canasta-discard", "canasta-finish", "canasta-score"]);
+  expect(canastaDef.learnSteps[0].decisionFirst).toBe(false);
+  expect(canastaCourses.map(course => course.pathStepId)).toEqual(canastaTopics.map(topic => topic.id));
+  expect(canastaCourses[0].practiceTarget).toEqual({ kind: "practice", game: "canasta", action: "values" });
+  const expected: Record<string, number> = { "3": 5, "4": 5, "5": 5, "6": 5, "7": 5, "8": 10, "9": 10, "10": 10, J: 10, Q: 10, K: 10, A: 20, "2": 20, Joker: 50 };
+  for (const card of canastaDeck(0)) expect(canastaValue(card)).toBe(expected[card.rank]);
+  for (const step of canastaLearningSteps("values").flatMap(step => [step, step.followUp!])) {
+    const before = structuredClone(step.session);
+    const total = step.session.hand.hands[0].reduce((sum, card) => sum + canastaValue(card), 0);
+    const choices = canastaExerciseChoices("values", step);
+    expect(new Set(choices.map(choice => choice.id)).size).toBe(3);
+    expect(choices.filter(choice => answerCanastaExercise("values", step, choice.id).good).map(choice => choice.id)).toEqual([String(total)]);
+    expect(canastaFeedbackBreakdown("values", step).rows.at(-1)).toEqual({ label: "Total", value: `${total} points` });
+    expect(step.session).toEqual(before);
+  }
+  expect(answerCanastaExercise("values", canastaLearningSteps("values")[2], "150").good).toBe(true);
 });
 
 test("guided Canasta pauses after moves, completes one hand and replays the deal", () => {

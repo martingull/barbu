@@ -14,6 +14,39 @@ test("Canasta preview opens without purchasing or granting Premium", async ({ pa
   await expect(page.getByRole("tab", { name: "Learn", exact: true })).toBeVisible();
 });
 
+test("Canasta puts rules first and teaches card values before opening points", async ({ page }, info) => {
+  await page.addInitScript(() => localStorage.setItem("barbu.courseProgress.v1", JSON.stringify({ "canasta-melds": true })));
+  for (const size of [{ width: 320, height: 568 }, { width: 393, height: 805 }, { width: 820, height: 1180 }]) {
+    await page.setViewportSize(size);
+    await page.goto("/");
+    await page.getByRole("button", { name: "Open Canasta", exact: true }).click();
+    await page.getByRole("tab", { name: "Learn", exact: true }).click();
+    const resources = page.getByRole("region", { name: "Learning resources", exact: true });
+    await expect(resources).toHaveCount(1);
+    expect(await page.locator(".learn-panel > section").first().getAttribute("aria-label")).toBe("Learning resources");
+    await expect(page.getByLabel("Continue learning")).toContainText("Count card points");
+    await expect(page.getByLabel("Canasta course progress")).toContainText("1 / 7 complete");
+    await page.screenshot({ path: info.outputPath(`canasta-learn-values-${size.width}.png`), fullPage: true });
+    await resources.getByRole("button", { name: /^Rules and card values/ }).click();
+    const sections = page.getByLabel("Canasta reference sections").locator("article");
+    await expect(sections.first()).toContainText("Card values");
+    await expect(sections.first()).toContainText("150 card points");
+    await page.locator('header[aria-label="Canasta reference"]').getByRole("button", { name: "Table", exact: true }).click();
+    await page.getByRole("tab", { name: "Learn", exact: true }).click();
+    await page.getByRole("button", { name: "Continue lesson", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Each card has a point value.", exact: true })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: info.outputPath(`canasta-card-values-${size.width}.png`), fullPage: true });
+    await page.getByRole("button", { name: "See example", exact: true }).click();
+    const example = page.getByLabel("Canasta example", { exact: true });
+    await expect(example.locator("img")).toHaveCount(7);
+    await expect.poll(() => example.locator("img").evaluateAll(images => images.every(image => (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: info.outputPath(`canasta-150-example-${size.width}.png`), fullPage: true });
+    await page.getByRole("button", { name: "Try cards", exact: true }).click();
+    await expect(page.getByRole("button", { name: "30 points", exact: true })).toBeVisible();
+  }
+});
 
 const label = (card: { rank: string; suit: "C" | "D" | "H" | "S"; id: string }) => `${formatCardLabel(card)}, pack ${Number(card.id[0]) + 1}`;
 async function saved(page: Page) { return restoreCanastaSession(await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), canastaSaveKey)); }
@@ -130,7 +163,7 @@ test("Canasta crowded hands scroll without shifting the board or controls", asyn
   }
 });
 
-test("Canasta teaches eighteen decisions without changing a saved match", async ({ page }, info) => {
+test("Canasta teaches twenty-one decisions without changing a saved match", async ({ page }, info) => {
   await page.setViewportSize({ width: 360, height: 740 }); await seed(page);
   const before = await saved(page);
   await page.getByRole("button", { name: "Table", exact: true }).first().click();
@@ -138,6 +171,12 @@ test("Canasta teaches eighteen decisions without changing a saved match", async 
   for (const topic of Object.keys(canastaExercises)) {
     const steps = canastaLearningSteps(topic);
     await page.getByRole("button", { name: /^(Start lesson|Continue lesson)$/ }).click();
+    if (topic === "values") {
+      await expect(page.getByRole("heading", { name: "Each card has a point value.", exact: true })).toBeVisible();
+      await page.getByRole("button", { name: "See example", exact: true }).click();
+      await expect(page.getByText(/Together: 30 \+ 120 = 150 card points/)).toBeVisible();
+      await page.getByRole("button", { name: "Try cards", exact: true }).click();
+    }
     for (let index = 0; index < steps.length; index++) {
       const step = steps[index], choices = canastaExerciseChoices(topic, step), answers = choices.map(choice => choice.id);
       const correct = answers.find(answer => answerCanastaExercise(topic, step, answer).good)!;
@@ -150,9 +189,9 @@ test("Canasta teaches eighteen decisions without changing a saved match", async 
     }
     await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
   }
-  await expect(page.getByLabel("Canasta course progress")).toContainText("6 / 6 complete");
+  await expect(page.getByLabel("Canasta course progress")).toContainText("7 / 7 complete");
   expect(await saved(page)).toEqual(before);
-  await page.getByRole("button", { name: /^Reference/ }).click();
+  await page.getByRole("button", { name: /^Rules and card values/ }).click();
   await expect(page.getByRole("heading", { name: "Canasta reference", exact: true })).toBeVisible();
   await expect(page.getByLabel("Variants and varieties")).toContainText("Modern American");
 });

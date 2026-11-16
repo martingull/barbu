@@ -28,6 +28,7 @@
   let { table, steps, completedSteps, learningEvidence = {}, completedCount, nextStep, actions = [], onStepSelect, onStepPractice, onStepRead, onReset, guidedHand,
     groups, exerciseActions, lessonEntries = [] }: Props = $props();
   let firstStep = $derived(steps.find(step => step.action !== "planned"));
+  let orderedActions = $derived([...actions].sort((a, b) => Number(b.id === "reference") - Number(a.id === "reference")));
   let firstExercise = $derived(groups.flatMap(group => group.entries ?? [])[0]);
   let exercises = $derived(groups.flatMap(group => group.entries ?? []));
   let extraExercises = $derived(exercises.filter(entry => !steps.some(step => (step.exerciseAction ?? step.action) === entry.action)));
@@ -41,6 +42,15 @@
 </script>
 
 <div aria-label="Learn" class="barbu-tab-panel learn-panel" id={table.tabs.learn.panelId} role="tabpanel">
+  {#if actions.length}
+    <section class="learn-section learn-resources" aria-label="Learning resources">
+      {#each orderedActions as action}
+        <button class="learn-topic" onclick={action.onClick} type="button">
+          <strong>{action.title}</strong><small>{formatCardText(action.summary)}</small>
+        </button>
+      {/each}
+    </section>
+  {/if}
   <section class="learn-start" aria-label="Continue learning">
     <p class="next-topic">{finished ? "Learning path complete" : "Next lesson"}</p>
     {#if !finished}<h2>{currentStep?.title ?? firstExercise?.title}</h2>{/if}
@@ -96,15 +106,6 @@
       </div>
   </section>
 
-  {#if actions.length}
-    <section class="learn-section learn-resources" aria-label="Learning resources">
-      {#each actions as action}
-        <button class="learn-topic" onclick={action.onClick} type="button">
-          <strong>{action.title}</strong><small>{formatCardText(action.summary)}</small>
-        </button>
-      {/each}
-    </section>
-  {/if}
 </div>
 
 <style>
