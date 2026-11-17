@@ -39,8 +39,10 @@ This does not implement iOS billing or change the normal release defaults.
 
 The local Android plugin under `src-tauri/plugins/purchases` wraps RevenueCat's
 SDK. `src/features/premium` owns the shared purchase UI and service; the pure
-access check lives in `src/domain/premiumAccess.ts`. These are implementation
-work in progress, not a payment-tested release. iOS billing is not implemented.
+access check lives in `src/domain/premiumAccess.ts`. The local Android build has
+passed an initial license-test purchase, restart/access, restore and cancellation/expiry check; a
+Play-distributed billing candidate and broader lifecycle tests remain outstanding.
+iOS billing is not implemented.
 
 ## Current Evidence
 
@@ -68,6 +70,40 @@ On November 16, 2026:
   purchases. RevenueCat received the test at 15:03 UTC (16:03 Oslo).
 - Native integration and shared entitlement handling exist locally, but real
   Play purchase/lifecycle tests remain outstanding. No paid release was submitted.
+
+### November 17 Device Check
+
+An initial USB capture of the Galaxy S9 (SM-G960F), running the local debug build `1.0.6`
+(`1000007`), confirms live offers at NOK 33/month and NOK 265/year, with the
+corresponding subscription buttons. Tapping **Refresh prices** retained both
+offers with no visible error. The previous product-loading blocker is no
+longer present on this device.
+
+Martin then completed a purchase and explicitly confirmed Google Play used a
+test payment method. The device showed **Premium is active** and **Premium is
+ready**. After force-stopping and reopening Barbu without clearing data, Canasta
+opened from the catalog rather than showing the paywall; Manage Premium still
+showed active access. **Restore purchases** returned **Premium access restored**.
+Existing saved-game data was retained. This is an on-device Google Play
+license-test flow, not a browser/mock purchase or real-money revenue.
+
+With Martin's explicit approval, renewal of that monthly test subscription was
+cancelled in Google Play. The management screen identified **Test card, always
+approves**, a five-minute test billing period, and cancellation effective at
+18:02 Europe/Oslo on November 17. Barbu subsequently showed **Renewal is off**
+while Premium was still active. By 18:03 the open Premium screen automatically
+returned to subscription offers without a restart. Opening Canasta from the
+catalog then routed to Premium instead of the game. Restore after expiry
+returned **No active Premium subscription was found**, without restoring access.
+The existing Hearts hand still resumed at pass-left, zero of three selected;
+no cards were selected or passed, and no installation or data reset was used.
+Canasta-save preservation across expiry still needs a device check with an
+existing Canasta save; this device had no Canasta match to resume before expiry.
+
+No further purchase was initiated by the agent, and no public build or store
+product configuration was changed. This evidence does not establish restoration
+after reinstall, a separately observed renewal, pending/declined payments,
+refund/revocation, payout readiness or behavior in a Play-distributed candidate.
 
 ## RevenueCat Configuration
 
@@ -166,9 +202,11 @@ Successful product reads do not prove that billing or payouts are ready.
    restoration after reinstall, renewal, cancellation through paid-through expiry,
    grace period, account hold, expiry, refund and revocation. Use Play license
    testers on installed builds; browser tests cannot verify a real purchase.
-6. **Launch:** the store plans are active for Norway-only license testing, but
-   the first device check could not fetch the product. Resolve availability and
-   finish lifecycle tests before approving broader regions. Keep
+6. **Launch:** the store plans are active for Norway-only license testing.
+   The November 17 local S9 check confirms price loading, a monthly license-test purchase,
+   access after restart, restore, cancelled-but-active access and expiry locking.
+   Verify a Play-distributed billing candidate
+   and the remaining lifecycle cases before approving broader regions. Keep
    the production build's checkout disabled until tests pass. Update
    terms/privacy/Data safety as applicable before submitting a paid candidate.
    Display actual store-localized prices and clear renewal/cancellation terms,

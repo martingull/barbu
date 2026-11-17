@@ -48,12 +48,51 @@ task ui:test:ios-preview
 The second build deliberately retains preview environment variables to check
 that production mode does not unlock Canasta. The crowded-hand component fixture
 requires Vite's module server and remains covered by `task ui:test:canasta`, not
-the packaged suite. On the phone, test all six Learn topics, a guided hand,
+the packaged suite. On the phone, test all eight Learn topics, a guided hand,
 ordinary play/resume, a large pile pickup, offline startup and rotation. Preview
 progress and matches use the existing save keys; a later public build preserves
 Canasta saves but hides them until access is available.
 
 [Apple's internal testing restrictions](https://developer.apple.com/help/app-store-connect/test-a-beta-version/add-internal-testers).
+
+### November 17 Candidate
+
+Uploaded `1.0.6 (8)` from `c9fe837` at 17:09 Europe/Oslo for internal-only
+TestFlight testing. Xcode reported "Upload succeeded"; Apple finished processing
+and the Account Holder completed the encryption questionnaire. Build 8 is
+`Internal`, and the existing Barbu Internal Testing Group lists it as `Testing`.
+The tester still shows installed build 7; physical installation/testing of build 8
+remain pending. No App Review submission or public
+availability change was made. Canasta is available as an internal preview;
+iOS purchases remain disabled. Build-specific **What to Test** notes were saved
+in App Store Connect for the internal testers.
+
+This build includes Canasta's eight-topic learning path, rank-first hands,
+meld-risk guidance, score breakdown and revised opponent strategy. Bridge adds
+**Support partner's major**, taking its path to seven topics, and identifies
+the Barbu Natural agreement at Play entry and in guided/normal auctions.
+
+Preserved artifacts:
+
+- `release/app-store/canasta-preview-v1.0.6-build8/Barbu.ipa`
+- `release/app-store/Barbu-canasta-preview-v1.0.6-build8.xcarchive`
+- `release/app-store/canasta-preview-v1.0.6-build8/verification.json`
+
+IPA SHA-256: `e3d21fa7a0ca510ecc158adbe195c8cfd65c22e7dbb53f4db302a04bf67ec87a`.
+The export passed distribution signature/provisioning, internal-only export,
+iPhone-only targeting, portrait orientation, iOS 15 minimum, opaque icons,
+privacy manifest, dependency notice and all 133 bundled-asset comparisons.
+
+Verification on this source: 275 domain tests and 32 focused Bridge browser
+checks passed. The packaged iPhone WebKit preview suite passed 15 tests, with
+eight development-fixture checks deliberately skipped; the packaged public
+catalog test also passed. Mobile configuration checks (three) and native shell
+compilation passed. The newly compiled build-8 simulator app launches and
+renders with pre-existing saved games retained. Tauri's subsequent simulator
+packaging step hit an existing archive-directory conflict; the fresh Xcode
+DerivedData app was installed directly. The separately preserved distribution
+archive and successful upload were unaffected. Physical TestFlight testing of
+build 8 remains pending.
 
 ### November 16 Candidate
 
