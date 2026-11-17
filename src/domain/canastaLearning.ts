@@ -2,7 +2,7 @@ import type { Card } from "./types";
 import { advanceCanastaOpponents, canastaObservation, canastaPickupAction, suggestedCanastaMelds } from "./canastaPolicy";
 import { completedCanastas, initialCanastaMinimum, canastaValue, isCanastaWild, canastaSpecial } from "./canastaRules";
 import { canastaMeldChanges, type CanastaMeldChange } from "./canastaMeldPreview";
-import { createCanastaSession, transitionCanastaSession, canastaNeedsThrees, legalCanastaDiscards,
+import { createCanastaSession, transitionCanastaSession, canastaNeedsThrees, canastaPickupBlockReason, legalCanastaDiscards,
   type CanastaAction, type CanastaSession } from "./canastaSession";
 
 type PlayerAction = Exclude<CanastaAction, { type: "next" }>;
@@ -60,15 +60,17 @@ export function canastaGuidance(observation: ReturnType<typeof canastaObservatio
     tip: "Threes cannot be discarded or used in ordinary melds. Before opening, you may keep one only for a special straight." };
   if (hand.phase === "draw") {
     const pickup = canastaPickupAction(observation), top = hand.discards.at(-1);
+    const blocked = canastaPickupBlockReason(hand);
     if (!hand.stock.length) return { facts, title: "The stock is empty",
-      rule: pickup ? "Take pile can continue the hand; End hand finishes it." : "Choose End hand to score the cards already played and held.",
-      tip: pickup ? "A legal pile pickup is available. Its buried cards join your hand and may help or cost points later."
+      rule: blocked || (pickup ? "Take pile can continue the hand; End hand finishes it." : "Choose End hand to score the cards already played and held."),
+      tip: blocked ? "Choose End hand to score the cards already played and held."
+        : pickup ? "A legal pile pickup is available. Its buried cards join your hand and may help or cost points later."
         : "No pickup was suggested. You may check Take pile for your own qualifying opening; otherwise end the hand without a going-out bonus." };
     return { facts, title: "1. Draw or take the pile",
-      rule: pickup ? "Choose Draw stock, or Take pile to use your matching pair." : "Choose Draw stock to take one face-down card.",
-      tip: pickup ? `Your natural pair can meld ${top!.label}. The other pile cards join your hand and cost points if left there.`
-        : !top ? "The discard pile is empty. After drawing, look for matching ranks; suits do not matter."
-        : `To take ${top.label}, you need two matching natural cards and a legal meld. Drawing stock keeps building your hand.` };
+      rule: blocked || (pickup ? "Choose Draw stock, or Take pile to use your matching pair." : "Choose Draw stock to take one face-down card."),
+      tip: blocked ? "Choose Draw stock instead. After drawing, meld if you wish, then discard."
+        : pickup ? `Your natural pair can meld ${top!.label}. The other pile cards join your hand and cost points if left there.`
+        : `To take ${top!.label}, you need two matching natural cards and a legal meld. Drawing stock keeps building your hand.` };
   }
   const special = hand.drewStock && !side.opened ? canastaSpecial(cards) : null;
   if (special) return { facts, title: "A special hand is available",

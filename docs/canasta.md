@@ -55,6 +55,12 @@ penalties even when a partnership has exactly one canasta.
   for the three cards. For an unopened partnership, the opening must qualify
   wholly from hand before the discard is added; the pair may belong to that
   opening. Cards buried in the pile cannot qualify the opening.
+  Normal and guided play show definite pickup blockers from the same domain
+  pre-check used by the action validator. For example, an existing five-card
+  meld plus a natural pair and the discard would make eight cards (maximum
+  seven): both pile controls are disabled and the turn explanation shows the
+  count. Unopened partnerships can still enter the editor to stage their own
+  qualifying opening; absence of an automatic suggestion does not block entry.
 - No three discards. Wild discards only when going out or after an all-wild hand
   draws another wild. Empty-pile restrictions on aces, sevens and dead ranks have
   the documented no-alternative exceptions. Melding cannot strand a player

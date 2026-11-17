@@ -2,9 +2,9 @@ import { expect, test, type Page } from "@playwright/test";
 
 test.skip(process.env.VITE_CANASTA_PREVIEW !== "1" || process.env.BARBU_PACKAGED_PREVIEW === "1", "Component positions use the Vite preview; packaged flows are covered separately.");
 
-async function mountPosition(page: Page, ids: string, result = false, pickup = false) {
+async function mountPosition(page: Page, ids: string, result = false, pickup = false, options: { sixMeld?: number; guided?: boolean } = {}) {
   await page.goto("/");
-  await page.evaluate(async ({ ids, result, pickup }) => {
+  await page.evaluate(async ({ ids, result, pickup, options }) => {
     const load = (path: string) => import(/* @vite-ignore */ path);
     const { mount } = await load("/node_modules/svelte/src/index-client.js");
     const { default: View } = await load("/src/features/canasta/CanastaHandView.svelte");
@@ -16,6 +16,11 @@ async function mountPosition(page: Page, ids: string, result = false, pickup = f
     session.hand.sides = [0, 1].map(() => ({ opened: true, melds: [], threes: [] }));
     session.hand.phase = pickup || result ? "draw" : "play";
     session.hand.discards = cards(pickup ? "0-AH" : "1-6S");
+    if (options.sixMeld) {
+      session.hand.phase = "draw";
+      session.hand.discards = cards("0-9C 1-6D");
+      session.hand.sides[0].melds = [{ rank: "6", cards: cards("0-6C 0-6D 0-6S 0-2S 1-6C").slice(0, options.sixMeld) }];
+    }
     if (result) {
       session.hand.stock = [];
       session.hand.hands[2] = cards("0-AC 0-AD 0-AH");
@@ -32,9 +37,10 @@ async function mountPosition(page: Page, ids: string, result = false, pickup = f
     const target = document.createElement("main"); target.className = "app-shell fixed-play-screen";
     document.getElementById("app")!.replaceChildren(target);
     window.scrollTo(0, 0);
-    mount(View, { target, props: { session, error: "", onAction: (action: any) => { (window as any).feedbackActions.push(action); return true; },
+    mount(View, { target, props: { session, error: "", guided: options.guided ? { session, review: null, moments: [] } : undefined,
+      onAction: (action: any) => { (window as any).feedbackActions.push(action); return true; },
       onBack: () => {}, onNext: () => {}, onReplay: () => {}, onNew: () => {} } });
-  }, { ids, result, pickup });
+  }, { ids, result, pickup, options });
 }
 
 async function stage(page: Page, labels: string[]) {
@@ -44,6 +50,34 @@ async function stage(page: Page, labels: string[]) {
 }
 
 for (const size of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { width: 820, height: 1180 }]) {
+  for (const guided of [false, true]) test(`Canasta explains blocked pile overflow in ${guided ? "guided" : "normal"} play at ${size.width}x${size.height}`, async ({ page }, info) => {
+    await page.setViewportSize(size);
+    const errors: string[] = []; page.on("pageerror", error => errors.push(error.message));
+    const ids = "0-6H 1-6H 0-4H 0-JS 0-AH 0-2D";
+    await mountPosition(page, ids, false, false, { sixMeld: 5, guided });
+    const instructions = page.getByRole("region", { name: guided ? "Turn guidance" : "Canasta turn instructions", exact: true });
+    await expect(instructions).toContainText("Your 6 meld: 5 + 2 from hand + 1 discard = 8 cards; maximum 7.");
+    await expect(page.getByRole("button", { name: "Take pile", exact: true })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Take discard pile", exact: true })).toBeDisabled();
+    const draw = page.getByRole("region", { name: "Canasta decisions", exact: true }).getByRole("button", { name: "Draw stock", exact: true });
+    await expect(draw).toBeEnabled();
+    await expect(draw).toBeInViewport({ ratio: 1 });
+    expect(await page.evaluate(() => (window as any).feedbackActions)).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const before = (await page.locator(".canasta-table").boundingBox())!;
+    const prompt = (await instructions.boundingBox())!;
+    const hand = (await page.getByLabel("Your Canasta hand", { exact: true }).boundingBox())!;
+    expect(prompt.y).toBeGreaterThanOrEqual(before.y + before.height - 1);
+    expect(hand.y).toBeGreaterThanOrEqual(prompt.y + prompt.height - 1);
+    await page.screenshot({ path: info.outputPath(`canasta-pile-overflow-${guided ? "guided" : "normal"}-${size.width}.png`), fullPage: true });
+    await mountPosition(page, ids, false, false, { sixMeld: 4, guided });
+    await expect(page.getByRole("button", { name: "Take pile", exact: true })).toBeEnabled();
+    expect((await page.locator(".canasta-table").boundingBox())!.height).toBeCloseTo(before.height, 0);
+    await page.getByRole("button", { name: "Take pile", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Confirm pickup", exact: true })).toBeEnabled();
+    expect(errors).toEqual([]);
+  });
+
   test(`Canasta meld-risk warnings stay advisory and fit at ${size.width}x${size.height}`, async ({ page }, info) => {
     await page.setViewportSize(size);
     const errors: string[] = []; page.on("pageerror", error => errors.push(error.message));

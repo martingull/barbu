@@ -34,6 +34,22 @@ export function createCanastaSession(seed: number): CanastaSession {
 export function canastaNeedsThrees(hand: CanastaHand): boolean {
   return hand.hands[hand.turn].filter(card => card.rank === "3").length > (hand.sides[canastaTeam(hand.turn)].opened ? 0 : 1);
 }
+// An unopened team can still stage its own qualifying opening in the editor.
+// These are definite blockers, not the opponent's bounded meld suggestion.
+export function canastaPickupBlockReason(hand: CanastaHand): string {
+  if (hand.phase !== "draw") return "Take the pile instead of drawing, not afterwards.";
+  if (canastaNeedsThrees(hand)) return "Expose your threes before taking the pile.";
+  const top = hand.discards.at(-1);
+  if (!top) return "The discard pile is empty.";
+  if (top.rank === "3" || isCanastaWild(top)) return "A three or wild card on top blocks the pile.";
+  if (deadCanastaRank(hand.sides, top.rank)) return `The ${top.rank} rank is closed by a completed canasta. You cannot take this pile.`;
+  if (hand.hands[hand.turn].filter(card => card.rank === top.rank && !isCanastaWild(card)).length < 2)
+    return `Taking ${top.label} needs two matching natural cards in hand; wilds cannot replace them.`;
+  const existing = hand.sides[canastaTeam(hand.turn)].melds.find(meld => meld.rank === top.rank);
+  if (existing && existing.cards.length + 3 > 7)
+    return `Your ${top.rank} meld: ${existing.cards.length} + 2 from hand + 1 discard = ${existing.cards.length + 3} cards; maximum 7.`;
+  return "";
+}
 export function legalCanastaDiscards(hand: CanastaHand): Card[] {
   if (hand.phase !== "play" || canastaNeedsThrees(hand)) return [];
   return canastaDiscards(hand.hands[hand.turn], hand.sides, canastaTeam(hand.turn), !hand.discards.length,
@@ -106,9 +122,9 @@ export function transitionCanastaSession(session: CanastaSession, action: Canast
       if (!legalCanastaDiscards(hand).length) throw Error("Keep a legal discard and a card to continue, unless you can go out.");
       log(hand, `${name} melded ${action.groups.map(group => group.rank).join(", ")}.`);
     } else if (action.type === "pickup") {
-      if (hand.phase !== "draw") throw Error("Take the pile instead of drawing, not afterwards.");
-      const top = hand.discards.at(-1);
-      if (!top || top.rank === "3" || isCanastaWild(top) || deadCanastaRank(hand.sides, top.rank)) throw Error("This discard cannot be picked up.");
+      const blocked = canastaPickupBlockReason(hand);
+      if (blocked) throw Error(blocked);
+      const top = hand.discards.at(-1)!;
       const pair = resolveCanastaCards(hand.hands[player], action.pair);
       if (pair.length !== 2 || pair.some(card => card.rank !== top.rank || isCanastaWild(card))) throw Error("You need two natural cards matching the top discard.");
       if (!side.opened) opening(hand, action.groups, session.scores[team]);

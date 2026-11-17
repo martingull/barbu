@@ -7,7 +7,7 @@
   import GuidedHandActions from "../../components/GuidedHandActions.svelte";
   import CanastaCards from "./CanastaCards.svelte";
   import CanastaMeldEditor from "./CanastaMeldEditor.svelte";
-  import { canastaComplete, canastaNeedsThrees, legalCanastaDiscards, type CanastaAction, type CanastaSession } from "../../domain/canastaSession";
+  import { canastaComplete, canastaNeedsThrees, canastaPickupBlockReason, legalCanastaDiscards, type CanastaAction, type CanastaSession } from "../../domain/canastaSession";
   import { completedCanastas, initialCanastaMinimum, isCanastaWild, canastaSpecial } from "../../domain/canastaRules";
   import { canastaObservation } from "../../domain/canastaPolicy";
   import { canastaGuidance, canastaGuidedRecap, type CanastaGuidedSession } from "../../domain/canastaLearning";
@@ -32,9 +32,10 @@
   const three = $derived(cards.find(card => card.id === selected && card.rank === "3") ?? cards.find(card => card.rank === "3"));
   const needsThrees = $derived(canastaNeedsThrees(hand));
   const special = $derived(hand.phase === "play" && hand.drewStock && !hand.sides[0].opened ? canastaSpecial(cards) : null);
-  const canPickup = $derived(!!top && !needsThrees && cards.filter(card => card.rank === top.rank && !isCanastaWild(card)).length >= 2);
+  const pickupBlock = $derived(canastaPickupBlockReason(hand));
+  const canPickup = $derived(!pickupBlock);
   const prompt = $derived(needsThrees ? "Expose threes before continuing. You may keep one before your team opens."
-    : hand.phase === "draw" ? "Draw from stock or take the pile with a matching natural pair."
+    : hand.phase === "draw" ? pickupBlock || "Draw from stock or take the pile with a matching natural pair."
     : "Meld if you wish, then choose a discard.");
   function act(action: CanastaAction) { const accepted = onAction(action); if (accepted) selected = ""; return accepted; }
 </script>
@@ -108,7 +109,8 @@
           result={review ? `${review.title} ${review.next}` : `Rule: ${guidance.rule}`} explanation={review ? review.explanation : `Tactic: ${guidance.tip}${meldAdvice ? ` ${meldAdvice}` : ""}`}
           outcome={review ? review.facts : guidance.facts} {error} />
       {:else}
-        <div class="canasta-prompt" aria-live="polite"><p class="result">{error || prompt}</p><p class="last-action">{formatCardText(hand.log.at(-1) ?? "")}</p></div>
+        <!-- svelte-ignore a11y_no_noninteractive_tabindex (Long turn explanations scroll without resizing the table.) -->
+        <div class="canasta-prompt" role="region" aria-label="Canasta turn instructions" tabindex="0" aria-live="polite"><p class="result">{formatCardText(error || prompt)}</p><p class="last-action">{formatCardText(hand.log.at(-1) ?? "")}</p></div>
       {/if}
       <CanastaCards {cards} readonly={reviewing} selected={selected ? [selected] : []} legal={hand.phase === "play" ? [...legal, ...cards.filter(card => card.rank === "3").map(card => card.id)] : undefined}
         onSelect={card => { selected = selected === card.id ? "" : card.id; }} />

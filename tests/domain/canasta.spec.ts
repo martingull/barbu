@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
 import { canastaDeck, canastaSpecial, initialCanastaMinimum, validateCanastaMeld, planCanastaMelds, scoreCanastaSide,
   canastaDiscards, type CanastaSide } from "../../src/domain/canastaRules";
-import { createCanastaSession, transitionCanastaSession, replayCanastaHand, canastaComplete, type CanastaSession } from "../../src/domain/canastaSession";
+import { createCanastaSession, transitionCanastaSession, replayCanastaHand, canastaComplete, canastaPickupBlockReason, type CanastaSession } from "../../src/domain/canastaSession";
+import { canastaGuidance } from "../../src/domain/canastaLearning";
 import { canastaObservation, chooseCanastaAction, advanceCanastaOpponents } from "../../src/domain/canastaPolicy";
 import { normalizeCanastaSave, restoreCanastaSession, saveCanastaSession } from "../../src/persistence/canastaSave";
 import { canastaExercises, answerCanastaExercise, canastaExerciseChoices } from "../../src/lessons/canasta/exercises";
@@ -66,6 +67,57 @@ test("pile pickup requires a natural pair and opening from hand, not the discard
   expect(() => transitionCanastaSession(session, { type: "pickup", pair: ["0-QC", "0-JR"], groups })).toThrow(/natural/);
   expect(() => transitionCanastaSession(session, { type: "pickup", pair: ["0-QC", "0-QD"], groups: [groups[0]] })).toThrow(/125/);
 });
+test("pile feedback explains existing-meld overflow and preserves legal three-card pickups", () => {
+  for (const count of [3, 4, 5, 6]) {
+    const session = position("0-6H 1-6H 0-4H 0-JS 0-AH 0-2D", "draw");
+    session.hand.sides = [side(true), side(true)];
+    session.hand.sides[0].melds = [{ rank: "6", cards: cards("0-6C 0-6D 0-6S 0-2S 1-6C 1-6S").slice(0, count) }];
+    session.hand.discards = cards("0-9C 1-6D");
+    const action = { type: "pickup" as const, pair: ["0-6H", "1-6H"], groups: [] };
+    const before = JSON.stringify(session);
+    const reason = canastaPickupBlockReason(session.hand);
+    if (count <= 4) {
+      expect(reason).toBe("");
+      const next = transitionCanastaSession(session, action);
+      expect(next.hand.sides[0].melds[0].cards).toHaveLength(count + 3);
+      expect(next.hand.discards).toEqual([]);
+    } else {
+      expect(reason).toBe(`Your 6 meld: ${count} + 2 from hand + 1 discard = ${count + 3} cards; maximum 7.`);
+      expect(() => transitionCanastaSession(session, action)).toThrow(reason);
+      expect(canastaGuidance(canastaObservation(session)).rule).toBe(reason);
+      session.hand.stock = [];
+      const guidance = canastaGuidance(canastaObservation(session));
+      expect(guidance.rule).toBe(reason);
+      expect(guidance.tip).toContain("End hand");
+      expect(guidance.tip).not.toContain("Draw stock");
+      session.hand.stock = JSON.parse(before).hand.stock;
+    }
+    expect(JSON.stringify(session)).toBe(before);
+  }
+});
+
+test("pile preflight explains definite blockers without requiring an automatic opening suggestion", () => {
+  const session = position("0-6H 1-6H 0-4H 0-JS", "draw");
+  expect(canastaPickupBlockReason(session.hand)).toContain("empty");
+  session.hand.discards = cards("0-2C");
+  expect(canastaPickupBlockReason(session.hand)).toContain("wild card");
+  session.hand.discards = cards("0-3C");
+  expect(canastaPickupBlockReason(session.hand)).toContain("three");
+  session.hand.discards = cards("0-QC");
+  expect(canastaPickupBlockReason(session.hand)).toContain("two matching natural cards");
+  session.hand.discards = cards("1-6D");
+  expect(session.hand.sides[0].opened).toBe(false);
+  expect(canastaPickupBlockReason(session.hand)).toBe("");
+  expect(() => transitionCanastaSession(session, { type: "pickup", pair: ["0-6H", "1-6H"], groups: [] })).toThrow(/group/);
+  session.hand.sides[1] = { ...side(true), melds: [{ rank: "6", cards: ranks("6", 7) }] };
+  expect(canastaPickupBlockReason(session.hand)).toContain("closed by a completed canasta");
+  session.hand.phase = "play";
+  expect(canastaPickupBlockReason(session.hand)).toContain("not afterwards");
+  session.hand.phase = "draw";
+  session.hand.hands[0].push(...cards("0-3H 0-3D"));
+  expect(canastaPickupBlockReason(session.hand)).toContain("Expose your threes");
+});
+
 test("discard restrictions avoid wild dumps and empty-pile safe cards", () => {
   const sides = [side(true), side(true)];
   const hand = cards("0-AC 0-7C 0-4C 0-2C 0-3C");

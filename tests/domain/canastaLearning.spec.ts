@@ -76,8 +76,8 @@ test("guided meld explanations use the player's actual public change before anyo
 
 test("Canasta coaching describes the current step, opening points and selected discards", () => {
   const draw = createCanastaGuidedSession(3).session;
-  expect(canastaGuidance(canastaObservation(draw)).rule).toContain("Choose Draw stock");
-  expect(canastaGuidance(canastaObservation(draw)).tip).toContain("discard pile is empty");
+  expect(canastaGuidance(canastaObservation(draw)).rule).toContain("discard pile is empty");
+  expect(canastaGuidance(canastaObservation(draw)).tip).toContain("Choose Draw stock");
   const opening = canastaLearningSteps("opening")[0].session;
   const guide = canastaGuidance(canastaObservation(opening));
   expect(guide.tip).toContain("150 card points (minimum 125)");
@@ -104,7 +104,8 @@ test("Canasta coaching describes the current step, opening points and selected d
 test("Canasta coaching distinguishes empty stock, pile pickup and special hands", () => {
   const empty = createCanastaGuidedSession(3).session;
   empty.hand.stock = [];
-  expect(canastaGuidance(canastaObservation(empty)).rule).toContain("End hand");
+  expect(canastaGuidance(canastaObservation(empty)).rule).toContain("discard pile is empty");
+  expect(canastaGuidance(canastaObservation(empty)).tip).toContain("End hand");
   const pile = canastaLearningSteps("pile")[0].session;
   expect(canastaGuidance(canastaObservation(pile)).rule).toContain("Take pile");
   pile.hand.stock = [];
