@@ -15,7 +15,7 @@ import { createGuidedHandFeature } from "../../src/features/guidedHandFeature";
 import { bridgeActiveHand } from "../../src/features/bridge/bridgePresentation";
 import { trickTakingSeats as seats } from "../../src/domain/trickTakingScore";
 
-test("Bridge's six topics share three fading stages and distinct bounded follow-ups", () => {
+test("Bridge's seven topics share three fading stages and distinct bounded follow-ups", () => {
   for (const topic of ["dummy", "declarer", "defense"] as const) {
     const steps = bridgeLearningSteps(topic);
     expect(steps.map(step => step.teaching!.stage)).toEqual(["worked", "supported", "independent"]);
@@ -46,7 +46,7 @@ test("Bridge's six topics share three fading stages and distinct bounded follow-
       }
     }
   }
-  for (const topic of ["contracts", "bidding", "responding"] as const) {
+  for (const topic of ["contracts", "bidding", "responding", "support"] as const) {
     const steps = bridgeChoiceSteps(topic);
     expect(steps.map(step => step.teaching.stage)).toEqual(["worked", "supported", "independent"]);
     expect(steps[2].teaching.guidance).toBeUndefined();
@@ -72,6 +72,25 @@ test("Bridge's six topics share three fading stages and distinct bounded follow-
     expect(session.index).toBe(2);
   }
   expect(bridgeChoiceSteps("bidding").map(step => bridgeHighCardPoints(step.followUp!.hand))).toEqual([7, 16, 13]);
+});
+
+test("major support lessons teach legal raises that match the live partnership agreement", () => {
+  const steps = bridgeChoiceSteps("support");
+  expect(steps.map(step => step.correct)).toEqual(["2H", "3S", "4H"]);
+  expect(steps.map(step => bridgeHighCardPoints(step.hand))).toEqual([6, 10, 13]);
+  expect(steps.map(step => bridgeHighCardPoints(step.followUp!.hand))).toEqual([9, 12, 14]);
+  for (const step of steps.flatMap(step => [step, step.followUp!])) {
+    const suit = step.correct.endsWith("H") ? "H" : "S";
+    const calls: BridgeAuctionCall[] = [{ seat: "Tutor", call: `1${suit}` }, { seat: "Right", call: "Pass" }];
+    const legal = bridgeLegalCallOptions(calls, "You", 0);
+    expect(bridgeIsBalanced(step.hand)).toBe(true);
+    expect(bridgeSuitCount(step.hand, suit)).toBe(3);
+    expect(step.options.every(option => legal.includes(option.id))).toBe(true);
+    expect(suggestBridgeCall(step.hand, "You", calls, legal)).toBe(step.correct);
+    expect(step.contextDetail).toContain(`${bridgeHighCardPoints(step.hand)} HCP`);
+    expect(step.explanations[step.correct]).toContain("at least eight trumps");
+    expect(step.explanations[step.correct]).toContain("do not guarantee tricks");
+  }
 });
 
 test("1NT response lessons match legal auction policy and keep their stated hand assumptions", () => {

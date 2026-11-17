@@ -92,7 +92,7 @@ for (const { width, height, role } of [
     await page.getByRole("button", { name: "Replay", exact: true }).click();
     expect(await page.getByLabel("Your Bridge auction hand").getByRole("button").evaluateAll(cards => cards.map(card => card.getAttribute("aria-label")))).toEqual(opening);
     await page.getByRole("button", { name: "Table", exact: true }).first().click();
-    await expect(page.getByLabel("Bridge course progress")).toContainText("0 / 6 complete");
+    await expect(page.getByLabel("Bridge course progress")).toContainText("0 / 7 complete");
     expect(await page.evaluate(key => localStorage.getItem(key), bridgeSaveKey)).toBe(saved);
     expect(errors).toEqual([]);
   });
@@ -112,10 +112,10 @@ test("passed-out guided auction has working replay and independent play exits", 
   expect(await page.evaluate(key => localStorage.getItem(key), bridgeSaveKey)).toBeNull();
 });
 
-test("Bridge choice lessons record follow-ups, lock answers and complete all six topics", async ({ page }, info) => {
+test("Bridge choice lessons record follow-ups, lock answers and complete all seven topics", async ({ page }, info) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await learn(page);
-  for (const topic of ["contracts", "bidding", "responding"] as const) {
+  for (const topic of ["contracts", "bidding", "responding", "support"] as const) {
     const steps = bridgeChoiceSteps(topic);
     await page.locator(`[data-skill="bridge-${topic}"] .lesson-topic`).click();
     await page.getByRole("button", { name: "See example", exact: true }).click();
@@ -151,5 +151,5 @@ test("Bridge choice lessons record follow-ups, lock answers and complete all six
     await expect(page.getByRole("button", { name: "Start guided hand", exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
   }
-  await expect(page.getByLabel("Bridge course progress")).toContainText("6 / 6 complete");
+  await expect(page.getByLabel("Bridge course progress")).toContainText("7 / 7 complete");
 });

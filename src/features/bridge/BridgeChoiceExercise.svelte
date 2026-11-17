@@ -11,7 +11,7 @@
   import { bridgeHandShapeLabel } from "./bridgePresentation";
   let { context }: { context: CustomExerciseContext } = $props();
   let session = $state(untrack(() => createLearningSession<BridgeChoiceStep, DrillResult, DecisionReview>(
-    bridgeChoiceSteps(context.action === "contracts" ? "contracts" : context.action === "responding" ? "responding" : "bidding"))));
+    bridgeChoiceSteps(context.action === "contracts" ? "contracts" : context.action === "responding" ? "responding" : context.action === "support" ? "support" : "bidding"))));
   let selected = $state("");
   let step = $derived(session.steps[session.index]);
   let checked = $derived(session.phase === "feedback");
@@ -52,7 +52,7 @@
     </section>
   {/snippet}
   {#snippet panel()}
-    <ExerciseFeedback coach={context.coach} reserveSpace eyebrow={context.action === "responding" ? "Respond to partner" : bidding ? "Opening bid" : "Contract target"} title={step.title}
+    <ExerciseFeedback coach={context.coach} reserveSpace eyebrow={context.action === "responding" || context.action === "support" ? "Respond to partner" : bidding ? "Opening bid" : "Contract target"} title={step.title}
       result={checked ? "" : step.prompt} teaching={checked ? { stage: step.teaching.stage } : step.teaching}
       explanation={checked ? step.explanations[selected] : ""}
       outcome={checked ? good ? "Good" : "Risky" : ""} warning={checked && !good}

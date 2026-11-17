@@ -54,16 +54,16 @@ Authored short exercises live under `src/lessons/bridge/`, not in the screen.
 Each topic has three decisions; defense exercises remain defensive. Legal cards
 are checked separately from tactical grades, and scripts must contain four unique
 seats in clockwise order with no duplicated cards.
-The six-topic path starts with reading contracts and controlling dummy,
-before opening bids, responding to 1NT, declarer tactics and defense. Dummy has its own three
+The seven-topic path starts with reading contracts and controlling dummy,
+before opening bids, responding to 1NT, supporting partner's major, declarer tactics and defense. Dummy has its own three
 reduced-hand positions, not a replay of declarer tactics. The shared drill view
 supports an explicit playing seat and a read-only reference hand; selected dummy
 cards render at North, and South's cards remain separate. Contract targets use
 the auction engine's bid metadata. Bidding choices start unselected. Existing
 progress keys and match saves are retained.
 
-`src/lessons/bridge/learning.ts` adapts the six topics into worked, supported
-and independent decisions, with eighteen base positions and eighteen distinct
+`src/lessons/bridge/learning.ts` adapts the seven topics into worked, supported
+and independent decisions, with twenty-one base positions and twenty-one distinct
 reinforcement positions. Shared feedback and decision review preserve the
 original visible information. Contract/bidding questions use the shared learning
 session controller rather than maintaining a separate completion model.
@@ -91,7 +91,16 @@ Supplementary teaching reference: [ACBL School Bridge Lesson Series, responding
 to 1NT](https://web2.acbl.org/documentlibrary/teachers/SBLSTeacherManual.pdf).
 Lesson wording and examples are original.
 
-Responses to suit openings, competitive auctions, multi-trick planning and interactive duplicate
+The `bridge-support` lesson teaches uncontested responses to partner's one-level
+major opening with balanced, three-card support hands. Three decisions use 6, 10
+and 13 HCP; distinct companions use 9, 12 and 14 HCP and switch majors. Feedback
+explains the eight-card fit, simple raise, direct invitation and ten-trick game
+target. Answers match the existing auction policy, not a second bidding evaluator.
+Existing progress and saved boards are unchanged. Learn's opening-bid lesson, Play's
+entry and both normal/guided auctions identify Barbu Natural as neither Acol nor
+complete SAYC. Different club agreements can assign different meanings to raises.
+
+Other responses to suit openings, competitive auctions, multi-trick planning and interactive duplicate
 score explanation remain curriculum gaps, not completed lessons.
 
 ## Remaining Strength Boundaries

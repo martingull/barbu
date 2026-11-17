@@ -4,14 +4,14 @@ import { bridgeChoiceSteps } from "../../src/lessons/bridge/learning";
 test("completed Bridge learners discover and finish the new bidding lesson without losing progress", async ({ page }, info) => {
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
-  const prior = Object.fromEntries(["contracts", "dummy", "bidding", "declarer", "defense"].map(topic => [`bridge-${topic}`, true]));
+  const prior = Object.fromEntries(["contracts", "dummy", "bidding", "support", "declarer", "defense"].map(topic => [`bridge-${topic}`, true]));
   await page.addInitScript(prior => {
     if (!localStorage.getItem("barbu.courseProgress.v1")) localStorage.setItem("barbu.courseProgress.v1", JSON.stringify(prior));
   }, prior);
   await page.goto("/");
   await page.getByRole("button", { name: "Open Bridge", exact: true }).click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
-  await expect(page.getByLabel("Bridge course progress")).toContainText("5 / 6 complete");
+  await expect(page.getByLabel("Bridge course progress")).toContainText("6 / 7 complete");
   await page.getByLabel("Continue learning").getByRole("button").click();
   await expect(page.getByRole("heading", { name: "Respond to 1NT", exact: true })).toBeVisible();
   await page.screenshot({ path: info.outputPath("responding-concept.png"), fullPage: true });

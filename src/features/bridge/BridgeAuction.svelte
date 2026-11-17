@@ -3,6 +3,7 @@
   import GameResult from "../../components/GameResult.svelte";
   import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
   import GuidedHandActions from "../../components/GuidedHandActions.svelte";
+  import { bridgeBiddingAgreement } from "../../games/bridge";
   import { bridgeHighCardPoints } from "../../domain/bridgeBidding";
   import { explainBridgeCall } from "./bridgeBidExplanation";
   import { bridgeAuctionStatus, bridgeLegalCallOptions, bridgeSuggestedCallForHand, bridgeFinalizeContract,
@@ -48,10 +49,7 @@
       <h2>{bridgeAuctionCurrentStatus.complete ? "Auction complete" : bridgeAuctionCurrentStatus.currentSeat === "You" ? "Choose your call" : "Auction in progress"}</h2>
     </div>
 
-    {#if !guided}<p class="result">
-      You are South. The auction uses basic natural bidding: five-card majors, better minor, 15-17 1NT, strong 2C,
-      and weak twos. The final contract sets declarer, dummy, opening lead, vulnerability, and scoring.
-    </p>{/if}
+    <p class="result">{bridgeBiddingAgreement}</p>
     {/if}
 
     {#if guided && !bridgeAuctionCurrentStatus.passedOut}

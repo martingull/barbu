@@ -202,11 +202,12 @@ Whist, Hearts, Spades, Bridge and Barbu have isolated frontends under their resp
   Its feature controller delegates bid locking, nil, bags and completion to
   `spadesSession.ts`; lessons never write the match save.
 - `BridgeGame.svelte` composes `BridgeAuction.svelte`, `BridgeHandView.svelte`
-  and the same `GameLearning` flow. All five topics use shared fading stages,
+  and the same `GameLearning` flow. All seven topics use shared fading stages,
   decision review and bounded reinforcement through `lessons/bridge/learning.ts`:
-  fifteen base decisions plus fifteen distinct follow-ups. Contract targets and
+  twenty-one base decisions plus twenty-one distinct follow-ups. Contract targets and
   bidding share `BridgeChoiceExercise` and `learningSession`; card decisions use
-  the common drill screen with compass labels. The five progress keys are unchanged.
+  the common drill screen with compass labels. Existing progress keys are unchanged;
+  responding to 1NT and supporting partner's major have their own added keys.
   Keep topics in authored order: worked, supported, then independent.
   Dummy excerpts supply visible information;
   the final declarer position gives both remaining hands and the trick target.

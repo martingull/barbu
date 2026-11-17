@@ -14,6 +14,7 @@ const principles = {
   contracts: "Read the level and strain: six base tricks plus the level is the partnership target. NT means no trump suit.",
   bidding: "Describe your own strength and shape: weak balanced hands pass, 15-17 balanced opens 1NT, opening strength with a five-card major shows that major.",
   responding: "After partner's 15-17 1NT, balanced hands without a four-card major pass with 0-7 HCP, invite with 2NT on 8-9, and bid 3NT on 10-15. Points guide the target; they do not guarantee tricks.",
+  support: "After partner opens a five-card major, three-card support makes an eight-card fit. In Barbu Natural, raise to two with 6-9 HCP, invite at three with 10-12, and bid game at four with 13+ on these balanced hands.",
   dummy: "Declarer directs two separate hands. Follow suit from the hand whose turn it is, not from the partnership's combined cards.",
   declarer: "Plan partnership winners and entries. Finesses, developing length and unblocking can create tricks, but hidden cards still matter.",
   defense: "Defenders work together: support partner's lead, use exposed dummy, and preserve partnership winners."
@@ -155,7 +156,48 @@ function responseChoices(): BridgeChoiceStep[] {
   });
 }
 
-export function bridgeChoiceSteps(topic: "contracts" | "bidding" | "responding"): BridgeChoiceStep[] {
+function supportChoices(): BridgeChoiceStep[] {
+  const examples = [
+    { title: "Show your fit", suit: "H", level: 2, hand: "KS 7S 2S QH 8H 3H JD 9D 4D 9C 10C 6C 2C",
+      followSuit: "S", followHand: "AS 8S 3S QH 7H 2H KD 9D 4D 10C 8C 6C 2C" },
+    { title: "Invite partner to game", suit: "S", level: 3, hand: "KS 9S 4S AH 8H 2H QD 7D 3D JC 9C 5C 2C",
+      followSuit: "H", followHand: "AS 9S 3S KH 7H 2H QD 8D 4D KC 10C 6C 2C" },
+    { title: "Choose the partnership target", suit: "H", level: 4, hand: "AS 8S 3S QH 7H 2H KD 9D 4D AC 8C 6C 2C",
+      followSuit: "S", followHand: "KS 9S 4S AH 8H 2H AD 7D 3D KC 9C 5C 2C" }
+  ] as const;
+  return examples.map((example, index) => {
+    const make = (ids: string, suit: "H" | "S", followUp: boolean): BridgeChoiceStep => {
+      const hand = cards(ids), points = bridgeHighCardPoints(hand);
+      const symbol = suitSymbol(suit), correct = `${example.level}${suit}`;
+      const options = ["Pass", `2${suit}`, `3${suit}`, `4${suit}`];
+      const fit = `Partner's five or more ${symbol} plus your three makes at least eight trumps.`;
+      const why = example.level === 2 ? `With ${points} HCP, raise to 2${symbol}: show 6-9 points and support without inviting game.`
+        : example.level === 3 ? `With ${points} HCP, invite with 3${symbol}: show 10-12 points and let partner pass or bid game with extra strength.`
+        : `With ${points} HCP, bid 4${symbol}: this hand has the support and strength for the ten-trick game target.`;
+      const objections: Record<string, string> = {
+        Pass: "Passing hides your support and responding strength.",
+        [`2${suit}`]: "A simple raise understates this hand's strength.",
+        [`3${suit}`]: example.level === 2 ? "An invitation overstates this hand's strength." : "An invitation understates this hand's strength.",
+        [`4${suit}`]: "Jumping to game overstates this hand's strength."
+      };
+      return {
+        id: `bridge-support-${index}${followUp ? "-follow-up" : ""}`, title: example.title,
+        prompt: `Partner opened 1${symbol}. How should you show your support?`,
+        context: `North (partner): 1${symbol}. East: Pass. South (you) to call.`,
+        contextDetail: `Barbu Natural. Partner: 5+ ${symbol}. You: 3 ${symbol}, ${points} HCP.`, hand,
+        options: options.map(id => ({ id, label: bridgeCallLabel(id) })), correct,
+        explanations: Object.fromEntries(options.map(id => [id, `${id === correct ? "Good." : objections[id]} ${fit} ${why} Points and fit guide bidding; they do not guarantee tricks.`])),
+        teaching: { stage: followUp ? "reinforcement" : teachingStages[index],
+          guidance: followUp ? principles.support : index === 0 ? `Try 2${symbol}. ${fit} ${why}`
+            : index === 1 ? "Check the fit first, then use your strength to choose a simple raise, an invitation or game." : undefined }
+      };
+    };
+    return { ...make(example.hand, example.suit, false), followUp: make(example.followHand, example.followSuit, true) };
+  });
+}
+
+export function bridgeChoiceSteps(topic: "contracts" | "bidding" | "responding" | "support"): BridgeChoiceStep[] {
+  if (topic === "support") return supportChoices();
   if (topic === "responding") return responseChoices();
   if (topic === "contracts") return bridgeContractSteps.map((step, index) => ({
     ...targetChoice(step.bid, step.title, step.options, { stage: teachingStages[index], guidance: step.hint || undefined }),

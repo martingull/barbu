@@ -106,6 +106,44 @@ const courses: CourseContent[] = [
     }
   },
   {
+    id: "bridge-support", game: "bridge", pathStepId: "bridge-support",
+    practiceTarget: { kind: "practice", game: "bridge", action: "support" },
+    contract: "Bridge", title: "Support partner's major",
+    concept: {
+      heading: "Find a fit before choosing the height.",
+      body: "North opens 1♥ or 1♠ and East passes. In Barbu Natural this shows at least five cards in that major. Your three-card support gives the partnership at least eight trumps: a fit.",
+      points: [
+        { marker: "Raise", text: "With 6-9 high-card points and support, raise to two of partner's major. This does not invite game." },
+        { marker: "Invite", text: "With 10-12 points and support, raise to three. Partner may pass or bid game with extra strength." },
+        { marker: "Game", text: "With 13+ points and support, these hands bid four of the major: a ten-trick game target." }
+      ]
+    },
+    example: {
+      heading: "Five plus three makes a fit.",
+      body: "North opens 1♥ and East passes. South has three hearts and 10 high-card points. Respond 3♥ to show the fit and invite North to game, not to promise nine tricks from South alone.",
+      ariaLabel: "Bridge major support example", pendingBySeat: {},
+      tableCards: [
+        { seat: "You", card: { id: "KH", rank: "K", suit: "H", label: "KH" } },
+        { seat: "You", card: { id: "8H", rank: "8", suit: "H", label: "8H" } },
+        { seat: "You", card: { id: "3H", rank: "3", suit: "H", label: "3H" } }
+      ],
+      sequence: [
+        { label: "Fit", text: "North has at least five hearts; South has three. Together there are at least eight." },
+        { label: "Strength", text: "Count all South's honors, not just hearts: 10-12 HCP is an invitation in this agreement." },
+        { label: "Target", text: "3♥ needs nine tricks if North passes; 4♥ needs ten and earns a game bonus if made." }
+      ]
+    },
+    review: {
+      heading: "Support tells partner about fit and strength.",
+      body: "These are uncontested responses to a one-level major opening, using balanced hands with three-card support. A fit helps select trumps; neither points nor length guarantees tricks.",
+      points: [
+        { marker: "Not NT", text: "With this major-suit fit, raise partner rather than apply the balanced 1NT-response ranges." },
+        { marker: "Agreement", text: "Barbu Natural uses direct invitational raises. Other club systems can give a jump raise a different meaning." },
+        { marker: "Scope", text: "Short suits, extra trump length, interference and slam-strength hands need further partnership agreements." }
+      ]
+    }
+  },
+  {
     id: "bridge-declarer", game: "bridge", pathStepId: "bridge-declarer",
     practiceTarget: { kind: "practice", game: "bridge", action: "declarer" },
     contract: "Bridge", title: "Declarer play",

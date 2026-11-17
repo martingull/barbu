@@ -1,8 +1,10 @@
 import type { GameDefinition } from "./gameRegistry";
 import { createGameTableDefinition, gameRulesCopy } from "./tableFactory";
 
-export type BridgeLearnPathAction = "contracts" | "bidding" | "responding" | "declarer" | "dummy" | "defense";
-export type BridgePracticeAction = "bidding" | "responding" | "declarer" | "defense";
+export type BridgeLearnPathAction = "contracts" | "bidding" | "responding" | "support" | "declarer" | "dummy" | "defense";
+export type BridgePracticeAction = "bidding" | "responding" | "support" | "declarer" | "defense";
+
+export const bridgeBiddingAgreement = "Barbu Natural: five-card majors and a 15-17 1NT. Not Acol or complete SAYC; check your club's agreements.";
 
 export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAction> = {
   table: createGameTableDefinition({
@@ -29,7 +31,7 @@ export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAct
         eyebrow: "Learn",
         title: "Learn declarer and defense.",
         summary:
-          "Bridge introduces basic natural bidding, the dummy, declarer play, and partnership defense."
+          `Learn bidding, dummy, declarer play and defense. ${bridgeBiddingAgreement}`
       },
       play: {
         eyebrow: "Play",
@@ -49,6 +51,7 @@ export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAct
         { id: "reference", label: gameRulesCopy.referenceTitle, destination: "Bridge rules" },
         { id: "bidding", label: "Bidding", destination: "Bridge bidding concept" },
         { id: "responding", label: "Respond to 1NT", destination: "Bridge responding concept" },
+        { id: "support", label: "Support partner's major", destination: "Bridge support concept" },
         { id: "declarer", label: "Declarer play", destination: "Bridge declarer concept" },
         { id: "dummy", label: "The Dummy", destination: "Bridge dummy concept" },
         { id: "defense", label: "Defense", destination: "Bridge defense concept" }
@@ -75,6 +78,10 @@ export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAct
     {
       id: "bridge-responding", step: "Partnership", title: "Respond to 1NT",
       summary: "Add your strength to partner's range: pass, invite, or bid game.", action: "responding"
+    },
+    {
+      id: "bridge-support", step: "Fit", title: "Support partner's major",
+      summary: "Find an eight-card fit, then choose a simple raise, an invitation or game.", action: "support"
     },
     {
       id: "bridge-declarer",
@@ -111,6 +118,11 @@ export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAct
           id: "responding", label: "Respond", title: "Respond to 1NT",
           summary: "Choose a partnership target after a 15-17 1NT opening.",
           action: "responding", group: "bridge-drills"
+        },
+        {
+          id: "support", label: "Support", title: "Support partner's major",
+          summary: "Raise partner's five-card major with support and the right strength.",
+          action: "support", group: "bridge-drills"
         },
         {
           id: "declarer-play",
