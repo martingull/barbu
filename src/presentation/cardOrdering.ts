@@ -1,6 +1,7 @@
 import type { Card, Suit } from "../domain/types";
 
 type Rank = "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "J" | "Q" | "K" | "A";
+export type CardDisplayComparator = (left: Card, right: Card) => number;
 
 export const displaySuitSequence: Suit[] = ["S", "H", "D", "C"];
 export const displaySuitOrder: Record<Suit, number> = { S: 0, H: 1, D: 2, C: 3 };
@@ -26,6 +27,12 @@ export function compareCardsForDisplay(left: Pick<Card, "rank" | "suit">, right:
   return displaySuitOrder[left.suit] - displaySuitOrder[right.suit] || rankOrder[left.rank as Rank] - rankOrder[right.rank as Rank];
 }
 
-export function sortCardsForDisplay<T extends Pick<Card, "rank" | "suit">>(cards: T[]) {
-  return [...cards].sort(compareCardsForDisplay);
+export function compareCanastaCardsForDisplay(left: Card, right: Card) {
+  const rank = (card: Card) => card.rank === "Joker" ? 16 : card.rank === "2" ? 15 : rankOrder[card.rank as Rank];
+  return rank(left) - rank(right) || displaySuitOrder[left.suit] - displaySuitOrder[right.suit]
+    || left.id.localeCompare(right.id);
+}
+
+export function sortCardsForDisplay<T extends Pick<Card, "rank" | "suit">>(cards: readonly T[], compare: (left: T, right: T) => number = compareCardsForDisplay) {
+  return [...cards].sort(compare);
 }

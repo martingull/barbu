@@ -81,7 +81,7 @@ penalties even when a partnership has exactly one canasta.
 - `domain/canastaRules.ts`: card identities, meld legality, values and scoring.
 - `domain/canastaSession.ts`: deterministic actions, complete hands and matches.
 - `domain/canastaPolicy.ts`: bounded deterministic suggestions and computer play.
-  The policy receives only its cards, public melds/discards, scores and stock
+  The policy receives only its cards, public melds/discards, scores, hand counts and stock
   count. Hidden hands, bonus packet contents, stock values and shuffle seed are
   removed before making a decision. It is a heuristic opponent, not expert search.
 - `persistence/canastaSave.ts`: version-1 action-log replay validation. Summaries
@@ -92,10 +92,36 @@ penalties even when a partnership has exactly one canasta.
 - `domain/canastaLearning.ts`: one unsaved guided hand using normal transitions
   and opponents. Public-only coaching, checked-move review, observed hand-count
   changes, one-hand completion and exact replay; no lesson progress or storage.
-- `lessons/canasta/`: seven courses (card values, melds, opening, pile, discard,
+- `lessons/canasta/`: eight courses (card values, melds, opening, meld risk, pile, discard,
   going out, scoring), each with three short decisions and three distinct bounded companions.
   Legality and score questions use the same session/rules as Play. The four
-  original progress keys remain; opening, score and card values add three new keys.
+  original progress keys remain; opening, score, card values and meld risk add four new keys.
+
+## Opponent Strategy
+
+The bounded meld search compares legal candidates rather than accepting the first
+one. It favors closing canastas and adding to existing groups, and preserves wilds
+when they do not complete a canasta. For this conservative heuristic, new pure-ace,
+seven and wild melds are suggested only when the move can complete them. Existing
+unfinished commitments can still be extended. A pile pickup is declined by the
+computer if it would start one of these penalty melds without enough visible cards
+to finish it. Manual legal melds and pickups remain available to the player.
+
+Before voluntarily melding down to a final discard, the policy considers public
+penalty commitments, the partner's card count, opponents close to going out, low
+stock and an estimated match finish. Concealed cards are estimated at ten points
+each; their identities and possible ace/seven penalties are not inspected. A
+negative own score is not an automatic veto: catching opponents with a worse
+public position can justify closing. A player already left with a legal last-card
+discard still goes out; the policy avoids committing to that position beforehand.
+Two canastas remain a minimum, not a mandatory stopping point or a new maximum.
+
+In a deterministic all-computer comparison of first hands for seeds 0 through 49,
+negative partnership-hand scores fell from 46/100 to 20/100, and hands ending by
+going out fell from 45/50 to 36/50; the remaining revised hands exhausted the stock.
+These are policy diagnostics, not statistics about human clubs or evidence of
+expert strength. Rules, point values and action-log replay are unchanged. Existing
+saves retain their historical actions; only future computer moves use this policy.
 
 ## Shared Learning And Table
 
@@ -107,8 +133,22 @@ retry, guided play or ordinary Play. Lessons never overwrite the saved match.
 Public/proposed melds are shown alongside the cards needed to answer each question.
 These are reduced teaching positions, not simulated full deals.
 
-The shared Learn template places rules/reference resources first for all games.
-Canasta labels its entry Rules and card values.
+Manage meld risk compares two legal moves against a stated public goal: avoid a
+new unfinished-meld penalty, remove an existing commitment, or complete a canasta
+without creating a new commitment. Three worked/supported/independent decisions
+have three different bounded reinforcement positions. `canastaMeldDecision` uses
+normal transitions and the shared penalty calculation, not the opponent's chosen
+move as an answer key. Choosing the riskier legal alternative is Risky, not Illegal.
+The comparison is about exposed meld penalties, not a prediction of the eventual
+hand score or a claim of globally optimal play. Keeping cards can also be costly.
+
+The course adds only `canasta-risk`, between opening and pile lessons. Completed
+older paths become seven of eight complete without resetting prior skills or
+saved matches. Both proposed groups, existing public melds, the player's cards
+and the selected move are preserved for decision review.
+
+The shared Learn template places Game rules first for all games, with the same
+description: Read the rules, scoring and variations.
 The reference starts with the value key and a worked 150-point total. The first
 lesson, Count card points, opens with a short explanation and a worked example
 before its three counting decisions. It distinguishes card values, meld legality,
@@ -124,16 +164,58 @@ always present. Every accepted action pauses for review; cards and pile actions
 are locked until Continue. The final action is retained in a bounded recap even
 when it ends the hand. Completion neither advances a match nor awards a lesson.
 
+The shared guided-hand entry explains advice, review and saved-game isolation;
+Canasta supplies its partnership/two-canasta goal as table metadata. Turn guidance
+names the next action in the current draw, meld or discard phase, explains a
+suggested opening's card-point total, and distinguishes a legal starting point
+from optimal play. Selected threes, restricted wild discards, the empty pile,
+special hands and stock exhaustion get relevant instructions rather than a list
+of every restriction. The meld editor explains staging and confirming groups.
+Reviews put the next action first, distinguish a three's replacement from the
+normal draw, and use actual terminal states rather than promising another turn.
+Hand-count facts describe the player's own move, before subsequent opponent turns
+or bonus-card delivery. Guidance scrolls within the unchanged reserved feedback
+region and returns to the start for each decision; it does not resize the board.
+Shared `canastaMeldChanges` facts connect the risk lesson to guided play: advice
+describes the visible effect of a proposed meld, and reviews report the actual
+group size, remaining cards, conditional unfinished penalty, completed bonus and
+removed commitment. These facts are captured before opponents move. Bonuses are
+described as end-of-hand amounts, not points already credited. Recaps include an
+actual penalty commitment or removal when one occurred; no hint toggles or extra
+table controls are added.
+
 The table uses the shared flow surface with a stable feedback region and a
 seven-column hand. Stock/pile cards are larger than in the paused prototype.
+Completed-hand scores list the actual canasta bonuses, unfinished meld penalties,
+per-player ace/seven penalties, red/black threes, melded values and cards left with
+both partners. The rows come from the same domain calculation as settlement, not
+a second presentation formula. Special-hand winners show only their replacement
+award. Signed rows add to the unchanged hand total and are generated again when
+old action-log saves are restored.
+
+The meld editor previews legal staged groups and automatic pile-pickup melds using
+the public-only observation. It warns about changed, unfinished pure aces, sevens
+and wild groups using the same penalty function as scoring. Completing a group or
+removing it clears its warning; unrelated old commitments are not repeated. These
+are conditional penalties, not charges applied at melding, and confirmation stays
+enabled for legal risky moves. Warning text has a reserved scrollable region, so
+appearing warnings do not resize the board or move the editor's hand and actions.
+
 Large hands and public melds scroll within their reserved areas. Meld details
 can be expanded without resizing the board. On short screens the hand window
 shows fewer rows; cards stay selectable by scrolling rather than overlapping
 the action row. The meld editor stages changes until confirmation.
 
 Existing jokers in `public/cards/PNG-cards-1.3/` are used rather than introducing
-new artwork. Shared card display keeps the existing suit ordering, with jokers at
-the end. Each duplicate is independently selectable by its pack-specific ID.
+new artwork. Each duplicate is independently selectable by its pack-specific ID.
+
+Canasta uses rank-first presentation: threes, fours through aces, then twos and
+jokers. Matching ranks stay adjacent across suits and duplicate packs; suits
+and physical pack ids break ties deterministically. The same comparator is
+supplied to shared hand, lesson-example and decision-review components, so Play,
+guided review, meld selection and Learn use one order. Selection does not regroup
+cards, and the seven-column layout is unchanged. Other games retain suit-first
+ordering. Sorting copies the display array; deals, turn state and saves are untouched.
 Standard single-deck shuffle outputs and all existing save identifiers are kept.
 
 ## Boundaries And Verification
@@ -143,7 +225,7 @@ permission dialogue, verbal/table signals, expert search and CLA-specific specia
 hands are not included. Suggestions are legal candidate groups, not a claim of
 optimal strategy. Invalid attempts do not incur physical-table procedural penalties.
 Manual card exposure beyond the rules is not simulated.
-The seven topics teach foundations, not a complete advanced Canasta curriculum.
+The eight topics teach foundations, not a complete advanced Canasta curriculum.
 Special-hand construction, partnership strategy, and more nuanced discard choices
 still need dedicated lessons and club-player feedback before selling this as an
 advanced course. Guidance explains legal possibilities, not optimal strategy.
@@ -158,6 +240,7 @@ Focused commands:
 
 ```sh
 npm run test:domain -- tests/domain/canasta.spec.ts
+npm run test:domain -- tests/domain/canastaPolicy.spec.ts
 task domain:test
 task ui:test:canasta
 npm run build
@@ -165,7 +248,7 @@ npm run build
 
 Verify complete matches, 108-card conservation, hidden-information independence,
 initial meld and pickup edge cases, target completion, exact replay/resume,
-blocked storage, twenty-one base decisions and twenty-one bounded companions,
+blocked storage, twenty-four base decisions and twenty-four bounded companions,
 full guided-hand review/replay, narrow-screen layout and a 48-card
 hand. Physical-device testing is required before including this game in a store
 release; browser coverage does not replace that check.

@@ -52,8 +52,14 @@ export type TableLearnDefinition = {
   nextSummary: string;
   completeSummary: string;
   referenceSummary: string;
-  referenceTitle?: string;
+  referenceTitle: string;
+  guidedHandGoal?: string;
 };
+
+export const gameRulesCopy = {
+  referenceTitle: "Game rules",
+  referenceSummary: "Read the rules, scoring and variations."
+} as const;
 
 export type GameTableDefinition = {
   id: string;
@@ -66,7 +72,8 @@ export type GameTableDefinition = {
   tabs: Record<TableTabId, TableTabDefinition>;
 };
 
-type CreateGameTableInput = Omit<GameTableDefinition, "tabs"> & {
+type CreateGameTableInput = Omit<GameTableDefinition, "tabs" | "learn"> & {
+  learn: Omit<TableLearnDefinition, keyof typeof gameRulesCopy>;
   tabIntros: Record<TableTabId, TableTabIntroDefinition>;
   actionsByTab: Partial<Record<TableTabId, TableActionDefinition[]>>;
 };
@@ -123,6 +130,7 @@ const tabLabels: Record<TableTabId, string> = {
 export function createGameTableDefinition(config: CreateGameTableInput): GameTableDefinition {
   return {
     ...config,
+    learn: { ...config.learn, ...gameRulesCopy },
     tabs: Object.fromEntries(
       tableTabIds.map((tab) => [
         tab,

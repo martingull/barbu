@@ -1,5 +1,5 @@
 import type { GameDefinition } from "./gameRegistry";
-import { createGameTableDefinition } from "./tableFactory";
+import { createGameTableDefinition, gameRulesCopy } from "./tableFactory";
 
 export type BarbuLearnPathAction = "lesson" | "planned";
 export type BarbuPracticeAction = "fixed" | "domino";
@@ -22,8 +22,7 @@ export const barbuDef: GameDefinition<BarbuLearnPathAction | BarbuPracticeAction
       pathTitle: "Learn the Barbu table",
       progressAriaLabel: "Barbu course progress",
       nextSummary: "Return to the next short card decision.",
-      completeSummary: "Look over the first Barbu table before another pass.",
-      referenceSummary: "Check the baseline rules, scoring, and variants."
+      completeSummary: "Look over the first Barbu table before another pass."
     },
     tabIntros: {
       learn: {
@@ -48,7 +47,7 @@ export const barbuDef: GameDefinition<BarbuLearnPathAction | BarbuPracticeAction
         { id: "review-results", label: "Review results", destination: "Barbu review" },
         { id: "reset-path", label: "Reset path", destination: "Barbu Learn" },
         { id: "continue-path", label: "Continue with next lesson", destination: "Next Barbu learning step" },
-        { id: "reference", label: "Reference", destination: "Barbu reference" },
+        { id: "reference", label: gameRulesCopy.referenceTitle, destination: "Barbu rules" },
         { id: "contracts", label: "Barbu contracts", destination: "Barbu contract map" }
       ],
       play: [

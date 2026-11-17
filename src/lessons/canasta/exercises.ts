@@ -1,6 +1,8 @@
 import { canastaDeck, canastaValue, initialCanastaMinimum, scoreCanastaSide, completedCanastas } from "../../domain/canastaRules";
 import { createCanastaSession, transitionCanastaSession, type CanastaAction, type CanastaSession } from "../../domain/canastaSession";
 import { teachingStages, type Teaching, type FeedbackBreakdown } from "../learningPresentation";
+import { canastaMeldDecision, type CanastaMeldGoal } from "../../domain/canastaMeldPreview";
+import { canastaObservation } from "../../domain/canastaPolicy";
 
 export function canastaCards(ids: string) {
   const deck = canastaDeck(0);
@@ -11,7 +13,8 @@ export function canastaCards(ids: string) {
   });
 }
 export type CanastaExercise = { title: string; prompt: string; session: CanastaSession; action?: CanastaAction; explanation: string;
-  teaching?: Teaching; followUp?: CanastaExercise; options?: string[] };
+  teaching?: Teaching; followUp?: CanastaExercise; options?: string[];
+  strategy?: { goal: CanastaMeldGoal; choices: { id: string; label: string; action: Extract<CanastaAction, { type: "meld" }>; explanation: string }[] } };
 function position(ids: string, opened = true, phase: "draw" | "play" = "play") {
   const session = createCanastaSession(3);
   session.hand.hands[0] = canastaCards(ids); session.hand.sides[0].opened = opened; session.hand.phase = phase;
@@ -52,6 +55,17 @@ function values(title: string, ids: string, options: string[], explanation: stri
   return { title, session: position(ids), options,
     prompt: "Add the point values of the cards shown. What is their total? This is counting practice, not a proposed meld.", explanation };
 }
+function risk(title: string, prompt: string, ids: string, goal: CanastaMeldGoal, publicMelds: [string, string][],
+  choices: [string, string, string, string][], workedChoice = 0): CanastaExercise {
+  const session = position(ids);
+  session.hand.hands = [session.hand.hands[0], [], [], []];
+  session.hand.sides[0].melds = publicMelds.map(([rank, ids]) => ({ rank, cards: canastaCards(ids) }));
+  const visible = new Set([...session.hand.hands[0], ...session.hand.discards, ...session.hand.sides[0].melds.flatMap(meld => meld.cards)].map(card => card.id));
+  session.hand.stock = canastaDeck(0).filter(card => !visible.has(card.id));
+  const moves = choices.map(([label, rank, selected, explanation], index) => ({ id: String(index), label, explanation,
+    action: { type: "meld" as const, groups: [{ rank, cardIds: selected.split(" ") }] } }));
+  return { title, prompt, session, explanation: moves[workedChoice].explanation, strategy: { goal, choices: moves } };
+}
 export const canastaExercises: Record<string, CanastaExercise[]> = {
   values: [
     values("Start with ordinary cards", "0-4C 0-7D 0-8H 0-QS", ["20", "30", "40"], "The four and seven count 5 each. The eight and queen count 10 each: 5 + 5 + 10 + 10 = 30 points."),
@@ -67,6 +81,23 @@ export const canastaExercises: Record<string, CanastaExercise[]> = {
     opening("Combine your groups", 0, "0-QC 0-QD 0-QH 0-KC 0-KD 0-JR 0-JB 0-4C", [["Q", "0-QC", "0-QD", "0-QH"], ["K", "0-KC", "0-KD", "0-JR", "0-JB"]]),
     opening("A higher minimum", 3200, "0-QC 0-QD 0-QH 0-KC 0-KD 0-JR 0-JB 0-4C", [["Q", "0-QC", "0-QD", "0-QH"], ["K", "0-KC", "0-KD", "0-JR", "0-JB"]]),
     opening("Check all opening conditions", 5100, "0-QC 0-QD 0-QH 0-KC 0-KD 0-KH 0-JR 0-JB 0-AC 0-AD 0-AH 0-4C", [["Q", "0-QC", "0-QD", "0-QH"], ["K", "0-KC", "0-KD", "0-KH", "0-JR", "0-JB"], ["A", "0-AC", "0-AD", "0-AH"]])
+  ],
+  risk: [
+    risk("Compare melds", "Both moves are legal. Which starts no unfinished-meld penalty on the table?",
+      "0-QC 0-QD 0-QH 0-2C 0-JR 0-JB 0-4C 0-5C", "avoid_new_penalty", [], [
+        ["Meld queens", "Q", "0-QC 0-QD 0-QH", "The queens start an ordinary meld with no unfinished-meld penalty. The separate three-card wild meld would carry a possible 2000-point penalty. Both moves are legal; this question compares the commitment on the table, not your final hand score."],
+        ["Start wild meld", "Wild", "0-2C 0-JR 0-JB", "That wild meld is legal, but it still needs four cards. It carries a possible 2000-point penalty if the hand ends first. The queens start no unfinished-meld penalty."]
+      ]),
+    risk("Finish sevens", "Both moves are legal. Which removes an existing unfinished-meld penalty?",
+      "1-7H 0-AC 0-AD 0-AH 0-4C 0-5C", "remove_penalty", [["7", "0-7C 0-7D 0-7H 0-7S 1-7C 1-7D"]], [
+        ["Start aces", "A", "0-AC 0-AD 0-AH", "Starting pure aces is legal, but it adds a possible 2500-point penalty while your sevens still need one card. Finish the sevens to remove the existing commitment."],
+        ["Finish sevens", "7", "1-7H", "The seventh seven completes the canasta and removes its possible 2500-point unfinished penalty. Starting pure aces instead leaves the sevens unfinished and creates another 2500-point commitment."]
+      ], 1),
+    risk("Use your wilds", "Both moves are legal. Which completes a canasta without creating a new unfinished-meld penalty?",
+      "0-2C 0-2D 0-JR 0-4C 0-5C", "complete_without_new_penalty", [["J", "0-JC 0-JD 0-JH 0-JS 1-JC"]], [
+        ["Finish jacks", "J", "0-2C 0-2D", "Five natural jacks allow two wilds. This completes a mixed canasta with a 300-point end-of-hand bonus and no unfinished-meld penalty. Starting a separate wild meld would leave a possible 2000-point commitment."],
+        ["Start wild meld", "Wild", "0-2C 0-2D 0-JR", "The separate wild meld is legal, but needs four more cards and carries a possible 2000-point penalty. These wilds can instead finish your existing jacks canasta."]
+      ])
   ],
   pile: [
     pile("A natural pair", "0-QC 0-QD 0-4C 0-6C", "0-QC 0-QD", true, "Two natural queens let you meld the top queen and take the rest of the pile."),
@@ -106,6 +137,23 @@ const companions: Record<string, CanastaExercise[]> = {
     opening("Reach 155", 3500, "0-JC 0-JD 0-JH 0-10C 0-10D 0-10H 0-JR 0-JB 0-4D 0-6H", [["J", "0-JC", "0-JD", "0-JH"], ["10", "0-10C", "0-10D", "0-10H", "0-JR", "0-JB"]]),
     opening("Below 180", 5500, "0-JC 0-JD 0-JH 0-10C 0-10D 0-10H 0-JR 0-JB 0-4D 0-6H", [["J", "0-JC", "0-JD", "0-JH"], ["10", "0-10C", "0-10D", "0-10H", "0-JR", "0-JB"]])
   ],
+  risk: [
+    risk("Joker risk", "Both moves are legal. Which starts no unfinished-meld penalty on the table?",
+      "0-KC 0-KD 0-KH 0-JR 0-JB 1-JR 1-JB 0-5C 0-6C", "avoid_new_penalty", [], [
+        ["Meld kings", "K", "0-KC 0-KD 0-KH", "The ordinary kings meld starts no unfinished-meld penalty. A wild meld containing all four jokers would be legal, but would cost 2500 if left unfinished."],
+        ["Start wild meld", "Wild", "0-JR 0-JB 1-JR 1-JB", "All four jokers make a legal wild meld, but it needs three more cards. With all four jokers its unfinished penalty is 2500, not 2000. The kings avoid that new commitment."]
+      ]),
+    risk("Finish aces", "Both moves are legal. Which removes an existing unfinished-meld penalty?",
+      "1-AH 0-7C 0-7D 0-7H 0-5C 0-6C", "remove_penalty", [["A", "0-AC 0-AD 0-AH 0-AS 1-AC 1-AD"]], [
+        ["Start sevens", "7", "0-7C 0-7D 0-7H", "The sevens are legal, but add a possible 2500-point penalty. The aces still need only one card; finish them to remove that existing commitment."],
+        ["Finish aces", "A", "1-AH", "The seventh natural ace completes the canasta and removes its possible 2500-point penalty. Starting sevens would add another unfinished commitment instead."]
+      ], 1),
+    risk("Finish queens", "Both moves are legal. Which completes a canasta without creating a new unfinished-meld penalty?",
+      "1-2D 1-2C 1-JB 0-5C 0-6C", "complete_without_new_penalty", [["Q", "0-QC 0-QD 0-QH 0-QS 1-QC 1-QD"]], [
+        ["Finish queens", "Q", "1-2D", "Six natural queens need only one wild to finish a mixed canasta. That preserves the other wilds without starting a new penalty commitment."],
+        ["Start wild meld", "Wild", "1-2D 1-2C 1-JB", "The new wild meld is legal, but needs four more cards and carries a possible 2000-point penalty. One of these wilds can already complete the queens canasta."]
+      ])
+  ],
   pile: [
     pile("Another natural pair", "0-QH 0-QS 0-5D 0-6H", "0-QH 0-QS", true, "The natural queens can take the queen-topped pile. The buried cards join your hand."),
     pile("Jokers cannot replace the pair", "0-QS 1-JB 0-5D 0-6H", "0-QS 1-JB", true, "A joker does not qualify as a natural queen. Draw stock instead."),
@@ -129,6 +177,7 @@ const companions: Record<string, CanastaExercise[]> = {
 };
 
 export function canastaExerciseChoices(topic: string, step: CanastaExercise) {
+  if (step.strategy) return step.strategy.choices.map(({ id, label }) => ({ id, label }));
   if (topic === "discard") return step.session.hand.hands[0].map(card => ({ id: card.id, label: card.label }));
   if (topic === "score" || topic === "values") return step.options!.map(id => ({ id, label: `${id} points` }));
   return [{ id: "yes", label: topic === "pile" ? "Take pile" : topic === "finish" ? "Go out" : "Meld" },
@@ -140,13 +189,18 @@ export function canastaLearningSteps(topic: string): CanastaExercise[] {
     teaching: { stage: teachingStages[index], guidance: index === 0 ? step.explanation : index === 1
       ? topic === "values" ? "Aces and twos count 20; jokers count 50. Add their own values, even when wild."
         : topic === "opening" ? "Count the staged groups and check the opening minimum at this score."
+        : topic === "risk" ? "Both moves are legal. Compare which unfinished-meld penalties they add or remove."
         : "Check the partnership's public position as well as your own cards." : undefined },
-    followUp: { ...companions[topic][index], teaching: { stage: "reinforcement", guidance: "Apply the same rule to this position." } }
+    followUp: { ...companions[topic][index], teaching: { stage: "reinforcement", guidance: topic === "risk" ? "Compare the visible commitments again. Both choices are legal." : "Apply the same rule to this position." } }
   }));
 }
 
 export function canastaFeedbackBreakdown(topic: string, step: CanastaExercise): FeedbackBreakdown {
   const { hand, scores } = step.session;
+  if (step.strategy) return { label: "Visible meld consequences", rows: step.strategy.choices.map(choice => {
+    const result = canastaMeldDecision(canastaObservation(step.session), choice.action, step.strategy!.goal);
+    return { label: choice.label, value: `${result.legal ? "Legal" : "Illegal"}; ${result.changes.filter(change => change.completed).length} canastas completed. Unfinished-meld penalties if play ends: ${-result.penaltyBefore} to ${-result.penaltyAfter} points.` };
+  }) };
   if (topic === "values") return { label: "Card points, not meld legality", rows: [
     ...hand.hands[0].map(card => ({ label: card.rank === "Joker" ? "Joker" : card.rank, value: `${canastaValue(card)} points` })),
     { label: "Total", value: `${hand.hands[0].reduce((sum, card) => sum + canastaValue(card), 0)} points` }
@@ -168,6 +222,11 @@ export function canastaFeedbackBreakdown(topic: string, step: CanastaExercise): 
 
 export function answerCanastaExercise(topic: string, step: CanastaExercise, answer: string) {
   if (!canastaExerciseChoices(topic, step).some(choice => choice.id === answer)) return { good: false, illegal: true, text: "Choose one of the available answers." };
+  if (step.strategy) {
+    const choice = step.strategy.choices.find(choice => choice.id === answer)!;
+    const result = canastaMeldDecision(canastaObservation(step.session), choice.action, step.strategy.goal);
+    return { good: result.correct, illegal: !result.legal, text: choice.explanation };
+  }
   if (topic === "values") return { good: answer === String(step.session.hand.hands[0].reduce((sum, card) => sum + canastaValue(card), 0)), illegal: false, text: step.explanation };
   if (topic === "score") return { good: answer === String(scoreCanastaSide(step.session.hand.sides[0], [step.session.hand.hands[0], step.session.hand.hands[2]], false).total), illegal: false, text: step.explanation };
   let legal = false, ends = false;

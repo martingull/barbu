@@ -4,6 +4,8 @@ import { advanceCanastaOpponents, canastaObservation, chooseCanastaAction, sugge
 import { canastaSaveKey, restoreCanastaSession, saveCanastaSession } from "../../src/persistence/canastaSave";
 import { canastaExercises, canastaLearningSteps, canastaExerciseChoices, answerCanastaExercise } from "../../src/lessons/canasta/exercises";
 import { formatCardLabel } from "../../src/presentation/cardDisplay";
+import { compareCanastaCardsForDisplay, sortCardsForDisplay } from "../../src/presentation/cardOrdering";
+import { canastaCourses } from "../../src/lessons/canasta/courses";
 test.skip(process.env.VITE_CANASTA_PREVIEW !== "1" && process.env.BARBU_PACKAGED_PREVIEW !== "1", "Run a Canasta preview configuration.");
 
 test("Canasta preview opens without purchasing or granting Premium", async ({ page }) => {
@@ -23,15 +25,17 @@ test("Canasta puts rules first and teaches card values before opening points", a
     await page.getByRole("tab", { name: "Learn", exact: true }).click();
     const resources = page.getByRole("region", { name: "Learning resources", exact: true });
     await expect(resources).toHaveCount(1);
+    await expect(resources.locator("strong")).toHaveText("Game rules");
+    await expect(resources.locator("small")).toHaveText("Read the rules, scoring and variations.");
     expect(await page.locator(".learn-panel > section").first().getAttribute("aria-label")).toBe("Learning resources");
     await expect(page.getByLabel("Continue learning")).toContainText("Count card points");
-    await expect(page.getByLabel("Canasta course progress")).toContainText("1 / 7 complete");
+    await expect(page.getByLabel("Canasta course progress")).toContainText("1 / 8 complete");
     await page.screenshot({ path: info.outputPath(`canasta-learn-values-${size.width}.png`), fullPage: true });
-    await resources.getByRole("button", { name: /^Rules and card values/ }).click();
-    const sections = page.getByLabel("Canasta reference sections").locator("article");
+    await resources.getByRole("button", { name: /^Game rules/ }).click();
+    const sections = page.getByLabel("Canasta rules sections").locator("article");
     await expect(sections.first()).toContainText("Card values");
     await expect(sections.first()).toContainText("150 card points");
-    await page.locator('header[aria-label="Canasta reference"]').getByRole("button", { name: "Table", exact: true }).click();
+    await page.locator('header[aria-label="Canasta rules"]').getByRole("button", { name: "Table", exact: true }).click();
     await page.getByRole("tab", { name: "Learn", exact: true }).click();
     await page.getByRole("button", { name: "Continue lesson", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Each card has a point value.", exact: true })).toBeVisible();
@@ -50,6 +54,7 @@ test("Canasta puts rules first and teaches card values before opening points", a
 
 const label = (card: { rank: string; suit: "C" | "D" | "H" | "S"; id: string }) => `${formatCardLabel(card)}, pack ${Number(card.id[0]) + 1}`;
 async function saved(page: Page) { return restoreCanastaSession(await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), canastaSaveKey)); }
+const ordered = (cards: CanastaSession["hand"]["hands"][number]) => sortCardsForDisplay(cards, compareCanastaCardsForDisplay);
 async function usableHeight(page: Page) {
   return page.evaluate(() => innerHeight - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--app-safe-area-bottom")) || 0));
 }
@@ -83,7 +88,15 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 740 }
     const board = page.locator(".canasta-table"), hand = page.getByLabel("Your Canasta hand", { exact: true });
     const original = (await board.boundingBox())!;
     await expect(hand.getByRole("button")).toHaveCount(13);
+    const initial = await saved(page), beforeSelection = ordered(initial.hand.hands[0]).map(label);
+    expect(await hand.getByRole("button").evaluateAll(buttons => buttons.map(button => button.getAttribute("aria-label")))).toEqual(beforeSelection);
+    await hand.getByRole("button", { name: beforeSelection[0], exact: true }).click();
+    await expect(hand.getByRole("button", { name: beforeSelection[0], exact: true })).toHaveAttribute("aria-pressed", "true");
+    expect(await hand.getByRole("button").evaluateAll(buttons => buttons.map(button => button.getAttribute("aria-label")))).toEqual(beforeSelection);
+    expect(await saved(page)).toEqual(initial);
     for (let i = 0; i < 8; i++) await move(page, await saved(page));
+    const after = await saved(page);
+    expect(await hand.getByRole("button").evaluateAll(buttons => buttons.map(button => button.getAttribute("aria-label")))).toEqual(ordered(after.hand.hands[0]).map(label));
     expect((await board.boundingBox())!.height).toBeCloseTo(original.height, 1);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     const handBox = (await hand.locator("..").boundingBox())!, boardBox = (await board.boundingBox())!;
@@ -111,7 +124,16 @@ test("Canasta stages melds without changing the match until confirmed", async ({
   expect(session.hand.phase).toBe("play"); expect(session.hand.turn).toBe(0);
   await page.setViewportSize({ width: 360, height: 740 }); await seed(page, session);
   await page.getByRole("button", { name: "Meld cards", exact: true }).click();
+  const editorHand = page.getByLabel("Cards for melding", { exact: true });
+  expect(await editorHand.getByRole("button").evaluateAll(buttons => buttons.map(button => button.getAttribute("aria-label")))).toEqual(ordered(session.hand.hands[0]).map(label));
+  const firstCard = ordered(session.hand.hands[0])[0];
+  await editorHand.getByRole("button", { name: label(firstCard), exact: true }).click();
+  await expect(editorHand.getByRole("button", { name: label(firstCard), exact: true })).toHaveAttribute("aria-pressed", "true");
+  expect(await editorHand.getByRole("button").evaluateAll(buttons => buttons.map(button => button.getAttribute("aria-label")))).toEqual(ordered(session.hand.hands[0]).map(label));
   await page.getByRole("button", { name: "Suggest groups", exact: true }).click();
+  const suggested = suggestedCanastaMelds(canastaObservation(session));
+  const stagedIds = new Set(suggested.flatMap(group => group.cardIds));
+  expect(await editorHand.getByRole("button").evaluateAll(buttons => buttons.map(button => button.getAttribute("aria-label")))).toEqual(ordered(session.hand.hands[0].filter(card => !stagedIds.has(card.id))).map(label));
   await expect(page.getByRole("button", { name: "Confirm melds", exact: true })).toBeEnabled();
   expect(await saved(page)).toEqual(session);
   await page.screenshot({ path: info.outputPath("canasta-melds.png"), fullPage: true });
@@ -163,7 +185,7 @@ test("Canasta crowded hands scroll without shifting the board or controls", asyn
   }
 });
 
-test("Canasta teaches twenty-one decisions without changing a saved match", async ({ page }, info) => {
+test("Canasta teaches twenty-four decisions without changing a saved match", async ({ page }, info) => {
   await page.setViewportSize({ width: 360, height: 740 }); await seed(page);
   const before = await saved(page);
   await page.getByRole("button", { name: "Table", exact: true }).first().click();
@@ -175,11 +197,14 @@ test("Canasta teaches twenty-one decisions without changing a saved match", asyn
       await expect(page.getByRole("heading", { name: "Each card has a point value.", exact: true })).toBeVisible();
       await page.getByRole("button", { name: "See example", exact: true }).click();
       await expect(page.getByText(/Together: 30 \+ 120 = 150 card points/)).toBeVisible();
+      const example = canastaCourses[0].example.tableCards.map(play => play.card);
+      expect(await page.getByLabel("Canasta example", { exact: true }).locator("img").evaluateAll(images => images.map(image => image.getAttribute("alt")))).toEqual(ordered(example).map(formatCardLabel));
       await page.getByRole("button", { name: "Try cards", exact: true }).click();
     }
     for (let index = 0; index < steps.length; index++) {
       const step = steps[index], choices = canastaExerciseChoices(topic, step), answers = choices.map(choice => choice.id);
       const correct = answers.find(answer => answerCanastaExercise(topic, step, answer).good)!;
+      if (topic !== "discard") expect(await page.getByLabel("Canasta exercise hand", { exact: true }).locator("img").evaluateAll(images => images.map(image => image.getAttribute("alt")))).toEqual(ordered(step.session.hand.hands[0]).map(formatCardLabel));
       if (topic === "discard") await page.getByLabel("Canasta exercise hand", { exact: true }).getByRole("button", { name: label(step.session.hand.hands[0].find(card => card.id === correct)!), exact: true }).click();
       else await page.getByLabel("Canasta choices").getByRole("button", { name: choices.find(choice => choice.id === correct)!.label, exact: true }).click();
       await page.getByRole("button", { name: "Check answer", exact: true }).click();
@@ -187,12 +212,18 @@ test("Canasta teaches twenty-one decisions without changing a saved match", asyn
       if (!index) await page.screenshot({ path: info.outputPath(`canasta-${topic}.png`), fullPage: true });
       await page.getByRole("button", { name: index === 2 ? "Finish topic" : "Next decision", exact: true }).click();
     }
+    if (topic === "values") {
+      await page.getByText("Review decisions", { exact: true }).click();
+      const firstReview = page.getByRole("list", { name: "Decision results" }).locator(".decision-review").first();
+      await firstReview.locator("summary").click();
+      expect(await firstReview.getByRole("group", { name: "Your hand", exact: true }).locator("img").evaluateAll(images => images.map(image => image.getAttribute("alt")))).toEqual(ordered(steps[0].session.hand.hands[0]).map(formatCardLabel));
+    }
     await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
   }
-  await expect(page.getByLabel("Canasta course progress")).toContainText("7 / 7 complete");
+  await expect(page.getByLabel("Canasta course progress")).toContainText("8 / 8 complete");
   expect(await saved(page)).toEqual(before);
-  await page.getByRole("button", { name: /^Rules and card values/ }).click();
-  await expect(page.getByRole("heading", { name: "Canasta reference", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: /^Game rules/ }).click();
+  await expect(page.getByRole("heading", { name: "Canasta rules", exact: true })).toBeVisible();
   await expect(page.getByLabel("Variants and varieties")).toContainText("Modern American");
 });
 

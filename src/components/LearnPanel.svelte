@@ -19,7 +19,7 @@
     onStepPractice: (step: LearnPathStep) => void;
     onStepRead?: (step: LearnPathStep) => void;
     onReset: () => void;
-    guidedHand?: { gameName: string; onStart: () => void };
+    guidedHand?: { gameName: string; goal?: string; onStart: () => void };
     groups: PracticeGroup[];
     exerciseActions: Record<string, () => void>;
     lessonEntries?: Array<{ id: string; contract: string; title: string }>;

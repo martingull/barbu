@@ -304,11 +304,14 @@ the Card Counting menu. These guides do not represent player seats or change
 opponent policy. Full-game avatars and character animation are not implemented.
 
 `LearnPanel` shows an open, numbered path and the next unfinished topic; it never
-locks other lessons. The next lesson and its Start/Continue lesson action come
-first, followed by a separate Play with guidance section when the game supplies
+locks other lessons. After Game rules, the next lesson and its Start/Continue
+lesson action come first, followed by a separate Play with guidance section when the game supplies
 an unsaved guided hand. Progress and the numbered path follow those choices.
 `GuidedHandEntry` is shared by the menu, introduction result and lesson result;
-it remains available after the path is complete. Saved-match resume belongs to
+it remains available after the path is complete. Its shared description explains
+advice before a move, review afterwards and isolation from saved play. Optional
+game goals belong in `table.learn.guidedHandGoal`, not a new learning shell.
+Saved-match resume belongs to
 Play, not Learn. Results group Try again/Next lesson together and route to the
 Play tab through Go to Play instead of silently starting or resuming a match.
 After a fully finished topic leaves every path step complete, the shared result
@@ -457,7 +460,7 @@ meld rules, not Gin's knock/deadwood model. It shares deterministic shuffling,
 the save-store/session controller, Learn/Play shell, card faces and completion
 events. Double-pack identities are local to Canasta; existing single-deck IDs
 and saves remain stable. Its policy projection removes hidden cards and stock
-order. Seven topics use `learningSession`, worked/supported/independent teaching,
+order. Eight topics use `learningSession`, worked/supported/independent teaching,
 bounded companions, decision review and completion evidence. `canastaLearning.ts`
 adapts the ordinary engine to a single unsaved guided hand with public-only
 coaching and observed action recaps. Use immutable/raw lesson state when domain
@@ -467,8 +470,11 @@ the shared cards. See [Canasta](canasta.md) for the selected table agreements,
 source differences and verification requirements.
 
 `LearnPanel` places learning resources before the next lesson and learning path
-for every game, with the rules/reference action first. Games provide reference
-copy through table metadata; do not add game-specific resource-position branches.
+for every game, with the rules action first. The table factory supplies one
+shared label, `Game rules`, and description, `Read the rules, scoring and variations.`
+Game definitions do not override this copy; the destination page is named
+`<Game> rules`. Internal reference ids and routes remain unchanged. Do not add
+game-specific resource-position branches.
 Card Counting currently has no separate rules reference and supplies no resources.
 
 Save keys, schemas, course progress identifiers, rules and native commands are

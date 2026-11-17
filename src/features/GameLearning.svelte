@@ -18,9 +18,10 @@
   import { learningGuide } from "../presentation/learningCharacters";
   import { createLearningSession, checkLearningAnswer, advanceLearningSession, type LearningSession } from "../domain/learningSession";
   import { drillDecisionReview, type DecisionReview } from "../lessons/decisionReview";
+  import type { CardDisplayComparator } from "../presentation/cardOrdering";
 
   let { definition, gameName, tab, onTab, play, customExercise, loadExercise, exerciseTitle, drillTitle, drillEyebrow, seatLabels = {}, resultMessage,
-    entry, onEntryConsumed, onIntroductionComplete, onGuidedPlay, introductionRecommendation, resources, lessonEntries = [], customExample: renderExample, drillTableFor, drillTopic,
+    entry, onEntryConsumed, onIntroductionComplete, onGuidedPlay, introductionRecommendation, resources, lessonEntries = [], customExample: renderExample, drillTableFor, drillTopic, compareCards,
     completedSteps, learningEvidence = {}, nextSeed, onBack, onReference, onCompleteStep, onResetSteps, onExerciseComplete, onSurfaceChange }: FeatureServices & {
     definition: GameDefinition; gameName: string; tab: TableTabId; onTab: (tab: TableTabId) => void;
     play: Snippet; customExercise?: Snippet<[CustomExerciseContext]>;
@@ -38,6 +39,7 @@
     customExample?: Snippet<[CourseContent]>;
     drillTableFor?: (step: DrillStep) => Snippet<[TableCard[]]> | undefined;
     drillTopic?: (action: string) => string;
+    compareCards?: CardDisplayComparator;
   } = $props();
   let view = $state<"table" | "course" | "drill" | "custom" | "result">("table");
   let course = $state<CourseContent | null>(null);
@@ -61,7 +63,7 @@
   let completedCount = $derived(definition.learnSteps.filter(step => completedSteps[step.id]).length);
   let nextStep = $derived(definition.learnSteps.find(step => !completedSteps[step.id]));
   let pathComplete = $derived(!!activeStep && exerciseComplete && definition.learnSteps.length > 0 && !nextStep);
-  let guidedHand = $derived(onGuidedPlay ? { gameName, onStart: onGuidedPlay } : undefined);
+  let guidedHand = $derived(onGuidedPlay ? { gameName, goal: definition.table.learn.guidedHandGoal, onStart: onGuidedPlay } : undefined);
   let actions = $derived(Object.fromEntries(definition.practiceGroups.flatMap(group => group.entries ?? []).map(entry => [entry.action, () => startExercise(entry.action)])));
   $effect(() => { onSurfaceChange(view === "course" || view === "drill" || view === "custom" || (view === "result" && !!introduction)); });
   let openedEntry: LearningEntry | undefined;
@@ -182,7 +184,7 @@
 </script>
 
 {#if view === "course" && course}
-  <CourseLesson {course} {stage} onBack={table} onContinue={continueCourse}>
+  <CourseLesson {course} {stage} {compareCards} onBack={table} onContinue={continueCourse}>
     {#snippet customExample()}{#if renderExample}{@render renderExample(course!)}{/if}{/snippet}
   </CourseLesson>
 {:else if view === "drill"}
@@ -216,7 +218,7 @@
   </TablePlaySurface>
 {:else if view === "result"}
   <DrillResultScreen title={activeStep?.title ?? exerciseTitle(action)} {results} complete={exerciseComplete}
-    {decisionReviews}
+    {decisionReviews} {compareCards}
     completedPath={pathComplete ? gameName : undefined}
     {guidedHand}
     coach={learningGuide(definition.table.id)}
@@ -239,7 +241,7 @@
   <GameTableShell table={definition.table} activeTab={tab} {onBack} onTabSelect={onTab}>
     {#if tab === "learn"}
       <LearnPanel table={definition.table} steps={definition.learnSteps} {completedSteps} {learningEvidence} {completedCount} {nextStep} {guidedHand}
-        actions={resources ?? [{ id: "reference", title: definition.table.learn.referenceTitle ?? "Reference", summary: definition.table.learn.referenceSummary, onClick: onReference }]}
+        actions={resources ?? [{ id: "reference", title: definition.table.learn.referenceTitle, summary: definition.table.learn.referenceSummary, onClick: onReference }]}
         {lessonEntries}
         onStepSelect={step => startStep(step)} onStepRead={step => startStep(step, true)} onStepPractice={shortcutStep} onReset={() => onResetSteps(definition.learnSteps.map(step => step.id))}
         groups={definition.practiceGroups} exerciseActions={actions} />

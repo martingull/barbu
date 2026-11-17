@@ -646,7 +646,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByLabel("Whist lesson path")).toContainText("Opening leads");
   await expect(page.getByLabel("Whist lesson path")).toContainText("Invite a suit");
   await expect(page.getByLabel("Whist lesson path")).toContainText("Count odd tricks");
-  await expect(page.getByLabel("Learning resources").getByRole("button", { name: "Reference" })).toBeVisible();
+  await expect(page.getByLabel("Learning resources").getByRole("button", { name: "Game rules" })).toBeVisible();
   await page.getByRole("tab", { name: "Learn" }).click();
   await expect(page.getByRole("heading", { name: "Learning path" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Try cards: Opening lead" })).toBeVisible();
@@ -662,7 +662,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
   await page.getByRole("tab", { name: "Learn" }).click();
   await expect(page.getByLabel("Spades lesson path")).toContainText("Spades always trump");
-  await expect(page.getByLabel("Learning resources").getByRole("button", { name: "Reference" })).toBeVisible();
+  await expect(page.getByLabel("Learning resources").getByRole("button", { name: "Game rules" })).toBeVisible();
   await page.getByRole("tab", { name: "Learn" }).click();
   await expect(page.getByRole("tabpanel", { name: "Learn" })).toContainText("Learning path");
   await expect(page.getByRole("button", { name: "Try cards: Follow suit" })).toBeVisible();
@@ -675,7 +675,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await page.getByRole("tab", { name: "Learn" }).click();
   await expect(page.getByLabel("Bridge lesson path")).toContainText("Declarer play");
   await expect(page.getByLabel("Bridge lesson path")).toContainText("The Dummy");
-  await expect(page.getByLabel("Learning resources").getByRole("button", { name: "Reference" })).toBeVisible();
+  await expect(page.getByLabel("Learning resources").getByRole("button", { name: "Game rules" })).toBeVisible();
   await page.getByRole("tab", { name: "Learn" }).click();
   await expect(page.getByRole("tabpanel", { name: "Learn" })).toContainText("Learning path");
   await expect(page.getByRole("button", { name: "Try cards: Declarer play" })).toBeVisible();
@@ -696,7 +696,7 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await expect(page.getByLabel("Barbu lesson path")).toContainText("Meet the contract");
   await expect(page.getByLabel("Barbu lesson path")).not.toContainText("Quick drill");
   await expect(page.getByRole("button", { name: /Barbu contracts/ })).toBeVisible();
-  await expect(page.getByLabel("Learning resources").getByRole("button", { name: "Reference" })).toBeVisible();
+  await expect(page.getByLabel("Learning resources").getByRole("button", { name: "Game rules" })).toBeVisible();
 
   await page.screenshot({ path: testInfo.outputPath("barbu-learn.png"), fullPage: true });
 
@@ -1646,7 +1646,7 @@ test("Hearts table reuses the shared avoid-hearts drill", async ({ page }, testI
   await expect(page.getByRole("button", { name: "Play Hearts" })).toBeVisible();
 
   await page.getByRole("tab", { name: "Learn" }).click();
-  await expect(page.getByLabel("Learning resources")).toContainText("Reference");
+  await expect(page.getByLabel("Learning resources")).toContainText("Game rules");
   await expect(page.getByLabel("Learning resources")).not.toContainText("Hearts scorecard");
   await expect(page.getByLabel("Hearts course progress")).toContainText("0 / 7 complete");
   await expect(page.getByLabel("Hearts lesson path")).not.toContainText("Quick drill");
@@ -1971,16 +1971,16 @@ test("Hearts reference explains the Black Lady rule boundary", async ({ page }, 
   await page.getByRole("button", { name: "Open Hearts" }).click();
 
   await page.getByRole("tab", { name: "Learn" }).click();
-  await page.getByLabel("Learning resources").getByRole("button", { name: "Reference" }).click();
+  await page.getByLabel("Learning resources").getByRole("button", { name: "Game rules" }).click();
 
-  await expect(page.getByRole("heading", { name: "Hearts reference" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Hearts rules" })).toBeVisible();
   await expect(page.getByLabel("Hearts overview")).toContainText("Black Lady");
   await expect(page.getByLabel("Hearts overview")).toContainText(/queen of spades/i);
-  await expect(page.getByLabel("Contract reference")).toContainText("Hearts rules");
-  await expect(page.getByLabel("Contract reference")).toContainText("queen of spades is 13");
-  await expect(page.getByLabel("Contract reference")).toContainText("shooting the moon");
+  await expect(page.getByLabel("Contract rules")).toContainText("Playing and scoring");
+  await expect(page.getByLabel("Contract rules")).toContainText("queen of spades is 13");
+  await expect(page.getByLabel("Contract rules")).toContainText("shooting the moon");
   await expect(page.getByLabel("Contract roadmap")).toHaveCount(0);
-  await expect(page.getByLabel("Hearts reference sections")).toContainText("The queen of spades may be passed.");
+  await expect(page.getByLabel("Hearts rules sections")).toContainText("The queen of spades may be passed.");
   await expect(page.getByLabel("Variants and varieties")).toContainText("House Rules");
   await page.screenshot({ path: testInfo.outputPath("hearts-reference.png"), fullPage: true });
 
@@ -1994,12 +1994,12 @@ test("Whist reference reflects the classic partnership table", async ({ page }, 
   await page.getByRole("button", { name: /Open Whist/ }).click();
 
   await page.getByRole("tab", { name: "Learn" }).click();
-  await page.getByLabel("Learning resources").getByRole("button", { name: "Reference" }).click();
+  await page.getByLabel("Learning resources").getByRole("button", { name: "Game rules" }).click();
 
-  await expect(page.getByRole("heading", { name: "Whist reference" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Whist rules" })).toBeVisible();
   await expect(page.getByLabel("Whist overview")).toContainText("classic four-player partnership trick-taking game");
-  await expect(page.getByLabel("Whist reference sections")).toContainText("Learning Path");
-  await expect(page.getByLabel("Whist reference sections")).toContainText("Single game or best-of-three rubber");
+  await expect(page.getByLabel("Whist rules sections")).toContainText("Learning Path");
+  await expect(page.getByLabel("Whist rules sections")).toContainText("Single game or best-of-three rubber");
   await expect(page.getByLabel("Contract roadmap")).toHaveCount(0);
   await page.screenshot({ path: testInfo.outputPath("whist-reference.png"), fullPage: true });
 
@@ -2013,14 +2013,14 @@ test("Spades reference explains partnership rules and nil variants", async ({ pa
   await page.getByRole("button", { name: /Open Spades/ }).click();
 
   await page.getByRole("tab", { name: "Learn" }).click();
-  await page.getByLabel("Learning resources").getByRole("button", { name: "Reference" }).click();
+  await page.getByLabel("Learning resources").getByRole("button", { name: "Game rules" }).click();
 
-  await expect(page.getByRole("heading", { name: "Spades reference" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Spades rules" })).toBeVisible();
   await expect(page.getByLabel("Spades overview")).toContainText("nil and bags");
-  await expect(page.getByLabel("Spades reference sections")).toContainText("Deal And Bid");
-  await expect(page.getByLabel("Spades reference sections")).toContainText("Bidding Heuristic");
-  await expect(page.getByLabel("Spades reference sections")).toContainText("Learning Path");
-  await expect(page.getByLabel("Contract reference")).toContainText("nil scores +100 or -100");
+  await expect(page.getByLabel("Spades rules sections")).toContainText("Deal And Bid");
+  await expect(page.getByLabel("Spades rules sections")).toContainText("Bidding Heuristic");
+  await expect(page.getByLabel("Spades rules sections")).toContainText("Learning Path");
+  await expect(page.getByLabel("Contract rules")).toContainText("nil scores +100 or -100");
   await expect(page.getByLabel("Contract roadmap")).toHaveCount(0);
   await expect(page.getByLabel("Variants and varieties")).toContainText("Blind nil");
   await expect(page.getByLabel("Variants and varieties")).toContainText("This table uses ordinary nil");
@@ -2039,10 +2039,10 @@ for (const reference of [
     await page.goto("/");
     await page.getByRole("button", { name: `Open ${reference.game}`, exact: true }).click();
     await page.getByRole("tab", { name: "Learn" }).click();
-    await page.getByLabel("Learning resources").getByRole("button", { name: "Reference" }).click();
+    await page.getByLabel("Learning resources").getByRole("button", { name: "Game rules" }).click();
 
-    await expect(page.getByRole("heading", { name: `${reference.game} reference` })).toBeVisible();
-    await expect(page.getByLabel(`${reference.game} reference sections`)).toContainText(reference.rule);
+    await expect(page.getByRole("heading", { name: `${reference.game} rules` })).toBeVisible();
+    await expect(page.getByLabel(`${reference.game} rules sections`)).toContainText(reference.rule);
     await expect(page.getByLabel("Variants and varieties")).toContainText(reference.variant);
     await expect(page.getByLabel("Contract roadmap")).toHaveCount(0);
     await expect(page.locator("main")).not.toContainText(/Current and later rules|Contract status|future work|not yet available|Planned/);
@@ -2744,21 +2744,21 @@ test("Barbu reference exposes baseline rules and varieties", async ({ page }, te
   await page.goto("/");
   await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await openBarbuTab(page, "Learn");
-  await page.getByLabel("Learning resources").getByRole("button", { name: "Reference" }).click();
+  await page.getByLabel("Learning resources").getByRole("button", { name: "Game rules" }).click();
 
-  await expect(page.getByRole("heading", { name: "Barbu reference" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Barbu rules" })).toBeVisible();
   await expect(page.getByText("David Parlett, The Penguin Book of Card Games")).toBeVisible();
   await expect(page.getByText("Barbu -> Right -> You -> Left when Barbu leads")).toBeVisible();
   await expect(page.getByText("Follow the led suit when you can")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Barbu contracts" })).toBeVisible();
-  await expect(page.getByLabel("Contract reference").getByText("No Hearts", { exact: true })).toBeVisible();
-  await expect(page.getByLabel("Contract reference").getByText("No Queens", { exact: true })).toBeVisible();
-  await expect(page.getByLabel("Contract reference").getByText("King of Hearts", { exact: true })).toBeVisible();
-  await expect(page.getByLabel("Contract reference").getByText("Domino", { exact: true })).toBeVisible();
-  await expect(page.getByLabel("Contract reference")).toContainText("20 penalty points");
-  await expect(page.getByLabel("Contract reference").getByText("No Last Two", { exact: true })).toBeVisible();
-  await expect(page.getByLabel("Contract reference").getByText("No Tricks", { exact: true })).toBeVisible();
-  await expect(page.getByLabel("Contract reference").getByText("Hearts Trumps", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Contract rules").getByText("No Hearts", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Contract rules").getByText("No Queens", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Contract rules").getByText("King of Hearts", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Contract rules").getByText("Domino", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Contract rules")).toContainText("20 penalty points");
+  await expect(page.getByLabel("Contract rules").getByText("No Last Two", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Contract rules").getByText("No Tricks", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Contract rules").getByText("Hearts Trumps", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Contract status" })).toHaveCount(0);
   await expect(page.getByLabel("Contract roadmap")).toHaveCount(0);
   await expect(page.getByLabel("Variants and varieties")).toContainText("Seven-Contract Training Table");

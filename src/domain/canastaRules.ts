@@ -103,21 +103,56 @@ export function canastaSpecial(hand: Card[]): { name: string; points: number } |
 }
 
 export type CanastaScore = { canastas: number; bonuses: number; melds: number; threes: number; penalties: number; inHand: number; total: number };
-export function scoreCanastaSide(side: CanastaSide, hands: Card[][], wentOut: boolean): CanastaScore {
+export type CanastaScoreItem = { category: Exclude<keyof CanastaScore, "canastas" | "total">; points: number } & (
+  { reason: "canasta"; rank: string; pure: boolean; jokers: number }
+  | { reason: "going_out" }
+  | { reason: "unfinished_meld"; rank: string; count: number }
+  | { reason: "held_danger"; rank: string; count: number; handIndex: number }
+  | { reason: "threes"; colour: "red" | "black"; count: number; canastas: number }
+  | { reason: "melded_cards"; canastas: number }
+  | { reason: "held_cards" }
+  | { reason: "special_hand"; name: string }
+);
+
+export function canastaMeldPenalty(meld: CanastaMeld) {
+  if (meld.cards.length === 7) return 0;
+  if (meld.rank === "Wild") return meld.cards.filter(card => card.rank === "Joker").length === 4 ? 2500 : 2000;
+  return meld.rank === "7" || meld.rank === "A" && !meld.cards.some(isCanastaWild) ? 2500 : 0;
+}
+
+export function canastaSideScoring(side: CanastaSide, hands: Card[][], wentOut: boolean): { score: CanastaScore; items: CanastaScoreItem[] } {
   const canastas = completedCanastas(side);
-  let bonuses = wentOut ? 100 : 0, penalties = 0;
+  const items: CanastaScoreItem[] = [];
   for (const meld of side.melds) {
     const pure = !meld.cards.some(isCanastaWild), jokers = meld.cards.filter(card => card.rank === "Joker").length;
-    if (meld.cards.length === 7) bonuses += meld.rank === "Wild" ? jokers === 0 ? 3000 : jokers === 4 ? 2500 : 2000
-      : pure ? ["A", "7"].includes(meld.rank) ? 2500 : 500 : 300;
-    else if (meld.rank === "Wild") penalties += jokers === 4 ? 2500 : 2000;
-    else if (meld.rank === "7" || meld.rank === "A" && pure) penalties += 2500;
+    if (meld.cards.length === 7) items.push({ category: "bonuses", reason: "canasta", rank: meld.rank, pure, jokers,
+      points: meld.rank === "Wild" ? jokers === 0 ? 3000 : jokers === 4 ? 2500 : 2000
+        : pure ? ["A", "7"].includes(meld.rank) ? 2500 : 500 : 300 });
+    const penalty = canastaMeldPenalty(meld);
+    if (penalty) items.push({ category: "penalties", reason: "unfinished_meld", rank: meld.rank, count: meld.cards.length, points: -penalty });
   }
-  for (const hand of hands) for (const rank of ["A", "7"]) if (hand.filter(card => card.rank === rank).length >= 3) penalties += 1500;
+  if (wentOut) items.push({ category: "bonuses", reason: "going_out", points: 100 });
+  hands.forEach((hand, handIndex) => {
+    for (const rank of ["A", "7"]) {
+      const count = hand.filter(card => card.rank === rank).length;
+      if (count >= 3) items.push({ category: "penalties", reason: "held_danger", rank, count, handIndex, points: -1500 });
+    }
+  });
   const red = side.threes.filter(card => card.suit === "D" || card.suit === "H").length;
   const values = [0, 100, 300, 500, 1000];
-  const threes = (values[red] + values[side.threes.length - red]) * (canastas === 0 ? -1 : canastas === 1 ? 0 : 1);
+  for (const [colour, count] of [["red", red], ["black", side.threes.length - red]] as const) {
+    if (count) items.push({ category: "threes", reason: "threes", colour, count, canastas,
+      points: values[count] * (canastas === 0 ? -1 : canastas === 1 ? 0 : 1) });
+  }
   const melds = side.melds.flatMap(meld => meld.cards).reduce((sum, card) => sum + canastaValue(card), 0) * (canastas ? 1 : -1);
   const inHand = hands.flat().reduce((sum, card) => sum + canastaValue(card), 0);
-  return { canastas, bonuses, melds, threes, penalties, inHand, total: bonuses + melds + threes - penalties - inHand };
+  items.push({ category: "melds", reason: "melded_cards", canastas, points: melds },
+    { category: "inHand", reason: "held_cards", points: -inHand });
+  const sum = (category: CanastaScoreItem["category"]) => items.filter(item => item.category === category).reduce((total, item) => total + item.points, 0);
+  return { score: { canastas, bonuses: sum("bonuses"), melds, threes: sum("threes"), penalties: Math.abs(sum("penalties")), inHand,
+    total: items.reduce((total, item) => total + item.points, 0) }, items };
+}
+
+export function scoreCanastaSide(side: CanastaSide, hands: Card[][], wentOut: boolean): CanastaScore {
+  return canastaSideScoring(side, hands, wentOut).score;
 }

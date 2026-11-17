@@ -185,8 +185,8 @@ test("Gin teaches fifteen decisions and persists progress separately from play",
   await page.getByRole("button", { name: "Open Gin Rummy", exact: true }).click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
   await expect(page.getByLabel("Gin Rummy course progress")).toContainText("5 / 5 complete");
-  await page.getByRole("button", { name: /^Reference/ }).click();
-  await expect(page.getByRole("heading", { name: "Gin Rummy reference", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: /^Game rules/ }).click();
+  await expect(page.getByRole("heading", { name: "Gin Rummy rules", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Back to Gin Rummy table", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Gin Rummy table", exact: true })).toBeVisible();
 });

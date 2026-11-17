@@ -13,8 +13,7 @@ export const ginRummyDef: GameDefinition = {
     id: "gin-rummy", title: "Gin Rummy table", family: "Rummy", referenceId: "gin-rummy", defaultTab: "play",
     scorecard: { label: "Gin score", unitLabel: "Points", objective: "First to 100", leaderRule: "high-score" },
     learn: { pathAriaLabel: "Gin Rummy lessons", pathEyebrow: "Learn", pathTitle: "Learn Gin Rummy",
-      progressAriaLabel: "Gin Rummy course progress", nextSummary: "Build your next combination.", completeSummary: "Take your skills into a full game.",
-      referenceSummary: "Check draws, knocking, layoffs and classic scoring." },
+      progressAriaLabel: "Gin Rummy course progress", nextSummary: "Build your next combination.", completeSummary: "Take your skills into a full game." },
     tabIntros: {
       learn: { eyebrow: "Rummy", title: "Learn Gin Rummy", summary: "Build sets and runs. Keep your deadwood low." },
       play: { eyebrow: "Two players", title: "Gin Rummy", summary: "You and Barbu, first to 100 points." },

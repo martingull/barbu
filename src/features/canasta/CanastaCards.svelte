@@ -2,12 +2,14 @@
   import CardChoiceHand from "../../components/CardChoiceHand.svelte";
   import type { Card } from "../../domain/types";
   import { formatCardLabel } from "../../presentation/cardDisplay";
+  import { compareCanastaCardsForDisplay } from "../../presentation/cardOrdering";
   let { cards, selected = [], legal, readonly = false, onSelect = () => {}, label = "Your Canasta hand" }: {
     cards: Card[]; selected?: string[]; legal?: string[]; readonly?: boolean; onSelect?: (card: Card) => void; label?: string;
   } = $props();
 </script>
 <div class="canasta-hand-scroll">
   <CardChoiceHand {cards} {readonly} ariaLabel={label} className="canasta-cards" cardClassName="card hand-card canasta-card"
+    compareCards={compareCanastaCardsForDisplay}
     cardLabel={card => `${formatCardLabel(card)}, pack ${Number(card.id[0]) + 1}`}
     {onSelect} isPressed={card => selected.includes(card.id)}
     getCardClasses={card => ({ selected: selected.includes(card.id), legal: !legal || legal.includes(card.id), illegal: !!legal && !legal.includes(card.id) })} />

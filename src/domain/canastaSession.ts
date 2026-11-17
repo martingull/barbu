@@ -1,13 +1,14 @@
 import type { Card } from "./types";
 import { canastaDeck, canastaTeam, canastaTarget, canastaDiscards, canastaSpecial, completedCanastas,
-  isCanastaWild, planCanastaMelds, resolveCanastaCards, scoreCanastaSide, validateCanastaMeld, deadCanastaRank,
-  type CanastaSide, type CanastaScore, type MeldRequest } from "./canastaRules";
+  isCanastaWild, planCanastaMelds, resolveCanastaCards, canastaSideScoring, validateCanastaMeld, deadCanastaRank,
+  type CanastaSide, type CanastaScore, type CanastaScoreItem, type MeldRequest } from "./canastaRules";
 
 export type CanastaAction = { type: "draw" } | { type: "expose"; cardId: string }
   | { type: "meld"; groups: MeldRequest[] }
   | { type: "pickup"; pair: string[]; groups: MeldRequest[] }
   | { type: "discard"; cardId: string } | { type: "special" } | { type: "next"; seed: number };
-export type CanastaResult = { reason: string; scores: [CanastaScore, CanastaScore]; special?: { team: number; name: string; points: number } };
+export type CanastaResult = { reason: string; scores: [CanastaScore, CanastaScore];
+  scoreItems: [CanastaScoreItem[], CanastaScoreItem[]]; special?: { team: number; name: string; points: number } };
 export type CanastaHand = {
   hands: Card[][]; stock: Card[]; discards: Card[]; sides: [CanastaSide, CanastaSide]; talons: Card[][];
   dealer: number; turn: number; phase: "draw" | "play" | "complete"; allWildAtDraw: boolean;
@@ -40,10 +41,13 @@ export function legalCanastaDiscards(hand: CanastaHand): Card[] {
 }
 function log(hand: CanastaHand, message: string) { hand.log = [...hand.log.slice(-11), message]; }
 function finish(hand: CanastaHand, reason: string, out = -1, special?: CanastaResult["special"]) {
-  const scores = hand.sides.map((side, team) => scoreCanastaSide(side,
-    hand.hands.flatMap((cards, player) => canastaTeam(player) === team ? [[...cards, ...hand.talons[player]]] : []), out >= 0 && canastaTeam(out) === team)) as [CanastaScore, CanastaScore];
+  const scoring = hand.sides.map((side, team) => canastaSideScoring(side,
+    hand.hands.flatMap((cards, player) => canastaTeam(player) === team ? [[...cards, ...hand.talons[player]]] : []), out >= 0 && canastaTeam(out) === team));
+  const scores = scoring.map(result => result.score) as [CanastaScore, CanastaScore];
+  const scoreItems = scoring.map(result => result.items) as [CanastaScoreItem[], CanastaScoreItem[]];
   if (special) scores[special.team] = { canastas: 0, bonuses: special.points, melds: 0, threes: 0, penalties: 0, inHand: 0, total: special.points };
-  hand.result = { reason, scores, ...(special ? { special } : {}) };
+  if (special) scoreItems[special.team] = [{ category: "bonuses", reason: "special_hand", name: special.name, points: special.points }];
+  hand.result = { reason, scores, scoreItems, ...(special ? { special } : {}) };
   hand.phase = "complete";
   log(hand, reason);
 }

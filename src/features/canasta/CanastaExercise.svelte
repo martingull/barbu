@@ -17,15 +17,17 @@
     ...(context.action === "pile" ? [{ label: "Top discard", cards: step.session.hand.discards.slice(-1) }] : []),
     ...step.session.hand.sides[0].melds.map(meld => ({ label: `${meld.rank} meld (${meld.cards.length}/7)`, cards: meld.cards })),
     ...(step.session.hand.sides[0].threes.length ? [{ label: "Exposed threes", cards: step.session.hand.sides[0].threes }] : []),
-    ...(step.action?.type === "meld" ? step.action.groups.map(group => ({ label: `Proposed ${group.rank} group`, cards: step.session.hand.hands[0].filter(card => group.cardIds.includes(card.id)) })) : [])
+    ...(step.action?.type === "meld" ? step.action.groups.map(group => ({ label: `Proposed ${group.rank} group`, cards: step.session.hand.hands[0].filter(card => group.cardIds.includes(card.id)) })) : []),
+    ...(step.strategy?.choices.map(choice => ({ label: choice.label, cards: step.session.hand.hands[0].filter(card => choice.action.groups.some(group => group.cardIds.includes(card.id))) })) ?? [])
   ]);
   function check() {
     if (!selected || checked) return;
     const answer = answerCanastaExercise(context.action, step, selected);
     session = checkLearningAnswer(session, { contract: "Canasta", cardLabel: canastaExerciseChoices(context.action, step).find(choice => choice.id === selected)!.label,
-      outcome: answer.good ? "good" : answer.illegal ? "illegal" : "risky", clean: answer.good, reason: "meld_count" },
+      outcome: answer.good ? "good" : answer.illegal ? "illegal" : "risky", clean: answer.good, reason: step.strategy ? "meld_risk" : "meld_count" },
       { title: step.title, prompt: step.prompt, explanation: answer.text, context: step.teaching?.guidance,
-        breakdown: canastaFeedbackBreakdown(context.action, step), selectedCardIds: context.action === "discard" ? [selected] : [],
+        breakdown: canastaFeedbackBreakdown(context.action, step), selectedCardIds: context.action === "discard" ? [selected]
+          : step.strategy?.choices.find(choice => choice.id === selected)?.action.groups.flatMap(group => group.cardIds) ?? [],
         groups: [...groups, { label: "Your hand", cards: step.session.hand.hands[0] }] });
   }
   function next() {
@@ -38,7 +40,8 @@
 <TablePlaySurface flowLayout stableFeedback showTable={false} surfaceClassName="learning-play-surface canasta-exercise" title={step.title} ariaLabel="Canasta exercise"
   statusLabel="Decision" statusValue={`${session.index + 1} of ${session.steps.length}`} onBack={context.onBack} tableAriaLabel="Canasta example" tableCards={[]} panelAriaLabel="Canasta exercise choices">
   {#snippet summary()}
-    {#if groups.length}<div class="position" aria-label="Canasta public position">
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex (Scrollable public cards need keyboard access.) -->
+    {#if groups.length}<div class="position" role="region" aria-label="Canasta public position" tabindex="0">
       {#each groups as group}<div><span>{group.label}</span><CanastaCards cards={group.cards} readonly label={group.label} /></div>{/each}
     </div>{/if}
   {/snippet}

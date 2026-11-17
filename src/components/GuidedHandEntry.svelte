@@ -1,9 +1,12 @@
 <script lang="ts">
-  let { gameName, onStart }: { gameName: string; onStart: () => void } = $props();
+  let { gameName, goal, onStart }: { gameName: string; goal?: string; onStart: () => void } = $props();
 </script>
 
 <section class="guided-hand-entry" aria-label="Play with guidance">
-  <div><h2>Play with guidance</h2><p>Play one {gameName} hand with help at each turn.</p></div>
+  <div><h2>Play with guidance</h2>
+    {#if goal}<p>{goal}</p>{/if}
+    <p>Play one {gameName} hand with advice before each move and an explanation afterwards. Your saved game is unchanged.</p>
+  </div>
   <button class="secondary-action" onclick={onStart} type="button">Start guided hand</button>
 </section>
 

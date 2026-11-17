@@ -1,6 +1,6 @@
 <script lang="ts">
   import CardFace from "./CardFace.svelte";
-  import { sortCardsForDisplay } from "../presentation/cardOrdering";
+  import { sortCardsForDisplay, type CardDisplayComparator } from "../presentation/cardOrdering";
   import type { Card } from "../domain/types";
 
   type CardClassFlags = Record<string, boolean | undefined>;
@@ -16,6 +16,7 @@
     onFocus?: (card: Card) => void;
     cardLabel?: (card: Card) => string;
     readonly?: boolean;
+    compareCards?: CardDisplayComparator;
   };
 
   let {
@@ -28,6 +29,7 @@
     onSelect,
     onFocus,
     readonly = false,
+    compareCards,
     cardLabel = card => `${card.rank} ${card.suit}`
   }: Props = $props();
 
@@ -42,7 +44,7 @@
 </script>
 
 <div class={className} class:has-selection={cards.some(isPressed)} aria-label={ariaLabel}>
-  {#each sortCardsForDisplay(cards) as card}
+  {#each sortCardsForDisplay(cards, compareCards) as card}
     {#if readonly}
       <div class={buttonClass(card)}><CardFace {card} /></div>
     {:else}

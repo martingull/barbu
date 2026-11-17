@@ -1,5 +1,5 @@
 import type { GameDefinition } from "./gameRegistry";
-import { createGameTableDefinition } from "./tableFactory";
+import { createGameTableDefinition, gameRulesCopy } from "./tableFactory";
 
 export type HeartsLearnPathAction = "object" | "queen" | "avoid" | "pass" | "break" | "moon" | "score";
 export type HeartsPracticeAction = "pass" | "first" | "avoid" | "queen" | "break" | "moon" | "score";
@@ -22,8 +22,7 @@ export const heartsDef: GameDefinition<HeartsLearnPathAction | HeartsPracticeAct
       pathTitle: "Learn the Hearts table",
       progressAriaLabel: "Hearts course progress",
       nextSummary: "Return to the next short Hearts decision.",
-      completeSummary: "Replay any Hearts lesson or move into practice.",
-      referenceSummary: "Check the rules, scoring, and varieties of play."
+      completeSummary: "Replay any Hearts lesson or move into practice."
     },
     tabIntros: {
       learn: {
@@ -50,7 +49,7 @@ export const heartsDef: GameDefinition<HeartsLearnPathAction | HeartsPracticeAct
         { id: "queen-danger", label: "Queen of Spades", destination: "Queen of Spades concept" },
         { id: "passing", label: "Pass three", destination: "Hearts passing concept" },
         { id: "score-reading", label: "Score reading", destination: "Hearts score concept" },
-        { id: "reference", label: "Reference", destination: "Hearts reference" }
+        { id: "reference", label: gameRulesCopy.referenceTitle, destination: "Hearts rules" }
       ],
       play: [{ id: "play-hearts", label: "Play Hearts", destination: "Hearts rotating-pass match" }]
     }

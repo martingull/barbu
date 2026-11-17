@@ -38,13 +38,26 @@ test("every table shares Learn and Play and keeps exercises inside Learn", async
     await page.getByRole("tab", { name: "Learn", exact: true }).click();
     await expect(page.getByLabel("Continue learning")).toBeVisible();
     if (game !== "Card Counting I") {
+      const guided = page.getByRole("region", { name: "Play with guidance", exact: true });
+      await expect(guided).toContainText(`Play one ${game} hand with advice before each move and an explanation afterwards.`);
+      await expect(guided).toContainText("Your saved game is unchanged.");
+    }
+    if (game !== "Card Counting I") {
       const resources = page.getByRole("region", { name: "Learning resources", exact: true });
       await expect(resources).toHaveCount(1);
       expect(await page.locator(".learn-panel > section").first().getAttribute("aria-label")).toBe("Learning resources");
-      await expect(resources.getByRole("button").first()).toContainText("Reference");
+      const rules = resources.getByRole("button").first();
+      await expect(rules.locator("strong")).toHaveText("Game rules");
+      await expect(rules.locator("small")).toHaveText("Read the rules, scoring and variations.");
       const resourcesBox = (await resources.boundingBox())!;
       const nextBox = (await page.getByLabel("Continue learning").boundingBox())!;
       expect(resourcesBox.y + resourcesBox.height).toBeLessThanOrEqual(nextBox.y);
+      if (game === "Hearts") await page.screenshot({ path: info.outputPath("hearts-game-rules-entry.png"), fullPage: true });
+      await rules.click();
+      await expect(page.getByRole("heading", { name: `${game} rules`, exact: true })).toBeVisible();
+      await expect(page.getByRole("region", { name: "Game rules", exact: true })).toBeVisible();
+      await page.locator(`header[aria-label="${game} rules"]`).getByRole("button", { name: "Table", exact: true }).click();
+      await page.getByRole("tab", { name: "Learn", exact: true }).click();
     }
     await expect(page.getByRole("button", { name: /Quick drill/ })).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Guided lessons", exact: true })).toHaveCount(0);

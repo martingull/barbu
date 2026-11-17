@@ -1,5 +1,5 @@
 import type { GameDefinition } from "./gameRegistry";
-import { createGameTableDefinition } from "./tableFactory";
+import { createGameTableDefinition, gameRulesCopy } from "./tableFactory";
 
 export type SpadesLearnPathAction = "object" | SpadesPracticeAction;
 export type SpadesPracticeAction = "follow" | "trump" | "bid" | "bags";
@@ -23,7 +23,6 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
       progressAriaLabel: "Spades course progress",
       nextSummary: "Start by seeing your hand, estimating a bid, then playing to the partnership target.",
       completeSummary: "You have tried the first Spades habits: follow suit, count spades, bid books, protect nil, and watch bags.",
-      referenceSummary: "Check the Spades baseline: partnership play, fixed trump, bidding, nil, bags, and ten-bag penalties."
     },
     tabIntros: {
       learn: {
@@ -47,7 +46,7 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
     defaultTab: "play",
     actionsByTab: {
       learn: [
-        { id: "reference", label: "Reference", destination: "Spades reference" },
+        { id: "reference", label: gameRulesCopy.referenceTitle, destination: "Spades rules" },
         { id: "fixed-trump", label: "Spades trump", destination: "Spades fixed-trump concept" },
         { id: "books", label: "Books", destination: "Spades books concept" },
         { id: "bidding", label: "Bidding", destination: "Spades bidding concept" }

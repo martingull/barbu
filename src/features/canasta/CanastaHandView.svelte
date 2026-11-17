@@ -13,6 +13,8 @@
   import { canastaGuidance, canastaGuidedRecap, type CanastaGuidedSession } from "../../domain/canastaLearning";
   import { canastaGuidedReview } from "./canastaGuidance";
   import { formatCardList, formatCardText } from "../../presentation/cardDisplay";
+  import { formatSignedScore } from "../../presentation/scorePresentation";
+  import { canastaScoreRows, canastaMeldChangeText } from "./canastaScorePresentation";
   let { session, error, guided, onContinue, onAction, onBack, onNext, onReplay, onNew }: {
     guided?: CanastaGuidedSession; onContinue?: () => void;
     session: CanastaSession; error: string; onAction: (action: CanastaAction) => boolean;
@@ -21,8 +23,10 @@
   let selected = $state(""), team = $state(0), editor = $state<"meld" | "pickup" | null>(null);
   const hand = $derived(session.hand), cards = $derived(hand.hands[0]), top = $derived(hand.discards.at(-1));
   const finished = $derived(hand.phase === "complete"), complete = $derived(!guided && canastaComplete(session));
+  const scoreRows = $derived(hand.result ? canastaScoreRows(hand.result) : []);
   const reviewing = $derived(Boolean(guided?.review));
   const guidance = $derived(guided && !finished ? canastaGuidance(canastaObservation(session), selected) : null);
+  const meldAdvice = $derived(guidance?.meldChanges ? canastaMeldChangeText(guidance.meldChanges) : "");
   const review = $derived(guided?.review ? canastaGuidedReview(guided.review) : null);
   const legal = $derived(legalCanastaDiscards(hand).map(card => card.id));
   const three = $derived(cards.find(card => card.id === selected && card.rank === "3") ?? cards.find(card => card.rank === "3"));
@@ -81,9 +85,10 @@
         summary={hand.result.reason} />
       <table class="score-breakdown" aria-label="Canasta hand scoring">
         <thead><tr><th>Hand score</th><th>Us</th><th>Them</th></tr></thead><tbody>
-          {#each [{ label: "Bonuses", key: "bonuses", sign: 1 }, { label: "Melded cards", key: "melds", sign: 1 }, { label: "Threes", key: "threes", sign: 1 }, { label: "Penalties", key: "penalties", sign: -1 }, { label: "Cards in hand", key: "inHand", sign: -1 }, { label: "Total", key: "total", sign: 1 }] as row}
-            <tr><th>{row.label}</th>{#each hand.result.scores as score}<td>{row.sign * score[row.key as keyof typeof score]}</td>{/each}</tr>
+          {#each scoreRows as row}
+            <tr><th scope="row">{row.label}</th>{#each row.values as points}<td class:negative={points !== null && points < 0}>{points === null ? "-" : formatSignedScore(points)}</td>{/each}</tr>
           {/each}
+          <tr class="total"><th scope="row">Total</th>{#each hand.result.scores as score}<td class:negative={score.total < 0}>{formatSignedScore(score.total)}</td>{/each}</tr>
         </tbody>
       </table>
       {#if guided}
@@ -99,8 +104,8 @@
         <button class="primary-action" onclick={complete ? onNew : onNext} type="button">{complete ? "New match" : "Next hand"}</button></div>{/if}
     {:else}
       {#if guided && guidance}
-        <ExerciseFeedback coach="barbu" reserveSpace eyebrow={review ? "Decision review" : "Your turn"} title={review ? "What changed" : "Choose your move"}
-          result={review ? review.title : `Rule: ${guidance.rule}`} explanation={review ? review.explanation : `Tactic: ${guidance.tip}`}
+        <ExerciseFeedback coach="barbu" reserveSpace eyebrow={review ? "Decision review" : "Your turn"} title={review ? "What changed" : guidance.title}
+          result={review ? `${review.title} ${review.next}` : `Rule: ${guidance.rule}`} explanation={review ? review.explanation : `Tactic: ${guidance.tip}${meldAdvice ? ` ${meldAdvice}` : ""}`}
           outcome={review ? review.facts : guidance.facts} {error} />
       {:else}
         <div class="canasta-prompt" aria-live="polite"><p class="result">{error || prompt}</p><p class="last-action">{formatCardText(hand.log.at(-1) ?? "")}</p></div>
@@ -127,7 +132,7 @@
     {#if finished && error}<p class="outcome warning" role="alert">{error}</p>{/if}
   {/snippet}
 </TablePlaySurface>
-{#if editor}<CanastaMeldEditor {session} pickup={editor === "pickup"} onConfirm={act} onClose={() => { editor = null; }} />{/if}
+{#if editor}<CanastaMeldEditor {session} guided={Boolean(guided)} pickup={editor === "pickup"} onConfirm={act} onClose={() => { editor = null; }} />{/if}
 
 <style>
   :global(.canasta-play-surface) { --canasta-hand-height: clamp(96px, calc(100dvh - 560px), 164px); }
@@ -155,7 +160,10 @@
   .last-action { font-size: 0.72rem; color: #d0dfd4; margin: 4px 0; }
   .guided-recap h2 { font-size: 1rem; }.guided-recap h3 { font-size: 0.85rem; }.guided-recap p { font-size: 0.8rem; line-height: 1.4; }
   .guided-recap article { border-top: 1px solid #ffffff30; padding: 4px 0; }
-  .score-breakdown { width: 100%; border-collapse: collapse; font-size: 0.85rem; }.score-breakdown th, .score-breakdown td { border-bottom: 1px solid #ffffff30; padding: 8px 4px; text-align: right; }.score-breakdown th:first-child { text-align: left; }
+  .score-breakdown { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+  .score-breakdown th, .score-breakdown td { border-bottom: 1px solid #ffffff30; padding: 8px 4px; text-align: right; overflow-wrap: anywhere; }
+  .score-breakdown th:first-child { text-align: left; width: 60%; font-weight: 500; }
+  .score-breakdown td.negative { color: #ffb3a5; }.score-breakdown .total th, .score-breakdown .total td { font-weight: 700; border-top: 2px solid #b8cbb7; }
   @media (max-height: 650px) {
     :global(.canasta-play-surface) { --canasta-hand-height: 72px; }
     :global(.canasta-play-surface.flow-play > .play-board-region) { min-height: 184px; flex-basis: 184px; }

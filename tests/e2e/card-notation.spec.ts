@@ -42,6 +42,6 @@ test("Hearts uses suit symbols in Play, every lesson example, and decision revie
   }
   await noRawCardCodes(page);
   await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
-  await page.getByRole("button", { name: /^Reference/ }).click();
+  await page.getByRole("button", { name: /^Game rules/ }).click();
   await noRawCardCodes(page);
 });

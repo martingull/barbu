@@ -9,16 +9,18 @@
   import { formatCardText } from "../presentation/cardDisplay";
   import DecisionReview from "./DecisionReview.svelte";
   import type { DecisionReview as DecisionReviewData } from "../lessons/decisionReview";
+  import type { CardDisplayComparator } from "../presentation/cardOrdering";
 
-  let { title, results, message, complete, total, kind, review, decisionReviews = [], onBack, actions, playAction, coach, guidedHand, completedPath }: {
+  let { title, results, message, complete, total, kind, review, decisionReviews = [], onBack, actions, playAction, coach, guidedHand, completedPath, compareCards }: {
     title: string; results: DrillResult[]; message: string; complete: boolean; total: number;
     kind: "Topic" | "Exercise";
     review?: CourseContent["review"]; onBack: () => void; actions: Snippet;
     playAction?: Snippet;
     coach?: LearningCharacterId;
-    guidedHand?: { gameName: string; onStart: () => void };
+    guidedHand?: { gameName: string; goal?: string; onStart: () => void };
     completedPath?: string;
     decisionReviews?: DecisionReviewData[];
+    compareCards?: CardDisplayComparator;
   } = $props();
 </script>
 
@@ -41,7 +43,7 @@
           <ol role="list" aria-label="Decision results" class:detailed-decisions={decisionReviews.length > 0}>
             {#each results as result, index}
               <li>
-                {#if decisionReviews[index]}<DecisionReview review={decisionReviews[index]} {result} {index} />
+                {#if decisionReviews[index]}<DecisionReview review={decisionReviews[index]} {result} {index} {compareCards} />
                 {:else}<strong>{formatCardText(result.cardLabel)}</strong><span>{drillOutcomeLabels[result.outcome]}</span>{/if}
               </li>
             {/each}

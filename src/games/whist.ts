@@ -1,5 +1,5 @@
 import type { GameDefinition } from "./gameRegistry";
-import { createGameTableDefinition } from "./tableFactory";
+import { createGameTableDefinition, gameRulesCopy } from "./tableFactory";
 
 export type WhistLearnPathAction = "object" | WhistPracticeAction;
 export type WhistPracticeAction = "lead" | "follow" | "trump" | "third" | "return" | "odd";
@@ -23,7 +23,6 @@ export const whistDef: GameDefinition<WhistLearnPathAction | WhistPracticeAction
       progressAriaLabel: "Whist course progress",
       nextSummary: "Open a compact Whist decision, then repeat the same habit in practice.",
       completeSummary: "You have tried the first Whist habits: partnerships, trumps, suit invites, and odd tricks.",
-      referenceSummary: "Check the Whist baseline: partnerships, trumps, odd tricks, and silent table signals."
     },
     tabIntros: {
       learn: {
@@ -47,7 +46,7 @@ export const whistDef: GameDefinition<WhistLearnPathAction | WhistPracticeAction
     defaultTab: "play",
     actionsByTab: {
       learn: [
-        { id: "reference", label: "Reference", destination: "Whist reference" },
+        { id: "reference", label: gameRulesCopy.referenceTitle, destination: "Whist rules" },
         { id: "follow-suit", label: "Follow suit", destination: "Whist follow-suit concept" },
         { id: "trumps", label: "Trump wins", destination: "Whist trump concept" },
         { id: "partner-suits", label: "Partner signals", destination: "Whist partnership concept" }

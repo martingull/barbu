@@ -5,9 +5,9 @@
   import type { DrillResult } from "../lessons/drillDecision";
   import { drillOutcomeLabels } from "../lessons/drillDecision";
   import { formatCardText } from "../presentation/cardDisplay";
-  import { sortCardsForDisplay } from "../presentation/cardOrdering";
+  import { sortCardsForDisplay, type CardDisplayComparator } from "../presentation/cardOrdering";
 
-  let { review, result, index }: { review: DecisionReview; result: DrillResult; index: number } = $props();
+  let { review, result, index, compareCards }: { review: DecisionReview; result: DrillResult; index: number; compareCards?: CardDisplayComparator } = $props();
 </script>
 
 <details class="decision-review">
@@ -21,7 +21,7 @@
       <div class="review-group" role="group" aria-label={group.label}>
         <h4>{group.label}</h4>
         <div class="review-cards" style={`--review-columns: ${columns}; --review-width: ${columns * 60}px`}>
-          {#each group.captions ? group.cards : sortCardsForDisplay(group.cards) as card}
+          {#each group.captions ? group.cards : sortCardsForDisplay(group.cards, compareCards) as card}
             <figure class:chosen={review.selectedCardIds?.includes(card.id)}>
               <div class="review-card"><CardFace {card} /></div>
               {#if group.captions?.[card.id]}<figcaption>{group.captions[card.id]}</figcaption>{/if}

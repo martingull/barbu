@@ -65,7 +65,7 @@
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
     resources={[
       { id: "review-results", title: "Review results", summary: "Return to your previous contract decisions.", onClick: () => { route = "review"; } },
-      { id: "reference", title: "Reference", summary: barbuDef.table.learn.referenceSummary, onClick: services.onReference },
+      { id: "reference", title: barbuDef.table.learn.referenceTitle, summary: barbuDef.table.learn.referenceSummary, onClick: services.onReference },
       { id: "contracts", title: "Barbu contracts", summary: "See the contract roster and what each table asks you to notice.", onClick: () => { route = "contracts"; } }
     ]}
     loadExercise={(action, _seed, fromCourse) => loader.load(action, fromCourse)}

@@ -7,6 +7,7 @@
   import { canastaDef } from "../../games/canasta";
   import type { FeatureServices } from "../featureServices";
   import type { CanastaFeature } from "./canastaFeature";
+  import { compareCanastaCardsForDisplay } from "../../presentation/cardOrdering";
   let { feature, ...services }: FeatureServices & { feature: CanastaFeature } = $props();
   let learningFixed = $state(false);
   let guidedSeed = $state<number | null>(null);
@@ -20,6 +21,7 @@
     onNext={() => void feature.start(true)} onReplay={feature.replay} onNew={() => void feature.start()} />
 {:else}
   <GameLearning {...services} definition={canastaDef} gameName="Canasta" tab={$feature.tab}
+    compareCards={compareCanastaCardsForDisplay}
     onGuidedPlay={() => { guidedSeed = services.nextSeed(); }}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
     loadExercise={() => ({ seed: 0 })} exerciseTitle={() => "Canasta"} drillTitle={step => step.trick.title}

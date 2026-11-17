@@ -51,7 +51,7 @@ test("Barbu courses retain progress through reference navigation and compact-scr
   await page.getByRole("button", { name: "Open Barbu", exact: true }).click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
   for (const [index, step] of barbuDef.learnSteps.entries()) {
-    await page.getByRole("button", { name: /^Reference\b/ }).click();
+    await page.getByRole("button", { name: /^Game rules\b/ }).click();
     await page.getByRole("button", { name: "Continue path", exact: true }).click();
     await page.getByRole("button", { name: "See example", exact: true }).click();
     if (index === 6) {

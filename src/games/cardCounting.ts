@@ -9,7 +9,7 @@ export const cardCountingTable = createGameTableDefinition({
   learn: {
     pathAriaLabel: "Card Counting I learning path", pathEyebrow: "Learn", pathTitle: "Memory skills",
     progressAriaLabel: "Card Counting I progress", nextSummary: "Count one suit, then track high cards.",
-    completeSummary: "Apply your memory in a full hand.", referenceSummary: ""
+    completeSummary: "Apply your memory in a full hand."
   },
   tabIntros: {
     learn: { eyebrow: "Learn", title: "Memory skills", summary: "Track played cards through focused decisions." },

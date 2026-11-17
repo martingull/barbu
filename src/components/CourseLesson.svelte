@@ -6,14 +6,18 @@
   import TablePlaySurface from "./TablePlaySurface.svelte";
   import LearningCoach from "./LearningCoach.svelte";
   import { learningGuide } from "../presentation/learningCharacters";
+  import type { CardDisplayComparator } from "../presentation/cardOrdering";
 
-  let { course, stage, onBack, onContinue, customExample }: {
+  let { course, stage, onBack, onContinue, customExample, compareCards }: {
     course: CourseContent; stage: CourseStage; onBack: () => void; onContinue: () => void; customExample?: Snippet;
+    compareCards?: CardDisplayComparator;
   } = $props();
   let copy = $derived(stage === "concept" ? course.concept : course.example);
   let points = $derived(stage === "example" ? course.example.sequence.map(step => ({ marker: step.label, text: step.text }))
     : course.concept.points);
   let singleHand = $derived(course.example.tableCards.length > 1 && new Set(course.example.tableCards.map(play => play.seat)).size === 1);
+  let exampleCards = $derived(singleHand && compareCards
+    ? [...course.example.tableCards].sort((left, right) => compareCards!(left.card, right.card)) : course.example.tableCards);
 </script>
 
 <TablePlaySurface flowLayout surfaceClassName="learning-play-surface learning-copy-surface"
@@ -34,7 +38,7 @@
       {@render customExample()}
     {:else}
       <div class="learning-example-hand" aria-label={course.example.ariaLabel}>
-        {#each course.example.tableCards as play}
+        {#each exampleCards as play}
           <div><CardFace card={play.card} /></div>
         {/each}
       </div>

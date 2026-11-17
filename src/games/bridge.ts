@@ -1,5 +1,5 @@
 import type { GameDefinition } from "./gameRegistry";
-import { createGameTableDefinition } from "./tableFactory";
+import { createGameTableDefinition, gameRulesCopy } from "./tableFactory";
 
 export type BridgeLearnPathAction = "contracts" | "bidding" | "responding" | "declarer" | "dummy" | "defense";
 export type BridgePracticeAction = "bidding" | "responding" | "declarer" | "defense";
@@ -23,7 +23,6 @@ export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAct
       progressAriaLabel: "Bridge course progress",
       nextSummary: "Open a compact Bridge decision, then repeat the same habit in practice.",
       completeSummary: "You have tried opening bids, responding to partner, declarer play, the dummy, and defense.",
-      referenceSummary: "Check the Bridge baseline: basic natural bidding, declarer play, the dummy, and defense."
     },
     tabIntros: {
       learn: {
@@ -47,7 +46,7 @@ export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAct
     defaultTab: "play",
     actionsByTab: {
       learn: [
-        { id: "reference", label: "Reference", destination: "Bridge reference" },
+        { id: "reference", label: gameRulesCopy.referenceTitle, destination: "Bridge rules" },
         { id: "bidding", label: "Bidding", destination: "Bridge bidding concept" },
         { id: "responding", label: "Respond to 1NT", destination: "Bridge responding concept" },
         { id: "declarer", label: "Declarer play", destination: "Bridge declarer concept" },

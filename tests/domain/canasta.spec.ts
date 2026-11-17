@@ -4,7 +4,7 @@ import { canastaDeck, canastaSpecial, initialCanastaMinimum, validateCanastaMeld
 import { createCanastaSession, transitionCanastaSession, replayCanastaHand, canastaComplete, type CanastaSession } from "../../src/domain/canastaSession";
 import { canastaObservation, chooseCanastaAction, advanceCanastaOpponents } from "../../src/domain/canastaPolicy";
 import { normalizeCanastaSave, restoreCanastaSession, saveCanastaSession } from "../../src/persistence/canastaSave";
-import { canastaExercises, answerCanastaExercise } from "../../src/lessons/canasta/exercises";
+import { canastaExercises, answerCanastaExercise, canastaExerciseChoices } from "../../src/lessons/canasta/exercises";
 import { createCanastaFeature } from "../../src/features/canasta/canastaFeature";
 import { get } from "svelte/store";
 
@@ -204,7 +204,7 @@ test("each Canasta topic has three engine-checked decisions", () => {
   for (const [topic, steps] of Object.entries(canastaExercises)) {
     expect(steps).toHaveLength(3);
     for (const step of steps) {
-      const options = topic === "discard" ? step.session.hand.hands[0].map(card => card.id) : step.options ?? ["yes", "no"];
+      const options = canastaExerciseChoices(topic, step).map(choice => choice.id);
       expect(options.some(answer => answerCanastaExercise(topic, step, answer).good)).toBe(true);
     }
   }

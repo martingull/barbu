@@ -9,7 +9,7 @@ export type DrillStep = { scenarioId?: string; contract: string; title: string; 
   playingSeat?: Seat; handLabel?: string; referenceHand?: { label: string; cards: Card[] };
   tableAfterByCard?: Partial<Record<string, TableCard[]>> };
 export type DrillResult = { contract: string; cardLabel: string; outcome: GuidedCardOutcome | "illegal";
-  reason: PracticeReason | "meld_count" | "contract_target" | "bid_selection" | "pass_selection" | "trick_winner"; clean: boolean };
+  reason: PracticeReason | "meld_count" | "meld_risk" | "contract_target" | "bid_selection" | "pass_selection" | "trick_winner"; clean: boolean };
 export const drillOutcomeLabels = { good: "Good", risky: "Risky", penalty: "Penalty", illegal: "Illegal" } as const;
 
 export function drillTableCards(step: DrillStep, checked?: Card): TableCard[] {

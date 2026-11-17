@@ -2,10 +2,13 @@
   import CanastaCards from "./CanastaCards.svelte";
   import { canastaRanks, canastaValue, isCanastaWild, initialCanastaMinimum, type MeldRequest } from "../../domain/canastaRules";
   import { canastaObservation, suggestedCanastaMelds } from "../../domain/canastaPolicy";
-  import { transitionCanastaSession, type CanastaSession, type CanastaAction } from "../../domain/canastaSession";
+  import { canastaMeldPreview } from "../../domain/canastaMeldPreview";
+  import type { CanastaSession, CanastaAction } from "../../domain/canastaSession";
   import { formatCardList } from "../../presentation/cardDisplay";
-  let { session, pickup = false, onConfirm, onClose }: {
-    session: CanastaSession; pickup?: boolean; onConfirm: (action: CanastaAction) => boolean; onClose: () => void;
+  import { formatSignedScore } from "../../presentation/scorePresentation";
+  import { canastaRiskLabel } from "./canastaScorePresentation";
+  let { session, pickup = false, guided = false, onConfirm, onClose }: {
+    session: CanastaSession; pickup?: boolean; guided?: boolean; onConfirm: (action: CanastaAction) => boolean; onClose: () => void;
   } = $props();
   let dialog: HTMLDialogElement;
   let selected = $state<string[]>([]), groups = $state<MeldRequest[]>([]), target = $state(""), localError = $state("");
@@ -15,10 +18,9 @@
   const rank = $derived(target || chosen.find(card => !isCanastaWild(card))?.rank || "Wild");
   const top = $derived(session.hand.discards.at(-1));
   const pair = $derived(hand.filter(card => card.rank === top?.rank && !isCanastaWild(card)).slice(0, 2).map(card => card.id));
-  const action = $derived<CanastaAction>(pickup ? { type: "pickup", pair, groups } : { type: "meld", groups });
-  const validation = $derived.by(() => {
-    try { transitionCanastaSession(session, action); return ""; } catch (cause) { return (cause as Error).message; }
-  });
+  const action = $derived<Extract<CanastaAction, { type: "meld" | "pickup" }>>(pickup ? { type: "pickup", pair, groups } : { type: "meld", groups });
+  const preview = $derived(canastaMeldPreview(canastaObservation(session), action));
+  const validation = $derived(preview.error);
   const points = $derived(hand.filter(card => groups.some(group => group.cardIds.includes(card.id))).reduce((sum, card) => sum + canastaValue(card), 0));
   $effect(() => { dialog.showModal(); });
   function stage() {
@@ -29,7 +31,11 @@
   }
   function suggest() {
     const suggested = suggestedCanastaMelds(canastaObservation(session), pickup ? pair : undefined);
-    if (!suggested.length) { localError = "No opening found. You can choose your own groups or draw from stock."; return; }
+    if (!suggested.length) {
+      localError = pickup ? `No opening suggested. Stage your own qualifying groups, or Cancel and ${session.hand.stock.length ? "draw from stock" : "end the hand"}.`
+        : "No groups suggested. Stage your own legal groups, or Cancel and choose a discard.";
+      return;
+    }
     groups = suggested; selected = []; localError = "";
   }
 </script>
@@ -38,6 +44,11 @@
   <div class="editor">
     <header><h2 id="canasta-meld-title">{pickup ? "Take discard pile" : "Build melds"}</h2><button class="secondary-action" onclick={onClose} type="button">Cancel</button></header>
     <p>{session.hand.sides[0].opened ? "Add to your partnership's melds." : `Opening: ${points} / ${initialCanastaMinimum(session.scores[0])} points`}</p>
+    {#if guided}
+      <p class="guided-instruction">{pickup && session.hand.sides[0].opened
+        ? "Your natural pair is included automatically. Confirm pickup adds the top discard to that meld and brings the buried cards into your hand."
+        : "Select matching ranks and Stage cards, or use Suggest groups for a legal starting point. Check the staged groups before confirming; you still need a final discard."}</p>
+    {/if}
     {#if pickup}<p>Top discard: {top ? formatCardList([top]) : "Empty"}. Your matching pair is included when taking the pile.</p>{/if}
     <div class="drafts" aria-label="Staged melds">
       {#each groups as group}
@@ -53,7 +64,16 @@
     {/if}
     <div class="controls"><button class="secondary-action" onclick={suggest} type="button">Suggest groups</button>
       <button class="secondary-action" disabled={!selected.length} onclick={stage} type="button">Stage {selected.length || ""} cards</button></div>
-    <p class="validation" role="status">{localError || validation || "Ready to meld."}</p>
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex (Scrollable validation needs keyboard access.) -->
+    <div class="validation" role="region" aria-label="Meld validation" tabindex="0">
+      <p role="status">{localError || validation || "Ready to meld."}</p>
+      {#if preview.risks.length}
+        <p class="risk-context">If the hand ends before completion:</p>
+        <ul aria-label="Meld risks" aria-live="polite">{#each preview.risks as risk}
+          <li><span>{canastaRiskLabel(risk.rank)} ({risk.count}/7):</span>{" "}<strong>{formatSignedScore(risk.points)}</strong></li>
+        {/each}</ul>
+      {/if}
+    </div>
     <button class="primary-action" disabled={!!validation} onclick={() => { if (onConfirm(action)) onClose(); }} type="button">{pickup ? "Confirm pickup" : "Confirm melds"}</button>
   </div>
 </dialog>
@@ -66,6 +86,9 @@
   button { min-height: 44px; padding: 8px 12px; font-size: 0.85rem; } .controls button { flex: 1; }
   .drafts { max-height: 110px; min-height: 44px; overflow: auto; border-block: 1px solid #ffffff30; }
   .drafts > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 3px 0; font-size: 0.8rem; }
-  .drafts p { padding: 12px 0; color: #c4d9cb; }.validation { min-height: 2.7em; color: #f0d998; }
+  .drafts p { padding: 12px 0; color: #c4d9cb; }
+  .validation { height: 110px; flex: none; overflow-y: auto; overscroll-behavior: contain; color: #f0d998; font-size: 0.8rem; line-height: 1.4; }
+  .validation .risk-context { margin-top: 4px; }.validation ul { margin: 4px 0 0; padding: 0; list-style: none; }
+  .validation li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }.validation strong { font-variant-numeric: tabular-nums; }
   fieldset { margin: 0; padding: 4px; border: 0; font-size: 0.8rem; }.ranks { display: flex; flex-wrap: wrap; gap: 4px; }.ranks label { display: flex; gap: 3px; align-items: center; min-height: 32px; padding: 3px; }
 </style>

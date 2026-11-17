@@ -486,11 +486,11 @@
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
       onSurfaceChange={fixed => { cardCountingFixedSurface = fixed; }} />
   {:else if appView === "reference"}
-    <header class="topbar" aria-label={`${activeReference.title} reference`}>
+    <header class="topbar" aria-label={`${activeReference.title} rules`}>
       <button class="back-button" onclick={openActiveGameTable} type="button">Table</button>
       <div>
         <p class="eyebrow">{activeReference.family} family</p>
-        <h1>{activeReference.title} reference</h1>
+        <h1>{activeReference.title} rules</h1>
       </div>
       <div class="contract-status">
         <span>Baseline</span>
@@ -498,14 +498,14 @@
       </div>
     </header>
 
-    <section class="reference-screen" aria-label="Game reference">
+    <section class="reference-screen" aria-label="Game rules">
       <section class="reference-overview" aria-label={`${activeReference.title} overview`}>
-        <p class="eyebrow">Reference source</p>
+        <p class="eyebrow">Rules source</p>
         <h2>{activeReference.baseline}</h2>
         <p>{formatCardText(activeReference.overview)}</p>
       </section>
 
-      <section class="reference-sections" aria-label={`${activeReference.title} reference sections`}>
+      <section class="reference-sections" aria-label={`${activeReference.title} rules sections`}>
         {#each activeReference.sections as section}
           <article class="reference-card">
             <p class="eyebrow">{section.title}</p>
@@ -525,10 +525,10 @@
       </section>
 
       {#if activeReference.contracts.length}
-      <section class="reference-list" aria-label="Contract reference">
+      <section class="reference-list" aria-label="Contract rules">
         <div class="section-heading">
           <p class="eyebrow">Rules</p>
-          <h2>{activeReferenceIsBarbu ? "Barbu contracts" : `${activeReference.title} rules`}</h2>
+          <h2>{activeReferenceIsBarbu ? "Barbu contracts" : "Playing and scoring"}</h2>
         </div>
         <div class="reference-list-grid">
           {#each activeReference.contracts as contract}
