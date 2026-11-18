@@ -105,6 +105,9 @@ new UI has been installed or tested on a physical device.
       behavior, subscription dates and subscription management on that candidate.
 - [ ] Walk rules -> lessons -> guided hand -> full game -> scoring -> resume on
       a small phone and a modern Android screen; check larger system text too.
+      The November 18 browser follow-up passed all 58 Canasta checks across
+      Chromium/WebKit, including guided completion, replay and save preservation;
+      installed-device checks on this candidate remain outstanding.
 - [ ] Update store screenshots/description so free games, paid Canasta and the
       Android-only purchase scope match the delivered build.
 

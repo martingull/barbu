@@ -47,6 +47,22 @@ review/publication and merchant checks remain open. No candidate upload, review 
 change, purchase or public rollout was performed. Do not infer installation or
 store availability from a successful local package verification.
 
+### Canasta Browser Follow-Up
+
+On November 18, `task ui:test:canasta` passed all 58 checks across Galaxy S9 /
+Chromium and iPhone XR / WebKit profiles. Coverage includes rules/card values,
+24 lesson decisions, guided-hand completion and replay, meld staging and risk
+feedback, scoring, resume and preserving an existing saved game while learning.
+Small-phone and tablet-sized screenshots were inspected.
+
+The first run stopped six guided-hand cases at an outdated opening-hint string
+after the pile-feedback improvement. The test now checks the actual empty-pile
+explanation and explicitly verifies that Draw stock is enabled and Take pile is
+disabled. The complete suite was rerun successfully; no production code changed.
+Release-tool tests also passed (17). The signed candidate's bytes, source
+fingerprint and build inputs were rechecked successfully. These browser results
+do not replace Play-installed device or purchase lifecycle tests.
+
 ### Historical Production Submission
 
 **November 4: first production release submitted and IN REVIEW.**

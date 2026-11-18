@@ -34,8 +34,10 @@ for (const size of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { 
     const guidance = page.getByRole("region", { name: "Turn guidance", exact: true });
     const actions = page.locator(".table-play-panel > .action-row");
     const baseline = (await board.boundingBox())!;
-    await expect(guidance).toContainText("Choose Draw stock to take one face-down card.");
-    await expect(guidance).toContainText("discard pile is empty");
+    await expect(guidance.locator(".result")).toHaveText("Rule: The discard pile is empty.");
+    await expect(guidance).toContainText("Tactic: Choose Draw stock instead.");
+    await expect(actions.getByRole("button", { name: "Draw stock", exact: true })).toBeEnabled();
+    await expect(actions.getByRole("button", { name: "Take pile", exact: true })).toBeDisabled();
     const opening = await hand.getByRole("button").evaluateAll(cards => cards.map(card => card.getAttribute("aria-label")));
     async function fits() {
       const bounds = (await board.boundingBox())!, feedback = (await guidance.boundingBox())!;
