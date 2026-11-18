@@ -86,10 +86,10 @@ new UI has been installed or tested on a physical device.
       The November 18 API update and a fresh Console export verified the saved
       answers for purchase history and the anonymous app identifier, with the
       Families commitment removed following Martin's audience confirmation.
-- [ ] Check Publishing overview for the declaration's review/publication status.
-      Martin reports the Data safety change is now in review with automated checks
-      running; approval and publication have not been confirmed.
-      Confirm no additional non-provider RevenueCat integrations are enabled and
+- [x] Confirm the declaration's publication status. Martin's November 18 Console
+      screenshot shows Data safety submission 14 submitted at 12:37 pm and
+      **Published** at 12:52 pm. This approves the declaration, not a new bundle.
+- [ ] Confirm no additional non-provider RevenueCat integrations are enabled and
       test the support process for purchase-data requests before paid launch.
 - [ ] Approve launch countries and local prices; only Norway is currently approved.
 - [x] Build a fresh, signed billing candidate including the latest Canasta
@@ -157,8 +157,11 @@ responses from explicit false to blank; no Boolean question or selected answer
 changed. Receipts and read-back verification are preserved in the same ignored
 directory. The old `billing-draft.csv` is superseded; do not import it.
 
-Saved-answer verification is not proof of review approval or public visibility.
-Check Publishing overview before making that claim. No bundle upload, product
+Saved-answer verification alone is not proof of review approval or public visibility.
+Martin subsequently supplied a Console screenshot of submission 14 showing the
+single Data safety change **Published** on November 18 at 12:52 pm, after
+submission at 12:37 pm. That is publication evidence for this declaration only.
+No bundle upload, product
 change, purchase or rollout was performed as part of this declaration update.
 The presence of a support email is not proof that a purchase-data deletion
 request has been tested.

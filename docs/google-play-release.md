@@ -11,14 +11,15 @@ performed for that candidate. The standard configuration still disables billing.
 
 The Data safety update was accepted through the API on November 18, and a fresh
 Console CSV export verified all saved answers, including the removal of the
-Families commitment after Martin confirmed a teen/adult audience. This does not
-confirm declaration review approval or store publication; check Publishing
-overview. See [the declaration evidence](premium.md#data-safety-update-from-the-existing-export).
+Families commitment after Martin confirmed a teen/adult audience. Martin's
+subsequent Console screenshot confirms Data safety submission 14 was submitted
+November 18 at 12:37 pm and **Published** at 12:52 pm. This is approval of the
+declaration, not the new billing bundle. See
+[the declaration evidence](premium.md#data-safety-update-from-the-existing-export).
 
-Martin subsequently reported that the Data safety change is in review, with
-automated checks running. Bank-account verification is also pending after he
-added a payout method. Neither status is approval to launch paid production.
-Keep the current review undisturbed; no additional release was submitted.
+Bank-account verification remains pending after Martin added a payout method.
+Declaration publication is not payout verification or approval to launch paid
+production. No new bundle has been submitted at this checkpoint.
 
 This remains a phone-first release. Martin deferred dedicated tablet layout
 work to a later pass. Existing wider-viewport checks are useful regression
@@ -76,7 +77,7 @@ publishing. See [purchase support and remaining checks](premium.md#purchase-supp
 
 Physical-device installation, a Play-signed saved-game upgrade, pre-launch report
 and 16 KB runtime testing have not been performed on this candidate. Data safety
-review/publication and merchant checks remain open. No candidate upload, review submission, product
+submission 14 is published; merchant checks remain open. No candidate upload, review submission, product
 change, purchase or public rollout was performed. Do not infer installation or
 store availability from a successful local package verification.
 
