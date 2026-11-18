@@ -1,6 +1,6 @@
 # Barbu Feature Map
 
-Current product scope, checked against the implementation on October 30, 2026.
+Current product scope; catalog and Premium notes updated on November 18, 2026.
 This is a working product document, not store copy or proof of release approval.
 See [SCREEN_PLAN.md](SCREEN_PLAN.md) for navigation and
 [game architecture](docs/game-architecture.md) for implementation boundaries.
@@ -31,9 +31,11 @@ opponents. Keep game-specific limitations explicit.
 | Rummy games | Gin Rummy | Two-player draw/discard, melds, knock/gin, layoffs and match scoring |
 | Card Skills | Card Counting I | Unsaved observation and memory exercises using shared card and hand mechanics |
 
-All visible tables are currently free. Canasta remains a paused prototype;
-Canasta, Card Counting II and Solitaire are hidden from the player catalog.
-Future pack/Pro metadata is not an entitlement system or a visible paywall.
+These seven tables remain free. Canasta is implemented as the first Premium
+candidate, with lessons, guided hands and full Modern American games. It is
+available in development/internal iOS previews and configured Android billing
+builds, not the current public release. Card Counting II and Solitaire remain
+hidden. See [Premium and billing](docs/premium.md) for access and release gates.
 
 ## Shared Learning Experience
 
@@ -48,7 +50,7 @@ Future pack/Pro metadata is not an entitlement system or a visible paywall.
 - Completion offers retry and the next lesson together; Play and return-to-Learn
   actions remain secondary. Finishing a path leads onward rather than repeating
   its first lesson. Reset lessons allows an intentional restart.
-- Hearts, Gin Rummy, Spades, Whist, Bridge and Barbu have unsaved guided hands
+- Hearts, Gin Rummy, Spades, Whist, Bridge, Barbu and the Canasta candidate have unsaved guided hands
   using their normal engines. Hints and explanations are shown automatically;
   recaps use actual play. Guided hands do not replace saved matches or award
   course completion merely for playing a hand.
@@ -83,6 +85,10 @@ Content ownership and detailed learning contracts are in
   training convention is documented. See [Bridge](docs/bridge.md).
 - **Gin Rummy:** classic scoring with automatic meld/layoff selection, not every
   regional rummy variant. See [Gin Rummy](docs/gin-rummy.md).
+- **Canasta candidate:** the documented Modern American profile, rank-first hands,
+  opening requirements, restricted discard-pile pickup, canastas, going out and
+  detailed hand scoring. Shared lessons and guided play use the same domain
+  rules as full games. Opponents are heuristics, not expert players.
 - **Barbu:** fixed-order training through all seven contracts, not canonical
   dealer-selected contracts, doubling or full historical settlement. Domino
   starts at sevens; its opponent policy still consults the next player's hidden
@@ -135,9 +141,11 @@ Full-hand and generated-practice scoring must stay aligned.
 
 ## Later And Non-Goals
 
-Accounts, cloud sync, multiplayer, tournaments, subscriptions, usage meters and
-paid packs are not implemented. Monetization remains a future product decision;
-centralize access checks if introduced. Do not describe metadata as paid functionality.
+Accounts, cloud sync, multiplayer, tournaments and usage meters are not implemented.
+Optional Android subscriptions use Google Play and RevenueCat with centralized
+verified access; they are still under controlled testing, not publicly launched.
+iOS billing and cross-platform purchase access are not implemented. Existing
+free games do not require a subscription. No advertising SDK is integrated.
 
 Other candidates include spaced review, adaptive difficulty, achievements,
 additional varieties, sound/haptics and character animation. They are not release

@@ -4,6 +4,9 @@
   import type { createPremiumFeature } from "./premiumFeature";
 
   let { feature, onBack }: { feature: ReturnType<typeof createPremiumFeature>; onBack: () => void } = $props();
+  const paidThrough = $derived($feature.customer?.expiresAt
+    ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format($feature.customer.expiresAt)
+    : "");
   onMount(() => { void feature.loadOffers(); });
 </script>
 
@@ -20,10 +23,18 @@
     <section class="premium-status">
       <h2>Premium is active</h2>
       <p>{$feature.customer?.willRenew ? "Your subscription renews through Google Play." : "Renewal is off. Access continues until the end of your paid period."}</p>
+      <p>{$feature.customer?.willRenew ? "Current paid period ends" : "Access until"}: {paidThrough}.</p>
+      {#if $feature.verificationNeeded}<p>Access is based on your last verified purchase. Reconnect to refresh your subscription status.</p>{/if}
       <button class="primary-action" type="button" disabled={$feature.busy} onclick={() => feature.manage()}>Manage subscription</button>
     </section>
   {:else if !$feature.available}
     <p>Subscriptions are not available in this version.</p>
+  {:else if $feature.verificationNeeded}
+    <section class="premium-status">
+      <h2>{$feature.busy ? "Checking Premium access" : "Reconnect to check Premium"}</h2>
+      <p>We have not confirmed your current subscription status. This does not mean your subscription has ended. Check access before subscribing again.</p>
+      <p>Your saved games and learning progress are kept. Your free games remain available.</p>
+    </section>
   {:else if !$feature.purchasesEnabled}
     <p>New subscriptions are not available yet. You can still restore an existing purchase.</p>
   {:else}
@@ -41,14 +52,21 @@
     </div>
     <p class="purchase-terms">Payment is charged to your Google Play account. Manage or cancel your subscription in Google Play. Cancellation stops future renewal; access continues for the paid period.</p>
   {/if}
+  {#if $feature.available}
+    <p class="purchase-terms">Premium needs an internet connection when you reopen Barbu. While Barbu stays open, verified access can continue offline for up to 24 hours, or until your paid period ends, whichever comes first.</p>
+  {/if}
   <div class="purchase-feedback" aria-live="polite">
     {#if $feature.message}<p>{$feature.message}</p>{/if}
     {#if $feature.error}<p role="alert">{$feature.error}</p>{/if}
   </div>
   {#if $feature.available}
     <div class="premium-actions">
+      <button class="secondary-action" type="button" disabled={$feature.busy} onclick={() => feature.refresh()}>Check access</button>
       <button class="secondary-action" type="button" disabled={$feature.busy} onclick={() => feature.restore()}>Restore purchases</button>
       <button class="secondary-action" type="button" disabled={$feature.busy} onclick={() => feature.loadOffers()}>Refresh prices</button>
+      {#if !$feature.active}
+        <button class="secondary-action" type="button" disabled={$feature.busy} onclick={() => feature.manage()}>Manage subscription</button>
+      {/if}
     </div>
     <footer>
       <button type="button" disabled={$feature.busy} onclick={() => feature.openLegal("terms")}>Terms of Service</button>

@@ -9,7 +9,10 @@ async function mockNativeOpener(page: Page, failFirst = false) {
       isTauri: true,
       privacyOpenCalls: calls,
       __TAURI_INTERNALS__: {
-        invoke: async (command: string) => {
+        invoke: async (command: string, args?: { operation?: string }) => {
+          if (command === "plugin:barbu-purchases|request" && args?.operation === "availability") {
+            return { available: false, purchasesEnabled: false };
+          }
           calls.push(command);
           if (command !== "open_privacy_policy") throw new Error(`Unexpected command: ${command}`);
           if (failFirst && calls.length === 1) throw new Error("Browser unavailable");

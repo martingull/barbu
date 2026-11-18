@@ -30,7 +30,8 @@ test("verified access expires and cancellation retains the paid-through period",
 test("malformed, unsigned and unrelated entitlement payloads cannot grant access", () => {
   for (const value of [null, true, {}, { ...active, verification: "failed" }, { ...active, verification: "VERIFIED_ON_DEVICE" },
     { ...active, entitlement: "other" }, { ...active, active: "true" }, { ...active, expiresAt: null },
-    { ...active, expiresAt: Infinity }, { ...active, checkedAt: "2026" }]) {
+    { ...active, expiresAt: Infinity }, { ...active, checkedAt: "2026" },
+    { ...active, expiresAt: Number.MAX_SAFE_INTEGER }, { ...active, checkedAt: Number.MAX_SAFE_INTEGER }]) {
     expect(() => readPremiumSnapshot(value)).toThrow();
   }
   expect(readPremiumSnapshot(inactive)).toEqual(inactive);
@@ -131,4 +132,80 @@ test("duplicate taps are ignored while the native purchase sheet is open", async
   finish({ outcome: "purchased", customer: active });
   await purchase;
   expect(get(feature).active).toBe(true);
+});
+
+test("failed startup verification cannot be bypassed by loading offers or restarting", async () => {
+  const h = harness({ customer: new Error("network unavailable") });
+  await h.feature.initialize();
+  await h.feature.loadOffers();
+  expect(get(h.feature).verificationNeeded).toBe(true);
+  expect(get(h.feature).offers).toEqual(offers);
+  await h.feature.purchase("monthly");
+  expect(h.calls).not.toContain("purchase");
+  h.responses.customer = { customer: active };
+  await h.feature.refresh();
+  expect(get(h.feature).active).toBe(true);
+  expect(get(h.feature).verificationNeeded).toBe(false);
+
+  const restarted = harness({ customer: new Error("still offline") });
+  await restarted.feature.initialize();
+  expect(get(restarted.feature).active).toBe(false);
+  expect(get(restarted.feature).verificationNeeded).toBe(true);
+});
+
+test("a failed refresh keeps bounded access but never treats unknown access as an invitation to buy", async () => {
+  const h = harness({ customer: { customer: active } });
+  await h.feature.initialize();
+  await h.feature.loadOffers();
+  h.responses.customer = new Error("offline");
+  await h.feature.refresh();
+  expect(get(h.feature).active).toBe(true);
+  expect(get(h.feature).verificationNeeded).toBe(true);
+  h.advance(now + premiumOfflineWindowMs);
+  h.feature.tick();
+  expect(get(h.feature).active).toBe(false);
+  await h.feature.purchase("monthly");
+  expect(h.calls).not.toContain("purchase");
+  h.responses.customer = { customer: { ...inactive, checkedAt: now + premiumOfflineWindowMs } };
+  await h.feature.refresh();
+  expect(get(h.feature).verificationNeeded).toBe(false);
+  await h.feature.purchase("monthly");
+  expect(h.calls).toContain("purchase");
+});
+
+test("stale inactive checks and unconfirmed payments require verification before another checkout", async () => {
+  const h = harness();
+  await h.feature.initialize();
+  await h.feature.loadOffers();
+  h.advance(now + premiumOfflineWindowMs);
+  h.feature.tick();
+  expect(get(h.feature).verificationNeeded).toBe(true);
+  await h.feature.purchase("monthly");
+  expect(h.calls).not.toContain("purchase");
+
+  for (const response of [{ outcome: "pending" }, { outcome: "purchased", customer: inactive }]) {
+    const payment = harness({ purchase: response });
+    await payment.feature.initialize();
+    await payment.feature.loadOffers();
+    await payment.feature.purchase("monthly");
+    expect(get(payment.feature).verificationNeeded).toBe(true);
+    await payment.feature.purchase("monthly");
+    expect(payment.calls.filter(call => call === "purchase")).toHaveLength(1);
+  }
+});
+
+test("check access retries an unavailable service and operation errors explain the correct recovery", async () => {
+  const h = harness({ availability: new Error("configuration not ready") });
+  await h.feature.initialize();
+  h.responses.availability = { available: true, purchasesEnabled: true };
+  await h.feature.refresh();
+  expect(get(h.feature).available).toBe(true);
+  expect(get(h.feature).verificationNeeded).toBe(false);
+  h.responses.manage = new Error("native error");
+  await h.feature.manage();
+  expect(get(h.feature).error).toContain("Play Store > Payments and subscriptions > Subscriptions");
+  h.responses.restore = new Error("native error");
+  await h.feature.restore();
+  expect(get(h.feature).verificationNeeded).toBe(true);
+  expect(get(h.feature).error).not.toContain("No active");
 });

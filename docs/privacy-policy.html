@@ -60,7 +60,7 @@
   <body>
     <main>
       <h1>Barbu Privacy Policy</h1>
-      <p class="effective-date">Updated: November 5, 2026</p>
+      <p class="effective-date">Updated: November 18, 2026</p>
 
       <p>
         Barbu is a card-game learning and practice table. This privacy policy explains how Barbu
@@ -73,19 +73,50 @@
         you can continue learning and playing. This information stays on your device.
       </p>
       <p>
-        Barbu does not require an account. Barbu does not collect your name, email address, contacts,
-        photos, location, advertising ID, or payment information.
+        Barbu does not require an account. It does not request your contacts, photos or location,
+        and it does not collect advertising identifiers. If you contact support, we receive
+        your email address and the information you choose to send. Google Play handles payment
+        details; Barbu does not receive your full payment-card or bank-account details.
       </p>
 
       <h2>Data Collection and Sharing</h2>
       <p>
-        Barbu does not send personal data, gameplay data, or saved progress to our servers. Barbu
-        does not sell user data. Barbu does not use advertising SDKs, third-party analytics SDKs, or
-        cross-app tracking.
+        Gameplay and saved progress are not uploaded to a Barbu server. Barbu does not sell user
+        data, use advertising SDKs or track you across other companies' applications. Configured
+        Android versions use RevenueCat for purchase verification and subscription reporting,
+        as described below. This is separate from tracking gameplay or lesson decisions.
       </p>
       <p>
-        The Android build may include internet capability as part of the mobile WebView runtime, but
-        Barbu does not use this to transmit personal data.
+        Versions without a configured purchase service do not initialize RevenueCat. In versions
+        with it configured, the service can process data when Barbu checks access or loads offers,
+        even if you do not buy a subscription. No advertising attribution integrations are enabled.
+      </p>
+
+      <h2 id="purchase-data">Purchases and Subscription Data</h2>
+      <p>
+        In Android versions with purchases configured, Barbu uses Google Play for checkout and
+        RevenueCat to verify purchases, restore access and report subscription status. This
+        processing includes a randomly generated app-user identifier, purchase tokens and
+        transaction history, product identifiers, renewal and expiry information, and technical
+        context such as device/operating-system version, locale and currency. Network requests
+        also expose your IP address to the receiving service. Purchase data is sent over encrypted
+        connections and is not limited to temporary processing on your device.
+      </p>
+      <p>
+        We use this information to deliver and manage your subscription, resolve purchase issues,
+        prevent misuse and understand subscription performance. We do not send your saved hands,
+        cards or learning progress to RevenueCat. Automatic device-identifier collection and
+        optional SDK diagnostics are disabled. Google and RevenueCat may process information
+        outside your country, including in the United States. See
+        <a href="https://policies.google.com/privacy">Google's privacy policy</a> and
+        <a href="https://www.revenuecat.com/privacy">RevenueCat's privacy information</a>.
+      </p>
+      <p>
+        Processing needed to provide and manage a purchase supports performance of your
+        subscription contract. Security, troubleshooting and subscription reporting support
+        our legitimate interests in operating a reliable service; legal obligations may also
+        require retention of transaction records. Contact us with questions or to exercise
+        applicable privacy rights.
       </p>
 
       <h2>Optional Sharing and External Links</h2>
@@ -113,8 +144,20 @@
         Barbu's storage, or reset your device data.
       </p>
       <p>
-        Because Barbu does not create user accounts or store personal data on our servers, there is
-        no server-side account data to delete.
+        Uninstalling does not delete purchase records held by Google Play or RevenueCat, or
+        cancel your subscription. Purchase and support records are retained as needed to manage
+        access, resolve disputes and meet legal obligations. To request access, correction or
+        deletion of purchase-related data, email
+        <a href="mailto:martin@insilicoveritas.org">martin@insilicoveritas.org</a>.
+        We may need a Google Play order reference to locate the record and verify the request;
+        do not send full payment-card details. We will arrange deletion where applicable and
+        explain any records that must be retained. Google controls its own store records.
+      </p>
+      <p>
+        Depending on your location, you may also have rights to portability, restriction or
+        objection to processing, and to complain to your data-protection authority. Deletion
+        of purchase-verification data can affect Premium access; it does not itself cancel
+        Google Play billing. Saved games are not erased when Premium expires.
       </p>
 
       <h2>Children</h2>
@@ -125,8 +168,8 @@
 
       <h2>Security</h2>
       <p>
-        Barbu limits data storage to local gameplay and progress data needed for the card table
-        experience. No personal account data is stored by Barbu servers.
+        Gameplay and progress remain local. Purchase verification uses encrypted connections
+        to Google Play and RevenueCat. No Barbu account or cloud-save service is required.
       </p>
 
       <h2>Changes</h2>

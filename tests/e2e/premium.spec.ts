@@ -1,17 +1,21 @@
 import { expect, test, type Page } from "@playwright/test";
 
-async function mockBilling(page: Page, outcome = "purchased") {
-  await page.addInitScript(({ outcome }) => {
+async function mockBilling(page: Page, outcome = "purchased", options: { failCustomer?: boolean; active?: boolean; willRenew?: boolean } = {}) {
+  await page.addInitScript(({ outcome, options }) => {
     const w = window as any;
     w.isTauri = true;
     w.billingCalls = [];
-    w.billingActive = false;
+    w.billingActive = options.active ?? false;
+    w.billingCustomerFails = options.failCustomer ?? false;
+    w.billingWillRenew = options.willRenew ?? true;
+    w.billingExpiresAt = Date.now() + 86400000;
     w.__TAURI_INTERNALS__ = { invoke: async (command: string, args: any) => {
       if (command !== "plugin:barbu-purchases|request") return;
       w.billingCalls.push(args.operation);
       const customer = () => ({ verification: "verified", entitlement: "premium", active: w.billingActive,
-        checkedAt: Date.now(), expiresAt: w.billingActive ? Date.now() + 86400000 : null, willRenew: w.billingActive });
+        checkedAt: Date.now(), expiresAt: w.billingActive ? w.billingExpiresAt : null, willRenew: w.billingActive && w.billingWillRenew });
       if (args.operation === "availability") return { available: true, purchasesEnabled: true };
+      if (args.operation === "customer" && w.billingCustomerFails) throw new Error("offline");
       if (args.operation === "offers") return { offers: [
         { id: "monthly", price: "EUR 2.49", period: "month" }, { id: "annual", price: "EUR 19.99", period: "year" }
       ] };
@@ -22,7 +26,7 @@ async function mockBilling(page: Page, outcome = "purchased") {
       if (args.operation === "restore") w.billingActive = true;
       return { customer: customer() };
     } };
-  }, { outcome });
+  }, { outcome, options });
 }
 
 for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { width: 820, height: 1180 }]) {
@@ -115,3 +119,50 @@ for (const outcome of ["pending", "cancelled"]) {
     expect(await page.evaluate(() => (window as any).billingCalls.filter((op: string) => op === "purchase").length)).toBe(1);
   });
 }
+
+test("unverified access hides checkout and recovers without asking an existing subscriber to buy again", async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await mockBilling(page, "purchased", { failCustomer: true });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Canasta", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Reconnect to check Premium" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Subscribe for/ })).toHaveCount(0);
+  await expect(page.getByText("This does not mean your subscription has ended.", { exact: false })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Manage subscription", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Refresh prices", exact: true }).click();
+  await expect(page.getByRole("button", { name: /^Subscribe for/ })).toHaveCount(0);
+  await page.getByRole("button", { name: "Check access", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("Reconnect and check access");
+  await page.screenshot({ path: testInfo.outputPath("premium-reconnect.png"), fullPage: true });
+  await page.evaluate(() => { (window as any).billingCustomerFails = false; (window as any).billingActive = true; });
+  await page.getByRole("button", { name: "Check access", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Premium is active" })).toBeVisible();
+  expect(await page.evaluate(() => (window as any).billingCalls.includes("purchase"))).toBe(false);
+});
+
+test("cancelled subscribers see their access date and a failed refresh does not remove verified access", async ({ page }, testInfo) => {
+  await mockBilling(page, "purchased", { active: true, willRenew: false });
+  await page.goto("/");
+  await page.locator(".catalog-footer").getByRole("button", { name: "Manage Premium", exact: true }).click();
+  const date = await page.evaluate(() => new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" })
+    .format((window as any).billingExpiresAt));
+  await expect(page.getByText(`Access until: ${date}.`, { exact: true })).toBeVisible();
+  await page.evaluate(() => { (window as any).billingCustomerFails = true; });
+  await page.getByRole("button", { name: "Check access", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Premium is active" })).toBeVisible();
+  await expect(page.getByText("Access is based on your last verified purchase.", { exact: false })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Subscribe for/ })).toHaveCount(0);
+  for (const width of [320, 360, 820]) {
+    await page.setViewportSize({ width, height: 740 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await page.screenshot({ path: testInfo.outputPath(`premium-cancelled-${width}.png`), fullPage: true });
+  }
+
+  await page.addInitScript(() => { (window as any).billingCustomerFails = true; });
+  await page.reload();
+  await page.getByRole("button", { name: "Open Canasta", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Reconnect to check Premium" })).toBeVisible();
+  await page.getByRole("button", { name: "Table", exact: true }).click();
+  await page.getByRole("button", { name: "Open Hearts", exact: true }).click();
+  await expect(page.getByRole("tab", { name: "Learn", exact: true })).toBeVisible();
+});

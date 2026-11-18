@@ -44,6 +44,67 @@ passed an initial license-test purchase, restart/access, restore and cancellatio
 Play-distributed billing candidate and broader lifecycle tests remain outstanding.
 iOS billing is not implemented.
 
+## Pre-Release Polish
+
+The November 18 source changes add a reconnect state to Premium. Unknown,
+failed or stale verification does not show checkout buttons, even when prices
+load. **Check access** retries verification; **Restore purchases** and **Manage
+subscription** remain available. Pending or unconfirmed checkout also requires
+an access check before another purchase attempt. Valid in-memory access survives
+a temporary connection failure only within the existing verified window.
+Cancelled subscribers see the paid-through date and time in the device locale.
+
+This pass deliberately does not persist a client-side Premium flag or change the
+native verification contract. Cold-start offline access is still unavailable;
+the Premium screen and terms now disclose the reconnect requirement. A future
+cross-restart offline cache needs a separate native verification design, not a
+local-storage entitlement. No store configuration or public checkout is changed.
+
+Terms and privacy source pages now describe optional Android subscriptions,
+RevenueCat processing, cancellation, restoration and deletion requests. They
+must be published and checked at their public URLs before a paid candidate is
+distributed. Updating these files does not update Play Console's Data safety form.
+
+November 18 automated verification: 281 domain tests, 78 focused Premium/legal/
+privacy browser checks across all six configured device profiles, and the
+production build passed. Screenshots were inspected at small-phone widths.
+Browser billing responses are simulated; these checks do not establish that the
+new UI has been installed or tested on a physical device.
+
+### Paid Candidate Checklist
+
+- [ ] Confirm merchant payout, bank and tax requirements have no outstanding warnings.
+- [ ] Publish and verify the updated terms/privacy URLs without login.
+- [ ] Update Play Data safety for the billing-enabled version. RevenueCat requires
+      disclosure of collected **Purchase history**, non-ephemeral processing,
+      encryption in transit, and app-functionality/subscription-analytics uses.
+      Review identifiers and technical data against the actual SDK configuration;
+      disabling advertising identifiers does not remove the anonymous purchaser ID.
+      Check service-provider sharing exemptions rather than marking all transfers
+      as advertising sharing. Test the support process for purchase-data requests.
+- [ ] Approve launch countries and local prices; only Norway is currently approved.
+- [ ] Build a fresh, signed billing candidate with an unused Play version code,
+      including the latest Canasta pile-pickup explanation. Keep the standard
+      public configuration disabled until the candidate is approved.
+- [ ] Install/update through a Play testing track without uninstalling. Check
+      saved hands, course progress and existing free games.
+- [ ] Verify monthly and annual checkout using license-test payment methods,
+      cancellation, pending/declined payments, renewal, refund/revocation, grace
+      period/account hold and restoration after reinstall. Monthly purchase,
+      restore and cancellation/expiry have local-device evidence, not yet
+      Play-distributed candidate evidence.
+- [ ] Check Canasta-save retention across expiry and restoration, reconnect
+      behavior, subscription dates and subscription management on that candidate.
+- [ ] Walk rules -> lessons -> guided hand -> full game -> scoring -> resume on
+      a small phone and a modern Android screen; check larger system text too.
+- [ ] Update store screenshots/description so free games, paid Canasta and the
+      Android-only purchase scope match the delivered build.
+
+Sources: [RevenueCat Data safety guidance](https://www.revenuecat.com/docs/platform-resources/google-platform-resources/google-plays-data-safety)
+and [Google subscription policy](https://support.google.com/googleplay/android-developer/answer/9900533?hl=en).
+This is a release checklist, not a statement that these Console changes or
+physical-device tests have been completed.
+
 ## Current Evidence
 
 On November 16, 2026:
