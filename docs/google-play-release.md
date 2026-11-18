@@ -20,6 +20,11 @@ automated checks running. Bank-account verification is also pending after he
 added a payout method. Neither status is approval to launch paid production.
 Keep the current review undisturbed; no additional release was submitted.
 
+This remains a phone-first release. Martin deferred dedicated tablet layout
+work to a later pass. Existing wider-viewport checks are useful regression
+coverage, not a claim that Android tablets or iPads have completed a full
+usability review. No device filters or distribution countries were changed.
+
 ### Prepared Billing Candidate
 
 The November 18 local build is signed with the existing upload certificate and
@@ -33,7 +38,7 @@ under `partial-v1.0.7-code1000008/`; the corrected verifier uses the existing
 - Bundle: `release/google-play/barbu-google-play-v1.0.7-code1000008.aab`.
 - Verification: `release/google-play/verification-v1.0.7-code1000008.json`.
 - Symbols and R8 mapping use the same version/code suffix in that directory.
-- SHA-256: `a7ad8e5bfde03fb56faf97cf4139dda2bd81c98700311a68b0104932e2b90264`.
+- SHA-256: `53632bc17859cf7f0ea6c78830405b53a27a3ada8030f63c708ec129f15b5331`.
 - Package `com.martin.barbu`, minimum SDK 24, target SDK 36; billing enabled only
   through the ignored override, with its hash included in verification.
 - Seventeen release-tool tests, three mobile-configuration checks, `tauri:check`
@@ -47,6 +52,21 @@ highest uploaded code before rebuilding. The earlier `1000008` bundle and its
 verification, mapping and symbols are preserved locally under
 `superseded-before-purchase-support/`; do not upload those older files. The new
 verification record captures the current uncommitted source fingerprint.
+
+The subsequent November 18 security refresh retains the same unuploaded version
+and includes the targeted dependency updates described in
+[the dependency follow-up](premium.md#dependency-security-follow-up). The previous
+purchase-support bundle and its matching verification files are preserved under
+`superseded-before-dependency-security-update/`. The SHA-256 above identifies
+the security-refreshed bundle, not either earlier candidate.
+
+After this refresh, 284 domain tests and 110 selected browser checks across
+Galaxy S9 / Chromium and iPhone XR / WebKit passed, covering the catalog, all
+seven free games, learning, saved hands and Premium. The production build,
+`tauri:check`, 17 release-tool tests, three mobile-configuration tests and a Sharp
+image-resize/format-conversion smoke check passed. The browser selection is not
+the complete 2,802-case suite. An outdated Bridge count assertion was corrected
+to verify the seven authored course IDs; no Bridge lesson was removed.
 
 A disposable API 35 emulator verified the debug build's native clipboard
 round-trip, email-client launch and missing-client fallback. It did not test an

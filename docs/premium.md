@@ -112,8 +112,11 @@ new UI has been installed or tested on a physical device.
       installed-device checks on this candidate remain outstanding.
 - [ ] Update store screenshots/description so free games, paid Canasta and the
       Android-only purchase scope match the delivered build.
-- [ ] Review and patch existing dependency audit warnings, including Svelte's
-      transitive `devalue` dependency; see the support-verification notes below.
+- [x] Apply the available compatible dependency security updates, including
+      Svelte's transitive `devalue` dependency; the production dependency audit
+      now reports no known vulnerabilities.
+- [ ] Recheck the unresolved development-only `picomatch` advisory before release;
+      see the dependency follow-up below. The full audit is not clean yet.
 
 Sources: [RevenueCat Data safety guidance](https://www.revenuecat.com/docs/platform-resources/google-platform-resources/google-plays-data-safety)
 and [Google subscription policy](https://support.google.com/googleplay/android-developer/answer/9900533?hl=en).
@@ -242,12 +245,46 @@ Screenshots and a private result record are ignored under
 `release/google-play/purchase-support-2026-11-18/`. A composed email on a
 configured physical phone and the complete deletion workflow remain untested.
 
-The dependency audit also reports a pre-existing high-severity `devalue` advisory
-through Svelte (`5.8.1` in the current lockfile). Svelte imports it in its server
-rendering modules; Barbu currently mounts a client-only frontend. This is not a
-claim that the dependency is fixed or that every advisory has been assessed.
-Review and patch the existing dependency warnings separately before paid launch;
-do not run a broad automatic dependency upgrade as part of purchase support.
+### Dependency Security Follow-Up
+
+The November 18 targeted update retains Svelte 5.56.1, the existing Svelte plugin,
+Tauri, TypeScript and Playwright. It updates only audited dependency chains:
+
+- `devalue` 5.8.1 -> 5.9.4, including the
+  [serialization fix](https://github.com/sveltejs/devalue/security/advisories/GHSA-j22f-vq7h-c4qm).
+- Vite 6.4.3 -> 6.4.6, including the maintainer's
+  [network-exposed dev-server fix](https://github.com/vitejs/vite/security/advisories/GHSA-p4f5-76q4-ffq7).
+- Sharp 0.35.3 -> 0.35.5 and its matching native image-processing packages.
+- PostCSS 8.5.33, Nano ID 3.3.20, source-map-js 1.2.2 and picomatch 4.0.7,
+  within the parents' supported version ranges. Their required transitive
+  changes are recorded in `package-lock.json`; third-party notices are regenerated.
+
+`npm audit --omit=dev` reports zero known vulnerabilities. The full `npm audit`
+still reports four high-severity package entries: picomatch plus its dependent
+fdir, tinyglobby and Vite. They trace to one
+[repeated-extglob denial-of-service advisory](https://github.com/advisories/GHSA-fc5q-39xc-vjpf),
+which lists no patched release; 4.0.7 is the latest published version checked.
+These are build/development dependencies, not a claim of a runtime vulnerability
+in installed Barbu. The reported attack requires attacker-controlled glob
+patterns. Keep patterns developer-controlled and do not expose development or
+preview servers to untrusted networks. This is risk containment, not an upstream
+fix or a general security certification.
+
+Do not use `npm audit fix --force`: its suggested Vite 6.2.7 downgrade would remove
+newer security fixes. Recheck the advisory and registry before the paid release,
+and update/retest when a maintained fix is available. No native billing SDK,
+gameplay policy, subscription region or public release changes in this pass.
+
+Verification passed 284 domain tests, 110 selected browser checks on Galaxy S9 /
+Chromium and iPhone XR / WebKit, the production build, `tauri:check`, 17 release
+tooling tests, three mobile-config tests and a Sharp image-conversion smoke.
+The selected browser run initially found an outdated assertion expecting six
+Bridge lessons; it now checks the seven authored IDs, and the complete selection
+was rerun successfully. This is not the full 2,802-case browser suite.
+The local signed `1.0.7` / `1000008` candidate was rebuilt and package-verified
+with these dependencies; no upload, device installation or purchase was performed.
+Dedicated tablet layout work remains deferred, not certified by the existing
+wider-viewport regression checks.
 
 ## Current Evidence
 
