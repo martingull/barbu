@@ -1,7 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { inspect, inspectMonetization, main, packageName, planUpload, submitUpload, validateCandidate } from "../../scripts/google-play.mjs";
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { applyBillingConfig, inspect, inspectMonetization, main, packageName, planUpload, submitUpload, validateCandidate } from "../../scripts/google-play.mjs";
 
 const bytes = Buffer.from("signed bundle fixture");
 const record = { package: packageName, versionName: "1.0.6", versionCode: 1000007, bytes: bytes.length,
@@ -22,6 +26,52 @@ test("candidate must match verified bytes, source, package, version and package 
   }
   assert.throws(() => validateCandidate(record, bytes, config, "fingerprint", " "));
   assert.throws(() => validateCandidate(record, bytes, config, "fingerprint", "x".repeat(501)));
+});
+
+test("billing override cannot alter the release identity or configure other plugins", () => {
+  const base = { ...config, plugins: { other: { retained: true }, "barbu-purchases": { androidApiKey: "", purchasesEnabled: false } } };
+  const override = { plugins: { "barbu-purchases": { androidApiKey: "goog_public_test_fixture", purchasesEnabled: true } } };
+  const effective = applyBillingConfig(base, override);
+  assert.equal(base.plugins["barbu-purchases"].purchasesEnabled, false);
+  assert.equal(effective.plugins["barbu-purchases"].purchasesEnabled, true);
+  assert.deepEqual(effective.plugins.other, base.plugins.other);
+  assert.equal(effective.version, base.version);
+  assert.equal(effective.bundle.android.versionCode, base.bundle.android.versionCode);
+  for (const invalid of [{ ...override, version: "other" }, { ...override, bundle: {} },
+    { plugins: { ...override.plugins, other: {} } },
+    { plugins: { "barbu-purchases": { androidApiKey: "secret_key", purchasesEnabled: true } } },
+    { plugins: { "barbu-purchases": { androidApiKey: "goog_fixture", purchasesEnabled: false } } },
+    { plugins: { "barbu-purchases": { ...override.plugins["barbu-purchases"], unexpected: true } } }]) {
+    assert.throws(() => applyBillingConfig(base, invalid));
+  }
+});
+
+test("billing and standard candidates cannot be verified in the wrong mode", () => {
+  const billingConfig = { ...config, plugins: { "barbu-purchases": { purchasesEnabled: true } } };
+  validateCandidate({ ...record, billingEnabled: true }, bytes, billingConfig, "fingerprint", "Notes");
+  assert.throws(() => validateCandidate(record, bytes, billingConfig, "fingerprint", "Notes"), /Billing mode/);
+  assert.throws(() => validateCandidate({ ...record, billingEnabled: true }, bytes, config, "fingerprint", "Notes"), /Billing mode/);
+});
+
+test("billing fingerprints include the ignored override without changing standard fingerprints", () => {
+  const dir = mkdtempSync(join(tmpdir(), "barbu-billing-fingerprint-"));
+  try {
+    execFileSync("git", ["init", "--quiet", dir]);
+    mkdirSync(join(dir, "src-tauri"));
+    writeFileSync(join(dir, ".gitignore"), "/src-tauri/tauri.billing.local.json\n");
+    writeFileSync(join(dir, "src-tauri/tauri.conf.json"), JSON.stringify(config));
+    const file = join(dir, "src-tauri/tauri.billing.local.json");
+    const script = `import { sourceFingerprint } from ${JSON.stringify(new URL("../../scripts/google-play.mjs", import.meta.url).href)};
+      console.log(JSON.stringify({ standard: sourceFingerprint(), billing: sourceFingerprint(true) }));`;
+    const fingerprint = () => JSON.parse(execFileSync(process.execPath, ["--input-type=module", "-e", script], { cwd: dir, encoding: "utf8" }));
+    writeFileSync(file, JSON.stringify({ plugins: { "barbu-purchases": { androidApiKey: "goog_fixture", purchasesEnabled: true } } }));
+    const first = fingerprint();
+    writeFileSync(file, JSON.stringify({ plugins: { "barbu-purchases": { androidApiKey: "goog_changed", purchasesEnabled: true } } }));
+    const second = fingerprint();
+    assert.notEqual(first.standard, first.billing);
+    assert.equal(first.standard, second.standard);
+    assert.notEqual(first.billing, second.billing);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
 test("preview only targets existing alpha and requires an unused version code", () => {
@@ -131,7 +181,8 @@ test("release-list quota failure stops before upload and cleans up the edit", as
 });
 
 test("invalid CLI options fail before authentication", async () => {
-  for (const args of [["production"], ["status", "--submit"], ["monetization", "--submit"], ["upload"], ["upload", "--track", "production"]]) {
+  for (const args of [["production"], ["status", "--submit"], ["status", "--billing"], ["monetization", "--submit"],
+    ["fingerprint", "--billing", "--json"], ["upload"], ["upload", "--track", "production"]]) {
     await assert.rejects(main(args));
   }
 });

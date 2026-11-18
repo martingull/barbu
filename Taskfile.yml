@@ -236,13 +236,19 @@ tasks:
 
   play:prepare:
     desc: Build, sign and verify the current Android version (Mac Android toolchain)
+    vars:
+      BILLING_FLAG: '{{if eq (default "0" .BILLING) "1"}}--billing{{end}}'
+      BILLING_CONFIG: '{{if eq (default "0" .BILLING) "1"}}--config src-tauri/tauri.billing.local.json{{end}}'
     requires:
       vars: [PREVIOUS_AAB]
+    preconditions:
+      - sh: 'test "{{default "0" .BILLING}}" = "0" -o "{{default "0" .BILLING}}" = "1"'
+        msg: BILLING must be 0 or 1
     cmds:
       - mkdir -p release/google-play
-      - node scripts/google-play.mjs fingerprint > release/google-play/build-source-fingerprint.txt
-      - env PATH=/opt/homebrew/opt/rustup/bin:$PATH JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ANDROID_HOME={{.HOME}}/Library/Android/sdk NDK_HOME={{.HOME}}/Library/Android/sdk/ndk/26.1.10909125 CARGO_PROFILE_RELEASE_DEBUG=1 RUSTFLAGS='-C link-arg=-Wl,-z,max-page-size=16384 -C link-arg=-Wl,-z,common-page-size=16384 -C link-arg=-Wl,--build-id=sha1' npm run tauri -- android build --aab --ci
-      - node scripts/verify-google-play.mjs '{{.PREVIOUS_AAB}}' release/google-play/build-source-fingerprint.txt
+      - node scripts/google-play.mjs fingerprint {{.BILLING_FLAG}} > release/google-play/build-source-fingerprint.txt
+      - env PATH=/opt/homebrew/opt/rustup/bin:$PATH JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ANDROID_HOME={{.HOME}}/Library/Android/sdk NDK_HOME={{.HOME}}/Library/Android/sdk/ndk/26.1.10909125 CARGO_PROFILE_RELEASE_DEBUG=1 RUSTFLAGS='-C link-arg=-Wl,-z,max-page-size=16384 -C link-arg=-Wl,-z,common-page-size=16384 -C link-arg=-Wl,--build-id=sha1' npm run tauri -- android build --aab --ci {{.BILLING_CONFIG}}
+      - node scripts/verify-google-play.mjs '{{.PREVIOUS_AAB}}' release/google-play/build-source-fingerprint.txt {{.BILLING_FLAG}}
 
   play:test:
     desc: Test Google Play release safeguards without network access

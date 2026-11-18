@@ -2,6 +2,53 @@
 
 ## Current Status
 
+**November 18 API check:** production and closed testing (`alpha`) both remain
+published at `1.0.6` / `1000007`, with no pending release lifecycle. The highest
+visible version code is `1000007`. Monthly and yearly `barbu_premium` base plans
+are active; this does not confirm merchant payout readiness. A new billing-enabled
+candidate is prepared as `1.0.7` / `1000008`. No upload or rollout has been
+performed for that candidate. The standard configuration still disables billing.
+
+The Data safety update was accepted through the API on November 18, and a fresh
+Console CSV export verified all saved answers, including the removal of the
+Families commitment after Martin confirmed a teen/adult audience. This does not
+confirm declaration review approval or store publication; check Publishing
+overview. See [the declaration evidence](premium.md#data-safety-update-from-the-existing-export).
+
+Martin subsequently reported that the Data safety change is in review, with
+automated checks running. Bank-account verification is also pending after he
+added a payout method. Neither status is approval to launch paid production.
+Keep the current review undisturbed; no additional release was submitted.
+
+### Prepared Billing Candidate
+
+The November 18 local build is signed with the existing upload certificate and
+verified against `1.0.6` / `1000007`. Bundletool validation, four-ABI native-symbol
+build-ID matching, R8 mapping matching, stripping and static 16 KB LOAD/RELRO and
+bundle alignment checks passed. The first verification attempt exceeded the
+32 MB extraction buffer for the 34,985,602-byte R8 map. Its files are preserved
+under `partial-v1.0.7-code1000008/`; the corrected verifier uses the existing
+128 MB extraction allowance and reports subprocess errors explicitly.
+
+- Bundle: `release/google-play/barbu-google-play-v1.0.7-code1000008.aab`.
+- Verification: `release/google-play/verification-v1.0.7-code1000008.json`.
+- Symbols and R8 mapping use the same version/code suffix in that directory.
+- SHA-256: `6e0f57e64aeeaccc0cae86cf774dcdd3730c351ab74c88f93ee1ee84366fe888`.
+- Package `com.martin.barbu`, minimum SDK 24, target SDK 36; billing enabled only
+  through the ignored override, with its hash included in verification.
+- Seventeen release-tool tests, three mobile-configuration checks, `tauri:check`
+  and the packaged frontend build passed. The preceding source-polish checks
+  cover 281 domain and 78 focused browser cases; they were not rerun for the
+  version/release-tooling changes.
+
+Physical-device installation, a Play-signed saved-game upgrade, pre-launch report
+and 16 KB runtime testing have not been performed on this candidate. Data safety
+review/publication and merchant checks remain open. No candidate upload, review submission, product
+change, purchase or public rollout was performed. Do not infer installation or
+store availability from a successful local package verification.
+
+### Historical Production Submission
+
 **November 4: first production release submitted and IN REVIEW.**
 After Martin enabled the app-scoped production-release permission, promotion of
 `1.0.6` / `1000007` passed validation and committed successfully as
@@ -164,6 +211,43 @@ records include that fingerprint, native checks, matching mapping and symbols.
 Upload rejects changed source/build inputs, mismatching checksums, wrong package
 or version, missing verification, and reused codes. Package verification does
 not assert tests or physical-device checks ran; those are recorded separately.
+
+### Billing-Enabled Candidates
+
+Leave the tracked `tauri.conf.json` purchase key empty and checkout disabled.
+Use the existing ignored `src-tauri/tauri.billing.local.json` for controlled
+Android billing tests. It may override only the purchase plugin's public `goog_`
+SDK key and `purchasesEnabled: true`, not the package, version or other plugins.
+The release checks include that file in the source fingerprint and build-input
+hashes and record the billing mode; a normal candidate and billing candidate
+cannot be substituted for each other.
+
+After choosing an unused version code and checking the paid release gates:
+
+```sh
+task play:prepare BILLING=1 \
+  PREVIOUS_AAB=release/google-play/barbu-google-play-v1.0.6-code1000007.aab
+task play:upload -- --billing \
+  --bundle release/google-play/barbu-google-play-v1.0.7-code1000008.aab \
+  --verification release/google-play/verification-v1.0.7-code1000008.json \
+  --notes release/google-play/release-notes-v1.0.7-code1000008.txt \
+  --name '1.0.7 - Canasta Premium closed test'
+```
+
+The second command previews only. Do not add `--submit` until the Data safety
+declaration and other [Premium gates](premium.md) are reviewed. A code becomes
+consumed on upload; inspect remote status again before retrying a failed upload.
+Do not upload the same version code once with billing and once without it.
+
+Google's Data safety API accepts a complete CSV declaration, not a partial patch
+or a read-back request. Export the existing answers in Play Console under the
+**Barbu app**, not developer-account settings: Policy and programs > App content >
+Data safety > Manage > Export to CSV. Preserve the export before changing answers;
+an import replaces the form. A saved API response is not evidence that Google
+has approved or published a declaration.
+
+References: [Data safety API](https://developers.google.com/android-publisher/api-ref/rest/v3/applications/dataSafety)
+and [Google's CSV import/export guidance](https://support.google.com/googleplay/android-developer/answer/10787469).
 
 References: [Publishing edits](https://developers.google.com/android-publisher/edits),
 [release lifecycle](https://developers.google.com/android-publisher/api-ref/rest/v3/applications.tracks.releases),

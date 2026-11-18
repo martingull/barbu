@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { parseEnv } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { sourceFingerprint } from './google-play.mjs';
+import { billingConfigPath, readBuildConfig, sourceFingerprint } from './google-play.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 process.chdir(root);
@@ -15,7 +15,10 @@ const tool = process.env.BUNDLETOOL_JAR || '/private/tmp/bundletool-all-1.18.1.j
 const ndkHome = process.env.NDK_HOME || path.join(process.env.HOME, 'Library/Android/sdk/ndk/26.1.10909125');
 const readelf = path.join(ndkHome, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-readelf');
 const input = path.join(root, 'src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab');
-const config = JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json', 'utf8'));
+assert(process.argv.length === 4 || process.argv.length === 5 && process.argv[4] === '--billing',
+  'Usage: verify-google-play.mjs PREVIOUS_AAB SOURCE_FINGERPRINT_FILE [--billing]');
+const billing = process.argv[4] === '--billing';
+const config = readBuildConfig(billing);
 const version = config.version;
 const versionCode = config.bundle.android.versionCode;
 const suffix = `v${version}-code${versionCode}`;
@@ -23,12 +26,12 @@ const bundle = path.join(release, `barbu-google-play-${suffix}.aab`);
 assert(process.argv[2] && process.argv[3], 'Usage: verify-google-play.mjs PREVIOUS_AAB SOURCE_FINGERPRINT_FILE');
 const previous = path.resolve(process.argv[2]);
 const sourceDigest = fs.readFileSync(process.argv[3], 'utf8').trim();
-assert.equal(sourceFingerprint(), sourceDigest, 'Production source changed during build. Rebuild before signing.');
+assert.equal(sourceFingerprint(billing), sourceDigest, 'Production source or billing override changed during build. Rebuild before signing.');
 const tmp = fs.mkdtempSync('/private/tmp/barbu-verify-');
 const java = name => path.join(javaHome, 'bin', name);
 const run = (command, args, options = {}) => {
   const result = spawnSync(command, args, { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024, ...options });
-  assert.equal(result.status, 0, `${command} failed: ${result.stderr || result.stdout}`);
+  assert.equal(result.status, 0, `${command} failed: ${result.error?.message || result.stderr || result.stdout}`);
   return result.stdout;
 };
 const hash = value => createHash('sha256').update(value).digest('hex');
@@ -100,18 +103,20 @@ run('zip', ['-qr', symbols, '.'], { cwd: symbolsRoot });
 const mappingEntry = 'BUNDLE-METADATA/com.android.tools.build.obfuscation/proguard.map';
 assert(entries.includes(mappingEntry));
 const mapping = path.join(release, `mapping-${suffix}.txt`);
-const mappingBytes = run('unzip', ['-p', bundle, mappingEntry], { encoding: null });
+const mappingBytes = run('unzip', ['-p', bundle, mappingEntry], { encoding: null, maxBuffer: 128 * 1024 * 1024 });
 assert(mappingBytes.equals(fs.readFileSync('src-tauri/gen/android/app/build/outputs/mapping/universalRelease/mapping.txt')));
 fs.writeFileSync(mapping, mappingBytes);
 const record = {
   verifiedAt: new Date().toISOString(), bundle, sha256: fileHash(bundle), bytes: fs.statSync(bundle).size,
   package: manifest(bundle, '/manifest/@package'), versionName: version, versionCode,
+  billingEnabled: config.plugins?.['barbu-purchases']?.purchasesEnabled === true,
   minSdk: Number(manifest(bundle, '/manifest/uses-sdk/@android:minSdkVersion')), targetSdk: 36,
   sourceCommit: run('git', ['rev-parse', 'HEAD']).trim(),
   sourceFingerprint: sourceDigest,
   sourceWorkingTree: run('git', ['status', '--short']), sourceDiffSha256: hash(run('git', ['diff', '--binary'])),
   sourceInputs: Object.fromEntries(['package-lock.json', 'Cargo.lock', 'src-tauri/tauri.conf.json',
-    'src-tauri/android/MainActivity.kt', 'src-tauri/gen/android/app/build.gradle.kts', 'dist/index.html']
+    'src-tauri/android/MainActivity.kt', 'src-tauri/gen/android/app/build.gradle.kts', 'dist/index.html',
+    ...(billing ? [billingConfigPath] : [])]
     .map(file => [file, fileHash(file)])),
   uploadCertificateSha256: fingerprint, signatureVerified: true, bundletoolVersion: '1.18.1',
   bundletoolValidation: true, matchingR8Mapping: true, symbolsSha256: fileHash(symbols),

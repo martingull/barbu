@@ -7,15 +7,33 @@ import { pathToFileURL } from "node:url";
 
 export const packageName = "com.martin.barbu";
 export const testingTrack = "alpha";
+export const billingConfigPath = "src-tauri/tauri.billing.local.json";
 const serviceAccount = "barbu-release@plenary-magpie-170009.iam.gserviceaccount.com";
 const apiRoot = "https://androidpublisher.googleapis.com/androidpublisher/v3";
 const appPath = `/applications/${packageName}`;
 const sha256 = bytes => createHash("sha256").update(bytes).digest("hex");
 const sourcePaths = ["src", "src-tauri", "public", "content", "package.json", "package-lock.json", "Cargo.toml", "Cargo.lock", "vite.config.ts"];
 
-export function sourceFingerprint() {
+export function applyBillingConfig(config, override) {
+  assert.deepEqual(Object.keys(override).sort(), ["plugins"], "Billing override may only configure the purchase plugin.");
+  assert.deepEqual(Object.keys(override.plugins).sort(), ["barbu-purchases"], "Unexpected plugin in billing override.");
+  const billing = override.plugins["barbu-purchases"];
+  assert.deepEqual(Object.keys(billing).sort(), ["androidApiKey", "purchasesEnabled"], "Unexpected billing configuration fields.");
+  assert(typeof billing.androidApiKey === "string" && billing.androidApiKey.startsWith("goog_"), "Billing requires a public Google Play SDK key.");
+  assert.equal(billing.purchasesEnabled, true, "Billing candidate must explicitly enable checkout.");
+  return { ...config, plugins: { ...config.plugins,
+    "barbu-purchases": { ...config.plugins?.["barbu-purchases"], ...billing } } };
+}
+
+export function readBuildConfig(billing = false) {
+  const config = JSON.parse(readFileSync("src-tauri/tauri.conf.json", "utf8"));
+  return billing ? applyBillingConfig(config, JSON.parse(readFileSync(billingConfigPath, "utf8"))) : config;
+}
+
+export function sourceFingerprint(billing = false) {
   const files = execFileSync("git", ["ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", ...sourcePaths], { encoding: "utf8" })
     .split("\0").filter(file => file && existsSync(file));
+  if (billing) files.push(billingConfigPath);
   return sha256(JSON.stringify([...new Set(files)].sort().map(file => [file, sha256(readFileSync(file))])));
 }
 
@@ -114,6 +132,8 @@ export function validateCandidate(record, bytes, config, fingerprint, notes) {
   assert.equal(record.bytes, bytes.length, "Bundle size differs from verification record.");
   assert.equal(typeof record.sourceFingerprint, "string", "Missing production-source fingerprint. Rebuild and verify it.");
   assert.equal(record.sourceFingerprint, fingerprint, "Production source changed since packaging. Rebuild and verify it.");
+  assert.equal(record.billingEnabled ?? false, config.plugins?.["barbu-purchases"]?.purchasesEnabled === true,
+    "Billing mode differs from the verified candidate. Use --billing only for a billing-enabled candidate.");
   for (const key of ["signatureVerified", "bundletoolValidation", "matchingR8Mapping"]) {
     assert.equal(record[key], true, `Missing successful package check: ${key}`);
   }
@@ -194,22 +214,24 @@ export async function submitUpload(client, plan, bytes, log = console.log) {
 export async function main(args) {
   const { values, positionals } = parseArgs({ args, allowPositionals: true, options: {
     bundle: { type: "string" }, verification: { type: "string" }, notes: { type: "string" }, name: { type: "string" },
-    "replace-unsent": { type: "string" }, submit: { type: "boolean", default: false }, json: { type: "boolean", default: false }
+    "replace-unsent": { type: "string" }, submit: { type: "boolean", default: false }, json: { type: "boolean", default: false },
+    billing: { type: "boolean", default: false }
   } });
   const command = positionals[0];
-  assert(positionals.length === 1 && ["status", "monetization", "upload", "fingerprint"].includes(command), "Usage: google-play.mjs status [--json] | monetization | fingerprint | upload --bundle PATH --verification PATH --notes PATH --name NAME [--replace-unsent CODE] [--submit]");
+  assert(positionals.length === 1 && ["status", "monetization", "upload", "fingerprint"].includes(command), "Usage: google-play.mjs status [--json] | monetization | fingerprint [--billing] | upload --bundle PATH --verification PATH --notes PATH --name NAME [--billing] [--replace-unsent CODE] [--submit]");
   if (command === "monetization") {
     assert(args.length === 1, "Monetization inspection accepts no options and never changes products.");
     console.log(JSON.stringify(await inspectMonetization(createClient(await authenticate())), null, 2));
     return;
   }
   if (command === "fingerprint") {
-    assert(args.length === 1, "Fingerprint accepts no options.");
-    console.log(sourceFingerprint());
+    assert(args.length === (values.billing ? 2 : 1), "Fingerprint only accepts --billing.");
+    readBuildConfig(values.billing);
+    console.log(sourceFingerprint(values.billing));
     return;
   }
   if (command === "status") {
-    assert(!values.submit && !values.bundle && !values.verification && !values.notes && !values.name && !values["replace-unsent"], "Status does not accept upload options.");
+    assert(!values.submit && !values.bundle && !values.verification && !values.notes && !values.name && !values["replace-unsent"] && !values.billing, "Status does not accept upload options.");
     const snapshot = await inspect(createClient(await authenticate()));
     if (values.json) console.log(JSON.stringify(snapshot, null, 2));
     else {
@@ -225,8 +247,8 @@ export async function main(args) {
   const bytes = readFileSync(values.bundle);
   const record = JSON.parse(readFileSync(values.verification, "utf8"));
   const notes = readFileSync(values.notes, "utf8");
-  const config = JSON.parse(readFileSync("src-tauri/tauri.conf.json", "utf8"));
-  validateCandidate(record, bytes, config, sourceFingerprint(), notes);
+  const config = readBuildConfig(values.billing);
+  validateCandidate(record, bytes, config, sourceFingerprint(values.billing), notes);
   assert(record.sourceInputs && Object.keys(record.sourceInputs).length, "Missing build-input verification.");
   for (const [file, hash] of Object.entries(record.sourceInputs)) assert.equal(sha256(readFileSync(file)), hash, `Build input changed: ${file}`);
   const client = createClient(await authenticate());

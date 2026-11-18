@@ -74,18 +74,26 @@ new UI has been installed or tested on a physical device.
 ### Paid Candidate Checklist
 
 - [ ] Confirm merchant payout, bank and tax requirements have no outstanding warnings.
-- [ ] Publish and verify the updated terms/privacy URLs without login.
-- [ ] Update Play Data safety for the billing-enabled version. RevenueCat requires
+      Martin added a payout bank account on November 18; verification is pending
+      via Google's test-deposit flow. This is not a verified payout method yet.
+- [x] Publish and verify the updated terms/privacy URLs without login. Both returned
+      HTTP 200 and matched commit `aae8699` on November 18.
+- [x] Update Play Data safety for the billing-enabled version. RevenueCat requires
       disclosure of collected **Purchase history**, non-ephemeral processing,
       encryption in transit, and app-functionality/subscription-analytics uses.
-      Review identifiers and technical data against the actual SDK configuration;
-      disabling advertising identifiers does not remove the anonymous purchaser ID.
-      Check service-provider sharing exemptions rather than marking all transfers
-      as advertising sharing. Test the support process for purchase-data requests.
+      The November 18 API update and a fresh Console export verified the saved
+      answers for purchase history and the anonymous app identifier, with the
+      Families commitment removed following Martin's audience confirmation.
+- [ ] Check Publishing overview for the declaration's review/publication status.
+      Martin reports the Data safety change is now in review with automated checks
+      running; approval and publication have not been confirmed.
+      Confirm no additional non-provider RevenueCat integrations are enabled and
+      test the support process for purchase-data requests before paid launch.
 - [ ] Approve launch countries and local prices; only Norway is currently approved.
-- [ ] Build a fresh, signed billing candidate with an unused Play version code,
-      including the latest Canasta pile-pickup explanation. Keep the standard
-      public configuration disabled until the candidate is approved.
+- [x] Build a fresh, signed billing candidate including the latest Canasta
+      pile-pickup explanation: `1.0.7` / `1000008`, prepared and package-verified
+      November 18. It is not uploaded; check remote codes again before upload.
+      The standard public configuration remains disabled.
 - [ ] Install/update through a Play testing track without uninstalling. Check
       saved hands, course progress and existing free games.
 - [ ] Verify monthly and annual checkout using license-test payment methods,
@@ -104,6 +112,62 @@ Sources: [RevenueCat Data safety guidance](https://www.revenuecat.com/docs/platf
 and [Google subscription policy](https://support.google.com/googleplay/android-developer/answer/9900533?hl=en).
 This is a release checklist, not a statement that these Console changes or
 physical-device tests have been completed.
+
+### Data Safety Update From the Existing Export
+
+On November 18, Martin exported `data_safety_export.csv` from Barbu's App content
+page. The original 782-row export declared no collected data and had the optional
+Families-policy commitment enabled. Martin confirmed that Barbu targets teens
+and adults, not children under 13, and approved removing that commitment. This
+does not independently inspect or change the separate target-audience form.
+
+The untouched original, a proposed CSV and its response-level diff are preserved
+locally in ignored `release/google-play/data-safety-2026-11-18/`. The initial draft
+changed 24 response values; the reviewed version changes 25 including the Families
+commitment. Row identifiers, labels, requirements, order and all other responses
+are preserved, and CSV round-trip checks passed. It declares:
+
+- Purchase history and the generated RevenueCat installation/customer identifier
+  (under Device or other IDs), collected for functionality and subscription
+  analytics. The identifier classification follows Google's inclusion of app
+  identifiers; it is not a claim that advertising identifiers are collected.
+- Non-ephemeral, required processing over encrypted connections; no Barbu account
+  creation or external-account login.
+- Data-deletion requests through the published privacy page's purchase-data
+  section and support email.
+- No sharing beyond the service-provider processing, subject to confirming that
+  no additional non-provider RevenueCat integrations are enabled.
+
+The API accepted `billing-reviewed.csv` on November 18. Its SHA-256 is
+`0c6cafd0c664af4860d3f8c291d3f52bec299c0ea0cbc5460f6fc023ee4cfb06`.
+Martin then refreshed the Console and supplied `data_safety_export (1).csv`.
+All 782 saved responses match the reviewed file semantically, including the
+Families commitment set to false. Google normalized six unchecked choice
+responses from explicit false to blank; no Boolean question or selected answer
+changed. Receipts and read-back verification are preserved in the same ignored
+directory. The old `billing-draft.csv` is superseded; do not import it.
+
+Saved-answer verification is not proof of review approval or public visibility.
+Check Publishing overview before making that claim. No bundle upload, product
+change, purchase or rollout was performed as part of this declaration update.
+The presence of a support email is not proof that a purchase-data deletion
+request has been tested.
+
+### Merchant Verification and Service-Fee Follow-Up
+
+Martin's November 18 Payments profile screenshot initially showed no payout
+method. He then added a bank account; the subsequent screenshot showed the
+test-deposit verification form. No bank identifiers or documents are recorded
+here. Verification, any remaining tax/setup requirements and payout readiness
+remain open. A pending test deposit is not evidence of a purchase failure.
+
+The same screenshot partially showed an account-group/service-fee panel, but
+not its heading. Request the full panel before treating it as a required step
+or changing account associations. Do not accept fee terms on Martin's behalf.
+Google's [service-fee guidance](https://support.google.com/googleplay/android-developer/answer/112622?hl=en)
+lists auto-renewing subscription pricing separately from the first-$1M fee tier;
+the latter has its own account-group and enrollment requirements. The visible
+fragment does not establish which enrollment or agreement the account still needs.
 
 ## Current Evidence
 
