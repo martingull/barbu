@@ -78,8 +78,9 @@ new UI has been installed or tested on a physical device.
       via Google's test-deposit flow. This is not a verified payout method yet.
 - [x] Publish and verify the updated terms/privacy URLs without login. Both returned
       HTTP 200 and matched commit `aae8699` on November 18.
-- [ ] Publish the subsequent purchase-support instructions and privacy clarification;
-      these newer source edits have only been checked locally so far.
+- [x] Publish the subsequent purchase-support instructions and privacy clarification.
+      After pushing `1780a0f`, the canonical support, privacy and terms URLs all
+      returned HTTP 200 and matched their source on November 18.
 - [x] Update Play Data safety for the billing-enabled version. RevenueCat requires
       disclosure of collected **Purchase history**, non-ephemeral processing,
       encryption in transit, and app-functionality/subscription-analytics uses.
@@ -96,6 +97,11 @@ new UI has been installed or tested on a physical device.
       pile-pickup explanation and purchase support: `1.0.7` / `1000008`, refreshed and package-verified
       November 18. It is not uploaded; check remote codes again before upload.
       The standard public configuration remains disabled.
+- [ ] Upload the verified candidate to closed testing. The November 18 preview
+      passed, but the first submission received HTTP 503 before upload. A fresh
+      status still showed only `1000007`; the single retry then hit Google's
+      release-list quota before upload. No release changed. Manual Console
+      upload or quota recovery is needed; do not weaken the review safeguards.
 - [ ] Install/update through a Play testing track without uninstalling. Check
       saved hands, course progress and existing free games.
 - [ ] Verify monthly and annual checkout using license-test payment methods,

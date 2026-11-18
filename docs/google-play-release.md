@@ -21,6 +21,20 @@ Bank-account verification remains pending after Martin added a payout method.
 Declaration publication is not payout verification or approval to launch paid
 production. No new bundle has been submitted at this checkpoint.
 
+The six pending commits were pushed through `1780a0f` on November 18. The
+canonical support, privacy and terms URLs then returned HTTP 200 and matched
+source. The guarded `1000008` upload preview passed, but submission stopped
+before any bundle upload: first HTTP 503 from the alpha release-list endpoint,
+then, after a successful fresh status check, HTTP 403 **Listing releases quota
+exceeded** from the beta release-list endpoint. Both temporary edits were cleaned
+up without committing. Logs are ignored under
+`release/google-play/upload-v1.0.7-code1000008-2026-11-18*.log`.
+No additional retry, review cancellation or production update was attempted.
+The bundle remains local; do not describe this as a submitted closed-test release.
+Use the manual Console upload path or wait for quota recovery, then verify the
+actual version code and lifecycle before proceeding. Avoid repeated all-track
+polling while the quota error persists.
+
 This remains a phone-first release. Martin deferred dedicated tablet layout
 work to a later pass. Existing wider-viewport checks are useful regression
 coverage, not a claim that Android tablets or iPads have completed a full
@@ -72,8 +86,9 @@ to verify the seven authored course IDs; no Bridge lesson was removed.
 A disposable API 35 emulator verified the debug build's native clipboard
 round-trip, email-client launch and missing-client fallback. It did not test an
 email draft with a configured account, subscription checkout or a Play-signed
-upgrade. The support/privacy page source has newer instructions that still need
-publishing. See [purchase support and remaining checks](premium.md#purchase-support).
+upgrade. After pushing `1780a0f`, the canonical support, privacy and terms pages
+returned HTTP 200 and matched source, including the purchase-support instructions.
+See [purchase support and remaining checks](premium.md#purchase-support).
 
 Physical-device installation, a Play-signed saved-game upgrade, pre-launch report
 and 16 KB runtime testing have not been performed on this candidate. Data safety
