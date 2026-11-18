@@ -78,6 +78,8 @@ new UI has been installed or tested on a physical device.
       via Google's test-deposit flow. This is not a verified payout method yet.
 - [x] Publish and verify the updated terms/privacy URLs without login. Both returned
       HTTP 200 and matched commit `aae8699` on November 18.
+- [ ] Publish the subsequent purchase-support instructions and privacy clarification;
+      these newer source edits have only been checked locally so far.
 - [x] Update Play Data safety for the billing-enabled version. RevenueCat requires
       disclosure of collected **Purchase history**, non-ephemeral processing,
       encryption in transit, and app-functionality/subscription-analytics uses.
@@ -91,7 +93,7 @@ new UI has been installed or tested on a physical device.
       test the support process for purchase-data requests before paid launch.
 - [ ] Approve launch countries and local prices; only Norway is currently approved.
 - [x] Build a fresh, signed billing candidate including the latest Canasta
-      pile-pickup explanation: `1.0.7` / `1000008`, prepared and package-verified
+      pile-pickup explanation and purchase support: `1.0.7` / `1000008`, refreshed and package-verified
       November 18. It is not uploaded; check remote codes again before upload.
       The standard public configuration remains disabled.
 - [ ] Install/update through a Play testing track without uninstalling. Check
@@ -110,6 +112,8 @@ new UI has been installed or tested on a physical device.
       installed-device checks on this candidate remain outstanding.
 - [ ] Update store screenshots/description so free games, paid Canasta and the
       Android-only purchase scope match the delivered build.
+- [ ] Review and patch existing dependency audit warnings, including Svelte's
+      transitive `devalue` dependency; see the support-verification notes below.
 
 Sources: [RevenueCat Data safety guidance](https://www.revenuecat.com/docs/platform-resources/google-platform-resources/google-plays-data-safety)
 and [Google subscription policy](https://support.google.com/googleplay/android-developer/answer/9900533?hl=en).
@@ -164,13 +168,86 @@ test-deposit verification form. No bank identifiers or documents are recorded
 here. Verification, any remaining tax/setup requirements and payout readiness
 remain open. A pending test deposit is not evidence of a purchase failure.
 
-The same screenshot partially showed an account-group/service-fee panel, but
-not its heading. Request the full panel before treating it as a required step
-or changing account associations. Do not accept fee terms on Martin's behalf.
+Martin's subsequent full-panel screenshot confirms the heading is **Enrol for
+the 15% service fee**. It is an enrollment invitation, not a merchant setup error
+or evidence that Premium checkout is blocked. Do not accept fee terms or change
+account associations on Martin's behalf.
 Google's [service-fee guidance](https://support.google.com/googleplay/android-developer/answer/112622?hl=en)
 lists auto-renewing subscription pricing separately from the first-$1M fee tier;
-the latter has its own account-group and enrollment requirements. The visible
-fragment does not establish which enrollment or agreement the account still needs.
+the latter has its own account-group and enrollment requirements. Review the
+applicable program before enrolling; bank verification remains a separate task.
+
+### Purchase Support
+
+Configured Android builds expose **Premium > Purchase support**, even if access
+verification fails. The native plugin reads the SDK's anonymous app-user ID and
+provides a copy action plus an email intent addressed to
+`martin@insilicoveritas.org`. The draft includes only the reference and installed
+Barbu version; it is not sent automatically. The Android clipboard entry is marked
+sensitive on Android 13 and later. If copying or email is unavailable, the
+selectable reference and address remain visible. Support-operation errors do not
+replace pending-payment messages or change subscription access.
+
+The reference is a private lookup aid, not a password, receipt or proof of payment.
+It is read from RevenueCat's native SDK, not persisted in browser storage or used to grant
+access. A reinstall can create a new anonymous ID; purchase restoration and its
+aliases may be needed to find an older record. Never ask users to post references
+or receipts in public GitHub issues. See RevenueCat's
+[customer identity guidance](https://www.revenuecat.com/docs/customers/identifying-customers).
+
+#### Support Procedure
+
+1. Ask for the privately emailed billing reference, Barbu version and a short
+   description. Never request bank details, full payment-card details or raw
+   purchase tokens. If access is missing, first try reconnecting, **Check access**
+   and **Restore purchases** with the Google Play account that bought Premium;
+   do not suggest buying twice or uninstalling to fix verification.
+2. Look up the reference in the Barbu RevenueCat project. Check aliases, store,
+   product, entitlement dates and whether the transaction is sandbox or production.
+   A reference alone does not authorize disclosure or destructive changes. Where
+   needed, verify the request against the corresponding Google Play order record
+   supplied privately by the purchaser. Do not grant access from an email claim
+   or edit client storage to bypass verification.
+3. Treat cancellation, refund and data deletion as separate requests. Direct a
+   cancellation to **Manage subscription** or Google Play's subscription settings.
+   Do not refund, revoke, cancel or delete a customer without an explicit request
+   and appropriate verification.
+4. For a verified purchase-data deletion request, explain that it can affect
+   Premium access but does not cancel Google Play billing. Determine which records
+   must legally be retained and explain that Google controls its own store records.
+   Use RevenueCat's customer profile **Manage > Delete Customer** only after the
+   request and scope are confirmed. Check aliases and follow the provider's
+   completion guidance; deletion is asynchronous, so an accepted request alone
+   does not establish completion. See the
+   [customer-profile documentation](https://www.revenuecat.com/docs/dashboard-and-metrics/customer-profile).
+5. Confirm the outcome privately and retain only the minimum support record
+   needed. Do not erase local saved games to handle a purchase-data request.
+   Restoring purchases does not recover local games lost through uninstalling.
+
+This documents the procedure, not a completed deletion test. No live customer
+was deleted, refunded or charged in developing these controls. Before paid
+launch, run a complete support/deletion rehearsal with a dedicated sandbox
+customer, verify completion and access consequences, and record the result
+without publishing its identifiers.
+
+November 18 support verification passed 284 domain tests, 102 focused browser
+checks across all six device profiles, the frontend production build and
+`tauri:check`. A local debug build on a disposable read-only API 35 emulator
+verified the native billing-reference format and a real clipboard round-trip
+back into Barbu. Contact support launched Gmail's welcome/setup screen; no
+account was added and no message was sent. Temporarily disabling that emulator's
+mail client also verified the missing-email-app fallback and retained reference.
+Gmail was re-enabled and the emulator stopped without saving its overlay.
+Screenshots and a private result record are ignored under
+`release/google-play/purchase-support-2026-11-18/`. A composed email on a
+configured physical phone and the complete deletion workflow remain untested.
+
+The dependency audit also reports a pre-existing high-severity `devalue` advisory
+through Svelte (`5.8.1` in the current lockfile). Svelte imports it in its server
+rendering modules; Barbu currently mounts a client-only frontend. This is not a
+claim that the dependency is fixed or that every advisory has been assessed.
+Review and patch the existing dependency warnings separately before paid launch;
+do not run a broad automatic dependency upgrade as part of purchase support.
 
 ## Current Evidence
 

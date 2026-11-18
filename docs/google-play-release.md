@@ -33,13 +33,26 @@ under `partial-v1.0.7-code1000008/`; the corrected verifier uses the existing
 - Bundle: `release/google-play/barbu-google-play-v1.0.7-code1000008.aab`.
 - Verification: `release/google-play/verification-v1.0.7-code1000008.json`.
 - Symbols and R8 mapping use the same version/code suffix in that directory.
-- SHA-256: `6e0f57e64aeeaccc0cae86cf774dcdd3730c351ab74c88f93ee1ee84366fe888`.
+- SHA-256: `a7ad8e5bfde03fb56faf97cf4139dda2bd81c98700311a68b0104932e2b90264`.
 - Package `com.martin.barbu`, minimum SDK 24, target SDK 36; billing enabled only
   through the ignored override, with its hash included in verification.
 - Seventeen release-tool tests, three mobile-configuration checks, `tauri:check`
-  and the packaged frontend build passed. The preceding source-polish checks
-  cover 281 domain and 78 focused browser cases; they were not rerun for the
-  version/release-tooling changes.
+  and the packaged frontend build passed. After purchase support was added,
+  all 284 domain and 102 focused Premium/legal/privacy browser checks passed.
+
+The candidate was refreshed on November 18 with **Premium > Purchase support**:
+a copyable private billing reference, native email handoff and recovery when no
+mail client is available. An API status read still showed `1000007` as the
+highest uploaded code before rebuilding. The earlier `1000008` bundle and its
+verification, mapping and symbols are preserved locally under
+`superseded-before-purchase-support/`; do not upload those older files. The new
+verification record captures the current uncommitted source fingerprint.
+
+A disposable API 35 emulator verified the debug build's native clipboard
+round-trip, email-client launch and missing-client fallback. It did not test an
+email draft with a configured account, subscription checkout or a Play-signed
+upgrade. The support/privacy page source has newer instructions that still need
+publishing. See [purchase support and remaining checks](premium.md#purchase-support).
 
 Physical-device installation, a Play-signed saved-game upgrade, pre-launch report
 and 16 KB runtime testing have not been performed on this candidate. Data safety
