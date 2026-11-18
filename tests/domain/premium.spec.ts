@@ -10,6 +10,7 @@ const active: PremiumSnapshot = { verification: "verified", entitlement: "premiu
   checkedAt: now, expiresAt: now + 30 * premiumOfflineWindowMs, willRenew: true };
 const inactive: PremiumSnapshot = { ...active, active: false, expiresAt: null, willRenew: false };
 const offers = [{ id: "monthly", price: "EUR 2.49", period: "month" }];
+const supportId = "$RCAnonymousID:0123456789abcdef0123456789abcdef";
 
 test("verified access expires and cancellation retains the paid-through period", () => {
   expect(hasPremiumAccess(active, now)).toBe(true);
@@ -41,6 +42,7 @@ function harness(overrides: Partial<Record<BillingOperation, unknown>> = {}) {
   const calls: BillingOperation[] = [];
   const responses: Partial<Record<BillingOperation, unknown>> = {
     availability: { available: true, purchasesEnabled: true }, customer: { customer: inactive },
+    supportInfo: { supportId }, copySupportId: { supportId }, support: { supportId },
     offers: { offers }, restore: { customer: active }, purchase: { outcome: "purchased", customer: active }, ...overrides
   };
   const adapter: BillingAdapter = { async request(operation) {
@@ -119,6 +121,7 @@ test("duplicate taps are ignored while the native purchase sheet is open", async
   const feature = createPremiumFeature({ async request(operation) {
     if (operation === "availability") return { available: true, purchasesEnabled: true };
     if (operation === "customer") return { customer: inactive };
+    if (operation === "supportInfo") return { supportId };
     if (operation === "offers") return { offers };
     count++;
     return new Promise(resolve => { finish = resolve; });
@@ -208,4 +211,55 @@ test("check access retries an unavailable service and operation errors explain t
   await h.feature.restore();
   expect(get(h.feature).verificationNeeded).toBe(true);
   expect(get(h.feature).error).not.toContain("No active");
+});
+
+test("support identity is available without verified access and never grants Premium", async () => {
+  const h = harness({ customer: new Error("offline") });
+  await h.feature.initialize();
+  const verificationError = get(h.feature).error;
+  expect(get(h.feature).supportId).toBe(supportId);
+  await h.feature.copySupportId();
+  expect(get(h.feature).supportMessage).toBe("Billing reference copied.");
+  expect(get(h.feature).error).toBe(verificationError);
+  expect(get(h.feature).verificationNeeded).toBe(true);
+  await h.feature.contactSupport();
+  expect(get(h.feature).supportMessage).toContain("Email app opened");
+  expect(get(h.feature).active).toBe(false);
+  expect(h.calls).not.toContain("purchase");
+});
+
+test("invalid support responses are rejected without changing access or exposing their contents", async () => {
+  const h = harness({ customer: { customer: active } });
+  await h.feature.initialize();
+  for (const id of [null, "", "private@example.org", "goog_secret", `${supportId}\nInjected`, "$RCAnonymousID:bad"]) {
+    h.responses.supportInfo = { supportId: id, customer: inactive };
+    await h.feature.loadSupportInfo();
+    expect(get(h.feature).active).toBe(true);
+    expect(get(h.feature).supportId).toBe(supportId);
+    expect(get(h.feature).supportError).toBe("Billing reference is unavailable. Please try again.");
+  }
+  h.responses.copySupportId = new Error("provider secret");
+  await h.feature.copySupportId();
+  expect(get(h.feature).supportError).toContain("Select and copy");
+  expect(get(h.feature).supportError).not.toContain("secret");
+  h.responses.support = new Error("no email handler");
+  await h.feature.contactSupport();
+  expect(get(h.feature).supportError).toContain("Email martin@insilicoveritas.org");
+  expect(get(h.feature).active).toBe(true);
+});
+
+test("support recovery retains pending-payment feedback and refreshes only the native reference", async () => {
+  const h = harness({ supportInfo: new Error("reference unavailable"), purchase: { outcome: "pending" } });
+  await h.feature.initialize();
+  expect(get(h.feature).supportId).toBeNull();
+  await h.feature.loadOffers();
+  await h.feature.purchase("monthly");
+  const pendingMessage = get(h.feature).message;
+  const changedId = "$RCAnonymousID:abcdef0123456789abcdef0123456789";
+  h.responses.copySupportId = { supportId: changedId, customer: active };
+  await h.feature.copySupportId();
+  expect(get(h.feature).supportId).toBe(changedId);
+  expect(get(h.feature).message).toBe(pendingMessage);
+  expect(get(h.feature).active).toBe(false);
+  expect(get(h.feature).verificationNeeded).toBe(true);
 });

@@ -1,8 +1,14 @@
 package com.martin.barbu.purchases
 
 import android.app.Activity
+import android.content.ClipData
+import android.content.ClipDescription
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import android.os.PersistableBundle
 import android.os.SystemClock
 import app.tauri.annotation.Command
 import app.tauri.annotation.InvokeArg
@@ -68,6 +74,18 @@ class PurchasesPlugin(private val activity: Activity) : Plugin(activity) {
                     "manage" -> open(invoke, "https://play.google.com/store/account/subscriptions?package=com.martin.barbu")
                     "terms" -> open(invoke, "https://martingull.github.io/barbu/terms-of-service.html")
                     "privacy" -> open(invoke, "https://martingull.github.io/barbu/privacy-policy.html")
+                    "supportInfo" -> invoke.resolve(supportInfo())
+                    "copySupportId" -> {
+                        val clip = ClipData.newPlainText("Barbu billing reference", supportId())
+                        if (Build.VERSION.SDK_INT >= 33) {
+                            clip.description.extras = PersistableBundle().apply {
+                                putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true)
+                            }
+                        }
+                        (activity.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(clip)
+                        invoke.resolve(supportInfo())
+                    }
+                    "support" -> contactSupport(invoke)
                     else -> invoke.reject("Unsupported purchase operation")
                 }
             } catch (_: Exception) {
@@ -75,6 +93,24 @@ class PurchasesPlugin(private val activity: Activity) : Plugin(activity) {
                 invoke.reject("Purchase service unavailable. Please try again.")
             }
         }
+    }
+
+    private fun supportId(): String {
+        val id = Purchases.sharedInstance.appUserID
+        val prefix = "\$RCAnonymousID:"
+        check(id.startsWith(prefix) && id.removePrefix(prefix).matches(Regex("[a-f0-9]{32}")))
+        return id
+    }
+
+    private fun supportInfo(): JSObject = JSObject().put("supportId", supportId())
+
+    private fun contactSupport(invoke: Invoke) {
+        val info = supportInfo()
+        val version = activity.packageManager.getPackageInfo(activity.packageName, 0).versionName
+        val body = "Hello,\n\nI need help with Barbu Premium.\n\nBilling reference: ${supportId()}\nBarbu version: $version\n\nMy question or purchase-data deletion request:\n"
+        val uri = Uri.parse("mailto:martin@insilicoveritas.org?subject=${Uri.encode("Barbu Premium support")}&body=${Uri.encode(body)}")
+        activity.startActivity(Intent(Intent.ACTION_SENDTO, uri))
+        invoke.resolve(info)
     }
 
     private fun snapshot(info: CustomerInfo): JSObject {

@@ -23,6 +23,7 @@
     "tauri:android": "tauri android dev"
   },
   "dependencies": {
+    "@lucide/svelte": "1.75.0",
     "@tauri-apps/api": "^2.0.0",
     "javascript-lp-solver": "1.0.3",
     "svelte": "^5.0.0"

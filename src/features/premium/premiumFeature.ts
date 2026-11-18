@@ -2,10 +2,12 @@ import { writable } from "svelte/store";
 import { hasPremiumAccess, hasRecentPremiumVerification, readPremiumSnapshot, type PremiumSnapshot } from "../../domain/premiumAccess";
 
 export type PremiumOffer = { id: string; price: string; period: "month" | "year" };
-export type BillingOperation = "availability" | "customer" | "offers" | "purchase" | "restore" | "manage" | "terms" | "privacy";
+export type BillingOperation = "availability" | "customer" | "offers" | "purchase" | "restore" | "manage" | "terms" | "privacy"
+  | "supportInfo" | "copySupportId" | "support";
 export type BillingAdapter = { request: (operation: BillingOperation, packageId?: string) => Promise<unknown> };
 type State = { available: boolean; purchasesEnabled: boolean; busy: boolean; customer: PremiumSnapshot | null;
-  active: boolean; verificationNeeded: boolean; offers: PremiumOffer[]; message: string; error: string };
+  active: boolean; verificationNeeded: boolean; offers: PremiumOffer[]; message: string; error: string;
+  supportId: string | null; supportMessage: string; supportError: string };
 
 function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Invalid purchase response");
@@ -24,9 +26,15 @@ function readOffers(value: unknown): PremiumOffer[] {
   });
 }
 
+function readSupportId(value: unknown): string {
+  if (typeof value !== "string" || !/^\$RCAnonymousID:[a-f0-9]{32}$/.test(value)) throw new Error("Invalid billing reference");
+  return value;
+}
+
 export function createPremiumFeature(adapter: BillingAdapter, now = Date.now) {
   let state: State = { available: false, purchasesEnabled: false, busy: false, customer: null,
-    active: false, verificationNeeded: false, offers: [], message: "", error: "" };
+    active: false, verificationNeeded: false, offers: [], message: "", error: "",
+    supportId: null, supportMessage: "", supportError: "" };
   const store = writable(state);
   let initialization: Promise<void> | undefined;
   let verificationFailed = false;
@@ -49,7 +57,9 @@ export function createPremiumFeature(adapter: BillingAdapter, now = Date.now) {
     if (state.busy || (operation !== "availability" && !state.available)) return;
     update();
     if (operation === "purchase" && (!state.purchasesEnabled || state.active || state.verificationNeeded || !state.offers.some(offer => offer.id === packageId))) return;
-    update({ busy: true, error: "", ...(operation === "customer" ? {} : { message: "" }) });
+    const supportOperation = operation === "supportInfo" || operation === "copySupportId" || operation === "support";
+    update({ busy: true, ...(supportOperation ? { supportMessage: "", supportError: "" }
+      : { error: "", ...(operation === "customer" ? {} : { message: "" }) }) });
     try {
       const result = object(await adapter.request(operation, packageId));
       if (operation === "availability") {
@@ -57,6 +67,9 @@ export function createPremiumFeature(adapter: BillingAdapter, now = Date.now) {
         update({ available: result.available, purchasesEnabled: result.available && result.purchasesEnabled });
       } else if (operation === "offers") {
         update({ offers: readOffers(result.offers) });
+      } else if (supportOperation) {
+        update({ supportId: readSupportId(result.supportId), supportMessage: operation === "copySupportId"
+          ? "Billing reference copied." : operation === "support" ? "Email app opened. Review your draft before sending." : "" });
       } else if (operation === "customer" || operation === "restore") {
         customer(result.customer);
         if (operation === "restore") update({ message: state.active ? "Premium access restored." : "No active Premium subscription was found." });
@@ -73,6 +86,12 @@ export function createPremiumFeature(adapter: BillingAdapter, now = Date.now) {
         else throw new Error("Purchase status could not be confirmed. Restore purchases before trying again.");
       }
     } catch {
+      if (supportOperation) {
+        update({ supportError: operation === "copySupportId" ? "Could not copy the reference. Select and copy it below."
+          : operation === "support" ? "Could not open an email app. Email martin@insilicoveritas.org and include your billing reference."
+          : "Billing reference is unavailable. Please try again." });
+        return;
+      }
       if (operation === "customer" || operation === "restore" || operation === "purchase") verificationFailed = true;
       if (operation === "offers") update({ offers: [] });
       update({ error: operation === "purchase"
@@ -87,12 +106,13 @@ export function createPremiumFeature(adapter: BillingAdapter, now = Date.now) {
   return {
     subscribe: store.subscribe,
     initialize() {
-      initialization ??= (async () => { await run("availability"); await run("customer"); })();
+      initialization ??= (async () => { await run("availability"); await run("supportInfo"); await run("customer"); })();
       return initialization;
     },
     async refresh() {
       await initialization;
       if (!state.available) await run("availability");
+      if (!state.supportId) await run("supportInfo");
       await run("customer");
     },
     async loadOffers() { await initialization; await run("offers"); },
@@ -100,6 +120,9 @@ export function createPremiumFeature(adapter: BillingAdapter, now = Date.now) {
     restore: () => run("restore"),
     manage: () => run("manage"),
     openLegal: (page: "terms" | "privacy") => run(page),
+    loadSupportInfo: () => run("supportInfo"),
+    copySupportId: () => run("copySupportId"),
+    contactSupport: () => run("support"),
     tick() {
       if (state.active !== hasPremiumAccess(state.customer, now())
         || state.verificationNeeded !== needsVerification()) update();

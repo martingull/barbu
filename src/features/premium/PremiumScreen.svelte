@@ -1,5 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import Copy from "@lucide/svelte/icons/copy";
+  import Mail from "@lucide/svelte/icons/mail";
+  import RefreshCw from "@lucide/svelte/icons/refresh-cw";
   import CharacterPortrait from "../../components/CharacterPortrait.svelte";
   import type { createPremiumFeature } from "./premiumFeature";
 
@@ -68,6 +71,25 @@
         <button class="secondary-action" type="button" disabled={$feature.busy} onclick={() => feature.manage()}>Manage subscription</button>
       {/if}
     </div>
+    <section class="premium-support" aria-labelledby="premium-support-title">
+      <h2 id="premium-support-title">Purchase support</h2>
+      <p>For billing help or a purchase-data deletion request, contact <span class="support-address">martin@insilicoveritas.org</span>. Share your reference privately, not in public bug reports.</p>
+      {#if $feature.supportId}
+        <label for="billing-reference">Billing reference</label>
+        <div class="billing-reference">
+          <input id="billing-reference" type="text" readonly value={$feature.supportId} onfocus={event => event.currentTarget.select()} />
+          <button class="secondary-action icon-button" type="button" title="Copy billing reference" aria-label="Copy billing reference" disabled={$feature.busy} onclick={() => feature.copySupportId()}><Copy size={20} aria-hidden="true" /></button>
+        </div>
+      {:else}
+        <button class="secondary-action support-action" type="button" disabled={$feature.busy} onclick={() => feature.loadSupportInfo()}><RefreshCw size={18} aria-hidden="true" />Load billing reference</button>
+      {/if}
+      <button class="secondary-action support-action" type="button" disabled={$feature.busy || !$feature.supportId} onclick={() => feature.contactSupport()}><Mail size={18} aria-hidden="true" />Contact support</button>
+      <p>Your email draft includes this reference and the installed Barbu version, not saved games or payment-card details. Nothing is sent automatically. Deleting purchase data does not cancel Google Play billing.</p>
+      <div aria-live="polite">
+        {#if $feature.supportMessage}<p role="status">{$feature.supportMessage}</p>{/if}
+        {#if $feature.supportError}<p role="alert">{$feature.supportError}</p>{/if}
+      </div>
+    </section>
     <footer>
       <button type="button" disabled={$feature.busy} onclick={() => feature.openLegal("terms")}>Terms of Service</button>
       <button type="button" disabled={$feature.busy} onclick={() => feature.openLegal("privacy")}>Privacy policy</button>
@@ -93,6 +115,14 @@
   .premium-status button { margin-top: 12px; }
   .purchase-feedback { min-height: 48px; padding: 8px 0; }
   .premium-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .premium-support { padding-top: 20px; margin-top: 20px; border-top: 1px solid #7b9380; }
+  .premium-support p, .premium-support label { color: #d0ddd2; font-size: 0.8rem; }
+  .support-address { color: #f5f1cf; overflow-wrap: anywhere; }
+  .billing-reference { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: 8px; margin: 8px 0 12px; }
+  .billing-reference input { box-sizing: border-box; width: 100%; min-width: 0; padding: 10px; border: 1px solid #829880; border-radius: 4px; background: #102319; color: #f7faf3; font: 0.8rem monospace; }
+  .icon-button { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; }
+  .support-action { display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin: 0 0 8px; }
+  .support-action :global(svg) { flex-shrink: 0; }
   footer { display: flex; flex-wrap: wrap; gap: 12px; padding: 16px 0; }
   footer button { background: none; border: 0; color: #f5f1cf; text-decoration: underline; cursor: pointer; padding: 8px 0; }
   button:focus-visible { outline: 2px solid #f5f1cf; outline-offset: 3px; }

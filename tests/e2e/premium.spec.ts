@@ -1,7 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 
-async function mockBilling(page: Page, outcome = "purchased", options: { failCustomer?: boolean; active?: boolean; willRenew?: boolean } = {}) {
-  await page.addInitScript(({ outcome, options }) => {
+const supportId = "$RCAnonymousID:0123456789abcdef0123456789abcdef";
+
+async function mockBilling(page: Page, outcome = "purchased", options: { failCustomer?: boolean; active?: boolean; willRenew?: boolean; failSupportInfo?: boolean } = {}) {
+  await page.addInitScript(({ outcome, options, supportId }) => {
     const w = window as any;
     w.isTauri = true;
     w.billingCalls = [];
@@ -9,12 +11,20 @@ async function mockBilling(page: Page, outcome = "purchased", options: { failCus
     w.billingCustomerFails = options.failCustomer ?? false;
     w.billingWillRenew = options.willRenew ?? true;
     w.billingExpiresAt = Date.now() + 86400000;
+    w.billingSupportId = supportId;
+    w.billingSupportFailures = { supportInfo: options.failSupportInfo ?? false };
     w.__TAURI_INTERNALS__ = { invoke: async (command: string, args: any) => {
       if (command !== "plugin:barbu-purchases|request") return;
       w.billingCalls.push(args.operation);
       const customer = () => ({ verification: "verified", entitlement: "premium", active: w.billingActive,
         checkedAt: Date.now(), expiresAt: w.billingActive ? w.billingExpiresAt : null, willRenew: w.billingActive && w.billingWillRenew });
       if (args.operation === "availability") return { available: true, purchasesEnabled: true };
+      if (w.billingSupportFailures[args.operation]) throw new Error("private provider diagnostics");
+      if (["supportInfo", "copySupportId", "support"].includes(args.operation)) {
+        if (args.operation === "copySupportId") w.copiedBillingReference = w.billingSupportId;
+        if (args.operation === "support") w.supportDraftOpened = true;
+        return { supportId: w.billingSupportId };
+      }
       if (args.operation === "customer" && w.billingCustomerFails) throw new Error("offline");
       if (args.operation === "offers") return { offers: [
         { id: "monthly", price: "EUR 2.49", period: "month" }, { id: "annual", price: "EUR 19.99", period: "year" }
@@ -26,7 +36,7 @@ async function mockBilling(page: Page, outcome = "purchased", options: { failCus
       if (args.operation === "restore") w.billingActive = true;
       return { customer: customer() };
     } };
-  }, { outcome, options });
+  }, { outcome, options, supportId });
 }
 
 for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { width: 820, height: 1180 }]) {
@@ -165,4 +175,72 @@ test("cancelled subscribers see their access date and a failed refresh does not 
   await page.getByRole("button", { name: "Table", exact: true }).click();
   await page.getByRole("button", { name: "Open Hearts", exact: true }).click();
   await expect(page.getByRole("tab", { name: "Learn", exact: true })).toBeVisible();
+});
+
+test("purchase support works with unverified access and fits small screens", async ({ page }, testInfo) => {
+  await mockBilling(page, "purchased", { failCustomer: true });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Canasta", exact: true }).click();
+  const support = page.getByRole("region", { name: "Purchase support", exact: true });
+  const reference = support.getByRole("textbox", { name: "Billing reference", exact: true });
+  await expect(reference).toHaveValue(supportId);
+  await expect(reference).toHaveAttribute("readonly", "");
+  for (const width of [320, 360, 820]) {
+    await page.setViewportSize({ width, height: 740 });
+    await support.scrollIntoViewIfNeeded();
+    const bounds = (await support.boundingBox())!;
+    const copy = (await support.getByRole("button", { name: "Copy billing reference", exact: true }).boundingBox())!;
+    expect(copy.x + copy.width).toBeLessThanOrEqual(bounds.x + bounds.width + 1);
+    expect(copy.width).toBe(44);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: testInfo.outputPath(`premium-support-${width}.png`), fullPage: true });
+  }
+  await support.getByRole("button", { name: "Copy billing reference", exact: true }).click();
+  await expect(support.getByRole("status")).toHaveText("Billing reference copied.");
+  expect(await page.evaluate(() => (window as any).copiedBillingReference)).toBe(supportId);
+  await expect(page.getByRole("heading", { name: "Reconnect to check Premium" })).toBeVisible();
+  await support.getByRole("button", { name: "Contact support", exact: true }).click();
+  await expect(support.getByRole("status")).toContainText("Email app opened");
+  expect(await page.evaluate(() => (window as any).supportDraftOpened)).toBe(true);
+  expect(await page.evaluate(() => JSON.stringify(localStorage))).not.toContain(supportId);
+  expect(await page.evaluate(() => (window as any).billingCalls.includes("purchase"))).toBe(false);
+});
+
+test("support clipboard and email failures retain the reference and verified access", async ({ page }) => {
+  await mockBilling(page, "purchased", { active: true });
+  await page.goto("/");
+  await page.locator(".catalog-footer").getByRole("button", { name: "Manage Premium", exact: true }).click();
+  const support = page.getByRole("region", { name: "Purchase support", exact: true });
+  await page.evaluate(() => { (window as any).billingSupportFailures = { copySupportId: true, support: true }; });
+  await support.getByRole("button", { name: "Copy billing reference", exact: true }).click();
+  await expect(support.getByRole("alert")).toContainText("Select and copy");
+  const reference = support.getByRole("textbox", { name: "Billing reference", exact: true });
+  await reference.focus();
+  expect(await reference.evaluate(element => (element as HTMLInputElement).selectionStart)).toBe(0);
+  expect(await reference.evaluate(element => (element as HTMLInputElement).selectionEnd)).toBe(supportId.length);
+  await support.getByRole("button", { name: "Contact support", exact: true }).click();
+  await expect(support.getByRole("alert")).toContainText("Email martin@insilicoveritas.org");
+  await expect(support).not.toContainText("private provider diagnostics");
+  await expect(page.getByRole("heading", { name: "Premium is active" })).toBeVisible();
+  await page.evaluate(() => { (window as any).billingSupportFailures = {}; });
+  await support.getByRole("button", { name: "Copy billing reference", exact: true }).click();
+  await expect(support.getByRole("alert")).toHaveCount(0);
+  await expect(support.getByRole("status")).toHaveText("Billing reference copied.");
+});
+
+test("missing or malformed references can be retried without exposing raw identifiers", async ({ page }) => {
+  await mockBilling(page, "purchased", { failSupportInfo: true });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Canasta", exact: true }).click();
+  const support = page.getByRole("region", { name: "Purchase support", exact: true });
+  await expect(support.getByRole("button", { name: "Contact support", exact: true })).toBeDisabled();
+  await page.evaluate(() => { (window as any).billingSupportFailures = {}; (window as any).billingSupportId = "private@example.org"; });
+  await support.getByRole("button", { name: "Load billing reference", exact: true }).click();
+  await expect(support.getByRole("alert")).toContainText("Billing reference is unavailable");
+  await expect(support).not.toContainText("private@example.org");
+  await page.evaluate(id => { (window as any).billingSupportId = id; }, supportId);
+  await support.getByRole("button", { name: "Load billing reference", exact: true }).click();
+  await expect(support.getByRole("textbox", { name: "Billing reference", exact: true })).toHaveValue(supportId);
+  await expect(support.getByRole("button", { name: "Contact support", exact: true })).toBeEnabled();
+  await expect(page.getByRole("heading", { name: "Premium is active" })).toHaveCount(0);
 });

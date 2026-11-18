@@ -25,6 +25,9 @@ pub enum Operation {
     Manage,
     Terms,
     Privacy,
+    SupportInfo,
+    CopySupportId,
+    Support,
 }
 
 #[tauri::command]
