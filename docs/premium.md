@@ -220,14 +220,43 @@ applicable program before enrolling; bank verification remains a separate task.
 
 ### Purchase Support
 
-Configured Android builds expose **Premium > Purchase support**, even if access
-verification fails. The native plugin reads the SDK's anonymous app-user ID and
-provides a copy action plus an email intent addressed to
+Configured Android builds expose **Premium > Contact support**, even if access
+verification fails. Reference copying and recovery tools live under **Purchase
+help**, closed by default. Contact does not require a separate reference-loading
+step: the native plugin reads the SDK's anonymous app-user ID and supplies an
+email intent addressed to
 `martin@insilicoveritas.org`. The draft includes only the reference and installed
 Barbu version; it is not sent automatically. The Android clipboard entry is marked
 sensitive on Android 13 and later. If copying or email is unavailable, the
-selectable reference and address remain visible. Support-operation errors do not
+selectable reference and address remain available in Purchase help. Support-operation errors do not
 replace pending-payment messages or change subscription access.
+
+The November 19 screen simplification separates ordinary use from troubleshooting.
+New subscribers choose monthly or yearly with radio controls, then use one
+Subscribe button showing the selected store price and period. Monthly is the
+default, and selecting a plan never initiates checkout. Active subscribers see
+their status, paid-through date and one **Manage or cancel subscription** action;
+that opens Google Play, not an immediate cancellation. Contact stays visible.
+Restore and routine access checks remain in Purchase help; failed verification
+promotes Check access instead of offering another purchase. Refresh prices appears
+only when prices are unavailable. No entitlement, checkout, pricing or native
+billing implementation changed.
+
+Store-provided prices, billing periods, automatic renewal, Google Play
+cancellation and the internet requirement remain visible before purchase.
+Detailed offline/support information and the private reference are secondary,
+not removed. This follows Google's
+[subscription-disclosure guidance](https://support.google.com/googleplay/android-developer/answer/9900533/).
+Build and 290 domain tests passed, along with 132 Premium/legal/privacy browser
+checks across six phone profiles. Before/after screenshots at 320, 360 and 820
+pixels were inspected; the normal active screen keeps management/contact visible
+even at 320 x 568. Browser billing was simulated, not a live purchase test.
+
+This UI change follows the prepared `1.0.8` / `1000012` bundle. Martin reports
+that build is in closed beta; it does not contain this later simplification.
+Keep its signed artifact and verification unchanged and use a fresh unused code
+for the next Android package. No release, subscription or store setting was
+changed by this UI pass.
 
 The reference is a private lookup aid, not a password, receipt or proof of payment.
 It is read from RevenueCat's native SDK, not persisted in browser storage or used to grant
@@ -241,7 +270,7 @@ or receipts in public GitHub issues. See RevenueCat's
 1. Ask for the privately emailed billing reference, Barbu version and a short
    description. Never request bank details, full payment-card details or raw
    purchase tokens. If access is missing, first try reconnecting, **Check access**
-   and **Restore purchases** with the Google Play account that bought Premium;
+   and **Purchase help > Restore purchases** with the Google Play account that bought Premium;
    do not suggest buying twice or uninstalling to fix verification.
 2. Look up the reference in the Barbu RevenueCat project. Check aliases, store,
    product, entitlement dates and whether the transaction is sandbox or production.
@@ -250,7 +279,7 @@ or receipts in public GitHub issues. See RevenueCat's
    supplied privately by the purchaser. Do not grant access from an email claim
    or edit client storage to bypass verification.
 3. Treat cancellation, refund and data deletion as separate requests. Direct a
-   cancellation to **Manage subscription** or Google Play's subscription settings.
+   cancellation to **Manage or cancel subscription** or Google Play's subscription settings.
    Do not refund, revoke, cancel or delete a customer without an explicit request
    and appropriate verification.
 4. For a verified purchase-data deletion request, explain that it can affect

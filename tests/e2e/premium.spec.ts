@@ -2,11 +2,13 @@ import { expect, test, type Page } from "@playwright/test";
 
 const supportId = "$RCAnonymousID:0123456789abcdef0123456789abcdef";
 
-async function mockBilling(page: Page, outcome = "purchased", options: { failCustomer?: boolean; active?: boolean; willRenew?: boolean; failSupportInfo?: boolean } = {}) {
+async function mockBilling(page: Page, outcome = "purchased", options: { failCustomer?: boolean; active?: boolean; willRenew?: boolean; failSupportInfo?: boolean; failOffers?: boolean } = {}) {
   await page.addInitScript(({ outcome, options, supportId }) => {
     const w = window as any;
     w.isTauri = true;
     w.billingCalls = [];
+    w.billingPurchasedIds = [];
+    w.billingOffersFail = options.failOffers ?? false;
     w.billingActive = options.active ?? false;
     w.billingCustomerFails = options.failCustomer ?? false;
     w.billingWillRenew = options.willRenew ?? true;
@@ -31,10 +33,12 @@ async function mockBilling(page: Page, outcome = "purchased", options: { failCus
       if (args.operation === "customer" && w.billingCustomerDeferred) {
         return new Promise(resolve => w.billingCustomerWaiters.push(() => resolve({ customer: customer() })));
       }
+      if (args.operation === "offers" && w.billingOffersFail) throw new Error("private store failure");
       if (args.operation === "offers") return { offers: [
         { id: "monthly", price: "EUR 2.49", period: "month" }, { id: "annual", price: "EUR 19.99", period: "year" }
       ] };
       if (args.operation === "purchase") {
+        w.billingPurchasedIds.push(args.packageId);
         if (outcome === "purchased") w.billingActive = true;
         return { outcome, ...(outcome === "purchased" ? { customer: customer() } : {}) };
       }
@@ -43,6 +47,92 @@ async function mockBilling(page: Page, outcome = "purchased", options: { failCus
     } };
   }, { outcome, options, supportId });
 }
+
+async function openPurchaseHelp(page: Page) {
+  const help = page.locator("details.premium-help");
+  if (!await help.evaluate(element => (element as HTMLDetailsElement).open)) await help.locator("summary").click();
+}
+
+test("Premium offers one checkout with explicit monthly and yearly choices, leaving diagnostics closed", async ({ page }, info) => {
+  await mockBilling(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Canasta", exact: true }).click();
+  const monthly = page.getByRole("radio", { name: "Monthly EUR 2.49 / month", exact: true });
+  const yearly = page.getByRole("radio", { name: "Yearly EUR 19.99 / year", exact: true });
+  await expect(monthly).toBeChecked();
+  await expect(page.getByRole("button", { name: /^Subscribe for/ })).toHaveCount(1);
+  await expect(page.getByRole("textbox", { name: "Billing reference", exact: true })).not.toBeVisible();
+  await expect(page.getByRole("button", { name: "Check access", exact: true })).not.toBeVisible();
+  await expect(page.getByRole("button", { name: "Restore purchases", exact: true })).not.toBeVisible();
+  await expect(page.getByRole("button", { name: "Refresh prices", exact: true })).toHaveCount(0);
+  for (const width of [320, 360, 820]) {
+    await page.setViewportSize({ width, height: 740 });
+    await expect(page.getByRole("button", { name: "Subscribe for EUR 2.49 / month", exact: true })).toBeInViewport({ ratio: 1 });
+    await expect(page.getByText(/Renews automatically every month until cancelled/)).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: info.outputPath(`simplified-paywall-${width}.png`), fullPage: true });
+    await yearly.check();
+    await expect(page.getByRole("button", { name: "Subscribe for EUR 19.99 / year", exact: true })).toBeVisible();
+    await expect(page.getByText(/Renews automatically every year until cancelled/)).toBeVisible();
+    await monthly.check();
+  }
+  expect(await page.evaluate(() => (window as any).billingPurchasedIds)).toEqual([]);
+  await yearly.check();
+  await page.getByRole("button", { name: "Subscribe for EUR 19.99 / year", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Premium is active", exact: true })).toBeVisible();
+  expect(await page.evaluate(() => (window as any).billingPurchasedIds)).toEqual(["annual"]);
+});
+
+test("active Premium keeps management and contact visible without recovery tools or selling plans", async ({ page }, info) => {
+  await mockBilling(page, "purchased", { active: true });
+  await page.goto("/");
+  await page.locator(".catalog-footer").getByRole("button", { name: "Manage Premium", exact: true }).click();
+  for (const size of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { width: 820, height: 1180 }]) {
+    await page.setViewportSize(size);
+    await expect(page.getByRole("button", { name: "Manage or cancel subscription", exact: true })).toBeInViewport({ ratio: 1 });
+    await expect(page.getByRole("button", { name: "Contact support", exact: true })).toBeInViewport({ ratio: 1 });
+    await expect(page.getByRole("button", { name: /^Subscribe for/ })).toHaveCount(0);
+    await expect(page.getByRole("radio")).toHaveCount(0);
+    await expect(page.getByRole("textbox", { name: "Billing reference", exact: true })).not.toBeVisible();
+    await expect(page.getByRole("button", { name: "Check access", exact: true })).not.toBeVisible();
+    await expect(page.getByRole("button", { name: "Restore purchases", exact: true })).not.toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: info.outputPath(`simplified-active-${size.width}.png`), fullPage: true });
+  }
+  await page.getByRole("button", { name: "Manage or cancel subscription", exact: true }).click();
+  expect(await page.evaluate(() => (window as any).billingCalls.filter((op: string) => op === "manage"))).toHaveLength(1);
+  expect(await page.evaluate(() => (window as any).billingPurchasedIds)).toEqual([]);
+});
+
+test("contact support opens directly without asking the player to load a reference", async ({ page }) => {
+  await mockBilling(page, "purchased", { failSupportInfo: true });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Canasta", exact: true }).click();
+  await expect(page.getByRole("alert")).not.toBeVisible();
+  await page.getByRole("button", { name: "Contact support", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("Email app opened");
+  expect(await page.evaluate(() => (window as any).supportDraftOpened)).toBe(true);
+  await expect(page.getByRole("textbox", { name: "Billing reference", exact: true })).not.toBeVisible();
+  expect(await page.evaluate(() => (window as any).billingPurchasedIds)).toEqual([]);
+});
+
+test("unavailable prices offer a contextual retry and restore remains keyboard accessible", async ({ page }) => {
+  await mockBilling(page, "purchased", { failOffers: true });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Canasta", exact: true }).click();
+  await expect(page.getByRole("button", { name: /^Subscribe for/ })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Refresh prices", exact: true })).toBeEnabled();
+  await page.evaluate(() => { (window as any).billingOffersFail = false; });
+  await page.getByRole("button", { name: "Refresh prices", exact: true }).click();
+  await expect(page.getByRole("button", { name: /^Subscribe for/ })).toHaveCount(1);
+  const summary = page.locator("details.premium-help > summary");
+  await summary.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("button", { name: "Restore purchases", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Restore purchases", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Premium is active", exact: true })).toBeVisible();
+  expect(await page.evaluate(() => (window as any).billingPurchasedIds)).toEqual([]);
+});
 
 test("renewal verification hides checkout, resumes the saved hand and loads offers only after confirmed expiry", async ({ page }, info) => {
   test.setTimeout(60_000);
@@ -119,6 +209,7 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 740 }
     await expect(page.getByRole("heading", { name: "Barbu Premium", exact: true })).toBeVisible();
     await expect(page.locator("main")).not.toHaveClass(/fixed-play-screen/);
     expect(await page.evaluate(() => localStorage.getItem("barbu.savedCanastaRun.v1"))).toBe(saved);
+    await openPurchaseHelp(page);
     await page.getByRole("button", { name: "Restore purchases", exact: true }).click();
     await expect(drawStock).toBeVisible();
     expect(await page.evaluate(() => localStorage.getItem("barbu.savedCanastaRun.v1"))).toBe(saved);
@@ -191,8 +282,8 @@ test("unverified access hides checkout and recovers without asking an existing s
   await expect(page.getByRole("heading", { name: "Reconnect to check Premium" })).toBeVisible();
   await expect(page.getByRole("button", { name: /^Subscribe for/ })).toHaveCount(0);
   await expect(page.getByText("This does not mean your subscription has ended.", { exact: false })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Manage subscription", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Refresh prices", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Manage or cancel subscription", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Refresh prices", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: /^Subscribe for/ })).toHaveCount(0);
   await page.getByRole("button", { name: "Check access", exact: true }).click();
   await expect(page.getByRole("alert")).toContainText("Reconnect and check access");
@@ -211,6 +302,7 @@ test("cancelled subscribers see their access date and a failed refresh does not 
     .format((window as any).billingExpiresAt));
   await expect(page.getByText(`Access until: ${date}.`, { exact: true })).toBeVisible();
   await page.evaluate(() => { (window as any).billingCustomerFails = true; });
+  await openPurchaseHelp(page);
   await page.getByRole("button", { name: "Check access", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Premium is active" })).toBeVisible();
   await expect(page.getByText("Access is based on your last verified purchase.", { exact: false })).toBeVisible();
@@ -235,6 +327,7 @@ test("purchase support works with unverified access and fits small screens", asy
   await page.goto("/");
   await page.getByRole("button", { name: "Open Canasta", exact: true }).click();
   const support = page.getByRole("region", { name: "Purchase support", exact: true });
+  await openPurchaseHelp(page);
   const reference = support.getByRole("textbox", { name: "Billing reference", exact: true });
   await expect(reference).toHaveValue(supportId);
   await expect(reference).toHaveAttribute("readonly", "");
@@ -264,6 +357,7 @@ test("support clipboard and email failures retain the reference and verified acc
   await page.goto("/");
   await page.locator(".catalog-footer").getByRole("button", { name: "Manage Premium", exact: true }).click();
   const support = page.getByRole("region", { name: "Purchase support", exact: true });
+  await openPurchaseHelp(page);
   await page.evaluate(() => { (window as any).billingSupportFailures = { copySupportId: true, support: true }; });
   await support.getByRole("button", { name: "Copy billing reference", exact: true }).click();
   await expect(support.getByRole("alert")).toContainText("Select and copy");
@@ -286,7 +380,8 @@ test("missing or malformed references can be retried without exposing raw identi
   await page.goto("/");
   await page.getByRole("button", { name: "Open Canasta", exact: true }).click();
   const support = page.getByRole("region", { name: "Purchase support", exact: true });
-  await expect(support.getByRole("button", { name: "Contact support", exact: true })).toBeDisabled();
+  await expect(support.getByRole("button", { name: "Contact support", exact: true })).toBeEnabled();
+  await openPurchaseHelp(page);
   await page.evaluate(() => { (window as any).billingSupportFailures = {}; (window as any).billingSupportId = "private@example.org"; });
   await support.getByRole("button", { name: "Load billing reference", exact: true }).click();
   await expect(support.getByRole("alert")).toContainText("Billing reference is unavailable");
