@@ -2472,7 +2472,7 @@ test("Whist memory hand separates trick review from memory questions", async ({ 
   await page.locator(".full-hand-cards .full-hand-card.legal").first().click();
   await page.getByRole("button", { name: "Play card" }).click();
   await expect(page.getByLabel("Whist hand decision")).toContainText(/Check whether|won the trick|held the trick|won with trump/);
-  await expect(page.getByLabel("Whist hand decision")).not.toContainText(/Has the .* been played|How many .* have been played|Who is officially out/);
+  await expect(page.getByLabel("Whist hand decision")).not.toContainText(/Has the .* been played|How many .* have been played|Choose a player whose off-suit/);
   await expect(page.getByRole("button", { name: "Next trick", exact: true })).toBeVisible();
   await expectNoPageScroll(page);
   await expectGameplayActionRowPinned(page);
@@ -2483,7 +2483,7 @@ test("Whist memory hand separates trick review from memory questions", async ({ 
     await page.getByRole("button", { name: "Play card" }).click();
   }
 
-  await expect(page.getByLabel("Whist hand decision")).toContainText(/How many|Did this|Is this|Who is officially out/);
+  await expect(page.getByLabel("Whist hand decision")).toContainText(/How many|Did this|Is this|Choose a player whose off-suit/);
   const answerGroups = [
     page.getByLabel("Whist count answer options").getByRole("button"),
     page.getByLabel("Void spotter options").getByRole("button"),
@@ -2516,7 +2516,7 @@ test("Whist memory card review stays inside the fixed phone screen", async ({ pa
       continue;
     }
 
-    await expect(page.getByLabel("Whist hand decision")).toContainText(/How many|Did this|Is this|Who is officially out/);
+    await expect(page.getByLabel("Whist hand decision")).toContainText(/How many|Did this|Is this|Choose a player whose off-suit/);
     const whistCardAnswers = page.getByLabel("Whist card answer options").getByRole("button");
 
     if ((await whistCardAnswers.count()) > 0) {

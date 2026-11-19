@@ -206,10 +206,10 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 820, height: 1180 
     await openLearn(page, "Hearts");
     await page.locator('[data-skill="hearts-avoid"] .exercise-shortcut').click();
     await finish(page);
-    await expect(page.getByRole("button", { name: "Go to Play", exact: true })).toBeInViewport();
     const lessonActions = page.getByRole("group", { name: "Lesson actions", exact: true });
     const navigation = page.getByRole("group", { name: "Game navigation", exact: true });
     await expect(lessonActions.getByRole("button")).toHaveText(["Try again", "Next lesson"]);
+    for (const button of await lessonActions.getByRole("button").all()) await expect(button).toBeInViewport();
     await expect(navigation.getByRole("button")).toHaveText(["Back to Learn", "Go to Play"]);
     for (const row of [lessonActions, navigation]) {
       const boxes = await row.getByRole("button").evaluateAll(buttons => buttons.map(button => {
@@ -222,6 +222,9 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 820, height: 1180 
     }
     expect((await navigation.boundingBox())!.y).toBeGreaterThan((await lessonActions.boundingBox())!.y);
     await page.screenshot({ path: info.outputPath("learning-result.png") });
+    // Secondary game navigation follows guidance/review; it need not be above the fold.
+    await page.getByRole("button", { name: "Go to Play", exact: true }).scrollIntoViewIfNeeded();
+    await expect(page.getByRole("button", { name: "Go to Play", exact: true })).toBeInViewport();
     await page.getByText("Review decisions", { exact: true }).click();
     await page.getByRole("button", { name: "Back to Learn", exact: true }).scrollIntoViewIfNeeded();
     await expect(page.getByRole("button", { name: "Back to Learn", exact: true })).toBeInViewport();

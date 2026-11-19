@@ -91,8 +91,8 @@ Content ownership and detailed learning contracts are in
   rules as full games. Opponents are heuristics, not expert players.
 - **Barbu:** fixed-order training through all seven contracts, not canonical
   dealer-selected contracts, doubling or full historical settlement. Domino
-  starts at sevens; its opponent policy still consults the next player's hidden
-  hand. Do not claim public-information-only Domino opponents.
+  starts at sevens; opponents use their own cards and public lanes, not concealed
+  hands. They are deterministic heuristics, not expert opponents.
 
 ### Barbu Contract Values
 
@@ -132,10 +132,10 @@ Full-hand and generated-practice scoring must stay aligned.
    [App Store](docs/app-store-release.md) runbooks, not inferred from local builds.
 2. Learning quality: observe where players stall; improve explanations, independent
    transfer decisions and reinforcement without adding competing entry points.
-3. Card Counting: broaden boss-card answers and void-spotting evaluation, then
+3. Card Counting: build on balanced recognition/boss-card questions and multi-seat void evaluation, then
    connect useful memory skills to real game decisions.
 4. Opponent quality: strengthen game-specific policies with reproducible cases,
-   including Domino's hidden-information limitation and Barbu endgame choices.
+   including stronger public-information Domino planning and Barbu endgame choices.
 5. Catalog growth: resume additional games only after existing journeys are
    dependable; use the architecture checklist and document each rules profile.
 

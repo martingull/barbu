@@ -68,7 +68,8 @@ export function memoryAnswerText(
     return `${question.answer} ${suitNames[question.trumpSuit].toLowerCase()} trumps have been played so far.`;
   }
   if (question.kind === "void_spotter") {
-    return `${scoreSeatLabel(question.answer)} is void in ${suitNames[question.targetSuit].toLowerCase()}.`;
+    const names = question.answers.map(scoreSeatLabel).join(" and ");
+    return `${names} ${question.answers.length === 1 ? "is" : "are"} void in ${suitNames[question.targetSuit]}. Any of these players is a correct answer.`;
   }
   if (question.kind === "boss_card") {
     return question.answer

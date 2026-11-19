@@ -1,7 +1,7 @@
 import type { Card, DominoHandState } from "./types";
 import { trickTakingSeats as seats } from "./trickTakingScore";
 import { dealDomino, dominoRanks, dominoSuits, compareDominoCards } from "./dominoDeal";
-import { chooseDominoCard, legalDominoCards } from "./dominoPolicy";
+import { chooseDominoCard, dominoObservation, legalDominoCards } from "./dominoPolicy";
 
 export type DominoAction = { type: "play-card"; cardId: string } | { type: "pass" } | { type: "replay" };
 
@@ -40,7 +40,7 @@ function clone(state: DominoHandState): DominoHandState {
 }
 
 function advanceToPlayer(state: DominoHandState): DominoHandState {
-  while (state.status === "in_progress" && state.currentPlayerIndex !== 2) advanceTurn(state, chooseDominoCard(state));
+  while (state.status === "in_progress" && state.currentPlayerIndex !== 2) advanceTurn(state, chooseDominoCard(dominoObservation(state)));
   return hydrateDominoHand(state);
 }
 

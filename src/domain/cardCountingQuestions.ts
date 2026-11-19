@@ -8,10 +8,13 @@ export type CardMemoryQuestion =
 export type WhistMemoryQuestion =
   | { kind: "trump_count"; prompt: string; answer: number; options: number[]; trumpSuit: Suit }
   | { kind: "trump_specific" | "boss_card"; prompt: string; answer: boolean; targetCard: Card }
-  | { kind: "void_spotter"; prompt: string; answer: Seat; targetSuit: Suit };
+  | { kind: "void_spotter"; prompt: string; answer: Seat; answers: Seat[]; targetSuit: Suit };
 export type MemoryQuestion = CardMemoryQuestion | WhistMemoryQuestion;
 export type CountMemoryQuestion = CardMemoryQuestion & { startTrick: number; endTrick: number };
 export type TrumpCountRound = { trumpSuit: Suit; tricks: TableCard[][]; questions: CountMemoryQuestion[] };
+export function memoryAnswerCorrect(question: MemoryQuestion, answer: MemoryAnswer | null): boolean {
+  return question.kind === "void_spotter" ? question.answers.some(seat => seat === answer) : answer === question.answer;
+}
 const countingTrickSeats: Seat[] = ["Tutor", "Right", "You", "Left"];
 const countingRanks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
 const countingSuits: Suit[] = ["C", "D", "H", "S"];
@@ -52,14 +55,15 @@ export function buildTrumpCountRound(seed: number): TrumpCountRound {
     if (shouldAskSpecific) {
       const seenTargets = segmentTrumpCards;
       const unseenTargets = trumpCards.filter((card) => !segmentCards.some((segmentCard) => segmentCard.id === card.id));
-      const answer = (seed + questionIndex) % 4 !== 0 && seenTargets.length > 0;
-      const targetPool = answer ? seenTargets : unseenTargets.length > 0 ? unseenTargets : seenTargets;
+      const preferSeen = Math.floor((seed + questionIndex) / 2) % 2 === 0;
+      const preferred = preferSeen ? seenTargets : unseenTargets;
+      const targetPool = preferred.length ? preferred : preferSeen ? unseenTargets : seenTargets;
       const targetCard = targetPool[(seed + questionIndex * 3) % Math.max(1, targetPool.length)] ?? trumpCards[0];
 
       return {
         kind: "specific",
         prompt: `The cards from tricks ${startTrick + 1}-${endTrick + 1} are hidden. Did this heart appear in that segment?`,
-        answer,
+        answer: segmentCards.some(card => card.id === targetCard.id),
         targetCard,
         startTrick,
         endTrick
@@ -98,9 +102,11 @@ export function buildWhistMemoryQuestion(tricks: TableCard[][], trumpSuit: Suit,
   });
 
   const voidSpotterValid = voids.filter(v => v.seat !== "You").length > 0;
-  const lastTrick = tricks.length > 0 ? tricks[tricks.length - 1] : null;
+  const lastTrick = tricks.at(-1);
   const ledSuit = lastTrick ? lastTrick[0].card.suit : null;
-  const bossCardValid = ledSuit !== null && ledSuit !== trumpSuit;
+  const allSuitCards = ledSuit ? countingRanks.map(rank => ({ id: `${rank}${ledSuit}`, rank, suit: ledSuit, label: `${rank}${ledSuit}` })) : [];
+  const unplayed = allSuitCards.filter(card => !seenCards.some(seen => seen.id === card.id));
+  const bossCardValid = ledSuit !== null && ledSuit !== trumpSuit && unplayed.length > 0;
 
   const availableKinds = ["trump_count", "trump_specific"];
   if (bossCardValid) availableKinds.push("boss_card");
@@ -110,23 +116,25 @@ export function buildWhistMemoryQuestion(tricks: TableCard[][], trumpSuit: Suit,
 
   if (kind === "void_spotter") {
     const targetVoid = voids.filter(v => v.seat !== "You")[seed % voids.filter(v => v.seat !== "You").length];
+    const answers = [...new Set(voids.filter(v => v.seat !== "You" && v.suit === targetVoid.suit).map(v => v.seat))];
     return {
       kind: "void_spotter",
-      prompt: `Who is officially out of ${suitNames[targetVoid.suit]}?`,
+      prompt: `Choose a player whose off-suit play showed they are out of ${suitNames[targetVoid.suit]}.`,
       answer: targetVoid.seat,
+      answers,
       targetSuit: targetVoid.suit
     };
   } else if (kind === "boss_card") {
-    // Find the highest unplayed card of ledSuit
-    const allSuitCards = countingRanks.map((rank) => ({ id: `${rank}${ledSuit}`, rank, suit: ledSuit as Suit, label: `${rank}${ledSuit}` }));
-    const unplayed = allSuitCards.filter(c => !seenCards.some(sc => sc.id === c.id));
-    const boss = unplayed.length > 0 ? unplayed.reduce((max, c) => countingRanks.indexOf(c.rank) > countingRanks.indexOf(max.rank) ? c : max) : allSuitCards[allSuitCards.length - 1];
+    const boss = unplayed.at(-1)!;
+    const positive = Math.floor(seed / availableKinds.length) % 2 === 0;
+    const alternatives = allSuitCards.filter(card => card.id !== boss.id);
+    const targetCard = positive ? boss : alternatives[seed % alternatives.length];
 
     return {
       kind: "boss_card",
       prompt: `Is this now the boss card in ${suitNames[boss.suit]}?`,
-      answer: true, // Retain the existing positive-only boss-card exercise.
-      targetCard: boss
+      answer: targetCard.id === boss.id,
+      targetCard
     };
   } else if (kind === "trump_count") {
     return {

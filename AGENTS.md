@@ -87,11 +87,12 @@ Barbu's six trick-taking contracts use the same hand factory, `barbuPolicy.ts`
 and `barbuRules.ts`. Their native engines, ruleset dispatch and hand commands
 are removed. `barbuHandSave.ts` validates legacy hands; replay recovers the actual
 deal. Domino uses `dominoHand.ts` with the same start/transition boundary but a
-separate layout state, native-compatible deal/policy and `dominoSave.ts` validation.
+separate layout state, native-compatible deal, public-information policy and `dominoSave.ts` validation.
 Its Rust engine, command DTOs and browser fallback are removed. Replay metadata
 recovers old browser/native deals without retaining two gameplay implementations.
-The existing Domino policy still reads the next hand's hidden cards; migration
-preserves that limitation rather than claiming a public-information opponent.
+Domino policy receives only its own cards, public lanes and the starting rank.
+Keep hidden hands, original deals and save metadata out of that observation.
+Legacy saves retain their positions; future moves and replay use the current policy.
 The seven-contract training session uses `barbuSession.ts` and `barbuSave.ts`:
 contract progression, review, completion, replay and save validation live outside
 Svelte. Reuse the reviewed-hand and storage factories; retain the version-1 save

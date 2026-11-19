@@ -190,11 +190,11 @@ test("legacy completion keeps old topics while exposing new foundations", async 
     "bridge-bidding": true, "bridge-dummy": true, "bridge-declarer": true, "bridge-defense": true
   })));
   await openLearn(page, "Gin Rummy");
-  await expect(page.getByLabel("Gin Rummy course progress")).toContainText("3 / 5 complete");
+  await expect(page.getByLabel("Gin Rummy course progress")).toContainText("3 / 6 complete");
   await page.getByRole("button", { name: "Continue lesson", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Count deadwood", exact: true })).toBeVisible();
   await openLearn(page, "Bridge");
-  await expect(page.getByLabel("Bridge course progress")).toContainText("4 / 6 complete");
+  await expect(page.getByLabel("Bridge course progress")).toContainText("4 / 7 complete");
   await page.getByRole("button", { name: "Continue lesson", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Read the contract", exact: true })).toBeVisible();
 });

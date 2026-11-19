@@ -119,7 +119,7 @@ use the hand factory too, with a separate `barbuPolicy.ts` and a `barbuHandSave.
 compatibility boundary. Their Rust engine and generic native hand commands are
 removed. Domino now uses `dominoHand.ts`, `dominoPolicy.ts` and `dominoSave.ts`,
 sharing the start/transition pattern but retaining its own layout state and
-placement rules. Native fixtures verify deal and policy compatibility; the
+placement rules. Native fixtures protect legacy positions and original deals; the
 Rust engine and browser fallback are removed. `barbuSession.ts` owns the fixed-order
 seven-contract progression, result recording, review and replay; `barbuSave.ts`
 validates and restores the existing version-1 run through the save-store factory.
@@ -148,8 +148,9 @@ Gin Rummy is the first implemented rummy-family table. It reuses the determinist
 deck, saved-session controller, metadata factory, Learn flow and card surfaces.
 Its draw/discard state and scoring live in `ginRummySession.ts`, with public-information
 opponent decisions in `ginRummyPolicy.ts`. `features/gin-rummy/` owns only interaction
-and rendering. Its version-1 action-log save is replay-validated. Five authored
-courses contain fifteen decisions and never write the match save. See
+and rendering. Its version-1 action-log save is replay-validated. Six authored
+courses contain eighteen decisions and never write the match save. The settlement
+topic shows exposed hands and uses normal `scoreGinHand` for layoffs and undercuts. See
 [Gin Rummy](gin-rummy.md) for the classic scoring profile, source notes, automatic
 meld/layoff declarations and remaining limitations.
 
@@ -265,8 +266,7 @@ Whist, Hearts, Spades, Bridge and Barbu have isolated frontends under their resp
   explain legality, the contract objective, winner and points, then recap actual
   opening, significant and final tricks. Domino keeps its lane layout, explains
   placements and forced passes, and reviews the actual finishing order/scores.
-  Coaching sees public projections only; the existing Domino opponent policy's
-  hidden-hand limitation is unchanged. Guided hands preserve the original deal on
+  Coaching and Domino opponents see public projections only. Guided hands preserve the original deal on
   replay and never write saved sessions, course progress or completion evidence.
   Both hand views reserve guidance/hand/action space; compact Domino ranges and
   a fixed-size finished count prevent layout growth during play.
@@ -360,7 +360,7 @@ attempts count toward evidence without modifying a saved match.
 The shared `decisionFirst` step metadata keeps the written explanation available
 through Read lesson without making it a prerequisite for playing cards.
 
-Hearts topic exercises (including passing) and all five Gin topics carry explicit
+Hearts topic exercises (including passing) and all six Gin topics carry explicit
 `Teaching` metadata: worked, supported, independent, with reinforcement for a
 missed goal. The five-decision Hearts introduction keeps its existing foundation
 sequence. Hearts topic positions use their authored order; passing can vary its
@@ -452,9 +452,10 @@ generation and exercise transitions live in `domain/cardCountingQuestions` and
 Card Counting reuses unsaved Hearts, Whist and No Queens hands and their
 presentation helpers, never writing a saved match. It has no authored course
 completion keys. The observation warm-up uses groups of four cards, not a legal
-Whist deal. Existing question limitations remain: boss-card questions currently
-have positive answers, and void spotting targets one seat rather than accepting
-all demonstrated voids. These need a separate curriculum pass.
+Whist deal. Recognition and boss-card questions include positive and negative
+answers derived from played history. Exhausted suits do not produce boss-card
+questions. Void spotting accepts every opponent shown void in the selected suit;
+the domain grader and shared memory view use the same accepted-answer predicate.
 Add the next game using the same boundaries. Reuse the common Learn flow and generalize
 controller behavior only where it removes real complexity. Do not add a
 universal controller or replace the existing metadata/engine factories.

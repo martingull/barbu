@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { heartsPracticeSteps } from "../../src/lessons/hearts/exercises";
 import { drillDecision } from "../../src/lessons/drillDecision";
-import { ginLearningSteps, ginExerciseChoices, ginExerciseAnswer, ginSelectsDiscard } from "../../src/lessons/gin-rummy/exercises";
+import { ginLearningSteps, ginExerciseChoices, ginExerciseAnswer, ginSelectsCard } from "../../src/lessons/gin-rummy/exercises";
 import { formatCardText } from "../../src/presentation/cardDisplay";
 import { ginSaveKey } from "../../src/persistence/ginRummySave";
 import { learningEvidenceKey } from "../../src/persistence/learningEvidence";
@@ -54,14 +54,14 @@ test("Hearts mistakes get fresh bounded examples, stable tables and complete rev
   await expect(page.getByLabel("Drill progress")).toContainText("0 / 3");
 });
 
-for (const action of ["melds", "deadwood", "draw", "knock", "gin"]) {
+for (const action of ["melds", "deadwood", "draw", "knock", "gin", "settlement"]) {
   test(`Gin ${action} reinforces once per miss and includes all six decisions in review`, async ({ page }, info) => {
     await page.setViewportSize({ width: 360, height: 740 });
     await open(page, "Gin Rummy", `gin-${action}`);
     const steps = ginLearningSteps(action).flatMap(step => [step, step.followUp!]);
     for (const [index, step] of steps.entries()) {
       const choice = ginExerciseChoices(action, step).find(choice => !ginExerciseAnswer(action, step, choice.id).good)!;
-      if (ginSelectsDiscard(action)) {
+      if (ginSelectsCard(action, step)) {
         const card = step.hand.find(card => card.id === choice.id)!;
         await page.getByLabel("Your Gin Rummy exercise hand").getByRole("button", { name: `${card.rank} ${card.suit}`, exact: true }).click();
       } else await page.getByRole("button", { name: choice.label, exact: true }).click();
@@ -96,7 +96,7 @@ test("leaving a Gin follow-up does not complete the topic or store attempt evide
   await page.getByRole("button", { name: "Try another example", exact: true }).click();
   await expect(page.locator(".contract-status")).toContainText("Decision 2 of 4");
   await page.getByRole("button", { name: "Table", exact: true }).first().click();
-  await expect(page.getByLabel("Gin Rummy course progress")).toContainText("0 / 5 complete");
+  await expect(page.getByLabel("Gin Rummy course progress")).toContainText("0 / 6 complete");
   expect(await page.evaluate(key => localStorage.getItem(key), learningEvidenceKey)).toBeNull();
   await page.locator('[data-skill="gin-knock"] .exercise-shortcut').click();
   await expect(page.locator(".contract-status")).toContainText("Decision 1 of 3");

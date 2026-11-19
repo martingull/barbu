@@ -4,7 +4,7 @@
   import CardChoiceHand from "../../components/CardChoiceHand.svelte";
   import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
   import { startMemoryHand, transitionMemoryHand, memoryHandQuestion, memoryHandDefinitions, type MemoryHandEvent } from "../../domain/cardCountingSession";
-  import type { MemoryExercise } from "../../domain/cardCountingQuestions";
+  import { memoryAnswerCorrect, type MemoryExercise } from "../../domain/cardCountingQuestions";
   import { contractScoreMeta } from "../../domain/contractScoring";
   import { formatCardLabel } from "../../presentation/cardDisplay";
   import { partnershipTrickCounts } from "../../domain/trickTakingScore";
@@ -78,7 +78,7 @@
       <MemoryPrompt {question} answer={session.answer} checked={session.checked} labels={presentation}
         heading={memoryQuestionHeading(question, danger, highCard)}
         caption={`Memory check ${Math.min(session.attempts + Number(!session.checked), definition.checkpoints.length)} of ${definition.checkpoints.length}`}
-        feedback={session.answer === question.answer ? "Correct. Memory held." : memoryAnswerText(question, danger, highCard)}
+        feedback={memoryAnswerCorrect(question, session.answer) ? "Correct. Memory held." : memoryAnswerText(question, danger, highCard)}
         cards={memoryReviewCards(session)} onAnswer={answer => change({ type: "answer", answer })} />
     {:else if review}
       <p class="outcome" class:warning={meta.kind === "avoidance" && review.outcome === "captured_penalty"}>{feedback}</p>

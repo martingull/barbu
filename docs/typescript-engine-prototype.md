@@ -248,10 +248,12 @@ The fixed-order training-run product limitation remains unchanged.
 
 `dominoHand.ts` owns immutable start, placement, pass and replay transitions.
 It shares placement legality with practice while retaining its own lane state,
-not forcing Domino into a trick-taking model. `dominoPolicy.ts` preserves the
-native lexicographic priorities, replacing the browser's weighted approximation.
-The existing policy still consults the next player's hidden hand; this migration
-does not claim public-information-only or expert opponents.
+not forcing Domino into a trick-taking model. The migration initially preserved
+the native lexicographic priorities, including a hidden-hand tie-breaker.
+The 2026-11-19 fairness pass removes that tie-breaker: `dominoPolicy.ts` receives
+only its own cards, public lanes and starting rank. It favors opening its own
+continuations and suits with more held cards, with deterministic rank/suit ties.
+This is public-information play, not an expert-strength claim.
 
 `dominoSave.ts` validates all 52 cards, contiguous lanes, finish order and original
 ownership, then rebuilds cached legality, scores and prompts. New saves carry
@@ -263,9 +265,12 @@ Final prompts now use the final score instead of the previous cached score.
 
 `tests/fixtures/domino-hands.json` freezes 12 native hands from `fdaf35e` before
 deletion: seeds 0, 1, 8 and 42 at starting ranks 7, 9 and A. Compact initial,
-mid-hand and final snapshots plus SHA-256 projections check every transition.
-Three old browser saves verify restore and replay compatibility. Do not regenerate
-expected values from the new engine. Separate property checks finish 96 deals.
+mid-hand and final snapshots plus historical SHA-256 projections record the old
+policy. Snapshots now check unchanged restore and completion under the current
+policy, rather than requiring the removed hidden-hand decisions. Three old browser
+saves verify restore and original-deal replay compatibility. Do not regenerate
+these historical fixtures. Separate property checks finish 96 deals, and observation
+tests redistribute concealed cards without changing a computer's choice.
 
 Domino now uses the shared flow table layout. Feedback sits after the suit lanes
 and before the hand instead of overlapping lanes through fixed viewport offsets.

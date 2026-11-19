@@ -1,5 +1,6 @@
 import { standardDeck } from "../../domain/deck";
 import { bestMeldLayout, deadwoodValue } from "../../domain/rummyMelds";
+import { scoreGinHand, ginRules, type GinPlayer } from "../../domain/ginRummySession";
 import type { Card } from "../../domain/types";
 import { formatCardLabel } from "../../presentation/cardDisplay";
 import { formatRummyMeld } from "../../presentation/rummyDisplay";
@@ -10,7 +11,10 @@ export const ginCards = (ids: string) => ids.split(" ").map(id => {
   if (!card) throw Error(`Unknown Gin example card: ${id}`);
   return card;
 });
-export type GinExerciseStep = { title: string; hand: Card[]; upcard?: Card; hint?: string; teaching?: Teaching; options?: string[]; followUp?: GinExerciseStep };
+export type GinExerciseStep = { title: string; hand: Card[]; upcard?: Card; hint?: string; teaching?: Teaching; options?: string[]; followUp?: GinExerciseStep;
+  settlement?: { opponentHand: Card[]; knocker: GinPlayer; question: "layoff" | "score" } };
+const settlementStep = (title: string, hand: string, opponentHand: string, knocker: GinPlayer, question: "layoff" | "score"): GinExerciseStep =>
+  ({ title, hand: ginCards(hand), settlement: { opponentHand: ginCards(opponentHand), knocker, question } });
 export const ginExercises: Record<string, GinExerciseStep[]> = {
   melds: [
     { title: "Keep your three combinations", hand: ginCards("3C 4C 5C 7D 7H 7S 9H 10H JH 2D KS") },
@@ -42,6 +46,11 @@ export const ginExercises: Record<string, GinExerciseStep[]> = {
     { title: "Keep all three melds", hand: ginCards("8S 9S 10S JS 4C 4D 4H 6H 7H 8H AD"),
       hint: "A run can contain four cards. Keep complete combinations together." },
     { title: "Find a gin finish", hand: ginCards("AC 2C 3C 4C 5D 5H 5S 9D 10D JD KH") }
+  ],
+  settlement: [
+    settlementStep("Lay off a card", "6C 8D 9D 10D QC QD QH 2S 3S 4S", "3C 4C 5C 7D 7H 7S 9H 10H JH 2D", 1, "layoff"),
+    settlementStep("A knock can lose", "3C 4C 5C 7D 7H 7S 9H 10H JH 8C", "AC AD AH 3D 4D 5D 8S 9S 10S 2H", 0, "score"),
+    settlementStep("Tied deadwood", "3C 4C 5C 7D 7H 7S 9H 10H JH 2D", "AS 2S 3S 4H 5H 6H 8D 9D 10D 2H", 0, "score")
   ]
 };
 const ginFollowUps: Record<string, GinExerciseStep[]> = {
@@ -69,6 +78,11 @@ const ginFollowUps: Record<string, GinExerciseStep[]> = {
     { title: "Find another zero-point finish", hand: ginCards("4D 5D 6D 7D 8C 8H 8S 10S JS QS KC") },
     { title: "Keep the four-card run", hand: ginCards("2H 3H 4H 5H 6C 6D 6S 10C JC QC AD") },
     { title: "Leave every card in a meld", hand: ginCards("5S 6S 7S 8S 9C 9D 9H 2C 3C 4C KH") }
+  ],
+  settlement: [
+    settlementStep("Extend another exposed run", "7D 9C 10C JC KS KH KC 3H 4H 5H", "4D 5D 6D 8C 8H 8S 10S JS QS 3C", 1, "layoff"),
+    settlementStep("Count the undercut bonus", "4D 5D 6D 8C 8H 8S 10S JS QS 9D", "2C 3C 4C 5H 6H 7H JD JH JC AD", 0, "score"),
+    settlementStep("Another tied knock", "4D 5D 6D 8C 8H 8S 10S JS QS 3C", "AH 2H 3H 5C 5H 5S 9C 10C JC 3S", 0, "score")
   ]
 };
 
@@ -76,7 +90,8 @@ export function ginLearningSteps(action: string): GinExerciseStep[] {
   return ginExercises[action].map((step, index) => {
     const choice = ginExerciseChoices(action, step).find(choice => ginExerciseAnswer(action, step, choice.id).good)!;
     const guidance = index === 0 ? step.hint ?? `${ginSelectsDiscard(action) ? "Discard" : "Choose"} ${choice.label}. ${ginExerciseAnswer(action, step, choice.id).text}`
-      : index === 1 ? step.hint ?? (action === "draw" ? "Look for a complete set or run after taking the upcard and discarding a different card."
+      : index === 1 ? step.hint ?? (action === "settlement" ? "Count both deadwood totals after any layoffs. Equal or lower defending deadwood earns the defender the difference plus the 10-point undercut bonus."
+        : action === "draw" ? "Look for a complete set or run after taking the upcard and discarding a different card."
         : "Keep complete sets and runs together. Only unmatched cards count as deadwood.") : undefined;
     return { ...step, teaching: { stage: teachingStages[index], guidance },
       followUp: { ...ginFollowUps[action][index], teaching: { stage: "reinforcement" } } };
@@ -84,6 +99,17 @@ export function ginLearningSteps(action: string): GinExerciseStep[] {
 }
 
 export function ginFeedbackBreakdown(action: string, step: GinExerciseStep, selected: string): FeedbackBreakdown {
+  if (step.settlement) {
+    const result = ginSettlementResult(step), { knocker } = step.settlement;
+    return { label: "Hand score breakdown", rows: [
+      ...result.layouts.map((layout, player) => ({ label: player === 0 ? "Your deadwood" : "Barbu's deadwood", value: `${layout.points} points after layoffs` })),
+      ...result.layouts.flatMap((layout, player) => layout.layoffs.map(layoff => ({ label: `${player === 0 ? "Your" : "Barbu's"} layoff`,
+        value: `${layoff.cards.map(formatCardLabel).join(", ")} onto ${formatRummyMeld(result.layouts[knocker].melds[layoff.target])}` }))),
+      { label: result.kind === "undercut" ? "Undercut bonus" : result.kind === "gin" ? "Gin bonus" : "Bonus",
+        value: `${result.kind === "undercut" ? ginRules.undercutBonus : result.kind === "gin" ? ginRules.ginBonus : 0} points` },
+      { label: "Hand points", value: `${result.winner === 0 ? "You score" : "Barbu scores"} ${result.points}` }
+    ] };
+  }
   if (action === "draw" && step.upcard) {
     const withUpcard = [...step.hand, step.upcard];
     const best = Math.min(...step.hand.map(card => bestMeldLayout(withUpcard.filter(item => item.id !== card.id)).points));
@@ -102,8 +128,20 @@ export function ginFeedbackBreakdown(action: string, step: GinExerciseStep, sele
 }
 
 export const ginSelectsDiscard = (action: string) => action === "melds" || action === "gin";
+export const ginSelectsCard = (action: string, step: GinExerciseStep) => ginSelectsDiscard(action) || step.settlement?.question === "layoff";
+export function ginSettlementResult(step: GinExerciseStep) {
+  if (!step.settlement) throw Error("Expected an exposed Gin settlement.");
+  return scoreGinHand([step.hand, step.settlement.opponentHand], step.settlement.knocker);
+}
+const settlementChoice = (winner: GinPlayer | null, points: number) => ({ id: `${winner}:${points}`,
+  label: winner === null ? "No score" : `${winner === 0 ? "You score" : "Barbu scores"} ${points}` });
 export function ginExerciseChoices(action: string, step: GinExerciseStep) {
-  if (ginSelectsDiscard(action)) return step.hand.map(card => ({ id: card.id, label: card.label }));
+  if (ginSelectsCard(action, step)) return step.hand.map(card => ({ id: card.id, label: formatCardLabel(card) }));
+  if (step.settlement) {
+    const result = ginSettlementResult(step);
+    return [settlementChoice(0, result.points), settlementChoice(1, result.points),
+      settlementChoice(result.points > ginRules.undercutBonus ? result.winner : null, Math.max(0, result.points - ginRules.undercutBonus))];
+  }
   if (action === "deadwood") return (step.options ?? []).map(id => ({ id, label: `${id} points` }));
   return action === "draw" ? [{ id: "stock", label: "Draw stock" }, { id: "upcard", label: "Take upcard" }]
     : [{ id: "continue", label: "Keep playing" }, { id: "knock", label: "Knock" }, { id: "gin", label: "Go gin" }];
@@ -113,9 +151,30 @@ export const ginExercisePrompts: Record<string, string> = {
   deadwood: "These are your ten cards. How many points are outside complete sets and runs?",
   draw: "Would this upcard improve your hand? Choose where to draw.",
   knock: "These ten cards remain after your proposed discard. Which finish is available? Choose Keep playing if neither is allowed.",
-  gin: "You have eleven cards. Which discard leaves ten cards in complete melds, allowing you to go gin?"
+  gin: "You have eleven cards. Which discard leaves ten cards in complete melds, allowing you to go gin?",
+  settlement: "Both hands are exposed after your knock. After any layoffs, who scores and how many hand points?"
 };
+export const ginExercisePrompt = (action: string, step: GinExerciseStep) => step.settlement?.question === "layoff"
+  ? "Barbu knocked. Which of your unmatched cards can be laid off onto his exposed melds?" : ginExercisePrompts[action];
+export const ginExerciseGroups = (step: GinExerciseStep) => [
+  ...(step.upcard ? [{ label: "Upcard", cards: [step.upcard] }] : []),
+  ...(step.settlement ? [{ label: step.settlement.knocker === 1 ? "Barbu's exposed hand (knocker)" : "Barbu's exposed hand (defender)", cards: step.settlement.opponentHand }] : []),
+  { label: step.settlement ? step.settlement.knocker === 0 ? "Your hand (knocker)" : "Your hand (defender)" : "Your hand before your choice", cards: step.hand }
+];
 export function ginExerciseAnswer(action: string, step: GinExerciseStep, selected: string): { good: boolean; illegal?: boolean; text: string } {
+  if (step.settlement) {
+    const result = ginSettlementResult(step), { knocker } = step.settlement;
+    const defender = knocker === 0 ? 1 : 0;
+    const laidOff = result.layouts[defender].layoffs.flatMap(layoff => layoff.cards);
+    const score = `${result.winner === 0 ? "You score" : "Barbu scores"} ${result.points} hand points.`;
+    if (step.settlement.question === "layoff") return {
+      good: laidOff.some(card => card.id === selected),
+      text: `${laidOff.map(formatCardLabel).join(", ")} extends Barbu's exposed meld and no longer counts as your deadwood. You have ${result.layouts[0].points} deadwood after layoffs against Barbu's ${result.layouts[1].points}. ${score} Layoffs are allowed after a knock, never against gin.`
+    };
+    const attacking = result.layouts[knocker].points, defending = result.layouts[defender].points;
+    return { good: selected === settlementChoice(result.winner, result.points).id,
+      text: `${defending} defending deadwood ${defending === attacking ? "equals" : "is below"} your ${attacking}. That is an undercut: the defender earns ${attacking} - ${defending} + ${ginRules.undercutBonus} = ${result.points}. ${score} A legal knock is not a guaranteed win.` };
+  }
   const current = bestMeldLayout(step.hand);
   if (action === "deadwood") return { good: selected === String(current.points),
     text: `The unmatched cards total ${current.points} points. Complete sets and runs count zero; aces count 1, number cards their value, and pictures 10.` };

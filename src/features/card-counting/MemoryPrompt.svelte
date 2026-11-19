@@ -3,7 +3,7 @@
   import { formatCardLabel } from "../../presentation/cardDisplay";
   import { scoreSeatLabel } from "../../presentation/scorePresentation";
   import type { Card, Seat } from "../../domain/types";
-  import type { MemoryAnswer, MemoryQuestion } from "../../domain/cardCountingQuestions";
+  import { memoryAnswerCorrect, type MemoryAnswer, type MemoryQuestion } from "../../domain/cardCountingQuestions";
   let { question, answer, checked, heading, caption, feedback, labels, cards, onAnswer }: {
     question: MemoryQuestion; answer: MemoryAnswer | null; checked: boolean; heading: string; caption: string;
     feedback: string; labels: { target: string; count: string; specific: string; seen: string };
@@ -30,13 +30,13 @@
     <div class="trump-count-options memory-options" aria-label={target ? labels.specific : question.kind === "void_spotter" ? "Void spotter options" : labels.count}>
       {#each options as option}
         <button type="button" class:selected={answer === option.value}
-          class:correct={checked && option.value === question.answer}
-          class:wrong={checked && answer === option.value && option.value !== question.answer}
+          class:correct={checked && memoryAnswerCorrect(question, option.value)}
+          class:wrong={checked && answer === option.value && !memoryAnswerCorrect(question, option.value)}
           aria-pressed={answer === option.value} disabled={checked} onclick={() => onAnswer(option.value)}>{option.label}</button>
       {/each}
     </div>
   </div>
-  <p class="outcome" class:warning={checked && answer !== question.answer} aria-live="polite">
+  <p class="outcome" class:warning={checked && !memoryAnswerCorrect(question, answer)} aria-live="polite">
     {checked ? feedback : "Answer from memory. Old tricks are hidden."}
   </p>
   {#if checked}

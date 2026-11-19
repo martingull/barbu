@@ -39,14 +39,14 @@ if the loser never scored. These bonuses do not advance the 100-point target.
   explicit actions, replayed and validated to rebuild state and score summaries.
   They preserve results across reloads and do not re-run a changed AI policy.
 - The feature composes `savedSessionFeature`, `GameLearning`, `TablePlaySurface`
-  and `CardChoiceHand`. Learn has five topics with three authored decisions
-  each: melds, deadwood, draw choices, knocking, and gin. Counting and finishing
+  and `CardChoiceHand`. Learn has six topics with three authored decisions
+  each: melds, deadwood, draw choices, knocking, gin, and layoffs/undercuts. Counting and finishing
   topics fade hints across the three decisions. Feedback shows melds and the
   unmatched-card total using the same meld engine as Play. Custom decisions
   feed the shared result summary and never modify match saves. Existing topic
   progress remains valid; new topics begin incomplete.
 
-All five topics use the shared worked/supported/independent sequence, bounded
+All six topics use the shared worked/supported/independent sequence, bounded
 reinforcement and read-only decision review. `domain/learningSession.ts` owns
 checked-answer locking and progression; game-specific grading stays with Gin.
 The separate guided hand reuses the normal session and table with automatic
@@ -54,9 +54,15 @@ public-information coaching and a recap of actual decisions and settlement.
 It preserves the deal on replay and writes neither match saves nor course
 completion. See [game architecture](game-architecture.md) for shared contracts.
 
-The first curriculum expansion focuses on counting and finishing eligibility.
-Linked draw-then-discard turns and interactive layoff/undercut settlement are
-still curriculum gaps; the knock exercises do not claim to teach optimal timing.
+The settlement topic exposes both ten-card hands after a knock. Its three
+decisions select a layoff card, score a lower-deadwood undercut, and score an
+equal-deadwood undercut. Three distinct companions reinforce missed decisions.
+Answers and score breakdowns call `scoreGinHand`, exactly as Play does; review
+preserves both exposed hands. The new `gin-settlement` key does not reset the
+five existing completions or any match save. This teaches settlement, not optimal
+knock timing or a prediction from hidden cards. Linked draw-then-discard turns
+remain a curriculum gap. The classic 10-point undercut agreement was rechecked
+against the linked Pagat rules on 2026-11-19.
 
 ## Deliberate boundaries
 

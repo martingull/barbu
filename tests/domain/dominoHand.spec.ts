@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { dominoHandEngine as engine } from "../../src/domain/dominoHand";
 import { normalizeDominoHand } from "../../src/persistence/dominoSave";
-import { legalDominoCards, chooseDominoCard } from "../../src/domain/dominoPolicy";
+import { legalDominoCards, chooseDominoCard, dominoObservation } from "../../src/domain/dominoPolicy";
 import { isLegalDominoPlacement } from "../../src/domain/dominoRules";
 import { dominoSuits } from "../../src/domain/dominoDeal";
 import { cardRank } from "../../src/domain/trickTakingRules";
@@ -12,31 +12,25 @@ function freeze<T>(value: T): T {
   if (value && typeof value === "object") { Object.freeze(value); Object.values(value).forEach(freeze); }
   return value;
 }
-async function hash(value: unknown) {
-  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(value)));
-  return Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, "0")).join("");
-}
 const play = (state: DominoHandState, cardId: string | null) => engine.transition(freeze(state), cardId ? { type: "play-card", cardId } : { type: "pass" });
 
 for (const startRank of ["7", "9", "A"]) {
-  test(`Domino ${startRank}-start deals and every transition match native fixtures`, async () => {
+  test(`Domino ${startRank}-start legacy positions resume without rewriting historical play`, () => {
     for (const f of fixtures.native.filter(f => f.startRank === startRank)) {
-      let hand = engine.start({ seed: f.seed, startRank });
-      expect(compactDominoHand(hand)).toEqual(f.initial);
-      const states = [];
-      for (const [index, move] of f.moves.entries()) {
-        if (index === f.midMove) {
-          const legacy = normalizeDominoHand(freeze(inflateDominoHand(f, "mid")))!;
-          expect(compactDominoHand(legacy)).toEqual(compactDominoHand(hand));
-          hand = legacy;
+      for (const phase of ["initial", "mid", "final"] as const) {
+        const old = freeze(inflateDominoHand(f, phase));
+        let hand = normalizeDominoHand(old)!;
+        expect(compactDominoHand(hand)).toEqual(f[phase]);
+        expect(hand.initialHands).toEqual(engine.start({ seed: f.seed, startRank }).initialHands);
+        for (let turn = 0; turn < 100 && hand.status !== "complete"; turn++) {
+          const next = play(hand, hand.legalCardIds[0] ?? null);
+          expect(normalizeDominoHand(next)).toEqual(next);
+          hand = next;
         }
-        hand = play(hand, move);
-        expect(normalizeDominoHand(hand)).not.toBeNull();
-        states.push(compactDominoHand(hand));
+        expect(hand.status).toBe("complete");
+        expect(engine.transition(freeze(hand), { type: "replay" })).toEqual(engine.start({ seed: f.seed, startRank }));
+        expect(compactDominoHand(old)).toEqual(f[phase]);
       }
-      expect(compactDominoHand(hand)).toEqual(f.final);
-      expect(await hash(states)).toBe(f.statesSha256);
-      expect(compactDominoHand(engine.transition(freeze(hand), { type: "replay" }))).toEqual(f.initial);
     }
   });
 }
@@ -129,10 +123,35 @@ test("Domino placement and policy share adjacency with practice", () => {
   const c = (id: string): Card => ({ id, label: id, rank: id.slice(0, -1), suit: id.at(-1) as Card["suit"] });
   const state = { ...engine.start({ seed: 1 }), currentPlayerIndex: 0, startRank: "7",
     hands: [["7C", "8C", "7D"].map(c), [], [], []], layout: [[], [], [], []] };
-  expect(chooseDominoCard(state)?.id).toBe("7C");
+  expect(chooseDominoCard(dominoObservation(state))?.id).toBe("7C");
   for (const startRank of ["2", "7", "A"]) {
     const hand = engine.start({ seed: 8, startRank });
     for (const card of hand.hands[2]) expect(hand.legalCardIds.includes(card.id))
       .toBe(isLegalDominoPlacement(hand.layout[dominoSuits.indexOf(card.suit)], card, startRank));
+  }
+});
+
+test("Domino opponents see only their cards and layout, never hidden hands or deal metadata", () => {
+  for (let seed = 0; seed < 32; seed++) for (let player = 0; player < 4; player++) {
+    const state = { ...engine.start({ seed }), currentPlayerIndex: player };
+    const observed = dominoObservation(state);
+    expect(Object.keys(observed).sort()).toEqual(["hand", "layout", "startRank"]);
+    const changed = structuredClone(state);
+    const hidden = [0, 1, 2, 3].filter(index => index !== player);
+    const cards = hidden.flatMap(index => changed.hands[index]).reverse();
+    let offset = 0;
+    for (const index of hidden) changed.hands[index] = cards.slice(offset, offset += changed.hands[index].length);
+    changed.id = "hidden-seed";
+    changed.initialHands = changed.initialHands!.map(hand => [...hand].reverse()).reverse();
+    changed.playerHand = [];
+    changed.scores = [999, 999, 999, 999];
+    expect(dominoObservation(changed)).toEqual(observed);
+    const before = structuredClone(observed);
+    const choice = chooseDominoCard(freeze(observed));
+    expect(chooseDominoCard(dominoObservation(changed))).toEqual(choice);
+    expect(observed).toEqual(before);
+    if (choice) expect(legalDominoCards(state, player)).toContainEqual(choice);
+    else expect(legalDominoCards(state, player)).toEqual([]);
+    expect(chooseDominoCard({ ...observed, hand: [...observed.hand].reverse() })).toEqual(choice);
   }
 });

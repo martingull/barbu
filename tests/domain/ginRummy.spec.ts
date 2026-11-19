@@ -6,7 +6,8 @@ import { formatRummyMeld } from "../../src/presentation/rummyDisplay";
 import { formatCardList } from "../../src/presentation/cardDisplay";
 import { advanceGinOpponent, chooseGinAction, ginObservation } from "../../src/domain/ginRummyPolicy";
 import { createGinSaveStore, normalizeGinSave, restoreGinSession, saveGinSession } from "../../src/persistence/ginRummySave";
-import { ginCards, ginExercises, ginExerciseAnswer, ginExerciseChoices } from "../../src/lessons/gin-rummy/exercises";
+import { ginCards, ginExercises, ginLearningSteps, ginExerciseAnswer, ginExerciseChoices, ginSettlementResult, ginFeedbackBreakdown, ginExerciseGroups } from "../../src/lessons/gin-rummy/exercises";
+import { ginCourses } from "../../src/lessons/gin-rummy/courses";
 import { createGinRummyFeature } from "../../src/features/gin-rummy/ginRummyFeature";
 import { get } from "svelte/store";
 
@@ -223,5 +224,45 @@ test("counting and finishing lessons use the same meld solver as play", () => {
     expect(bestMeldLayout(hand).points).toBe(0);
     expect(ginExerciseAnswer("gin", step, discard).good).toBe(true);
     expect(ginExerciseAnswer("gin", step, step.hand[0].id).good).toBe(false);
+  }
+});
+
+test("settlement lessons expose two unique hands and derive layoffs and undercuts from Play scoring", () => {
+  const steps = ginLearningSteps("settlement");
+  expect(steps).toHaveLength(3);
+  expect(steps.map(step => step.teaching?.stage)).toEqual(["worked", "supported", "independent"]);
+  expect(ginCourses.at(-1)?.id).toBe("gin-settlement");
+  for (const [index, base] of steps.entries()) for (const step of [base, base.followUp!]) {
+    const position = step.settlement!;
+    expect(step.hand).toHaveLength(10);
+    expect(position.opponentHand).toHaveLength(10);
+    expect(new Set([...step.hand, ...position.opponentHand].map(card => card.id)).size).toBe(20);
+    const result = ginSettlementResult(step);
+    expect(result).toEqual(scoreGinHand([step.hand, position.opponentHand], position.knocker));
+    expect(result.kind).toBe("undercut");
+    const choices = ginExerciseChoices("settlement", step);
+    const good = choices.filter(choice => ginExerciseAnswer("settlement", step, choice.id).good);
+    expect(good).toHaveLength(1);
+    expect(new Set(choices.map(choice => choice.id)).size).toBe(choices.length);
+    expect(ginExerciseAnswer("settlement", step, good[0].id).text).not.toMatch(/QS|6C|7D/);
+    const groups = ginExerciseGroups(step);
+    expect(groups).toHaveLength(2);
+    expect(groups[0].cards).toEqual(position.opponentHand);
+    expect(groups[1].cards).toEqual(step.hand);
+    expect(ginFeedbackBreakdown("settlement", step, good[0].id).rows.at(-1)?.value).toBe(`${result.winner === 0 ? "You score" : "Barbu scores"} ${result.points}`);
+    if (index === 0) {
+      expect(good[0].id).toBe(step === base ? "6C" : "7D");
+      expect(result.layouts[0].points).toBe(0);
+      expect(result.winner).toBe(0);
+      expect(ginExerciseAnswer("settlement", step, good[0].id).text).toContain("never against gin");
+    } else {
+      expect(result.winner).toBe(1);
+      expect(result.points).toBe(index === 2 ? 10 : step === base ? 16 : 18);
+      if (index === 2) expect(result.layouts[0].points).toBe(result.layouts[1].points);
+      for (const choice of choices.filter(choice => !good.includes(choice))) {
+        expect(ginExerciseAnswer("settlement", step, choice.id)).toMatchObject({ good: false });
+        expect(ginExerciseAnswer("settlement", step, choice.id).illegal).toBeUndefined();
+      }
+    }
   }
 });

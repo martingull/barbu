@@ -2,10 +2,11 @@ import { expect, test } from "@playwright/test";
 import { startMemoryHand, transitionMemoryHand, memoryHandQuestion, memoryHandDefinitions,
   startCountRound, transitionCountRound } from "../../src/domain/cardCountingSession";
 import { buildTrumpCountRound, buildTrumpMemoryQuestion, buildCourtMemoryQuestion, buildDangerMemoryQuestion,
-  buildWhistMemoryQuestion, type MemoryExercise } from "../../src/domain/cardCountingQuestions";
+  buildWhistMemoryQuestion, memoryAnswerCorrect, type MemoryExercise } from "../../src/domain/cardCountingQuestions";
 import { typescriptHandEngine } from "../../src/domain/handEngine";
 import { memoryReviewCards } from "../../src/features/card-counting/countingPresentation";
 import type { TableCard } from "../../src/domain/types";
+import { standardDeck } from "../../src/domain/deck";
 
 test("counting questions use only played cards and preserve their existing seed choices", () => {
   const tricks: TableCard[][] = [[
@@ -30,6 +31,71 @@ test("counting questions use only played cards and preserve their existing seed 
       }
     }
   }
+});
+
+test("memory questions accept every demonstrated void and reject unsupported seats", () => {
+  const card = (id: string) => standardDeck().find(card => card.id === id)!;
+  const tricks: TableCard[][] = [[
+    { seat: "Tutor", card: card("2C") }, { seat: "Right", card: card("2D") },
+    { seat: "You", card: card("3C") }, { seat: "Left", card: card("2H") }
+  ]];
+  const question = buildWhistMemoryQuestion(tricks, "S", 3);
+  expect(question).toMatchObject({ kind: "void_spotter", targetSuit: "C", answers: ["Right", "Left"] });
+  expect(memoryAnswerCorrect(question, "Right")).toBe(true);
+  expect(memoryAnswerCorrect(question, "Left")).toBe(true);
+  expect(memoryAnswerCorrect(question, "Tutor")).toBe(false);
+  expect(memoryAnswerCorrect(question, null)).toBe(false);
+});
+
+test("warm-up and boss-card questions include both answers derived from visible history", () => {
+  const warmupAnswers = new Set<boolean>(), bossAnswers = new Set<boolean>();
+  const deck = standardDeck();
+  const tricks: TableCard[][] = [["Tutor", "Right", "You", "Left"].map((seat, i) => ({
+    seat: seat as TableCard["seat"], card: deck.find(card => card.id === ["AC", "2C", "3C", "KC"][i])!
+  }))];
+  for (let seed = 0; seed < 100; seed++) {
+    const round = buildTrumpCountRound(seed);
+    for (const question of round.questions) if (question.kind === "specific") {
+      const seen = round.tricks.slice(question.startTrick, question.endTrick + 1).flat().map(play => play.card.id);
+      expect(question.answer).toBe(seen.includes(question.targetCard.id));
+      warmupAnswers.add(question.answer);
+    }
+    const question = buildWhistMemoryQuestion(tricks, "H", seed);
+    if (question.kind === "boss_card") {
+      bossAnswers.add(question.answer);
+      expect(question.answer).toBe(question.targetCard.id === "QC");
+    }
+  }
+  expect(warmupAnswers).toEqual(new Set([true, false]));
+  expect(bossAnswers).toEqual(new Set([true, false]));
+  const allClubs = deck.filter(card => card.suit === "C");
+  const exhausted = allClubs.map(card => [{ seat: "Tutor" as const, card }]);
+  for (let seed = 0; seed < 32; seed++) expect(buildWhistMemoryQuestion(exhausted, "H", seed).kind).not.toBe("boss_card");
+});
+
+test("actual Whist memory checkpoints award credit to every demonstrated void without double scoring", () => {
+  let checkedMultiple = false;
+  for (let seed = 0; seed < 64 && !checkedMultiple; seed++) {
+    let session = startMemoryHand("whist-memory", seed);
+    for (let trick = 0; trick < 11; trick++) {
+      session = transitionMemoryHand(session, { type: "play-card", cardId: session.fullHand.legalCardIds[0] });
+      const question = memoryHandQuestion(session);
+      if (question) {
+        if (question.kind === "void_spotter" && question.answers.length > 1) {
+          for (const answer of question.answers) {
+            const checked = transitionMemoryHand(transitionMemoryHand(session, { type: "answer", answer }), { type: "check" });
+            expect(checked.clean).toBe(session.clean + 1);
+            expect(checked.attempts).toBe(session.attempts + 1);
+            expect(transitionMemoryHand(checked, { type: "check" })).toBe(checked);
+          }
+          checkedMultiple = true;
+        }
+        session = transitionMemoryHand(transitionMemoryHand(session, { type: "answer", answer: question.answer }), { type: "check" });
+      }
+      session = transitionMemoryHand(session, { type: "next" });
+    }
+  }
+  expect(checkedMultiple).toBe(true);
 });
 
 for (const exercise of Object.keys(memoryHandDefinitions) as MemoryExercise[]) {

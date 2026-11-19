@@ -1,7 +1,7 @@
 import { typescriptHandEngine } from "./handEngine";
 import { transitionReviewedHand, type ReviewedHand } from "./reviewedHand";
 import { buildTrumpCountRound, buildTrumpMemoryQuestion, buildCourtMemoryQuestion, buildDangerMemoryQuestion,
-  buildWhistMemoryQuestion, heartMemoryCheckpoints, whistMemoryCheckpoints,
+  buildWhistMemoryQuestion, memoryAnswerCorrect, heartMemoryCheckpoints, whistMemoryCheckpoints,
   type MemoryAnswer, type MemoryExercise, type MemoryQuestion, type TrumpCountRound } from "./cardCountingQuestions";
 
 export const memoryHandDefinitions = {
@@ -50,7 +50,7 @@ export function transitionMemoryHand(session: MemoryHandSession, event: MemoryHa
   if (event.type === "answer") return !question || session.checked || !validMemoryAnswer(question, event.answer)
     ? session : { ...session, answer: event.answer };
   if (event.type === "check") return !question || session.checked || session.answer === null ? session
-    : { ...session, checked: true, attempts: session.attempts + 1, clean: session.clean + Number(session.answer === question.answer) };
+    : { ...session, checked: true, attempts: session.attempts + 1, clean: session.clean + Number(memoryAnswerCorrect(question, session.answer)) };
   if (event.type === "next" && (!session.fullHandReviewTrickCount || (question && !session.checked))) return session;
   const engine = typescriptHandEngine(session.fullHand.contract)!;
   const next = transitionReviewedHand(session, event.type === "next" ? { type: "next-trick" } : event, engine);
@@ -73,7 +73,7 @@ export function transitionCountRound(session: CountRoundSession, event: MemoryEv
   if (event.type === "answer") return session.stage !== "answer" || session.checked || !validMemoryAnswer(question, event.answer)
     ? session : { ...session, answer: event.answer };
   if (event.type === "check") return session.stage !== "answer" || session.checked || session.answer === null ? session
-    : { ...session, checked: true, attempts: session.attempts + 1, clean: session.clean + Number(session.answer === question.answer) };
+    : { ...session, checked: true, attempts: session.attempts + 1, clean: session.clean + Number(memoryAnswerCorrect(question, session.answer)) };
   if (session.stage === "reveal") return session.trick === question.endTrick
     ? { ...session, stage: "answer" } : { ...session, trick: session.trick + 1 };
   if (!session.checked) return session;
