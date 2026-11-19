@@ -43,6 +43,13 @@ Google Play production is live. The first production release is:
 - Version: **1.0.6**, Android version code **1000007**.
 - Release: **1.0.6 - First production release**, promoting the existing closed-test bundle.
 
+Android version **1.0.8** / **1000012** was prepared with the
+Whist learning improvements, Premium renewal recovery and phone compatibility
+fixes. It is signed and package-verified; the developer now reports it is in
+closed testing. Later Premium-screen simplification is source-only and is not
+included in that bundle. See the
+[1.0.8 handoff](docs/google-play-release.md#prepared-108-candidate).
+
 Physical Samsung testing and no blocking pre-launch report errors were confirmed
 by the developer. Later store-listing updates have their own review status; check
 Play Console's **Publishing overview** before announcing those changes. See the

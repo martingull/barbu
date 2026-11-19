@@ -2,13 +2,68 @@
 
 ## Current Status
 
-**November 19 release checks:** the Publisher API confirms closed testing
+**Last confirmed November 19 track status:** the Publisher API showed closed testing
 (`alpha`) is PUBLISHED at `1.0.7` / `1000010`, with SHA-256 matching the verified
 local bundle. Production remains PUBLISHED at `1.0.6` / `1000007`. No production
 promotion was performed. The manually replaced `1000008` draft is no longer the
 active closed-test release. Do not reuse earlier version codes.
 
-**Renewal-fix candidate:** November 19 preparation produced signed
+**Subsequent developer report:** Martin says `1.0.8` is now in closed beta. The
+prepared artifact below uses code `1000012`; this UI pass did not independently
+recheck its remote checksum, lifecycle or tester availability. The later
+[Premium-screen simplification](premium.md#purchase-support) is not in that bundle.
+It changes the current source fingerprint, so preserve the signed artifact and
+use a fresh unused code when packaging the new screen. No replacement upload or
+production change was performed in this pass.
+
+### Prepared 1.0.8 Candidate
+
+The November 19 local preparation produced **1.0.8** / **1000012**, including all
+improvements committed through `5e71213` plus the synchronized package/native
+version bump. This supersedes local candidate `1000011`; preserve both older
+artifacts rather than overwriting or relabelling them.
+
+- Release name: **1.0.8 - Better Whist lessons and Premium recovery**.
+- Bundle: `release/google-play/barbu-google-play-v1.0.8-code1000012.aab`.
+- Verification: `release/google-play/verification-v1.0.8-code1000012.json`.
+- Notes: `release/google-play/release-notes-v1.0.8-code1000012.txt` (428 characters).
+- Symbols: `release/google-play/native-debug-symbols-v1.0.8-code1000012.zip`.
+- Mapping: `release/google-play/mapping-v1.0.8-code1000012.txt`.
+- SHA-256: `68779316afa5760a83f96c79c972e5b18a43bb43641d534e3c76ba819658592c`.
+- Package `com.martin.barbu`, minimum SDK 24, target SDK 36; Premium billing enabled
+  only through the existing ignored Android override. No product prices, checkout
+  regions, testers or distribution settings were changed.
+
+The bundle contains Canasta Premium, the immediate renewal-verification fix,
+Whist's distinct foundations and club-format/scoring explanations, optional
+portrait hardware and the removal of TV launcher declarations. Existing free
+tables stay free. Shared version files now read `1.0.8`; no iOS archive or
+TestFlight upload was prepared in this pass.
+
+Verification passed: 290 domain tests; 17 release-tool and five mobile-config
+tests; `tauri:check`; the packaged frontend build; and 134 targeted browser checks
+across Galaxy S9 / Chromium and iPhone XR / WebKit. The regular run passed 76 and
+intentionally skipped 58 preview-only Canasta cases; all 58 then passed through
+`task ui:test:canasta`. This is not the complete browser suite or a physical-device
+acceptance pass. Signing matches the existing upload certificate; bundletool,
+four-ABI symbols/build IDs, R8 map, stripped libraries, 16 KB LOAD/RELRO and bundle
+alignment, launcher and optional-portrait checks passed.
+
+The full status read hit HTTP 403 **Listing releases quota exceeded** on the alpha
+release-list endpoint. One lightweight bundle-only read then confirmed the highest
+uploaded code remains `1000010`; its temporary inspection edit was deleted without
+committing. No preview upload, bundle upload, review submission or promotion was
+attempted for `1000012`. No production or phone installation was changed.
+
+Martin subsequently reports this version is in closed beta. Next: verify its
+remote code/hash and current review state without uploading a duplicate. Once Play makes it
+available, update the Samsung without uninstalling; check saved-game continuity,
+Whist's first lesson and a Canasta test renewal before production approval.
+Annual checkout and the remaining Premium lifecycle gates still apply.
+
+### Earlier 1.0.7 Candidates
+
+**Superseded renewal-fix candidate:** November 19 preparation produced signed
 `1.0.7` / `1000011`, named **1.0.7 - Premium renewal fix**. Its bundle is
 `release/google-play/barbu-google-play-v1.0.7-code1000011.aab`, with verification,
 symbols, mapping and release notes using the same suffix. SHA-256:
@@ -21,9 +76,9 @@ fix previously passed 289 domain tests and 72 Premium browser checks.
 The upload preview then failed reading the Android XR production release list
 with HTTP 403 **Listing releases quota exceeded**. The temporary inspection edit
 was cleaned up; no bundle was uploaded or release committed. No actual submit was
-attempted. Do not remove lifecycle safeguards or retry blindly. Upload `1000011`
-to the existing closed test manually, or retry the guarded preview when quota
-allows; then verify code/hash and review state. The candidate is not installed on
+attempted. Do not remove lifecycle safeguards or retry blindly. This candidate
+is superseded by `1000012`; do not upload `1000011` as the latest release.
+The candidate is not installed on
 the Samsung and is not a production release.
 
 The subsequent Whist content pass changes source after `1000011` was built.
@@ -44,8 +99,8 @@ and removes unintended TV declarations.
 The subsequent [renewal-boundary fix](premium-launch.md#renewal-boundary-fix) is
 verified in source/browser tests but is not in `1000010`. Its source fingerprint
 no longer matches the current tree. Preserve the signed bundle and verification
-record. The corrected `1000011` candidate above is built but still needs upload
-and device checks.
+record. The corrected `1000012` candidate above includes the fix but still needs
+upload and device checks.
 Monthly and yearly `barbu_premium`
 base plans are active; this does not confirm merchant payout readiness.
 The standard configuration still disables billing.
@@ -381,13 +436,17 @@ After choosing an unused version code and checking the paid release gates:
 
 ```sh
 task play:prepare BILLING=1 \
-  PREVIOUS_AAB=release/google-play/barbu-google-play-v1.0.6-code1000007.aab
+  PREVIOUS_AAB=release/google-play/barbu-google-play-v1.0.7-code1000010.aab
 task play:upload -- --billing \
-  --bundle release/google-play/barbu-google-play-v1.0.7-code1000010.aab \
-  --verification release/google-play/verification-v1.0.7-code1000010.json \
-  --notes release/google-play/release-notes-v1.0.7-code1000010.txt \
-  --name '1.0.7 - Canasta Premium closed test'
+  --bundle release/google-play/barbu-google-play-v1.0.8-code1000012.aab \
+  --verification release/google-play/verification-v1.0.8-code1000012.json \
+  --notes release/google-play/release-notes-v1.0.8-code1000012.txt \
+  --name '1.0.8 - Better Whist lessons and Premium recovery'
 ```
+
+Candidate `1000012` is already built: skip `play:prepare` for that artifact.
+The build command is for a new unused code; it refuses to overwrite an existing
+signed bundle. Update the paths for each future version.
 
 The second command previews only. Do not add `--submit` until the Data safety
 declaration and other [Premium gates](premium.md) are reviewed. A code becomes

@@ -6,6 +6,15 @@ not Barbu's first production release. Owner: Martin Gullaksen.
 
 ## Release State
 
+The current locally prepared candidate is **1.0.8** / **1000012**, combining the
+Premium renewal fix, Whist content improvements and phone compatibility cleanup.
+Signing and package checks passed; Martin now reports this version is in closed
+beta. Its remote lifecycle and installation were not rechecked in the subsequent
+UI pass, and it does not contain the later Premium-screen simplification. See
+the [release handoff](google-play-release.md#prepared-108-candidate) for files,
+checksum, verification and remaining gates. Earlier Samsung results below belong
+to `1000010`, not proof that the new candidate has passed on the phone.
+
 On November 19 the Publisher API confirmed `1.0.7` / `1000010` is published to
 closed testing (`alpha`), with the verified local bundle's checksum. Production
 remains `1.0.6` / `1000007`. ADB confirmed the connected Samsung has version
@@ -88,7 +97,7 @@ is blocked, not passed; record the available test method before running it.
 
 | Check | Expected outcome | Result |
 | --- | --- | --- |
-| Confirm candidate | Play installs `1.0.7` / `1000010`, not an older local APK. | Passed November 19: ADB version and Play installer confirmed. |
+| Confirm candidate | Play installs `1.0.8` / `1000012`, not an older local APK. | Pending new candidate. Earlier `1000010` version and Play installer confirmed November 19. |
 | Upgrade without uninstalling | Existing saved hand, lesson progress and free tables survive. Stop on a signature conflict; do not erase data. | Pending |
 | First Canasta journey | Rules -> card values -> lesson feedback -> next topic -> guided hand -> Play -> score -> resume. | Pending |
 | Phone usability | Readable S9 controls, no navigation-key overlap, stable board, usable larger system text. Check a modern phone too. | Pending |
@@ -159,9 +168,11 @@ that artifact and its verification record. A fresh signed `1000011` candidate
 was prepared November 19 and passed packaging, 17 release-tool tests, five
 mobile-config tests and `tauri:check`. Its upload preview hit Google's release-list
 quota (HTTP 403) before any upload. See the
-[release handoff](google-play-release.md#current-status). Upload it to closed
-testing and repeat the physical renewal/expiry checks before marking those rows
-passed. Do not assume the installed `1000010` contains the fix.
+[release handoff](google-play-release.md#prepared-108-candidate). The subsequent
+`1.0.8` / `1000012` package also includes the Whist improvements and supersedes
+that local candidate. Upload the new package to closed testing and repeat the
+physical renewal/expiry checks before marking those rows passed. Do not assume
+the installed `1000010` contains the fix.
 
 ### Provider Correlation
 
