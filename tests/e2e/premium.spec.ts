@@ -11,6 +11,8 @@ async function mockBilling(page: Page, outcome = "purchased", options: { failCus
     w.billingCustomerFails = options.failCustomer ?? false;
     w.billingWillRenew = options.willRenew ?? true;
     w.billingExpiresAt = Date.now() + 86400000;
+    w.billingCustomerDeferred = false;
+    w.billingCustomerWaiters = [];
     w.billingSupportId = supportId;
     w.billingSupportFailures = { supportInfo: options.failSupportInfo ?? false };
     w.__TAURI_INTERNALS__ = { invoke: async (command: string, args: any) => {
@@ -26,6 +28,9 @@ async function mockBilling(page: Page, outcome = "purchased", options: { failCus
         return { supportId: w.billingSupportId };
       }
       if (args.operation === "customer" && w.billingCustomerFails) throw new Error("offline");
+      if (args.operation === "customer" && w.billingCustomerDeferred) {
+        return new Promise(resolve => w.billingCustomerWaiters.push(() => resolve({ customer: customer() })));
+      }
       if (args.operation === "offers") return { offers: [
         { id: "monthly", price: "EUR 2.49", period: "month" }, { id: "annual", price: "EUR 19.99", period: "year" }
       ] };
@@ -38,6 +43,54 @@ async function mockBilling(page: Page, outcome = "purchased", options: { failCus
     } };
   }, { outcome, options, supportId });
 }
+
+test("renewal verification hides checkout, resumes the saved hand and loads offers only after confirmed expiry", async ({ page }, info) => {
+  test.setTimeout(60_000);
+  await mockBilling(page, "purchased", { active: true });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Canasta", exact: true }).click();
+  await page.getByRole("tab", { name: "Play", exact: true }).click();
+  await page.getByRole("button", { name: "Play Canasta", exact: true }).click();
+  const draw = page.getByRole("region", { name: "Canasta decisions", exact: true })
+    .getByRole("button", { name: "Draw stock", exact: true });
+  await expect(draw).toBeVisible();
+  const saved = await page.evaluate(() => localStorage.getItem("barbu.savedCanastaRun.v1"));
+  expect(saved).not.toBeNull();
+
+  for (const renewed of [true, false]) {
+    const checks = await page.evaluate(() => (window as any).billingCalls.filter((op: string) => op === "customer").length);
+    await page.evaluate(() => {
+      (window as any).billingExpiresAt = Date.now() + 2_000;
+      window.dispatchEvent(new Event("focus"));
+    });
+    await expect.poll(() => page.evaluate(() => (window as any).billingCalls.filter((op: string) => op === "customer").length))
+      .toBe(checks + 1);
+    await page.evaluate(() => { (window as any).billingCustomerDeferred = true; });
+    await expect(page.getByRole("heading", { name: "Checking Premium access", exact: true })).toBeVisible({ timeout: 7_000 });
+    await expect.poll(() => page.evaluate(() => (window as any).billingCustomerWaiters.length)).toBe(1);
+    await expect(page.getByRole("button", { name: /^Subscribe for/ })).toHaveCount(0);
+    expect(await page.evaluate(() => localStorage.getItem("barbu.savedCanastaRun.v1"))).toBe(saved);
+    if (renewed) await page.screenshot({ path: info.outputPath("renewal-checking.png"), fullPage: true });
+
+    await page.evaluate(renewed => {
+      const w = window as any;
+      w.billingActive = renewed;
+      w.billingWillRenew = renewed;
+      w.billingExpiresAt = Date.now() + 300_000;
+      w.billingCustomerDeferred = false;
+      w.billingCustomerWaiters.splice(0).forEach((finish: () => void) => finish());
+    }, renewed);
+    if (renewed) {
+      await expect(draw).toBeVisible();
+      await page.screenshot({ path: info.outputPath("renewal-recovered.png") });
+    } else {
+      await expect(page.getByRole("button", { name: "Subscribe for EUR 2.49 / month", exact: true })).toBeVisible();
+      await page.screenshot({ path: info.outputPath("expiry-confirmed.png"), fullPage: true });
+    }
+    expect(await page.evaluate(() => localStorage.getItem("barbu.savedCanastaRun.v1"))).toBe(saved);
+  }
+  expect(await page.evaluate(() => (window as any).billingCalls.includes("purchase"))).toBe(false);
+});
 
 for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { width: 820, height: 1180 }]) {
   test(`Premium purchase, expiry and restore preserve Canasta at ${viewport.width}x${viewport.height}`, async ({ page }, testInfo) => {

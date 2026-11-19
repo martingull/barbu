@@ -156,6 +156,126 @@ test("failed startup verification cannot be bypassed by loading offers or restar
   expect(get(restarted.feature).verificationNeeded).toBe(true);
 });
 
+test("a paid-period boundary requires fresh verification instead of inviting another purchase", async () => {
+  const expiresAt = now + 1_000;
+  const h = harness({ customer: { customer: { ...active, expiresAt } } });
+  await h.feature.initialize();
+  await h.feature.loadOffers();
+  let renew!: (value: unknown) => void;
+  h.responses.customer = new Promise(resolve => { renew = resolve; });
+  h.advance(expiresAt);
+  h.feature.tick();
+  expect(get(h.feature).active).toBe(false);
+  expect(get(h.feature).verificationNeeded).toBe(true);
+  await h.feature.purchase("monthly");
+  expect(h.calls).not.toContain("purchase");
+  expect(h.calls.filter(call => call === "customer")).toHaveLength(2);
+  renew({ customer: { ...active, checkedAt: expiresAt, expiresAt: expiresAt + 300_000 } });
+  await expect.poll(() => get(h.feature).active).toBe(true);
+  expect(get(h.feature).verificationNeeded).toBe(false);
+});
+
+test("period checks are bounded, reject stale renewal responses and leave manual recovery available", async () => {
+  const expiresAt = now + 1_000;
+  const h = harness({ customer: { customer: { ...active, expiresAt } } });
+  await h.feature.initialize();
+  await h.feature.loadOffers();
+  h.responses.customer = new Error("offline provider details");
+  h.advance(expiresAt);
+  h.feature.tick();
+  await expect.poll(() => get(h.feature).busy).toBe(false);
+  expect(get(h.feature).verificationNeeded).toBe(true);
+  for (let i = 0; i < 20; i++) h.feature.tick();
+  expect(h.calls.filter(call => call === "customer")).toHaveLength(2);
+  h.responses.customer = { customer: { ...active, checkedAt: now - 1, expiresAt: expiresAt + 300_000 } };
+  h.advance(expiresAt + 5_000);
+  h.feature.tick();
+  await expect.poll(() => get(h.feature).busy).toBe(false);
+  expect(get(h.feature).active).toBe(false);
+  expect(get(h.feature).verificationNeeded).toBe(true);
+  h.advance(expiresAt + 10_000);
+  h.feature.tick();
+  await expect.poll(() => get(h.feature).busy).toBe(false);
+  h.advance(expiresAt + 30_000);
+  for (let i = 0; i < 20; i++) h.feature.tick();
+  expect(h.calls.filter(call => call === "customer")).toHaveLength(4);
+  await h.feature.purchase("monthly");
+  expect(h.calls).not.toContain("purchase");
+  h.responses.customer = { customer: { ...active, checkedAt: expiresAt + 30_000, expiresAt: expiresAt + 300_000 } };
+  await h.feature.refresh();
+  expect(get(h.feature).active).toBe(true);
+  h.responses.customer = { customer: { ...inactive, checkedAt: expiresAt + 300_000 } };
+  h.advance(expiresAt + 300_000);
+  h.feature.tick();
+  await expect.poll(() => get(h.feature).customer?.active).toBe(false);
+  expect(get(h.feature).verificationNeeded).toBe(false);
+});
+
+test("an inactive entitlement still set to renew is unresolved, not a new checkout invitation", async () => {
+  const expiresAt = now + 1_000;
+  const h = harness({ customer: { customer: { ...active, expiresAt } } });
+  await h.feature.initialize();
+  await h.feature.loadOffers();
+  h.responses.customer = { customer: { ...active, active: false, expiresAt, checkedAt: expiresAt } };
+  h.advance(expiresAt);
+  h.feature.tick();
+  await expect.poll(() => get(h.feature).busy).toBe(false);
+  expect(get(h.feature).customer?.active).toBe(false);
+  expect(get(h.feature).active).toBe(false);
+  expect(get(h.feature).verificationNeeded).toBe(true);
+  await h.feature.purchase("monthly");
+  expect(h.calls).not.toContain("purchase");
+  h.responses.customer = { customer: { ...active, checkedAt: expiresAt + 5_000, expiresAt: expiresAt + 300_000 } };
+  h.advance(expiresAt + 5_000);
+  h.feature.tick();
+  await expect.poll(() => get(h.feature).active).toBe(true);
+  expect(get(h.feature).verificationNeeded).toBe(false);
+});
+
+test("confirmed expiry loads offers after verification, including when renewal was cancelled", async () => {
+  for (const willRenew of [true, false]) {
+    const expiresAt = now + 1_000;
+    const h = harness({ customer: { customer: { ...active, expiresAt, willRenew } } });
+    await h.feature.initialize();
+    let finish!: (value: unknown) => void;
+    h.responses.customer = new Promise(resolve => { finish = resolve; });
+    h.advance(expiresAt);
+    h.feature.tick();
+    const loadingOffers = h.feature.loadOffers();
+    expect(get(h.feature).verificationNeeded).toBe(true);
+    expect(h.calls).not.toContain("offers");
+    finish({ customer: { ...inactive, checkedAt: expiresAt } });
+    await loadingOffers;
+    expect(get(h.feature).active).toBe(false);
+    expect(get(h.feature).verificationNeeded).toBe(false);
+    expect(get(h.feature).offers).toEqual(offers);
+    const checks = h.calls.length;
+    h.feature.tick();
+    expect(h.calls).toHaveLength(checks);
+    await h.feature.purchase("monthly");
+    expect(h.calls.filter(call => call === "purchase")).toHaveLength(1);
+  }
+});
+
+test("an expired-period check waits for the next tick if another native operation is busy", async () => {
+  const expiresAt = now + 1_000;
+  const h = harness({ customer: { customer: { ...active, expiresAt } } });
+  await h.feature.initialize();
+  let finish!: (value: unknown) => void;
+  h.responses.supportInfo = new Promise(resolve => { finish = resolve; });
+  const support = h.feature.loadSupportInfo();
+  h.responses.customer = { customer: { ...active, checkedAt: expiresAt, expiresAt: expiresAt + 300_000 } };
+  h.advance(expiresAt);
+  h.feature.tick();
+  expect(get(h.feature).verificationNeeded).toBe(true);
+  expect(h.calls.filter(call => call === "customer")).toHaveLength(1);
+  finish({ supportId });
+  await support;
+  h.feature.tick();
+  await expect.poll(() => get(h.feature).active).toBe(true);
+  expect(h.calls.filter(call => call === "customer")).toHaveLength(2);
+});
+
 test("a failed refresh keeps bounded access but never treats unknown access as an invitation to buy", async () => {
   const h = harness({ customer: { customer: active } });
   await h.feature.initialize();

@@ -37,8 +37,16 @@ export function createPremiumFeature(adapter: BillingAdapter, now = Date.now) {
     supportId: null, supportMessage: "", supportError: "" };
   const store = writable(state);
   let initialization: Promise<void> | undefined;
+  let operationFinished = Promise.resolve();
   let verificationFailed = false;
-  const needsVerification = () => state.available && (verificationFailed || !hasRecentPremiumVerification(state.customer, now()));
+  let periodCheck: { expiresAt: number; attempts: number; nextAt: number } | undefined;
+  const endedPaidPeriod = () => {
+    const snapshot = state.customer;
+    return snapshot && (snapshot.active || snapshot.willRenew) && snapshot.expiresAt !== null
+      && now() >= snapshot.expiresAt ? snapshot.expiresAt : null;
+  };
+  const needsVerification = () => state.available && (verificationFailed || endedPaidPeriod() !== null
+    || !hasRecentPremiumVerification(state.customer, now()));
   function update(change: Partial<State> = {}) {
     state = { ...state, ...change };
     state.active = hasPremiumAccess(state.customer, now());
@@ -58,6 +66,8 @@ export function createPremiumFeature(adapter: BillingAdapter, now = Date.now) {
     update();
     if (operation === "purchase" && (!state.purchasesEnabled || state.active || state.verificationNeeded || !state.offers.some(offer => offer.id === packageId))) return;
     const supportOperation = operation === "supportInfo" || operation === "copySupportId" || operation === "support";
+    let finish!: () => void;
+    operationFinished = new Promise<void>(resolve => { finish = resolve; });
     update({ busy: true, ...(supportOperation ? { supportMessage: "", supportError: "" }
       : { error: "", ...(operation === "customer" ? {} : { message: "" }) }) });
     try {
@@ -101,7 +111,7 @@ export function createPremiumFeature(adapter: BillingAdapter, now = Date.now) {
           : operation === "manage" ? "Could not open Google Play. You can manage or cancel your subscription in Play Store > Payments and subscriptions > Subscriptions."
           : operation === "terms" || operation === "privacy" ? "Could not open your browser. Please try again."
           : "Could not load the purchase service. Please reconnect and try again." });
-    } finally { update({ busy: false }); }
+    } finally { update({ busy: false }); finish(); }
   }
   return {
     subscribe: store.subscribe,
@@ -115,7 +125,7 @@ export function createPremiumFeature(adapter: BillingAdapter, now = Date.now) {
       if (!state.supportId) await run("supportInfo");
       await run("customer");
     },
-    async loadOffers() { await initialization; await run("offers"); },
+    async loadOffers() { await initialization; await operationFinished; await run("offers"); },
     purchase: (id: string) => run("purchase", id),
     restore: () => run("restore"),
     manage: () => run("manage"),
@@ -126,6 +136,15 @@ export function createPremiumFeature(adapter: BillingAdapter, now = Date.now) {
     tick() {
       if (state.active !== hasPremiumAccess(state.customer, now())
         || state.verificationNeeded !== needsVerification()) update();
+      const expiresAt = endedPaidPeriod();
+      if (!state.available || expiresAt === null) return;
+      if (periodCheck?.expiresAt !== expiresAt) periodCheck = { expiresAt, attempts: 0, nextAt: now() };
+      // Recheck the ended snapshot immediately, without flooding a delayed provider.
+      if (!state.busy && periodCheck.attempts < 3 && now() >= periodCheck.nextAt) {
+        periodCheck.attempts++;
+        periodCheck.nextAt = now() + 5_000;
+        void run("customer");
+      }
     }
   };
 }
