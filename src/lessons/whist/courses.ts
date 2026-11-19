@@ -5,17 +5,17 @@ export const whistCourses: CourseContent[] = [
     id: "whist-object",
     game: "whist",
     pathStepId: "whist-object",
-    practiceTarget: { kind: "practice", game: "whist", action: "follow" },
+    practiceTarget: { kind: "practice", game: "whist", action: "object" },
     contract: "Whist",
     title: "Win tricks together",
     concept: {
       heading: "Whist is partnership trick-taking.",
       body:
-        "You and Barbu sit opposite each other, against Left and Right. Each player receives thirteen cards. Play goes clockwise: the player on the dealer's left opens, then each trick winner leads next. There is no bidding.",
+        "You and Barbu sit opposite each other, against Left and Right. One card from each player makes a trick. The winner takes all four cards for their partnership and leads next. This is classic Whist: thirteen cards each, no bidding, and trump set by the dealer's last card.",
       points: [
         { marker: "1", text: "Read the table as two sides: You + Barbu against Left + Right." },
         { marker: "2", text: "Follow suit first. The highest trump wins; otherwise the highest card of the led suit wins." },
-        { marker: "3", text: "Seven tricks is the first point. The rest are extra odd tricks." }
+        { marker: "3", text: "The player left of the dealer opens. After that, the trick winner leads next, not the next seat clockwise." }
       ]
     },
     example: {
@@ -38,11 +38,11 @@ export const whistCourses: CourseContent[] = [
     review: {
       heading: "Whist starts with partnership awareness.",
       body:
-        "You practiced reading the current winner as a partnership result, not just as an individual trick. That is the table habit behind the rest of Whist.",
+        "You identified the winning card, the partnership taking the trick and the next leader. A high card from a different plain suit cannot win, but even a small trump can.",
       points: [
         { marker: "OK", text: "You and Barbu score together." },
-        { marker: "OK", text: "Partner winning can make a low card correct." },
-        { marker: "OK", text: "Odd tricks are tricks above six." }
+        { marker: "OK", text: "Highest trump wins; without trump, highest led suit wins." },
+        { marker: "OK", text: "The winner leads next. Follow suit is your next lesson." }
       ]
     }
   },
@@ -175,7 +175,7 @@ export const whistCourses: CourseContent[] = [
       points: [
         { marker: "OK", text: "Third hand high is about partnership control." },
         { marker: "OK", text: "Do not fight Barbu for the same trick." },
-        { marker: "OK", text: "Win when opponents are currently ahead." }
+        { marker: "OK", text: "In third hand, allow for the opponent still to play; the current winner is not always safe." }
       ]
     }
   },
@@ -279,7 +279,7 @@ export const whistCourses: CourseContent[] = [
     concept: {
       heading: "Only tricks above six score.",
       body:
-        "After all thirteen tricks, only the side with more than six scores: seven tricks earns one point, eight earns two, and so on. Points accumulate across deals until a side reaches five or more. Honours are not scored at this table.",
+        "After all thirteen tricks, only the side with more than six scores: seven tricks earns one point, eight earns two, and so on. An 8-5 result scores 2-0, not 8-5 points. Add those points to earlier deals until a side reaches five or more. Honours are not scored at this table.",
       points: [
         { marker: "1", text: "Count your partnership's tricks." },
         { marker: "2", text: "Subtract six from the winning side's trick count." },
@@ -306,7 +306,7 @@ export const whistCourses: CourseContent[] = [
     review: {
       heading: "Odd tricks explain why one trick can matter.",
       body:
-        "You practiced seeing the scoring threshold, not just the current trick. A seventh trick changes the score; a sixth trick does not.",
+        "A seventh trick earns the first point; the completed hand decides the final points. If your side starts on 3 points and wins eight tricks, add 2 to reach 5 and win the game. In a rubber that is one game won, not five games.",
       points: [
         { marker: "OK", text: "Six tricks is the baseline." },
         { marker: "OK", text: "Seven tricks scores one." },

@@ -2,11 +2,12 @@ import { standardDeck } from "../../domain/deck";
 import { legalCards, trickWinner } from "../../domain/trickTakingRules";
 import { whistOddTricksForSide } from "../../domain/whistScoring";
 import type { Seat, Suit } from "../../domain/types";
-import type { WhistPracticeAction } from "../../games/whist";
+import type { WhistLearnPathAction, WhistPracticeAction } from "../../games/whist";
 import { formatCardLabel, formatCardList } from "../../presentation/cardDisplay";
 import { scoreSeatLabel } from "../../presentation/scorePresentation";
 import { drillTableCards, type DrillStep } from "../drillDecision";
 import { teachingStages } from "../learningPresentation";
+import { whistFoundationSteps } from "./foundations";
 import { whistFollowSuitDrillPool, whistTrumpOrDiscardDrillPool, whistThirdHandHighDrillPool,
   whistReturnPartnerSuitDrillPool, whistOpeningLeadLessonPool, whistOddTrickDrillPool } from "./exercises";
 
@@ -21,7 +22,9 @@ const principles = {
   return: "Partner's earlier lead can invite a suit back. Consider returning it, but reconsider when shown voids or exhausted winners make it unhelpful.",
   odd: "Only tricks above six score: seven earns one point, eight earns two. Five points wins a game; two games wins a rubber."
 };
-export const whistTakeaway = (action: string) => principles[action as WhistPracticeAction] ?? principles.follow;
+export const whistTakeaway = (action: string) => action === "object"
+  ? "The winner takes the trick for their partnership and leads next. Trump wins first; without trump, compare only the suit led."
+  : principles[action as WhistPracticeAction] ?? principles.follow;
 
 type Companion = { hand: string; table: string; after?: string; good: string; trump: Suit; prompt: string; explanation: string; playerTricksBefore?: number };
 const companions: Record<WhistPracticeAction, Companion[]> = {
@@ -102,7 +105,8 @@ function present(step: WhistStep, topic: WhistPracticeAction): WhistStep {
     return [card.id, { label: "Whist decision breakdown", rows }];
   })) };
 }
-export function whistLearningSteps(topic: WhistPracticeAction): DrillStep[] {
+export function whistLearningSteps(topic: WhistLearnPathAction): DrillStep[] {
+  if (topic === "object") return whistFoundationSteps();
   return pools[topic].map((original, index) => {
     const step = present(original, topic);
     const answer = step.trick.hand.find(card => step.trick.cardOutcomes?.[card.id] === "good")!;

@@ -3,7 +3,7 @@
   import PlayTabPanel from "../../components/PlayTabPanel.svelte";
   import WhistHandView from "./WhistHandView.svelte";
   import WhistGuidedHand from "./WhistGuidedHand.svelte";
-  import { whistDef, type WhistPracticeAction } from "../../games/whist";
+  import { whistDef, type WhistLearnPathAction } from "../../games/whist";
   import { whistLearningSteps, whistTakeaway } from "../../lessons/whist/learning";
   import { savedWhistRunSummary } from "../../persistence/whistSave";
   import type { FeatureServices } from "../featureServices";
@@ -14,8 +14,8 @@
   let guidedSeed = $state<number | null>(null);
   $effect(() => { services.onSurfaceChange(guidedSeed !== null || $feature.view === "hand" || learningFixed); });
   function endGuidedHand(tab: "learn" | "play") { guidedSeed = null; learningFixed = false; feature.openTable(tab); }
-  const names: Record<WhistPracticeAction, string> = {
-    lead: "opening leads", follow: "follow suit", trump: "trump or discard", third: "third hand high",
+  const names: Record<WhistLearnPathAction, string> = {
+    object: "win tricks together", lead: "opening leads", follow: "follow suit", trump: "trump or discard", third: "third hand high",
     return: "return partner's suit", odd: "count odd tricks"
   };
 </script>
@@ -30,8 +30,8 @@
   <GameLearning {...services} definition={whistDef} gameName="Whist" tab={$feature.tab}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
     onGuidedPlay={() => { guidedSeed = services.nextSeed(); }}
-    loadExercise={action => whistLearningSteps(action as WhistPracticeAction)}
-    exerciseTitle={action => `Whist practice: ${names[action as WhistPracticeAction]}`} drillTitle={() => "Whist lesson"} drillEyebrow="Whist"
+    loadExercise={action => whistLearningSteps(action as WhistLearnPathAction)}
+    exerciseTitle={action => `Whist practice: ${names[action as WhistLearnPathAction]}`} drillTitle={() => "Whist lesson"} drillEyebrow="Whist"
     resultMessage={(_clean, action) => whistTakeaway(action)}>
     {#snippet play()}
       <PlayTabPanel table={whistDef.table} {...whistDef.playTabConfig}

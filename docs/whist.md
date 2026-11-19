@@ -33,11 +33,19 @@ remain necessary before making claims about opponent strength.
 - Table metadata and learning path: `src/games/whist.ts` and the shared table factory.
 - Authored decisions: `src/lessons/whist/exercises.ts`; concepts and examples: `src/lessons/whist/courses.ts`.
   Learn covers the same clockwise deal/play, exposed trump, five-point games,
-  honours-off scoring and optional rubber as Play. Tests check all 18 authored
+  honours-off scoring and optional rubber as Play. Tests check all 18 tactical
   decisions against the public-information policy and complete all seven lessons.
+- Foundations: `src/lessons/whist/foundations.ts` gives the first lesson three
+  distinct winner-identification positions, not a repeat of Follow suit. Learners
+  identify the winning card, its partnership and the next leader, including a
+  small trump beating an ace and an off-suit ace losing. The shared winner rule
+  grades each answer; it never plays the chosen answer as a fifth card. One fresh
+  companion per question covers a missed goal, and decision review shows only the
+  original four-card trick. The existing `whist-object` progress key is preserved.
 - Shared learning adapter: `src/lessons/whist/learning.ts`. Each three-decision
   topic follows worked, supported and independent stages, with one fresh
-  reinforcement per missed decision (18 base positions plus 18 follow-ups).
+  reinforcement per missed decision (21 base positions plus 21 follow-ups across
+  seven topics, including the foundations).
   Opening leads and suit returns identify a plan rather than showing fabricated
   responses to a different lead. The old standalone opening-lead controller is
   removed; both Learn entry points now use the same feedback and attempt evidence.
@@ -46,6 +54,11 @@ remain necessary before making claims about opponent strength.
   play automatically. A recap shows actual tricks and points above six, including
   the honours-off and single-game/rubber distinction. Replay repeats the same deal;
   exiting never replaces a match save or completes a lesson.
+- Club preparation: Game rules names classic partnership Whist explicitly and
+  explains what to ask an organiser about trumps, deals, scoring and movement.
+  Whist-drive arrangements and Bid/Solo Whist are distinguished from this table,
+  not advertised as implemented formats. Scoring copy includes an 8-5 trick
+  result scoring 2-0 and how those points accumulate towards a five-point game.
 - Common tactical and scoring fixtures: `tests/fixtures/whist-*.json`.
 - Domain tests cover golden policy/scoring fixtures, seeded full deals,
   hidden-hand independence, dealer metadata, native-save compatibility and replay.
@@ -60,6 +73,21 @@ the dealer clockwise, including between rubber games.
 
 Legacy native and current TypeScript shuffles differ. Frozen native-save
 snapshots check compatibility without retaining a second engine.
+
+The November 19 content pass keeps the normal session, opponent policy, save
+schema, seven progress keys and shared responsive Learn/Play surfaces unchanged.
+It does not reset completed lessons. Use Learn -> Win tricks together -> Try
+cards to revisit the new foundation decisions.
+
+Verification for that pass: `task domain:test` (290 passed), `task build`, and
+the Whist learning, Play, feature-isolation and native-runtime browser files on
+Galaxy S9 / Chromium and iPhone XR / WebKit (38 passed). Screenshots of the new
+lesson at 320/360 pixels and the club-format reference were visually inspected.
+The native-runtime fixture explicitly supplies disabled billing availability;
+it still rejects any Whist gameplay command routed through Tauri. No signed
+device build was made for this content pass. The previously prepared Android
+bundle `1000011` does not include these later edits; preserve its artifacts rather
+than relabelling them as the latest source.
 
 Run `task domain:test`, `task ui:test`, `task build`,
 and `task tauri:check`. Browser testing does not replace a signed

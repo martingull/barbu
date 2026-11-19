@@ -3,13 +3,72 @@ import { createWhistSession } from "../../src/domain/whistSession";
 import { saveWhistSession, whistSaveKey } from "../../src/persistence/whistSave";
 import { whistLearningSteps } from "../../src/lessons/whist/learning";
 import { whistCourses } from "../../src/lessons/whist/courses";
-import type { WhistPracticeAction } from "../../src/games/whist";
+import type { WhistLearnPathAction } from "../../src/games/whist";
 
 async function learn(page: Page) {
   await page.goto("/");
   await page.getByRole("button", { name: "Open Whist", exact: true }).click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
 }
+
+for (const width of [320, 360]) {
+  test(`Whist foundations teach winning sides and next leaders without changing a saved game at ${width}px`, async ({ page }, info) => {
+    await page.setViewportSize({ width, height: width === 320 ? 568 : 740 });
+    const errors: string[] = [];
+    page.on("pageerror", error => errors.push(error.message));
+    const saved = JSON.stringify(saveWhistSession(createWhistSession(8, "rubber"), "2026-11-19"));
+    await page.addInitScript(({ key, saved }) => localStorage.setItem(key, saved), { key: whistSaveKey, saved });
+    await learn(page);
+    await page.getByRole("button", { name: /^1 .*Win tricks together/ }).click();
+    await expect(page.getByLabel("Whist course content")).toContainText("classic Whist");
+    await page.getByRole("button", { name: "See example", exact: true }).click();
+    await page.getByRole("button", { name: "Try cards", exact: true }).click();
+    const steps = whistLearningSteps("object");
+    const table = page.getByLabel("Drill card table", { exact: true });
+    for (const [index, step] of [...steps, steps[2].followUp!].entries()) {
+      await expect(table.locator("img")).toHaveCount(4);
+      const before = await table.innerHTML();
+      const card = index === 2 ? step.trick.hand.find(card => card.id === "AH")!
+        : step.trick.hand.find(card => step.trick.cardOutcomes[card.id] === "good")!;
+      await page.getByLabel("Which card won?", { exact: true }).getByRole("button", { name: `${card.rank} ${card.suit}`, exact: true }).click();
+      await page.getByRole("button", { name: "Check answer", exact: true }).click();
+      expect(await table.innerHTML()).toBe(before);
+      await expect(page.getByLabel("Whist decision breakdown")).toContainText("Next lead");
+      await expect(page.getByLabel("Whist decision breakdown")).toContainText("Trick for");
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      const next = page.getByRole("button", { name: index === 2 ? "Try another example" : index === 3 ? "Finish topic" : "Next decision", exact: true });
+      await expect(next).toBeInViewport({ ratio: 1 });
+      if (index === 0) await page.screenshot({ path: info.outputPath("whist-foundation-feedback.png") });
+      await next.click();
+    }
+    await expect(page.getByRole("status")).toHaveText("Topic complete.");
+    await page.getByText("Review decisions", { exact: true }).click();
+    await page.locator(".decision-review summary").first().click();
+    const review = page.getByRole("region", { name: "Decision 1 review", exact: true });
+    await expect(review.locator("img")).toHaveCount(4);
+    await expect(review).not.toContainText("Your hand before your choice");
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem("barbu.courseProgress.v1")!)))
+      .toEqual({ "whist-object": true });
+    const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("barbu.learningEvidence.v1")!));
+    expect(evidence.skills["whist-object"]).toMatchObject({ total: 4, correct: 3, attempts: 1 });
+    expect(await page.evaluate(key => localStorage.getItem(key), whistSaveKey)).toBe(saved);
+    await page.getByRole("button", { name: "Next lesson", exact: true }).click();
+    await expect(page.getByLabel("Drill decision", { exact: true })).toContainText("You still have clubs");
+    await expect(page.getByLabel("Your drill hand", { exact: true }).getByRole("button")).toHaveCount(3);
+    expect(errors).toEqual([]);
+  });
+}
+
+test("Whist rules explain the club format rather than promising whist-drive scoring", async ({ page }, info) => {
+  await learn(page);
+  await page.getByRole("button", { name: /^Game rules Read the rules/ }).click();
+  await expect(page.getByText("Before Playing At A Club", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Ask how trumps are chosen/)).toContainText("fixed number of deals");
+  await expect(page.getByText(/Ask how trumps are chosen/)).toContainText("Bid Whist and Solo Whist are different games");
+  await page.locator("article").filter({ hasText: "Before Playing At A Club" })
+    .screenshot({ path: info.outputPath("whist-club-rules.png") });
+});
+
 for (const size of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { width: 820, height: 1180 }]) {
   test(`guided Whist completes with stable geometry at ${size.width}x${size.height}`, async ({ page }, info) => {
     test.setTimeout(60_000);
@@ -118,10 +177,10 @@ test("all seven Whist courses retain completion keys and finish at the shared gu
     await page.getByRole("button", { name: new RegExp(`^${i + 1} .*${course.title}`) }).click();
     await page.getByRole("button", { name: "See example", exact: true }).click();
     await page.getByRole("button", { name: "Try cards", exact: true }).click();
-    const action = course.practiceTarget.kind === "practice" ? course.practiceTarget.action as WhistPracticeAction : "follow";
+    const action = course.practiceTarget.kind === "practice" ? course.practiceTarget.action as WhistLearnPathAction : "follow";
     for (const [index, step] of whistLearningSteps(action).entries()) {
       const card = step.trick.hand.find(card => step.trick.cardOutcomes?.[card.id] === "good")!;
-      await page.getByLabel("Your drill hand").getByRole("button", { name: `${card.rank} ${card.suit}`, exact: true }).click();
+      await page.getByLabel(step.handLabel ?? "Your drill hand", { exact: true }).getByRole("button", { name: `${card.rank} ${card.suit}`, exact: true }).click();
       await page.getByRole("button", { name: "Check answer", exact: true }).click();
       await page.getByRole("button", { name: index === 2 ? "Finish topic" : "Next decision", exact: true }).click();
     }

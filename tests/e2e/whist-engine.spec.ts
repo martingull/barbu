@@ -10,7 +10,9 @@ async function mockNativeRuntime(page: Page) {
       structuredClone: undefined,
       nativeCommands: [] as string[],
       __TAURI_INTERNALS__: {
-        invoke: async (command: string) => {
+        invoke: async (command: string, args: { operation?: string }) => {
+          if (command === "plugin:barbu-purchases|request" && args.operation === "availability")
+            return { available: false, purchasesEnabled: false };
           (window as unknown as { nativeCommands: string[] }).nativeCommands.push(command);
           throw new Error(`Native command must not be needed by Whist: ${command}`);
         }

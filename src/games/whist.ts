@@ -23,19 +23,20 @@ export const whistDef: GameDefinition<WhistLearnPathAction | WhistPracticeAction
       progressAriaLabel: "Whist course progress",
       nextSummary: "Open a compact Whist decision, then repeat the same habit in practice.",
       completeSummary: "You have tried the first Whist habits: partnerships, trumps, suit invites, and odd tricks.",
+      guidedHandGoal: "Practise a classic Whist deal: check trump, follow suit, support Barbu and count your side's tricks above six.",
     },
     tabIntros: {
       learn: {
         eyebrow: "Learn",
         title: "Learn partnership trick play.",
         summary:
-          "Whist teaches the partnership habits behind many later games: follow suit, manage trumps, lead strength, and read partner."
+          "Learn classic partnership Whist: no bidding, dealer's last card sets trump, and honours are not counted. Club drive formats can differ."
       },
       play: {
         eyebrow: "Play",
         title: "Play a partnership hand.",
         summary:
-          "Play You and Barbu against Left and Right with a visible trump suit, follow-suit play, and odd-trick scoring."
+          "Play classic Whist: You and Barbu against Left and Right, no bidding, trump from the dealer's last card and honours off."
       },
       perfect: {
         eyebrow: "Pro",
@@ -59,7 +60,7 @@ export const whistDef: GameDefinition<WhistLearnPathAction | WhistPracticeAction
       id: "whist-object",
       step: "Concept",
       title: "Win tricks together",
-      summary: "Whist is partnership trick-taking: you and the player opposite you score as a side.",
+      summary: "Identify the winning card, which partnership takes the trick and who leads next.",
       action: "object"
     },
     {

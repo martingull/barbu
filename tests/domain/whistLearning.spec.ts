@@ -9,11 +9,14 @@ import { legalCards, trickWinner } from "../../src/domain/trickTakingRules";
 import { standardDeck } from "../../src/domain/deck";
 import type { Card, CompletedHandTrick, Suit } from "../../src/domain/types";
 import { createGuidedHandFeature } from "../../src/features/guidedHandFeature";
+import { whistCourses } from "../../src/lessons/whist/courses";
+import { whistDef } from "../../src/games/whist";
+import { drillDecisionReview } from "../../src/lessons/decisionReview";
 
 const card = (id: string): Card => standardDeck().find(card => card.id === id)!;
 const seats = ["Tutor", "Right", "You", "Left"];
 
-test("Whist has six staged topics with distinct bounded companions, legal play and factual breakdowns", () => {
+test("Whist has six tactical topics with distinct bounded companions, legal play and factual breakdowns", () => {
   const ids: string[] = [];
   for (const topic of ["lead", "follow", "trump", "third", "return", "odd"] as const) {
     const steps = whistLearningSteps(topic);
@@ -52,6 +55,53 @@ test("Whist has six staged topics with distinct bounded companions, legal play a
   }
   expect(ids).toHaveLength(36);
   expect(new Set(ids).size).toBe(36);
+});
+
+test("Whist foundations identify real winners, partnerships and next leaders without playing a fifth card", () => {
+  const foundations = whistLearningSteps("object");
+  expect(whistCourses[0].practiceTarget).toEqual({ kind: "practice", game: "whist", action: "object" });
+  expect(whistDef.learnSteps.map(step => step.id)).toEqual(whistCourses.map(course => course.pathStepId));
+  expect(foundations.map(step => step.teaching?.stage)).toEqual(["worked", "supported", "independent"]);
+  expect(foundations[2].teaching?.guidance).toBeUndefined();
+  const winners = new Set<string>();
+  const ids = new Set<string>();
+  for (const step of foundations) {
+    expect(step.followUp?.followUp).toBeUndefined();
+    expect(step.followUp?.teaching?.stage).toBe("reinforcement");
+    for (const question of [step, step.followUp!]) {
+      ids.add(question.scenarioId!);
+      expect(question.choiceMode).toBe("identify");
+      const { hand, tableBeforeChoice: table, tableAfterChoice, legalCardIds } = question.trick;
+      expect(table).toHaveLength(4);
+      expect(tableAfterChoice).toEqual([]);
+      expect(new Set(table.map(play => play.card.id)).size).toBe(4);
+      expect(hand).toEqual(table.map(play => play.card));
+      expect(legalCardIds).toEqual(hand.map(card => card.id));
+      const trump = question.breakdownByCard![hand[0].id].rows.find(row => row.label === "Trump")!.value;
+      const suits: Record<string, Suit> = { Clubs: "C", Diamonds: "D", Hearts: "H", Spades: "S" };
+      const suit = suits[trump];
+      const winner = trickWinner(table, suit)!;
+      winners.add(winner.seat);
+      for (const choice of hand) {
+        const decision = drillDecision(question, choice);
+        expect(decision.result.clean).toBe(choice.id === winner.card.id);
+        expect(decision.result.reason).toBe("trick_winner");
+        expect(drillTableCards(question, choice)).toEqual(table);
+        const review = drillDecisionReview(question, choice);
+        expect(review.groups).toHaveLength(1);
+        expect(review.groups[0].cards).toHaveLength(4);
+        expect(review.breakdown!.rows.find(row => row.label === "Next lead")!.value)
+          .toBe(winner.seat === "Tutor" ? "Barbu" : winner.seat);
+        expect(review.breakdown!.rows.find(row => row.label === "Trick for")!.value)
+          .toBe(winner.seat === "Tutor" || winner.seat === "You" ? "You + Barbu" : "Left + Right");
+      }
+    }
+  }
+  expect(ids.size).toBe(6);
+  expect(winners).toEqual(new Set(["Tutor", "Right", "You"]));
+  const all = [...foundations, ...(["lead", "follow", "trump", "third", "return", "odd"] as const).flatMap(topic =>
+    whistLearningSteps(topic))].flatMap(step => [step.scenarioId, step.followUp!.scenarioId]);
+  expect(new Set(all).size).toBe(42);
 });
 
 test("guided Whist plays normal hands, reviews actual results and replays even after a game-winning hand", () => {

@@ -273,9 +273,9 @@ export const referenceCatalog: GameReference[] = [
     id: "whist",
     title: "Whist",
     family: "Whist",
-    baseline: "David Parlett structure, classic Whist baseline with Wikipedia cross-check",
+    baseline: "David Parlett structure, classic partnership Whist with Pagat cross-check",
     overview:
-      "Whist is a classic four-player partnership trick-taking game. Fixed partners sit opposite each other, the dealer's last card sets trump, players follow suit when able, and each partnership scores odd tricks above six.",
+      "This table teaches classic four-player partnership Whist, without bidding or honours scoring. The dealer's last card sets trump. Partners sit opposite, follow suit when able and score tricks above six. A club's whist-drive format may use different trump and scoring arrangements.",
     sections: [
       {
         id: "object",
@@ -343,6 +343,17 @@ export const referenceCatalog: GameReference[] = [
         ]
       },
       {
+        id: "club-formats",
+        title: "Before Playing At A Club",
+        body:
+          "Ask how trumps are chosen, how many deals are played and how scores are recorded. A whist drive may use scheduled trumps, a fixed number of deals and movement between tables, rather than our first-to-five game. Bid Whist and Solo Whist are different games, not just different scores. Learn the partnership and follow-suit habits here, then check the club's format before sitting down.",
+        facts: [
+          { label: "This table", value: "Classic partnership Whist; no bidding; honours off" },
+          { label: "Ask the organiser", value: "Trump schedule, deals, scoring and table movement" },
+          { label: "At the table", value: "Communicate through cards, not advice about concealed hands" }
+        ]
+      },
+      {
         id: "signals",
         title: "Silent Partnership Signals",
         body:
@@ -357,7 +368,7 @@ export const referenceCatalog: GameReference[] = [
         id: "app-learning",
         title: "Learning Path",
         body:
-          "The Whist lessons start with the partnership object, then move into compact table decisions. The first habits are follow suit, trump or discard, third hand high, returning partner's suit, inviting with a strong suit, and counting odd tricks.",
+          "Start by identifying the winning card, which partnership takes the trick and who leads next. Then practise following suit, trump or discard, supporting partner, opening leads, returning a suit and scoring odd tricks. A guided thirteen-trick hand brings those habits together before independent play.",
         facts: [
           { label: "First step", value: "Concept: win tricks together" },
           { label: "Practice", value: "Compact Whist habits" },

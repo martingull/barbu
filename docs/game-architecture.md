@@ -166,7 +166,10 @@ Whist, Hearts, Spades, Bridge and Barbu have isolated frontends under their resp
   courses and exercises. Its six topic pools use the shared worked/supported/
   independent sequence through `lessons/whist/learning.ts`, with eighteen distinct
   bounded follow-ups and engine-derived legality, winner and odd-trick breakdowns.
-  The seven progress keys remain; the introductory course still reuses follow suit.
+  The seven progress keys remain. `lessons/whist/foundations.ts` supplies three
+  distinct winner/partnership/next-leader questions plus three bounded companions
+  for the introductory course. They reuse `trickWinner` and shared identification
+  mode, never append a fifth card, and leave the other six topic pools unchanged.
 - `whistFeature.ts` creates an instance-local store for the match, selected card,
   mode, saving and resume. It dispatches existing domain session events rather
   than implementing rules. Storage and the seed source are injected.
