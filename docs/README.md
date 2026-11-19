@@ -24,7 +24,8 @@ release evidence have different roles; an old audit is not a current release gat
 - [Whist](whist.md)
 - [Bridge](bridge.md)
 - [Gin Rummy](gin-rummy.md)
-- [Canasta preview](canasta.md), opt-in development access; hidden in release builds
+- [Canasta](canasta.md), opt-in development preview and Android Premium candidate; not yet in public production.
+- [Euchre proposal](euchre.md): proposed rules, shared learning journey and engine boundaries; not implemented or advertised.
 
 Barbu's training boundaries and contract values are in the
 [feature map](../FEATURES.md#play-boundaries). Spades currently documents its
@@ -34,6 +35,7 @@ scope there and in the domain modules; neither has a dedicated rules runbook her
 
 - [Google Play](google-play-release.md): packaging, API safeguards and dated track status.
 - [Premium and billing](premium.md): free/premium boundaries, payment setup and launch gates.
+- [Premium production preparation](premium-launch.md): draft listing, selected markets, Samsung acceptance and private support rehearsal.
 - [App Store](app-store-release.md): iPhone packaging and last recorded submission.
 - [App Review response](app-review-response.md): submission-specific correspondence,
   not reusable claims about an untested new build.

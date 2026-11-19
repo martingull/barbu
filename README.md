@@ -6,16 +6,34 @@ Barbu helps players learn classic card games through short interactive lessons, 
 
 Barbu is available on [Google Play](https://play.google.com/store/apps/details?id=com.martin.barbu). Visit the [product website](https://siliciumveritas.com/) for a preview and an introduction to the games; its source lives in [`website/`](website/).
 
-The active catalog contains Hearts, Barbu (including Domino), Whist, Spades, Bridge, Gin Rummy and Card Counting I. Each table uses shared **Learn | Play** navigation; short exercises and guided hands belong inside Learn. [Canasta](docs/canasta.md) has an opt-in development preview with shared lessons and guided play; it remains hidden in release builds.
+The active catalog contains Hearts, Barbu (including Domino), Whist, Spades, Bridge, Gin Rummy and Card Counting I. Each table uses shared **Learn | Play** navigation; short exercises and guided hands belong inside Learn. [Canasta](docs/canasta.md) has an opt-in development preview and an Android Premium candidate with shared lessons and guided play; it remains hidden in the public production build.
 
 All gameplay runs locally in TypeScript, shared by browser and installed builds. Svelte owns presentation and interaction; Tauri packages the native application. Rust handles startup and native integrations, not rules or scoring. Saves and learning progress are local; there is no gameplay server or player login. The Android billing test integration uses Google Play and RevenueCat.
 
 The existing seven games remain free. Additional games, starting with Canasta,
 are intended for an optional Premium subscription. Billing is disabled in the
-public build; Norway-only purchase testing is in progress locally. See
-the [premium setup and release gates](docs/premium.md).
+public build. Canasta version `1.0.7` / `1000010` is published to closed testing;
+Norway, the Netherlands and the UK are selected for paid-launch preparation,
+with only Norway currently enabled for checkout. See the
+[premium setup and release gates](docs/premium.md) and
+[production preparation checklist](docs/premium-launch.md).
 
 Play is against computer opponents, not online multiplayer. **Share Barbu** shares the Google Play listing, and **Get out and play** opens an external Google Maps search for card clubs. Barbu does not operate a verified club directory, membership service or tournament booking system. Local tables may use different rules and conventions.
+
+## Device Support
+
+The current release target is **Android phones and iPhones in upright portrait**.
+Tablet and iPad layouts are deferred; no dedicated watch, TV, automotive or XR
+edition is supported. Browser gameplay and the desktop Tauri shell are development
+and testing runtimes, not separately launched consumer products.
+
+This is a support policy, not proof that every other device is blocked from
+installation. Google Play form-factor settings and Device catalog exclusions
+must be checked separately. The Android manifest keeps portrait hardware optional
+and does not advertise a TV launcher or Wear OS edition. Apple release preparation
+targets iPhone, with iPad compatibility-mode checks still required. See the
+[Android device-support gate](docs/google-play-release.md#device-support-gate)
+and [iPhone release scope](docs/app-store-release.md).
 
 ## Release Status
 

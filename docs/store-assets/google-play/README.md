@@ -2,6 +2,13 @@
 
 ## Listing Copy and Feature Graphic
 
+The optional Canasta update has a separate, unpublished
+[`listing-premium-en-GB.draft.json`](listing-premium-en-GB.draft.json).
+It is text-only and must not replace the live copy or trailer during the current
+closed-test review. The [Premium launch plan](../../premium-launch.md#listing-and-screenshots)
+defines the new screenshot sequence and required native-release provenance.
+The existing screenshots and `manifest.json` below remain unchanged.
+
 The `en-GB` title and descriptions are maintained in
 [`listing-en-GB.json`](listing-en-GB.json). The positioning is learning and
 single-player practice before playing with people in person, not online

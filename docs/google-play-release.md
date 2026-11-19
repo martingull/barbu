@@ -2,12 +2,53 @@
 
 ## Current Status
 
-**November 18 API check:** production and closed testing (`alpha`) both remain
-published at `1.0.6` / `1000007`, with no pending release lifecycle. The highest
-visible version code is `1000007`. Monthly and yearly `barbu_premium` base plans
-are active; this does not confirm merchant payout readiness. A new billing-enabled
-candidate is prepared as `1.0.7` / `1000008`. No upload or rollout has been
-performed for that candidate. The standard configuration still disables billing.
+**November 19 release checks:** the Publisher API confirms closed testing
+(`alpha`) is PUBLISHED at `1.0.7` / `1000010`, with SHA-256 matching the verified
+local bundle. Production remains PUBLISHED at `1.0.6` / `1000007`. No production
+promotion was performed. The manually replaced `1000008` draft is no longer the
+active closed-test release. Do not reuse earlier version codes.
+
+**Renewal-fix candidate:** November 19 preparation produced signed
+`1.0.7` / `1000011`, named **1.0.7 - Premium renewal fix**. Its bundle is
+`release/google-play/barbu-google-play-v1.0.7-code1000011.aab`, with verification,
+symbols, mapping and release notes using the same suffix. SHA-256:
+`77a5d064c3343a34cd46c459df67946fb0dba843aa4ac944bcd7c0eb22421dda`.
+Source fingerprint, upload certificate, bundletool validation, matching four-ABI
+symbols/R8 map, 16 KB alignment and phone manifest checks passed. Seventeen
+release-tool tests, five mobile-config tests and `tauri:check` passed; the renewal
+fix previously passed 289 domain tests and 72 Premium browser checks.
+
+The upload preview then failed reading the Android XR production release list
+with HTTP 403 **Listing releases quota exceeded**. The temporary inspection edit
+was cleaned up; no bundle was uploaded or release committed. No actual submit was
+attempted. Do not remove lifecycle safeguards or retry blindly. Upload `1000011`
+to the existing closed test manually, or retry the guarded preview when quota
+allows; then verify code/hash and review state. The candidate is not installed on
+the Samsung and is not a production release.
+
+The subsequent Whist content pass changes source after `1000011` was built.
+Those lessons are not included in that artifact, and its source fingerprint no
+longer matches the current tree. Preserve its signed bundle and verification
+record; package current source under a fresh unused code before a latest-source
+upload. Do not restamp the older artifact's verification.
+
+ADB confirmed `1000010` on the Galaxy S9, installed by `com.android.vending`.
+Martin reports a monthly license-test purchase. Active Premium, successful
+restore and Canasta entry access were observed; renewal showed a transient
+offers screen. A subsequent RevenueCat sandbox check confirmed renewal at that
+boundary and six renewals before final test expiry. Direct Play acknowledgement
+and corrected-build device verification remain open. See
+[Samsung acceptance](premium-launch.md#samsung-acceptance) for the partial evidence
+and remaining production gates. The candidate keeps portrait hardware optional
+and removes unintended TV declarations.
+The subsequent [renewal-boundary fix](premium-launch.md#renewal-boundary-fix) is
+verified in source/browser tests but is not in `1000010`. Its source fingerprint
+no longer matches the current tree. Preserve the signed bundle and verification
+record. The corrected `1000011` candidate above is built but still needs upload
+and device checks.
+Monthly and yearly `barbu_premium`
+base plans are active; this does not confirm merchant payout readiness.
+The standard configuration still disables billing.
 
 The Data safety update was accepted through the API on November 18, and a fresh
 Console CSV export verified all saved answers, including the removal of the
@@ -17,9 +58,12 @@ November 18 at 12:37 pm and **Published** at 12:52 pm. This is approval of the
 declaration, not the new billing bundle. See
 [the declaration evidence](premium.md#data-safety-update-from-the-existing-export).
 
-Bank-account verification remains pending after Martin added a payout method.
-Declaration publication is not payout verification or approval to launch paid
-production. No new bundle has been submitted at this checkpoint.
+On November 19 Martin reported that the payment went through and Play Console
+shows no warnings. Confirm Payments profile explicitly shows the bank as verified;
+the Publisher API checks above do not inspect payout, bank or tax verification.
+Neither the test purchase nor declaration publication establishes payout readiness.
+See the [Premium production preparation](premium-launch.md) for
+listing, markets and the Play-installed acceptance checks.
 
 The six pending commits were pushed through `1780a0f` on November 18. The
 canonical support, privacy and terms URLs then returned HTTP 200 and matched
@@ -29,16 +73,30 @@ then, after a successful fresh status check, HTTP 403 **Listing releases quota
 exceeded** from the beta release-list endpoint. Both temporary edits were cleaned
 up without committing. Logs are ignored under
 `release/google-play/upload-v1.0.7-code1000008-2026-11-18*.log`.
-No additional retry, review cancellation or production update was attempted.
-The bundle remains local; do not describe this as a submitted closed-test release.
-Use the manual Console upload path or wait for quota recovery, then verify the
-actual version code and lifecycle before proceeding. Avoid repeated all-track
-polling while the quota error persists.
+Martin then uploaded `1000008` manually, as verified by the bundle-only read
+above. Replace it with corrected `1000010` in the draft and verify the actual
+version code and lifecycle before proceeding. Avoid repeated all-track polling
+while the quota error persists.
+
+After Martin authorized uploading the corrected bundle, local validation passed
+again for `1000010`, including its source fingerprint, build inputs and checksum.
+A fresh full status check succeeded and confirmed that `1000008` was the only
+unsent release and the highest visible uploaded code. Submission used
+`--replace-unsent 1000008`, targeting only `alpha`, but its transactional
+pre-upload check received HTTP 403 **Listing releases quota exceeded** from
+`/tracks/android_xr%3Aproduction/releases`. The temporary edit was deleted without
+committing; no bundle upload or track update was attempted. Do not retry blindly
+or remove lifecycle checks. Martin then discarded the old draft, received the
+`1000010` path and release copy, and reported the changes in review. That report
+is not an independent code/hash check. No production promotion or price/tester
+change was performed by the agent.
 
 This remains a phone-first release. Martin deferred dedicated tablet layout
 work to a later pass. Existing wider-viewport checks are useful regression
 coverage, not a claim that Android tablets or iPads have completed a full
-usability review. No device filters or distribution countries were changed.
+usability review. TV launcher/Leanback declarations are removed from the next
+bundle, but Console device exclusions, form-factor opt-ins and distribution
+countries have not been changed or verified by this source cleanup.
 
 ### Prepared Billing Candidate
 
@@ -50,17 +108,46 @@ bundle alignment checks passed. The first verification attempt exceeded the
 under `partial-v1.0.7-code1000008/`; the corrected verifier uses the existing
 128 MB extraction allowance and reports subprocess errors explicitly.
 
-- Bundle: `release/google-play/barbu-google-play-v1.0.7-code1000008.aab`.
-- Verification: `release/google-play/verification-v1.0.7-code1000008.json`.
+- Bundle: `release/google-play/barbu-google-play-v1.0.7-code1000010.aab`.
+- Verification: `release/google-play/verification-v1.0.7-code1000010.json`.
 - Symbols and R8 mapping use the same version/code suffix in that directory.
-- SHA-256: `53632bc17859cf7f0ea6c78830405b53a27a3ada8030f63c708ec129f15b5331`.
+- SHA-256: `75cc5312daa587f41889180f6aefd7f814fa63bbd07df649324b08871d31ace4`.
 - Package `com.martin.barbu`, minimum SDK 24, target SDK 36; billing enabled only
   through the ignored override, with its hash included in verification.
-- Seventeen release-tool tests, three mobile-configuration checks, `tauri:check`
+- Seventeen release-tool tests, five mobile-configuration checks, `tauri:check`
   and the packaged frontend build passed. After purchase support was added,
   all 284 domain and 102 focused Premium/legal/privacy browser checks passed.
 
-The candidate was refreshed on November 18 with **Premium > Purchase support**:
+For the `1000009` correction, bundletool confirmed that the merged manifest
+retains activity orientation `1` (portrait) and declares portrait hardware
+`required="false"`. Inspection-only universal APKs from both bundles were
+checked with Android build-tools 36.0.0 AAPT2: `1000008` lists required and
+implied-required portrait; `1000009` lists only `uses-feature-not-required`
+for portrait. Badging output and the comparison are ignored under
+`release/google-play/portrait-feature-check-2026-11-18/`. The temporary APKs
+were not installed or distributed. The source and upload regression tests
+now guard this requirement; the signed bundle's four-ABI symbols, mapping,
+signature and 16 KB checks also passed. These are packaging checks, not a
+claim that Console has accepted the replacement or tablet usability is verified.
+
+The phone-scope cleanup then produced `1000010`, keeping `1000009` unchanged
+as earlier handoff evidence. Its merged manifest has no TV or Wear OS declarations,
+retains the ordinary phone launcher and portrait orientation, and keeps portrait
+hardware optional. Five mobile-configuration tests, 17 release-tool tests,
+`tauri:check`, the frontend build and signed four-ABI package verification passed.
+The latest lightweight bundle read still showed `1000008` as the highest uploaded
+code; no new bundle upload or Console targeting change was performed in this pass.
+See [the device support gate](#device-support-gate) for the remaining store checks.
+
+Android build-tools 36.0.0 AAPT2 also verified an inspection-only universal APK
+from `1000010`: the phone launcher is present, the TV launcher and Leanback/watch
+features are absent, and portrait appears only as an optional hardware feature.
+Badging output and results are ignored under
+`release/google-play/device-scope-check-2026-11-18/`. The temporary APK was not
+installed or distributed; Play's form-factor settings and tablet exclusions
+remain unverified. No runtime startup block or fake telephony requirement was added.
+
+The earlier `1000008` candidate was refreshed on November 18 with **Premium > Purchase support**:
 a copyable private billing reference, native email handoff and recovery when no
 mail client is available. An API status read still showed `1000007` as the
 highest uploaded code before rebuilding. The earlier `1000008` bundle and its
@@ -68,12 +155,15 @@ verification, mapping and symbols are preserved locally under
 `superseded-before-purchase-support/`; do not upload those older files. The new
 verification record captures the current uncommitted source fingerprint.
 
-The subsequent November 18 security refresh retains the same unuploaded version
+The subsequent November 18 security refresh retained the same then-unuploaded version
 and includes the targeted dependency updates described in
 [the dependency follow-up](premium.md#dependency-security-follow-up). The previous
 purchase-support bundle and its matching verification files are preserved under
-`superseded-before-dependency-security-update/`. The SHA-256 above identifies
-the security-refreshed bundle, not either earlier candidate.
+`superseded-before-dependency-security-update/`. That security-refreshed
+`1000008` bundle has SHA-256
+`53632bc17859cf7f0ea6c78830405b53a27a3ada8030f63c708ec129f15b5331`.
+It is superseded by the portrait
+hardware correction in `1000009`.
 
 After this refresh, 284 domain tests and 110 selected browser checks across
 Galaxy S9 / Chromium and iPhone XR / WebKit passed, covering the catalog, all
@@ -92,7 +182,7 @@ See [purchase support and remaining checks](premium.md#purchase-support).
 
 Physical-device installation, a Play-signed saved-game upgrade, pre-launch report
 and 16 KB runtime testing have not been performed on this candidate. Data safety
-submission 14 is published; merchant checks remain open. No candidate upload, review submission, product
+submission 14 is published; merchant checks remain open. No corrected candidate upload, review submission, product
 change, purchase or public rollout was performed. Do not infer installation or
 store availability from a successful local package verification.
 
@@ -293,9 +383,9 @@ After choosing an unused version code and checking the paid release gates:
 task play:prepare BILLING=1 \
   PREVIOUS_AAB=release/google-play/barbu-google-play-v1.0.6-code1000007.aab
 task play:upload -- --billing \
-  --bundle release/google-play/barbu-google-play-v1.0.7-code1000008.aab \
-  --verification release/google-play/verification-v1.0.7-code1000008.json \
-  --notes release/google-play/release-notes-v1.0.7-code1000008.txt \
+  --bundle release/google-play/barbu-google-play-v1.0.7-code1000010.aab \
+  --verification release/google-play/verification-v1.0.7-code1000010.json \
+  --notes release/google-play/release-notes-v1.0.7-code1000010.txt \
   --name '1.0.7 - Canasta Premium closed test'
 ```
 
@@ -343,6 +433,52 @@ not establish whether a release is available to testers.
 The September 22 migration build was installed and launched on iPhone 16.
 That does not verify the Android package or a Google Play saved-game upgrade.
 
+## Device Support Gate
+
+Official support is Android phones and iPhones in upright portrait. Tablet/iPad
+layout work is deferred; there is no supported watch, TV, automotive, desktop
+or XR edition. Browser and desktop-shell builds are development/test runtimes.
+Existing production installs are not changed by editing the next bundle.
+
+The Android source removes both `android.software.leanback` and
+`android.intent.category.LEANBACK_LAUNCHER`; the ordinary phone launcher remains.
+Source and merged-bundle checks reject these TV declarations and Wear OS feature,
+standalone-metadata and library declarations. The upload guard requires the
+verifier's `noTvOrWearDeclarations` result. This prevents accidental opt-in
+metadata, not installation by every possible unsupported device or sideloading.
+See [Android's TV launcher guidance](https://developer.android.com/training/tv/get-started/create).
+
+Before advertising phone-only store availability:
+
+- [x] Inspect Play Console > Test and release > Advanced settings > Form factors.
+      Martin's November 18, 16:04 screenshot shows **Android XR: Active** and
+      **Google Play Games on PC: Active**. Wear OS, Android TV and Automotive
+      are not listed. This is inspection evidence, not an opt-out confirmation.
+- [ ] Opt out of Google Play Games on PC using the visible **Opt out** control,
+      then verify the saved state. Do not unpublish the mobile application.
+- [ ] Open Android XR > Manage and inspect its availability controls. Do not
+      create or switch to a dedicated XR release track to try to disable XR.
+      If no availability opt-out is offered, review XR headset exclusions in
+      Device catalog instead. See
+      [Android XR distribution and device exclusions](https://developer.android.com/develop/xr/package-and-distribute).
+      A manifest change alone does not confirm the Console state. See also
+      [Google's form-factor release guidance](https://support.google.com/googleplay/android-developer/answer/13295490?hl=en).
+- [ ] Inspect Monitor and improve > Reach and devices > Device catalog. Review
+      tablet and other unsupported models and the impact of any exclusions before
+      applying them. Model exclusions need upkeep as devices are added; screen
+      flags such as `largeScreens="false"` are not a reliable tablet block.
+      See [device exclusions](https://support.google.com/googleplay/android-developer/answer/7353455?hl=en)
+      and [Play filtering](https://developer.android.com/google/play/filters).
+- [ ] Verify a Play-installed phone upgrade preserves saved games and learning,
+      and that portrait rotation, system insets and native actions still work.
+
+Do not require telephony or portrait hardware just to approximate a phone filter,
+add a density/model allowlist, or block startup based only on viewport width.
+Those approaches can exclude legitimate phones or break resizable/foldable use.
+Apple preparation already sets `TARGETED_DEVICE_FAMILY=1`; iPad compatibility
+mode can still be used during review and needs basic scrolling/control checks.
+This cleanup does not claim native tablet, remote-control or keyboard-only support.
+
 ## Repository Boundaries
 
 Native Barbu currently requests upright portrait only. The tracked manifest at
@@ -352,6 +488,14 @@ the game category: Android 16 exempts games from the default large-screen
 orientation override. Device/OEM settings and windowing modes can still override
 orientation, so this is not a universal tablet-layout guarantee. Browser previews
 remain resizable. Run `task mobile:check` and test phone rotation after shell changes.
+
+The manifest also explicitly declares `android.hardware.screen.portrait` with
+`android:required="false"`. Without this, Play infers a required hardware feature
+from the activity's orientation and can exclude devices. The declaration removes
+that install-time filter without changing the phone's upright portrait request.
+Source tests and the bundle verifier both guard this distinction; the upload
+guard requires the verifier's `optionalPortraitFeature` result. See
+[Android's feature-filter guidance](https://developer.android.com/develop/adaptive-apps/guides/increase-app-availability).
 
 Dedicated tablet/foldable/desktop layouts remain a separate validation task:
 check bounded table/hand sizes, both window orientations, resizing, system insets,

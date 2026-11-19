@@ -2,6 +2,9 @@
 
 ## Product Decision
 
+Use the [production preparation checklist](premium-launch.md) for the Samsung
+acceptance run, listing draft, launch-market proposal and support rehearsal.
+
 Keep Hearts, Barbu, Whist, Spades, Bridge, Gin Rummy and Card Counting I free,
 including their current Learn and Play content. No timers, cooldowns or ads.
 Future premium games belong to one optional Barbu Premium subscription, starting
@@ -92,23 +95,49 @@ new UI has been installed or tested on a physical device.
       **Published** at 12:52 pm. This approves the declaration, not a new bundle.
 - [ ] Confirm no additional non-provider RevenueCat integrations are enabled and
       test the support process for purchase-data requests before paid launch.
-- [ ] Approve launch countries and local prices; only Norway is currently approved.
+- [ ] Approve local launch prices and enable the selected countries. Martin selected
+      Norway, the Netherlands and the UK for preparation on November 18. Read-only
+      verification still shows only Norway enabled; see the saved regional prices
+      in [the launch proposal](premium-launch.md#launch-markets). No NL/GB activation
+      or new price approval has been performed.
 - [x] Build a fresh, signed billing candidate including the latest Canasta
-      pile-pickup explanation and purchase support: `1.0.7` / `1000008`, refreshed and package-verified
-      November 18. It is not uploaded; check remote codes again before upload.
+      pile-pickup explanation, purchase support and optional portrait hardware:
+      `1.0.7` / `1000010`, replacing the uploaded `1000008` validation failure
+      and superseding local `1000009` with the TV declarations removed.
+      The November 19 API check confirmed `1000010` published on `alpha`, with
+      the verified checksum; ADB confirmed its Play-installed Samsung copy.
       The standard public configuration remains disabled.
-- [ ] Upload the verified candidate to closed testing. The November 18 preview
+- [x] Independently confirm the replacement closed-test bundle and lifecycle.
+      November 19: `alpha` is PUBLISHED at `1000010`; the bundle checksum matches
+      local verification. Production remains published at `1000007`.
+      The earlier November 18 preview
       passed, but the first submission received HTTP 503 before upload. A fresh
       status still showed only `1000007`; the single retry then hit Google's
-      release-list quota before upload. No release changed. Manual Console
-      upload or quota recovery is needed; do not weaken the review safeguards.
+      release-list quota before upload. Martin subsequently uploaded `1000008`
+      manually, confirmed by a bundle-only API read, but reported a portrait
+      hardware validation blocker. Replace it in the draft with corrected
+      `1000010`; upload alone is not review submission or publication.
+      A subsequent authorized `1000010` submission confirmed the unsent `1000008`
+      state, but hit HTTP 403 release-list quota on the XR production track during
+      transactional checks. The edit was cleaned up before any upload or change;
+      Martin subsequently discarded that draft and reported the replacement in
+      review. The successful November 19 read resolves that earlier uncertainty;
+      it is not evidence that the Premium candidate has launched to production.
 - [ ] Install/update through a Play testing track without uninstalling. Check
-      saved hands, course progress and existing free games.
+      saved hands, course progress and existing free games. ADB confirms the
+      Play-installed `1000010` update; pre-upgrade progress continuity still needs
+      a baseline comparison.
 - [ ] Verify monthly and annual checkout using license-test payment methods,
       cancellation, pending/declined payments, renewal, refund/revocation, grace
       period/account hold and restoration after reinstall. Monthly purchase,
-      restore and cancellation/expiry have local-device evidence, not yet
-      Play-distributed candidate evidence.
+      restore and cancellation/expiry have earlier local-device evidence.
+      November 19 adds Play-candidate monthly test-purchase confirmation from
+      Martin, observed active access and successful active restore. RevenueCat's
+      matched sandbox history confirms six monthly renewals, including the
+      observed 12:11 boundary; corrected-build physical behavior still needs
+      verification after the client-side renewal fix. Annual
+      checkout, provider acknowledgement and broader lifecycle checks remain open;
+      see the [renewal-boundary observation](premium-launch.md#samsung-acceptance).
 - [ ] Check Canasta-save retention across expiry and restoration, reconnect
       behavior, subscription dates and subscription management on that candidate.
 - [ ] Walk rules -> lessons -> guided hand -> full game -> scoring -> resume on
@@ -291,9 +320,30 @@ The selected browser run initially found an outdated assertion expecting six
 Bridge lessons; it now checks the seven authored IDs, and the complete selection
 was rerun successfully. This is not the full 2,802-case browser suite.
 The local signed `1.0.7` / `1000008` candidate was rebuilt and package-verified
-with these dependencies; no upload, device installation or purchase was performed.
+with these dependencies; no API upload, device installation or purchase was performed
+in the security pass. Martin subsequently uploaded it manually. It is superseded
+by the optional-portrait hardware correction in `1000009`.
 Dedicated tablet layout work remains deferred, not certified by the existing
 wider-viewport regression checks.
+
+The subsequent portrait-hardware correction uses `1.0.7` / `1000009`, because
+the bundle-only Publisher read confirmed `1000008` was already uploaded.
+The signed replacement passed four mobile-configuration tests, 17 release-tool
+tests, `tauri:check`, a frontend build and bundle verification. AAPT2 inspection
+of universal APKs confirmed that portrait changes from an implied requirement
+in `1000008` to an optional feature in `1000009`; the phone activity still
+requests upright portrait. No replacement upload, device installation, pricing
+change or production rollout was performed. Recheck Console validation after
+replacing the draft's bundle; this does not complete the subscription tests.
+
+The subsequent phone-scope cleanup supersedes that local candidate with
+`1.0.7` / `1000010`. It removes the TV launcher/Leanback declarations and adds
+source, merged-manifest and upload checks against TV/Wear OS metadata while
+retaining the phone launcher and optional portrait hardware. Five mobile-config
+tests, 17 release-tool tests, `tauri:check`, the frontend build and package
+verification passed. Store form-factor opt-ins and device exclusions have not
+been inspected or changed; those are separate gates, not guaranteed by manifest
+cleanup. No new bundle upload, device install or purchase was performed.
 
 ## Current Evidence
 
