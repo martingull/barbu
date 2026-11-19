@@ -17,6 +17,28 @@ test("Android requests upright portrait and declares the game category", () => {
   assert.equal(execFileSync("xmllint", ["--xpath", "count(/manifest/application/activity)", manifest], { encoding: "utf8" }).trim(), "1");
 });
 
+test("Android portrait orientation does not require portrait-capable hardware", () => {
+  const feature = "/manifest/uses-feature[@*[local-name()='name']='android.hardware.screen.portrait']";
+  assert.equal(execFileSync("xmllint", ["--xpath", `count(${feature})`, manifest], { encoding: "utf8" }).trim(), "1");
+  assert.equal(androidAttribute(feature, "required"), "false");
+});
+
+test("Android keeps the phone launcher without advertising TV or Wear OS", () => {
+  const absent = [
+    "/manifest/uses-feature[@*[local-name()='name']='android.software.leanback']",
+    "/manifest/uses-feature[@*[local-name()='name']='android.software.leanback_only']",
+    "/manifest/uses-feature[@*[local-name()='name']='android.hardware.type.television']",
+    "/manifest/uses-feature[@*[local-name()='name']='android.hardware.type.watch']",
+    "/manifest/application//category[@*[local-name()='name']='android.intent.category.LEANBACK_LAUNCHER']",
+    "/manifest/application//meta-data[@*[local-name()='name']='com.google.android.wearable.standalone']",
+    "/manifest/application/uses-library[@*[local-name()='name']='com.google.android.wearable']",
+  ];
+  for (const element of absent) {
+    assert.equal(execFileSync("xmllint", ["--xpath", `count(${element})`, manifest], { encoding: "utf8" }).trim(), "0", element);
+  }
+  assert.equal(androidAttribute("/manifest/application/activity/intent-filter/category", "name"), "android.intent.category.LAUNCHER");
+});
+
 test("iOS orientation overrides exclude landscape for phones and compatibility mode", () => {
   for (const key of ["UISupportedInterfaceOrientations", "UISupportedInterfaceOrientations~ipad"]) {
     const array = `/plist/dict/key[.='${key}']/following-sibling::*[1]`;

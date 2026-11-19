@@ -10,7 +10,8 @@ import { applyBillingConfig, inspect, inspectMonetization, main, packageName, pl
 const bytes = Buffer.from("signed bundle fixture");
 const record = { package: packageName, versionName: "1.0.6", versionCode: 1000007, bytes: bytes.length,
   sha256: createHash("sha256").update(bytes).digest("hex"), sourceFingerprint: "fingerprint",
-  signatureVerified: true, bundletoolValidation: true, matchingR8Mapping: true, bundleNativeAlignment: "PAGE_ALIGNMENT_16K" };
+  signatureVerified: true, bundletoolValidation: true, matchingR8Mapping: true, bundleNativeAlignment: "PAGE_ALIGNMENT_16K",
+  optionalPortraitFeature: true, noTvOrWearDeclarations: true };
 const config = { identifier: packageName, version: "1.0.6", bundle: { android: { versionCode: 1000007 } } };
 const snapshot = () => ({ highestVisibleVersionCode: 1000006,
   tracks: [{ track: "alpha", releases: [{ versionCodes: ["1000006"], status: "completed" }] }, { track: "production" }],
@@ -21,7 +22,9 @@ test("candidate must match verified bytes, source, package, version and package 
   validateCandidate(record, bytes, config, "fingerprint", "Notes");
   for (const change of [{ package: "other.app" }, { versionName: "old" }, { versionCode: 1000006 },
     { bytes: 0 }, { sha256: "invalid" }, { sourceFingerprint: "old" }, { signatureVerified: false },
-    { bundletoolValidation: false }, { matchingR8Mapping: false }, { bundleNativeAlignment: "PAGE_ALIGNMENT_4K" }]) {
+    { bundletoolValidation: false }, { matchingR8Mapping: false }, { bundleNativeAlignment: "PAGE_ALIGNMENT_4K" },
+    { optionalPortraitFeature: false }, { optionalPortraitFeature: undefined },
+    { noTvOrWearDeclarations: false }, { noTvOrWearDeclarations: undefined }]) {
     assert.throws(() => validateCandidate({ ...record, ...change }, bytes, config, "fingerprint", "Notes"));
   }
   assert.throws(() => validateCandidate(record, bytes, config, "fingerprint", " "));

@@ -41,6 +41,19 @@ assert.equal(manifest(input, '/manifest/@android:versionCode'), String(versionCo
 assert.equal(manifest(input, '/manifest/@android:versionName'), version);
 assert.equal(manifest(input, '/manifest/@package'), 'com.martin.barbu');
 assert.equal(manifest(input, '/manifest/uses-sdk/@android:targetSdkVersion'), '36');
+assert.equal(manifest(input, '/manifest/uses-feature[@android:name="android.hardware.screen.portrait"]/@android:required'),
+  'false', 'Merged manifest must make portrait hardware optional.');
+assert.equal(manifest(input, '/manifest/application/activity/@android:screenOrientation'),
+  '1', 'Phone activity must retain upright portrait orientation.');
+const nonPhoneDeclarations = [
+  '/manifest/uses-feature[@android:name="android.software.leanback" or @android:name="android.software.leanback_only" or @android:name="android.hardware.type.television" or @android:name="android.hardware.type.watch"]/@android:name',
+  '/manifest/application//category[@android:name="android.intent.category.LEANBACK_LAUNCHER"]/@android:name',
+  '/manifest/application//meta-data[@android:name="com.google.android.wearable.standalone"]/@android:name',
+  '/manifest/application/uses-library[@android:name="com.google.android.wearable"]/@android:name',
+];
+assert.equal(manifest(input, nonPhoneDeclarations.join(' | ')), '', 'Merged manifest must not advertise TV or Wear OS.');
+assert.equal(manifest(input, '/manifest/application/activity/intent-filter/category[@android:name="android.intent.category.LAUNCHER"]/@android:name'),
+  'android.intent.category.LAUNCHER', 'Phone launcher is missing.');
 assert(!fs.existsSync(bundle), 'Refusing to overwrite an existing release bundle');
 const credentials = parseEnv(fs.readFileSync(path.join(release, 'barbu-upload-keystore-password.txt'), 'utf8'));
 assert(credentials.password && credentials.alias, 'Missing signing configuration');
@@ -111,11 +124,13 @@ const record = {
   package: manifest(bundle, '/manifest/@package'), versionName: version, versionCode,
   billingEnabled: config.plugins?.['barbu-purchases']?.purchasesEnabled === true,
   minSdk: Number(manifest(bundle, '/manifest/uses-sdk/@android:minSdkVersion')), targetSdk: 36,
+  optionalPortraitFeature: true,
+  noTvOrWearDeclarations: true,
   sourceCommit: run('git', ['rev-parse', 'HEAD']).trim(),
   sourceFingerprint: sourceDigest,
   sourceWorkingTree: run('git', ['status', '--short']), sourceDiffSha256: hash(run('git', ['diff', '--binary'])),
   sourceInputs: Object.fromEntries(['package-lock.json', 'Cargo.lock', 'src-tauri/tauri.conf.json',
-    'src-tauri/android/MainActivity.kt', 'src-tauri/gen/android/app/build.gradle.kts', 'dist/index.html',
+    'src-tauri/android/MainActivity.kt', 'src-tauri/android/AndroidManifest.xml', 'src-tauri/gen/android/app/build.gradle.kts', 'dist/index.html',
     ...(billing ? [billingConfigPath] : [])]
     .map(file => [file, fileHash(file)])),
   uploadCertificateSha256: fingerprint, signatureVerified: true, bundletoolVersion: '1.18.1',

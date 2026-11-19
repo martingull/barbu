@@ -138,6 +138,8 @@ export function validateCandidate(record, bytes, config, fingerprint, notes) {
     assert.equal(record[key], true, `Missing successful package check: ${key}`);
   }
   assert.equal(record.bundleNativeAlignment, "PAGE_ALIGNMENT_16K", "Missing 16 KB bundle alignment check.");
+  assert.equal(record.optionalPortraitFeature, true, "Missing optional portrait hardware check. Rebuild and verify the candidate.");
+  assert.equal(record.noTvOrWearDeclarations, true, "Missing phone launcher and non-phone declaration checks. Rebuild and verify the candidate.");
   assert(notes.trim() && [...notes.trim()].length <= 500, "Release notes must contain 1-500 characters.");
 }
 

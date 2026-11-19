@@ -33,7 +33,7 @@
     "targets": "all",
     "icon": ["icons/icon.png"],
     "android": {
-      "versionCode": 1000008
+      "versionCode": 1000011
     },
     "iOS": {
       "developmentTeam": "3PB43Q6B3W",
