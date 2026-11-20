@@ -41,6 +41,17 @@ Persistence depends on the domain, never on Svelte or game views. Shared compone
 and presentation helpers must not import game features; features compose them.
 Card Counting deliberately reuses the other games' feedback for its unsaved hands.
 `tests/domain/architecture.spec.js` checks these dependency boundaries.
+Shared components may use individual `@lucide/svelte/icons/*` components for UI
+icons; this does not permit domain code to depend on UI libraries. The shell and
+learning templates are also checked for game-id branches and direct imports of
+individual game definitions. Differences belong in metadata or feature adapters.
+
+`GameRegistry.register` rejects duplicate or mismatched table ids instead of
+silently replacing definitions. The table factory validates unique visible modes
+and requires the default to be available; hidden Pro metadata is never a visible
+mode. Catalog/registry coverage, activity-action uniqueness and globally unique
+course-progress keys have regression checks. These guards preserve the shared
+contracts when adding games without changing existing save/progress identifiers.
 
 `lessons/courses.ts` assembles per-game courses; it is not a place to accumulate
 new game prose. `lessons/courseTypes.ts` owns their shared structure. Generated
@@ -445,13 +456,18 @@ artwork; native code remains outside the presentation layer.
 This is an incremental frontend refactor, not another engine migration.
 All five game features and Card Counting are isolated; the shell launches them
 and provides catalog-wide services. `features/card-counting/CardCountingGame`
-uses `GameLearning`, `PlayTabPanel` and the shared flow-layout table. Its five
+uses `GameLearning`, `LearnPanel` and the shared flow-layout table. Its five
 exercises share a memory-question view and unboxed results. Pure question
 generation and exercise transitions live in `domain/cardCountingQuestions` and
 `domain/cardCountingSession`; the unused legacy practice engines were removed.
 Card Counting reuses unsaved Hearts, Whist and No Queens hands and their
 presentation helpers, never writing a saved match. It has no authored course
-completion keys. The observation warm-up uses groups of four cards, not a legal
+completion keys. Its metadata declares `availableTabs: ["learn"]`; games without
+that option retain Learn/Play. The shared shell omits a one-tab rail, and Learn
+renders grouped activities rather than inventing a lesson path or duplicating a
+Start lesson entry. Warm up contains Count trumps; Practise in a hand contains the
+four full-hand memory activities. No exercise, save, seed or completion behavior
+changes with this navigation. The observation warm-up uses groups of four cards, not a legal
 Whist deal. Recognition and boss-card questions include positive and negative
 answers derived from played history. Exhausted suits do not produce boss-card
 questions. Void spotting accepts every opponent shown void in the selected suit;

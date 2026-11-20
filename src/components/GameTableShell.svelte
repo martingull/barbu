@@ -13,6 +13,7 @@
   let { table, activeTab, onBack, onTabSelect, children }: Props = $props();
 
   let activeTabLabel = $derived(table.tabs[activeTab].label);
+  let tabs = $derived(tableTabsFor(table));
 </script>
 
 <header class="topbar table-topbar" aria-label={table.title}>
@@ -27,11 +28,12 @@
   </div>
 </header>
 
-<section class="table-room" aria-label={`${table.title} modes`}>
+<section class="table-room" class:single-mode={tabs.length === 1} aria-label={`${table.title} modes`}>
+  {#if tabs.length > 1}
   <div class="barbu-table-rail">
     <div class="barbu-mode-box">
       <div class="barbu-table-tabs" aria-label={`${table.title} sections`} role="tablist">
-        {#each tableTabsFor(table) as tab}
+        {#each tabs as tab}
           <button
             aria-controls={tab.panelId}
             aria-selected={activeTab === tab.id}
@@ -48,6 +50,11 @@
       </div>
     </div>
   </div>
+  {/if}
 
   {@render children()}
 </section>
+
+<style>
+  .table-room.single-mode { grid-template-columns: minmax(0, 1fr); }
+</style>

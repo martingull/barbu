@@ -6,6 +6,7 @@ import { createBridgeSession, transitionBridgeSession } from "../../src/domain/b
 import { saveBridgeSession } from "../../src/persistence/bridgeSave";
 import { trickTakingSeats } from "../../src/domain/trickTakingScore";
 import { whistOddProgress } from "../../src/features/whist/whistPresentation";
+import { whistLearningSteps } from "../../src/lessons/whist/learning";
 
 async function finishGuidedLesson(page: Page) {
   while (await page.getByRole("button", { name: /^(Next decision|Try another example)$/ }).isVisible()) {
@@ -722,14 +723,13 @@ test("catalog opens Barbu's table", async ({ page }, testInfo) => {
   await page.getByRole("button", { name: "Open Card Counting I" }).click();
   await expect(page.getByRole("heading", { name: "Card Counting I" })).toBeVisible();
   await expect(page.getByLabel("Card Counting I", { exact: true })).toContainText("Card skills");
-  await expect(page.getByRole("tab", { name: "Play" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("tab")).toHaveCount(0);
   await expect(page.getByLabel("Card Counting I exercises")).toContainText("Count trumps");
   await expect(page.getByLabel("Card Counting I exercises")).toContainText("Heart memory hand");
   await expect(page.getByLabel("Card Counting I exercises")).toContainText("Three amigos memory");
   await expect(page.getByLabel("Card Counting I exercises")).toContainText("Danger cards");
-  await page.getByRole("tab", { name: "Learn" }).click();
-  await expect(page.getByLabel("Card Counting I learning path")).toContainText("Count trumps");
-  await page.getByRole("tab", { name: "Play" }).click();
+  await expect(page.getByRole("region", { name: "Warm up", exact: true })).toContainText("Count trumps");
+  await expect(page.getByRole("region", { name: "Practise in a hand", exact: true }).getByRole("button")).toHaveCount(4);
   await page.getByLabel("Card Counting I exercises").getByRole("button", { name: "Count trumps" }).click();
   await expect(page.getByRole("heading", { name: "Count trumps" })).toBeVisible();
   await page.getByLabel("Count trumps", { exact: true }).getByRole("button", { name: "Table" }).click();
@@ -819,8 +819,16 @@ test("Whist learn path opens matching practice decisions", async ({ page }, test
 
   await expect(page.getByRole("heading", { name: "Whist lesson" })).toBeVisible();
   await expect(page.getByLabel("Drill progress")).toContainText("0 / 3");
-  await expect(page.getByLabel("Drill decision")).toContainText(/Follow partner's led suit|Second hand follows low|Cover when it wins/);
-  await completeVisibleDrillSession(page);
+  for (const [index, step] of whistLearningSteps("object").entries()) {
+    await expect(page.getByLabel("Drill decision")).toContainText(step.trick.title);
+    await expect(page.getByLabel("Drill card table", { exact: true }).locator("img")).toHaveCount(4);
+    const winner = step.trick.hand.find(card => step.trick.cardOutcomes[card.id] === "good")!;
+    await page.getByLabel("Which card won?", { exact: true })
+      .getByRole("button", { name: `${winner.rank} ${winner.suit}`, exact: true }).click();
+    await checkDrillAnswer(page);
+    await expect(page.getByLabel("Whist decision breakdown")).toContainText("Next lead");
+    await continueDrillFromCheckedAnswer(page, index === 2 ? "Finish topic" : "Next decision");
+  }
   await expect(page.getByRole("status")).toHaveText("Topic complete.");
   await page.getByText("Review decisions", { exact: true }).click();
   await expect(page.getByText("Whist starts with partnership awareness")).toBeVisible();
@@ -868,7 +876,8 @@ test("Whist play starts a partnership trump hand", async ({ page }, testInfo) =>
   await page.getByRole("button", { name: /Open Whist/ }).click();
   await page.getByRole("tab", { name: "Play" }).click();
 
-  await expect(page.getByRole("tabpanel", { name: "Play" })).toContainText("odd-trick scoring");
+  await expect(page.getByRole("tabpanel", { name: "Play" })).toContainText("trump from the dealer's last card and honours off");
+  await expect(page.getByRole("radio", { name: "Single game First to 5 points" })).toBeChecked();
   await page.getByRole("button", { name: "Play Whist" }).click();
 
   await expect(page.getByRole("heading", { name: "Whist hand" })).toBeVisible();
@@ -1038,7 +1047,8 @@ test("Bridge play starts from a rotating auction into a scored contract hand", a
   await page.getByRole("button", { name: /Open Bridge/ }).click();
   await page.getByRole("tab", { name: "Play" }).click();
 
-  await expect(page.getByRole("tabpanel", { name: "Play" })).toContainText("Natural bidding: five-card majors");
+  await expect(page.getByRole("tabpanel", { name: "Play" })).toContainText("Barbu Natural: five-card majors and a 15-17 1NT");
+  await expect(page.getByRole("tabpanel", { name: "Play" })).toContainText("Not Acol or complete SAYC");
   await page.getByRole("button", { name: "Play Bridge" }).click();
 
   await expect(page.getByRole("heading", { name: "Bridge auction" })).toBeVisible();
@@ -1997,7 +2007,8 @@ test("Whist reference reflects the classic partnership table", async ({ page }, 
   await page.getByLabel("Learning resources").getByRole("button", { name: "Game rules" }).click();
 
   await expect(page.getByRole("heading", { name: "Whist rules" })).toBeVisible();
-  await expect(page.getByLabel("Whist overview")).toContainText("classic four-player partnership trick-taking game");
+  await expect(page.getByLabel("Whist overview")).toContainText("classic four-player partnership Whist, without bidding or honours scoring");
+  await expect(page.getByLabel("Whist overview")).toContainText("A club's whist-drive format may use different trump and scoring arrangements");
   await expect(page.getByLabel("Whist rules sections")).toContainText("Learning Path");
   await expect(page.getByLabel("Whist rules sections")).toContainText("Single game or best-of-three rubber");
   await expect(page.getByLabel("Contract roadmap")).toHaveCount(0);

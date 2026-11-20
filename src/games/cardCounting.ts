@@ -4,15 +4,15 @@ import type { CountingExercise } from "../domain/cardCountingQuestions";
 
 export const cardCountingTable = createGameTableDefinition({
   id: "card-counting", title: "Card Counting I", family: "Card skills", referenceId: "",
-  defaultTab: "play",
+  defaultTab: "learn", availableTabs: ["learn"],
   scorecard: { label: "Memory checks", unitLabel: "Correct", objective: "Track played cards", leaderRule: "high-score" },
   learn: {
-    pathAriaLabel: "Card Counting I learning path", pathEyebrow: "Learn", pathTitle: "Memory skills",
+    pathAriaLabel: "Card Counting I exercises", pathEyebrow: "Learn", pathTitle: "Memory skills",
     progressAriaLabel: "Card Counting I progress", nextSummary: "Count one suit, then track high cards.",
     completeSummary: "Apply your memory in a full hand."
   },
   tabIntros: {
-    learn: { eyebrow: "Learn", title: "Memory skills", summary: "Track played cards through focused decisions." },
+    learn: { eyebrow: "Learn", title: "Memory skills", summary: "Start by tracking one suit. Then remember played cards while making decisions in a full hand." },
     play: { eyebrow: "Play", title: "Real hands with memory checks.", summary: "Start with Black Lady, then try trump, court-card, and danger-card tracking." },
     perfect: { eyebrow: "Compete", title: "", summary: "" }
   },
@@ -55,11 +55,14 @@ export const cardCountingExercises: { eyebrow: string; title: string; summary: s
 export const cardCountingDef: GameDefinition<CountingExercise> = {
   table: cardCountingTable,
   learnSteps: [],
-  practiceGroups: [{
-    id: "memory", ariaLabel: "Card Counting I learning path", eyebrow: "Memory", title: "Memory skills", layout: "entry-grid",
-    entries: cardCountingExercises.map(exercise => ({ id: exercise.action, label: exercise.eyebrow, title: exercise.title,
-      summary: exercise.summary, action: exercise.action, group: "memory" }))
-  }],
+  practiceGroups: [
+    { id: "warm-up", ariaLabel: "Warm up", eyebrow: "Memory", title: "Warm up", layout: "action-list",
+      entries: cardCountingExercises.filter(exercise => exercise.action === "trump-count").map(exercise => ({
+        id: exercise.action, label: exercise.eyebrow, title: exercise.title, summary: exercise.summary, action: exercise.action, group: "warm-up" })) },
+    { id: "memory-hands", ariaLabel: "Practise in a hand", eyebrow: "Memory", title: "Practise in a hand", layout: "action-list",
+      entries: cardCountingExercises.filter(exercise => exercise.action !== "trump-count").map(exercise => ({
+        id: exercise.action, label: exercise.eyebrow, title: exercise.title, summary: exercise.summary, action: exercise.action, group: "memory-hands" })) }
+  ],
   playTabConfig: { actionAriaLabel: "Card Counting I practice", groupAriaLabel: "Card Counting I exercises",
     groupEyebrow: "Memory hands", primaryLabel: "Heart memory hand" },
   proTabConfig: { featuresAriaLabel: "Card Counting pro features", headingTitle: "", headingSummary: "" }

@@ -19,10 +19,12 @@ export interface GameDefinition<TAction extends string = string> {
   };
 }
 
-class GameRegistry {
+export class GameRegistry {
   private games = new Map<string, GameDefinition<any>>();
 
   register<TAction extends string>(gameId: string, def: GameDefinition<TAction>) {
+    if (!gameId || gameId !== def.table.id) throw Error("The registry key must match the table id.");
+    if (this.games.has(gameId)) throw Error(`Game already registered: ${gameId}`);
     this.games.set(gameId, def);
   }
 

@@ -5,6 +5,43 @@ async function openCounting(page: Page) {
   await page.getByRole("button", { name: "Open Card Counting I", exact: true }).click();
 }
 
+test("Counting has one learning screen with each activity once and no artificial lesson progress", async ({ page }, info) => {
+  const preserved = { "hearts-object": true, "gin-settlement": true };
+  await page.addInitScript(progress => localStorage.setItem("barbu.courseProgress.v1", JSON.stringify(progress)), preserved);
+  await page.setViewportSize({ width: 360, height: 740 });
+  await openCounting(page);
+  await expect(page.getByRole("tablist")).toHaveCount(0);
+  await expect(page.getByRole("tab")).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Learn", exact: true })).toHaveCount(1);
+  await expect(page.getByRole("heading", { name: "Memory skills", exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Warm up", exact: true }).getByRole("button")).toHaveCount(1);
+  await expect(page.getByRole("region", { name: "Practise in a hand", exact: true }).getByRole("button")).toHaveCount(4);
+  for (const name of ["Count trumps", "Heart memory hand", "Three amigos memory", "Danger cards", "Whist memory hand"]) {
+    await expect(page.getByRole("button", { name: new RegExp(`^${name}\\b`) })).toHaveCount(1);
+  }
+  await expect(page.getByRole("button", { name: /Start lesson|Continue lesson|Go to Play|Reset lessons/ })).toHaveCount(0);
+  await expect(page.getByRole("progressbar")).toHaveCount(0);
+  const activityRows = page.locator(".activity-topic");
+  await expect(activityRows).toHaveCount(5);
+  for (const row of await activityRows.all()) {
+    const layout = await row.evaluate(button => {
+      const symbol = button.querySelector(".activity-symbol")!.getBoundingClientRect();
+      const copy = button.querySelector("span:last-child")!.getBoundingClientRect();
+      return { height: button.getBoundingClientRect().height, symbolWidth: symbol.width,
+        gap: copy.x - symbol.right, overflow: button.scrollWidth - button.clientWidth };
+    });
+    expect(layout.height).toBeGreaterThanOrEqual(44);
+    expect(layout.symbolWidth).toBe(32);
+    expect(layout.gap).toBeGreaterThanOrEqual(8);
+    expect(layout.overflow).toBeLessThanOrEqual(1);
+  }
+  await page.screenshot({ path: info.outputPath("counting-one-learning-screen.png"), fullPage: true, scale: "css" });
+  await page.reload();
+  await page.getByRole("button", { name: "Open Card Counting I", exact: true }).click();
+  await expect(page.getByRole("tab")).toHaveCount(0);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("barbu.courseProgress.v1")!))).toEqual(preserved);
+});
+
 async function checkLayout(page: Page) {
   const surface = page.locator(".counting-surface.flow-play");
   await expect(surface).toBeVisible();
@@ -34,6 +71,11 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 640 }
   test(`Counting uses shared layout at ${viewport.width}x${viewport.height}`, async ({ page }, info) => {
     await page.setViewportSize(viewport);
     await openCounting(page);
+    const room = (await page.locator(".table-room").boundingBox())!;
+    const learn = (await page.getByRole("region", { name: "Learn", exact: true }).boundingBox())!;
+    expect(Math.abs(room.width - learn.width)).toBeLessThanOrEqual(1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+    await page.screenshot({ path: info.outputPath("counting-menu.png"), fullPage: true, scale: "css" });
     for (const name of ["Heart memory hand", "Three amigos memory", "Danger cards", "Whist memory hand", "Count trumps"]) {
       await page.getByRole("button", { name: new RegExp(name) }).click();
       await checkLayout(page);
@@ -54,7 +96,8 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 640 }
       }
       await page.screenshot({ path: info.outputPath(`${name.replaceAll(" ", "-")}.png`), fullPage: true });
       await page.getByRole("button", { name: "Table", exact: true }).first().click();
-      await expect(page.getByRole("tab", { name: "Play", exact: true })).toHaveAttribute("aria-selected", "true");
+      await expect(page.getByRole("region", { name: "Learn", exact: true })).toBeVisible();
+      await expect(page.getByRole("tab")).toHaveCount(0);
     }
   });
 }
@@ -63,7 +106,6 @@ test("Warm-up replay resets answers and counts without changing the deal", async
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
   await openCounting(page);
-  await page.getByRole("tab", { name: "Learn", exact: true }).click();
   await page.getByRole("button", { name: /Count trumps/ }).click();
   const first = await page.getByLabel("Trump trick reveal").getByRole("img").evaluateAll(cards => cards.map(card => card.getAttribute("aria-label")));
   expect(first).toHaveLength(4);
@@ -86,7 +128,8 @@ test("Warm-up replay resets answers and counts without changing the deal", async
   await expect(page.locator(".contract-status")).toContainText("0 of 0");
   expect(await page.getByLabel("Trump trick reveal").getByRole("img").evaluateAll(cards => cards.map(card => card.getAttribute("aria-label")))).toEqual(first);
   await page.getByRole("button", { name: "Table", exact: true }).first().click();
-  await expect(page.getByRole("tab", { name: "Learn", exact: true })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("region", { name: "Learn", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Count trumps/ })).toHaveCount(1);
   expect(errors).toEqual([]);
 });
 

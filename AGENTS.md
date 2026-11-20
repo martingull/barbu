@@ -4,7 +4,7 @@ Guidance for coding agents working in this repository.
 
 ## Project
 
-Barbu is an iPhone-first card-game collection with Android builds and a browser development runtime. The active catalog is Hearts, Barbu, Whist, Spades, Bridge, Gin Rummy and Card Counting I. Canasta has an opt-in development preview (`VITE_CANASTA_PREVIEW=1`) and remains hidden in release builds. Hearts provides the first-use introduction; Learn and Play are the shared visible tabs.
+Barbu is an iPhone-first card-game collection with Android builds and a browser development runtime. The active catalog is Hearts, Barbu, Whist, Spades, Bridge, Gin Rummy and Card Counting I. Canasta has an opt-in development preview (`VITE_CANASTA_PREVIEW=1`) and remains hidden in release builds. Hearts provides the first-use introduction; games share Learn and Play, while skill activities can declare Learn only through the table factory.
 
 The product concept is that the player learns by sitting down against Barbu, a "King of Cards" figure who introduces games, sets contracts, reacts to play, and gradually raises the difficulty. Treat this persona as a teaching and progression device, not as an excuse to hide rules or make the interface theatrical at the cost of clarity.
 
@@ -135,10 +135,15 @@ table metadata with `createGameTableDefinition`, and register the definition in
 `src/games/index.ts`. Together these own:
 
 - catalog entries and free/pack access labels
-- the shared `Learn | Play` navigation (future Pro metadata stays hidden)
+- the shared `Learn | Play` navigation and optional `availableTabs` for single-mode skills (future Pro metadata stays hidden)
 - table title, family, reference id, scorecard direction, and default tab
 - learn path step metadata
 - practice entry and practice group metadata
+
+Register each table id once and keep it equal to the registry key. Visible tabs
+must be unique Learn/Play modes and include the default. Shared shells must not
+branch on individual game ids or import their definitions; use metadata and
+feature adapters. Architecture and registry tests enforce these boundaries.
 
 `src/App.svelte` should consume that metadata through the shared table shell before adding game-specific behavior. The intended split is:
 
@@ -151,6 +156,9 @@ table metadata with `createGameTableDefinition`, and register the definition in
 
 Practice is an activity within Learn, not a separate navigation tab. Keep the
 existing course-progress and saved-game keys stable when changing presentation.
+Card Counting declares Learn only and lists its warm-up and four memory hands once.
+The shared shell hides the tab rail for one mode; Learn renders grouped activities
+without a synthetic lesson path, duplicate Start lesson entry, or completion score.
 Show each skill once: a guided lesson with an optional `Try cards` shortcut,
 matched by action (or lesson id for Barbu). Use `exerciseAction` only for an
 explicit mapping such as Domino. Do not add a second list of the same topics or

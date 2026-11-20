@@ -69,6 +69,7 @@ export type GameTableDefinition = {
   scorecard: TableScorecardDefinition;
   learn: TableLearnDefinition;
   defaultTab: TableTabId;
+  availableTabs?: ReadonlyArray<Exclude<TableTabId, "perfect">>;
   tabs: Record<TableTabId, TableTabDefinition>;
 };
 
@@ -128,6 +129,13 @@ const tabLabels: Record<TableTabId, string> = {
 };
 
 export function createGameTableDefinition(config: CreateGameTableInput): GameTableDefinition {
+  const available = config.availableTabs ?? ["learn", "play"];
+  if (!available.length || new Set(available).size !== available.length || available.some(tab => tab !== "learn" && tab !== "play")) {
+    throw Error("Available table tabs must be unique Learn/Play modes.");
+  }
+  if (!available.some(tab => tab === config.defaultTab)) {
+    throw Error("The default table tab must be available.");
+  }
   return {
     ...config,
     learn: { ...config.learn, ...gameRulesCopy },
@@ -151,7 +159,8 @@ export function tableTabLabel(tab: TableTabId) {
 }
 
 export function tableTabsFor(table: GameTableDefinition) {
-  return tableTabIds.filter(tab => tab !== "perfect").map((tab) => table.tabs[tab]);
+  return tableTabIds.filter(tab => tab !== "perfect" && (!table.availableTabs || table.availableTabs.some(available => available === tab)))
+    .map(tab => table.tabs[tab]);
 }
 
 function createCatalogEntry(entry: Omit<CatalogEntry, "access">): CatalogEntry {

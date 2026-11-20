@@ -1,8 +1,24 @@
 import { expect, test } from "@playwright/test";
 import { freeGameIds, gameAccess, hasReleasedGameAccess, monetizationPolicy } from "../../src/games/accessPolicy";
-import { getCatalogCategories, isCatalogGameAvailable } from "../../src/games/tableFactory";
+import { createGameTableDefinition, getCatalogCategories, isCatalogGameAvailable, tableTabsFor } from "../../src/games/tableFactory";
 import { registry } from "../../src/games/gameRegistry";
 import "../../src/games";
+
+test("table metadata gives skill activities one mode without changing game navigation", () => {
+  for (const { table } of registry.getAll()) {
+    expect(tableTabsFor(table).map(tab => tab.id)).toEqual(table.id === "card-counting" ? ["learn"] : ["learn", "play"]);
+    expect(tableTabsFor(table).some(tab => tab.id === table.defaultTab)).toBe(true);
+  }
+  const { table, practiceGroups, learnSteps } = registry.get("card-counting")!;
+  expect(table.defaultTab).toBe("learn");
+  expect(learnSteps).toEqual([]);
+  expect(practiceGroups.map(group => [group.title, group.entries?.length])).toEqual([["Warm up", 1], ["Practise in a hand", 4]]);
+  const actions = practiceGroups.flatMap(group => group.entries!.map(entry => entry.action));
+  expect(new Set(actions).size).toBe(5);
+  const config = { ...table, availableTabs: ["learn"] as const, defaultTab: "play" as const,
+    tabIntros: { learn: table.tabs.learn.intro, play: table.tabs.play.intro, perfect: table.tabs.perfect.intro }, actionsByTab: {} };
+  expect(() => createGameTableDefinition(config)).toThrow("default table tab must be available");
+});
 
 test("every game derives the same rules label and description from the table factory", () => {
   expect(registry.getAll()).toHaveLength(8);

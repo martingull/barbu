@@ -1,10 +1,11 @@
 <script lang="ts">
-  import type { GameTableDefinition, LearnPathStep, PracticeGroup } from "../games/tableFactory";
+  import { tableTabsFor, type GameTableDefinition, type LearnPathStep, type PracticeGroup } from "../games/tableFactory";
   import LearningCoach from "./LearningCoach.svelte";
   import GuidedHandEntry from "./GuidedHandEntry.svelte";
   import { learningGuide } from "../presentation/learningCharacters";
   import type { LearningEvidence } from "../domain/learningEvidence";
   import { formatCardText } from "../presentation/cardDisplay";
+  import ChevronRight from "@lucide/svelte/icons/chevron-right";
 
   type LearnAction = { id: string; title: string; summary: string; onClick: () => void };
   type Props = {
@@ -29,7 +30,6 @@
     groups, exerciseActions, lessonEntries = [] }: Props = $props();
   let firstStep = $derived(steps.find(step => step.action !== "planned"));
   let orderedActions = $derived([...actions].sort((a, b) => Number(b.id === "reference") - Number(a.id === "reference")));
-  let firstExercise = $derived(groups.flatMap(group => group.entries ?? [])[0]);
   let exercises = $derived(groups.flatMap(group => group.entries ?? []));
   let extraExercises = $derived(exercises.filter(entry => !steps.some(step => (step.exerciseAction ?? step.action) === entry.action)));
   let currentStep = $derived(nextStep ?? firstStep);
@@ -38,10 +38,10 @@
   let finished = $derived(steps.length > 0 && completedCount === steps.length);
   let welcome = $derived(finished ? revisit ? `You have finished the path. Let's revisit ${revisit.title} before your next game.`
     : "You have finished the path. Take a seat for a full game, or revisit a lesson."
-    : currentStep?.summary ?? firstExercise?.summary ?? "Let's try a card decision together.");
+    : currentStep?.summary ?? table.tabs.learn.intro.summary);
 </script>
 
-<div aria-label="Learn" class="barbu-tab-panel learn-panel" id={table.tabs.learn.panelId} role="tabpanel">
+<div aria-label="Learn" class="barbu-tab-panel learn-panel" class:activity-menu={!steps.length} id={table.tabs.learn.panelId} role={tableTabsFor(table).length > 1 ? "tabpanel" : "region"}>
   {#if actions.length}
     <section class="learn-section learn-resources" aria-label="Learning resources">
       {#each orderedActions as action}
@@ -52,14 +52,14 @@
     </section>
   {/if}
   <section class="learn-start" aria-label="Continue learning">
-    <p class="next-topic">{finished ? "Learning path complete" : "Next lesson"}</p>
-    {#if !finished}<h2>{currentStep?.title ?? firstExercise?.title}</h2>{/if}
+    {#if steps.length}<p class="next-topic">{finished ? "Learning path complete" : "Next lesson"}</p>{/if}
+    {#if !finished}<h2>{currentStep?.title ?? table.learn.pathTitle}</h2>{/if}
     <LearningCoach character={learningGuide(table.id)} message={welcome} compact />
     {#if steps.length && completedCount === steps.length}
       {#if revisit}<button class="drill-action" onclick={() => onStepPractice(revisit!)} type="button">Revisit lesson</button>{/if}
       <button class="reset-lessons" onclick={onReset} type="button">Reset lessons</button>
-    {:else if currentStep || firstExercise}
-      <button class="drill-action" onclick={() => currentStep ? onStepSelect(currentStep) : firstExercise && exerciseActions[firstExercise.action]?.()} type="button">
+    {:else if currentStep}
+      <button class="drill-action" onclick={() => currentStep && onStepSelect(currentStep)} type="button">
         {completedCount ? "Continue lesson" : "Start lesson"}
       </button>
     {/if}
@@ -68,13 +68,12 @@
   {#if guidedHand}<GuidedHandEntry {...guidedHand} />{/if}
 
   <section class="learn-section" aria-label="Choose a topic">
-    <h2>Learning path</h2>
     {#if steps.length}
+    <h2>Learning path</h2>
       <div class="course-progress" aria-label={table.learn.progressAriaLabel}>
         <span>{completedCount} / {steps.length} complete</span>
         <div class="progress-track" role="progressbar" aria-label="Lessons completed" aria-valuenow={completedCount} aria-valuemin={0} aria-valuemax={steps.length}><div class="progress-fill" style={`width: ${progress}%`}></div></div>
       </div>
-    {/if}
       <div class="learn-topic-list" aria-label={table.learn.pathAriaLabel}>
         {#each steps as step, index}
           {@const exercise = exercises.find(entry => entry.action === (step.exerciseAction ?? step.action))}
@@ -104,6 +103,25 @@
           </div>
         {/each}
       </div>
+    {:else}
+      <div class="activity-groups" aria-label={table.learn.pathAriaLabel}>
+        {#each groups as group}
+          <section class="learn-section activity-group" aria-label={group.ariaLabel}>
+            <h2>{group.title}</h2>
+            <div class="learn-topic-list">
+              {#each group.entries ?? [] as entry}
+                <div class="learn-skill" data-skill={entry.id}>
+                  <button class="learn-topic activity-topic" onclick={() => exerciseActions[entry.action]?.()} type="button">
+                    <span class="activity-symbol" aria-hidden="true"><ChevronRight size={18} strokeWidth={2} /></span>
+                    <span><strong>{entry.title}</strong><small>{formatCardText(entry.summary)}</small></span>
+                  </button>
+                </div>
+              {/each}
+            </div>
+          </section>
+        {/each}
+      </div>
+    {/if}
   </section>
 
 </div>
@@ -121,6 +139,13 @@
   .learn-skill.path-end::before { bottom: 50%; }
   .learn-skill:has(.exercise-shortcut) { grid-template-columns: minmax(0, 1fr) 64px; gap: 8px; }
   .learn-skill .learn-topic { position: relative; border-bottom: 0; padding-block: 16px; }
+  .activity-menu .learn-start { border-bottom: 1px solid #ffffff26; }
+  .activity-menu > .learn-section { padding-top: 0; }
+  .activity-groups { display: grid; gap: 20px; min-width: 0; }
+  .activity-group { padding: 0; }
+  .activity-group + .activity-group { border-top: 1px solid #ffffff26; padding-top: 16px; }
+  .activity-group .learn-skill + .learn-skill { border-top: 1px solid #ffffff1a; }
+  .activity-topic { grid-template-columns: 36px minmax(0, 1fr); align-items: center; column-gap: 12px; }
   .exercise-shortcut { justify-self: end; min-height: 44px; padding: 8px 2px; border: 0; background: transparent; color: #f5f1cf; font-size: 0.8rem; text-decoration: underline; }
   .learn-topic {
     display: grid; gap: 4px; width: 100%; min-width: 0; min-height: 48px;
@@ -133,7 +158,8 @@
   .learn-topic strong { display: block; font-size: 0.94rem; line-height: 1.3; }
   .learn-topic small { display: block; color: #c1d1bf; font-size: 0.8rem; line-height: 1.4; }
   .lesson-topic { grid-template-columns: 36px minmax(0, 1fr); gap: 5px 12px; align-items: center; }
-  .lesson-number { display: grid; place-items: center; grid-row: 1 / 3; width: 32px; height: 32px; border-radius: 50%; border: 2px solid #819c8e; background: #173c2e; color: #e5eee7; font-size: 0.85rem; font-weight: 700; }
+  .lesson-number, .activity-symbol { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; border: 2px solid #819c8e; background: #173c2e; color: #e5eee7; font-size: 0.85rem; font-weight: 700; }
+  .lesson-number { grid-row: 1 / 3; }
   .current .lesson-number { background: #e7c766; color: #15291e; border-color: #e7c766; box-shadow: 0 0 0 4px #e7c76622; }
   .finished .lesson-number { border-color: #8ccfca; background: #244b45; color: #c6f2ed; }
   .lesson-status { grid-column: 2; font-size: 0.72rem; color: #f5f1cf; line-height: 1.5; }

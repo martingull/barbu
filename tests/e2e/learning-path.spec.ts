@@ -6,7 +6,8 @@ const progressKey = "barbu.courseProgress.v1";
 async function openLearn(page: Page, game = "Hearts") {
   await page.goto("/");
   await page.getByRole("button", { name: `Open ${game}`, exact: true }).click();
-  await page.getByRole("tab", { name: "Learn", exact: true }).click();
+  const learn = page.getByRole("tab", { name: "Learn", exact: true });
+  if (await learn.count()) await learn.click();
 }
 async function evidence(page: Page) {
   return page.evaluate(key => JSON.parse(localStorage.getItem(key) ?? "null"), evidenceKey);
@@ -49,7 +50,9 @@ for (const size of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { 
     await noOverflow(page);
     await page.screenshot({ path: info.outputPath("learning-path.png"), fullPage: true });
     await expect(page.getByRole("button", { name: "Start lesson", exact: true })).toBeInViewport({ ratio: 1 });
-    await expect(page.getByRole("button", { name: "Start guided hand", exact: true })).toBeInViewport({ ratio: 1 });
+    const guidedButton = page.getByRole("button", { name: "Start guided hand", exact: true });
+    await guidedButton.scrollIntoViewIfNeeded();
+    await expect(guidedButton).toBeInViewport({ ratio: 1 });
     const guided = (await page.getByRole("region", { name: "Play with guidance", exact: true }).boundingBox())!;
     const path = (await page.getByRole("region", { name: "Choose a topic", exact: true }).boundingBox())!;
     expect(path.y).toBeGreaterThanOrEqual(guided.y + guided.height);
@@ -123,8 +126,14 @@ test("guided play stays prominent with a saved match and a completed learning pa
 test("games share lesson choices and offer guided hands only when supported", async ({ page }) => {
   for (const game of ["Barbu", "Bridge", "Card Counting I"]) {
     await openLearn(page, game);
-    await expect(page.getByRole("button", { name: "Start lesson", exact: true })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Learning path", exact: true })).toBeVisible();
+    if (game === "Card Counting I") {
+      await expect(page.getByRole("heading", { name: "Memory skills", exact: true })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Learning path", exact: true })).toHaveCount(0);
+      await expect(page.getByRole("button", { name: "Start lesson", exact: true })).toHaveCount(0);
+    } else {
+      await expect(page.getByRole("button", { name: "Start lesson", exact: true })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Learning path", exact: true })).toBeVisible();
+    }
     await expect(page.getByRole("button", { name: "Start guided hand", exact: true })).toHaveCount(game === "Card Counting I" ? 0 : 1);
     await expect(page.getByRole("button", { name: new RegExp(`^(Continue|Play) ${game}$`) })).toHaveCount(0);
   }

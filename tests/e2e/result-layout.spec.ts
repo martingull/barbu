@@ -136,7 +136,6 @@ for (const viewport of viewports) {
     test("Counting warm-up result", async ({ page }, info) => {
       await page.goto("/");
       await page.getByRole("button", { name: "Open Card Counting I", exact: true }).click();
-      await page.getByRole("tab", { name: "Learn", exact: true }).click();
       await page.getByRole("button", { name: /Count trumps/ }).click();
       for (let segment = 0; segment < 3; segment++) {
         while (await page.getByRole("button", { name: "Next trick", exact: true }).count()) {

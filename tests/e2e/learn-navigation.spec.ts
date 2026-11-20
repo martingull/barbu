@@ -27,15 +27,19 @@ async function expectLearningLayout(page: Page) {
   }
 }
 
-test("every table shares Learn and Play and keeps exercises inside Learn", async ({ page }, info) => {
+test("games share Learn and Play while skill activities use Learn without duplicate modes", async ({ page }, info) => {
   for (const [game, exercise] of [
     ["Barbu", "No Hearts"], ["Hearts", "Pass three"], ["Whist", "Follow suit"],
     ["Spades", "Follow suit"], ["Bridge", "Opening bids"], ["Gin Rummy", "Sets and runs"], ["Card Counting I", "Count trumps"]
   ]) {
     await page.goto("/");
     await page.getByRole("button", { name: `Open ${game}`, exact: true }).click();
-    await expect(page.getByRole("tab")).toHaveText(["Learn", "Play"]);
-    await page.getByRole("tab", { name: "Learn", exact: true }).click();
+    if (game === "Card Counting I") {
+      await expect(page.getByRole("tab")).toHaveCount(0);
+    } else {
+      await expect(page.getByRole("tab")).toHaveText(["Learn", "Play"]);
+      await page.getByRole("tab", { name: "Learn", exact: true }).click();
+    }
     await expect(page.getByLabel("Continue learning")).toBeVisible();
     if (game !== "Card Counting I") {
       const guided = page.getByRole("region", { name: "Play with guidance", exact: true });
@@ -61,7 +65,7 @@ test("every table shares Learn and Play and keeps exercises inside Learn", async
     }
     await expect(page.getByRole("button", { name: /Quick drill/ })).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Guided lessons", exact: true })).toHaveCount(0);
-    const expectedSkills: Record<string, number> = { Barbu: 7, Hearts: 8, Whist: 7, Spades: 5, Bridge: bridgeCourses.length, "Gin Rummy": 5, "Card Counting I": 5 };
+    const expectedSkills: Record<string, number> = { Barbu: 7, Hearts: 8, Whist: 7, Spades: 5, Bridge: bridgeCourses.length, "Gin Rummy": 6, "Card Counting I": 5 };
     await expect(page.locator(".learn-skill")).toHaveCount(expectedSkills[game]);
     const skillIds = await page.locator(".learn-skill").evaluateAll(rows => rows.map(row => row.getAttribute("data-skill")));
     expect(new Set(skillIds).size).toBe(skillIds.length);
@@ -71,7 +75,8 @@ test("every table shares Learn and Play and keeps exercises inside Learn", async
     await expectLearningLayout(page);
     await page.screenshot({ path: info.outputPath(`${game}-exercise.png`), fullPage: true });
     await page.locator("header").getByRole("button", { name: "Table", exact: true }).click();
-    await expect(page.getByRole("tab", { name: "Learn", exact: true })).toHaveAttribute("aria-selected", "true");
+    if (game === "Card Counting I") await expect(page.getByRole("region", { name: "Learn", exact: true })).toBeVisible();
+    else await expect(page.getByRole("tab", { name: "Learn", exact: true })).toHaveAttribute("aria-selected", "true");
   }
 });
 

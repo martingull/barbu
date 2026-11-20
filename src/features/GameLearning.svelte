@@ -11,7 +11,7 @@
   import type { CourseContent, CourseStage } from "../lessons/courseTypes";
   import { drillDecision, type DrillStep, type DrillResult } from "../lessons/drillDecision";
   import type { GameDefinition } from "../games/gameRegistry";
-  import type { LearnPathStep, TableTabId } from "../games/tableFactory";
+  import { tableTabsFor, type LearnPathStep, type TableTabId } from "../games/tableFactory";
   import type { CustomExerciseContext, FeatureServices, LearningEntry } from "./featureServices";
   import LearningCoach from "../components/LearningCoach.svelte";
   import GuidedHandEntry from "../components/GuidedHandEntry.svelte";
@@ -24,7 +24,7 @@
     entry, onEntryConsumed, onIntroductionComplete, onGuidedPlay, introductionRecommendation, resources, lessonEntries = [], customExample: renderExample, drillTableFor, drillTopic, compareCards,
     completedSteps, learningEvidence = {}, nextSeed, onBack, onReference, onCompleteStep, onResetSteps, onExerciseComplete, onSurfaceChange }: FeatureServices & {
     definition: GameDefinition; gameName: string; tab: TableTabId; onTab: (tab: TableTabId) => void;
-    play: Snippet; customExercise?: Snippet<[CustomExerciseContext]>;
+    play?: Snippet; customExercise?: Snippet<[CustomExerciseContext]>;
     loadExercise: (action: string, nextSeed: () => number, fromCourse: boolean) => DrillStep[] | { seed: number };
     exerciseTitle: (action: string) => string; drillTitle: (step: DrillStep) => string; drillEyebrow?: string;
     seatLabels?: Partial<Record<Seat, string>>;
@@ -65,6 +65,9 @@
   let pathComplete = $derived(!!activeStep && exerciseComplete && definition.learnSteps.length > 0 && !nextStep);
   let guidedHand = $derived(onGuidedPlay ? { gameName, goal: definition.table.learn.guidedHandGoal, onStart: onGuidedPlay } : undefined);
   let actions = $derived(Object.fromEntries(definition.practiceGroups.flatMap(group => group.entries ?? []).map(entry => [entry.action, () => startExercise(entry.action)])));
+  let availableTabs = $derived(tableTabsFor(definition.table));
+  let activeTab = $derived(availableTabs.some(available => available.id === tab) ? tab : definition.table.defaultTab);
+  let hasPlay = $derived(availableTabs.some(available => available.id === "play"));
   $effect(() => { onSurfaceChange(view === "course" || view === "drill" || view === "custom" || (view === "result" && !!introduction)); });
   let openedEntry: LearningEntry | undefined;
   $effect(() => {
@@ -83,7 +86,7 @@
   });
 
   function table() { view = "table"; course = null; activeStep = null; introduction = ""; error = ""; }
-  function openPlay() { table(); onTab("play"); }
+  function openPlay() { table(); if (hasPlay) onTab("play"); }
   function startStep(step: LearnPathStep, explanation = false) {
     introduction = "";
     activeStep = step;
@@ -206,7 +209,7 @@
       {#if guidedHand}<GuidedHandEntry {...guidedHand} />{/if}
       <div class="action-row">
         <button class="secondary-action" onclick={table} type="button">Learn {gameName}</button>
-        <button class="secondary-action" onclick={openPlay} type="button">Go to Play</button>
+        {#if hasPlay}<button class="secondary-action" onclick={openPlay} type="button">Go to Play</button>{/if}
       </div>
       {#if results.length === steps.length && introductionRecommendation}
         <section class="next-game" aria-label="Explore another game">
@@ -227,25 +230,25 @@
     message={pathComplete ? "You've covered the foundations. Put them into practice in Play, and revisit lessons whenever you need a reminder."
       : results.length ? resultMessage(results.every(result => result.clean), action) : "Try this skill in a full hand, or continue learning."}>
     {#snippet actions()}
-      {#if pathComplete}<button class="primary-action" onclick={openPlay} type="button">Go to Play</button>{/if}
+      {#if pathComplete && hasPlay}<button class="primary-action" onclick={openPlay} type="button">Go to Play</button>{/if}
       <button class="secondary-action" onclick={retry} type="button">Try again</button>
       {#if exerciseComplete && nextStep}
         <button class="primary-action" onclick={() => practiceStep(nextStep!)} type="button">Next lesson</button>
       {/if}
     {/snippet}
     {#snippet playAction()}
-      {#if !pathComplete}<button class="secondary-action" onclick={openPlay} type="button">Go to Play</button>{/if}
+      {#if !pathComplete && hasPlay}<button class="secondary-action" onclick={openPlay} type="button">Go to Play</button>{/if}
     {/snippet}
   </DrillResultScreen>
 {:else}
-  <GameTableShell table={definition.table} activeTab={tab} {onBack} onTabSelect={onTab}>
-    {#if tab === "learn"}
+  <GameTableShell table={definition.table} {activeTab} {onBack} onTabSelect={onTab}>
+    {#if activeTab === "learn"}
       <LearnPanel table={definition.table} steps={definition.learnSteps} {completedSteps} {learningEvidence} {completedCount} {nextStep} {guidedHand}
         actions={resources ?? [{ id: "reference", title: definition.table.learn.referenceTitle, summary: definition.table.learn.referenceSummary, onClick: onReference }]}
         {lessonEntries}
         onStepSelect={step => startStep(step)} onStepRead={step => startStep(step, true)} onStepPractice={shortcutStep} onReset={() => onResetSteps(definition.learnSteps.map(step => step.id))}
         groups={definition.practiceGroups} exerciseActions={actions} />
-    {:else}{@render play()}{/if}
+    {:else if play}{@render play()}{/if}
   </GameTableShell>
 {/if}
 {#if error}<p class="outcome warning" role="alert">{error}</p>{/if}

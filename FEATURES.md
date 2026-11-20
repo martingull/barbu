@@ -56,8 +56,9 @@ hidden. See [Premium and billing](docs/premium.md) for access and release gates.
   course completion merely for playing a hand.
 - Shared coach portraits use the custom deck identity. Coaching should clarify
   decisions, not obscure cards or become long dialogue.
-- Card Counting shares the Learn/Play surfaces but does not have authored course
-  completion keys. Do not imply identical curriculum depth across every table.
+- Card Counting uses one shared Learn screen with a warm-up and four memory hands,
+  each listed once. It has no Play tab or authored course completion keys. Do not
+  imply identical curriculum depth across every table.
 
 Content ownership and detailed learning contracts are in
 [content/README.md](content/README.md) and [game architecture](docs/game-architecture.md).
