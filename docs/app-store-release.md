@@ -55,6 +55,52 @@ Canasta saves but hides them until access is available.
 
 [Apple's internal testing restrictions](https://developer.apple.com/help/app-store-connect/test-a-beta-version/add-internal-testers).
 
+### November 19 Candidate
+
+Uploaded **1.0.9 (9)** at 20:43 Europe/Oslo for internal-only TestFlight testing.
+Apple processed the build, the Account Holder completed the encryption
+questionnaire, and the build shows **Ready to Test** with the existing
+**Barbu Internal Testing Group** assigned (one tester). Build-specific
+**What to Test** instructions cover saved-game upgrades, Card Counting, Gin
+Rummy, Whist, Canasta and the remaining tables. Physical installation and
+acceptance testing of build 9 remain pending. No App Review submission or
+public availability change was made; iOS purchases remain disabled.
+
+This candidate includes the single Card Counting Learn screen, clearer Whist
+learning, Gin Rummy settlement lessons and the latest Domino and Canasta
+improvements. It uses version `1.0.9` with the iOS-only build number `9`;
+Android retains version code `1000013` and its existing production submission.
+The source is `02dcd78` plus the pending changes captured in the private receipt.
+
+Preserved artifacts (ignored, not committed):
+
+- `release/app-store/canasta-preview-v1.0.9-build9/Barbu.ipa`
+- `release/app-store/Barbu-canasta-preview-v1.0.9-build9.xcarchive`
+- `release/app-store/canasta-preview-v1.0.9-build9/verification.json`
+- `release/app-store/canasta-preview-v1.0.9-build9/upload-result.json`
+- `release/app-store/canasta-preview-v1.0.9-build9/simulator-smoke.json`
+
+IPA SHA-256: `37ce648be7008cee282f2246fe1ef6406dcb7a532c1f524437c629b7008dd9d2`.
+Distribution signing/provisioning, internal-only export, iPhone targeting,
+portrait orientation, iOS 15 minimum, privacy manifest, dependency notices and
+all 133 bundled assets passed verification. The newly built iOS 26.5 simulator
+version launches and renders with existing saved games retained; its assets
+match the packaged preview. Screenshot: `simulator-launch.png` in the build's
+ignored release directory.
+
+Packaged iPhone WebKit checks passed 15 preview tests (14 development-fixture
+checks intentionally skipped) and the public-catalog isolation test. Five
+mobile configuration checks passed. The canonical packaged-test port was busy,
+so an ignored configuration used ports 1424/1425 without terminating the
+existing service. Native archive, export, upload and simulator builds succeeded.
+Apple returned a non-blocking warning: from April 2027 uploads need the iOS 27
+SDK / Xcode 27 or later. The current upload was accepted.
+
+iOS dependency notices were refreshed against the current lockfiles; only their
+two lockfile-hash headers changed. This happened after the Android artifact was
+queued, so the current tree no longer exactly matches that older Android source
+fingerprint. Its signed bundle and original verification record were not changed.
+
 ### November 17 Candidate
 
 Uploaded `1.0.6 (8)` from `c9fe837` at 17:09 Europe/Oslo for internal-only

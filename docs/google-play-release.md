@@ -2,19 +2,108 @@
 
 ## Current Status
 
-**Last confirmed November 19 track status:** the Publisher API showed closed testing
-(`alpha`) is PUBLISHED at `1.0.7` / `1000010`, with SHA-256 matching the verified
-local bundle. Production remains PUBLISHED at `1.0.6` / `1000007`. No production
-promotion was performed. The manually replaced `1000008` draft is no longer the
-active closed-test release. Do not reuse earlier version codes.
+**November 19 production-queue audit:** the Publisher API confirms `1.0.9` /
+`1000013` is **IN_REVIEW** on production and **PUBLISHED** on closed testing
+(`alpha`). The queued bundle's SHA-256 matches the signed local artifact below.
+Production's previously published `1.0.6` / `1000007` remains live during review.
+The generic track status `completed` does not establish publication; use the
+separate release lifecycle. The temporary inspection edit was deleted without
+committing; no release, product or review setting was changed by this audit.
 
-**Subsequent developer report:** Martin says `1.0.8` is now in closed beta. The
-prepared artifact below uses code `1000012`; this UI pass did not independently
-recheck its remote checksum, lifecycle or tester availability. The later
-[Premium-screen simplification](premium.md#purchase-support) is not in that bundle.
-It changes the current source fingerprint, so preserve the signed artifact and
-use a fresh unused code when packaging the new screen. No replacement upload or
-production change was performed in this pass.
+Console Publishing overview shows only **Production: 1.0.9 - Clearer learning
+and simpler Premium / Start full rollout** in review, with **managed publishing
+off**. Approval can therefore publish the full rollout automatically; this is
+not a staged launch or manual publishing hold. Policy status shows **No issues
+found**. Preserve all earlier artifacts and verification records.
+
+The signed bundle, production-source fingerprint and recorded build inputs still
+match. All public privacy, terms and support pages returned HTTP 200 and matched
+the billing-aware source. The audit reran 17 release-tool tests, five mobile
+configuration tests and 40 focused Premium/catalog/privacy browser cases; all
+passed. Earlier package, 301 domain and 510 selected browser checks remain the
+preparation evidence below, not newly repeated full-suite or device tests.
+
+Later on November 19, the internal iOS TestFlight preparation refreshed the two
+lockfile-hash headers in `public/THIRD_PARTY_LICENSES.txt`. The working tree
+therefore no longer exactly matches the Android source fingerprint checked
+above. The queued AAB, its checksum, original receipt and production review were
+left unchanged; do not restamp that receipt using the later iOS tree.
+
+Monthly and yearly base plans are active, with checkout enabled **only in Norway**
+at NOK 33/month and NOK 265/year. Saved Netherlands and UK prices remain disabled
+for new subscribers. No regions, prices or free-download availability were changed.
+The main listing still describes the free catalog and does not mention Canasta
+Premium; a paid-content listing draft exists, but was not submitted during review.
+
+**Remaining verification gaps:** Console's pre-launch overview currently shows
+**Upload artifacts to generate pre-launch reports**, not a report for `1000013`.
+That is not proof of a clean report or a known crash. Its settings were inspected
+without saving changes. No Android device was connected, so the exact candidate's
+Play-installed upgrade and native subscription lifecycle checks remain unverified
+in our record. Earlier monthly sandbox results on `1000010` do not pass the yearly,
+restore, renewal/expiry or offline checks for `1000013`. Bank/payout status was not
+re-read in this audit. The release source changes remain uncommitted; the preserved
+fingerprint identifies the actual packaged tree. Commit them before further work.
+
+Read-only API, Console, legal-page and browser evidence is ignored under
+`release/google-play/production-audit-2026-11-19/`. Do not cancel or resubmit the
+review merely to tidy an empty alpha draft, replace screenshots or change copy.
+
+### Prepared 1.0.9 Candidate
+
+The November 19 preparation produced **1.0.9** / **1000013**, based on `02dcd78`
+plus the current uncommitted Card Counting/template improvements and synchronized
+version bump. The verification record captures the production-source fingerprint
+and build inputs. No iOS archive or TestFlight upload was prepared.
+
+- Release name: **1.0.9 - Clearer learning and simpler Premium**.
+- Bundle: `release/google-play/barbu-google-play-v1.0.9-code1000013.aab`.
+- Verification: `release/google-play/verification-v1.0.9-code1000013.json`.
+- Notes: `release/google-play/release-notes-v1.0.9-code1000013.txt` (456 characters, excluding the trailing newline).
+- Symbols: `release/google-play/native-debug-symbols-v1.0.9-code1000013.zip`.
+- Mapping: `release/google-play/mapping-v1.0.9-code1000013.txt`.
+- SHA-256: `d666b3143f45503602934d0b1bbd947dc13c790641e4b5bcabba4b505264c630`.
+- Package `com.martin.barbu`, minimum SDK 24, target SDK 36; billing enabled only
+  through the existing ignored Android override. Prices, checkout markets,
+  testers and production distribution are unchanged. The seven free tables
+  remain free; the standard configuration still disables billing.
+
+Release notes:
+
+```text
+Simpler Premium checkout, with clearer subscription management and purchase help.
+Card Counting now has one Learn screen, with each memory exercise listed once and improved feedback for correct answers.
+New Gin Rummy lessons explain layoffs, undercuts and scoring after a knock.
+Improved Domino opponents make decisions from their own cards and the visible layout.
+Includes shared learning and layout improvements. The seven existing free tables stay free.
+```
+
+Verification passed: 301 domain tests, 17 release-tool tests, five mobile-config
+tests, `tauri:check` and the packaged frontend build. The selected regular browser
+run passed 441 cases initially, with 11 failures and six project-specific skips.
+Outdated Whist/Bridge content assertions and a short-screen assumption that both
+Learn entry buttons fit above the fold were corrected in tests. Guided play must
+remain scroll-reachable; in-hand no-overlap and pinned-action checks are unchanged.
+All 18 follow-up cases passed, including every earlier failure and the seven-game
+navigation test that timed out during concurrent compilation. All 58 Canasta
+preview cases passed separately: 510 distinct selected browser cases passed
+overall. This is not the entire browser suite or a physical-device acceptance pass.
+Card Counting and Premium screenshots were visually inspected at narrow widths.
+
+Packaging verification passed: the existing upload certificate matches `1000012`,
+bundletool validation, matching four-ABI debug symbols/build IDs, R8 mapping,
+stripped libraries, 16 KB LOAD/RELRO and bundle alignment, optional portrait
+hardware and phone-only launcher declarations. Existing non-blocking frontend
+chunk-size and Java/Gradle deprecation warnings remain.
+
+**Subsequent status:** Martin uploaded the bundle and promoted it to the production
+queue. The audit above confirms it is published to closed testing and in production
+review. Do not upload a duplicate or resubmit it. The next acceptance step is a
+Play-installed Samsung update without
+uninstalling: preserve a saved hand, complete a Learn exercise, open each Card
+Counting activity and check Premium/Canasta access using the license-test flow.
+Check the pre-launch report before considering production. Device, Play-signed
+upgrade and 16 KB runtime checks remain pending for this candidate.
 
 ### Prepared 1.0.8 Candidate
 

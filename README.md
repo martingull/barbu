@@ -6,13 +6,14 @@ Barbu helps players learn classic card games through short interactive lessons, 
 
 Barbu is available on [Google Play](https://play.google.com/store/apps/details?id=com.martin.barbu). Visit the [product website](https://siliciumveritas.com/) for a preview and an introduction to the games; its source lives in [`website/`](website/).
 
-The active catalog contains Hearts, Barbu (including Domino), Whist, Spades, Bridge, Gin Rummy and Card Counting I. Each table uses shared **Learn | Play** navigation; short exercises and guided hands belong inside Learn. [Canasta](docs/canasta.md) has an opt-in development preview and an Android Premium candidate with shared lessons and guided play; it remains hidden in the public production build.
+The active catalog contains Hearts, Barbu (including Domino), Whist, Spades, Bridge, Gin Rummy and Card Counting I. Games use shared **Learn | Play** navigation; short exercises and guided hands belong inside Learn. Card Counting is a skill activity with one Learn screen: a warm-up followed by memory hands, each listed once. [Canasta](docs/canasta.md) has an opt-in development preview and an Android Premium candidate with shared lessons and guided play; it remains hidden in the public production build.
 
 All gameplay runs locally in TypeScript, shared by browser and installed builds. Svelte owns presentation and interaction; Tauri packages the native application. Rust handles startup and native integrations, not rules or scoring. Saves and learning progress are local; there is no gameplay server or player login. The Android billing test integration uses Google Play and RevenueCat.
 
 The existing seven games remain free. Additional games, starting with Canasta,
 are intended for an optional Premium subscription. Billing is disabled in the
-public build. Canasta version `1.0.7` / `1000010` is published to closed testing;
+published `1.0.6` build. The closed-testing track contains `1.0.9` / `1000013`,
+and the same billing-enabled bundle is in production review;
 Norway, the Netherlands and the UK are selected for paid-launch preparation,
 with only Norway currently enabled for checkout. See the
 [premium setup and release gates](docs/premium.md) and
@@ -43,12 +44,14 @@ Google Play production is live. The first production release is:
 - Version: **1.0.6**, Android version code **1000007**.
 - Release: **1.0.6 - First production release**, promoting the existing closed-test bundle.
 
-Android version **1.0.8** / **1000012** was prepared with the
-Whist learning improvements, Premium renewal recovery and phone compatibility
-fixes. It is signed and package-verified; the developer now reports it is in
-closed testing. Later Premium-screen simplification is source-only and is not
-included in that bundle. See the
-[1.0.8 handoff](docs/google-play-release.md#prepared-108-candidate).
+Android version **1.0.9** / **1000013** is published to closed testing and
+**in review for production**, confirmed through the Publisher API on November 19.
+Its checksum matches the signed local bundle. It adds simpler Premium checkout,
+Gin Rummy settlement lessons, fairer Domino decisions and the single Card
+Counting Learn screen. Production still serves `1.0.6` / `1000007` while review
+is pending. Managed publishing is off and the submission requests a full rollout;
+no staged percentage or manual publishing hold is configured.
+See the [1.0.9 handoff](docs/google-play-release.md#prepared-109-candidate).
 
 Physical Samsung testing and no blocking pre-launch report errors were confirmed
 by the developer. Later store-listing updates have their own review status; check
@@ -56,7 +59,9 @@ Play Console's **Publishing overview** before announcing those changes. See the
 [Google Play release runbook](docs/google-play-release.md) for dated evidence and
 the [store assets](docs/store-assets/google-play/README.md) for copy, artwork and
 screenshot provenance. iPhone distribution is tracked separately in the
-[App Store runbook](docs/app-store-release.md).
+[App Store runbook](docs/app-store-release.md). Internal iPhone testing now has
+**1.0.9 (9)**, with Canasta unlocked for preview and purchases disabled; install
+it through the existing TestFlight group. This is not an App Store submission.
 
 ## Quick Start
 
@@ -98,6 +103,7 @@ The [Taskfile](Taskfile.yml) is the canonical command surface. Browser tests sta
 - **[Content](content/README.md)**: Lesson, reference and generated-exercise sources.
 - **[Documentation index](docs/README.md)**: Game rules, release runbooks, public pages and historical audits.
 - **[Market-entry strategy](docs/marketing/strategy.md)**: Audiences, competition, distribution experiments, measurement and monetisation boundaries.
+- **[Outreach tooling](outreach/README.md)**: Isolated Gmail/Sheets CLI for reviewed club invitations; account connection required, with private records outside Git.
 - **[THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md)**: Dependency licenses and attribution.
 - **[Google Play releases](./docs/google-play-release.md)**: Android packaging, API workflow and dated release evidence.
 - **[App Store releases](docs/app-store-release.md)**: iPhone packaging, review and dated submission evidence.

@@ -1,19 +1,25 @@
 # Premium Production Preparation
 
-Prepare the Canasta update without promoting the closed test or changing production.
+Track the Canasta paid-content launch and its remaining acceptance checks.
+The production update is in review; this checklist does not authorise changing it.
 The public free edition is already live; this is the first paid-content launch,
 not Barbu's first production release. Owner: Martin Gullaksen.
 
 ## Release State
 
-The current locally prepared candidate is **1.0.8** / **1000012**, combining the
-Premium renewal fix, Whist content improvements and phone compatibility cleanup.
-Signing and package checks passed; Martin now reports this version is in closed
-beta. Its remote lifecycle and installation were not rechecked in the subsequent
-UI pass, and it does not contain the later Premium-screen simplification. See
-the [release handoff](google-play-release.md#prepared-108-candidate) for files,
-checksum, verification and remaining gates. Earlier Samsung results below belong
-to `1000010`, not proof that the new candidate has passed on the phone.
+The current candidate is **1.0.9** / **1000013**. The November 19 read-only Publisher
+API audit confirms **PUBLISHED** on closed testing and **IN_REVIEW** on production,
+with SHA-256 matching the signed local bundle. It includes the renewal fix,
+Whist improvements, simpler Premium screen, Gin settlement lessons, fairer Domino
+policy and Card Counting cleanup. See the
+[release handoff](google-play-release.md#prepared-109-candidate) for verification.
+Earlier Samsung results below belong to `1000010`, not proof that `1000013` has
+passed on the phone. No device was connected during this audit.
+
+Publishing overview requests a full rollout with managed publishing off. Policy
+status shows **No issues found**; the pre-launch overview currently has no report
+to inspect. Public legal/support pages match source, and the focused audit checks
+passed. No release, review, price or region setting was changed by the audit.
 
 On November 19 the Publisher API confirmed `1.0.7` / `1000010` is published to
 closed testing (`alpha`), with the verified local bundle's checksum. Production
@@ -97,7 +103,7 @@ is blocked, not passed; record the available test method before running it.
 
 | Check | Expected outcome | Result |
 | --- | --- | --- |
-| Confirm candidate | Play installs `1.0.8` / `1000012`, not an older local APK. | Pending new candidate. Earlier `1000010` version and Play installer confirmed November 19. |
+| Confirm candidate | Play installs `1.0.9` / `1000013`, not an older local APK. | Pending physical verification. API confirms closed-test publication and production review; earlier `1000010` version and Play installer confirmed November 19. |
 | Upgrade without uninstalling | Existing saved hand, lesson progress and free tables survive. Stop on a signature conflict; do not erase data. | Pending |
 | First Canasta journey | Rules -> card values -> lesson feedback -> next topic -> guided hand -> Play -> score -> resume. | Pending |
 | Phone usability | Readable S9 controls, no navigation-key overlap, stable board, usable larger system text. Check a modern phone too. | Pending |
