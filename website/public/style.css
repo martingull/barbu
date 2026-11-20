@@ -59,6 +59,7 @@ nav a:hover, .text-link:hover { text-decoration: underline; }
 .preview-copy p { max-width: 480px; }
 .preview-detail { font-size: 14px; color: var(--muted); }
 .preview-copy .text-link { margin-top: 18px; }
+.preview-copy .text-link + .text-link { display: flex; margin-top: 4px; }
 .video-frame { aspect-ratio: 9 / 16; background: #102b22; border-radius: 6px; overflow: hidden; position: relative; }
 .video-frame iframe { display: block; width: 100%; height: 100%; border: 0; }
 .video-poster { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; cursor: pointer; color: #fff; }
@@ -81,6 +82,24 @@ nav a:hover, .text-link:hover { text-decoration: underline; }
 .footer-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
 .footer-heading p { font-size: 15px; }
 .site-footer nav { margin-block: 16px; }
+.guide-heading { background: var(--green); color: #fff; padding-block: 40px; }
+.guide-heading h1 { font: bold 48px/1.1 Georgia, serif; color: #f2db9b; margin-block: 12px 20px; }
+.guide-heading p { font-size: 18px; }
+.guide-heading .eyebrow { font-size: 14px; color: #c8dfd1; }
+.guide { max-width: 800px; display: grid; gap: 40px; }
+.guide section { min-width: 0; scroll-margin-top: 24px; }
+.guide h2 { font-size: 30px; }
+.guide .video-frame { width: min(100%, 360px); margin-top: 24px; }
+.card-values { margin: 24px 0; }
+.card-values div, .example-hand p { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-block: 14px; border-bottom: 1px solid var(--line); }
+.card-values dt { font-weight: 650; }
+.card-values dd { margin: 0; }
+.example-hand { margin-block: 24px; }
+.example-hand p + p { margin: 0; }
+.example-hand span { font-size: 21px; white-space: nowrap; }
+.worked-answer { border-block: 1px solid var(--line); padding-block: 16px; }
+.worked-answer summary { cursor: pointer; font-weight: 650; min-height: 44px; display: list-item; align-content: center; }
+.worked-answer p { margin-top: 12px; }
 @media (max-width: 1000px) {
   .hero-inner { background-size: 210px auto; background-position: right bottom -45px; }
   .hero .intro, .hero .actions { max-width: calc(100% - 240px); }
@@ -93,6 +112,9 @@ nav a:hover, .text-link:hover { text-decoration: underline; }
   .brand { font-size: 24px; }
   .section { padding-block: 40px; }
   h2 { font-size: 28px; }
+  .guide-heading h1 { font-size: 36px; }
+  .guide h2 { font-size: 26px; }
+  .card-values div, .example-hand p { grid-template-columns: minmax(0, 1fr); gap: 4px; }
   .hero-inner { padding-block: 28px; background-size: 106px auto; background-position: right bottom -18px; }
   .hero h1 { font-size: 56px; margin-bottom: 12px; }
   .hero-tagline { font-size: 30px; }

@@ -230,6 +230,23 @@ Anonymous oEmbed verified the title and Barbu channel. The original remains
 public to preserve its views and comments; no comments were posted or paid
 promotion started.
 
+### Website Gin Feature
+
+The November 20 website update features the larger-card Gin Short `YSz8LAFvlD0`
+on the homepage and an original worked guide at `/gin-rummy.html`. It does not
+replace the Google Play trailer or edit either published Gin upload. The poster
+is a tracked copy of `gin-knock-or-gin-large-cards/preview-question.png`, so the
+site does not depend on ignored movie exports being present after a clone.
+The guide's ten-card example matches the first authored knock exercise.
+
+The guide is linked from the homepage and sitemap, with a distinct title,
+description and canonical URL. See [website search setup](../../website/infra/README.md#search-discovery)
+for Search Console submission and the outstanding CloudFront soft-404 issue.
+Do not claim that views explain why the Gin videos attract interest or that the
+new page already ranks; neither audience motivation nor search performance has
+been established. The channel profile's Play Store link remains the download
+route from Shorts, whose description URLs are not clickable.
+
 ### Teaching-First Experiment
 
 Published November 11, 2026: [Hearts: pass the spades or the hearts?](https://www.youtube.com/shorts/pnhAxxTyEWI).
