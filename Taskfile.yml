@@ -1,6 +1,22 @@
 version: "3"
 
 tasks:
+  outreach:install:
+    desc: Install the isolated outreach CLI (Node 24+); no game dependency changes
+    cmds:
+      - npm --prefix outreach ci
+
+  outreach:
+    desc: Run the Gmail/Sheets outreach CLI; use --help first, sending requires explicit approval and --execute
+    cmds:
+      - npm --prefix outreach run outreach -- {{.CLI_ARGS}}
+
+  outreach:test:
+    desc: Type-check and test outreach safeguards offline; no Google access or email sending
+    cmds:
+      - npm --prefix outreach run check
+      - npm --prefix outreach test
+
   website:serve:
     desc: Preview the Silicium Veritas Barbu landing page
     cmds:

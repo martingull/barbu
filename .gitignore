@@ -1,4 +1,12 @@
 /node_modules/
+/outreach/node_modules/
+/outreach/.env*
+/outreach/**/*.local.json
+/outreach/**/*.sqlite*
+/outreach/**/client_secret*.json
+/outreach/**/credentials.json
+/outreach/**/auth.json
+/outreach/**/tokens.json
 /dist/
 /dist-canasta-preview/
 /target/
@@ -13,6 +21,7 @@
 /src-tauri/tauri.billing.local.json
 /playwright-report/
 /test-results/
+/test-results-passing/
 /test-results-domain/
 /release/google-play/
 /release/app-store/
