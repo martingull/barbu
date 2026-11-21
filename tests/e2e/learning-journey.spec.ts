@@ -5,6 +5,9 @@ import { spadesDef } from "../../src/games/spades";
 import { bridgeDef } from "../../src/games/bridge";
 import { barbuDef } from "../../src/games/barbu";
 import { ginRummyDef } from "../../src/games/ginRummy";
+import { legacyBridgePreference } from "../fixtures/legacyBridgePreference";
+
+test.beforeEach(async ({ page }) => legacyBridgePreference(page));
 
 const progressKey = "barbu.courseProgress.v1";
 async function progress(page: Page) {

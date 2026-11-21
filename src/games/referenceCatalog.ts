@@ -585,7 +585,7 @@ export const referenceCatalog: GameReference[] = [
         id: "app-learning",
         title: "Learning Path",
         body:
-          "The Bridge path teaches bidding, declarer play, dummy handling, and defense through short decisions. Choose Barbu Natural or Acol Foundation before learning or starting a board. Play uses those agreements, the standard sixteen-board dealer and vulnerability cycle, and duplicate contract scores. Passed-out boards score zero and advance the session. Session totals add the contract points from each board; they are not matchpoints or IMPs.",
+          "The Bridge path teaches bidding, declarer play, dummy handling, and defense through short decisions. Choose Standard American Foundation or Acol Foundation before learning or starting a board. Play uses those agreements, the standard sixteen-board dealer and vulnerability cycle, and duplicate contract scores. Passed-out boards score zero and advance the session. Session totals add the contract points from each board; they are not matchpoints or IMPs.",
         facts: [
           { label: "Play", value: "Auction into scored contract hand" },
           { label: "Practice", value: "Short scripted decisions" },
@@ -594,7 +594,7 @@ export const referenceCatalog: GameReference[] = [
       },
       {
         id: "bidding-agreements",
-        title: "Barbu Natural Agreements",
+        title: "Earlier Saved Boards: Barbu Natural",
         body:
           "Open a five-card major with 13+ high-card points; otherwise choose the better minor, preferring clubs with three cards in each minor. Balanced hands open 1NT with 15-17 or 2NT with 20-21. Strong 2 clubs shows 22+ and asks for 2 diamonds waiting. A subsequent 2NT rebid shows 22-24 and may be passed; a suit rebid keeps the partnership moving toward game. Weak two openings in diamonds, hearts, or spades show 5-11 points and six cards.",
         facts: [
@@ -603,6 +603,21 @@ export const referenceCatalog: GameReference[] = [
           { label: "New suits", value: "One-level responses show 6+ points and four cards; two-level responses show 10+ and length." },
           { label: "Takeout", value: "Low-level doubles of suit openings need opening strength, shortness in the bid suit, and support for unbid suits." },
           { label: "Not included", value: "Stayman, transfers, Blackwood, and a full competitive convention system. Barbu Natural is not SAYC." }
+        ]
+      },
+      {
+        id: "american-agreements",
+        title: "Standard American Foundation Agreements",
+        body:
+          "SAYC-based beginner agreements, not full SAYC or 2/1 Game Forcing. Open five-card majors or the better minor with opening strength; balanced notrump openings are 15-17 at 1NT, 20-21 at 2NT and 25-27 at 3NT. Stayman and Jacoby major-suit transfers are used after 1NT and 2NT, including the balanced 2NT rebid after strong 2 clubs. All four seats use the same profile. Check your club's system card before playing with a real partner.",
+        facts: [
+          { label: "Stayman", value: "2♣ over 1NT asks for a four-card major, here with 8+ HCP. Reply 2♦ without a major, 2♥ with hearts (possibly spades too), otherwise 2♠." },
+          { label: "Transfers", value: "2♦ asks for hearts; 2♥ asks for spades. Shows five cards, not strength. After acceptance, pass weak hands, invite with 8-9, choose game with 10+. With exactly five trumps use notrump to describe strength; opener judges the fit." },
+          { label: "After 2NT", value: "3♣ Stayman, 3♦ transfer to hearts, 3♥ transfer to spades. These teaching decisions use game-going strength." },
+          { label: "Major support", value: "Balanced three-card support: simple raise 6-10, limit raise 11-12, game 13+ HCP. With four-card support and 13+, unpassed responder uses Jacoby 2NT, game forcing. Shape can change real-table judgment." },
+          { label: "Balanced rebids", value: "After opening a suit and hearing a one-level response: 1NT 12-14 or 2NT 18-19, unless a major fit can be shown." },
+          { label: "Other responses", value: "Strong 2♣ allows 2♦ waiting or an 8+ positive response. 2NT over a weak two asks for a feature; over a minor opening it shows 13-15 balanced and forces game. Two-over-one responses require another bid, not an automatic game force." },
+          { label: "Scope", value: "No minor-suit transfer system, ace-asking, quantitative slam investigation, negative doubles or complete competitive continuations. This is not the complete published SAYC system. HCP guides and computer continuations remain simplified." }
         ]
       },
       {
@@ -634,7 +649,7 @@ export const referenceCatalog: GameReference[] = [
         id: "local-contract-play",
         title: "Local Contract Play",
         note:
-          "Play individual boards against computer opponents using the selected Barbu Natural or Acol Foundation agreements. Each board earns its duplicate contract score. Matchpoints and IMPs compare results from other tables; this local session does not make those comparisons."
+          "Play individual boards against computer opponents using Standard American Foundation or Acol Foundation agreements. Earlier saved boards retain Barbu Natural. Each board earns its duplicate contract score. Matchpoints and IMPs compare results from other tables; this local session does not make those comparisons."
       }
     ]
   },

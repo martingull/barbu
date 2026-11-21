@@ -26,7 +26,7 @@
   function leaveGuided(tab: "learn" | "play") {
     guidedSeed = null; guidedFixed = false; learningFixed = false; feature.openTable(tab);
   }
-  const names: Record<string, string> = { contracts: "contracts", dummy: "dummy", bidding: "bidding", responding: "respond to 1NT", support: "support partner's major", rebidding: "rebid in notrump", stayman: "Stayman", declarer: "declarer play", defense: "defense" };
+  const names: Record<string, string> = { contracts: "contracts", dummy: "dummy", bidding: "bidding", responding: "respond to 1NT", support: "support partner's major", rebidding: "rebid in notrump", stayman: "Stayman", transfers: "Jacoby transfers", declarer: "declarer play", defense: "defense" };
 </script>
 
 {#if guidedSeed !== null}
@@ -45,7 +45,7 @@
   {#key $systemChoice}
   <GameLearning {...services} {definition} {courses} gameName="Bridge" tab={$feature.tab}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
-    loadExercise={action => ["bidding", "responding", "support", "contracts", "rebidding", "stayman"].includes(action) ? { seed: 0 }
+    loadExercise={action => ["bidding", "responding", "support", "contracts", "rebidding", "stayman", "transfers"].includes(action) ? { seed: 0 }
       : bridgeLearningSteps(action === "dummy" ? "dummy" : action === "defense" ? "defense" : "declarer")}
     exerciseTitle={action => `Bridge practice: ${names[action]}`} drillTitle={() => "Bridge lesson"} drillEyebrow="Bridge" seatLabels={compassSeatLabels}
     onGuidedPlay={() => { guidedSeed = services.nextSeed(); }} resultMessage={(_, action) => bridgeTakeaway(action, $systemChoice)}>

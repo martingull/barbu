@@ -5,6 +5,9 @@ import { saveBridgeSession, restoreBridgeSession } from "../../src/persistence/b
 import { trickTakingSeats } from "../../src/domain/trickTakingScore";
 import { sortCardsForDisplay } from "../../src/presentation/cardOrdering";
 import { formatCardLabel } from "../../src/presentation/cardDisplay";
+import { legacyBridgePreference } from "../fixtures/legacyBridgePreference";
+
+test.beforeEach(async ({ page }) => legacyBridgePreference(page));
 
 const key = "barbu.savedBridgeRun.v1";
 const saved = (page: Page) => page.evaluate(key => JSON.parse(localStorage.getItem(key)!), key);

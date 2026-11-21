@@ -1,9 +1,6 @@
-import { standardDeck } from "../../domain/deck";
-import { bridgeHighCardPoints } from "../../domain/bridgeBidding";
-import { bridgeCallLabel } from "../../domain/bridgeAuction";
 import type { BridgeAuctionCall } from "../../domain/types";
-import { teachingStages } from "../learningPresentation";
 import type { BridgeChoiceStep } from "./learning";
+import { biddingLesson, type BiddingExample } from "./biddingLesson";
 
 export type AcolTopic = "bidding" | "responding" | "support" | "rebidding" | "stayman";
 const response: BridgeAuctionCall[] = [{ seat: "Tutor", call: "1NT" }, { seat: "Right", call: "Pass" }];
@@ -17,8 +14,6 @@ const ten = "KS 9S 4S AH 8H 2H QD 7D 3D JC 9C 5C 2C";
 const twelve = "AS 9S 3S KH 7H 2H QD 8D 4D KC 10C 6C 2C";
 const thirteen = "AS 8S 3S QH 7H 2H KD 9D 4D AC 8C 6C 2C";
 const fourteen = "AS QS 3S KH 8H 2H QD JD 4D QC 9C 6C 2C";
-type Position = { hand: string; call: string; calls?: BridgeAuctionCall[] };
-type Example = { title: string; prompt: string; why: string; options: string[]; positions: [Position, Position] };
 export const acolPrinciples: Record<AcolTopic, string> = {
   bidding: "Acol Foundation opens a balanced 12-14 with 1NT. Otherwise, with 12+ HCP, choose a four-card or longer suit and plan a rebid.",
   responding: "After a weak 12-14 1NT, these balanced hands without a four-card major pass with 0-10, invite with 11-12, and bid game with 13-19 HCP.",
@@ -26,7 +21,7 @@ export const acolPrinciples: Record<AcolTopic, string> = {
   rebidding: "After a one-level new-suit response, balanced opener rebids 1NT with 15-16, 2NT with 17-18, or 3NT with 19 HCP, unless a major fit can be shown.",
   stayman: "After partner's 1NT, 2♣ asks for a four-card major. Here constructive Stayman needs 11+ HCP. 2♦ denies a major; 2♥ may also include four spades. No transfers."
 };
-const examples: Record<AcolTopic, Example[]> = {
+const examples: Record<AcolTopic, BiddingExample[]> = {
   bidding: [
     { title: "Passing is useful", prompt: "South deals. Which opening describes this hand in Acol Foundation?", why: "This balanced hand is below the 12-point opening range. Pass.", options: ["Pass", "1C", "1NT"],
       positions: [{ hand: low, call: "Pass" }, { hand: "QS 8S 3S KH 9H 2H JD 8D 4D 10C 7C 5C 2C", call: "Pass" }] },
@@ -58,18 +53,5 @@ const examples: Record<AcolTopic, Example[]> = {
 };
 
 export function acolChoiceSteps(topic: AcolTopic): BridgeChoiceStep[] {
-  return examples[topic].map((spec, index) => {
-    const make = (position: Position, followUp: boolean): BridgeChoiceStep => {
-      const hand = position.hand.split(" ").map(id => standardDeck().find(card => card.id === id)!);
-      const calls = position.calls ?? [];
-      return { id: `bridge-acol-${topic}-${index}${followUp ? "-follow-up" : ""}`, title: spec.title, prompt: spec.prompt,
-        context: calls.length ? calls.map(call => `${({ Tutor: "North", Right: "East", You: "South", Left: "West", Unknown: "Unknown" })[call.seat]}: ${bridgeCallLabel(call.call)}`).join(". ") + ". South to call." : "South deals. No calls yet.",
-        contextDetail: `Acol Foundation. You: ${bridgeHighCardPoints(hand)} HCP.`, hand, auction: calls,
-        options: spec.options.map(id => ({ id, label: bridgeCallLabel(id) })), correct: position.call,
-        explanations: Object.fromEntries(spec.options.map(id => [id, `${id === position.call ? "Good." : "Compare the strength, shape and earlier calls."} ${spec.why}`])),
-        teaching: { stage: followUp ? "reinforcement" : teachingStages[index], guidance: followUp ? acolPrinciples[topic]
-          : index === 0 ? `Try ${bridgeCallLabel(position.call)}. ${spec.why}` : index === 1 ? acolPrinciples[topic] : undefined } };
-    };
-    return { ...make(spec.positions[0], false), followUp: make(spec.positions[1], true) };
-  });
+  return biddingLesson(topic, "acol-foundation", acolPrinciples[topic], examples[topic]);
 }

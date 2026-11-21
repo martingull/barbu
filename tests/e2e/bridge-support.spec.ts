@@ -3,6 +3,9 @@ import { bridgeChoiceSteps } from "../../src/lessons/bridge/learning";
 import { bridgeCallLabel } from "../../src/domain/bridgeAuction";
 import { createBridgeSession } from "../../src/domain/bridgeSession";
 import { bridgeSaveKey, saveBridgeSession } from "../../src/persistence/bridgeSave";
+import { legacyBridgePreference } from "../fixtures/legacyBridgePreference";
+
+test.beforeEach(async ({ page }) => legacyBridgePreference(page));
 
 test("existing Bridge learners discover major support, reinforce a mistake and preserve their saved board", async ({ page }, info) => {
   const errors: string[] = [];

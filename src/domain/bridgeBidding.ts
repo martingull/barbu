@@ -1,24 +1,20 @@
 import type { BridgeAuctionCall, Card, Seat, Suit } from "./types";
 import { bridgeBiddingSystems, defaultBridgeSystem, type BridgeBiddingSystemId } from "./bridgeSystems";
+import { bridgeHighCardPoints, bridgeIsBalanced, bridgeSuitCount, parseBridgeBid } from "./bridgeBidPrimitives";
+import { bridgeNotrumpCall } from "./bridgeNotrump";
+import { bridgeAmericanCall } from "./bridgeAmericanBidding";
+export { bridgeHighCardPoints, bridgeIsBalanced, bridgeSuitCount, parseBridgeBid } from "./bridgeBidPrimitives";
 
 // Named profiles share natural bidding mechanics, not a universal convention system.
-// Frozen fixtures protect Barbu Natural while Acol uses explicit additional sequences.
+// Frozen fixtures protect Barbu Natural; named profiles add explicit convention sequences.
 const suits: Suit[] = ["S", "H", "D", "C"];
 const seats: Seat[] = ["Tutor", "Right", "You", "Left"];
-export const bridgeHighCardPoints = (cards: Card[]) => cards.reduce((n, card) => n + ({ A: 4, K: 3, Q: 2, J: 1 }[card.rank] ?? 0), 0);
-export const bridgeSuitCount = (cards: Card[], suit: string) => cards.filter(card => card.suit === suit).length;
-export const bridgeIsBalanced = (cards: Card[]) => ["3-3-3-4", "2-3-4-4", "2-3-3-5"].includes(suits.map(suit => bridgeSuitCount(cards, suit)).sort().join("-"));
 const longest = (cards: Card[]) => [...suits].sort((a, b) => bridgeSuitCount(cards, b) - bridgeSuitCount(cards, a))[0];
-
-export function parseBridgeBid(call: string) {
-  const normalized = call.trim().toUpperCase().replace(/NO TRUMPS?/g, "NT").replace(/CLUBS?/g, "C").replace(/DIAMONDS?/g, "D").replace(/HEARTS?/g, "H").replace(/SPADES?/g, "S").replace(/[♣♦♥♠]/g, suit => ({ "♣": "C", "♦": "D", "♥": "H", "♠": "S" }[suit]!)).replace(/\s+/g, "");
-  const match = /^([1-7])(C|D|H|S|NT)$/.exec(normalized);
-  return match ? { level: Number(match[1]), strain: match[2], id: normalized } : null;
-}
 
 export function bridgeOpeningCall(cards: Card[], system: BridgeBiddingSystemId = defaultBridgeSystem): string {
   const profile = bridgeBiddingSystems[system];
   const points = bridgeHighCardPoints(cards);
+  if (system === "standard-american" && bridgeIsBalanced(cards) && points >= 25 && points <= 27) return "3NT";
   if (points >= profile.strongTwo) return "2C";
   if (bridgeIsBalanced(cards) && points >= profile.twoNt[0]) return "2NT";
   if (bridgeIsBalanced(cards) && points >= profile.oneNt[0] && points <= profile.oneNt[1]) return "1NT";
@@ -61,31 +57,11 @@ export function suggestBridgeCall(cards: Card[], seat: Seat, calls: BridgeAuctio
 
   if (!last) return choose(bridgeOpeningCall(cards, system));
   if (!legal.length) return "Pass";
-  // Stayman belongs to this uncontested opening sequence, not every artificial 2C.
-  const ntOpening = bids[0];
-  if (system === "acol-foundation" && ntOpening.id === "1NT" && uncontested) {
-    const opener = ntOpening.seat === seat;
-    const inquiry = opener ? partnerBid : own;
-    if (opener && ours.length === 1 && inquiry?.id === "2C") return choose(count("H") >= 4 ? "2H" : count("S") >= 4 ? "2S" : "2D");
-    if (!opener && ours[0]?.id === "2C" && partners.length === 2) {
-      if (["H", "S"].includes(partnerBid!.strain) && count(partnerBid!.strain) >= 4) return choose(`${points >= 13 ? 4 : 3}${partnerBid!.strain}`);
-      if (points >= 13 && count(suit) >= 5 && ["H", "S"].includes(suit)) return choose(`3${suit}`);
-      return choose(points >= 13 ? "3NT" : "2NT");
-    }
-    if (opener && ours[1]?.id === "2D" && partnerBid?.level === 3 && ["H", "S"].includes(partnerBid.strain)) {
-      return choose(count(partnerBid.strain) >= 3 ? `4${partnerBid.strain}` : "3NT");
-    }
-    if (opener && ours.length === 2 && partners[0]?.id === "2C" && partnerBid?.level === 3 && ["H", "S"].includes(partnerBid.strain)) {
-      return own?.strain !== partnerBid.strain
-        ? choose(count(partnerBid.strain) >= 3 ? `4${partnerBid.strain}` : "3NT")
-        : points === profile.oneNt[1] ? choose(`4${partnerBid.strain}`) : "Pass";
-    }
-    // Notrump after our 2H reply denies a heart fit: responder's major is spades.
-    if (opener && ours.length === 2 && own?.id === "2H" && partners[0]?.id === "2C"
-      && partnerBid?.strain === "NT" && partnerBid.level <= 3 && count("S") >= 4)
-      return choose(`${partnerBid.level === 3 || points === profile.oneNt[1] ? 4 : 3}S`);
-    if (opener && partnerBid?.id === "2NT") return points === profile.oneNt[1] ? choose("3NT") : "Pass";
-    if (!opener && !own && partnerBid?.id === "1NT" && points >= 11 && (count("H") >= 4 || count("S") >= 4)) return choose("2C");
+  const notrumpCall = bridgeNotrumpCall(cards, seat, calls, system);
+  if (notrumpCall !== null) return choose(notrumpCall);
+  if (system === "standard-american") {
+    const call = bridgeAmericanCall(cards, seat, calls, legal);
+    if (call !== null) return choose(call);
   }
   const partnerAction = [...calls].reverse().find(call => call.seat === partner && call.call !== "Pass");
   if (!own && !partnerBid && ["X", "Double"].includes(partnerAction?.call ?? "") && last.level <= 2) {

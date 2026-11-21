@@ -1,4 +1,7 @@
 import { expect, test } from "@playwright/test";
+import { legacyBridgePreference } from "../fixtures/legacyBridgePreference";
+
+test.beforeEach(async ({ page }) => legacyBridgePreference(page));
 
 test("Bridge auction and active hand survive other games and bidding lessons", async ({ page }, info) => {
   test.setTimeout(60_000);

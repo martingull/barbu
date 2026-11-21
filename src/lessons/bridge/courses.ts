@@ -1,7 +1,9 @@
 import type { CourseContent } from "../courseTypes";
 import { bridgeDef, bridgeDefinitionFor, bridgeBiddingSkillId } from "../../games/bridge";
-import { defaultBridgeSystem, type BridgeBiddingSystemId } from "../../domain/bridgeSystems";
-import { acolChoiceSteps, acolPrinciples, type AcolTopic } from "./acol";
+import { bridgeBiddingSystems, defaultBridgeSystem, type BridgeBiddingSystemId } from "../../domain/bridgeSystems";
+import { acolPrinciples } from "./acol";
+import { americanPrinciples } from "./american";
+import { bridgeChoiceSteps, type BridgeChoiceTopic } from "./learning";
 
 const courses: CourseContent[] = [
   {
@@ -260,26 +262,29 @@ export const bridgeCourses = bridgeDef.learnSteps.map(step => courses.find(cours
 
 export function bridgeCoursesFor(system: BridgeBiddingSystemId = defaultBridgeSystem): CourseContent[] {
   if (system === "barbu-natural") return bridgeCourses;
+  const principles = system === "acol-foundation" ? acolPrinciples : americanPrinciples;
+  const profile = bridgeBiddingSystems[system];
   return bridgeDefinitionFor(system).learnSteps.map(step => {
-    const topic = step.action as AcolTopic;
-    if (!(topic in acolPrinciples)) return bridgeCourses.find(course => course.pathStepId === step.id)!;
-    const example = acolChoiceSteps(topic)[topic === "stayman" ? 0 : 1];
+    const topic = step.action;
+    if (!(topic in principles)) return bridgeCourses.find(course => course.pathStepId === step.id)!;
+    const principle = principles[topic as keyof typeof principles];
+    const example = bridgeChoiceSteps(topic as BridgeChoiceTopic, system)[topic === "stayman" ? 0 : 1];
     const id = bridgeBiddingSkillId(`bridge-${topic}`, system);
     return { id, pathStepId: id, game: "bridge", contract: "Bridge", title: step.title,
       practiceTarget: { kind: "practice", game: "bridge", action: topic },
-      concept: { heading: "Agree the meaning before you bid.", body: acolPrinciples[topic], points: [
-        { marker: "System", text: "Acol Foundation: four-card majors, weak 12-14 1NT, Stayman and natural weak takeouts. No transfers." },
+      concept: { heading: "Agree the meaning before you bid.", body: principle, points: [
+        { marker: "System", text: `${profile.name}: ${profile.summary}` },
         { marker: "Count", text: "Ace = 4, king = 3, queen = 2, jack = 1 high-card points. Shape and the earlier calls matter too." },
-        { marker: "Club", text: "These are named partnership agreements, not the only way to play Acol. Check your club's system card." }
+        { marker: "Club", text: "Check your club's system card. These are beginner agreements, not a complete competitive bidding system." }
       ] },
       example: { heading: example.title, body: `${example.prompt} ${example.explanations[example.correct]} The cards below are an excerpt, not the full hand.`,
-        ariaLabel: "Acol bidding example hand excerpt", pendingBySeat: {},
+        ariaLabel: `${profile.name.replace(" Foundation", "")} bidding example hand excerpt`, pendingBySeat: {},
         tableCards: example.hand.filter(card => ["A", "K", "Q", "J"].includes(card.rank)).slice(0, 4).map(card => ({ seat: "You", card })),
         sequence: [{ label: "Auction", text: example.context }, { label: "Strength", text: example.contextDetail! },
           { label: "Call", text: example.options.find(option => option.id === example.correct)!.label }] },
-      review: { heading: "Read the whole auction.", body: acolPrinciples[topic], points: [
+      review: { heading: "Read the whole auction.", body: principle, points: [
         { marker: "Target", text: "Points help choose a contract; they do not promise tricks." },
-        { marker: "Scope", text: "Transfers, slam conventions and a full competitive bidding system are not included. Manual legal bids do not teach partner a new convention." }
+        { marker: "Scope", text: `${profile.transfers ? "Minor-suit transfers" : "Transfers"}, slam conventions and full competitive continuations are not included. Manual legal bids do not teach partner a new convention.` }
       ] } };
   });
 }

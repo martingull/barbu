@@ -1,4 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
+import { legacyBridgePreference } from "../fixtures/legacyBridgePreference";
+
+test.beforeEach(async ({ page }) => legacyBridgePreference(page));
 
 async function openLearn(page: Page, game: string) {
   await page.goto("/");

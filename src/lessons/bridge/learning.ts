@@ -5,6 +5,8 @@ import { bridgeHighCardPoints } from "../../domain/bridgeBidding";
 import type { BridgeAuctionCall, Card, Seat } from "../../domain/types";
 import { defaultBridgeSystem, type BridgeBiddingSystemId } from "../../domain/bridgeSystems";
 import { acolChoiceSteps, acolPrinciples } from "./acol";
+import { americanConventionSteps, americanPrinciples } from "./american";
+import { bridgeBiddingSystems } from "../../domain/bridgeSystems";
 import { compassSeatLabels, formatCardLabel, formatCardList, suitSymbol } from "../../presentation/cardDisplay";
 import { drillTableCards, type DrillStep } from "../drillDecision";
 import { teachingStages, type Teaching } from "../learningPresentation";
@@ -23,6 +25,7 @@ const principles = {
 };
 export const bridgeTakeaway = (action: string, system: BridgeBiddingSystemId = defaultBridgeSystem) =>
   system === "acol-foundation" && action in acolPrinciples ? acolPrinciples[action as keyof typeof acolPrinciples]
+    : system === "standard-american" && action in americanPrinciples ? americanPrinciples[action as keyof typeof americanPrinciples]
     : principles[action as keyof typeof principles] ?? principles.contracts;
 const cards = (ids: string): Card[] => ids ? ids.split(" ").map(id => {
   const card = standardDeck().find(card => card.id === id);
@@ -160,11 +163,11 @@ function responseChoices(): BridgeChoiceStep[] {
   });
 }
 
-function supportChoices(): BridgeChoiceStep[] {
+function supportChoices(american = false): BridgeChoiceStep[] {
   const examples = [
     { title: "Show your fit", suit: "H", level: 2, hand: "KS 7S 2S QH 8H 3H JD 9D 4D 9C 10C 6C 2C",
       followSuit: "S", followHand: "AS 8S 3S QH 7H 2H KD 9D 4D 10C 8C 6C 2C" },
-    { title: "Invite partner to game", suit: "S", level: 3, hand: "KS 9S 4S AH 8H 2H QD 7D 3D JC 9C 5C 2C",
+    { title: "Invite partner to game", suit: "S", level: 3, hand: american ? "KS JS 4S AH 8H 2H QD 7D 3D JC 9C 5C 2C" : "KS 9S 4S AH 8H 2H QD 7D 3D JC 9C 5C 2C",
       followSuit: "H", followHand: "AS 9S 3S KH 7H 2H QD 8D 4D KC 10C 6C 2C" },
     { title: "Choose the partnership target", suit: "H", level: 4, hand: "AS 8S 3S QH 7H 2H KD 9D 4D AC 8C 6C 2C",
       followSuit: "S", followHand: "KS 9S 4S AH 8H 2H AD 7D 3D KC 9C 5C 2C" }
@@ -175,8 +178,8 @@ function supportChoices(): BridgeChoiceStep[] {
       const symbol = suitSymbol(suit), correct = `${example.level}${suit}`;
       const options = ["Pass", `2${suit}`, `3${suit}`, `4${suit}`];
       const fit = `Partner's five or more ${symbol} plus your three makes at least eight trumps.`;
-      const why = example.level === 2 ? `With ${points} HCP, raise to 2${symbol}: show 6-9 points and support without inviting game.`
-        : example.level === 3 ? `With ${points} HCP, invite with 3${symbol}: show 10-12 points and let partner pass or bid game with extra strength.`
+      const why = example.level === 2 ? `With ${points} HCP, raise to 2${symbol}: show ${american ? "6-10" : "6-9"} points and support without inviting game.`
+        : example.level === 3 ? `With ${points} HCP, invite with 3${symbol}: show ${american ? "11-12" : "10-12"} points and let partner pass or bid game with extra strength.`
         : `With ${points} HCP, bid 4${symbol}: this hand has the support and strength for the ten-trick game target.`;
       const objections: Record<string, string> = {
         Pass: "Passing hides your support and responding strength.",
@@ -200,9 +203,22 @@ function supportChoices(): BridgeChoiceStep[] {
   });
 }
 
-export function bridgeChoiceSteps(topic: "contracts" | "bidding" | "responding" | "support" | "rebidding" | "stayman", system: BridgeBiddingSystemId = defaultBridgeSystem): BridgeChoiceStep[] {
-  if (system === "acol-foundation" && topic !== "contracts") return acolChoiceSteps(topic);
-  if (topic === "rebidding" || topic === "stayman") throw Error("This lesson belongs to Acol Foundation.");
+export type BridgeChoiceTopic = "contracts" | "bidding" | "responding" | "support" | "rebidding" | "stayman" | "transfers";
+export function bridgeChoiceSteps(topic: BridgeChoiceTopic, system: BridgeBiddingSystemId = defaultBridgeSystem): BridgeChoiceStep[] {
+  if (system === "acol-foundation" && topic !== "contracts" && topic !== "transfers") return acolChoiceSteps(topic);
+  if (system === "standard-american" && (topic === "rebidding" || topic === "stayman" || topic === "transfers")) return americanConventionSteps(topic);
+  if (topic === "rebidding" || topic === "stayman" || topic === "transfers") throw Error("This lesson is not part of the selected bidding system.");
+  const steps = topic === "support" ? supportChoices(system === "standard-american") : baseChoiceSteps(topic);
+  if (system !== "standard-american" || topic === "contracts") return steps;
+  const present = (step: BridgeChoiceStep): BridgeChoiceStep => ({ ...step, id: step.id.replace("bridge-", "bridge-american-"),
+    contextDetail: `${bridgeBiddingSystems[system].name}. ${step.contextDetail?.replace("Barbu Natural. ", "") ?? `You: ${bridgeHighCardPoints(step.hand)} HCP.`}`,
+    auction: topic === "bidding" ? [] : [{ seat: "Tutor", call: topic === "responding" ? "1NT" : `1${step.correct.at(-1)}` }, { seat: "Right", call: "Pass" }],
+    teaching: { ...step.teaching, guidance: step.teaching.stage === "reinforcement" || step.teaching.stage === "supported" ? americanPrinciples[topic as "bidding" | "responding" | "support"] : step.teaching.guidance },
+    followUp: step.followUp ? present(step.followUp) : undefined });
+  return steps.map(present);
+}
+
+function baseChoiceSteps(topic: "contracts" | "bidding" | "responding" | "support"): BridgeChoiceStep[] {
   if (topic === "support") return supportChoices();
   if (topic === "responding") return responseChoices();
   if (topic === "contracts") return bridgeContractSteps.map((step, index) => ({

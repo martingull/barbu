@@ -6,11 +6,11 @@ import { bridgeAuctionStatus, type BridgeCallOption } from "../../domain/bridgeA
 import { bridgeDef } from "../../games/bridge";
 import { bridgeActiveHand, bridgeDealerIndex } from "./bridgePresentation";
 import { createSaveStore } from "../../persistence/saveStore";
-import { defaultBridgeSystem, isBridgeSystem, type BridgeBiddingSystemId } from "../../domain/bridgeSystems";
+import { newBridgeSystem, isBridgeSystem, type BridgeBiddingSystemId } from "../../domain/bridgeSystems";
 
 export function createBridgeFeature(options: FeatureOptions) {
   const preference = createSaveStore("barbu.bridgeBiddingSystem.v1", value => isBridgeSystem(value) ? value : null, options.storage);
-  const biddingSystem = writable(preference.load() ?? defaultBridgeSystem);
+  const biddingSystem = writable(preference.load() ?? newBridgeSystem);
   const feature = createReviewedMatchFeature({
     ...options, defaultTab: bridgeDef.table.defaultTab, store: createBridgeSaveStore(options.storage),
     create: seed => createBridgeSession(seed, 1, get(biddingSystem)), transition: transitionBridgeSession, complete: () => false,

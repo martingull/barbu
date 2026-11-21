@@ -3,6 +3,7 @@ import { bridgeCourses } from "../../src/lessons/bridge/courses";
 import { bridgeBiddingPracticeSteps, bridgeContractSteps } from "../../src/lessons/bridge/exercises";
 import { bridgeCallLabel } from "../../src/domain/bridgeAuction";
 import { bridgeChoiceSteps, bridgeLearningSteps } from "../../src/lessons/bridge/learning";
+import { legacyBridgePreference } from "../fixtures/legacyBridgePreference";
 
 async function expectLearningLayout(page: Page) {
   const surface = page.locator(".table-play-surface.flow-play");
@@ -145,6 +146,7 @@ test("Barbu review does not offer a replay of another game's exercise", async ({
 
 test("Bridge guided topics use the common lesson loop and preserve progress on reload", async ({ page }, info) => {
   test.setTimeout(60_000);
+  await legacyBridgePreference(page);
   await page.setViewportSize({ width: 320, height: 568 });
   await page.goto("/");
   await page.getByRole("button", { name: "Open Bridge", exact: true }).click();

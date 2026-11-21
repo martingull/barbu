@@ -50,8 +50,8 @@ test("Acol lessons use shared learning, separate bidding progress, and retain ol
     await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
   }
   await expect(page.getByLabel("Bridge course progress")).toContainText("6 / 9 complete");
-  await page.getByRole("button", { name: "Barbu Natural", exact: true }).click();
-  await expect(page.getByLabel("Bridge course progress")).toContainText("4 / 7 complete");
+  await page.getByRole("button", { name: "Standard American Foundation", exact: true }).click();
+  await expect(page.getByLabel("Bridge course progress")).toContainText("1 / 10 complete");
   await page.getByRole("button", { name: "Acol Foundation", exact: true }).click();
   await page.reload();
   await page.getByRole("button", { name: "Open Bridge", exact: true }).click();

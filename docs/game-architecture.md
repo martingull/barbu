@@ -231,6 +231,13 @@ Whist, Hearts, Spades, Bridge and Barbu have isolated frontends under their resp
   `bridgeSystems.ts` owns agreements, `bridgeBidding.ts` applies them, and sessions
   retain the chosen system across resume/next board. Old saves default to Barbu
   Natural; changing a menu preference never reinterprets an existing auction.
+  Standard American Foundation is the new-user choice, with ten topics and
+  separate `bridge-american-*` bidding keys. `bridgeNotrump.ts` shares Stayman
+  mechanics and profile-dependent transfer continuations; `bridgeAmericanBidding.ts`
+  adds suit/strong/weak-two sequences, not another auction engine. Convention
+  exercises use `biddingLesson.ts` and the same lesson/course shell as Acol.
+  Preserve the frozen Barbu Natural API/save interpretation; do not equate this
+  SAYC-based beginner subset with complete SAYC. See `docs/bridge.md` for the matrix.
   Dummy excerpts supply visible information;
   the final declarer position gives both remaining hands and the trick target.
   `DrillStep.tableAfterByCard` supplies choice-specific scripted responses through

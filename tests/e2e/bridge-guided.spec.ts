@@ -3,6 +3,9 @@ import { createBridgeSession, transitionBridgeSession } from "../../src/domain/b
 import { bridgeAuctionStatus, bridgeFinalizeContract } from "../../src/domain/bridgeAuction";
 import { saveBridgeSession, bridgeSaveKey } from "../../src/persistence/bridgeSave";
 import { bridgeChoiceSteps, bridgeLearningSteps } from "../../src/lessons/bridge/learning";
+import { legacyBridgePreference } from "../fixtures/legacyBridgePreference";
+
+test.beforeEach(async ({ page }) => legacyBridgePreference(page));
 
 function seedFor(role: "You" | "Right" | "Tutor" | "Left" | "passed") {
   for (let seed = 1; seed < 200; seed++) {

@@ -8,12 +8,64 @@ Board number, not deal seed, determines dealer and vulnerability. Passed-out
 boards record zero points and advance without clearing previous results.
 Existing saved boards keep their original conditions until the next deal.
 
-Bridge offers two named teaching profiles. The selector applies to new boards,
+Bridge offers Standard American Foundation and Acol Foundation. The selector applies to new boards,
 guided boards and bidding lessons; it does not change a saved board's agreements.
 All four seats use the same selected profile. Existing saves without a system
 field remain Barbu Natural. The existing free Bridge access is unchanged.
+New installations start with Standard American Foundation. A stored Barbu Natural
+preference is not silently migrated: it stays available to that learner with a
+prompt to choose a named system for new boards. Barbu Natural is not one of the
+two new-board selector buttons; it remains a compatibility profile, not a system
+we claim clubs know by that name.
 
-### Barbu Natural
+### Standard American Foundation
+
+This implements beginner agreements based on the [ACBL SAYC System Booklet,
+revised January 2006](https://web2.acbl.org/documentlibrary/play/sayc_book.pdf).
+Supporting teacher material: [ACBL responding to notrump](https://web2.acbl.org/documentLibrary/education/intro_to_bridge_online/Online_Class_13/C13_Online_Student_Manual.pdf)
+and [minor-suit responses](https://cdn.acbl.org/assets/documents/teachers/Teacher-Manuals/Commonly-Used-Conventions-Lesson-5.pdf).
+Lesson hands and wording are original. This is deliberately labelled Foundation,
+not SAYC: a partial convention catalog is not a complete partnership system.
+
+- Five-card majors and better minors, including clubs with 3-3 minors; use the
+  existing conservative 13-HCP opening threshold. Balanced notrump takes priority:
+  1NT 15-17, 2NT 20-21, 3NT 25-27; other strong hands use 2C at 22+.
+- Constructive Stayman at 8+ over 1NT; the shared major replies distinguish hearts
+  (possibly both majors), spades, or neither. Acol uses the same sequence machinery
+  but requires 11+ over its weak notrump.
+- Jacoby major transfers over 1NT/2NT and the balanced strong-2C rebid. Complete
+  the transfer with any holding; a maximum 1NT with four-card support may
+  superaccept. Responder then passes, invites or bids game; opener uses the
+  established five-card length and their own support, never responder's hidden hand.
+- With exactly five in a major, responder continues 2NT on 8-9 or 3NT on 10+;
+  with six, chooses three or four of the major. Game-going strength is required
+  for the taught 2NT continuations. Conventions remain on over doubles, off over
+  suit overcalls. The fallback after intervention is natural, not a full defense.
+- Balanced major-raise examples use 6-10 simple, 11-12 limit, 13+ game, with
+  three-card support. Four-card support and 13+ by an unpassed hand use Jacoby
+  2NT; opener describes shortage/strength and the simplified responder settles
+  in game. These HCP guides do not implement full dummy-point/losing-trick judgment.
+- Balanced rebids after a one-level new-suit response show 12-14 at 1NT or
+  18-19 at 2NT; another available four-card major can be shown first. Rebid
+  strength must not be interpreted as the opening 15-17 range. A simple 1NT
+  response is not forcing; two-over-one responses do require a continuation,
+  unlike a full 2/1 Game Forcing agreement.
+- Positive strong-2C responses use 8+ and a five-card suit, or balanced 2NT;
+  other hands use 2D waiting. A weak-two 2NT enquiry gets a minimum suit rebid
+  or a maximum ace/king feature (3NT without one). After a minor opening,
+  2NT is 13-15 balanced/game forcing and 3NT 16-18, not the old invitation.
+  Extremely strong balanced hands stop in game in this teaching policy rather
+  than generating an unsupported slam enquiry; that is an explicit strength limit.
+
+Remaining published-SAYC gaps include minor-suit sign-off transfers, slam
+investigation (Blackwood/Gerber/quantitative sequences), strong jump shifts,
+complete forcing-continuation handling, negative doubles, Michaels/unusual
+notrump and full competitive/carding agreements. Notrump/strong-opening judgment,
+shape valuation and some natural fallback sequences remain heuristic. The
+presentation warns against unsupported slam calls. Do not rename this to SAYC
+until the convention matrix and continuation tests actually cover those agreements.
+
+### Barbu Natural (Compatibility)
 
 Barbu Natural is a deliberately limited natural bidding agreement, not SAYC:
 
@@ -71,6 +123,11 @@ Agree the system with a real partner before transferring these habits to a club.
 
 `src/domain/bridgeSystems.ts` defines the named agreements and their thresholds.
 `bridgeBidding.ts` applies them to each seat's own hand and the public auction.
+`bridgeBidPrimitives.ts` shares card evaluation and parsing. `bridgeNotrump.ts`
+recognises and advances notrump conventions for both named profiles, while
+`bridgeAmericanBidding.ts` handles the additional American suit/strong/weak-two
+sequences. These are policies within the existing auction engine, not separate
+game or scoring engines. Frozen Barbu Natural decisions retain their old meaning.
 Contextual display explanations live in `features/bridge/bridgeBidExplanation.ts`.
 All are shared by browser and installed builds. `src/domain/bridgeAuction.ts` owns legal
 calls and contract formation; `bridgeScoring.ts` owns duplicate scoring.
@@ -154,6 +211,21 @@ snippet without importing any game. Only contract/dummy/declarer/defense complet
 is shared between profiles; `bridge-acol-*` bidding progress stays separate from
 the existing `bridge-*` keys. The selected preference is stored independently at
 `barbu.bridgeBiddingSystem.v1`; the saved board keeps its own `biddingSystem`.
+
+Standard American uses ten topics: the four common contract/cardplay topics and
+six separate `bridge-american-*` topics (openings, notrump responses, major support,
+rebids, Stayman and transfers). There are 30 base decisions plus 30 distinct
+companions. Bidding progress is never copied from Barbu Natural or Acol. Both
+profiles use `biddingLesson.ts` for authored convention decisions and the same
+course factory, cards, feedback and guided-hand components. Compatibility browser
+fixtures explicitly load the legacy preference; separate new-user tests complete
+all ten topics and check a live accepted transfer through actual cardplay.
+
+`newBridgeSystem` selects the default for newly created UI tables. Existing
+low-level APIs with omitted system arguments retain `defaultBridgeSystem`
+(Barbu Natural) for fixture/API compatibility. All production feature and guided
+routes pass their selected profile explicitly. Save normalisation always treats
+an absent system as the original Barbu Natural agreement, never the new default.
 
 ## Remaining Strength Boundaries
 

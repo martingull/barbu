@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
 import { bridgeChoiceSteps } from "../../src/lessons/bridge/learning";
+import { legacyBridgePreference } from "../fixtures/legacyBridgePreference";
+
+test.beforeEach(async ({ page }) => legacyBridgePreference(page));
 
 test("completed Bridge learners discover and finish the new bidding lesson without losing progress", async ({ page }, info) => {
   const errors: string[] = [];

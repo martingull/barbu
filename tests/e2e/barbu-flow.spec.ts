@@ -7,6 +7,7 @@ import { saveBridgeSession } from "../../src/persistence/bridgeSave";
 import { trickTakingSeats } from "../../src/domain/trickTakingScore";
 import { whistOddProgress } from "../../src/features/whist/whistPresentation";
 import { whistLearningSteps } from "../../src/lessons/whist/learning";
+import { legacyBridgePreference } from "../fixtures/legacyBridgePreference";
 
 async function finishGuidedLesson(page: Page) {
   while (await page.getByRole("button", { name: /^(Next decision|Try another example)$/ }).isVisible()) {
@@ -18,6 +19,7 @@ async function finishGuidedLesson(page: Page) {
 }
 
 test.beforeEach(async ({ page }, testInfo) => {
+  await legacyBridgePreference(page);
   if (testInfo.project.name !== "iphone-16") {
     return;
   }
