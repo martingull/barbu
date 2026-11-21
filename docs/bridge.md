@@ -8,6 +8,13 @@ Board number, not deal seed, determines dealer and vulnerability. Passed-out
 boards record zero points and advance without clearing previous results.
 Existing saved boards keep their original conditions until the next deal.
 
+Bridge offers two named teaching profiles. The selector applies to new boards,
+guided boards and bidding lessons; it does not change a saved board's agreements.
+All four seats use the same selected profile. Existing saves without a system
+field remain Barbu Natural. The existing free Bridge access is unchanged.
+
+### Barbu Natural
+
 Barbu Natural is a deliberately limited natural bidding agreement, not SAYC:
 
 - 13+ HCP one-level openings; five-card majors, better minor, clubs with 3-3 minors.
@@ -29,10 +36,43 @@ investigation, negative/responsive doubles, forcing passes, or all competitive
 continuations after interference. Manual legal calls remain available, but
 computer partners do not understand unimplemented conventions.
 
+### Acol Foundation
+
+This beginner profile starts from the [Standard English Acol Foundation Level
+system file (2019)](https://www.bridgewebs.com/castlegc/ACOL.pdf), not from a claim
+that every Acol club uses the same agreements. Explanations and hands are original.
+
+- Balanced 1NT 12-14; otherwise open a four-card or longer suit with 12+ HCP.
+  Longest suit first; prefer hearts with equal four-card majors. For 4-4-4-1,
+  singleton C opens H, singleton D opens C, otherwise open D.
+- Balanced responses without a four-card major: pass 0-10, invite 11-12 with
+  2NT, game 13-19 with 3NT. The simplified opener accepts invitations with 14.
+- Constructive Stayman after uncontested 1NT: 2C with 11+ and a four-card
+  major; replies 2D without a major, 2H with hearts (possibly spades too),
+  otherwise 2S. Responder invites or bids game with a fit, otherwise notrump.
+  A game-forcing major continuation after a 2D reply gets three-card support
+  or 3NT. Doubles and suit intervention switch off these Stayman sequences.
+- Natural weak 2D/H/S takeouts over 1NT promise five cards; no transfers.
+- After a one-level new-suit response, balanced rebids show 15-16 at 1NT,
+  17-18 at 2NT, 19 at 3NT, unless supporting partner's major. Subsequent
+  invitations use this rebid range, not the weak opening range.
+- Balanced four-card major-support hands use simple HCP raises: 6-9 to two,
+  10-12 to three, 13+ to game. Shape evaluation is not taught by these examples.
+- 2NT opens 20-22 balanced; strong 2C uses 23+ and the existing simplified
+  2D waiting route. Weak two openings in D/H/S use 6-10 and six cards.
+
+This is a bounded teaching profile, not the full published system. In particular,
+Rule of 20 openings, weak Stayman, transfers, positive responses to strong 2C,
+quantitative slam bidding and complete competitive continuations are not included.
+The shared natural fallback is still heuristic, not an expert bidding search.
+Agree the system with a real partner before transferring these habits to a club.
+
 ## Implementation
 
-`src/domain/bridgeBidding.ts` contains Barbu Natural bidding and contextual explanations,
-shared by browser and installed builds. `src/domain/bridgeAuction.ts` owns legal
+`src/domain/bridgeSystems.ts` defines the named agreements and their thresholds.
+`bridgeBidding.ts` applies them to each seat's own hand and the public auction.
+Contextual display explanations live in `features/bridge/bridgeBidExplanation.ts`.
+All are shared by browser and installed builds. `src/domain/bridgeAuction.ts` owns legal
 calls and contract formation; `bridgeScoring.ts` owns duplicate scoring.
 `bridgeSession.ts` owns auction/play phases, trick review, replay and board
 settlement. `src/persistence/bridgeSave.ts` validates and restores version-1 saves
@@ -102,6 +142,18 @@ complete SAYC. Different club agreements can assign different meanings to raises
 
 Other responses to suit openings, competitive auctions, multi-trick planning and interactive duplicate
 score explanation remain curriculum gaps, not completed lessons.
+
+Acol uses the same learning template with nine topics: the four common
+contract/cardplay topics plus Acol openings, responding, support, notrump rebids
+and Stayman. Each has three base decisions and three bounded fresh companions
+(27 + 27 overall). The five Acol bidding pools live in `lessons/bridge/acol.ts`;
+their answers are checked against the actual auction policy at all four seats.
+`bridgeDefinitionFor` and `bridgeCoursesFor` adapt metadata, not a second game
+implementation. `GameLearning` accepts a course catalog and optional settings
+snippet without importing any game. Only contract/dummy/declarer/defense completion
+is shared between profiles; `bridge-acol-*` bidding progress stays separate from
+the existing `bridge-*` keys. The selected preference is stored independently at
+`barbu.bridgeBiddingSystem.v1`; the saved board keeps its own `biddingSystem`.
 
 ## Remaining Strength Boundaries
 

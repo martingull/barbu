@@ -1,7 +1,8 @@
 import type { BridgeAuctionCall, Card, Seat, Suit } from "./types";
+import { bridgeBiddingSystems, defaultBridgeSystem, type BridgeBiddingSystemId } from "./bridgeSystems";
 
-// Barbu Natural: five-card majors, strong notrump, natural responses, 2D waiting.
-// Frozen native fixtures protect this policy during the TypeScript migration.
+// Named profiles share natural bidding mechanics, not a universal convention system.
+// Frozen fixtures protect Barbu Natural while Acol uses explicit additional sequences.
 const suits: Suit[] = ["S", "H", "D", "C"];
 const seats: Seat[] = ["Tutor", "Right", "You", "Left"];
 export const bridgeHighCardPoints = (cards: Card[]) => cards.reduce((n, card) => n + ({ A: 4, K: 3, Q: 2, J: 1 }[card.rank] ?? 0), 0);
@@ -15,23 +16,32 @@ export function parseBridgeBid(call: string) {
   return match ? { level: Number(match[1]), strain: match[2], id: normalized } : null;
 }
 
-export function bridgeOpeningCall(cards: Card[]): string {
+export function bridgeOpeningCall(cards: Card[], system: BridgeBiddingSystemId = defaultBridgeSystem): string {
+  const profile = bridgeBiddingSystems[system];
   const points = bridgeHighCardPoints(cards);
-  if (points >= 22) return "2C";
-  if (bridgeIsBalanced(cards) && points >= 20) return "2NT";
-  if (bridgeIsBalanced(cards) && points >= 15 && points <= 17) return "1NT";
+  if (points >= profile.strongTwo) return "2C";
+  if (bridgeIsBalanced(cards) && points >= profile.twoNt[0]) return "2NT";
+  if (bridgeIsBalanced(cards) && points >= profile.oneNt[0] && points <= profile.oneNt[1]) return "1NT";
   const count = (suit: string) => bridgeSuitCount(cards, suit);
-  if (points >= 13) {
+  if (points >= profile.openingPoints) {
+    if (system === "acol-foundation") {
+      if (["C", "D", "H", "S"].every(suit => count(suit) === 4 || count(suit) === 1)) {
+        return count("C") === 1 ? "1H" : count("D") === 1 ? "1C" : "1D";
+      }
+      const suit = longest(cards);
+      return count("H") === 4 && count("S") === 4 && count(suit) === 4 ? "1H" : `1${suit}`;
+    }
     if (count("S") >= 5 && count("S") >= count("H")) return "1S";
     if (count("H") >= 5) return "1H";
     return count("D") > count("C") || (count("D") === count("C") && count("D") >= 4) ? "1D" : "1C";
   }
   const suit = longest(cards);
-  if (points >= 5 && points <= 11 && suit !== "C" && count(suit) >= 6) return `2${suit}`;
+  if (points >= profile.weakTwo[0] && points <= profile.weakTwo[1] && suit !== "C" && count(suit) >= 6) return `2${suit}`;
   return "Pass";
 }
 
-export function suggestBridgeCall(cards: Card[], seat: Seat, calls: BridgeAuctionCall[], legal: string[]): string {
+export function suggestBridgeCall(cards: Card[], seat: Seat, calls: BridgeAuctionCall[], legal: string[], system: BridgeBiddingSystemId = defaultBridgeSystem): string {
+  const profile = bridgeBiddingSystems[system];
   const points = bridgeHighCardPoints(cards);
   const count = (suit: string) => bridgeSuitCount(cards, suit);
   const balanced = bridgeIsBalanced(cards);
@@ -41,6 +51,7 @@ export function suggestBridgeCall(cards: Card[], seat: Seat, calls: BridgeAuctio
   const ours = bids.filter(bid => bid.seat === seat);
   const partners = bids.filter(bid => bid.seat === partner);
   const opponents = bids.filter(bid => bid.seat !== seat && bid.seat !== partner);
+  const uncontested = !calls.some(call => call.seat !== seat && call.seat !== partner && call.call.trim().toUpperCase() !== "PASS");
   const last = bids.at(-1);
   const own = ours.at(-1);
   const partnerBid = partners.at(-1);
@@ -48,8 +59,34 @@ export function suggestBridgeCall(cards: Card[], seat: Seat, calls: BridgeAuctio
   const game = (strain: string) => strain === "NT" ? 3 : ["H", "S"].includes(strain) ? 4 : 5;
   const stopped = opponents.every(bid => cards.some(card => card.suit === bid.strain && (card.rank === "A" || (card.rank === "K" && count(bid.strain) >= 2) || (card.rank === "Q" && count(bid.strain) >= 3))));
 
-  if (!last) return choose(bridgeOpeningCall(cards));
+  if (!last) return choose(bridgeOpeningCall(cards, system));
   if (!legal.length) return "Pass";
+  // Stayman belongs to this uncontested opening sequence, not every artificial 2C.
+  const ntOpening = bids[0];
+  if (system === "acol-foundation" && ntOpening.id === "1NT" && uncontested) {
+    const opener = ntOpening.seat === seat;
+    const inquiry = opener ? partnerBid : own;
+    if (opener && ours.length === 1 && inquiry?.id === "2C") return choose(count("H") >= 4 ? "2H" : count("S") >= 4 ? "2S" : "2D");
+    if (!opener && ours[0]?.id === "2C" && partners.length === 2) {
+      if (["H", "S"].includes(partnerBid!.strain) && count(partnerBid!.strain) >= 4) return choose(`${points >= 13 ? 4 : 3}${partnerBid!.strain}`);
+      if (points >= 13 && count(suit) >= 5 && ["H", "S"].includes(suit)) return choose(`3${suit}`);
+      return choose(points >= 13 ? "3NT" : "2NT");
+    }
+    if (opener && ours[1]?.id === "2D" && partnerBid?.level === 3 && ["H", "S"].includes(partnerBid.strain)) {
+      return choose(count(partnerBid.strain) >= 3 ? `4${partnerBid.strain}` : "3NT");
+    }
+    if (opener && ours.length === 2 && partners[0]?.id === "2C" && partnerBid?.level === 3 && ["H", "S"].includes(partnerBid.strain)) {
+      return own?.strain !== partnerBid.strain
+        ? choose(count(partnerBid.strain) >= 3 ? `4${partnerBid.strain}` : "3NT")
+        : points === profile.oneNt[1] ? choose(`4${partnerBid.strain}`) : "Pass";
+    }
+    // Notrump after our 2H reply denies a heart fit: responder's major is spades.
+    if (opener && ours.length === 2 && own?.id === "2H" && partners[0]?.id === "2C"
+      && partnerBid?.strain === "NT" && partnerBid.level <= 3 && count("S") >= 4)
+      return choose(`${partnerBid.level === 3 || points === profile.oneNt[1] ? 4 : 3}S`);
+    if (opener && partnerBid?.id === "2NT") return points === profile.oneNt[1] ? choose("3NT") : "Pass";
+    if (!opener && !own && partnerBid?.id === "1NT" && points >= 11 && (count("H") >= 4 || count("S") >= 4)) return choose("2C");
+  }
   const partnerAction = [...calls].reverse().find(call => call.seat === partner && call.call !== "Pass");
   if (!own && !partnerBid && ["X", "Double"].includes(partnerAction?.call ?? "") && last.level <= 2) {
     const unbid = [...suits].filter(suit => !opponents.some(bid => bid.strain === suit)).sort((a, b) => count(b) - count(a));
@@ -64,19 +101,21 @@ export function suggestBridgeCall(cards: Card[], seat: Seat, calls: BridgeAuctio
     if (partners[0].id === "2C") return choose("2D");
     if (partnerBid.strain === "NT") {
       if (partnerBid.level >= 3) return "Pass";
-      const base = partnerBid.level === 1 ? 15 : 20;
+      const openingNotrump = bids[0] === partnerBid;
+      const base = partnerBid.level === 1 ? openingNotrump ? profile.oneNt[0] : 15 : profile.twoNt[0];
+      const maximum = openingNotrump ? profile.oneNt[1] : 17;
       const major = ["S", "H"].find(major => count(major) >= 6);
       if (major && points + base >= 25) return choose(`4${major}`);
       if (points + base >= 25 && stopped) return choose("3NT");
-      if (partnerBid.level === 1 && points >= 8 && stopped) return choose("2NT");
-      if (partnerBid.level === 1 && count(suit) >= 5 && ["S", "H"].includes(suit)) return choose(`2${suit}`);
+      if (partnerBid.level === 1 && points >= 25 - maximum && stopped) return choose("2NT");
+      if (partnerBid.level === 1 && count(suit) >= 5 && (system === "acol-foundation" ? suit !== "C" : ["S", "H"].includes(suit))) return choose(`2${suit}`);
       return "Pass";
     }
     if (partnerBid.level === 2) {
       return count(partnerBid.strain) >= 3 && points >= 15 ? choose(`${game(partnerBid.strain)}${partnerBid.strain}`) : "Pass";
     }
     if (partnerBid.level !== 1 || points < 6) return "Pass";
-    if (["H", "S"].includes(partnerBid.strain) && count(partnerBid.strain) >= 3) {
+    if (["H", "S"].includes(partnerBid.strain) && count(partnerBid.strain) >= profile.raiseSupport) {
       return choose(`${points >= 13 ? 4 : points >= 10 ? 3 : 2}${partnerBid.strain}`);
     }
     // Show a four-card major at the one level before raising a minor.
@@ -100,14 +139,34 @@ export function suggestBridgeCall(cards: Card[], seat: Seat, calls: BridgeAuctio
       return choose("3NT");
     }
     if (partnerBid.level >= game(partnerBid.strain)) return "Pass";
-    if (own.strain === "NT" && partnerBid.id === "2NT") return points >= (opened ? 17 : 12) ? choose("3NT") : "Pass";
+    if (system === "acol-foundation" && opened && ours.length === 1 && own.level === 1 && own.strain !== "NT" && partnerBid.level <= 2 && partnerBid.strain !== "NT" && partnerBid.strain !== own.strain && balanced) {
+      if (["H", "S"].includes(partnerBid.strain) && count(partnerBid.strain) >= 4) return choose(`${points >= 19 ? 4 : points >= 17 ? 3 : 2}${partnerBid.strain}`);
+      const level = partnerBid.level === 1 ? points >= 19 ? 3 : points >= 17 ? 2 : 1 : points >= 17 ? 3 : 2;
+      return choose(`${level}NT`);
+    }
+    // A suit opening followed by notrump describes a different range from opening 1NT.
+    const suitOpening = bids[0].level === 1 && bids[0].strain !== "NT";
+    if (system === "acol-foundation" && suitOpening && uncontested) {
+      if (!opened && ours.length === 1 && own.level === 1 && partners.length === 2 && partnerBid.strain === "NT") {
+        const minimum = partnerBid.level === 1 ? 15 : 17;
+        if (count(own.strain) >= 5 && ["H", "S"].includes(own.strain) && points + minimum >= 25) return choose(`${count(own.strain) >= 6 ? 4 : 3}${own.strain}`);
+        if (points + minimum >= 25) return choose("3NT");
+        if (partnerBid.level === 1 && points + 16 >= 25) return choose("2NT");
+        return count(own.strain) >= 6 ? choose(`2${own.strain}`) : "Pass";
+      }
+      if (opened && ours.length === 2 && own.strain === "NT") {
+        if (partnerBid.id === "2NT") return points >= 16 ? choose("3NT") : "Pass";
+        if (partnerBid.level === 3 && ["H", "S"].includes(partnerBid.strain)) return choose(count(partnerBid.strain) >= 3 ? `4${partnerBid.strain}` : "3NT");
+      }
+    }
+    if (own.strain === "NT" && partnerBid.id === "2NT") return points >= (opened ? profile.oneNt[1] : 12) ? choose("3NT") : "Pass";
     if (own.strain === partnerBid.strain) {
       const needed = opened ? (partnerBid.level === 2 ? 19 : 15) : 13;
       return points >= needed ? choose(`${game(own.strain)}${own.strain}`) : "Pass";
     }
     if (own.strain === "NT") return "Pass";
     if (opened && partnerBid.id === "2NT") return points >= 15 ? choose("3NT") : "Pass";
-    if (["H", "S"].includes(partnerBid.strain) && count(partnerBid.strain) >= (opened ? 4 : 3)) {
+    if (["H", "S"].includes(partnerBid.strain) && count(partnerBid.strain) >= (opened ? 4 : profile.raiseSupport)) {
       const level = points >= (opened ? 19 : 13) ? 4 : points >= (opened ? 17 : 10) ? 3 : 2;
       return choose(`${level}${partnerBid.strain}`);
     }

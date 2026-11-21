@@ -224,6 +224,13 @@ Whist, Hearts, Spades, Bridge and Barbu have isolated frontends under their resp
   the common drill screen with compass labels. Existing progress keys are unchanged;
   responding to 1NT and supporting partner's major have their own added keys.
   Keep topics in authored order: worked, supported, then independent.
+  Bridge's `bridgeDefinitionFor` and `bridgeCoursesFor` supply profile-specific
+  metadata through optional `GameLearning` course/settings inputs, not game-id
+  branches in the shared template. Acol Foundation adds separate bidding progress,
+  rebidding and Stayman topics while sharing the four contract/cardplay topics.
+  `bridgeSystems.ts` owns agreements, `bridgeBidding.ts` applies them, and sessions
+  retain the chosen system across resume/next board. Old saves default to Barbu
+  Natural; changing a menu preference never reinterprets an existing auction.
   Dummy excerpts supply visible information;
   the final declarer position gives both remaining hands and the trick target.
   `DrillStep.tableAfterByCard` supplies choice-specific scripted responses through

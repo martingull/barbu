@@ -7,6 +7,7 @@ import { bridgeHandResultFor, type BridgeScoreState } from "../../domain/bridgeS
 import { trickTakingSeats } from "../../domain/trickTakingScore";
 import { formatSignedScore } from "../../presentation/scorePresentation";
 import type { SavedBridgeRun } from "../../persistence/bridgeSave";
+import { bridgeBiddingSystems } from "../../domain/bridgeSystems";
 
 export const bridgeSeatLabel = (seat: Seat | "Unknown") => seat === "Unknown" ? seat : compassSeatLabels[seat];
 
@@ -65,7 +66,7 @@ export function bridgePartnershipLabel(side: "NS" | "EW") {
 
 export function savedBridgeRunSummary(savedRun: SavedBridgeRun) {
   const handNumber = savedRun.fullHand.bridgeBoardNumber ?? savedRun.results.length + 1;
-  const score = `NS ${formatSignedScore(savedRun.scores.ns)}, EW ${formatSignedScore(savedRun.scores.ew)}`;
+  const score = `NS ${formatSignedScore(savedRun.scores.ns)}, EW ${formatSignedScore(savedRun.scores.ew)}; ${bridgeBiddingSystems[savedRun.biddingSystem].name}`;
   const finalContract = savedRun.fullHand.bridgeContract?.label;
 
   if (savedRun.view === "bridgeAuction") {

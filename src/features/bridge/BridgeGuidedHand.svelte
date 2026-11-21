@@ -6,13 +6,16 @@
   import { bridgeDealerIndex } from "./bridgePresentation";
   import BridgeAuction from "./BridgeAuction.svelte";
   import BridgeHandView from "./BridgeHandView.svelte";
-  let { seed, onBack, onIndependentPlay, onSurfaceChange }: {
+  import { defaultBridgeSystem, type BridgeBiddingSystemId } from "../../domain/bridgeSystems";
+  let { seed, system = defaultBridgeSystem, onBack, onIndependentPlay, onSurfaceChange }: {
+    system?: BridgeBiddingSystemId;
     seed: number; onBack: () => void; onIndependentPlay: () => void; onSurfaceChange: (fixed: boolean) => void;
   } = $props();
   const feature = untrack(() => {
     const openingSeed = seed;
-    return createGuidedHandFeature(openingSeed, { create: createBridgeSession,
-      transition: transitionBridgeSession, replay: () => createBridgeSession(openingSeed) });
+    const selectedSystem = system;
+    return createGuidedHandFeature(openingSeed, { create: seed => createBridgeSession(seed, 1, selectedSystem),
+      transition: transitionBridgeSession, replay: () => createBridgeSession(openingSeed, 1, selectedSystem) });
   });
   $effect(() => { onSurfaceChange($feature.session.view === "fullHand"); });
   function confirm() {

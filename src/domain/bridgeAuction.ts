@@ -1,6 +1,7 @@
 import type { BridgeAuctionCall, BridgeContractState, BridgeStrain, FullHandState, Seat } from "./types";
 import { parseBridgeBid, suggestBridgeCall } from "./bridgeBidding";
 import { trickTakingSeats as seats } from "./trickTakingScore";
+import { defaultBridgeSystem, type BridgeBiddingSystemId } from "./bridgeSystems";
 
 export type BridgeBidOption = {
   id: string;
@@ -179,18 +180,18 @@ export function normalizeBridgeCall(value: unknown): BridgeCallOption | null {
   return parseBridgeBid(value)?.id ?? null;
 }
 
-export function bridgeSuggestedCallForHand(hand: FullHandState | null, calls: BridgeAuctionCall[], seat: Seat = "You"): BridgeCallOption {
+export function bridgeSuggestedCallForHand(hand: FullHandState | null, calls: BridgeAuctionCall[], seat: Seat = "You", system: BridgeBiddingSystemId = defaultBridgeSystem): BridgeCallOption {
   if (!hand) return "Pass";
   const legal = bridgeLegalCallOptions(calls, seat, seats.indexOf(hand.bridgeDealer ?? "You"));
-  return suggestBridgeCall(hand.hands[seats.indexOf(seat)], seat, calls, legal);
+  return suggestBridgeCall(hand.hands[seats.indexOf(seat)], seat, calls, legal, system);
 }
 
-export function bridgeAutoAdvanceAuction(calls: BridgeAuctionCall[], hand: FullHandState): BridgeAuctionCall[] {
+export function bridgeAutoAdvanceAuction(calls: BridgeAuctionCall[], hand: FullHandState, system: BridgeBiddingSystemId = defaultBridgeSystem): BridgeAuctionCall[] {
   const next = [...calls];
   const dealer = seats.indexOf(hand.bridgeDealer ?? "You");
   while (true) {
     const status = bridgeAuctionStatus(next, dealer);
     if (status.complete || status.currentSeat === "You") return next;
-    next.push({ seat: status.currentSeat, call: bridgeCallLabel(bridgeSuggestedCallForHand(hand, next, status.currentSeat)) });
+    next.push({ seat: status.currentSeat, call: bridgeCallLabel(bridgeSuggestedCallForHand(hand, next, status.currentSeat, system)) });
   }
 }

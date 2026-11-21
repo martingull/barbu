@@ -7,7 +7,7 @@
   import DrillScreen from "../components/DrillScreen.svelte";
   import DrillResultScreen from "../components/DrillResultScreen.svelte";
   import TablePlaySurface from "../components/TablePlaySurface.svelte";
-  import { courseCatalog } from "../lessons/courses";
+  import { courseCatalog as defaultCourses } from "../lessons/courses";
   import type { CourseContent, CourseStage } from "../lessons/courseTypes";
   import { drillDecision, type DrillStep, type DrillResult } from "../lessons/drillDecision";
   import type { GameDefinition } from "../games/gameRegistry";
@@ -21,7 +21,7 @@
   import type { CardDisplayComparator } from "../presentation/cardOrdering";
 
   let { definition, gameName, tab, onTab, play, customExercise, loadExercise, exerciseTitle, drillTitle, drillEyebrow, seatLabels = {}, resultMessage,
-    entry, onEntryConsumed, onIntroductionComplete, onGuidedPlay, introductionRecommendation, resources, lessonEntries = [], customExample: renderExample, drillTableFor, drillTopic, compareCards,
+    entry, onEntryConsumed, onIntroductionComplete, onGuidedPlay, introductionRecommendation, resources, lessonEntries = [], customExample: renderExample, drillTableFor, drillTopic, compareCards, courses = defaultCourses, settings,
     completedSteps, learningEvidence = {}, nextSeed, onBack, onReference, onCompleteStep, onResetSteps, onExerciseComplete, onSurfaceChange }: FeatureServices & {
     definition: GameDefinition; gameName: string; tab: TableTabId; onTab: (tab: TableTabId) => void;
     play?: Snippet; customExercise?: Snippet<[CustomExerciseContext]>;
@@ -40,6 +40,8 @@
     drillTableFor?: (step: DrillStep) => Snippet<[TableCard[]]> | undefined;
     drillTopic?: (action: string) => string;
     compareCards?: CardDisplayComparator;
+    courses?: CourseContent[];
+    settings?: Snippet;
   } = $props();
   let view = $state<"table" | "course" | "drill" | "custom" | "result">("table");
   let course = $state<CourseContent | null>(null);
@@ -90,7 +92,7 @@
   function startStep(step: LearnPathStep, explanation = false) {
     introduction = "";
     activeStep = step;
-    course = courseCatalog.find(item => item.game === definition.table.id && item.pathStepId === step.id) ?? null;
+    course = courses.find(item => item.game === definition.table.id && item.pathStepId === step.id) ?? null;
     if (step.decisionFirst && !explanation) startExercise(step.exerciseAction ?? step.action, true);
     else if (course) { stage = "concept"; view = "course"; }
     else startExercise(step.exerciseAction ?? step.action);
@@ -108,7 +110,7 @@
     if (!hasExercise && !step.lessonId) { practiceStep(step); return; }
     startExercise(hasExercise ? exerciseAction : step.lessonId!);
     activeStep = step;
-    course = courseCatalog.find(item => item.game === definition.table.id && item.pathStepId === step.id) ?? null;
+    course = courses.find(item => item.game === definition.table.id && item.pathStepId === step.id) ?? null;
   }
   function continueCourse() {
     if (!course) return;
@@ -127,7 +129,7 @@
         // Only an unambiguous topic can receive credit from a standalone exercise.
         const matches = definition.learnSteps.filter(step => (step.exerciseAction ?? step.action) === nextAction || step.lessonId === nextAction);
         activeStep = !introductionTitle && matches.length === 1 ? matches[0] : null;
-        course = activeStep ? courseCatalog.find(item => item.game === definition.table.id && item.pathStepId === activeStep?.id) ?? null : null;
+        course = activeStep ? courses.find(item => item.game === definition.table.id && item.pathStepId === activeStep?.id) ?? null : null;
       }
       introduction = introductionTitle;
       action = nextAction;
@@ -242,6 +244,7 @@
   </DrillResultScreen>
 {:else}
   <GameTableShell table={definition.table} {activeTab} {onBack} onTabSelect={onTab}>
+    {#if settings}{@render settings()}{/if}
     {#if activeTab === "learn"}
       <LearnPanel table={definition.table} steps={definition.learnSteps} {completedSteps} {learningEvidence} {completedCount} {nextStep} {guidedHand}
         actions={resources ?? [{ id: "reference", title: definition.table.learn.referenceTitle, summary: definition.table.learn.referenceSummary, onClick: onReference }]}

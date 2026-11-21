@@ -3,7 +3,7 @@
   import GameResult from "../../components/GameResult.svelte";
   import ExerciseFeedback from "../../components/ExerciseFeedback.svelte";
   import GuidedHandActions from "../../components/GuidedHandActions.svelte";
-  import { bridgeBiddingAgreement } from "../../games/bridge";
+  import { bridgeSystemAgreement } from "../../domain/bridgeSystems";
   import { bridgeHighCardPoints } from "../../domain/bridgeBidding";
   import { explainBridgeCall } from "./bridgeBidExplanation";
   import { bridgeAuctionStatus, bridgeLegalCallOptions, bridgeSuggestedCallForHand, bridgeFinalizeContract,
@@ -22,9 +22,9 @@
   let bridgeAuctionLegalCalls = $derived(bridgeLegalCallOptions(bridgeAuctionCalls, bridgeAuctionCurrentStatus.currentSeat, bridgeDealerIndex(fullHand)));
   let bridgeAuctionReadyToPlay = $derived(bridgeAuctionCurrentStatus.complete && !bridgeAuctionCurrentStatus.passedOut);
   let bridgeAuctionActionLabel = $derived(bridgeAuctionReadyToPlay ? "Start play" : bridgeAuctionCurrentStatus.passedOut ? "Deal again" : "Make call");
-  let bridgeSuggestedCall = $derived(bridgeSuggestedCallForHand(fullHand, bridgeAuctionCalls, "You"));
+  let bridgeSuggestedCall = $derived(bridgeSuggestedCallForHand(fullHand, bridgeAuctionCalls, "You", session.biddingSystem));
   let bridgeVisibleContract = $derived(bridgeFinalizeContract(bridgeAuctionCalls, fullHand));
-  let bridgeAuctionSelectedCallExplanation = $derived(explainBridgeCall(bridgeAuctionSelectedCall, bridgeAuctionCalls, bridgeAuctionCurrentStatus.currentSeat));
+  let bridgeAuctionSelectedCallExplanation = $derived(explainBridgeCall(bridgeAuctionSelectedCall, bridgeAuctionCalls, bridgeAuctionCurrentStatus.currentSeat, session.biddingSystem));
 </script>
 
 <header class="topbar table-play-topbar" aria-label="Bridge auction">
@@ -49,7 +49,7 @@
       <h2>{bridgeAuctionCurrentStatus.complete ? "Auction complete" : bridgeAuctionCurrentStatus.currentSeat === "You" ? "Choose your call" : "Auction in progress"}</h2>
     </div>
 
-    <p class="result">{bridgeBiddingAgreement}</p>
+    <p class="result" aria-label="Bridge bidding agreement">{bridgeSystemAgreement(session.biddingSystem)}</p>
     {/if}
 
     {#if guided && !bridgeAuctionCurrentStatus.passedOut}
@@ -58,7 +58,7 @@
           ? `${bridgeSeatLabel(bridgeVisibleContract.declarer)} declares; ${bridgeSeatLabel(bridgeVisibleContract.dummy)} is dummy. Six + ${bridgeVisibleContract.level} = ${bridgeVisibleContract.target} tricks needed.`
           : "Rule: Bid higher than the last bid, pass, or choose a legal double or redouble. Your call describes your own hand; partner's cards are still hidden."}
         explanation={bridgeAuctionReadyToPlay ? "Dummy appears after the opening lead. Declarer directs dummy; defenders keep their own hands hidden."
-          : "Tactic: Count high-card points and suit lengths. Compare the suggested call with the natural system, then make your choice. Passing is often correct."} />
+          : "Tactic: Count high-card points and suit lengths. Compare the suggested call with the selected partnership agreements, then make your choice. Passing is often correct."} />
     {/if}
 
     {#if !guided || !bridgeAuctionCurrentStatus.passedOut}

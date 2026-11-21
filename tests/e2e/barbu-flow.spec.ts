@@ -1047,7 +1047,7 @@ test("Bridge play starts from a rotating auction into a scored contract hand", a
   await page.getByRole("button", { name: /Open Bridge/ }).click();
   await page.getByRole("tab", { name: "Play" }).click();
 
-  await expect(page.getByRole("tabpanel", { name: "Play" })).toContainText("Barbu Natural: five-card majors and a 15-17 1NT");
+  await expect(page.getByRole("tabpanel", { name: "Play" })).toContainText("Barbu Natural: Five-card majors; 15-17 1NT");
   await expect(page.getByRole("tabpanel", { name: "Play" })).toContainText("Not Acol or complete SAYC");
   await page.getByRole("button", { name: "Play Bridge" }).click();
 

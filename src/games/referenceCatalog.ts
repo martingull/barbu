@@ -585,7 +585,7 @@ export const referenceCatalog: GameReference[] = [
         id: "app-learning",
         title: "Learning Path",
         body:
-          "The Bridge path teaches declarer play, dummy handling, and defense through short decisions. Play uses Barbu Natural agreements, the standard sixteen-board dealer and vulnerability cycle, and duplicate contract scores. Passed-out boards score zero and advance the session. Session totals add the contract points from each board; they are not matchpoints or IMPs.",
+          "The Bridge path teaches bidding, declarer play, dummy handling, and defense through short decisions. Choose Barbu Natural or Acol Foundation before learning or starting a board. Play uses those agreements, the standard sixteen-board dealer and vulnerability cycle, and duplicate contract scores. Passed-out boards score zero and advance the session. Session totals add the contract points from each board; they are not matchpoints or IMPs.",
         facts: [
           { label: "Play", value: "Auction into scored contract hand" },
           { label: "Practice", value: "Short scripted decisions" },
@@ -604,6 +604,20 @@ export const referenceCatalog: GameReference[] = [
           { label: "Takeout", value: "Low-level doubles of suit openings need opening strength, shortness in the bid suit, and support for unbid suits." },
           { label: "Not included", value: "Stayman, transfers, Blackwood, and a full competitive convention system. Barbu Natural is not SAYC." }
         ]
+      },
+      {
+        id: "acol-agreements",
+        title: "Acol Foundation Agreements",
+        body:
+          "This beginner Acol profile uses four-card majors, a balanced 12-14 1NT and 12+ HCP suit openings. Open the longest suit; with two four-card majors prefer hearts. With 4-4-4-1 shape, open hearts with a singleton club, clubs with a singleton diamond, otherwise diamonds. Balanced major-support examples need four trumps. Acol agreements vary between clubs: check your partner's system card.",
+        facts: [
+          { label: "Over 1NT", value: "Without a four-card major: pass these balanced 0-10 HCP hands, invite with 11-12, bid 3NT with 13-19. Opener accepts invitations with 14." },
+          { label: "Stayman", value: "Uncontested 1NT-2♣ asks for a major, here with 11+ HCP. Reply 2♦ without a four-card major, 2♥ with hearts (possibly spades too), otherwise 2♠ with spades." },
+          { label: "Weak takeout", value: "2♦/2♥/2♠ over 1NT are natural weak five-card or longer suits, not transfers. Opener passes." },
+          { label: "Balanced rebids", value: "After a one-level new-suit response: 1NT shows 15-16, 2NT 17-18, 3NT 19, unless supporting partner's major." },
+          { label: "Stronger openings", value: "2NT 20-22 balanced; 2♣ 23+ with a simplified 2♦ waiting response. Weak two openings in ♦/♥/♠ show 6-10 HCP and six cards." },
+          { label: "Scope", value: "A teaching profile, not the entire Standard English system: no weak Stayman, transfers, Rule of 20 openings, slam investigation or complete competitive conventions. Suit raises use simple HCP guides rather than distributional evaluation." }
+        ]
       }
     ],
     contracts: [
@@ -620,7 +634,7 @@ export const referenceCatalog: GameReference[] = [
         id: "local-contract-play",
         title: "Local Contract Play",
         note:
-          "Play individual boards against computer opponents using Barbu Natural agreements. Each board earns its duplicate contract score. Matchpoints and IMPs compare results from other tables; this local session does not make those comparisons."
+          "Play individual boards against computer opponents using the selected Barbu Natural or Acol Foundation agreements. Each board earns its duplicate contract score. Matchpoints and IMPs compare results from other tables; this local session does not make those comparisons."
       }
     ]
   },

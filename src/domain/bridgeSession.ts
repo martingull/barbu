@@ -6,8 +6,10 @@ import { bridgeHandEngine } from "./handEngine";
 import { applyBrowserBridgeAuction } from "./trickTakingHand";
 import { trickTakingSeats as seats } from "./trickTakingScore";
 import { transitionReviewedHand, type ReviewedHandEvent } from "./reviewedHand";
+import { defaultBridgeSystem, type BridgeBiddingSystemId } from "./bridgeSystems";
 
 export type BridgeSession = {
+  biddingSystem: BridgeBiddingSystemId;
   view: "bridgeAuction" | "fullHand";
   scores: BridgeScoreState;
   results: BridgeHandResult[];
@@ -20,11 +22,11 @@ export type BridgeSessionEvent = ReviewedHandEvent
   | { type: "select-call"; call: BridgeCallOption } | { type: "make-call" } | { type: "start-play" }
   | { type: "replay" } | { type: "next-hand"; seed: number };
 
-export function createBridgeSession(seed: number, boardNumber = 1): BridgeSession {
+export function createBridgeSession(seed: number, boardNumber = 1, biddingSystem: BridgeBiddingSystemId = defaultBridgeSystem): BridgeSession {
   const fullHand = bridgeHandEngine.start({ seed, boardNumber });
-  const auctionCalls = bridgeAutoAdvanceAuction([], fullHand);
-  return { view: "bridgeAuction", scores: { ns: 0, ew: 0 }, results: [], fullHand, auctionCalls,
-    selectedCall: bridgeSuggestedCallForHand(fullHand, auctionCalls), fullHandReviewTrickCount: 0 };
+  const auctionCalls = bridgeAutoAdvanceAuction([], fullHand, biddingSystem);
+  return { biddingSystem, view: "bridgeAuction", scores: { ns: 0, ew: 0 }, results: [], fullHand, auctionCalls,
+    selectedCall: bridgeSuggestedCallForHand(fullHand, auctionCalls, "You", biddingSystem), fullHandReviewTrickCount: 0 };
 }
 
 export function bridgeSessionSettlement(session: BridgeSession) {
@@ -44,8 +46,8 @@ export function transitionBridgeSession(session: BridgeSession, event: BridgeSes
     case "make-call": {
       if (session.view !== "bridgeAuction" || !bridgeLegalCallOptions(session.auctionCalls, "You", dealer).includes(session.selectedCall)) return session;
       const auctionCalls = bridgeAutoAdvanceAuction([...session.auctionCalls,
-        { seat: "You", call: bridgeCallLabel(session.selectedCall) }], hand);
-      return { ...session, auctionCalls, selectedCall: bridgeSuggestedCallForHand(hand, auctionCalls) };
+        { seat: "You", call: bridgeCallLabel(session.selectedCall) }], hand, session.biddingSystem);
+      return { ...session, auctionCalls, selectedCall: bridgeSuggestedCallForHand(hand, auctionCalls, "You", session.biddingSystem) };
     }
     case "start-play": {
       if (session.view !== "bridgeAuction" || !status.complete || status.passedOut) return session;
@@ -67,7 +69,7 @@ export function transitionBridgeSession(session: BridgeSession, event: BridgeSes
             vulnerability: hand.bridgeVulnerability ?? "None", target: 0, tricks: 0, defenders: 0, score: 0, made: false }
         : settlement.result;
       if (!result) return session;
-      return { ...createBridgeSession(event.seed, boardNumber + 1), scores: settlement.scores,
+      return { ...createBridgeSession(event.seed, boardNumber + 1, session.biddingSystem), scores: settlement.scores,
         results: [...session.results, result] };
     }
   }

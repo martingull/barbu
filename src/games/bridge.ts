@@ -1,10 +1,14 @@
 import type { GameDefinition } from "./gameRegistry";
 import { createGameTableDefinition, gameRulesCopy } from "./tableFactory";
+import { bridgeSystemAgreement, type BridgeBiddingSystemId } from "../domain/bridgeSystems";
 
-export type BridgeLearnPathAction = "contracts" | "bidding" | "responding" | "support" | "declarer" | "dummy" | "defense";
-export type BridgePracticeAction = "bidding" | "responding" | "support" | "declarer" | "defense";
+export type BridgeLearnPathAction = "contracts" | "bidding" | "responding" | "support" | "rebidding" | "stayman" | "declarer" | "dummy" | "defense";
+export type BridgePracticeAction = "bidding" | "responding" | "support" | "rebidding" | "stayman" | "declarer" | "defense";
 
 export const bridgeBiddingAgreement = "Barbu Natural: five-card majors and a 15-17 1NT. Not Acol or complete SAYC; check your club's agreements.";
+export const bridgeBiddingSkillId = (id: string, system: BridgeBiddingSystemId) =>
+  system === "acol-foundation" && ["bridge-bidding", "bridge-responding", "bridge-support", "bridge-rebidding", "bridge-stayman"].includes(id)
+    ? id.replace("bridge-", "bridge-acol-") : id;
 
 export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAction> = {
   table: createGameTableDefinition({
@@ -155,3 +159,21 @@ export const bridgeDef: GameDefinition<BridgeLearnPathAction | BridgePracticeAct
     headingSummary: "Play subscriber AI contracts or competitive settlement tables."
   }
 };
+
+export function bridgeDefinitionFor(system: BridgeBiddingSystemId): GameDefinition {
+  if (system === "barbu-natural") return bridgeDef;
+  const learnSteps: GameDefinition["learnSteps"] = bridgeDef.learnSteps.map(step => ({ ...step, id: bridgeBiddingSkillId(step.id, system),
+    summary: step.action === "bidding" ? "Count points, use a weak 1NT, or open a four-card suit with a plan for your rebid." : step.summary }));
+  learnSteps.splice(5, 0,
+    { id: bridgeBiddingSkillId("bridge-rebidding", system), step: "Rebid", title: "Rebid in notrump", action: "rebidding", summary: "Show 15-19 balanced after opening a suit and hearing a one-level response." },
+    { id: bridgeBiddingSkillId("bridge-stayman", system), step: "Enquire", title: "Find a major with Stayman", action: "stayman", summary: "Ask about a four-card major, interpret the answer and choose the target." });
+  return { ...bridgeDef, learnSteps, table: { ...bridgeDef.table,
+    tabs: { ...bridgeDef.table.tabs, learn: { ...bridgeDef.table.tabs.learn,
+      intro: { ...bridgeDef.table.tabs.learn.intro,
+        summary: `Learn bidding, dummy, declarer play and defense. ${bridgeSystemAgreement(system)}` } } } },
+    practiceGroups: bridgeDef.practiceGroups.map(group => ({ ...group, entries: [
+      ...(group.entries ?? []).map(entry => ({ ...entry, summary: learnSteps.find(step => step.action === entry.action)?.summary ?? entry.summary })),
+      ...learnSteps.filter(step => step.action === "rebidding" || step.action === "stayman").map(step => ({
+        id: step.action, label: step.title, title: step.title, summary: step.summary, action: step.action, group: group.id }))
+    ] })) };
+}

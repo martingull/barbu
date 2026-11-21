@@ -2,7 +2,9 @@ import { standardDeck } from "../../domain/deck";
 import { legalCards, trickWinner } from "../../domain/trickTakingRules";
 import { bridgeBidById, bridgeCallLabel } from "../../domain/bridgeAuction";
 import { bridgeHighCardPoints } from "../../domain/bridgeBidding";
-import type { Card, Seat } from "../../domain/types";
+import type { BridgeAuctionCall, Card, Seat } from "../../domain/types";
+import { defaultBridgeSystem, type BridgeBiddingSystemId } from "../../domain/bridgeSystems";
+import { acolChoiceSteps, acolPrinciples } from "./acol";
 import { compassSeatLabels, formatCardLabel, formatCardList, suitSymbol } from "../../presentation/cardDisplay";
 import { drillTableCards, type DrillStep } from "../drillDecision";
 import { teachingStages, type Teaching } from "../learningPresentation";
@@ -19,7 +21,9 @@ const principles = {
   declarer: "Plan partnership winners and entries. Finesses, developing length and unblocking can create tricks, but hidden cards still matter.",
   defense: "Defenders work together: support partner's lead, use exposed dummy, and preserve partnership winners."
 };
-export const bridgeTakeaway = (action: string) => principles[action as keyof typeof principles] ?? principles.contracts;
+export const bridgeTakeaway = (action: string, system: BridgeBiddingSystemId = defaultBridgeSystem) =>
+  system === "acol-foundation" && action in acolPrinciples ? acolPrinciples[action as keyof typeof acolPrinciples]
+    : principles[action as keyof typeof principles] ?? principles.contracts;
 const cards = (ids: string): Card[] => ids ? ids.split(" ").map(id => {
   const card = standardDeck().find(card => card.id === id);
   if (!card) throw Error(`Unknown teaching card ${id}`);
@@ -103,7 +107,7 @@ export function bridgeLearningSteps(topic: CardTopic): DrillStep[] {
 
 export type BridgeChoiceStep = {
   id: string; title: string; prompt: string; context: string; contextDetail?: string; hand: Card[]; options: { id: string; label: string }[];
-  correct: string; explanations: Record<string, string>; teaching: Teaching; followUp?: BridgeChoiceStep;
+  correct: string; explanations: Record<string, string>; teaching: Teaching; followUp?: BridgeChoiceStep; auction?: BridgeAuctionCall[];
 };
 function targetChoice(bid: string, title: string, options: string[], teaching: Teaching): BridgeChoiceStep {
   const contract = bridgeBidById(bid);
@@ -196,7 +200,9 @@ function supportChoices(): BridgeChoiceStep[] {
   });
 }
 
-export function bridgeChoiceSteps(topic: "contracts" | "bidding" | "responding" | "support"): BridgeChoiceStep[] {
+export function bridgeChoiceSteps(topic: "contracts" | "bidding" | "responding" | "support" | "rebidding" | "stayman", system: BridgeBiddingSystemId = defaultBridgeSystem): BridgeChoiceStep[] {
+  if (system === "acol-foundation" && topic !== "contracts") return acolChoiceSteps(topic);
+  if (topic === "rebidding" || topic === "stayman") throw Error("This lesson belongs to Acol Foundation.");
   if (topic === "support") return supportChoices();
   if (topic === "responding") return responseChoices();
   if (topic === "contracts") return bridgeContractSteps.map((step, index) => ({

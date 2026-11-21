@@ -9,9 +9,10 @@
   import type { DecisionReview } from "../../lessons/decisionReview";
   import type { CustomExerciseContext } from "../featureServices";
   import { bridgeHandShapeLabel } from "./bridgePresentation";
-  let { context }: { context: CustomExerciseContext } = $props();
+  import { defaultBridgeSystem, type BridgeBiddingSystemId } from "../../domain/bridgeSystems";
+  let { context, system = defaultBridgeSystem }: { context: CustomExerciseContext; system?: BridgeBiddingSystemId } = $props();
   let session = $state(untrack(() => createLearningSession<BridgeChoiceStep, DrillResult, DecisionReview>(
-    bridgeChoiceSteps(context.action === "contracts" ? "contracts" : context.action === "responding" ? "responding" : context.action === "support" ? "support" : "bidding"))));
+    bridgeChoiceSteps(context.action === "contracts" ? "contracts" : context.action === "responding" ? "responding" : context.action === "support" ? "support" : context.action === "rebidding" ? "rebidding" : context.action === "stayman" ? "stayman" : "bidding", system))));
   let selected = $state("");
   let step = $derived(session.steps[session.index]);
   let checked = $derived(session.phase === "feedback");
@@ -52,7 +53,7 @@
     </section>
   {/snippet}
   {#snippet panel()}
-    <ExerciseFeedback coach={context.coach} reserveSpace eyebrow={context.action === "responding" || context.action === "support" ? "Respond to partner" : bidding ? "Opening bid" : "Contract target"} title={step.title}
+    <ExerciseFeedback coach={context.coach} reserveSpace eyebrow={context.action === "responding" || context.action === "support" ? "Respond to partner" : context.action === "rebidding" ? "Rebid" : context.action === "stayman" ? "Stayman" : bidding ? "Opening bid" : "Contract target"} title={step.title}
       result={checked ? "" : step.prompt} teaching={checked ? { stage: step.teaching.stage } : step.teaching}
       explanation={checked ? step.explanations[selected] : ""}
       outcome={checked ? good ? "Good" : "Risky" : ""} warning={checked && !good}

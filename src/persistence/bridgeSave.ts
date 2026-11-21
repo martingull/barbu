@@ -6,6 +6,7 @@ import { hydrateFullHandState } from "../domain/trickTakingHand";
 import { trickTakingSeats as seats } from "../domain/trickTakingScore";
 import { createSaveStore, type SaveStorage } from "./saveStore";
 import { isSavedTrickHand, natural, normalizedReviewCount, record, seat } from "./handSaveValidation";
+import { defaultBridgeSystem, isBridgeSystem } from "../domain/bridgeSystems";
 
 export const bridgeSaveKey = "barbu.savedBridgeRun.v1";
 export type SavedBridgeRun = BridgeSession & { version: 1; usingBrowserFullHand: boolean; savedAt: string };
@@ -25,6 +26,8 @@ export function normalizeBridgeSave(value: unknown): SavedBridgeRun | null {
   if (!record(value) || value.version !== 1 || !["bridgeAuction", "fullHand"].includes(String(value.view))
     || !isSavedTrickHand(value.fullHand, "Bridge", value.view === "bridgeAuction")) return null;
   const hand = value.fullHand;
+  const biddingSystem = value.biddingSystem === undefined ? defaultBridgeSystem : value.biddingSystem;
+  if (!isBridgeSystem(biddingSystem)) return null;
   if (!seat(hand.bridgeDealer) || !vulnerability(hand.bridgeVulnerability) || !Array.isArray(value.auctionCalls)) return null;
   const dealer = seats.indexOf(hand.bridgeDealer);
   const calls: BridgeAuctionCall[] = [];
@@ -58,7 +61,7 @@ export function normalizeBridgeSave(value: unknown): SavedBridgeRun | null {
     trumpSuit: contract ? contract.strain === "NT" ? null : contract.strain : null,
     dummySeat: contract?.dummy });
   const selected = normalizeBridgeCall(value.selectedCall);
-  return { version: 1, view: value.view as BridgeSession["view"],
+  return { version: 1, biddingSystem, view: value.view as BridgeSession["view"],
     scores: { ns: Number(value.scores.ns), ew: Number(value.scores.ew) }, results: value.results,
     fullHand, auctionCalls: calls, selectedCall: selected ?? "Pass",
     fullHandReviewTrickCount: value.view === "bridgeAuction" ? 0 : normalizedReviewCount(value.fullHandReviewTrickCount, fullHand),
