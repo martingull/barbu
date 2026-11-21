@@ -48,3 +48,14 @@ test('MIME encodes Unicode subjects and bodies without modifying the direct Play
   assert.match(head, /Message-ID: <01234567-abcd@example.org>/);
   assert.equal(Buffer.from(body.replaceAll('\r\n', ''), 'base64').toString('utf8'), c.body.replaceAll('\n', '\r\n'));
 });
+
+test('Norwegian invitations require an explicit opt-out, review and the Play link', () => {
+  const link = 'https://play.google.com/store/apps/details?id=com.martin.barbu';
+  const contact = contactSchema.parse({ id: '7f297fba-58d4-4aa1-a880-b794f9b1b3c4', organisation: 'Club', recipient: 'club@example.org',
+    source: 'https://example.org/contact', eligibility: 'reviewed', status: 'draft', subject: 'Et gratis kortkurs',
+    body: `Et gratis kortkurs: ${link}\nHvis dette ikke er relevant, gi beskjed, s\u00e5 kontakter jeg dere ikke igjen. Ingen automatisk oppf\u00f8lging.` });
+  assert.doesNotThrow(() => assertEligible(contact));
+  assert.throws(() => assertEligible({ ...contact, body: `Et gratis kortkurs: ${link}\nIngen automatisk oppf\u00f8lging.` }), /opt-out/);
+  assert.throws(() => assertEligible({ ...contact, eligibility: 'needs-review' }), /not eligible/);
+  assert.throws(() => assertEligible({ ...contact, body: contact.body.replace(link, '') }), /Google Play link/);
+});

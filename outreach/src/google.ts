@@ -5,6 +5,8 @@ import { join } from 'node:path';
 import { z } from 'zod';
 import { configSchema, headers, type Config, type Contact } from './model.ts';
 import { readInputJson, readPrivate, writePrivate, type Attempt } from './store.ts';
+import { existsSync } from 'node:fs';
+import { OptOutClient, optOutConfigSchema } from './optOut.ts';
 
 export const scopes = [
   'https://www.googleapis.com/auth/gmail.readonly',
@@ -76,7 +78,9 @@ export function connect(home: string): GoogleApi {
     Object.assign(saved.tokens, tokens, { refresh_token: refresh });
     writePrivate(join(home, 'auth.json'), saved);
   });
-  return new GoogleApi(config, auth);
+  const optOutPath = join(home, 'unsubscribe.json');
+  const optOut = existsSync(optOutPath) ? new OptOutClient(optOutConfigSchema.parse(readPrivate(optOutPath))) : undefined;
+  return new GoogleApi(config, auth, optOut);
 }
 
 export interface Services {
@@ -87,12 +91,26 @@ export interface Services {
   previousContact(recipient: string): Promise<boolean>;
   send(raw: string): Promise<{ id: string; threadId: string }>;
   record(contact: Contact, attempt: Attempt, status?: string): Promise<void>;
+  optOutStatus(contact: Contact): Promise<{ suppressed: boolean; linkValid: boolean }>;
+  markOptOut(contact: Contact): Promise<void>;
 }
 
 export class GoogleApi implements Services {
   config: Config;
   auth: OAuth2Client;
-  constructor(config: Config, auth: OAuth2Client) { this.config = config; this.auth = auth; }
+  readonly optOut?: OptOutClient;
+  constructor(config: Config, auth: OAuth2Client, optOut?: OptOutClient) { this.config = config; this.auth = auth; this.optOut = optOut; }
+
+  async optOutStatus(contact: Contact) {
+    if (!this.optOut) throw Error('Configure the hosted unsubscribe service before preparing or sending invitations.');
+    return this.optOut.status(contact);
+  }
+  async markOptOut(contact: Contact) {
+    const values = await this.queue();
+    const contacts = values.map((row, index) => ({ row, index })).filter(x => x.row[0] === contact.id && x.row[2]?.trim().toLowerCase() === contact.recipient);
+    if (JSON.stringify(values[0]) !== JSON.stringify(headers) || contacts.length !== 1) throw Error('Cannot safely update opted-out contact');
+    await this.write(this.range(this.config.queueSheet, `H${contacts[0].index + 1}`), [['do-not-contact']]);
+  }
 
   async request(url: string, method = 'GET', body?: unknown): Promise<unknown> {
     const { token } = await this.auth.getAccessToken();

@@ -100,6 +100,12 @@ nav a:hover, .text-link:hover { text-decoration: underline; }
 .worked-answer { border-block: 1px solid var(--line); padding-block: 16px; }
 .worked-answer summary { cursor: pointer; font-weight: 650; min-height: 44px; display: list-item; align-content: center; }
 .worked-answer p { margin-top: 12px; }
+.unsubscribe-page { max-width: 720px; }
+.unsubscribe-page h1 { font-size: 32px; margin-bottom: 24px; }
+.unsubscribe-page form { margin-block: 24px; }
+.unsubscribe-page button:disabled { opacity: 0.6; cursor: not-allowed; }
+.unsubscribe-page [role=status] { border-left: 3px solid #819c8e; padding-left: 16px; margin-bottom: 24px; }
+.unsubscribe-page details { margin-top: 24px; }
 @media (max-width: 1000px) {
   .hero-inner { background-size: 210px auto; background-position: right bottom -45px; }
   .hero .intro, .hero .actions { max-width: calc(100% - 240px); }

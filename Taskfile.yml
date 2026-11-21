@@ -17,6 +17,16 @@ tasks:
       - npm --prefix outreach run check
       - npm --prefix outreach test
 
+  outreach:unsubscribe:deploy:
+    desc: Preview the unsubscribe service; pass --apply explicitly to create/update only its AWS stacks
+    cmds:
+      - node outreach/scripts/deploy-unsubscribe.mjs {{.CLI_ARGS}}
+
+  outreach:unsubscribe:smoke:
+    desc: Verify live unsubscribe with synthetic references and a fake sender; sends no email and never changes real tracker contacts
+    cmds:
+      - node outreach/scripts/check-unsubscribe.mjs
+
   website:serve:
     desc: Preview the Silicium Veritas Barbu landing page
     cmds:

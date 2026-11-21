@@ -1,5 +1,8 @@
 /node_modules/
 /outreach/node_modules/
+/outreach/.build/
+/outreach/unsubscribe.json
+/outreach/**/unsubscribe-links.json
 /outreach/.env*
 /outreach/**/*.local.json
 /outreach/**/*.sqlite*

@@ -59,7 +59,7 @@ export function historicalAttemptsToday(values: string[][], day: string): number
 export function assertEligible(contact: Contact): void {
   if (contact.eligibility !== 'reviewed' || contact.status !== 'draft') throw Error(`Contact ${contact.id} is not eligible for a new message`);
   if (!contact.body.includes('https://play.google.com/store/apps/details?id=com.martin.barbu')) throw Error('Message must include the direct Google Play link');
-  if (!/won.t follow up|opt out|stop contacting|do not contact|let me know and I will not contact you again/i.test(contact.body)) throw Error('Message must include an opt-out instruction');
+  if (!/won.t follow up|opt out|stop contacting|do not contact|let me know and I will not contact you again|gi beskjed, s\u00e5 kontakter jeg dere ikke igjen/i.test(contact.body)) throw Error('Message must include an opt-out instruction');
 }
 
 export function dayKey(date: Date, timezone: string): string {

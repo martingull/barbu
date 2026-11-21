@@ -25,12 +25,17 @@ class FakeApi implements Services {
   identityFailure = false;
   sends = 0;
   records = 0;
+  optedOut = false;
+  optOutFailure = false;
+  linkValid = true;
   async identity() { if (this.identityFailure) throw Error('Wrong account'); }
   async queue() { return [headers, ...this.contacts.map(contactRow)]; }
   async history() { return this.historyRows; }
   async previousContact() { return this.previous; }
   async send() { this.sends++; if (this.sendFailure) throw Error('Connection dropped after POST'); return { id: 'message1', threadId: 'thread1' }; }
   async record(_c: Contact, _a: Attempt) { this.records++; if (this.trackerFailure) throw Error('Sheets unavailable'); }
+  async optOutStatus() { if (this.optOutFailure) throw Error('Unsubscribe unavailable'); return { suppressed: this.optedOut, linkValid: this.linkValid }; }
+  async markOptOut(c: Contact) { this.contacts.find(contact => contact.id === c.id)!.status = 'do-not-contact'; }
 }
 
 function setup(t: { after: (f: () => void) => void }) {
@@ -137,6 +142,28 @@ test('wrong account and newly found Gmail history block approved sending', async
   await assert.rejects(sendBatch(api, ledger, batch, () => date), /Wrong account/);
   api.identityFailure = false; api.previous = true;
   await assert.rejects(sendBatch(api, ledger, batch, () => date), /Existing contact/);
+  assert.equal(api.sends, 0);
+});
+
+test('hosted opt-outs override an approved batch and stale tracker eligibility', async t => {
+  const { api, ledger } = setup(t);
+  const batch = await prepare(api, ledger, [], date); ledger.approve(batch);
+  api.optedOut = true;
+  await assert.rejects(sendBatch(api, ledger, batch, () => date), /opted out/);
+  assert.equal(api.sends, 0);
+  assert.equal(ledger.blocked(api.contacts[0].recipient), true);
+  assert.equal(api.contacts[0].status, 'do-not-contact');
+});
+
+test('unavailable unsubscribe service and invalid links fail before reserving or sending', async t => {
+  const { api, ledger } = setup(t);
+  const batch = await prepare(api, ledger, [], date); ledger.approve(batch);
+  api.optOutFailure = true;
+  await assert.rejects(sendBatch(api, ledger, batch, () => date), /Unsubscribe unavailable/);
+  assert.equal(ledger.attempts().length, 0);
+  api.optOutFailure = false; api.linkValid = false;
+  await assert.rejects(sendBatch(api, ledger, batch, () => date), /unsubscribe link/);
+  await assert.rejects(prepare(api, ledger, [], date), /unsubscribe link/);
   assert.equal(api.sends, 0);
 });
 

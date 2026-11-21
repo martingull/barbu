@@ -3,6 +3,16 @@ import { assertEligible, dayKey, digest, historicalAttemptsToday, historyRecipie
 import { Ledger } from './store.ts';
 import type { Services } from './google.ts';
 
+async function requireContactable(api: Services, ledger: Ledger, contact: Contact) {
+  const status = await api.optOutStatus(contact);
+  if (status.suppressed) {
+    ledger.suppress(contact.recipient, 'Hosted unsubscribe request');
+    await api.markOptOut(contact);
+    throw Error(`Contact ${contact.id} has opted out; sending stopped.`);
+  }
+  if (!status.linkValid) throw Error(`Contact ${contact.id} needs a valid recipient-specific unsubscribe link before approval.`);
+}
+
 export function checkBatch(batch: Batch, config: Config, now = new Date()) {
   if (JSON.stringify(batch.config) !== JSON.stringify(config)) throw Error('Account or tracker configuration changed; prepare again');
   const age = now.getTime() - Date.parse(batch.createdAt);
@@ -26,6 +36,7 @@ export async function prepare(api: Services, ledger: Ledger, ids: string[], now 
   for (const c of selected) {
     if (c.recipient === api.config.sender || ledger.blocked(c.recipient) || history.has(c.recipient)) throw Error(`Contact ${c.id} was already contacted or is suppressed`);
     if (await api.previousContact(c.recipient)) throw Error(`Gmail has an existing conversation for ${c.id}; review it manually, do not send a new invitation`);
+    await requireContactable(api, ledger, c);
   }
   return batch;
 }
@@ -45,6 +56,7 @@ export async function sendBatch(api: Services, ledger: Ledger, batch: Batch, now
     if (JSON.stringify(current) !== JSON.stringify(c)) throw Error(`Contact ${c.id} changed after preview; approval no longer applies`);
     const history = await api.history();
     if (historyRecipients(history).has(c.recipient) || await api.previousContact(c.recipient)) throw Error(`Existing contact for ${c.id}; sending stopped`);
+    await requireContactable(api, ledger, c);
     const day = dayKey(now(), api.config.timezone);
     const messageId = ledger.reserve(c, hash, day, api.config.dailyLimit, api.config.sender, historicalAttemptsToday(history, day));
     let receipt: { id: string; threadId: string };

@@ -93,3 +93,24 @@ test('HTTP send failure is never automatically retried', async t => {
   await assert.rejects(api.send('fake-mime'), /HTTP 503/);
   assert.equal(calls, 1);
 });
+
+test('missing unsubscribe configuration blocks eligibility checks', async () => {
+  await assert.rejects(new StubGoogle().optOutStatus(contact), /Configure the hosted unsubscribe/);
+});
+
+test('hosted opt-out updates only the matching status cell after row movement', async () => {
+  const api = new StubGoogle();
+  const row = contactRow(contact); row[11] = 'Keep the operator note';
+  api.responses = [{ values: [headers, contactRow({ ...contact, id: '851bc4b5-dff3-4bfe-8fad-49bcf7284b22', recipient: 'other@example.org' }), row] }, {}];
+  await api.markOptOut(contact);
+  assert.deepEqual(api.calls.at(-1)?.body, { range: "'Outreach Queue'!H3", values: [['do-not-contact']] });
+});
+
+test('opt-out reconciliation refuses shifted headers or changed recipient identity', async () => {
+  const api = new StubGoogle();
+  api.responses = [{ values: [['Changed headers'], contactRow(contact)] }];
+  await assert.rejects(api.markOptOut(contact), /safely update/);
+  api.responses = [{ values: [headers, contactRow({ ...contact, recipient: 'different@example.org' })] }];
+  await assert.rejects(api.markOptOut(contact), /safely update/);
+  assert.equal(api.calls.some(call => call.method !== 'GET'), false);
+});

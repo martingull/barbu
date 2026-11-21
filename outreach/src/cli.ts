@@ -1,8 +1,10 @@
 import { parseArgs } from 'node:util';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { z } from 'zod';
 import { authorize, connect } from './google.ts';
 import { configSchema, contactRow, contactSchema, dayKey, email, historicalAttemptsToday, historyRecipients, readQueue } from './model.ts';
-import { Ledger, loadBatch, privateHome, readInputJson, saveBatch } from './store.ts';
+import { Ledger, loadBatch, privateHome, readInputJson, readPrivate, writePrivate, saveBatch } from './store.ts';
 import { checkBatch, newContact, prepare, sendBatch } from './workflow.ts';
 
 const help = `Barbu outreach - no email is sent unless an approved batch is explicitly executed.
@@ -16,11 +18,12 @@ Commands (npm run outreach -- COMMAND):
   add --file /private/path/contacts.json           Validate and preview new contacts
   add --file /private/path/contacts.json --apply   Append drafts; never approves or sends
   prepare [--ids ID1,ID2]        Print full messages and save an immutable private batch
+  unsubscribe-links [--ids ID1,ID2] [--apply]  Preview/add recipient-specific links to drafts before approval
   approve --batch SHA256         Approve the exact preview; approval expires with the 24h batch
   send --batch SHA256            Check approval and print the saved preview; no send
   send --batch SHA256 --execute  Recheck Google and send, at most 10 attempts/day
   sync                          Repair confirmed sends in Sheets and flag replies for review
-  suppress --email ADDRESS --reason REASON        Block an address locally
+  suppress --email ADDRESS --reason REASON        Block an address locally and in the hosted service
 
 Review each contact's eligibility and set Eligibility=reviewed in Sheets before prepare.
 Never approve on someone else's behalf. New batches need explicit recipient/content approval.
@@ -42,7 +45,7 @@ function required(name: 'client' | 'sheet' | 'sender' | 'file' | 'batch' | 'emai
 async function main() {
   const command = positionals[0];
   if (values.help || !command || command === 'help') { console.log(help); return; }
-  if (positionals.length !== 1 || !['auth', 'status', 'setup', 'add', 'prepare', 'approve', 'send', 'sync', 'suppress'].includes(command)) throw Error('Unknown command; use --help');
+  if (positionals.length !== 1 || !['auth', 'status', 'setup', 'add', 'prepare', 'unsubscribe-links', 'approve', 'send', 'sync', 'suppress'].includes(command)) throw Error('Unknown command; use --help');
   const home = privateHome();
   if (command === 'auth') {
     const config = configSchema.parse({ sender: required('sender'), spreadsheetId: required('sheet') });
@@ -55,7 +58,10 @@ async function main() {
     if (command === 'suppress') {
       const recipient = email.parse(required('email'));
       ledger.suppress(recipient, z.string().min(1).max(500).parse(required('reason')));
-      console.log('Address suppressed locally. No email sent. Mark do-not-contact in Sheets as well.');
+      if (!api.optOut) throw Error('Address blocked locally, but hosted suppression is not configured. Do not send from another machine.');
+      await api.optOut.suppress(recipient);
+      for (const contact of readQueue(await api.queue()).filter(c => c.recipient === recipient)) await api.markOptOut(contact);
+      console.log('Address blocked locally and in the hosted service. Matching queue rows marked do-not-contact. No email sent.');
       return;
     }
     await api.identity();
@@ -88,6 +94,41 @@ async function main() {
       const contacts = inputs.map(newContact);
       if (values.apply) await api.append(contacts.map(contactRow));
       console.log(JSON.stringify({ applied: !!values.apply, contacts }, null, 2));
+    } else if (command === 'unsubscribe-links') {
+      if (!api.optOut) throw Error('Configure the hosted unsubscribe service first.');
+      const rows = await api.queue();
+      const contacts = readQueue(rows);
+      const ids = values.ids?.split(',').filter(Boolean) || [];
+      const selected = ids.length ? ids.map(id => {
+        const c = contacts.find(c => c.id === id);
+        if (!c) throw Error('Unknown contact id');
+        return c;
+      }) : contacts.filter(c => c.status === 'draft');
+      const path = join(home, 'unsubscribe-links.json');
+      const saved = existsSync(path) ? z.record(z.string(), z.object({ recipient: email, url: z.url() })).parse(readPrivate(path)) : {};
+      const results = [];
+      for (const c of selected) {
+        if (c.status !== 'draft' || ledger.blocked(c.recipient)) throw Error('Only unsent, non-suppressed drafts can receive a link');
+        const status = await api.optOutStatus(c);
+        if (status.suppressed) { ledger.suppress(c.recipient, 'Hosted unsubscribe request'); await api.markOptOut(c); throw Error('Recipient opted out; link creation stopped'); }
+        if (status.linkValid) { results.push({ contactId: c.id, state: 'valid link already present' }); continue; }
+        if (api.optOut.token(c)) throw Error('Draft contains an invalid or wrong-recipient unsubscribe link; inspect manually');
+        if (values.apply) {
+          if (saved[c.id] && saved[c.id].recipient !== c.recipient) throw Error('Saved link belongs to a different recipient');
+          const url = saved[c.id]?.url ?? await api.optOut.register(c);
+          saved[c.id] = { recipient: c.recipient, url };
+          writePrivate(path, saved);
+          const label = /gi beskjed, s\u00e5 kontakter jeg dere ikke igjen/i.test(c.body) ? 'Stopp flere e-poster fra Barbu' : 'Stop further Barbu outreach';
+          const body = `${c.body}\n\n${label}: ${url}`;
+          if (!(await api.optOut.status({ ...c, body })).linkValid) throw Error('New link did not validate; draft unchanged');
+          const current = await api.queue();
+          const matching = current.map((row, index) => ({ row, index })).filter(x => x.row[0] === c.id);
+          if (matching.length !== 1 || JSON.stringify(readQueue(current).find(x => x.id === c.id)) !== JSON.stringify(c)) throw Error('Draft changed during link creation; inspect before retrying');
+          await api.write(api.range(api.config.queueSheet, `G${matching[0].index + 1}`), [[body]]);
+        }
+        results.push({ contactId: c.id, state: values.apply ? 'link added; prepare and approve the changed message before sending' : 'would add private unsubscribe link' });
+      }
+      console.log(JSON.stringify(results, null, 2));
     } else if (command === 'prepare') {
       const batch = await prepare(api, ledger, values.ids?.split(',').filter(Boolean) || []);
       const hash = saveBatch(home, batch);
@@ -104,7 +145,17 @@ async function main() {
     } else if (command === 'sync') {
       const queue = readQueue(await api.queue());
       const results = [];
+      const optedOut = new Set<string>();
+      for (const contact of queue) {
+        if ((await api.optOutStatus(contact)).suppressed) {
+          ledger.suppress(contact.recipient, 'Hosted unsubscribe request');
+          await api.markOptOut(contact);
+          optedOut.add(contact.id);
+          results.push({ contactId: contact.id, status: 'do-not-contact' });
+        }
+      }
       for (const a of ledger.attempts()) {
+        if (optedOut.has(a.contact_id)) continue;
         if (a.state !== 'sent') { results.push({ contactId: a.contact_id, state: 'uncertain; manual Sent Mail inspection required; never resend automatically' }); continue; }
         const contact = queue.find(c => c.id === a.contact_id);
         if (!contact || !a.thread_id) throw Error('Sent contact missing from queue; manual tracker repair required');
