@@ -8,12 +8,19 @@ acceptance run, listing draft, launch-market proposal and support rehearsal.
 Keep Hearts, Barbu, Whist, Spades, Bridge, Gin Rummy and Card Counting I free,
 including their current Learn and Play content. No timers, cooldowns or ads.
 Future premium games belong to one optional Barbu Premium subscription, starting
-with Canasta. Martin approved EUR 2.50 per month or EUR 19.99 per year, with no free
-trial, on November 16, 2026. These are intended customer-facing euro prices;
-regional conversions and broader launch availability still need review. Martin
-approved Norway-only activation at NOK 33/month and NOK 265/year on November 16.
-Both plans are now active in Norway for controlled license testing. Public-build
-checkout must wait for purchase testing and the launch gates below.
+with Canasta. On November 21, 2026, Martin lowered the Norway prices to NOK 10
+per month or NOK 59 per year and approved lowering the other regional prices too.
+Google Play saved all 173 existing regional configurations per plan using its
+currency conversion and rounding; Norway retains the exact requested amounts.
+Saved prices include EUR 0.89/month or EUR 5.49/year in the Netherlands,
+GBP 0.79/month or GBP 4.39/year in the UK, and USD 0.79/month or USD 4.79/year
+in the US. There is no free trial. These replace the November 16 prices for
+new purchases; existing subscriber cohorts were not migrated.
+Both plans are active in Norway, the UK and the US following Martin's explicit
+November 21 approval. The Netherlands remains disabled. API readback confirmed
+only those four regional availability flags changed (GB/US on each plan), with
+prices and production/closed-test release lifecycles preserved. UK/US checkout
+has not yet been verified on a device; public-build launch checks remain below.
 
 Google Play product: `barbu_premium`, with auto-renewing base plans
 `monthly` (`P1M`) and `yearly` (`P1Y`). No introductory offers or lifetime plan.
@@ -96,10 +103,12 @@ new UI has been installed or tested on a physical device.
 - [ ] Confirm no additional non-provider RevenueCat integrations are enabled and
       test the support process for purchase-data requests before paid launch.
 - [ ] Approve local launch prices and enable the selected countries. Martin selected
-      Norway, the Netherlands and the UK for preparation on November 18. Read-only
-      verification still shows only Norway enabled; see the saved regional prices
-      in [the launch proposal](premium-launch.md#launch-markets). No NL/GB activation
-      or new price approval has been performed.
+      Norway, the Netherlands and the UK for preparation on November 18, then
+      approved lower prices across all configured regions on November 21.
+      That day he also approved GB/US activation, and API readback confirms
+      Norway, the UK and the US enabled with the lower prices; see
+      [the launch proposal](premium-launch.md#launch-markets). NL activation
+      remains unapproved, and UK/US native checkout verification is pending.
 - [x] Build a fresh, signed billing candidate including the latest Canasta
       pile-pickup explanation, purchase support and optional portrait hardware:
       `1.0.7` / `1000010`, replacing the uploaded `1000008` validation failure

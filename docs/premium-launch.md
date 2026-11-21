@@ -75,23 +75,39 @@ store-country checkout or the acceptance rows below.
 
 ## Launch Markets
 
-Martin selected Norway, the Netherlands and the UK for preparation. A read-only
-Google Play subscription query on November 18 returned these saved prices:
+Martin selected Norway, the Netherlands and the UK for preparation. On November
+21, he approved NOK 10/month and NOK 59/year and lower prices in the other
+configured regions. Google Play API readback verified these saved prices:
 
 | Market | Code | Monthly | Yearly | Current checkout |
 | --- | --- | --- | --- | --- |
-| Norway | NO | NOK 33 | NOK 265 | Enabled for controlled testing |
-| Netherlands | NL | EUR 2.50 | EUR 19.99 | Disabled |
-| United Kingdom | GB | GBP 2.49 | GBP 19.99 | Disabled |
+| Norway | NO | NOK 10 | NOK 59 | Enabled; production candidate still in review |
+| Netherlands | NL | EUR 0.89 | EUR 5.49 | Disabled |
+| United Kingdom | GB | GBP 0.79 | GBP 4.39 | Enabled; regional checkout test pending |
+| United States | US | USD 0.79 | USD 4.79 | Enabled; regional checkout test pending |
 
-The two base plans are active, but only Norway permits new subscribers. The UK
-price is the saved conversion, not a newly approved price. Confirm these exact
-launch prices with Martin before enabling NL/GB. Do not turn on automatic future
-regions or change existing subscribers' prices. Regional settings belong to
+All 173 existing regional prices per plan were lowered, using Google's currency
+conversion and rounding outside Norway. This pricing operation did not enable
+countries. Martin then explicitly approved GB/US activation on November 21;
+API readback confirms both plans now allow new subscribers in NO/GB/US only.
+No prices, existing subscriber cohorts or release submissions were changed by
+that activation. Production `1000013` remains in review; `1000007` remains the
+published version, and closed-test `1000013` remains published. This is store
+configuration evidence, not proof of native UK/US purchase and restore flows.
+Confirm country activation with Martin before enabling NL or other markets.
+Do not turn on automatic future regions or migrate existing subscribers' prices.
+The previous settings and full API verification are saved under ignored
+`release/google-play/premium-prices-2026-11-21T17-07-28.285Z/`; no credentials are
+stored there. Regional settings belong to
 [subscription base plans](https://support.google.com/googleplay/android-developer/answer/12154973?hl=en),
 not a restriction of the free download's distribution countries. Keep existing
 free-game availability unchanged. Verify checkout with an eligible account per
 market; device language or a VPN is not proof of store-country eligibility.
+
+The regional activation's before/after subscription and release snapshots are
+under ignored `release/google-play/premium-markets-2026-11-21T17-12-22.144Z/`.
+Use an eligible licensed tester or Google's Play Billing Lab for regional checks;
+never make a real purchase as a test without explicit approval.
 
 ## Samsung Acceptance
 

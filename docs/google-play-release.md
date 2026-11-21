@@ -29,9 +29,16 @@ therefore no longer exactly matches the Android source fingerprint checked
 above. The queued AAB, its checksum, original receipt and production review were
 left unchanged; do not restamp that receipt using the later iOS tree.
 
-Monthly and yearly base plans are active, with checkout enabled **only in Norway**
-at NOK 33/month and NOK 265/year. Saved Netherlands and UK prices remain disabled
-for new subscribers. No regions, prices or free-download availability were changed.
+Monthly and yearly base plans are active, with checkout enabled in **Norway,
+the UK and the US** following Martin's November 21 approval.
+The November 21 pricing update lowered Norway to NOK 10/month and NOK 59/year,
+and lowered all other existing regional prices; see
+[the current regional prices](premium-launch.md#launch-markets). The Netherlands
+remains disabled. The subsequent GB/US activation changed only subscription
+availability: API readback confirms production `1000013` is still in review,
+`1000007` remains published, and closed-test `1000013` is still published.
+Existing subscriber cohorts, free-download distribution and release artifacts
+were unchanged. Native UK/US checkout and restore are not yet verified.
 The main listing still describes the free catalog and does not mention Canasta
 Premium; a paid-content listing draft exists, but was not submitted during review.
 
