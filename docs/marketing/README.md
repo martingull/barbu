@@ -13,6 +13,10 @@ That strategy owns audiences, organiser outreach, budgets, measurement and
 monetisation decisions. The videos form the initial organic publishing
 experiment; publication alone is not evidence of audience reach or acquisition.
 
+For Play search visibility, see the [discovery baseline and listing experiment](store-discovery.md).
+It records the public search checks, unpublished copy proposal and Console
+metrics still needed; it does not publish changes or interrupt a release review.
+
 ## Google Play Store Trailer
 
 The current submitted trailer is

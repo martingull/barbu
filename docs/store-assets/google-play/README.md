@@ -2,17 +2,42 @@
 
 ## Listing Copy and Feature Graphic
 
-The optional Canasta update has a separate, unpublished
+The discovery and optional Canasta update share one unpublished text draft,
 [`listing-premium-en-GB.draft.json`](listing-premium-en-GB.draft.json).
-It is text-only and must not replace the live copy or trailer during the current
-closed-test review. The [Premium launch plan](../../premium-launch.md#listing-and-screenshots)
+It is text-only and must not replace the saved copy or trailer during the current
+production review. See the [discovery baseline and rollout plan](../../marketing/store-discovery.md).
+The [Premium launch plan](../../premium-launch.md#listing-and-screenshots)
 defines the new screenshot sequence and required native-release provenance.
 The existing screenshots and `manifest.json` below remain unchanged.
+
+### French Listing Draft
+
+[`listing-fr-FR.draft.json`](listing-fr-FR.draft.json) is a separate, unpublished
+French-language text draft prepared November 23, 2026. Its short description
+and opening paragraph explicitly disclose that menus, lessons and guided hands
+are currently in English. It advertises only implemented games, not the proposed
+Belote, Coinche or Tarot additions. This is store localisation, not an in-game
+translation or a France-only distribution setting.
+
+Have a fluent French reader check terminology before publication. Follow the
+same review safeguards as the English refresh: back up and reconcile any existing
+`fr-FR` listing, update only the approved text fields, and preserve the saved
+English copy, trailer, artwork, tracks, countries and subscription settings.
+Do not assume text localisation also translates English screenshots or the
+trailer. Native gameplay images must remain truthful; review the French listing
+preview and asset fallbacks before submitting. No upload or review cancellation
+is authorised by preparing this draft.
 
 The `en-GB` title and descriptions are maintained in
 [`listing-en-GB.json`](listing-en-GB.json). The positioning is learning and
 single-player practice before playing with people in person, not online
 multiplayer. Club search opens Google Maps; it is not a verified directory.
+
+On November 23, 2026, a read-only API audit confirmed the saved text is still
+the November 3 copy and the saved video is version 2 (`FeuhyBNAAv0`). The local
+JSON's stale version-1 video URL was corrected to match that saved value; this
+did not publish anything. Production 1.0.10 (1000014) was in review and 1.0.9
+(1000013) was published. The inspection edit was discarded.
 
 [`feature-graphic.png`](feature-graphic.png) replaces the old screenshot with
 blurred side panels. It is a 1024 x 500, 24-bit PNG, visually inspected after

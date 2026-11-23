@@ -156,6 +156,10 @@ than repeatedly posting a download link. No bought or incentivised reviews.
 
 ### 4. Store Discovery and Word of Mouth
 
+The [discovery baseline and listing experiment](store-discovery.md) records the
+November 23 search sample, proposed game-specific copy and measurement plan.
+Keep that experiment separate from the active production review.
+
 Keep store copy and screenshots aligned with learning before in-person play.
 Use the existing Share Barbu action; ask pilot users whether they actually
 recommended it, rather than assuming a share action creates an install.
@@ -199,7 +203,7 @@ available in Play Console, platform post statistics and voluntary pilot follow-u
 
 | Question | Initial measurement | Limitation |
 | --- | --- | --- |
-| Are people finding and installing Barbu? | Console store visitors, acquisitions and available source breakdowns | Record exact metric definitions; downloads are not unique active users |
+| Are people finding and installing Barbu? | Console listing visitors, install clicks and CTR; completed acquisitions separately in Grow users / Statistics | Install clicks are not completed installs; use current definitions and fixed filters |
 | Which content attracts interest? | Per-post views, watch time and link clicks where available | Views and clicks cannot be converted into assumed installs |
 | Do beginners understand the lesson? | Observe ten volunteers completing a lesson and starting a hand | Small, selected sample; report numerator and denominator |
 | Do people return? | Available Console retention measures, separately labelled; voluntary seven-day pilot follow-up | Pilot replies are self-selected; nonresponses are unknown |
@@ -236,9 +240,9 @@ once we have repeat-use evidence and understand what users value, not merely whe
 an install counter reaches a number. The November 14 direction is optional paid
 content. The subsequent agreed direction is one optional Premium subscription
 for additional games, starting with Canasta, while the existing seven games stay
-free. Approved prices are EUR 2.50/month and EUR 19.99/year; Android billing is
-under controlled Norway-only testing and is not publicly launched. See the
-[premium delivery gates](../premium.md). Advertising is not part of the current
+free. For current availability and regional pricing, use the
+[Premium launch plan](../premium-launch.md) and [delivery gates](../premium.md),
+not the older pricing assumptions in this strategy. Advertising is not part of the current
 plan. Do not abruptly lock existing free lessons.
 Protect lessons and guided explanations; do not create cooldowns or charge for
 correcting mistakes. Club licences would require a validated organiser need.
