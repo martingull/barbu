@@ -1,13 +1,13 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { createEuchreSession, transitionEuchreSession } from "../../src/domain/euchreSession";
 import { advanceEuchreOpponents } from "../../src/domain/euchrePolicy";
 import { saveEuchreSession, euchreSaveKey } from "../../src/persistence/euchreSave";
 
-async function openPreview(page) {
+async function openPreview(page: Page) {
   await page.goto("/?preview=euchre&seed=1");
   await expect(page.getByRole("button", { name: "Order up", exact: true })).toBeVisible();
 }
-async function geometry(page) {
+async function geometry(page: Page) {
   const cards = page.getByLabel("Your Euchre hand", { exact: true });
   const controls = page.getByLabel("Euchre turn actions", { exact: true });
   await expect(controls.locator("button").last()).toBeInViewport();
@@ -23,6 +23,28 @@ async function geometry(page) {
   const callBox = await calling.boundingBox();
   expect(callBox!.y + callBox!.height).toBeLessThanOrEqual(hand!.y + 1);
   const board = await page.locator(".play-board-region").boundingBox();
+  const prompt = await page.locator(".euchre-prompt, .coach-feedback.reserved").boundingBox();
+  expect(board!.y + board!.height).toBeLessThanOrEqual(prompt!.y + 1);
+  expect(prompt!.y + prompt!.height).toBeLessThanOrEqual(callBox!.y + 1);
+  for (const holder of await page.locator(".cardholder").all()) {
+    const frame = (await holder.boundingBox())!, label = (await holder.locator(".cardholder-label").boundingBox())!;
+    expect(frame.y).toBeGreaterThanOrEqual(board!.y);
+    expect(frame.y + frame.height).toBeLessThanOrEqual(board!.y + board!.height);
+    expect(label.y).toBeGreaterThanOrEqual(frame.y);
+    expect(label.y + label.height).toBeLessThanOrEqual(frame.y + frame.height);
+    for (const text of await holder.locator(".cardholder-label > *").all()) {
+      expect(await text.evaluate(element => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
+    }
+    if (await holder.locator(".table-card").count()) {
+      const card = (await holder.locator(".table-card").boundingBox())!;
+      expect(card.y + card.height + 2).toBeLessThanOrEqual(label.y + 1);
+    }
+  }
+  if (await page.locator(".tutor-slot .cardholder").count()) {
+    const north = (await page.locator(".tutor-slot .cardholder").boundingBox())!;
+    const south = (await page.locator(".you-slot .cardholder").boundingBox())!;
+    expect(north.y + north.height + 4).toBeLessThanOrEqual(south.y + 1);
+  }
   return board!;
 }
 
@@ -141,3 +163,27 @@ test("calling and review fit a small 320 by 568 viewport", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Next trick", exact: true })).toBeInViewport();
   await geometry(page);
 });
+
+for (const size of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { width: 393, height: 805 }, { width: 1280, height: 800 }]) {
+  test(`Euchre seat roles stay below cards throughout a lone hand at ${size.width}x${size.height}`, async ({ page }, info) => {
+    await page.setViewportSize(size);
+    await openPreview(page);
+    await geometry(page);
+    await page.getByRole("radio", { name: "Go alone", exact: true }).check();
+    await page.getByRole("button", { name: "Order up", exact: true }).click();
+    await expect(page.locator(".you-slot .cardholder-label")).toContainText("Caller, alone");
+    const initial = await geometry(page);
+    for (let trick = 0; trick < 5; trick++) {
+      await page.getByLabel("Your Euchre hand", { exact: true }).locator("button.legal").first().click();
+      await page.getByRole("button", { name: "Play card", exact: true }).click();
+      if (trick === 4) break;
+      await expect(page.getByRole("button", { name: "Next trick", exact: true })).toBeVisible();
+      expect((await geometry(page)).height).toBeCloseTo(initial.height, 0);
+      await expect.poll(() => page.locator(".card-table img").evaluateAll(images => images.every(image => (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
+      if (trick === 0) await page.screenshot({ path: info.outputPath(`euchre-lone-review-${size.width}.png`), scale: "css" });
+      await page.getByRole("button", { name: "Next trick", exact: true }).click();
+      expect((await geometry(page)).height).toBeCloseTo(initial.height, 0);
+    }
+    await expect(page.getByLabel("Euchre result summary", { exact: true })).toBeVisible();
+  });
+}

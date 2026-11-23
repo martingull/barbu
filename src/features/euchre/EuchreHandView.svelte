@@ -177,4 +177,28 @@
   :global(.app-shell.fixed-play-screen .table-play-surface.euchre-play-surface.flow-play.compact-play .table-play-panel .full-hand-cards) {
     grid-template-columns: repeat(6, var(--flow-card-width)); grid-template-rows: var(--flow-hand-height); justify-content: center;
   }
+  :global(.euchre-play-surface.flow-play > .play-board-region) { min-height: 160px; flex-basis: 160px; }
+  /* Seat and role captions need their own row, outside the played card. */
+  :global(.app-shell.fixed-play-screen .euchre-play-surface.flow-play .play-board-region .card-table.compass-table) {
+    --table-card-face-width: clamp(24px, min(11cqw, calc((100cqh - 92px) / 2.8)), 58px);
+    --table-holder-width: max(84px, calc(var(--table-card-face-width) + 18px));
+  }
+  :global(.app-shell.fixed-play-screen .euchre-play-surface.flow-play .play-board-region .cardholder) {
+    height: calc(var(--table-card-face-width) * 1.4 + 34px);
+    grid-template-rows: calc(var(--table-card-face-width) * 1.4) 22px;
+    align-content: start;
+    row-gap: 2px;
+    padding: 3px 4px;
+  }
+  :global(.app-shell.fixed-play-screen .euchre-play-surface.flow-play .play-board-region .cardholder-label) {
+    position: static;
+    grid-column: 1;
+    grid-row: 2;
+    align-self: center;
+    width: 100%;
+  }
+  :global(.app-shell.fixed-play-screen .euchre-play-surface.flow-play .play-board-region .table-card) {
+    height: calc(var(--table-card-face-width) * 1.4);
+    min-height: 0;
+  }
 </style>
