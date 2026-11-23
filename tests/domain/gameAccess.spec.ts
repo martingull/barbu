@@ -21,7 +21,7 @@ test("table metadata gives skill activities one mode without changing game navig
 });
 
 test("every game derives the same rules label and description from the table factory", () => {
-  expect(registry.getAll()).toHaveLength(8);
+  expect(registry.getAll()).toHaveLength(9);
   for (const { table } of registry.getAll()) {
     expect(table.learn.referenceTitle).toBe("Game rules");
     expect(table.learn.referenceSummary).toBe("Read the rules, scoring and variations.");
@@ -47,7 +47,7 @@ test("the existing seven games remain free without billing or usage limits", () 
 
 test("premium intent does not grant access and unassigned games fail closed", () => {
   expect(gameAccess("canasta")).toBe("Premium");
-  for (const id of ["canasta", "solitaire", "card-counting-ii", "unknown", "", "toString"]) {
+  for (const id of ["canasta", "euchre", "solitaire", "card-counting-ii", "unknown", "", "toString"]) {
     expect(hasReleasedGameAccess(id)).toBe(false);
     expect(isCatalogGameAvailable(id)).toBe(false);
   }

@@ -164,12 +164,14 @@ export function tableTabsFor(table: GameTableDefinition) {
 }
 
 function createCatalogEntry(entry: Omit<CatalogEntry, "access">): CatalogEntry {
-  return { ...entry, access: gameAccess(entry.id), preview: entry.id === "canasta" && isCanastaPreview() };
+  return { ...entry, access: gameAccess(entry.id), preview: isGamePreview(entry.id) };
 }
 
-function isCanastaPreview(): boolean {
-  return (import.meta.env?.DEV === true && import.meta.env?.VITE_CANASTA_PREVIEW === "1")
-    || (import.meta.env?.MODE === "canasta-internal" && import.meta.env?.TAURI_ENV_PLATFORM === "ios");
+export function isGamePreview(id: string): boolean {
+  const flags: Record<string, string | undefined> = { canasta: import.meta.env?.VITE_CANASTA_PREVIEW, euchre: import.meta.env?.VITE_EUCHRE_PREVIEW };
+  return (import.meta.env?.DEV === true && Object.hasOwn(flags, id)
+      && (flags[id] === "1" || typeof location !== "undefined" && new URL(location.href).searchParams.get("preview") === id))
+    || (id === "canasta" && import.meta.env?.MODE === "canasta-internal" && import.meta.env?.TAURI_ENV_PLATFORM === "ios");
 }
 
 export type CatalogCategory = {
@@ -234,6 +236,11 @@ export function getCatalogCategories(context: CatalogAccessContext = {}): Catalo
           card: { rank: "K", suit: "D" },
           status: "Ready",
           summary: "Bid a contract, then play as declarer or defend."
+        }),
+        createCatalogEntry({
+          id: "euchre", family: "Euchre", title: "Euchre", card: { rank: "J", suit: "D" },
+          status: isGamePreview("euchre") || context.premiumAvailable ? "Ready" : "Planned",
+          summary: "Call trump. Win three of five tricks with your partner."
         })
       ]
     },
@@ -255,7 +262,7 @@ export function getCatalogCategories(context: CatalogAccessContext = {}): Catalo
           family: "Rummy",
           title: "Canasta",
           card: { rank: "2", suit: "H" },
-          status: isCanastaPreview() || context.premiumAvailable ? "Ready" : "Planned",
+          status: isGamePreview("canasta") || context.premiumAvailable ? "Ready" : "Planned",
           summary: "Build canastas with your partner. Take the pile at the right moment."
         })
       ]
@@ -303,5 +310,5 @@ export function getCatalogCategories(context: CatalogAccessContext = {}): Catalo
 
 export function isCatalogGameAvailable(id: string, context: CatalogAccessContext = {}, now = Date.now()): boolean {
   return getCatalogCategories(context).some(category => category.entries.some(entry => entry.id === id))
-    && (hasReleasedGameAccess(id, context.customer, now) || (id === "canasta" && isCanastaPreview()));
+    && (hasReleasedGameAccess(id, context.customer, now) || isGamePreview(id));
 }

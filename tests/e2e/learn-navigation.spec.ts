@@ -1,7 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
-import { bridgeCourses } from "../../src/lessons/bridge/courses";
+import { bridgeCourses, bridgeCoursesFor } from "../../src/lessons/bridge/courses";
 import { bridgeBiddingPracticeSteps, bridgeContractSteps } from "../../src/lessons/bridge/exercises";
 import { bridgeCallLabel } from "../../src/domain/bridgeAuction";
+import { newBridgeSystem } from "../../src/domain/bridgeSystems";
 import { bridgeChoiceSteps, bridgeLearningSteps } from "../../src/lessons/bridge/learning";
 import { legacyBridgePreference } from "../fixtures/legacyBridgePreference";
 
@@ -66,11 +67,11 @@ test("games share Learn and Play while skill activities use Learn without duplic
     }
     await expect(page.getByRole("button", { name: /Quick drill/ })).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Guided lessons", exact: true })).toHaveCount(0);
-    const expectedSkills: Record<string, number> = { Barbu: 7, Hearts: 8, Whist: 7, Spades: 5, Bridge: bridgeCourses.length, "Gin Rummy": 6, "Card Counting I": 5 };
+    const expectedSkills: Record<string, number> = { Barbu: 7, Hearts: 8, Whist: 7, Spades: 5, Bridge: bridgeCoursesFor(newBridgeSystem).length, "Gin Rummy": 6, "Card Counting I": 5 };
     await expect(page.locator(".learn-skill")).toHaveCount(expectedSkills[game]);
     const skillIds = await page.locator(".learn-skill").evaluateAll(rows => rows.map(row => row.getAttribute("data-skill")));
     expect(new Set(skillIds).size).toBe(skillIds.length);
-    if (game === "Bridge") expect([...skillIds].sort()).toEqual(bridgeCourses.map(course => course.id).sort());
+    if (game === "Bridge") expect([...skillIds].sort()).toEqual(bridgeCoursesFor(newBridgeSystem).map(course => course.id).sort());
     await page.getByRole("button", { name: game === "Card Counting I" ? new RegExp(`^${exercise}\\b`) : `Try cards: ${exercise}`, exact: game !== "Card Counting I" }).click();
     await expect(page.getByRole("tablist")).toHaveCount(0);
     await expectLearningLayout(page);

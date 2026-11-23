@@ -24,11 +24,12 @@ export type CoursePracticeTarget =
   | { kind: "practice"; game: "spades"; action: string }
   | { kind: "practice"; game: "bridge"; action: string }
   | { kind: "practice"; game: "gin-rummy"; action: string }
-  | { kind: "practice"; game: "canasta"; action: string };
+  | { kind: "practice"; game: "canasta"; action: string }
+  | { kind: "practice"; game: "euchre"; action: string };
 
 export type CourseContent = {
   id: string;
-  game: "barbu" | "hearts" | "whist" | "spades" | "bridge" | "gin-rummy" | "canasta";
+  game: "barbu" | "hearts" | "whist" | "spades" | "bridge" | "gin-rummy" | "canasta" | "euchre";
   pathStepId: string;
   practiceTarget: CoursePracticeTarget;
   contract: string;

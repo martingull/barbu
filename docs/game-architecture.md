@@ -504,6 +504,19 @@ Large hands and public melds scroll in bounded regions rather than shrinking
 the shared cards. See [Canasta](canasta.md) for the selected table agreements,
 source differences and verification requirements.
 
+Euchre registers the same Learn/Play metadata and shares the existing Premium
+entitlement. Its 24-card deal, calling rounds, private dealer discard and lone-hand
+seat skipping live in `domain/euchreSession.ts`, not the 13-card hand factory.
+Only effective-suit/rank hooks extend the shared trick primitives; other games
+retain their defaults. Opponents and coaching receive `euchrePosition` public
+observations. Six topics provide 18 base decisions and 18 bounded companions;
+`euchreLearning.ts` grades them through the normal rules and adapts the same engine
+to one unsaved guided hand. Features reuse `GameLearning`, `learningSession`,
+the saved-session controller and shared table/card/review surfaces. The version-1
+save replays legal actions and derives its summaries. Development preview access
+does not bypass production Premium gating. See [Euchre](euchre.md) for its
+North American profile, heuristic-opponent limits and remaining release checks.
+
 `LearnPanel` places learning resources before the next lesson and learning path
 for every game, with the rules action first. The table factory supplies one
 shared label, `Game rules`, and description, `Read the rules, scoring and variations.`

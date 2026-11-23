@@ -7,7 +7,7 @@ export type GameAccess = "Free" | "Premium" | "Unassigned";
 export const monetizationPolicy = {
   model: "free-catalog-and-premium-subscription",
   freeGameIds,
-  premiumGameIds: ["canasta"],
+  premiumGameIds: ["canasta", "euchre"],
   purchaseProvider: "revenuecat"
 } as const;
 
