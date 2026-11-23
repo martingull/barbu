@@ -1,11 +1,12 @@
 import { bestMeldLayout } from "../../domain/rummyMelds";
 import { ginDiscardChoices, type GinObservation } from "../../domain/ginRummyPolicy";
-import { ginRules } from "../../domain/ginRummySession";
+import { defaultGinSettings, ginRulesFor, type GinSettings } from "../../domain/ginRummyRules";
 import type { GinGuidedMoment } from "../../domain/ginRummyLearning";
 import { formatCardText } from "../../presentation/cardDisplay";
 import { formatRummyMeld } from "../../presentation/rummyDisplay";
 
-export function ginGuidance(position: GinObservation, selected: string) {
+export function ginGuidance(position: GinObservation, selected: string, settings: GinSettings = defaultGinSettings) {
+  const ginRules = ginRulesFor(settings);
   const layout = bestMeldLayout(position.hand);
   const melds = layout.melds.length ? layout.melds.map(formatRummyMeld).join("; ") : "None yet";
   const facts = `Deadwood: ${layout.points} with ${position.hand.length} cards. Melds: ${melds}.`;
@@ -14,7 +15,7 @@ export function ginGuidance(position: GinObservation, selected: string) {
     const preview = choices.find(choice => choice.card.id === selected);
     const rule = `Discard one card. ${position.blockedDiscard ? "You cannot discard the upcard you just took. " : ""}Knock at ${ginRules.knockLimit} deadwood or less; gin needs zero.`;
     const tip = preview ? `Discarding ${formatCardText(preview.card.label)} leaves ${preview.layout.points} deadwood. ${preview.layout.points === 0
-      ? "You can go gin; Barbu cannot lay off cards."
+      ? `You can go gin for ${ginRules.ginBonus} extra points; Barbu cannot lay off cards.`
       : preview.layout.points <= ginRules.knockLimit ? "You may knock, but Barbu can lay off and might undercut."
       : "Keep playing; this is too much deadwood to knock."}`
       : selected === position.blockedDiscard && selected ? "Keep the upcard you just took and choose another card."

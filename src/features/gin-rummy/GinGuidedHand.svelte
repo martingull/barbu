@@ -3,10 +3,11 @@
   import { createGuidedHandFeature } from "../guidedHandFeature";
   import { createGinGuidedSession, transitionGinGuidedSession, replayGinGuidedSession } from "../../domain/ginRummyLearning";
   import GinHandView from "./GinHandView.svelte";
+  import { defaultGinSettings, type GinSettings } from "../../domain/ginRummyRules";
 
-  let { seed, onBack, onIndependentPlay }: { seed: number; onBack: () => void; onIndependentPlay: () => void } = $props();
+  let { seed, settings = defaultGinSettings, onBack, onIndependentPlay }: { seed: number; settings?: GinSettings; onBack: () => void; onIndependentPlay: () => void } = $props();
   const feature = untrack(() => createGuidedHandFeature(seed, {
-    create: createGinGuidedSession, transition: transitionGinGuidedSession, replay: replayGinGuidedSession
+    create: seed => createGinGuidedSession(seed, settings), transition: transitionGinGuidedSession, replay: replayGinGuidedSession
   }));
 </script>
 

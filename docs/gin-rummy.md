@@ -18,11 +18,25 @@ cards of one suit. A card cannot serve two melds. Knock with at most ten
 unmatched points after discarding. Defenders can meld and lay off onto the
 knocker's exposed melds. Equal or lower defending deadwood undercuts.
 
-Gin adds 20; an undercut adds 10; otherwise score the deadwood difference.
+Choose the scoring agreement before Learn, guided play or a new game:
+
+| Profile | Gin bonus | Undercut bonus | Box bonus per hand won |
+| --- | --- | --- | --- |
+| Classic 20/10 (default) | 20 | 10 | 20 |
+| American 25/25 | 25 | 25 | 25 |
+
+Pagat documents both bonus agreements in its rules and variations. American
+25/25 is a named scoring option, not a claim of universal US club rules or
+Gin Rummy Association tournament compliance. Both profiles play to 100 hand
+points; there is no separate target setting.
+
+Gin adds the selected bonus to defending deadwood; an undercut adds its bonus
+to the deadwood difference; otherwise score only the deadwood difference.
 No layoffs against gin. At two stock cards, a non-knocking discard draws the
 hand without scoring. Winner deals next; drawn hands retain their dealer.
-First to 100 ends the game. Add 20 per hand won and a 100 game bonus, doubled
-if the loser never scored. These bonuses do not advance the 100-point target.
+First to 100 hand points ends the game. Add the selected box bonus per hand
+won and a 100 game bonus, doubled if the loser never scored. These end bonuses
+do not advance the target. Both profiles keep the same deal and play rules.
 
 ## Implementation
 
@@ -33,11 +47,16 @@ if the loser never scored. These bonuses do not advance the 100-point target.
   chained layoffs share one optimization; separate greedy choices are unsafe.
 - `ginRummySession.ts` owns opening offers, turns, hand scoring, game completion
   and replay. It never imports UI or storage.
+- `ginRummyRules.ts` owns validated scoring settings. New-game preferences use
+  `barbu.ginSettings.v1`; sessions embed their own scoring profile. Changing preferences
+  never changes a saved match, its next deal or replay.
 - `ginRummyPolicy.ts` sees only its own cards, the upcard and public pickups.
   No hidden opponent hand or stock order is passed to its decision function.
 - `ginRummySave.ts` uses the shared save-store factory. Version-1 saves keep
   explicit actions, replayed and validated to rebuild state and score summaries.
   They preserve results across reloads and do not re-run a changed AI policy.
+  Missing settings on older saves mean Classic 20/10, target 100; invalid explicit
+  settings are rejected rather than silently changing the agreement.
 - The feature composes `savedSessionFeature`, `GameLearning`, `TablePlaySurface`
   and `CardChoiceHand`. Learn has seven topics with three authored decisions
   each: melds, deadwood, draw choices, a linked turn, knocking, gin, and layoffs/undercuts. Counting and finishing
@@ -77,9 +96,11 @@ decisions select a layoff card, score a lower-deadwood undercut, and score an
 equal-deadwood undercut. Three distinct companions reinforce missed decisions.
 Answers and score breakdowns call `scoreGinHand`, exactly as Play does; review
 preserves both exposed hands. The new `gin-settlement` key does not reset the
-five earlier completions or any match save. This teaches settlement, not optimal
-knock timing or a prediction from hidden cards. The classic 10-point undercut agreement was rechecked
-against the linked Pagat rules on 2026-11-19.
+five earlier completions or any match save. The American profile uses
+`gin-american-settlement` because its scoring answers differ; other skill keys
+are shared. Lesson text,
+choices, reinforcement and score breakdowns use the selected rules. This teaches
+settlement, not optimal knock timing or a prediction from hidden cards.
 
 ## Deliberate boundaries
 
@@ -88,6 +109,6 @@ and defensive layoffs are automatically optimized; players cannot choose a
 different equally good declaration to restrict layoffs. The deterministic AI
 reduces deadwood, preserves nearby cards and avoids feeding known pickups. It
 knocks whenever eligible rather than conducting expert probabilistic search.
-Oklahoma Gin, Big Gin, Hollywood scoring, 25-point bonuses, multiplayer, gambling
+Oklahoma Gin, Big Gin, Hollywood scoring, multiplayer, gambling
 and tournament settlement are not implemented. Final points are informational;
 there are no wagers. Physical iOS/Android checks are required before release.

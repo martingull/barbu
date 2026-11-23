@@ -1,5 +1,10 @@
 import type { GameDefinition } from "./gameRegistry";
 import { createGameTableDefinition } from "./tableFactory";
+import { ginRulesFor, type GinSettings } from "../domain/ginRummyRules";
+import { ginProfileNames } from "../presentation/ginRummyDisplay";
+
+export const ginSkillId = (id: string, settings: GinSettings) =>
+  settings.profile === "american" && id === "gin-settlement" ? "gin-american-settlement" : id;
 
 export const ginTopics = [
   { id: "gin-melds", action: "melds", title: "Sets and runs", summary: "Find combinations and reduce unmatched points." },
@@ -30,3 +35,13 @@ export const ginRummyDef: GameDefinition = {
     footerNote: "Melds and layoffs use the lowest-deadwood arrangement automatically." },
   proTabConfig: { featuresAriaLabel: "Gin Rummy pro", headingTitle: "Competitive Gin", headingSummary: "Not available yet." }
 };
+
+export function ginDefinitionFor(settings: GinSettings): GameDefinition {
+  const rules = ginRulesFor(settings);
+  return { ...ginRummyDef,
+    learnSteps: ginRummyDef.learnSteps.map(step => ({ ...step, id: ginSkillId(step.id, settings) })),
+    table: { ...ginRummyDef.table, scorecard: { ...ginRummyDef.table.scorecard, objective: `First to ${rules.target}` } },
+    playTabConfig: { ...ginRummyDef.playTabConfig, groupEyebrow: ginProfileNames[settings.profile],
+      supportingCopy: `Two players. Knock at ${rules.knockLimit} or less; gin earns ${rules.ginBonus} extra points. First to ${rules.target} wins, then game and box bonuses are added.` }
+  };
+}

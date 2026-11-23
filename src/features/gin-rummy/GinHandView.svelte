@@ -11,7 +11,9 @@
   import { ginObservation } from "../../domain/ginRummyPolicy";
   import type { GinGuidedSession } from "../../domain/ginRummyLearning";
   import { bestMeldLayout } from "../../domain/rummyMelds";
-  import { ginComplete, ginDiscardLayout, ginScoreBreakdown, ginRules, type GinSession, type GinAction } from "../../domain/ginRummySession";
+  import { ginComplete, ginDiscardLayout, ginScoreBreakdown, type GinSession, type GinAction } from "../../domain/ginRummySession";
+  import { ginRulesFor } from "../../domain/ginRummyRules";
+  import { ginProfileNames } from "../../presentation/ginRummyDisplay";
   import { formatCardList, formatCardText } from "../../presentation/cardDisplay";
   import { formatRummyMeld } from "../../presentation/rummyDisplay";
 
@@ -21,10 +23,11 @@
     onAction: (action: GinAction) => void; onBack: () => void; onNext: () => void; onReplay: () => void; onNew: () => void;
   } = $props();
   let hand = $derived(session.hand);
+  let ginRules = $derived(ginRulesFor(session.settings));
   let finished = $derived(hand.phase === "complete");
   let gameOver = $derived(!guided && ginComplete(session));
   let reviewing = $derived(Boolean(guided?.review));
-  let guidance = $derived(guided && !finished ? ginGuidance(ginObservation(session), selectedCardId) : null);
+  let guidance = $derived(guided && !finished ? ginGuidance(ginObservation(session), selectedCardId, session.settings) : null);
   let review = $derived(guided?.review ? ginGuidedReview(guided.review) : null);
   let layout = $derived(bestMeldLayout(hand.hands[0]));
   let preview = $derived(ginDiscardLayout(hand, selectedCardId));
@@ -41,11 +44,12 @@
   let prompt = $derived(hand.phase === "offer" ? "Take the opening upcard or pass."
     : hand.phase === "draw" ? hand.forcedStock ? "Both players passed. Draw from the stock." : "Draw from the stock or take the upcard."
     : "Choose your discard. Knock with 10 or less, or keep playing.");
-  let resultTitle = $derived(gameOver ? session.scores[0] >= 100 ? "You won the game" : "Barbu won the game"
+  let resultTitle = $derived(gameOver ? session.scores[0] >= ginRules.target ? "You won the game" : "Barbu won the game"
     : hand.result?.kind === "draw" ? "Hand drawn" : `${hand.result?.winner === 0 ? "You" : "Barbu"} ${hand.result?.kind === "gin" ? "went gin" : hand.result?.kind === "undercut" ? "undercut" : "won the hand"}`);
 </script>
 
 <TablePlaySurface flowLayout stableFeedback={Boolean(guided)} mode={finished ? "result" : "play"} title={guided ? "Guided Gin Rummy" : "Gin Rummy"} ariaLabel="Gin Rummy hand"
+  eyebrow={ginProfileNames[session.settings.profile]}
   statusLabel="Hand" statusValue={String(session.handNumber)} {onBack} showTable={!finished} useCustomTable
   tableAriaLabel="Gin Rummy piles" tableCards={[]} panelAriaLabel="Gin Rummy decisions" surfaceClassName="gin-play-surface">
   {#snippet summary()}
@@ -148,7 +152,7 @@
           <button class="secondary-action" disabled={!canTakeUpcard} onclick={() => onAction({ type: "draw", source: "discard" })} type="button">Take upcard</button>
         {:else}
           <button class="secondary-action" disabled={!preview} onclick={() => onAction({ type: "discard", cardId: selectedCardId })} type="button">Discard</button>
-          <button class="primary-action" disabled={!preview || preview.points > 10} onclick={() => onAction({ type: "discard", cardId: selectedCardId, knock: true })} type="button">{preview?.points === 0 ? "Go gin" : "Knock"}</button>
+          <button class="primary-action" disabled={!preview || preview.points > ginRules.knockLimit} onclick={() => onAction({ type: "discard", cardId: selectedCardId, knock: true })} type="button">{preview?.points === 0 ? "Go gin" : "Knock"}</button>
         {/if}
       </div>
     {/if}
@@ -157,6 +161,7 @@
 </TablePlaySurface>
 
 <style>
+  :global(.topbar.table-play-topbar:is(.compact-play, .compact-result):has(+ .gin-play-surface) .eyebrow) { display: block; margin: 0 0 2px; font-size: 0.625rem; line-height: 1.1; }
   :global(.gin-play-surface.flow-play > .play-board-region) { min-height: 168px; flex-basis: 168px; }
   :global(.gin-play-surface.flow-play.stable-feedback > .play-board-region) { min-height: 140px; flex-basis: 140px; }
   .gin-table {

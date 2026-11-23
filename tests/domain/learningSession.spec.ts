@@ -53,7 +53,7 @@ test("a missed decision inserts one companion, including at the end, without rec
 test("Hearts and Gin expose the same ordered teaching stages and one reinforcement per decision", () => {
   for (const seed of [0, 1, 42]) {
     const lessons = [...heartsPracticeTopics.map(focus => heartsPracticeSteps(seed, focus)), heartsPassingSteps(seed),
-      ...Object.keys(ginExercises).map(ginLearningSteps)];
+      ...Object.keys(ginExercises).map(action => ginLearningSteps(action))];
     for (const steps of lessons) {
       expect(steps.map(step => step.teaching?.stage)).toEqual(["worked", "supported", "independent"]);
       expect(steps[0].teaching?.guidance).toBeTruthy();

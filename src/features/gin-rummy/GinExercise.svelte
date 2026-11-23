@@ -9,9 +9,10 @@
   import { createLearningSession, checkLearningAnswer } from "../../domain/learningSession";
   import type { DrillResult } from "../../lessons/drillDecision";
   import type { DecisionReview } from "../../lessons/decisionReview";
-  let { context }: { context: CustomExerciseContext } = $props();
+  import { defaultGinSettings, type GinSettings } from "../../domain/ginRummyRules";
+  let { context, settings = defaultGinSettings }: { context: CustomExerciseContext; settings?: GinSettings } = $props();
   let selected = $state("");
-  let session = $state(untrack(() => createLearningSession<GinExerciseStep, DrillResult, DecisionReview>(ginLearningSteps(context.action))));
+  let session = $state(untrack(() => createLearningSession<GinExerciseStep, DrillResult, DecisionReview>(ginLearningSteps(context.action, settings))));
   let index = $derived(session.index), steps = $derived(session.steps), checked = $derived(session.phase !== "answer");
   let step = $derived(steps[index]);
   let feedback = $derived(checked ? ginExerciseAnswer(context.action, step, selected) : null);

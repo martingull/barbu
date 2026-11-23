@@ -3,6 +3,7 @@ import { standardDeck } from "./deck";
 import { bestMeldLayout } from "./rummyMelds";
 import { advanceGinOpponent } from "./ginRummyPolicy";
 import { createGinSession, transitionGinSession, type GinAction, type GinSession } from "./ginRummySession";
+import { defaultGinSettings, type GinSettings } from "./ginRummyRules";
 
 type PlayerAction = Exclude<GinAction, { type: "next" }>;
 
@@ -24,8 +25,8 @@ export type GinGuidedMoment = {
 };
 export type GinGuidedSession = { session: GinSession; review: GinGuidedMoment | null; moments: GinGuidedMoment[] };
 
-export function createGinGuidedSession(seed: number): GinGuidedSession {
-  return { session: advanceGinOpponent(createGinSession(seed)), review: null, moments: [] };
+export function createGinGuidedSession(seed: number, settings: GinSettings = defaultGinSettings): GinGuidedSession {
+  return { session: advanceGinOpponent(createGinSession(seed, settings)), review: null, moments: [] };
 }
 
 export function transitionGinGuidedSession(state: GinGuidedSession, event: GinGuidedEvent): GinGuidedSession {
@@ -46,7 +47,7 @@ export function transitionGinGuidedSession(state: GinGuidedSession, event: GinGu
 }
 
 export function replayGinGuidedSession(state: GinGuidedSession) {
-  return createGinGuidedSession(state.session.initialSeed);
+  return createGinGuidedSession(state.session.initialSeed, state.session.settings);
 }
 
 export function ginGuidedRecap(moments: GinGuidedMoment[]) {

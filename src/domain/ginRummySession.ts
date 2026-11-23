@@ -1,6 +1,7 @@
 import type { Card } from "./types";
 import { shuffledDeck } from "./deck";
 import { bestMeldLayout, type MeldLayout } from "./rummyMelds";
+import { defaultGinSettings, ginRulesFor, type GinSettings } from "./ginRummyRules";
 
 export type GinPlayer = 0 | 1;
 export type GinAction = { type: "pass" } | { type: "draw"; source: "stock" | "discard" }
@@ -12,10 +13,10 @@ export type GinHand = {
   phase: "offer" | "draw" | "discard" | "complete"; passes: number; forcedStock: boolean;
   blockedDiscard: string; known: [Card[], Card[]]; result: GinResult | null; message: string;
 };
-export type GinSession = { initialSeed: number; events: GinAction[]; hand: GinHand; scores: [number, number]; wins: [number, number]; handNumber: number };
-export const ginRules = { target: 100, knockLimit: 10, ginBonus: 20, undercutBonus: 10, boxBonus: 20, gameBonus: 100 } as const;
+export type GinSession = { settings: GinSettings; initialSeed: number; events: GinAction[]; hand: GinHand; scores: [number, number]; wins: [number, number]; handNumber: number };
+export const ginRules = ginRulesFor();
 export const otherGinPlayer = (player: GinPlayer): GinPlayer => player === 0 ? 1 : 0;
-export const ginComplete = (session: GinSession) => session.scores.some(score => score >= ginRules.target);
+export const ginComplete = (session: GinSession) => session.scores.some(score => score >= ginRulesFor(session.settings).target);
 
 function deal(seed: number, dealer: GinPlayer): GinHand {
   if (!Number.isSafeInteger(seed) || seed < 0) throw Error("Invalid Gin Rummy seed");
@@ -24,14 +25,16 @@ function deal(seed: number, dealer: GinPlayer): GinHand {
   return { hands, stock: deck.slice(21), discards: [deck[20]], dealer, turn: otherGinPlayer(dealer), phase: "offer",
     passes: 0, forcedStock: false, blockedDiscard: "", known: [[], []], result: null, message: "The non-dealer has first choice of the upcard." };
 }
-export function createGinSession(seed: number): GinSession {
-  return { initialSeed: seed, events: [], hand: deal(seed, seed % 2 as GinPlayer), scores: [0, 0], wins: [0, 0], handNumber: 1 };
+export function createGinSession(seed: number, settings: GinSettings = defaultGinSettings): GinSession {
+  ginRulesFor(settings);
+  return { settings: { profile: settings.profile }, initialSeed: seed, events: [], hand: deal(seed, seed % 2 as GinPlayer), scores: [0, 0], wins: [0, 0], handNumber: 1 };
 }
 export function ginDiscardLayout(hand: GinHand, cardId: string) {
   if (hand.phase !== "discard" || cardId === hand.blockedDiscard || !hand.hands[hand.turn].some(card => card.id === cardId)) return null;
   return bestMeldLayout(hand.hands[hand.turn].filter(card => card.id !== cardId));
 }
-export function scoreGinHand(hands: [Card[], Card[]], knocker: GinPlayer): GinResult {
+export function scoreGinHand(hands: [Card[], Card[]], knocker: GinPlayer, settings: GinSettings = defaultGinSettings): GinResult {
+  const ginRules = ginRulesFor(settings);
   const attacking = bestMeldLayout(hands[knocker]);
   if (attacking.points > ginRules.knockLimit) throw Error("Knocking requires at most 10 deadwood points.");
   const defending = bestMeldLayout(hands[otherGinPlayer(knocker)], attacking.points ? attacking.melds : []);
@@ -42,6 +45,7 @@ export function scoreGinHand(hands: [Card[], Card[]], knocker: GinPlayer): GinRe
     layouts: knocker === 0 ? [attacking, defending] : [defending, attacking] };
 }
 export function ginScoreBreakdown(session: GinSession) {
+  const ginRules = ginRulesFor(session.settings);
   const complete = ginComplete(session);
   const winner: GinPlayer = session.scores[0] >= ginRules.target ? 0 : 1;
   return ([0, 1] as const).map(player => {
@@ -57,6 +61,7 @@ export function ginFinalScores(session: GinSession): [number, number] {
   return [scores[0].total, scores[1].total];
 }
 export function transitionGinSession(session: GinSession, action: GinAction): GinSession {
+  const ginRules = ginRulesFor(session.settings);
   if (ginComplete(session)) throw Error("This game is complete.");
   if (action.type === "next") {
     if (session.hand.phase !== "complete") throw Error("Finish this hand first.");
@@ -96,7 +101,7 @@ export function transitionGinSession(session: GinSession, action: GinAction): Gi
     hand.discards.push(card);
     hand.blockedDiscard = "";
     hand.message = `${name} discarded ${card.label}.`;
-    if (action.knock) hand.result = scoreGinHand(hand.hands, player);
+    if (action.knock) hand.result = scoreGinHand(hand.hands, player, session.settings);
     else if (hand.stock.length <= 2) hand.result = { kind: "draw", winner: null, knocker: null, points: 0,
       layouts: [bestMeldLayout(hand.hands[0]), bestMeldLayout(hand.hands[1])] };
     hand.phase = hand.result ? "complete" : "draw";
@@ -113,5 +118,5 @@ export function transitionGinSession(session: GinSession, action: GinAction): Gi
 export function replayGinHand(session: GinSession): GinSession {
   let boundary = -1;
   session.events.forEach((event, index) => { if (event.type === "next") boundary = index; });
-  return session.events.slice(0, boundary + 1).reduce(transitionGinSession, createGinSession(session.initialSeed));
+  return session.events.slice(0, boundary + 1).reduce(transitionGinSession, createGinSession(session.initialSeed, session.settings));
 }

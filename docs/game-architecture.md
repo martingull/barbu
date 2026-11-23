@@ -454,6 +454,15 @@ activity ends after thirteen tricks and neither settles a saved match nor awards
 lesson completion. Normal single-game/rubber Play and version-1 saves are unchanged.
 
 `GinGuidedHand` uses the normal Gin engine and public-information opponent policy.
+Gin scoring settings are validated in `domain/ginRummyRules.ts` and embedded in
+each session: Classic 20/10 or American 25/25, both playing to 100 hand points.
+The fixed target belongs to the domain rules, not saved preferences.
+The feature persists new-game preferences separately from version-1 match saves;
+legacy saves without settings stay Classic/100. Per-profile definitions and
+courses feed the existing `GameLearning` shell. Only American settlement has a
+new progress key, since the other tested skills are unchanged. Guided play,
+replay, scoring answers and final bonuses use the session's agreement rather than
+the current menu preference. These are scoring profiles, not Oklahoma Gin.
 `domain/ginRummyLearning.ts` pauses after each player action for review, records
 only that player's observed card/deadwood changes, and stops after one hand.
 The last action remains in the recap even when it ends the hand. Coaching accepts

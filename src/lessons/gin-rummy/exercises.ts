@@ -1,6 +1,7 @@
 import { standardDeck } from "../../domain/deck";
 import { bestMeldLayout, deadwoodValue } from "../../domain/rummyMelds";
-import { scoreGinHand, ginRules, ginDiscardLayout, transitionGinSession, type GinPlayer, type GinSession } from "../../domain/ginRummySession";
+import { scoreGinHand, ginDiscardLayout, transitionGinSession, type GinPlayer, type GinSession } from "../../domain/ginRummySession";
+import { defaultGinSettings, ginRulesFor, type GinSettings } from "../../domain/ginRummyRules";
 import { createGinLearningTurn } from "../../domain/ginRummyLearning";
 import { ginDiscardChoices } from "../../domain/ginRummyPolicy";
 import { advanceLearningSession, type LearningSession } from "../../domain/learningSession";
@@ -15,6 +16,7 @@ export const ginCards = (ids: string) => ids.split(" ").map(id => {
   return card;
 });
 export type GinExerciseStep = { title: string; hand: Card[]; upcard?: Card; hint?: string; teaching?: Teaching; options?: string[]; followUp?: GinExerciseStep;
+  settings?: GinSettings;
   turn?: { question: "draw" | "discard" | "count"; session: GinSession; drawn?: Card; source?: "stock" | "discard"; discarded?: Card };
   settlement?: { opponentHand: Card[]; knocker: GinPlayer; question: "layoff" | "score" } };
 
@@ -112,15 +114,19 @@ const ginFollowUps: Record<string, GinExerciseStep[]> = {
   ]
 };
 
-export function ginLearningSteps(action: string): GinExerciseStep[] {
-  return ginExercises[action].map((step, index) => {
+export function ginLearningSteps(action: string, settings: GinSettings = defaultGinSettings): GinExerciseStep[] {
+  const rules = ginRulesFor(settings);
+  const configured = (step: GinExerciseStep): GinExerciseStep => ({ ...step, settings: { ...settings },
+    turn: step.turn ? { ...step.turn, session: { ...step.turn.session, settings: { ...settings } } } : undefined });
+  return ginExercises[action].map((original, index) => {
+    const step = configured(original);
     const choice = ginExerciseChoices(action, step).find(choice => ginExerciseAnswer(action, step, choice.id).good)!;
     const guidance = index === 0 ? step.hint ?? `${ginSelectsDiscard(action) ? "Discard" : "Choose"} ${choice.label}. ${ginExerciseAnswer(action, step, choice.id).text}`
-      : index === 1 ? step.hint ?? (action === "settlement" ? "Count both deadwood totals after any layoffs. Equal or lower defending deadwood earns the defender the difference plus the 10-point undercut bonus."
+      : index === 1 ? step.hint ?? (action === "settlement" ? `Count both deadwood totals after any layoffs. Equal or lower defending deadwood earns the defender the difference plus the ${rules.undercutBonus}-point undercut bonus.`
         : action === "draw" ? "Look for a complete set or run after taking the upcard and discarding a different card."
         : "Keep complete sets and runs together. Only unmatched cards count as deadwood.") : undefined;
     return { ...step, teaching: { stage: teachingStages[index], guidance },
-      followUp: { ...ginFollowUps[action][index], teaching: { stage: "reinforcement" } } };
+      followUp: { ...configured(ginFollowUps[action][index]), teaching: { stage: "reinforcement" } } };
   });
 }
 
@@ -148,6 +154,7 @@ export function advanceGinLearningSession<R extends { clean: boolean }, V>(
 }
 
 export function ginFeedbackBreakdown(action: string, step: GinExerciseStep, selected: string): FeedbackBreakdown {
+  const ginRules = ginRulesFor(step.settings);
   if (step.turn?.question === "draw") return ginFeedbackBreakdown("draw", { ...step, turn: undefined }, selected);
   if (step.settlement) {
     const result = ginSettlementResult(step), { knocker } = step.settlement;
@@ -181,11 +188,12 @@ export const ginSelectsDiscard = (action: string, step?: GinExerciseStep) => act
 export const ginSelectsCard = (action: string, step: GinExerciseStep) => ginSelectsDiscard(action, step) || step.settlement?.question === "layoff";
 export function ginSettlementResult(step: GinExerciseStep) {
   if (!step.settlement) throw Error("Expected an exposed Gin settlement.");
-  return scoreGinHand([step.hand, step.settlement.opponentHand], step.settlement.knocker);
+  return scoreGinHand([step.hand, step.settlement.opponentHand], step.settlement.knocker, step.settings);
 }
 const settlementChoice = (winner: GinPlayer | null, points: number) => ({ id: `${winner}:${points}`,
   label: winner === null ? "No score" : `${winner === 0 ? "You score" : "Barbu scores"} ${points}` });
 export function ginExerciseChoices(action: string, step: GinExerciseStep) {
+  const ginRules = ginRulesFor(step.settings);
   if (step.turn?.question === "draw") return ginExerciseChoices("draw", { ...step, turn: undefined });
   if (step.turn?.question === "count") return ginExerciseChoices("deadwood", { ...step, turn: undefined });
   if (step.turn?.question === "discard") return step.hand.filter(card => ginDiscardLayout(step.turn!.session.hand, card.id))
@@ -223,6 +231,7 @@ export const ginExerciseGroups = (step: GinExerciseStep) => [
   { label: step.settlement ? step.settlement.knocker === 0 ? "Your hand (knocker)" : "Your hand (defender)" : "Your hand before your choice", cards: step.hand }
 ];
 export function ginExerciseAnswer(action: string, step: GinExerciseStep, selected: string): { good: boolean; illegal?: boolean; text: string } {
+  const ginRules = ginRulesFor(step.settings);
   if (step.turn?.question === "draw") return ginExerciseAnswer("draw", { ...step, turn: undefined }, selected);
   if (step.turn?.question === "count") return ginExerciseAnswer("deadwood", { ...step, turn: undefined }, selected);
   if (step.turn?.question === "discard") {
@@ -250,7 +259,7 @@ export function ginExerciseAnswer(action: string, step: GinExerciseStep, selecte
   if (action === "gin") {
     const points = bestMeldLayout(step.hand.filter(card => card.id !== selected)).points;
     return { good: points === 0, text: points === 0
-      ? "Every remaining card belongs to a meld: zero deadwood. This discard lets you go gin. Gin adds 20 points to Barbu's deadwood, with no layoffs."
+      ? `Every remaining card belongs to a meld: zero deadwood. This discard lets you go gin. Gin adds ${ginRules.ginBonus} points to Barbu's deadwood, with no layoffs.`
       : `This discard leaves ${points} unmatched points, so it is not gin. Keep the complete melds and discard the card outside them.` };
   }
   if (action === "melds") {
@@ -272,7 +281,7 @@ export function ginExerciseAnswer(action: string, step: GinExerciseStep, selecte
   if (selected === "knock" && current.points > 10) return { good: false, illegal: true,
     text: `${current.points} deadwood points is above the knock limit of 10. Keep playing.` };
   return { good: selected === answer, text: current.points === 0
-    ? "No deadwood: go gin for 20 extra points. Barbu cannot lay off cards against a gin hand."
+    ? `No deadwood: go gin for ${ginRules.ginBonus} extra points. Barbu cannot lay off cards against a gin hand.`
     : current.points <= 10 ? `${current.points} points: you may knock, but not go gin. Continuing is legal too; this question asks which finish is available. A knock is not a guaranteed win.`
       : `${current.points} deadwood points is above the knock limit of 10. Keep playing.` };
 }
