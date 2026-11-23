@@ -2,6 +2,22 @@
 
 ## Current Status
 
+**November 23 recorded audit:** the read-only Publisher API check documented in
+the [discovery baseline](marketing/store-discovery.md) found **1.0.9 / 1000013
+PUBLISHED** and **1.0.10 / 1000014 IN_REVIEW** on production. This supersedes the
+earlier preparation/upload status below. Subsequent Euchre source changes are
+not included in the signed `1000014` artifact; use a higher version code and
+rebuild and verify a new candidate before uploading them. Committing this source
+does not change the current review or replace the prepared bundle.
+
+**November 21 preparation:** signed **1.0.10 / 1000014** is ready locally for
+closed testing, including both named Bridge bidding profiles and the tighter
+system-selector layout. It has **not been uploaded**. The read-only Publisher
+API check before preparation confirmed the highest visible code was `1000013`,
+published on `alpha` and still in production review. That review, the previous
+bundle, store settings and subscription products were left unchanged. See the
+[new candidate](#prepared-1010-candidate) for artifacts and verification.
+
 **November 19 production-queue audit:** the Publisher API confirms `1.0.9` /
 `1000013` is **IN_REVIEW** on production and **PUBLISHED** on closed testing
 (`alpha`). The queued bundle's SHA-256 matches the signed local artifact below.
@@ -55,6 +71,62 @@ fingerprint identifies the actual packaged tree. Commit them before further work
 Read-only API, Console, legal-page and browser evidence is ignored under
 `release/google-play/production-audit-2026-11-19/`. Do not cancel or resubmit the
 review merely to tidy an empty alpha draft, replace screenshots or change copy.
+
+### Prepared 1.0.10 Candidate
+
+The November 21 preparation produced **1.0.10 / 1000014**, based on `00f9add`
+plus the synchronized release-version changes and refreshed dependency-notice
+hashes. This records the source at preparation time, before the later Euchre work.
+The signed source fingerprint and build inputs are preserved in the verification
+record. This is a closed-testing candidate, not a production release.
+
+- Release name: **1.0.10 - Better Bridge bidding**.
+- Bundle: `release/google-play/barbu-google-play-v1.0.10-code1000014.aab`.
+- Verification: `release/google-play/verification-v1.0.10-code1000014.json`.
+- Notes: `release/google-play/release-notes-v1.0.10-code1000014.txt` (406 characters, excluding the trailing newline).
+- Symbols: `release/google-play/native-debug-symbols-v1.0.10-code1000014.zip`.
+- Mapping: `release/google-play/mapping-v1.0.10-code1000014.txt`.
+- SHA-256: `5bc822e7647bd0e7f2cdbfe4ea12bfe02585dfce60f538124496691b96ef02f3`.
+
+This candidate adds Standard American Foundation and Acol Foundation, original
+system-specific lessons, Stayman, American major-suit transfers and contextual
+auction explanations. The American path has ten topics; existing boards retain
+their original bidding agreements. These are bounded teaching profiles, not
+complete SAYC or every club's Acol agreement. Canasta Premium and the seven free
+tables retain the existing centralized access policy.
+
+Release notes:
+
+```text
+New Bridge bidding choices: Standard American Foundation and Acol Foundation, with lessons matched to each system.
+Learn Stayman, Jacoby transfers and notrump rebids, with clearer auction explanations.
+Existing Bridge saves keep their original agreements.
+Tighter Bridge learning layout. Includes Canasta Premium and the latest learning and gameplay improvements.
+The seven existing free games remain free.
+```
+
+Verification passed: 317 domain tests, 17 release-tool tests, five mobile-config
+tests, `tauri:check`, the production frontend build, 140 focused development
+browser checks and 38 repeated checks against the packaged frontend. The latter
+cover public-catalog isolation, Premium recovery/restore and the American lesson
+path/live transfer. Browser billing is simulated, not a native purchase test.
+This is not the complete browser suite or a physical-device acceptance pass.
+
+The upload certificate matches `1000013`. Bundletool validation, stripped native
+libraries, matching symbols/build IDs for all four ABIs, R8 mapping, optional
+portrait hardware, phone-launcher declarations and static 16 KB LOAD/RELRO and
+bundle alignment checks passed. Source and build-input hashes were rechecked;
+the previous signed bundle is unchanged. Existing frontend chunk-size and
+Java/Gradle deprecation warnings remain non-blocking.
+
+Billing uses the existing ignored Android override; the browser development
+unlock is not part of the release. No prices, checkout countries, tester groups,
+store listing or review submission were changed. No iOS package was built.
+Update the Samsung through the existing closed-testing track after upload and
+publication, without uninstalling. Verify saved games, both Bridge systems,
+Canasta learning/play and the native license-test subscription lifecycle before
+considering production. The existing `1000013` production review was not cancelled
+or replaced; no upload or submission was attempted for `1000014`.
 
 ### Prepared 1.0.9 Candidate
 

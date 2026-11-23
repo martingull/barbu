@@ -1,8 +1,8 @@
 Barbu - Third-Party Software Notices
 
 Generated from Cargo.lock and package-lock.json by scripts/generate-ios-notices.mjs.
-Cargo.lock SHA256: 349fb486a858a3d38b0d853b89c9b3977f9c49b35632024eb08c078a4da57437
-package-lock.json SHA256: bef89a3db8ec5fef85c1c5a417cb0046dffe41e508da7405c2c7898ef255b417
+Cargo.lock SHA256: d25ce9e0661360ba2f5214dd39f28cd5cd5785e9c3bdccd7009332e30baf4283
+package-lock.json SHA256: 8adb815eec539004d67d8e5d55e4aa9734abe2cf2638edba3257b1c178f8ad54
 Scope: the resolved iOS Rust graph (including build tools) and non-development npm dependencies.
 This is a conservative inventory, not a claim that every listed package is linked into the executable.
 

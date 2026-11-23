@@ -6,16 +6,13 @@ Barbu helps players learn classic card games through short interactive lessons, 
 
 Barbu is available on [Google Play](https://play.google.com/store/apps/details?id=com.martin.barbu). Visit the [product website](https://siliciumveritas.com/) for a preview and an introduction to the games; its source lives in [`website/`](website/).
 
-The active catalog contains Hearts, Barbu (including Domino), Whist, Spades, Bridge, Gin Rummy and Card Counting I. Games use shared **Learn | Play** navigation; short exercises and guided hands belong inside Learn. Card Counting is a skill activity with one Learn screen: a warm-up followed by memory hands, each listed once. [Canasta](docs/canasta.md) has an opt-in development preview and an Android Premium candidate with shared lessons and guided play; it remains hidden in the public production build.
+The seven free tables are Hearts, Barbu (including Domino), Whist, Spades, Bridge, Gin Rummy and Card Counting I. Games use shared **Learn | Play** navigation; short exercises and guided hands belong inside Learn. Card Counting is a skill activity with one Learn screen: a warm-up followed by memory hands, each listed once. [Canasta](docs/canasta.md) adds Premium lessons, guided hands and partnership games. [Euchre](docs/euchre.md) now has the same shared learning and play structure in development, using the existing Premium entitlement; it is not yet included in a store release.
 
 All gameplay runs locally in TypeScript, shared by browser and installed builds. Svelte owns presentation and interaction; Tauri packages the native application. Rust handles startup and native integrations, not rules or scoring. Saves and learning progress are local; there is no gameplay server or player login. The Android billing test integration uses Google Play and RevenueCat.
 
 The existing seven games remain free. Additional games, starting with Canasta,
-are intended for an optional Premium subscription. Billing is disabled in the
-published `1.0.6` build. The closed-testing track contains `1.0.9` / `1000013`,
-and the same billing-enabled bundle is in production review;
-Norway, the Netherlands and the UK are selected for paid-launch preparation,
-with only Norway currently enabled for checkout. See the
+use an optional Premium subscription. The recorded checkout configuration enables
+Norway, the UK and the US; the Netherlands remains disabled. See the
 [premium setup and release gates](docs/premium.md) and
 [production preparation checklist](docs/premium-launch.md).
 
@@ -44,14 +41,17 @@ Google Play production is live. The first production release is:
 - Version: **1.0.6**, Android version code **1000007**.
 - Release: **1.0.6 - First production release**, promoting the existing closed-test bundle.
 
-Android version **1.0.9** / **1000013** is published to closed testing and
-**in review for production**, confirmed through the Publisher API on November 19.
-Its checksum matches the signed local bundle. It adds simpler Premium checkout,
-Gin Rummy settlement lessons, fairer Domino decisions and the single Card
-Counting Learn screen. Production still serves `1.0.6` / `1000007` while review
-is pending. Managed publishing is off and the submission requests a full rollout;
-no staged percentage or manual publishing hold is configured.
-See the [1.0.9 handoff](docs/google-play-release.md#prepared-109-candidate).
+The latest recorded Publisher API audit, **November 23, 2026**, found
+**1.0.9 / 1000013 published** and **1.0.10 / 1000014 in production review**.
+The earlier November 19 audit and original bundle verification are retained in
+the [release runbook](docs/google-play-release.md).
+
+The prepared **1.0.10 / 1000014** bundle adds Standard American Foundation/Acol
+Bridge bidding choices and matched lessons while preserving existing saved
+boards. Canasta retains Premium access. Subsequent Euchre development is **not
+in that signed bundle**: a new version/code and rebuilt, verified candidate are
+required before submitting these source changes. See the
+[1.0.10 handoff](docs/google-play-release.md#prepared-1010-candidate).
 
 Physical Samsung testing and no blocking pre-launch report errors were confirmed
 by the developer. Later store-listing updates have their own review status; check
