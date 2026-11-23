@@ -3,6 +3,7 @@ import { createGinGuidedSession, transitionGinGuidedSession } from "../../src/do
 import { chooseGinAction, ginObservation } from "../../src/domain/ginRummyPolicy";
 import { createGinSession } from "../../src/domain/ginRummySession";
 import { ginSaveKey, saveGinSession } from "../../src/persistence/ginRummySave";
+import { ginTopics } from "../../src/games/ginRummy";
 
 async function learn(page: Page) {
   await page.goto("/");
@@ -90,7 +91,7 @@ for (const size of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { 
       await expect(guidance).toContainText("Rule:");
       await page.getByRole("button", { name: "Table", exact: true }).first().click();
     }
-    await expect(page.getByLabel("Gin Rummy course progress")).toContainText("0 / 5 complete");
+    await expect(page.getByLabel("Gin Rummy course progress")).toContainText(`0 / ${ginTopics.length} complete`);
     expect(await page.evaluate(key => localStorage.getItem(key), ginSaveKey)).toBe(saved);
     expect(await page.evaluate(() => (window as any).completions)).toEqual([]);
     expect(errors).toEqual([]);

@@ -1,6 +1,9 @@
 import { standardDeck } from "../../domain/deck";
 import { bestMeldLayout, deadwoodValue } from "../../domain/rummyMelds";
-import { scoreGinHand, ginRules, type GinPlayer } from "../../domain/ginRummySession";
+import { scoreGinHand, ginRules, ginDiscardLayout, transitionGinSession, type GinPlayer, type GinSession } from "../../domain/ginRummySession";
+import { createGinLearningTurn } from "../../domain/ginRummyLearning";
+import { ginDiscardChoices } from "../../domain/ginRummyPolicy";
+import { advanceLearningSession, type LearningSession } from "../../domain/learningSession";
 import type { Card } from "../../domain/types";
 import { formatCardLabel } from "../../presentation/cardDisplay";
 import { formatRummyMeld } from "../../presentation/rummyDisplay";
@@ -12,7 +15,28 @@ export const ginCards = (ids: string) => ids.split(" ").map(id => {
   return card;
 });
 export type GinExerciseStep = { title: string; hand: Card[]; upcard?: Card; hint?: string; teaching?: Teaching; options?: string[]; followUp?: GinExerciseStep;
+  turn?: { question: "draw" | "discard" | "count"; session: GinSession; drawn?: Card; source?: "stock" | "discard"; discarded?: Card };
   settlement?: { opponentHand: Card[]; knocker: GinPlayer; question: "layoff" | "score" } };
+
+function turnStep(step: GinExerciseStep, session: GinSession, drawn?: Card, source?: "stock" | "discard", discarded?: Card): GinExerciseStep {
+  const question = step.turn!.question, hand = session.hand.hands[0], points = bestMeldLayout(hand).points;
+  const counts = [points, points > 0 ? points - 1 : 1, points + 10], offset = points % counts.length;
+  return { ...step, hand, upcard: question === "draw" ? session.hand.discards.at(-1) : undefined,
+    options: question === "count" ? [...counts.slice(offset), ...counts.slice(0, offset)].map(String) : undefined,
+    turn: { question, session, drawn, source, discarded } };
+}
+
+function turnSteps(hand: string, upcard: string, stock: string, discard: string): GinExerciseStep[] {
+  const initial = createGinLearningTurn(ginCards(hand), ginCards(upcard)[0], ginCards(stock)[0]);
+  const drawn = transitionGinSession(initial, { type: "draw", source: "discard" });
+  const finished = transitionGinSession(drawn, { type: "discard", cardId: discard });
+  return (["draw", "discard", "count"] as const).map((question, index) => turnStep({
+    title: ["Draw a card", "Choose your discard", "Count your deadwood"][index], hand: [],
+    hint: index === 1 ? "Keep complete sets and runs together. Discard an unmatched card to leave the lowest deadwood; keep a taken upcard this turn." : undefined,
+    turn: { question, session: initial }
+  }, [initial, drawn, finished][index], index ? ginCards(upcard)[0] : undefined, index ? "discard" : undefined,
+  index === 2 ? ginCards(discard)[0] : undefined));
+}
 const settlementStep = (title: string, hand: string, opponentHand: string, knocker: GinPlayer, question: "layoff" | "score"): GinExerciseStep =>
   ({ title, hand: ginCards(hand), settlement: { opponentHand: ginCards(opponentHand), knocker, question } });
 export const ginExercises: Record<string, GinExerciseStep[]> = {
@@ -33,6 +57,7 @@ export const ginExercises: Record<string, GinExerciseStep[]> = {
     { title: "An unhelpful queen", hand: ginCards("AC 2C 3C 5D 5H 5S 9D 10D JD 4S"), upcard: ginCards("QC")[0] },
     { title: "Extend your hearts", hand: ginCards("2S 3S 4S 6C 6D 6H 8H 9H AD QS"), upcard: ginCards("10H")[0] }
   ],
+  turn: turnSteps("3C 4C 7D 7H 7S 9H 10H JH 2D KS", "5C", "QD", "KS"),
   knock: [
     { title: "Can you end the hand?", hand: ginCards("3C 4C 5C 7D 7H 7S 9H 10H JH 2D"),
       hint: "Only 2D is unmatched. Two points is within the knock limit of 10, but is not zero." },
@@ -69,6 +94,7 @@ const ginFollowUps: Record<string, GinExerciseStep[]> = {
     { title: "Does this king help?", hand: ginCards("2H 3H 4H 6C 6D 6S 10C JC QC AD"), upcard: ginCards("KH")[0] },
     { title: "Finish the clubs", hand: ginCards("5S 6S 7S 9C 9D 9H 2C 3C 2D KH"), upcard: ginCards("4C")[0] }
   ],
+  turn: turnSteps("4D 5D 8C 8H 8S 10S JS QS 3H KC", "6D", "KD", "KC"),
   knock: [
     { title: "Check another possible finish", hand: ginCards("4D 5D 6D 8C 8H 8S 10S JS QS 3H") },
     { title: "Count before you knock", hand: ginCards("5S 6S 7S 9C 9D 9H 2C 3C KD AD") },
@@ -98,7 +124,31 @@ export function ginLearningSteps(action: string): GinExerciseStep[] {
   });
 }
 
+export function advanceGinLearningSession<R extends { clean: boolean }, V>(
+  session: LearningSession<GinExerciseStep, R, V>, selected: string
+): LearningSession<GinExerciseStep, R, V> {
+  if (session.phase !== "feedback") return session;
+  const turn = session.steps[session.index].turn;
+  const next = advanceLearningSession(session);
+  if (!turn || turn.question === "count" || next.phase === "complete") return next;
+  if (turn.question === "draw" && selected !== "stock" && selected !== "upcard") throw Error("Choose a valid Gin draw source.");
+  const source = selected === "stock" ? "stock" : "discard";
+  const played = transitionGinSession(turn.session, turn.question === "draw"
+    ? { type: "draw", source } : { type: "discard", cardId: selected });
+  const question = turn.question === "draw" ? "discard" : "count";
+  // A missed stage may insert a fresh companion before the linked continuation.
+  const target = next.steps.findIndex((step, index) => index >= next.index &&
+    step.turn?.question === question && step.teaching?.stage !== "reinforcement");
+  if (target < 0) throw Error("Missing Gin turn continuation.");
+  const drawn = turn.question === "draw" ? played.hand.hands[0].at(-1) : turn.drawn;
+  return { ...next, steps: next.steps.map((step, index) => index === target
+    ? turnStep(step, played, drawn, turn.question === "draw" ? source : turn.source,
+      turn.question === "discard" ? turn.session.hand.hands[0].find(card => card.id === selected) : undefined)
+    : step) };
+}
+
 export function ginFeedbackBreakdown(action: string, step: GinExerciseStep, selected: string): FeedbackBreakdown {
+  if (step.turn?.question === "draw") return ginFeedbackBreakdown("draw", { ...step, turn: undefined }, selected);
   if (step.settlement) {
     const result = ginSettlementResult(step), { knocker } = step.settlement;
     return { label: "Hand score breakdown", rows: [
@@ -119,7 +169,7 @@ export function ginFeedbackBreakdown(action: string, step: GinExerciseStep, sele
       { label: "Stock", value: "Unknown card" }
     ] };
   }
-  const layout = bestMeldLayout(step.hand.filter(card => !ginSelectsDiscard(action) || card.id !== selected));
+  const layout = bestMeldLayout(step.hand.filter(card => !ginSelectsDiscard(action, step) || card.id !== selected));
   return { label: "Deadwood breakdown", rows: [
     ...layout.melds.map(meld => ({ label: meld.kind === "set" ? "Set" : "Run", value: `${formatRummyMeld(meld)} = 0` })),
     { label: "Unmatched", value: layout.deadwood.length ? layout.deadwood.map(card => `${formatCardLabel(card)} (${deadwoodValue(card)})`).join(" + ") : "None" },
@@ -127,8 +177,8 @@ export function ginFeedbackBreakdown(action: string, step: GinExerciseStep, sele
   ] };
 }
 
-export const ginSelectsDiscard = (action: string) => action === "melds" || action === "gin";
-export const ginSelectsCard = (action: string, step: GinExerciseStep) => ginSelectsDiscard(action) || step.settlement?.question === "layoff";
+export const ginSelectsDiscard = (action: string, step?: GinExerciseStep) => action === "melds" || action === "gin" || step?.turn?.question === "discard";
+export const ginSelectsCard = (action: string, step: GinExerciseStep) => ginSelectsDiscard(action, step) || step.settlement?.question === "layoff";
 export function ginSettlementResult(step: GinExerciseStep) {
   if (!step.settlement) throw Error("Expected an exposed Gin settlement.");
   return scoreGinHand([step.hand, step.settlement.opponentHand], step.settlement.knocker);
@@ -136,6 +186,10 @@ export function ginSettlementResult(step: GinExerciseStep) {
 const settlementChoice = (winner: GinPlayer | null, points: number) => ({ id: `${winner}:${points}`,
   label: winner === null ? "No score" : `${winner === 0 ? "You score" : "Barbu scores"} ${points}` });
 export function ginExerciseChoices(action: string, step: GinExerciseStep) {
+  if (step.turn?.question === "draw") return ginExerciseChoices("draw", { ...step, turn: undefined });
+  if (step.turn?.question === "count") return ginExerciseChoices("deadwood", { ...step, turn: undefined });
+  if (step.turn?.question === "discard") return step.hand.filter(card => ginDiscardLayout(step.turn!.session.hand, card.id))
+    .map(card => ({ id: card.id, label: formatCardLabel(card) }));
   if (ginSelectsCard(action, step)) return step.hand.map(card => ({ id: card.id, label: formatCardLabel(card) }));
   if (step.settlement) {
     const result = ginSettlementResult(step);
@@ -154,14 +208,29 @@ export const ginExercisePrompts: Record<string, string> = {
   gin: "You have eleven cards. Which discard leaves ten cards in complete melds, allowing you to go gin?",
   settlement: "Both hands are exposed after your knock. After any layoffs, who scores and how many hand points?"
 };
-export const ginExercisePrompt = (action: string, step: GinExerciseStep) => step.settlement?.question === "layoff"
-  ? "Barbu knocked. Which of your unmatched cards can be laid off onto his exposed melds?" : ginExercisePrompts[action];
+export function ginExercisePrompt(action: string, step: GinExerciseStep) {
+  if (step.turn?.question === "draw") return "This is a normal turn, after the opening offers. You have ten cards. Choose where to draw; the stock card is unknown.";
+  if (step.turn?.question === "discard") return `You ${step.turn.source === "stock" ? "drew" : "took"} ${formatCardLabel(step.turn.drawn!)} and now have eleven cards. Choose a discard that leaves the fewest deadwood points.${step.turn.source === "discard" ? " You must keep the upcard this turn." : " You may discard the stock card you just drew."}`;
+  if (step.turn?.question === "count") return `You discarded ${formatCardLabel(step.turn.discarded!)}. These are the ten cards you kept. How many deadwood points remain?`;
+  return step.settlement?.question === "layoff"
+    ? "Barbu knocked. Which of your unmatched cards can be laid off onto his exposed melds?" : ginExercisePrompts[action];
+}
 export const ginExerciseGroups = (step: GinExerciseStep) => [
   ...(step.upcard ? [{ label: "Upcard", cards: [step.upcard] }] : []),
+  ...(step.turn?.drawn && step.turn.question === "discard" ? [{ label: step.turn.source === "stock" ? "Drawn from stock" : "Taken upcard", cards: [step.turn.drawn] }] : []),
+  ...(step.turn?.discarded ? [{ label: "Your discard", cards: [step.turn.discarded] }] : []),
   ...(step.settlement ? [{ label: step.settlement.knocker === 1 ? "Barbu's exposed hand (knocker)" : "Barbu's exposed hand (defender)", cards: step.settlement.opponentHand }] : []),
   { label: step.settlement ? step.settlement.knocker === 0 ? "Your hand (knocker)" : "Your hand (defender)" : "Your hand before your choice", cards: step.hand }
 ];
 export function ginExerciseAnswer(action: string, step: GinExerciseStep, selected: string): { good: boolean; illegal?: boolean; text: string } {
+  if (step.turn?.question === "draw") return ginExerciseAnswer("draw", { ...step, turn: undefined }, selected);
+  if (step.turn?.question === "count") return ginExerciseAnswer("deadwood", { ...step, turn: undefined }, selected);
+  if (step.turn?.question === "discard") {
+    const layout = ginDiscardLayout(step.turn.session.hand, selected);
+    if (!layout) return { good: false, illegal: true, text: "You must keep the upcard you just took. Choose a different card to discard." };
+    const minimum = Math.min(...ginDiscardChoices(step.hand, step.turn.session.hand.blockedDiscard).map(choice => choice.layout.points));
+    return { good: layout.points === minimum, text: `After discarding ${formatCardLabel(step.hand.find(card => card.id === selected)!)}, you keep ten cards with ${layout.points} deadwood points. The lowest permitted total is ${minimum}. Next, count the cards you actually kept.` };
+  }
   if (step.settlement) {
     const result = ginSettlementResult(step), { knocker } = step.settlement;
     const defender = knocker === 0 ? 1 : 0;

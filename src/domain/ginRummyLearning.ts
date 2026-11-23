@@ -1,9 +1,23 @@
 import type { Card } from "./types";
+import { standardDeck } from "./deck";
 import { bestMeldLayout } from "./rummyMelds";
 import { advanceGinOpponent } from "./ginRummyPolicy";
 import { createGinSession, transitionGinSession, type GinAction, type GinSession } from "./ginRummySession";
 
 type PlayerAction = Exclude<GinAction, { type: "next" }>;
+
+export function createGinLearningTurn(cards: Card[], upcard: Card, stockCard: Card): GinSession {
+  const deck = standardDeck(), visible = [...cards, upcard, stockCard];
+  if (cards.length !== 10 || new Set(visible.map(card => card.id)).size !== 12 ||
+    visible.some(card => !deck.some(item => item.id === card.id && item.rank === card.rank && item.suit === card.suit))) {
+    throw Error("A Gin turn needs ten cards and two distinct draw cards.");
+  }
+  const remaining = deck.filter(card => !visible.some(item => item.id === card.id));
+  const session = createGinSession(1);
+  return { ...session, hand: { ...session.hand, phase: "draw", turn: 0,
+    hands: [[...cards], remaining.slice(0, 10)], stock: [stockCard, ...remaining.slice(10)], discards: [upcard] } };
+}
+
 export type GinGuidedEvent = PlayerAction | { type: "continue" };
 export type GinGuidedMoment = {
   action: PlayerAction; card?: Card; before: number; after: number;

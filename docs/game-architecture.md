@@ -159,8 +159,8 @@ Gin Rummy is the first implemented rummy-family table. It reuses the determinist
 deck, saved-session controller, metadata factory, Learn flow and card surfaces.
 Its draw/discard state and scoring live in `ginRummySession.ts`, with public-information
 opponent decisions in `ginRummyPolicy.ts`. `features/gin-rummy/` owns only interaction
-and rendering. Its version-1 action-log save is replay-validated. Six authored
-courses contain eighteen decisions and never write the match save. The settlement
+and rendering. Its version-1 action-log save is replay-validated. Seven authored
+courses contain twenty-one decisions and never write the match save. The settlement
 topic shows exposed hands and uses normal `scoreGinHand` for layoffs and undercuts. See
 [Gin Rummy](gin-rummy.md) for the classic scoring profile, source notes, automatic
 meld/layoff declarations and remaining limitations.
@@ -385,7 +385,7 @@ attempts count toward evidence without modifying a saved match.
 The shared `decisionFirst` step metadata keeps the written explanation available
 through Read lesson without making it a prerequisite for playing cards.
 
-Hearts topic exercises (including passing) and all six Gin topics carry explicit
+Hearts topic exercises (including passing) and all seven Gin topics carry explicit
 `Teaching` metadata: worked, supported, independent, with reinforcement for a
 missed goal. The five-decision Hearts introduction keeps its existing foundation
 sequence. Hearts topic positions use their authored order; passing can vary its

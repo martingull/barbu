@@ -64,7 +64,7 @@ test("Gin companions retain the skill with valid hands, fresh cards and solver-c
       const follow = step.followUp!;
       expect(follow.followUp).toBeUndefined();
       expect(follow.hand).not.toEqual(step.hand);
-      expect(follow.hand).toHaveLength(ginSelectsDiscard(action) ? 11 : 10);
+      expect(follow.hand).toHaveLength(ginSelectsDiscard(action, follow) ? 11 : 10);
       const cards = [...follow.hand, ...(follow.upcard ? [follow.upcard] : [])];
       expect(new Set(cards.map(card => card.id)).size).toBe(cards.length);
       const good = ginExerciseChoices(action, follow).filter(choice => ginExerciseAnswer(action, follow, choice.id).good);

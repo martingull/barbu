@@ -2,7 +2,8 @@ import { expect, test, type Page } from "@playwright/test";
 import { createGinSession, ginComplete, transitionGinSession, type GinSession } from "../../src/domain/ginRummySession";
 import { advanceGinOpponent, chooseGinAction, ginObservation } from "../../src/domain/ginRummyPolicy";
 import { ginSaveKey, restoreGinSession, saveGinSession } from "../../src/persistence/ginRummySave";
-import { ginExercises, ginLearningSteps, ginExerciseAnswer, ginExerciseChoices, ginSelectsCard } from "../../src/lessons/gin-rummy/exercises";
+import { ginExercises, ginLearningSteps, ginExerciseAnswer, ginExerciseChoices, ginSelectsCard, ginFeedbackBreakdown } from "../../src/lessons/gin-rummy/exercises";
+import { ginTopics } from "../../src/games/ginRummy";
 
 async function saved(page: Page) {
   return restoreGinSession(await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), ginSaveKey));
@@ -140,7 +141,7 @@ test("Gin game completion is announced and survives reload", async ({ page }) =>
   await expect(page.getByLabel("Your Gin Rummy hand", { exact: true })).toBeVisible();
 });
 
-test("Gin teaches eighteen decisions and persists progress separately from play", async ({ page }, info) => {
+test("Gin teaches twenty-one decisions and persists progress separately from play", async ({ page }, info) => {
   test.setTimeout(60_000);
   await page.setViewportSize({ width: 320, height: 568 });
   await seed(page);
@@ -163,7 +164,7 @@ test("Gin teaches eighteen decisions and persists progress separately from play"
       await expect(page.getByRole("button", { name: "Check answer", exact: true })).toBeInViewport();
       await page.getByRole("button", { name: "Check answer", exact: true }).click();
       await expect(page.locator(".outcome")).toHaveText("Good");
-      if (topic !== "draw") await expect(page.getByRole("region", { name: topic === "settlement" ? "Hand score breakdown" : "Deadwood breakdown" })).toBeVisible();
+      await expect(page.getByRole("region", { name: ginFeedbackBreakdown(topic, step, correct.id).label, exact: true })).toBeVisible();
       if (index === 0) await page.screenshot({ path: info.outputPath(`gin-${topic}.png`), fullPage: true });
       await page.getByRole("button", { name: index === 2 ? "Finish topic" : "Next decision", exact: true }).click();
     }
@@ -179,12 +180,12 @@ test("Gin teaches eighteen decisions and persists progress separately from play"
       await page.getByRole("tab", { name: "Learn", exact: true }).click();
     } else await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
   }
-  await expect(page.getByLabel("Gin Rummy course progress")).toContainText("6 / 6 complete");
+  await expect(page.getByLabel("Gin Rummy course progress")).toContainText(`${ginTopics.length} / ${ginTopics.length} complete`);
   expect(await saved(page)).toEqual(before);
   await page.reload();
   await page.getByRole("button", { name: "Open Gin Rummy", exact: true }).click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
-  await expect(page.getByLabel("Gin Rummy course progress")).toContainText("6 / 6 complete");
+  await expect(page.getByLabel("Gin Rummy course progress")).toContainText(`${ginTopics.length} / ${ginTopics.length} complete`);
   await page.getByRole("button", { name: /^Game rules/ }).click();
   await expect(page.getByRole("heading", { name: "Gin Rummy rules", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Back to Gin Rummy table", exact: true }).click();
@@ -213,16 +214,109 @@ test("Gin lesson distinguishes an illegal declaration from a risky decision", as
   await expect(page.locator(".explanation")).toContainText("Gin needs zero deadwood");
 });
 
+test("a new Gin player can finish a lesson, try guidance and resume independent play", async ({ page }, info) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.addInitScript(() => localStorage.setItem("barbu.practiceSeed.v1", "1"));
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Gin Rummy", exact: true }).click();
+  await page.getByRole("tab", { name: "Learn", exact: true }).click();
+  await page.screenshot({ path: info.outputPath("gin-newcomer-learn.png"), fullPage: true, scale: "css" });
+  await page.getByRole("button", { name: "Start lesson", exact: true }).click();
+  await page.getByRole("button", { name: "See example", exact: true }).click();
+  await page.getByRole("button", { name: "Try cards", exact: true }).click();
+  for (const [index, step] of ginLearningSteps("melds").entries()) {
+    const choice = ginExerciseChoices("melds", step).find(choice => ginExerciseAnswer("melds", step, choice.id).good)!;
+    const card = step.hand.find(card => card.id === choice.id)!;
+    await page.getByLabel("Your Gin Rummy exercise hand").getByRole("button", { name: `${card.rank} ${card.suit}`, exact: true }).click();
+    await page.getByRole("button", { name: "Check answer", exact: true }).click();
+    await page.getByRole("button", { name: index === 2 ? "Finish topic" : "Next decision", exact: true }).click();
+  }
+  await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
+  await expect(page.getByLabel("Gin Rummy course progress")).toContainText(`1 / ${ginTopics.length} complete`);
+  await page.getByRole("button", { name: "Start guided hand", exact: true }).click();
+  const actions = page.getByLabel("Gin turn actions"), hand = page.getByLabel("Your Gin Rummy hand", { exact: true });
+  await actions.getByRole("button", { name: "Take upcard", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Turn guidance", exact: true })).toContainText("11");
+  await actions.getByRole("button", { name: "Continue", exact: true }).click();
+  await hand.locator("button.legal").first().click();
+  await actions.getByRole("button", { name: "Discard", exact: true }).click();
+  await actions.getByRole("button", { name: "Continue", exact: true }).click();
+  await actions.getByRole("button", { name: "Table", exact: true }).click();
+  expect(await page.evaluate(key => localStorage.getItem(key), ginSaveKey)).toBeNull();
+  await expect(page.getByLabel("Gin Rummy course progress")).toContainText(`1 / ${ginTopics.length} complete`);
+  await page.getByRole("tab", { name: "Play", exact: true }).click();
+  await page.getByRole("button", { name: "Play Gin Rummy", exact: true }).click();
+  await expect(hand.getByRole("button")).toHaveCount(10);
+  const opening = await saved(page);
+  await actions.getByRole("button", { name: opening.hand.phase === "offer" ? "Take upcard" : "Draw stock", exact: true }).click();
+  await expect(hand.getByRole("button")).toHaveCount(11);
+  await hand.locator("button.legal").first().click();
+  await actions.getByRole("button", { name: "Discard", exact: true }).click();
+  const played = await saved(page);
+  await page.reload();
+  await page.getByRole("button", { name: "Continue Gin Rummy", exact: true }).click();
+  expect(await saved(page)).toEqual(played);
+  await page.screenshot({ path: info.outputPath("gin-newcomer-resumed-play.png"), scale: "css" });
+  expect(errors).toEqual([]);
+});
+
+for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { width: 1280, height: 800 }]) {
+  test(`Gin lessons keep cards and checked choices stable at ${viewport.width}x${viewport.height}`, async ({ page }, info) => {
+    await page.setViewportSize(viewport);
+    await page.goto("/");
+    await page.getByRole("button", { name: "Open Gin Rummy", exact: true }).click();
+    await page.getByRole("tab", { name: "Learn", exact: true }).click();
+    const hand = page.getByLabel("Your Gin Rummy exercise hand", { exact: true });
+    const guidance = page.getByRole("region", { name: "Turn guidance", exact: true });
+    const actions = page.locator(".action-row");
+    async function geometry() {
+      const feedback = (await guidance.boundingBox())!, cards = (await hand.boundingBox())!, buttons = (await actions.boundingBox())!;
+      expect(cards.y).toBeGreaterThanOrEqual(feedback.y + feedback.height);
+      expect(buttons.y).toBeGreaterThanOrEqual(cards.y + cards.height);
+      expect(buttons.y + buttons.height).toBeLessThanOrEqual(viewport.height);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      return [feedback, cards, buttons].map(box => [box.y, box.height]);
+    }
+    for (const topic of Object.keys(ginExercises)) {
+      await page.locator(`[data-skill="gin-${topic}"] .exercise-shortcut`).click();
+      for (const [index, step] of [ginLearningSteps(topic)[0], ginLearningSteps(topic)[0].followUp!].entries()) {
+        const choice = ginExerciseChoices(topic, step).find(choice => !ginExerciseAnswer(topic, step, choice.id).good)!;
+        if (ginSelectsCard(topic, step)) {
+          const card = step.hand.find(card => card.id === choice.id)!;
+          await hand.getByRole("button", { name: `${card.rank} ${card.suit}`, exact: true }).click();
+        } else await page.getByRole("button", { name: choice.label, exact: true }).click();
+        const before = await geometry();
+        await page.getByRole("button", { name: "Check answer", exact: true }).click();
+        expect(await geometry()).toEqual(before);
+        await expect(hand.getByRole("button")).toHaveCount(0);
+        if (!ginSelectsCard(topic, step)) {
+          const selected = page.getByRole("button", { name: choice.label, exact: true });
+          await expect(selected).toBeDisabled();
+          await expect(selected).toHaveAttribute("aria-pressed", "true");
+        }
+        await expect.poll(() => hand.locator("img").evaluateAll(images => images.every(image => (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
+        if (index === 0) await page.screenshot({ path: info.outputPath(`gin-${topic}-locked-feedback.png`), scale: "css" });
+        await page.getByRole("button", { name: index === 0 ? "Try another example" : "Next decision", exact: true }).click();
+      }
+      await page.getByRole("button", { name: "Table", exact: true }).first().click();
+    }
+    await expect(page.getByLabel("Gin Rummy course progress")).toContainText(`0 / ${ginTopics.length} complete`);
+    expect(await page.evaluate(key => localStorage.getItem(key), ginSaveKey)).toBeNull();
+  });
+}
+
 for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { width: 820, height: 1180 }]) {
   test(`Gin settlement keeps exposed hands and actions separate at ${viewport.width}x${viewport.height}`, async ({ page }, info) => {
     await page.setViewportSize(viewport);
     await page.addInitScript(() => localStorage.setItem("barbu.courseProgress.v1", JSON.stringify({
-      "gin-melds": true, "gin-deadwood": true, "gin-draw": true, "gin-knock": true, "gin-gin": true
+      "gin-melds": true, "gin-deadwood": true, "gin-draw": true, "gin-turn": true, "gin-knock": true, "gin-gin": true
     })));
     await page.goto("/");
     await page.getByRole("button", { name: "Open Gin Rummy", exact: true }).click();
     await page.getByRole("tab", { name: "Learn", exact: true }).click();
-    await expect(page.getByLabel("Gin Rummy course progress")).toContainText("5 / 6 complete");
+    await expect(page.getByLabel("Gin Rummy course progress")).toContainText(`6 / ${ginTopics.length} complete`);
     await page.getByRole("button", { name: "Continue lesson", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Layoffs and undercuts", exact: true })).toBeVisible();
     await page.getByRole("button", { name: "See example", exact: true }).click();

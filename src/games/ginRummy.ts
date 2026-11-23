@@ -5,6 +5,7 @@ export const ginTopics = [
   { id: "gin-melds", action: "melds", title: "Sets and runs", summary: "Find combinations and reduce unmatched points." },
   { id: "gin-deadwood", action: "deadwood", title: "Count deadwood", summary: "Count only the cards outside your sets and runs." },
   { id: "gin-draw", action: "draw", title: "Draw and discard", summary: "Choose between the upcard and the unknown stock." },
+  { id: "gin-turn", action: "turn", title: "Complete a turn", summary: "Draw a card, choose your discard, then count what is left." },
   { id: "gin-knock", action: "knock", title: "Knock or keep playing", summary: "Check whether your remaining points allow a knock." },
   { id: "gin-gin", action: "gin", title: "Go gin", summary: "Choose a final discard that leaves every card in a meld." },
   { id: "gin-settlement", action: "settlement", title: "Layoffs and undercuts", summary: "Lay off unmatched cards and see why a legal knock can lose." }

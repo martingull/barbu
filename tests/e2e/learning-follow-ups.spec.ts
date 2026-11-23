@@ -96,7 +96,7 @@ test("leaving a Gin follow-up does not complete the topic or store attempt evide
   await page.getByRole("button", { name: "Try another example", exact: true }).click();
   await expect(page.locator(".contract-status")).toContainText("Decision 2 of 4");
   await page.getByRole("button", { name: "Table", exact: true }).first().click();
-  await expect(page.getByLabel("Gin Rummy course progress")).toContainText("0 / 6 complete");
+  await expect(page.getByLabel("Gin Rummy course progress")).toContainText("0 / 7 complete");
   expect(await page.evaluate(key => localStorage.getItem(key), learningEvidenceKey)).toBeNull();
   await page.locator('[data-skill="gin-knock"] .exercise-shortcut').click();
   await expect(page.locator(".contract-status")).toContainText("Decision 1 of 3");
