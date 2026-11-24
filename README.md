@@ -47,8 +47,11 @@ Google Play production is live. The first production release is:
 - Version: **1.0.6**, Android version code **1000007**.
 - Release: **1.0.6 - First production release**, promoting the existing closed-test bundle.
 
-The English listing rename to **Learn Card Games by Barbu** was submitted on November 24.
-This changes store presentation, not the in-game Barbu name or package identifier.
+The English listing rename to **Learn Card Games by Barbu** and the short description
+"Learn Gin Rummy, Hearts and Whist with short lessons and guided hands." were
+saved to Play Console separately on November 24. These change store presentation,
+not the in-game Barbu name or package identifier. Review submission and public
+visibility are not yet verified.
 See the [listing update status](docs/marketing/store-discovery.md).
 
 The latest recorded Publisher API audit, **November 24, 2026**, found

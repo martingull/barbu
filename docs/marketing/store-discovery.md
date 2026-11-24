@@ -18,13 +18,13 @@ in-person play. It names the games naturally, explains English-language lessons,
 and does not imply multiplayer or universal bidding conventions. Card Counting
 is described as a learning activity, not a second Play mode.
 
-The description refresh is **prepared, not uploaded**. The title-only rename is
-separate from that refresh; do not upload the whole draft merely to rename the
-listing. On November 24, 2026, the Publisher API confirmed production and closed
-testing 1.0.10 (1000014) published, with the English title still
+The full-description refresh is **prepared, not uploaded**. The title and short
+description were saved separately from that refresh; do not upload the whole
+draft merely to change one listing field. On November 24, 2026, the Publisher API
+confirmed production and closed testing 1.0.10 (1000014) published, with the English title still
 **Barbu: Learn Card Games**. The November 23 audit had found that release in review.
 
-The title-only rename to **Learn Card Games by Barbu** was validated and submitted
+The title-only rename to **Learn Card Games by Barbu** was validated and saved
 through the Publisher API on November 24. Google required automatic review;
 the commit explicitly used `ERROR_IF_IN_REVIEW` so it could not cancel an active
 review. Validation confirmed that only `en-GB.title` changed: descriptions, video,
@@ -32,6 +32,20 @@ other locales, app details and release tracks were preserved. Public visibility
 has not yet been verified; the published snapshot remains unchanged. The private
 backup and receipt are under the ignored
 `release/google-play/listing-title-2026-11-24T15-06-52-733Z/` directory.
+
+The 70-character short description above was subsequently validated and saved
+on November 24. Its previous wording was "Learn classic card games, practise your
+skills, then play with friends." Only `en-GB.shortDescription` was patched, with
+`ERROR_IF_IN_REVIEW` again preventing cancellation of an active review. API
+readback confirmed the saved text and unchanged title, full description, video,
+other locales, release tracks and app details. Public visibility has not yet been
+verified, so the published snapshot remains unchanged. Backup, validation,
+API commit receipt and readback are in the ignored
+`release/google-play/listing-short-description-2026-11-24T16-11-27.341Z/` directory.
+
+An API edit commit confirms the saved listing fields, not that changes have been
+sent for review. Check Play Console's Publishing overview and submit any pending
+changes there; review submission and public publication remain unverified here.
 
 ## Public Search Baseline
 
@@ -115,8 +129,9 @@ views. Do not add in-game tracking just to fill these blanks.
 
 ## Controlled Listing Update
 
-For a title-only change, patch only the English `title` field and preserve the
-live descriptions and video, even when they differ from the broader text draft.
+For a title-only or short-description-only change, patch only the requested
+English field and preserve the other live text and video, even when they differ
+from the broader text draft.
 Keep `listing-en-GB.json` as the last published snapshot until publication has
 been verified. Saving a change to Console is not proof it has been reviewed or
 is publicly visible.
