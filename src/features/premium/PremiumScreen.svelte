@@ -28,7 +28,7 @@
     <CharacterPortrait character="barbu" size={48} />
     <div>
       <h2>{$feature.active ? "Premium is active" : "More games for your table"}</h2>
-      <p>Canasta and Euchre lessons, guided hands and full games.{$feature.active ? "" : " Your existing free games stay free."}</p>
+      <p>Canasta, Euchre and Cribbage lessons, guided hands and full games.{$feature.active ? "" : " Your existing free games stay free."}</p>
     </div>
   </div>
   {#if $feature.active}

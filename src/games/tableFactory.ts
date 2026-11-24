@@ -168,7 +168,7 @@ function createCatalogEntry(entry: Omit<CatalogEntry, "access">): CatalogEntry {
 }
 
 export function isGamePreview(id: string): boolean {
-  const flags: Record<string, string | undefined> = { canasta: import.meta.env?.VITE_CANASTA_PREVIEW, euchre: import.meta.env?.VITE_EUCHRE_PREVIEW };
+  const flags: Record<string, string | undefined> = { canasta: import.meta.env?.VITE_CANASTA_PREVIEW, euchre: import.meta.env?.VITE_EUCHRE_PREVIEW, cribbage: import.meta.env?.VITE_CRIBBAGE_PREVIEW };
   return (import.meta.env?.DEV === true && Object.hasOwn(flags, id)
       && (flags[id] === "1" || typeof location !== "undefined" && new URL(location.href).searchParams.get("preview") === id))
     || (id === "canasta" && import.meta.env?.MODE === "canasta-internal" && import.meta.env?.TAURI_ENV_PLATFORM === "ios");
@@ -266,6 +266,13 @@ export function getCatalogCategories(context: CatalogAccessContext = {}): Catalo
           summary: "Build canastas with your partner. Take the pile at the right moment."
         })
       ]
+    },
+    {
+      id: "adding-games",
+      title: "Combinations & counting",
+      summary: "Make fifteens, pairs and runs. Every point counts.",
+      entries: [createCatalogEntry({ id: "cribbage", family: "Adding games", title: "Cribbage", card: { rank: "5", suit: "H" },
+        status: isGamePreview("cribbage") || context.premiumAvailable ? "Ready" : "Planned", summary: "Keep four, build the crib and race Barbu to 121." })]
     },
     {
       id: "skill-packs",

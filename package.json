@@ -23,6 +23,7 @@
     "tauri:android": "tauri android dev"
   },
   "dependencies": {
+    "@johnmorrisdotca/toranpu": "2.17.0",
     "@lucide/svelte": "1.75.0",
     "@tauri-apps/api": "^2.0.0",
     "javascript-lp-solver": "1.0.3",

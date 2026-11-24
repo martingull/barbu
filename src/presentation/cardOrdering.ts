@@ -33,6 +33,11 @@ export function compareCanastaCardsForDisplay(left: Card, right: Card) {
     || left.id.localeCompare(right.id);
 }
 
+export function compareCribbageCardsForDisplay(left: Card, right: Card) {
+  const rank = (card: Card) => card.rank === "A" ? 1 : rankOrder[card.rank as Rank];
+  return rank(left) - rank(right) || displaySuitOrder[left.suit] - displaySuitOrder[right.suit];
+}
+
 export function sortCardsForDisplay<T extends Pick<Card, "rank" | "suit">>(cards: readonly T[], compare: (left: T, right: T) => number = compareCardsForDisplay) {
   return [...cards].sort(compare);
 }

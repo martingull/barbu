@@ -288,7 +288,8 @@
   margin-top: 0;
 }
 
-.app-shell.fixed-play-screen .flow-play.learning-copy-surface .table-play-panel {
+.app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play.learning-copy-surface .table-play-panel {
+  flex: 1 0 auto;
   min-height: 0;
   justify-content: flex-start;
 }

@@ -38,7 +38,8 @@ test("domain, storage and shared UI retain one-way dependency boundaries", () =>
             // The learning guide reuses the launcher logo, not native shell code.
             || layer === "presentation" && target === "src-tauri/icons/128x128@2x.png"
           : layer === "components" && (spec === "svelte" || /^@lucide\/svelte\/icons\/[a-z0-9-]+$/.test(spec))
-            || layer === "domain" && spec === "javascript-lp-solver" && file.endsWith("rummyMelds.ts");
+            || layer === "domain" && spec === "javascript-lp-solver" && file.endsWith("rummyMelds.ts")
+            || layer === "domain" && spec === "@johnmorrisdotca/toranpu/cribbage" && file.endsWith("/cribbage.ts");
         if (!permitted) violations.push(`${file} imports ${spec}`);
       }
     }

@@ -26,6 +26,11 @@ are used without source modifications. This inventory is not a binary reachabili
 audit or legal clearance. Review Android-specific dependencies separately for
 Google Play releases.
 
+Cribbage uses the pinned MIT-licensed `@johnmorrisdotca/toranpu@2.17.0`
+Cribbage module for scoring, legal transitions and computer decisions. Its license
+and copyright notice are included in the generated inventory. The package has no
+transitive runtime dependencies; Barbu's other games keep their existing engines.
+
 ## Card Assets
 
 The app currently includes local playing-card images under:

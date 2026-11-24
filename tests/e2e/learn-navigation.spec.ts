@@ -5,6 +5,8 @@ import { bridgeCallLabel } from "../../src/domain/bridgeAuction";
 import { newBridgeSystem } from "../../src/domain/bridgeSystems";
 import { bridgeChoiceSteps, bridgeLearningSteps } from "../../src/lessons/bridge/learning";
 import { legacyBridgePreference } from "../fixtures/legacyBridgePreference";
+import { registry } from "../../src/games/gameRegistry";
+import "../../src/games";
 
 async function expectLearningLayout(page: Page) {
   const surface = page.locator(".table-play-surface.flow-play");
@@ -67,8 +69,9 @@ test("games share Learn and Play while skill activities use Learn without duplic
     }
     await expect(page.getByRole("button", { name: /Quick drill/ })).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Guided lessons", exact: true })).toHaveCount(0);
-    const expectedSkills: Record<string, number> = { Barbu: 7, Hearts: 8, Whist: 7, Spades: 5, Bridge: bridgeCoursesFor(newBridgeSystem).length, "Gin Rummy": 6, "Card Counting I": 5 };
-    await expect(page.locator(".learn-skill")).toHaveCount(expectedSkills[game]);
+    const expectedSkills = game === "Card Counting I" ? 5 : game === "Bridge" ? bridgeCoursesFor(newBridgeSystem).length
+      : registry.get(game.toLowerCase().replaceAll(" ", "-"))!.learnSteps.length + (game === "Hearts" ? 1 : 0);
+    await expect(page.locator(".learn-skill")).toHaveCount(expectedSkills);
     const skillIds = await page.locator(".learn-skill").evaluateAll(rows => rows.map(row => row.getAttribute("data-skill")));
     expect(new Set(skillIds).size).toBe(skillIds.length);
     if (game === "Bridge") expect([...skillIds].sort()).toEqual(bridgeCoursesFor(newBridgeSystem).map(course => course.id).sort());

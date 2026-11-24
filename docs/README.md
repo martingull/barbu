@@ -18,6 +18,9 @@ release evidence have different roles; an old audit is not a current release gat
 
 ## Game Profiles
 
+- [Cribbage](cribbage.md): two-player six-card development preview, shared Learn,
+  guided deals, saved games to 121, rules-library boundary and release limitations.
+
 - [Game expansion shortlist](game-roadmap.md): eight agreed game candidates,
   priorities, rules profiles and release expectations.
 - [Hearts](hearts.md)

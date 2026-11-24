@@ -37,6 +37,10 @@ src/
 Keep domain imports within `domain/` or structured JSON under `content/`.
 Reviewed algorithm dependencies may be explicitly allowlisted: `rummyMelds.ts`
 uses `javascript-lp-solver` for non-overlapping meld and layoff selection.
+`domain/cribbage.ts` wraps the pinned, MIT-licensed Toranpu Cribbage module for
+scoring, legal moves and public-information opponents. Its session adapter owns
+stepwise counting review; saving replays its action log. Other games do not use
+this dependency. See [Cribbage](cribbage.md) for scope and limitations.
 Persistence depends on the domain, never on Svelte or game views. Shared components
 and presentation helpers must not import game features; features compose them.
 Card Counting deliberately reuses the other games' feedback for its unsaved hands.

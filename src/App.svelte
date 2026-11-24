@@ -12,6 +12,8 @@
   import CanastaGame from "./features/canasta/CanastaGame.svelte";
   import EuchreGame from "./features/euchre/EuchreGame.svelte";
   import { createEuchreFeature } from "./features/euchre/euchreFeature";
+  import CribbageGame from "./features/cribbage/CribbageGame.svelte";
+  import { createCribbageFeature } from "./features/cribbage/cribbageFeature";
   import { isCatalogGameAvailable, isGamePreview } from "./games/tableFactory";
   import { createCanastaFeature } from "./features/canasta/canastaFeature";
   import { createGinRummyFeature } from "./features/gin-rummy/ginRummyFeature";
@@ -36,18 +38,22 @@
   import type { DrillResult } from "./lessons/drillDecision";
   import { formatCardText } from "./presentation/cardDisplay";
 
-  type AppView = "catalog" | "premium" | "barbuFeature" | "heartsFeature" | "whistFeature" | "spadesFeature" | "bridgeFeature" | "ginFeature" | "canastaFeature" | "euchreFeature" | "cardCountingFeature" | "reference";
+  type AppView = "catalog" | "premium" | "barbuFeature" | "heartsFeature" | "whistFeature" | "spadesFeature" | "bridgeFeature" | "ginFeature" | "canastaFeature" | "euchreFeature" | "cribbageFeature" | "cardCountingFeature" | "reference";
   const premium = createPremiumFeature(nativeBilling);
   onMount(() => {
     void premium.initialize();
-    if (isGamePreview("euchre") && new URL(location.href).searchParams.get("preview") === "euchre") {
-      const params = new URL(location.href).searchParams;
+    const params = new URL(location.href).searchParams;
+    const preview = params.get("preview");
+    const previews = { euchre: euchreFeature, cribbage: cribbageFeature };
+    if (preview && Object.hasOwn(previews, preview) && isGamePreview(preview)) {
+      const feature = previews[preview as keyof typeof previews];
       const seed = Number(params.get("seed"));
-      if (!$euchreFeature.saved && params.has("seed") && Number.isSafeInteger(seed) && seed >= 0) practiceSeed = seed;
-      openGame("euchre");
+      if (params.has("seed") && Number.isSafeInteger(seed) && seed >= 0) practiceSeed = seed;
+      openGame(preview);
       if (params.get("tab") !== "learn") {
-        if ($euchreFeature.saved) euchreFeature.resume();
-        else void euchreFeature.start();
+        feature.resume();
+        // start() is explicit when no persisted session exists.
+        if (preview === "euchre" ? !$euchreFeature.saved : !$cribbageFeature.saved) void feature.start();
       }
     }
     const refresh = () => { if (document.visibilityState === "visible") void premium.refresh(); };
@@ -92,6 +98,7 @@
   let ginFixedSurface = false;
   let canastaFixedSurface = false;
   let euchreFixedSurface = false;
+  let cribbageFixedSurface = false;
   const services = { storage: () => typeof localStorage === "undefined" ? undefined : localStorage, nextSeed: usePracticeSeed };
   const barbuFeature = createBarbuFeature(services);
   const whistFeature = createWhistFeature(services);
@@ -101,9 +108,10 @@
   const ginFeature = createGinRummyFeature(services);
   const canastaFeature = createCanastaFeature(services);
   const euchreFeature = createEuchreFeature(services);
-  const playFeatures = { barbu: barbuFeature, hearts: heartsFeature, whist: whistFeature, spades: spadesFeature, bridge: bridgeFeature, "gin-rummy": ginFeature, canasta: canastaFeature, euchre: euchreFeature };
+  const cribbageFeature = createCribbageFeature(services);
+  const playFeatures = { barbu: barbuFeature, hearts: heartsFeature, whist: whistFeature, spades: spadesFeature, bridge: bridgeFeature, "gin-rummy": ginFeature, canasta: canastaFeature, euchre: euchreFeature, cribbage: cribbageFeature };
   $: savedGames = continueGames({ barbu: $barbuFeature.saved, hearts: $heartsFeature.saved,
-    whist: $whistFeature.saved, spades: $spadesFeature.saved, bridge: $bridgeFeature.saved, "gin-rummy": $ginFeature.saved, canasta: $canastaFeature.saved, euchre: $euchreFeature.saved }, accessContext);
+    whist: $whistFeature.saved, spades: $spadesFeature.saved, bridge: $bridgeFeature.saved, "gin-rummy": $ginFeature.saved, canasta: $canastaFeature.saved, euchre: $euchreFeature.saved, cribbage: $cribbageFeature.saved }, accessContext);
   $: gameAccessBlocked = appView !== "catalog" && appView !== "premium" && appView !== "reference"
     && !isCatalogGameAvailable(activeGameTable, accessContext);
   $: activeReference = referenceCatalog.find(reference => reference.id === activeReferenceId) ?? referenceCatalog[0];
@@ -316,6 +324,7 @@
 
 
   function openActiveGameTable() {
+    if (activeGameTable === "cribbage") { openGame("cribbage"); return; }
     if (activeGameTable === "euchre") { openGame("euchre"); return; }
     if (activeGameTable === "canasta") { openGame("canasta"); return; }
     if (activeGameTable === "gin-rummy") { openGame("gin-rummy"); return; }
@@ -358,6 +367,12 @@
   function openGame(gameId: CatalogGameId) {
     if (!isCatalogGameAvailable(gameId, accessContext)) {
       if ($premium.available && catalogCategories.some(category => category.entries.some(entry => entry.id === gameId))) openPremium();
+      return;
+    }
+    if (gameId === "cribbage") {
+      activeGameTable = "cribbage";
+      cribbageFeature.openTable();
+      appView = "cribbageFeature";
       return;
     }
     if (gameId === "euchre") {
@@ -439,7 +454,7 @@
 
 </script>
 
-<main class:fixed-play-screen={!gameAccessBlocked && ((appView === "whistFeature" && whistFixedSurface) || (appView === "heartsFeature" && heartsFixedSurface) || (appView === "spadesFeature" && spadesFixedSurface) || (appView === "bridgeFeature" && bridgeFixedSurface) || (appView === "barbuFeature" && barbuFixedSurface) || (appView === "cardCountingFeature" && cardCountingFixedSurface) || (appView === "ginFeature" && ginFixedSurface) || (appView === "canastaFeature" && canastaFixedSurface) || (appView === "euchreFeature" && euchreFixedSurface))} class="app-shell">
+<main class:fixed-play-screen={!gameAccessBlocked && ((appView === "whistFeature" && whistFixedSurface) || (appView === "heartsFeature" && heartsFixedSurface) || (appView === "spadesFeature" && spadesFixedSurface) || (appView === "bridgeFeature" && bridgeFixedSurface) || (appView === "barbuFeature" && barbuFixedSurface) || (appView === "cardCountingFeature" && cardCountingFixedSurface) || (appView === "ginFeature" && ginFixedSurface) || (appView === "canastaFeature" && canastaFixedSurface) || (appView === "euchreFeature" && euchreFixedSurface) || (appView === "cribbageFeature" && cribbageFixedSurface))} class="app-shell">
   {#if appView === "catalog"}
     <GameCatalog categories={catalogCategories} {savedGames} introduction={heartsIntroductionComplete ? heartsIntroduction.completed : heartsIntroduction} onOpen={openGame} onContinue={continueGame} onIntroduction={tryHearts} />
 
@@ -494,6 +509,12 @@
       {learningEvidence} onCompleteStep={completeCourseStep} onResetSteps={resetCourseSteps}
       onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
       onSurfaceChange={fixed => { ginFixedSurface = fixed; }} />
+  {:else if appView === "cribbageFeature"}
+    <CribbageGame feature={cribbageFeature} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
+      onBack={openCatalog} onReference={() => openReference("cribbage")}
+      {learningEvidence} onCompleteStep={completeCourseStep} onResetSteps={resetCourseSteps}
+      onExerciseComplete={results => savePlayBarbuHistory([{ id: `${Date.now()}-${results.length}`, completedAt: new Date().toISOString(), results }, ...playBarbuHistory])}
+      onSurfaceChange={fixed => { cribbageFixedSurface = fixed; }} />
   {:else if appView === "euchreFeature"}
     <EuchreGame feature={euchreFeature} completedSteps={completedPathSteps} history={playBarbuHistory} nextSeed={usePracticeSeed}
       onBack={openCatalog} onReference={() => openReference("euchre")}

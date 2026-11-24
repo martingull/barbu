@@ -58,7 +58,7 @@
 </TablePlaySurface>
 
 <style>
-  .learning-copy { padding: 8px 0; color: #f7faf3; }
+  .learning-copy { flex: none; padding: 8px 0; color: #f7faf3; }
   h2 { margin: 0 0 8px; font-size: 1.1rem; line-height: 1.3; }
   .learning-points { display: grid; gap: 8px; padding: 0; margin: 0; list-style: none; }
   li { display: grid; grid-template-columns: 60px minmax(0, 1fr); gap: 8px; padding: 8px 0; border-bottom: 1px solid #ffffff26; }

@@ -21,7 +21,7 @@ test("table metadata gives skill activities one mode without changing game navig
 });
 
 test("every game derives the same rules label and description from the table factory", () => {
-  expect(registry.getAll()).toHaveLength(9);
+  expect(registry.getAll()).toHaveLength(10);
   for (const { table } of registry.getAll()) {
     expect(table.learn.referenceTitle).toBe("Game rules");
     expect(table.learn.referenceSummary).toBe("Read the rules, scoring and variations.");

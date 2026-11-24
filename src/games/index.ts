@@ -8,6 +8,7 @@ import { cardCountingDef } from "./cardCounting";
 import { ginRummyDef } from "./ginRummy";
 import { canastaDef } from "./canasta";
 import { euchreDef } from "./euchre";
+import { cribbageDef } from "./cribbage";
 
 // Register all core games
 registry.register("barbu", barbuDef);
@@ -19,3 +20,4 @@ registry.register("card-counting", cardCountingDef);
 registry.register("gin-rummy", ginRummyDef);
 registry.register("canasta", canastaDef);
 registry.register("euchre", euchreDef);
+registry.register("cribbage", cribbageDef);
