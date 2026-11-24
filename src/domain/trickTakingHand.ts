@@ -3,6 +3,7 @@ import { shuffledDeck } from "./deck";
 import { chooseBarbuCard } from "./barbuPolicy";
 import { barbuTrickPoints, isBarbuTrickContract, type BarbuTrickContract } from "./barbuRules";
 import { originalSpadesCards, spadesBidFromId, suggestedSpadesBidForCards } from "./spadesBidding";
+import { spadesBooksForSide, spadesTrickCounts } from "./spadesScoring";
 import { heartsPoints, legalHeartsCards, heartsHaveBeenBroken } from "./heartsRules";
 import { chooseWhistCard, whistPositionFromHand } from "./whistPolicy";
 import { bridgeBoardConditions } from "./bridgeBoard";
@@ -187,8 +188,18 @@ export function startBrowserSpadesHand(seed: number): FullHandState {
   return startBrowserWhistFamilyHand("Spades", seed, "S");
 }
 
-export function startSpadesBiddingHand(seed: number): FullHandState {
-  return startBrowserWhistFamilyHand("Spades", seed, "S", undefined, true);
+export function startSpadesBiddingHand(seed: number, dealer?: number): FullHandState {
+  if (dealer !== undefined && (!Number.isInteger(dealer) || dealer < 0 || dealer > 3)) throw Error("Invalid Spades dealer");
+  return startBrowserWhistFamilyHand("Spades", seed, "S", dealer, true);
+}
+
+export function spadesDealerForHand(state: FullHandState): number {
+  const dealer = state.id.match(/-dealer-([0-3])-/)?.[1];
+  if (dealer !== undefined) return Number(dealer);
+  const opener = state.completedTricks[0]?.cards[0]?.seat ?? state.currentTrick[0]?.seat ?? state.currentPlayer;
+  const leader = playerNames.indexOf(opener as Seat);
+  if (leader < 0) throw Error("Invalid Spades opening leader");
+  return (leader + 3) % 4;
 }
 
 export function beginSpadesHand(state: FullHandState, bids: Record<Seat, number>): FullHandState {
@@ -724,12 +735,16 @@ function chooseBridgeVoidCard(state: FullHandState, legal: Card[]) {
 function chooseSpadesLeadCard(state: FullHandState, legal: Card[]) {
   const context = spadesPlayContext(state);
 
-  if (context.currentPlayerNil || context.sideHasContract) {
+  if (context.currentPlayerNil) {
     return lowestCardFromLongestSuit(legal.filter((card) => card.suit !== "S"), legal) ?? lowestCard(legal);
   }
 
   if (context.partnerNil) {
     return highestCardFromLongestSuit(legal.filter((card) => card.suit !== "S"), legal) ?? highestCard(legal);
+  }
+
+  if (context.sideHasContract) {
+    return lowestCardFromLongestSuit(legal.filter(card => card.suit !== "S"), legal) ?? lowestCard(legal);
   }
 
   if (context.opponentNil) {
@@ -810,22 +825,24 @@ function spadesPlayContext(state: FullHandState) {
   const currentPlayer = state.currentPlayerIndex;
   const partnerIndex = (currentPlayer + 2) % 4;
   const currentWinner = state.currentTrick.length ? trickWinnerForState(state, state.currentTrick) : undefined;
-  const sideBid = spadesEstimatedBidForPlayer(state, currentPlayer) + spadesEstimatedBidForPlayer(state, partnerIndex);
-  const sideTricks = state.completedTricks.filter((trick) => sameWhistPartnership(trick.winnerIndex, currentPlayer)).length;
+  const counts = spadesTrickCounts(state.completedTricks);
+  const bids = Object.fromEntries(playerNames.map((seat, index) => [seat, spadesEstimatedBidForPlayer(state, index)])) as Record<Seat, number>;
+  const intactNil = (index: number) => bids[playerNames[index]] === 0 && counts[playerNames[index]] === 0;
+  const books = spadesBooksForSide(counts, bids, [playerNames[currentPlayer], playerNames[partnerIndex]]);
 
   return {
     currentWinner,
     partnerIndex,
-    currentPlayerNil: spadesEstimatedBidForPlayer(state, currentPlayer) === 0,
-    partnerNil: spadesEstimatedBidForPlayer(state, partnerIndex) === 0,
+    currentPlayerNil: intactNil(currentPlayer),
+    partnerNil: intactNil(partnerIndex),
     opponentNil: [0, 1, 2, 3].some(
-      (player) => !sameWhistPartnership(player, currentPlayer) && spadesEstimatedBidForPlayer(state, player) === 0
+      (player) => !sameWhistPartnership(player, currentPlayer) && intactNil(player)
     ),
     opponentNilWinning:
       currentWinner !== undefined &&
       !sameWhistPartnership(currentWinner, currentPlayer) &&
-      spadesEstimatedBidForPlayer(state, currentWinner) === 0,
-    sideHasContract: sideBid > 0 && sideTricks >= sideBid
+      intactNil(currentWinner),
+    sideHasContract: books.won >= books.bid
   };
 }
 

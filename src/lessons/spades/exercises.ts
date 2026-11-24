@@ -228,111 +228,6 @@ const spadesTrumpOvertrumpDrillStep: DrillStep = {
     }
   }
 };
-const spadesBidAceDrillStep: DrillStep = {
-  scenarioId: "spades-bid-count-ace",
-  contract: "Spades",
-  title: "Bid books",
-  trick: {
-    title: "Count a likely winner",
-    beforeResult: "Before bidding, identify the card that most clearly belongs in your book estimate.",
-    afterResult: "Aces are the first cards to count when estimating a Spades bid.",
-    emptyExplanation: "Choose the card you should count most confidently as a book.",
-    legalCardIds: ["AS", "7D", "4C"],
-    hand: [
-      { id: "AS", rank: "A", suit: "S", label: "AS" },
-      { id: "7D", rank: "7", suit: "D", label: "7D" },
-      { id: "4C", rank: "4", suit: "C", label: "4C" }
-    ],
-    tableBeforeChoice: [],
-    tableAfterChoice: [],
-    pendingBySeat: { You: "estimate bid" },
-    playedExplanations: {
-      AS: "AS is good. A high spade is a strong likely book.",
-      "7D": "7D is not a card you should count as a likely book.",
-      "4C": "4C is useful as a low exit, not as a bid winner."
-    },
-    cardOutcomes: {
-      AS: "good",
-      "7D": "risky",
-      "4C": "risky"
-    },
-    cardReasons: {
-      AS: "won_clean_trick",
-      "7D": "off_suit",
-      "4C": "off_suit"
-    }
-  }
-};
-const spadesBidProtectedKingDrillStep: DrillStep = {
-  scenarioId: "spades-bid-protected-king",
-  contract: "Spades",
-  title: "Bid books",
-  trick: {
-    title: "Prefer protected strength",
-    beforeResult: "Before bidding, compare the kings. One has small cards behind it; one is lonely.",
-    afterResult: "A protected king is safer to count than a singleton king.",
-    emptyExplanation: "Choose the card that deserves more credit in the bid estimate.",
-    legalCardIds: ["KH", "KC", "5H"],
-    hand: [
-      { id: "KH", rank: "K", suit: "H", label: "KH" },
-      { id: "5H", rank: "5", suit: "H", label: "5H" },
-      { id: "KC", rank: "K", suit: "C", label: "KC" }
-    ],
-    tableBeforeChoice: [],
-    tableAfterChoice: [],
-    pendingBySeat: { You: "estimate bid" },
-    playedExplanations: {
-      KH: "KH is good. The small heart means this king is protected by suit length.",
-      KC: "KC is a king, but as a lonely club it is easier to lose or be forced out.",
-      "5H": "5H helps protect KH, but the king is the card you count."
-    },
-    cardOutcomes: {
-      KH: "good",
-      KC: "risky",
-      "5H": "risky"
-    },
-    cardReasons: {
-      KH: "won_clean_trick",
-      KC: "off_suit",
-      "5H": "off_suit"
-    }
-  }
-};
-const spadesBidNilDrillStep: DrillStep = {
-  scenarioId: "spades-bid-nil-danger",
-  contract: "Spades",
-  title: "Bid books",
-  trick: {
-    title: "Do not call nil with a clear winner",
-    beforeResult: "You are checking whether nil is realistic. One card makes nil dangerous.",
-    afterResult: "Nil means you must win zero tricks, so obvious winners argue against nil.",
-    emptyExplanation: "Choose the card that makes a nil bid unsafe.",
-    legalCardIds: ["QS", "3C", "6D"],
-    hand: [
-      { id: "QS", rank: "Q", suit: "S", label: "QS" },
-      { id: "3C", rank: "3", suit: "C", label: "3C" },
-      { id: "6D", rank: "6", suit: "D", label: "6D" }
-    ],
-    tableBeforeChoice: [],
-    tableAfterChoice: [],
-    pendingBySeat: { You: "nil check" },
-    playedExplanations: {
-      QS: "QS is good. A high spade can be hard to duck, so nil is risky.",
-      "3C": "3C is the kind of low card that helps a nil plan.",
-      "6D": "6D is not the main nil danger here."
-    },
-    cardOutcomes: {
-      QS: "good",
-      "3C": "risky",
-      "6D": "risky"
-    },
-    cardReasons: {
-      QS: "won_clean_trick",
-      "3C": "off_suit",
-      "6D": "off_suit"
-    }
-  }
-};
 const spadesBagsDuckDrillStep: DrillStep = {
   scenarioId: "spades-bags-duck-after-bid",
   contract: "Spades",
@@ -448,5 +343,4 @@ const spadesBagsProtectNilDrillStep: DrillStep = {
 };
 export const spadesFollowSuitDrillPool = [spadesFollowSuitDrillStep, spadesFollowSuitDuckDrillStep, spadesFollowSuitCoverDrillStep];
 export const spadesTrumpOrDiscardDrillPool = [spadesTrumpCutDrillStep, spadesTrumpPreserveDrillStep, spadesTrumpOvertrumpDrillStep];
-export const spadesBidBooksDrillPool = [spadesBidAceDrillStep, spadesBidProtectedKingDrillStep, spadesBidNilDrillStep];
 export const spadesAvoidBagsDrillPool = [spadesBagsDuckDrillStep, spadesBagsDiscardDrillStep, spadesBagsProtectNilDrillStep];

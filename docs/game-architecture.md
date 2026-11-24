@@ -117,7 +117,11 @@ engine. Hearts practice uses `src/domain/heartsPractice.ts` with structured temp
 in `content/hearts-practice.json`. Its legality and points reuse full-play rules;
 frozen native outputs verify all 18 decisions and both passing patterns.
 Spades uses the same hand, review and save factories, with bidding and settlement
-in domain modules and its twelve authored decisions in `src/lessons/spades/exercises.ts`.
+in domain modules. Its eighteen authored decisions and eighteen bounded follow-ups
+live in `src/lessons/spades/exercises.ts`, `learning.ts` and `choices.ts`.
+`spadesBooksForSide` supplies the same positive-bid book count to settlement,
+opponents, score summaries and guidance: failed-nil tricks are bags, not bid books.
+See `docs/spades.md` for the selected rule baseline and remaining limitations.
 Bridge adds auction and duplicate-scoring domain modules, a board session, and a
 version-1 save adapter. Its native auction/scoring mirror is removed. Replay
 restores the actual deal and contract; Next board commits one result, including
@@ -206,12 +210,14 @@ Whist, Hearts, Spades, Bridge and Barbu have isolated frontends under their resp
   game adapter. Retrying creates a fresh session, and leaving early cannot mark
   the session complete. Other custom game exercises retain their current controllers
   until migrated; this is not yet a catalog-wide custom-exercise migration.
-- `SpadesGame.svelte` uses that Learn flow for all five courses. The four
-  three-decision exercise pools now run in authored worked/supported/independent
-  order through `lessons/spades/learning.ts`, with twelve distinct bounded
-  reinforcement examples and shared winner/legality breakdowns. Bidding questions
-  identify cards rather than playing a fictitious trick. The introductory course
-  still reuses the follow-suit activity; the five existing progress keys remain.
+- `SpadesGame.svelte` uses that Learn flow for six distinct courses. Three tactical
+  pools use `lessons/spades/learning.ts`; foundations, thirteen-card bid estimates
+  and scoring use `choices.ts` through `SpadesChoiceExercise` and `learningSession`.
+  There are eighteen base decisions and eighteen fresh bounded reinforcements,
+  with shared worked/supported/independent stages and decision review. Foundations
+  identify winner, partnership and next leader without playing a fictitious fifth
+  card. Numeric questions reuse the live bidding estimate and scorer. The five
+  original progress keys remain; `spades-scoring` is an additional sixth topic.
   `SpadesHandView.svelte` and `SpadesBids.svelte`
   preserve the deal-first table, bid toggle, player-only adjustment and hand review.
   Its feature controller delegates bid locking, nil, bags and completion to

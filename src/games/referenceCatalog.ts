@@ -405,7 +405,7 @@ export const referenceCatalog: GameReference[] = [
     id: "spades",
     title: "Spades",
     family: "Whist",
-    baseline: "Whist-family partnership game, Spades fixed-trump baseline",
+    baseline: "Partnership Spades, Pagat-based nil and bags scoring",
     overview:
       "Spades is a Whist-family partnership table. You and Barbu play against Left and Right, players follow suit when able, spades are always trump, and each side tries to meet its bid while managing nil and bags.",
     sections: [
@@ -444,9 +444,10 @@ export const referenceCatalog: GameReference[] = [
         id: "deal-and-bid",
         title: "Deal And Bid",
         body:
-          "Each player receives thirteen cards. At the Spades table, you see your hand before bidding, the table estimates the hidden hands, and you may adjust only your own bid. Individual bids combine into partnership totals, while nil remains an individual promise to take no tricks.",
+          "Deal clockwise, thirteen cards each. The dealer moves clockwise after each hand; the player to the dealer's left leads first. At this table, you see your hand before bidding and may adjust only your own bid. The other three bids are hand-based estimates shown together, rather than a turn-by-turn club auction. Positive bids combine into partnership totals; nil is an individual promise to take no tricks.",
         facts: [
           { label: "Deal", value: "13 cards each" },
+          { label: "Opening lead", value: "Player to dealer's left" },
           { label: "Player control", value: "You adjust only your own bid" },
           { label: "Hidden seats", value: "Barbu, Left, and Right use hand-based estimates" },
           { label: "Nil", value: "Individual bid to win zero tricks" }
@@ -480,11 +481,12 @@ export const referenceCatalog: GameReference[] = [
         id: "scoring",
         title: "Scoring",
         body:
-          "A made bid scores ten points per bid book plus one point for each overtrick bag. A failed bid scores minus ten points per bid book. A nil bid scores 100 when that player takes no tricks and -100 when they take any trick. Every tenth accumulated bag costs 100 points. After scoring all thirteen tricks, including nil and bag penalties, the match ends if a partnership has at least 500 points. The higher score wins; equal scores at or above 500 require another hand.",
+          "A made bid scores ten points per bid book plus one point for each overtrick bag. A failed bid scores minus ten points per bid book. Nil scores +100 for no tricks and -100 otherwise. Under this table's Pagat-based rule, failed-nil tricks cannot fulfil the partner's bid: they count as bags, worth one point each, even if the partner is set. Every tenth accumulated bag costs 100 points. After all thirteen tricks are scored, the match ends if a partnership has at least 500 points. The higher score wins; equal scores at or above 500 require another hand.",
         facts: [
           { label: "Made bid", value: "10 per bid book + bags" },
           { label: "Failed bid", value: "-10 per bid book" },
           { label: "Nil", value: "+100 if made, -100 if missed" },
+          { label: "Failed-nil tricks", value: "Bags, not partner's bid books" },
           { label: "Ten bags", value: "-100 point penalty" },
           { label: "Match target", value: "500 points" }
         ]
@@ -493,10 +495,11 @@ export const referenceCatalog: GameReference[] = [
         id: "app-learning",
         title: "Learning Path",
         body:
-          "Start with the partnership objective, then try following suit, using trumps, bidding from your hand, protecting nil, and managing bags. Short card decisions let you explore each idea before a full match.",
+          "Identify a book's winner, partnership and next leader, then estimate bids from thirteen-card hands. Practise following suit, trumping, protecting nil and avoiding bags. Finish by scoring a hand, including failed nil and the ten-bag penalty. Each topic has three short decisions, with a fresh example after a mistake, before a guided hand or full match.",
         facts: [
           { label: "First step", value: "Concept: win your books" },
           { label: "Practice", value: "Three short scripted decisions per topic" },
+          { label: "Topics", value: "Six, including bidding and scoring" },
           { label: "Play", value: "Partnership match to 500 points" }
         ]
       }

@@ -9,7 +9,7 @@
   import { spadesLearningPosition } from "../../domain/spadesLearning";
   import { spadesGuidance, spadesGuidedReview } from "./spadesGuidance";
   import { spadesSessionSettlement, spadesSessionComplete, type SpadesSession } from "../../domain/spadesSession";
-  import { spadesSideBid, spadesPlayerSideSeats, spadesOpponentSideSeats, spadesMatchTarget } from "../../domain/spadesScoring";
+  import { spadesBooksForSide, spadesTrickCounts, spadesSideBid, spadesPlayerSideSeats, spadesOpponentSideSeats, spadesMatchTarget } from "../../domain/spadesScoring";
   import { spadesTrickFeedback } from "./spadesFeedback";
   import { partnershipTrickCounts } from "../../domain/trickTakingScore";
   import { spadesBidLabel, spadesResultCopy } from "./spadesPresentation";
@@ -28,6 +28,9 @@
   let tableCards = $derived(review?.cards ?? hand.currentTrick);
   let legal = $derived(new Set(hand.legalCardIds));
   let tricks = $derived(partnershipTrickCounts(hand.completedTricks));
+  let counts = $derived(spadesTrickCounts(hand.completedTricks));
+  let bidBooks = $derived({ playerSide: spadesBooksForSide(counts, session.bids, spadesPlayerSideSeats).won,
+    opponentSide: spadesBooksForSide(counts, session.bids, spadesOpponentSideSeats).won });
   let bids = $derived({ playerSide: spadesSideBid(session.bids, spadesPlayerSideSeats),
     opponentSide: spadesSideBid(session.bids, spadesOpponentSideSeats) });
   let settlement = $derived(spadesSessionSettlement(session));
@@ -47,8 +50,8 @@
       <div class="full-hand-summary grouped-play-summary" aria-label="Spades hand score">
         <div class="full-hand-summary-row current-hand whist-hand-summary" aria-label="Current hand">
           <span class="summary-row-label">Current hand</span>
-          <div><span>Your side</span><strong>{guided ? `${tricks.playerSide} / ${bids.playerSide}` : tricks.playerSide}</strong></div>
-          <div><span>Opponents</span><strong>{guided ? `${tricks.opponentSide} / ${bids.opponentSide}` : tricks.opponentSide}</strong></div>
+          <div><span>Your books</span><strong>{bidBooks.playerSide} / {bids.playerSide}</strong></div>
+          <div><span>Their books</span><strong>{bidBooks.opponentSide} / {bids.opponentSide}</strong></div>
           <div><span>Tricks</span><strong>{hand.completedTricks.length} / 13</strong></div>
           <div><span>{guided ? "Your bid" : "Bid"}</span><strong>{guided ? session.bids.You === 0 ? "Nil" : session.bids.You : spadesBidLabel(session.bids)}</strong></div>
         </div>

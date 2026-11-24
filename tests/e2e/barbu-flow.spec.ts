@@ -7,6 +7,7 @@ import { saveBridgeSession } from "../../src/persistence/bridgeSave";
 import { trickTakingSeats } from "../../src/domain/trickTakingScore";
 import { whistOddProgress } from "../../src/features/whist/whistPresentation";
 import { whistLearningSteps } from "../../src/lessons/whist/learning";
+import { spadesChoiceSteps } from "../../src/lessons/spades/choices";
 import { legacyBridgePreference } from "../fixtures/legacyBridgePreference";
 
 async function finishGuidedLesson(page: Page) {
@@ -917,8 +918,8 @@ test("Spades play starts a bid-scored partnership hand", async ({ page }, testIn
   await expect(page.getByRole("heading", { name: "Spades hand" })).toBeVisible();
   await expect(page.getByLabel("Spades hand", { exact: true })).toContainText("Trump");
   await expect(page.getByLabel("Spades hand", { exact: true })).toContainText("Spades");
-  await expect(page.getByLabel("Spades hand score")).toContainText("Your side");
-  await expect(page.getByLabel("Spades hand score")).toContainText("Opponents");
+  await expect(page.getByLabel("Spades hand score")).toContainText("Your books");
+  await expect(page.getByLabel("Spades hand score")).toContainText("Their books");
   await expect(page.getByLabel("Spades hand score")).toContainText("Bid");
   await expect(page.getByLabel("Spades match score")).toContainText("You + Barbu");
   await expect(page.getByLabel("Spades match score")).toContainText("Bags");
@@ -1745,7 +1746,7 @@ test("Spades learn path opens course content before scripted practice", async ({
   await page.getByRole("button", { name: /Open Spades/ }).click();
   await page.getByRole("tab", { name: "Learn" }).click();
 
-  await expect(page.getByLabel("Spades course progress")).toContainText("0 / 5 complete");
+  await expect(page.getByLabel("Spades course progress")).toContainText("0 / 6 complete");
   await expect(page.getByLabel("Continue learning")).toContainText("Win your books");
 
   await page.locator('[data-skill="spades-object"] .lesson-topic').click();
@@ -1756,11 +1757,14 @@ test("Spades learn path opens course content before scripted practice", async ({
   await page.getByRole("button", { name: "See example" }).click();
   await expect(page.getByLabel("Spades object example table")).toBeVisible();
   await page.getByRole("button", { name: "Try cards" }).click();
-  await expect(page.getByRole("heading", { name: "Spades lesson" })).toBeVisible();
-  await expect(page.getByLabel("Drill decision")).toContainText("Spades");
-  await expect(page.getByText("Decision 1 of 3")).toBeVisible();
-
-  await completeVisibleDrillSession(page);
+  await expect(page.getByLabel("Spades exercise choices")).toContainText("Who won this book?");
+  await expect(page.getByLabel("Completed Spades trick").locator(".card-face")).toHaveCount(4);
+  for (const [index, step] of spadesChoiceSteps("object").entries()) {
+    const label = step.options.find(option => option.id === step.correct)!.label;
+    await page.getByRole("group", { name: "Spades answer choices", exact: true }).getByRole("button", { name: label, exact: true }).click();
+    await page.getByRole("button", { name: "Check answer", exact: true }).click();
+    await page.getByRole("button", { name: index === 2 ? "Finish topic" : "Next decision", exact: true }).click();
+  }
   await expect(page.getByRole("status")).toHaveText("Topic complete.");
   await page.getByText("Review decisions", { exact: true }).click();
   await expect(page.getByText("The bid gives every Spades hand its plan.")).toBeVisible();

@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { courseCatalog } from "../../src/lessons/courses";
 import { spadesLearningSteps, type SpadesLearningTopic } from "../../src/lessons/spades/learning";
+import { spadesChoiceSteps, type SpadesChoiceTopic } from "../../src/lessons/spades/choices";
 
 test("Spades bidding survives other games and every guided lesson", async ({ page }, info) => {
   test.setTimeout(60_000);
@@ -27,22 +28,29 @@ test("Spades bidding survives other games and every guided lesson", async ({ pag
     await page.locator(`[data-skill="${course.pathStepId}"] .lesson-topic`).click();
     await page.getByRole("button", { name: "See example", exact: true }).click();
     await page.getByRole("button", { name: "Try cards", exact: true }).click();
-    const steps = spadesLearningSteps((course.practiceTarget as { action: SpadesLearningTopic }).action);
+    const action = (course.practiceTarget as { action: string }).action;
+    const choiceSteps = ["object", "bid", "score"].includes(action) ? spadesChoiceSteps(action as SpadesChoiceTopic) : null;
+    const steps = choiceSteps ? null : spadesLearningSteps(action as SpadesLearningTopic);
     for (let i = 0; i < 3; i++) {
-      const card = steps[i].trick.hand.find(card => steps[i].trick.cardOutcomes?.[card.id] === "good")!;
-      await page.getByLabel("Your drill hand").getByRole("button", { name: `${card.rank} ${card.suit}`, exact: true }).click();
+      if (choiceSteps) {
+        const step = choiceSteps[i];
+        await page.getByRole("group", { name: "Spades answer choices", exact: true }).getByRole("button", { name: step.options.find(option => option.id === step.correct)!.label, exact: true }).click();
+      } else {
+        const card = steps![i].trick.hand.find(card => steps![i].trick.cardOutcomes?.[card.id] === "good")!;
+        await page.getByLabel("Your drill hand").getByRole("button", { name: `${card.rank} ${card.suit}`, exact: true }).click();
+      }
       await page.getByRole("button", { name: "Check answer", exact: true }).click();
       await page.getByRole("button", { name: i === 2 ? "Finish topic" : "Next decision", exact: true }).click();
     }
-    await expect(page.getByRole("status")).toHaveText(index === 4 ? "Spades learning path complete." : "Topic complete.");
+    await expect(page.getByRole("status")).toHaveText(index === 5 ? "Spades learning path complete." : "Topic complete.");
     await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
-    await expect(page.getByLabel("Spades course progress")).toContainText(`${index + 1} / 5 complete`);
+    await expect(page.getByLabel("Spades course progress")).toContainText(`${index + 1} / 6 complete`);
     expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), key)).toEqual(saved);
   }
   await page.reload();
   await page.getByRole("button", { name: "Open Spades", exact: true }).click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
-  await expect(page.getByLabel("Spades course progress")).toContainText("5 / 5 complete");
+  await expect(page.getByLabel("Spades course progress")).toContainText("6 / 6 complete");
   await page.getByRole("tab", { name: "Play", exact: true }).click();
   await page.getByRole("button", { name: "Continue Spades", exact: true }).click();
   await expect(page.getByLabel("Spades bids for this hand")).toBeVisible();

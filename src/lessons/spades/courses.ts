@@ -5,7 +5,7 @@ export const spadesCourses: CourseContent[] = [
     id: "spades-object",
     game: "spades",
     pathStepId: "spades-object",
-    practiceTarget: { kind: "practice", game: "spades", action: "follow" },
+    practiceTarget: { kind: "practice", game: "spades", action: "object" },
     contract: "Spades",
     title: "Win your books",
     concept: {
@@ -19,9 +19,9 @@ export const spadesCourses: CourseContent[] = [
       ]
     },
     example: {
-      heading: "Your side bid five books and the hand is just starting.",
+      heading: "Barbu wins a club trick for your side.",
       body:
-        "The first job is not to win every trick. The first job is to see the target, protect any nil, and help the partnership reach its bid without drifting into extra bags.",
+        "Left led clubs and Barbu's king is highest. No spade was played. Barbu takes one book for your partnership and leads next. If your side bid five and this is its first bid book, four more are needed.",
       sequence: [
         { label: "Sides", text: "You and Barbu share one score." },
         { label: "Bid", text: "Five books means your side needs at least five tricks." },
@@ -29,16 +29,17 @@ export const spadesCourses: CourseContent[] = [
       ],
       ariaLabel: "Spades object example table",
       tableCards: [
-        { seat: "You", card: { id: "AS", rank: "A", suit: "S", label: "AS" } },
-        { seat: "Tutor", card: { id: "KH", rank: "K", suit: "H", label: "KH" } },
-        { seat: "Right", card: { id: "9H", rank: "9", suit: "H", label: "9H" } }
+        { seat: "Left", card: { id: "9C", rank: "9", suit: "C", label: "9C" } },
+        { seat: "Tutor", card: { id: "KC", rank: "K", suit: "C", label: "KC" } },
+        { seat: "Right", card: { id: "4C", rank: "4", suit: "C", label: "4C" } },
+        { seat: "You", card: { id: "3C", rank: "3", suit: "C", label: "3C" } }
       ],
-      pendingBySeat: { Left: "follows" }
+      pendingBySeat: {}
     },
     review: {
       heading: "The bid gives every Spades hand its plan.",
       body:
-        "You practiced treating the hand as a partnership target. That target explains when to win, when to protect partner, and when an extra trick becomes a bag.",
+        "You identified who won, which partnership took the book, and who leads next. Use those facts to track the partnership target.",
       points: [
         { marker: "OK", text: "Each trick is one book." },
         { marker: "OK", text: "Partners combine tricks for the side bid." },
@@ -56,7 +57,7 @@ export const spadesCourses: CourseContent[] = [
     concept: {
       heading: "Spades are trump, but the led suit still controls legal play.",
       body:
-        "When a suit is led, you must play that suit if you have it. A spade is only available when you are void in the led suit.",
+        "When a suit is led, you must play that suit if you have it. On a plain-suit lead, a spade is only available when you are void. If spades are led, you must follow spades when possible.",
       points: [
         { marker: "1", text: "Identify the first card led to the trick." },
         { marker: "2", text: "Check whether your hand contains that suit." },
@@ -154,9 +155,9 @@ export const spadesCourses: CourseContent[] = [
       ]
     },
     example: {
-      heading: "Your hand has AS, KS, AH, and a protected KD.",
+      heading: "An excerpt: two high spades, an ace and a protected king.",
       body:
-        "That is not a nil shape. A beginner estimate would count AS and AH, give credit for KS, and consider KD safer if diamonds are not short.",
+        "A♠ and K♠, A♥, and K♦ protected by 8♦ suggest four likely books. Check the rest of your hand for extra spade length and other winners before deciding. This is not a nil shape.",
       sequence: [
         { label: "Sure", text: "Aces usually point to books." },
         { label: "Spades", text: "High spades can win late control." },
@@ -165,16 +166,17 @@ export const spadesCourses: CourseContent[] = [
       ariaLabel: "Spades bidding example table",
       tableCards: [
         { seat: "You", card: { id: "AS", rank: "A", suit: "S", label: "AS" } },
-        { seat: "Tutor", card: { id: "KD", rank: "K", suit: "D", label: "KD" } },
-        { seat: "Left", card: { id: "4C", rank: "4", suit: "C", label: "4C" } },
-        { seat: "Right", card: { id: "8H", rank: "8", suit: "H", label: "8H" } }
+        { seat: "You", card: { id: "KS", rank: "K", suit: "S", label: "KS" } },
+        { seat: "You", card: { id: "AH", rank: "A", suit: "H", label: "AH" } },
+        { seat: "You", card: { id: "KD", rank: "K", suit: "D", label: "KD" } },
+        { seat: "You", card: { id: "8D", rank: "8", suit: "D", label: "8D" } }
       ],
-      pendingBySeat: { You: "estimate bid" }
+      pendingBySeat: {}
     },
     review: {
       heading: "A practical bid is an estimate, not a promise of perfect control.",
       body:
-        "You practiced counting likely winners and ruling out nil when your hand contains too many obvious tricks.",
+        "You estimated bids from full thirteen-card hands and considered nil separately. The starter estimate is a practical guideline, not a guaranteed trick count.",
       points: [
         { marker: "OK", text: "Aces and high spades are the first count." },
         { marker: "OK", text: "Protected kings can add books." },
@@ -225,6 +227,31 @@ export const spadesCourses: CourseContent[] = [
         { marker: "OK", text: "Ten bags trigger a score penalty." },
         { marker: "OK", text: "After the bid, ducking can be the best play." }
       ]
+    }
+  },
+  {
+    id: "spades-scoring", game: "spades", pathStepId: "spades-scoring",
+    practiceTarget: { kind: "practice", game: "spades", action: "score" }, contract: "Spades", title: "Score a hand",
+    concept: {
+      heading: "Keep the bid, nil and bags separate.",
+      body: "A made contract earns ten points per bid book; a failed contract loses ten per bid book. Bags add one point each, but ten accumulated bags cost 100 points.",
+      points: [
+        { marker: "Bid", text: "Add partners' positive bids. Only tricks taken by non-nil bidders count toward this target." },
+        { marker: "Nil", text: "Nil earns +100 for zero tricks or -100 for any trick. Failed-nil tricks become bags even when partner misses the bid." },
+        { marker: "Bags", text: "Add this hand's bags to the carried total. Subtract 100 per ten bags and carry the remainder. Play to 500; a tie at the target continues." }
+      ]
+    },
+    example: {
+      heading: "A failed nil cannot rescue partner's contract.",
+      body: "You bid nil and take one trick. Barbu bids four but takes only three. The contract loses 40, nil loses 100, and your nil trick adds one bag point: -139 for the hand before any ten-bag penalty.",
+      sequence: [{ label: "Separate", text: "Barbu's three books do not meet the bid of four. Your nil trick is a bag, not the fourth bid book." }],
+      ariaLabel: "Spades scoring example", tableCards: [], pendingBySeat: {}
+    },
+    review: {
+      heading: "Check each part of the hand score.",
+      body: "Score the contract, add bags and nil, then subtract any ten-bag penalty. Nil tricks never fulfil partner's bid.",
+      points: [{ marker: "OK", text: "A made bid is ten points per book; a failed bid loses the same amount." },
+        { marker: "OK", text: "Nil is scored separately from the contract." }, { marker: "OK", text: "Keep the remaining bags for the next hand." }]
     }
   }
 ];

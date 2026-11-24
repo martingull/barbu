@@ -32,6 +32,17 @@ export function spadesSideTricks(tricks: Record<Seat, number>, seats: Seat[]) {
   return seats.reduce((total, seat) => total + tricks[seat], 0);
 }
 
+export function spadesTrickCounts(tricks: FullHandState["completedTricks"]): Record<Seat, number> {
+  return Object.fromEntries(trickTakingSeats.map(seat => [seat, tricks.filter(trick => trick.winner === seat).length])) as Record<Seat, number>;
+}
+
+export function spadesBooksForSide(tricks: Record<Seat, number>, bids: SpadesBidState, seats: Seat[]) {
+  const bid = spadesSideBid(bids, seats);
+  const won = spadesSideTricks(tricks, seats.filter(seat => bids[seat] > 0));
+  const nilTricks = spadesSideTricks(tricks, seats.filter(seat => bids[seat] === 0));
+  return { bid, won, nilTricks, extra: Math.max(0, won - bid) + nilTricks };
+}
+
 export function spadesNilResultsForSide(tricks: Record<Seat, number>, bids: SpadesBidState, seats: Seat[]) {
   return seats
     .filter((seat) => bids[seat] === 0)
@@ -52,22 +63,19 @@ export function spadesScoreForSide(
   seats: Seat[],
   currentBags: number
 ) {
-  const bid = spadesSideBid(bids, seats);
-  const sideTricks = spadesSideTricks(tricks, seats);
+  const books = spadesBooksForSide(tricks, bids, seats);
   const nilResults = spadesNilResultsForSide(tricks, bids, seats);
   const nilScore = nilResults.reduce((total, result) => total + result.score, 0);
 
-  if (sideTricks < bid) {
-    return { score: -10 * bid + nilScore, bags: 0, bagPenalty: 0, nilResults };
-  }
-
-  const handBags = Math.max(0, sideTricks - bid);
+  const contractPoints = (books.won >= books.bid ? 10 : -10) * books.bid;
+  const handBags = books.extra;
   const totalBags = currentBags + handBags;
   const bagPenalty = Math.floor(totalBags / 10) * 100;
   const remainingBags = totalBags % 10;
 
   return {
-    score: bid * 10 + handBags + nilScore - bagPenalty,
+    ...books, contractPoints,
+    score: contractPoints + handBags + nilScore - bagPenalty,
     bags: remainingBags - currentBags,
     bagPenalty,
     nilResults
@@ -76,7 +84,7 @@ export function spadesScoreForSide(
 
 export function spadesHandResultFor(hand: FullHandState, handNumber: number, bids: SpadesBidState, bags: SpadesScoreState): SpadesHandResult {
   const partnershipTricks = { playerSide: hand.completedTricks.filter(trick => trick.winnerIndex % 2 === 0).length, opponentSide: hand.completedTricks.filter(trick => trick.winnerIndex % 2 === 1).length };
-  const seatTricks = Object.fromEntries(trickTakingSeats.map(seat => [seat, hand.completedTricks.filter(trick => trick.winner === seat).length])) as Record<Seat, number>;
+  const seatTricks = spadesTrickCounts(hand.completedTricks);
   const playerSide = spadesScoreForSide(seatTricks, bids, spadesPlayerSideSeats, bags.playerSide);
   const opponentSide = spadesScoreForSide(seatTricks, bids, spadesOpponentSideSeats, bags.opponentSide);
 

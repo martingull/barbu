@@ -37,11 +37,7 @@ export function shouldSuggestSpadesNil(cards: Card[]) {
   return !hasAce && !hasHighSpade && !hasProtectedKing && highCardCount <= 2 && spades.length <= 3;
 }
 
-export function suggestedSpadesBidForCards(cards: Card[]) {
-  if (shouldSuggestSpadesNil(cards)) {
-    return 0;
-  }
-
+export function spadesBidEstimate(cards: Card[]) {
   const suitGroups = cardsBySuit(cards);
   const nonSpadeAces = cards.filter((card) => card.suit !== "S" && card.rank === "A").length;
   const protectedNonSpadeKings = cards.filter(
@@ -51,8 +47,12 @@ export function suggestedSpadesBidForCards(cards: Card[]) {
   const longSpades = Math.max(0, suitGroups.S.length - 3);
   const estimate = nonSpadeAces + protectedNonSpadeKings + highSpades + longSpades;
 
-  return spadesClampBid(Math.max(1, estimate));
+  const nilSuggested = shouldSuggestSpadesNil(cards);
+  return { nonSpadeAces, protectedNonSpadeKings, highSpades, longSpades, nilSuggested,
+    bid: nilSuggested ? 0 : spadesClampBid(Math.max(1, estimate)) };
 }
+
+export const suggestedSpadesBidForCards = (cards: Card[]) => spadesBidEstimate(cards).bid;
 
 export function suggestedSpadesBidsForHand(hand: FullHandState | null): SpadesBidState {
   if (!hand) {

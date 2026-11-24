@@ -3,9 +3,10 @@
   import PlayTabPanel from "../../components/PlayTabPanel.svelte";
   import SpadesHandView from "./SpadesHandView.svelte";
   import SpadesGuidedHand from "./SpadesGuidedHand.svelte";
-  import { spadesDef, type SpadesPracticeAction } from "../../games/spades";
+  import SpadesChoiceExercise from "./SpadesChoiceExercise.svelte";
+  import { spadesDef, type SpadesLearnPathAction } from "../../games/spades";
   import { spadesMatchTarget } from "../../domain/spadesScoring";
-  import { spadesLearningSteps, spadesTakeaway } from "../../lessons/spades/learning";
+  import { spadesLearningSteps, spadesTakeaway, type SpadesLearningTopic } from "../../lessons/spades/learning";
   import { savedSpadesRunSummary } from "./spadesPresentation";
   import type { FeatureServices } from "../featureServices";
   import type { SpadesFeature } from "./spadesFeature";
@@ -14,7 +15,7 @@
   let guidedSeed = $state<number | null>(null);
   $effect(() => { services.onSurfaceChange(guidedSeed !== null || $feature.view === "hand" || learningFixed); });
   function endGuidedHand(tab: "learn" | "play") { guidedSeed = null; learningFixed = false; feature.openTable(tab); }
-  const names: Record<SpadesPracticeAction, string> = { follow: "follow suit", trump: "trump or discard", bid: "bid books", bags: "avoid bags" };
+  const names: Record<SpadesLearnPathAction, string> = { object: "win your books", follow: "follow suit", trump: "trump or discard", bid: "bid books", bags: "avoid bags", score: "score a hand" };
 </script>
 
 {#if guidedSeed !== null}
@@ -28,9 +29,10 @@
   <GameLearning {...services} definition={spadesDef} gameName="Spades" tab={$feature.tab}
     onGuidedPlay={() => { guidedSeed = services.nextSeed(); }}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
-    loadExercise={action => spadesLearningSteps(action as SpadesPracticeAction)}
-    exerciseTitle={action => `Spades practice: ${names[action as SpadesPracticeAction]}`} drillTitle={() => "Spades lesson"} drillEyebrow="Spades"
+    loadExercise={action => ["object", "bid", "score"].includes(action) ? { seed: 0 } : spadesLearningSteps(action as SpadesLearningTopic)}
+    exerciseTitle={action => `Spades practice: ${names[action as SpadesLearnPathAction]}`} drillTitle={() => "Spades lesson"} drillEyebrow="Spades"
     resultMessage={(_clean, action) => spadesTakeaway(action)}>
+    {#snippet customExercise(context)}<SpadesChoiceExercise {context} />{/snippet}
     {#snippet play()}
       <PlayTabPanel table={spadesDef.table} {...spadesDef.playTabConfig}
         footerNote={`Individual bids, nil, bags, and ten-bag penalties score locally. Play to ${spadesMatchTarget}.`}

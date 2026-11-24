@@ -25,6 +25,8 @@ test("nil feedback distinguishes intact nil, first failure and later wins", () =
   const nilBids = { ...bids, You: 0 };
   expect(spadesTrickFeedback([trick("Tutor")], nilBids)).toContain("Nil is still intact");
   expect(spadesTrickFeedback([trick("You")], nilBids)).toContain("You break nil; the nil scores -100.");
+  expect(spadesTrickFeedback([trick("You")], nilBids)).toContain("0 of 1 bid tricks");
+  expect(spadesTrickFeedback([trick("You")], nilBids)).toContain("Nil tricks count as bags, not toward partner's bid.");
   expect(spadesTrickFeedback([trick("You"), trick("You")], nilBids)).toContain("You have already broken nil");
   expect(spadesTrickFeedback([trick("Right")], { ...bids, Right: 0 })).toContain("Right breaks nil");
   expect(spadesTrickFeedback([trick("You")], { ...bids, You: 0, Tutor: 0 })).toContain("bid 0 covered, with 1 bag");

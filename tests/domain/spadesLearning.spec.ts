@@ -13,7 +13,7 @@ import { createGuidedHandFeature } from "../../src/features/guidedHandFeature";
 const card = (id: string): Card => standardDeck().find(card => card.id === id)!;
 
 test("Spades topics have ordered stages, distinct bounded companions and engine-checked trick facts", () => {
-  for (const topic of ["follow", "trump", "bid", "bags"] as const) {
+  for (const topic of ["follow", "trump", "bags"] as const) {
     const steps = spadesLearningSteps(topic);
     expect(steps.map(step => step.teaching?.stage)).toEqual(["worked", "supported", "independent"]);
     expect(steps[0].teaching?.guidance).toContain("Try ");
@@ -30,7 +30,7 @@ test("Spades topics have ordered stages, distinct bounded companions and engine-
         expect(hand.some(card => drillDecision(example, card).result.clean)).toBe(true);
         for (const choice of hand) {
           const table = drillTableCards(example, choice);
-          if (topic === "bid" || !legalCardIds.includes(choice.id)) expect(table).toEqual(tableBeforeChoice);
+          if (!legalCardIds.includes(choice.id)) expect(table).toEqual(tableBeforeChoice);
           else {
             expect(table.map(play => play.seat)).toEqual(["Left", "Tutor", "Right", "You"]);
             const winner = trickWinner(table, "S")!;
@@ -101,6 +101,18 @@ test("scoring recap separates made and missed contracts, nil success/failure and
   expect(success).toMatchObject({ bid: 3, won: 4, extra: 1, contractPoints: 30, bagPenalty: 100, remainingBags: 0, score: 31 });
   expect(success.nilResults[0].score).toBe(100);
   const failure = spadesLearningScore(tricks(["You", "Tutor"]), bids, ["You", "Tutor"], 9);
-  expect(failure).toMatchObject({ contractPoints: -30, extra: 0, remainingBags: 9, score: -130 });
+  expect(failure).toMatchObject({ contractPoints: -30, won: 1, nilTricks: 1, extra: 1, remainingBags: 0, bagPenalty: 100, score: -229 });
   expect(failure.nilResults[0].score).toBe(-100);
+  const history = tricks(["You", "Tutor", "Tutor", "Tutor"]).map((trick, index) => ({ ...trick,
+    cards: (["Left", "Tutor", "Right", "You"] as Seat[]).map((seat, position) => ({ seat,
+      card: card(`${seat === trick.winner ? "A" : position + 2}${["C", "D", "H", "S"][index]}`) })) }));
+  const recap = spadesLearningRecap(history, bids);
+  expect(recap.find(moment => moment.firstBag)?.number).toBe(1);
+  expect(recap.find(moment => moment.targetReached)?.number).toBe(4);
+  const position = { ...spadesLearningPosition(createSpadesSession(8)), bids, playStarted: true,
+    completedTricks: history.slice(0, 3) };
+  expect(spadesGuidance(position).tip).toContain("Barbu still needs 1 bid trick.");
+  expect(spadesGuidance(position).tip).not.toContain("has covered");
+  expect(spadesGuidance(position).tip).toContain("Your winners cannot fulfil that bid");
+  expect(spadesGuidance({ ...position, bids: { ...bids, You: 3, Tutor: 0 } }).tip).toContain("still needs 2 bid tricks");
 });

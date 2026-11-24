@@ -10,7 +10,8 @@ async function openSpades(page: Page) {
 }
 async function mockNative(page: Page) {
   await page.addInitScript(() => Object.assign(window, { isTauri: true, structuredClone: undefined, nativeCommands: [] as string[],
-    __TAURI_INTERNALS__: { invoke: async (command: string) => {
+    __TAURI_INTERNALS__: { invoke: async (command: string, args?: { operation?: string }) => {
+      if (command === "plugin:barbu-purchases|request" && args?.operation === "availability") return { available: false, purchasesEnabled: false };
       (window as unknown as { nativeCommands: string[] }).nativeCommands.push(command);
       throw Error(`Unexpected native command: ${command}`);
     } }

@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { createSpadesSession } from "../../src/domain/spadesSession";
 import { saveSpadesSession } from "../../src/persistence/spadesSave";
-import { spadesLearningSteps } from "../../src/lessons/spades/learning";
+import { spadesChoiceSteps } from "../../src/lessons/spades/choices";
 
 const saveKey = "barbu.savedSpadesRun.v1";
 async function learn(page: Page) {
@@ -93,35 +93,37 @@ for (const size of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { 
       await expect(page.getByRole("button", { name: "Continue Spades", exact: true })).toBeVisible();
       await page.getByRole("tab", { name: "Learn", exact: true }).click();
     } else await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
-    await expect(page.getByLabel("Spades course progress")).toContainText("0 / 5 complete");
+    await expect(page.getByLabel("Spades course progress")).toContainText("0 / 6 complete");
     expect(await page.evaluate(key => localStorage.getItem(key), saveKey)).toBe(saved);
     expect(errors).toEqual([]);
   });
 }
 
-test("Spades lessons share stages, bounded follow-ups, and selection-only bidding", async ({ page }, info) => {
+test("Spades bidding uses full hands, bounded follow-ups and locked numeric answers", async ({ page }, info) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await learn(page);
   await page.getByRole("button", { name: "Try cards: Bid books", exact: true }).click();
-  const steps = spadesLearningSteps("bid");
-  const table = page.getByLabel("Drill card table", { exact: true });
-  const before = await table.innerHTML();
-  await expect(page.getByLabel("Drill decision")).toContainText("Worked example");
-  await page.getByLabel("Your drill hand").getByRole("button", { name: "7 D", exact: true }).click();
+  const steps = spadesChoiceSteps("bid");
+  const hand = page.getByLabel("Your Spades bidding exercise hand", { exact: true });
+  await expect(hand.locator("img")).toHaveCount(13);
+  const before = await hand.innerHTML();
+  await expect(page.getByLabel("Spades exercise choices")).toContainText("Worked example");
+  await page.getByRole("button", { name: "Nil (0)", exact: true }).click();
   await page.getByRole("button", { name: "Check answer", exact: true }).click();
-  expect(await table.innerHTML()).toBe(before);
+  expect(await hand.innerHTML()).toBe(before);
+  await expect(page.getByRole("button", { name: "Nil (0)", exact: true })).toBeDisabled();
   await page.getByRole("button", { name: "Try another example", exact: true }).click();
-  await expect(page.getByLabel("Drill decision")).toContainText("Another example");
+  await expect(page.getByLabel("Spades exercise choices")).toContainText("Another example");
   const choices = [steps[0].followUp!, steps[1], steps[2]];
   for (let i = 0; i < choices.length; i++) {
     const step = choices[i];
-    const card = step.trick.hand.find(card => step.trick.cardOutcomes?.[card.id] === "good")!;
+    const choice = step.options.find(option => option.id === step.correct)!;
     await expect(page.getByRole("button", { name: "Check answer", exact: true })).toBeInViewport({ ratio: 1 });
-    if (i === 1) await expect(page.getByLabel("Drill decision")).toContainText("With guidance");
-    if (i === 2) await expect(page.getByLabel("Drill decision")).toContainText("Your turn");
-    await page.getByLabel("Your drill hand").getByRole("button", { name: `${card.rank} ${card.suit}`, exact: true }).click();
+    if (i === 1) await expect(page.getByLabel("Spades exercise choices")).toContainText("With guidance");
+    if (i === 2) await expect(page.getByLabel("Spades exercise choices")).toContainText("Your turn");
+    await page.getByRole("group", { name: "Spades answer choices", exact: true }).getByRole("button", { name: choice.label, exact: true }).click();
     await page.getByRole("button", { name: "Check answer", exact: true }).click();
-    await expect(page.getByLabel("Spades decision breakdown")).toBeVisible();
+    await expect(page.getByLabel("Spades bid estimate")).toBeVisible();
     if (i === 1) await page.screenshot({ path: info.outputPath("spades-lesson-feedback.png") });
     await page.getByRole("button", { name: i === 2 ? "Finish topic" : "Next decision", exact: true }).click();
   }

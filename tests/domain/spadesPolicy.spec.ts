@@ -77,7 +77,11 @@ test("Spades settles contracts, nil, bags and tied targets using the existing pa
     { bid: 4, partnerBid: 3, tricks: 3, partnerTricks: 3, bags: 0, score: -70, delta: 0, penalty: 0 },
     { bid: 4, partnerBid: 3, tricks: 5, partnerTricks: 3, bags: 9, score: -29, delta: -9, penalty: 100 },
     { bid: 0, partnerBid: 3, tricks: 0, partnerTricks: 3, bags: 0, score: 130, delta: 0, penalty: 0 },
-    { bid: 0, partnerBid: 3, tricks: 1, partnerTricks: 2, bags: 0, score: -70, delta: 0, penalty: 0 },
+    { bid: 0, partnerBid: 3, tricks: 1, partnerTricks: 2, bags: 0, score: -129, delta: 1, penalty: 0 },
+    { bid: 0, partnerBid: 3, tricks: 1, partnerTricks: 2, bags: 9, score: -229, delta: -9, penalty: 100 },
+    { bid: 0, partnerBid: 3, tricks: 2, partnerTricks: 4, bags: 0, score: -67, delta: 3, penalty: 0 },
+    { bid: 0, partnerBid: 3, tricks: 0, partnerTricks: 2, bags: 9, score: 70, delta: 0, penalty: 0 },
+    { bid: 3, partnerBid: 0, tricks: 2, partnerTricks: 1, bags: 0, score: -129, delta: 1, penalty: 0 },
     { bid: 0, partnerBid: 0, tricks: 1, partnerTricks: 0, bags: 0, score: 1, delta: 1, penalty: 0 }
   ]) {
     const result = spadesScoreForSide({ You: fixture.tricks, Tutor: fixture.partnerTricks, Right: 0, Left: 0 },
@@ -87,4 +91,29 @@ test("Spades settles contracts, nil, bags and tied targets using the existing pa
   expect(spadesMatchComplete({ playerSide: 499, opponentSide: 400 })).toBe(false);
   expect(spadesMatchComplete({ playerSide: 500, opponentSide: 400 })).toBe(true);
   expect(spadesMatchComplete({ playerSide: 500, opponentSide: 500 })).toBe(false);
+});
+
+test("nil tactics stop after failure for self, partner and opponents at every seat", () => {
+  for (let rotation = 0; rotation < 4; rotation++) {
+    const seat = (index: number) => seats[(index + rotation) % 4];
+    const position = (bids: number[], table: string[], pastWinner: number | null, hand: string[]) => {
+      const hands: Card[][] = [[], [], [], []];
+      hands[rotation] = hand.map(card);
+      return { ...startSpadesBiddingHand(8), hands, currentPlayerIndex: rotation, currentPlayer: seat(0),
+        spadesBids: Object.fromEntries(bids.map((bid, index) => [seat(index), bid])) as Record<Seat, number>,
+        currentTrick: table.map((id, index) => ({ seat: seat(index + 1), card: card(id) })),
+        completedTricks: pastWinner === null ? [] : [{ winner: seat(pastWinner), winnerIndex: (pastWinner + rotation) % 4,
+          cards: [], penalty: 1, outcome: "won_clean_trick" as const }] };
+    };
+    expect(chooseBrowserOpponentCardForState(position([0, 4, 4, 4], ["KC", "3C", "4C"], null, ["2C", "AC"]))?.id).toBe("2C");
+    expect(chooseBrowserOpponentCardForState(position([0, 4, 4, 4], ["KC", "3C", "4C"], 0, ["2C", "AC"]))?.id).toBe("AC");
+    expect(chooseBrowserOpponentCardForState(position([3, 4, 0, 4], ["2C", "KC", "3C"], null, ["4C", "AC"]))?.id).toBe("AC");
+    expect(chooseBrowserOpponentCardForState(position([3, 4, 0, 4], ["2C", "KC", "3C"], 2, ["4C", "AC"]))?.id).toBe("4C");
+    expect(chooseBrowserOpponentCardForState(position([3, 0, 3, 4], ["KC", "3C", "4C"], null, ["2C", "AC"]))?.id).toBe("2C");
+    expect(chooseBrowserOpponentCardForState(position([3, 0, 3, 4], ["KC", "3C", "4C"], 1, ["2C", "AC"]))?.id).toBe("AC");
+    const covered = position([1, 4, 0, 4], [], 0, ["2C", "AC"]);
+    expect(chooseBrowserOpponentCardForState(covered)?.id).toBe("AC");
+    expect(chooseBrowserOpponentCardForState({ ...covered, completedTricks: [...covered.completedTricks,
+      { winner: seat(2), winnerIndex: (rotation + 2) % 4, cards: [], penalty: 1, outcome: "won_clean_trick" }] })?.id).toBe("2C");
+  }
 });

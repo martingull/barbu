@@ -2,7 +2,7 @@ import type { GameDefinition } from "./gameRegistry";
 import { createGameTableDefinition, gameRulesCopy } from "./tableFactory";
 
 export type SpadesLearnPathAction = "object" | SpadesPracticeAction;
-export type SpadesPracticeAction = "follow" | "trump" | "bid" | "bags";
+export type SpadesPracticeAction = "follow" | "trump" | "bid" | "bags" | "score";
 
 export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAction> = {
   table: createGameTableDefinition({
@@ -22,7 +22,7 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
       pathTitle: "Learn the Spades table",
       progressAriaLabel: "Spades course progress",
       nextSummary: "Start by seeing your hand, estimating a bid, then playing to the partnership target.",
-      completeSummary: "You have tried the first Spades habits: follow suit, count spades, bid books, protect nil, and watch bags.",
+      completeSummary: "You have tried partnership books, following suit, trump, bidding, nil, bags and hand scoring.",
     },
     tabIntros: {
       learn: {
@@ -66,7 +66,7 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
       id: "spades-follow-suit",
       step: "Rule",
       title: "Follow suit first",
-      summary: "Spades only become available when you cannot follow the led suit.",
+      summary: "Follow the led suit when possible; when void, you may trump or discard.",
       action: "follow"
     },
     {
@@ -89,6 +89,13 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
       title: "Avoid extra bags",
       summary: "Extra tricks still score, but they become bags you should track.",
       action: "bags"
+    },
+    {
+      id: "spades-scoring",
+      step: "Scoring",
+      title: "Score a hand",
+      summary: "Separate contract points, nil, bags and the ten-bag penalty.",
+      action: "score"
     }
   ],
   practiceGroups: [
@@ -99,6 +106,10 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
       title: "Practice one Spades habit.",
       layout: "entry-grid",
       entries: [
+        {
+          id: "books-and-partners", label: "Books", title: "Win your books",
+          summary: "Identify the winner, the partnership and who leads next.", action: "object", group: "fixed-drills"
+        },
         {
           id: "follow-suit",
           label: "Rule",
@@ -119,9 +130,13 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
           id: "bid-books",
           label: "Bidding",
           title: "Bid books",
-          summary: "Identify the cards that count toward a bid and the hands that make nil risky.",
+          summary: "Read three full thirteen-card hands and choose a starter bid or nil.",
           action: "bid",
           group: "fixed-drills"
+        },
+        {
+          id: "score-hand", label: "Scoring", title: "Score a hand",
+          summary: "Calculate made bids, failed nil and a ten-bag penalty.", action: "score", group: "fixed-drills"
         },
         {
           id: "bags",

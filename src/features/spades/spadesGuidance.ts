@@ -1,6 +1,6 @@
 import { suggestedSpadesBidForCards } from "../../domain/spadesBidding";
 import { spadesHaveBeenBroken } from "../../domain/trickTakingHand";
-import { spadesSideBid, spadesPlayerSideSeats } from "../../domain/spadesScoring";
+import { spadesBooksForSide, spadesTrickCounts, spadesPlayerSideSeats } from "../../domain/spadesScoring";
 import { spadesLearningTrick, type SpadesLearningPosition } from "../../domain/spadesLearning";
 import { trickWinner } from "../../domain/trickTakingRules";
 import type { CompletedHandTrick } from "../../domain/types";
@@ -26,14 +26,17 @@ export function spadesGuidance(position: SpadesLearningPosition) {
     : "You lead. Spades are not broken; lead a different suit while you still have one.";
   const ownTricks = completedTricks.filter(trick => trick.winner === "You").length;
   const partnerTricks = completedTricks.filter(trick => trick.winner === "Tutor").length;
-  const target = spadesSideBid(bids, spadesPlayerSideSeats);
+  const books = spadesBooksForSide(spadesTrickCounts(completedTricks), bids, spadesPlayerSideSeats);
+  const target = books.bid;
+  const needed = `${target - books.won} ${target - books.won === 1 ? "bid trick" : "bid tricks"}`;
   const winner = trickWinner(currentTrick, "S");
   const tip = bids.You === 0 && ownTricks === 0 ? "Your nil is intact. Follow suit, but look for a card that will not win. Later players may change the winner."
     : bids.Tutor === 0 && partnerTricks === 0 ? "Barbu's nil is intact. Cover partner's winning card when you legally can; protecting nil can be worth an extra bag."
-    : ownTricks + partnerTricks >= target ? `Your side has covered its bid of ${target}. Further tricks add bags; avoid unnecessary winners. Ten accumulated bags cost 100 points.`
+    : books.won >= target ? `Your side has covered its bid of ${target}. Further tricks add bags; avoid unnecessary winners. Ten accumulated bags cost 100 points.`
+    : bids.You === 0 && ownTricks > 0 ? `Barbu still needs ${needed}. Your winners cannot fulfil that bid; keep partner's winning card ahead when possible.`
     : winner?.seat === "Tutor" ? "Barbu is currently winning. Saving your high card may leave your side another winner later; cards still to come can change this trick."
-    : `Your side still needs ${target - ownTricks - partnerTricks} tricks. Consider a low winning card, keeping stronger cards for later. Winning is a tactic, not a requirement.`;
-  return { rule, tip: `${bids.You === 0 && ownTricks > 0 ? "Your nil has failed (-100); now help the partnership. " : ""}${tip}` };
+    : `Your side still needs ${needed}. Consider a low winning card, keeping stronger cards for later. Winning is a tactic, not a requirement.`;
+  return { rule, tip: `${bids.You === 0 && ownTricks > 0 ? "Your nil has failed (-100); your tricks are bags, not books toward Barbu's bid. " : bids.Tutor === 0 && partnerTricks > 0 ? "Barbu's nil has failed; those tricks are bags, not books toward your bid. " : ""}${tip}` };
 }
 export function spadesGuidedReview(tricks: CompletedHandTrick[], bids: SpadesBidState) {
   const trick = tricks.at(-1);

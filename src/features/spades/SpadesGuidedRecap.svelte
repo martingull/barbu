@@ -19,7 +19,8 @@
   <h3>{side.label}: {formatSignedScore(score.score)}</h3>
   <FeedbackBreakdown breakdown={{ label: `${side.label} scoring`, rows: [
     { label: "Bids", value: side.seats.map(seat => `${scoreSeatLabel(seat)} ${session.bids[seat] === 0 ? "nil" : session.bids[seat]}`).join(" + ") },
-    { label: "Books / bid", value: `${score.won} / ${score.bid}` },
+    { label: "Bid books / target", value: `${score.won} / ${score.bid}` },
+    ...(score.nilTricks ? [{ label: "Nil tricks", value: `${score.nilTricks} bags; excluded from the bid books` }] : []),
     { label: score.won >= score.bid ? "Bid made" : "Bid missed", value: `${formatSignedScore(score.contractPoints)} points` },
     { label: "Extra books", value: `${score.extra} ${score.extra === 1 ? "bag" : "bags"} = +${score.extra} ${score.extra === 1 ? "point" : "points"}` },
     ...score.nilResults.map(nil => ({ label: `${scoreSeatLabel(nil.seat)} nil`, value: `${nil.tricks} tricks: ${formatSignedScore(nil.score)}` })),

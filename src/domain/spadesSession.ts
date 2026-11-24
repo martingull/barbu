@@ -3,6 +3,7 @@ import { addSpadesMatchResult, spadesHandResultFor, spadesMatchComplete, type Sp
 import { spadesClampBid, suggestedSpadesBidsForHand, type SpadesBidState } from "./spadesBidding";
 import { spadesHandEngine } from "./handEngine";
 import { transitionReviewedHand, type ReviewedHandEvent } from "./reviewedHand";
+import { spadesDealerForHand } from "./trickTakingHand";
 
 export type SpadesSession = {
   scores: SpadesScoreState;
@@ -18,8 +19,8 @@ export type SpadesSessionEvent = ReviewedHandEvent
   | { type: "set-bid"; bid: number } | { type: "toggle-bids" } | { type: "start-play" }
   | { type: "replay" } | { type: "next-hand"; seed: number };
 
-export function createSpadesSession(seed: number): SpadesSession {
-  const fullHand = spadesHandEngine.startBidding(seed);
+export function createSpadesSession(seed: number, dealer?: number): SpadesSession {
+  const fullHand = spadesHandEngine.startBidding(seed, dealer);
   return { scores: { playerSide: 0, opponentSide: 0 }, bags: { playerSide: 0, opponentSide: 0 },
     bids: suggestedSpadesBidsForHand(fullHand), results: [], fullHand, fullHandReviewTrickCount: 0,
     playStarted: false, openingPanel: "table" };
@@ -51,7 +52,7 @@ export function transitionSpadesSession(session: SpadesSession, event: SpadesSes
     case "next-hand": {
       if (session.fullHand.status !== "complete" || spadesSessionComplete(session)) return session;
       const settlement = spadesSessionSettlement(session);
-      return { ...createSpadesSession(event.seed), scores: settlement.scores, bags: settlement.bags,
+      return { ...createSpadesSession(event.seed, (spadesDealerForHand(session.fullHand) + 1) % 4), scores: settlement.scores, bags: settlement.bags,
         results: [...session.results, settlement.result!] };
     }
   }
