@@ -41,8 +41,12 @@ Google Play production is live. The first production release is:
 - Version: **1.0.6**, Android version code **1000007**.
 - Release: **1.0.6 - First production release**, promoting the existing closed-test bundle.
 
-The latest recorded Publisher API audit, **November 23, 2026**, found
-**1.0.9 / 1000013 published** and **1.0.10 / 1000014 in production review**.
+The English listing rename to **Learn Card Games by Barbu** was submitted on November 24.
+This changes store presentation, not the in-game Barbu name or package identifier.
+See the [listing update status](docs/marketing/store-discovery.md).
+
+The latest recorded Publisher API audit, **November 24, 2026**, found
+**1.0.10 / 1000014 published** in production and closed testing.
 The earlier November 19 audit and original bundle verification are retained in
 the [release runbook](docs/google-play-release.md).
 

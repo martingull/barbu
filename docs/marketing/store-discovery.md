@@ -2,8 +2,10 @@
 
 ## Current Decision
 
-Keep **Barbu: Learn Card Games**. Make the learning offer concrete before
-considering another name change. Lead with Gin Rummy, Hearts and Whist, while
+Use **Learn Card Games by Barbu**, as requested by Martin. This 25-character
+English listing title leads with the learning offer while keeping Barbu as the
+brand. Keep the in-game name, package identifier and existing video branding
+unchanged. Lead with Gin Rummy, Hearts and Whist in the description, while
 retaining the wider catalog and the optional Canasta subscription distinction.
 
 The [single text-only draft](../store-assets/google-play/listing-premium-en-GB.draft.json)
@@ -16,9 +18,20 @@ in-person play. It names the games naturally, explains English-language lessons,
 and does not imply multiplayer or universal bidding conventions. Card Counting
 is described as a learning activity, not a second Play mode.
 
-This is **prepared, not uploaded**. On November 23, 2026, the Publisher API
-reported production 1.0.10 (1000014) in review and 1.0.9 (1000013) published.
-Do not cancel or resubmit that review for this experiment.
+The description refresh is **prepared, not uploaded**. The title-only rename is
+separate from that refresh; do not upload the whole draft merely to rename the
+listing. On November 24, 2026, the Publisher API confirmed production and closed
+testing 1.0.10 (1000014) published, with the English title still
+**Barbu: Learn Card Games**. The November 23 audit had found that release in review.
+
+The title-only rename to **Learn Card Games by Barbu** was validated and submitted
+through the Publisher API on November 24. Google required automatic review;
+the commit explicitly used `ERROR_IF_IN_REVIEW` so it could not cancel an active
+review. Validation confirmed that only `en-GB.title` changed: descriptions, video,
+other locales, app details and release tracks were preserved. Public visibility
+has not yet been verified; the published snapshot remains unchanged. The private
+backup and receipt are under the ignored
+`release/google-play/listing-title-2026-11-24T15-06-52-733Z/` directory.
 
 ## Public Search Baseline
 
@@ -101,6 +114,12 @@ Do not infer acquisitions or retention from the public download band or Shorts
 views. Do not add in-game tracking just to fill these blanks.
 
 ## Controlled Listing Update
+
+For a title-only change, patch only the English `title` field and preserve the
+live descriptions and video, even when they differ from the broader text draft.
+Keep `listing-en-GB.json` as the last published snapshot until publication has
+been verified. Saving a change to Console is not proof it has been reviewed or
+is publicly visible.
 
 1. Obtain the Console baseline and confirm the active review has finished.
 2. Read and privately back up current listings, images, app details and tracks.
