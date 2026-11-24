@@ -6,7 +6,7 @@ const spadesFollowSuitDrillStep: DrillStep = {
   title: "Follow suit",
   trick: {
     title: "Follow before trump",
-    beforeResult: "Left led clubs. You still have clubs, even though you also hold spades.",
+    beforeResult: "Neither partner bid nil. Left led clubs and Barbu is winning with K♣. You still have clubs; follow suit and save your ace.",
     afterResult: "In Spades, fixed trump does not override the follow-suit rule.",
     emptyExplanation: "Clubs were led. Choose a legal club before thinking about trump.",
     legalCardIds: ["3C", "AC"],
@@ -23,8 +23,8 @@ const spadesFollowSuitDrillStep: DrillStep = {
     tableAfterChoice: [],
     pendingBySeat: { You: "follow clubs" },
     playedExplanations: {
-      "3C": "3C is good. You follow clubs and avoid spending a spade illegally.",
-      AC: "AC follows suit and wins, but first notice that clubs are the legal suit.",
+      "3C": "3C follows clubs and leaves the book with your non-nil partner. Keep the ace for later.",
+      AC: "AC is legal, but spends an ace to overtake your non-nil partner without adding a partnership book.",
       "8S": "8S is illegal while you still have clubs."
     },
     cardOutcomes: {
@@ -43,7 +43,7 @@ const spadesFollowSuitDuckDrillStep: DrillStep = {
   title: "Follow suit",
   trick: {
     title: "Follow low when partner is safe",
-    beforeResult: "Barbu is your partner and is winning with KD. Diamonds were led, and you have diamonds.",
+    beforeResult: "Neither partner bid nil. Barbu is winning with K♦. Diamonds were led, and you have diamonds.",
     afterResult: "Following suit can still preserve strength when partner already controls the trick.",
     emptyExplanation: "Diamonds were led. Follow diamonds without overtaking partner.",
     legalCardIds: ["4D", "AD"],
@@ -156,7 +156,7 @@ const spadesTrumpPreserveDrillStep: DrillStep = {
   title: "Trump or discard",
   trick: {
     title: "Discard when partner is winning",
-    beforeResult: "Clubs were led. You are void in clubs, and Barbu is already winning with AC.",
+    beforeResult: "Neither partner bid nil. Clubs were led. You are void in clubs, and Barbu is already winning with A♣.",
     afterResult: "When partner has the book, throwing a side card can preserve spade control.",
     emptyExplanation: "You are void in clubs. Decide whether this trick needs a spade.",
     legalCardIds: ["5S", "JS", "8D"],
@@ -234,7 +234,7 @@ const spadesBagsDuckDrillStep: DrillStep = {
   title: "Avoid bags",
   trick: {
     title: "Duck after making the bid",
-    beforeResult: "Your side bid five and already has five books. Clubs were led, and Right is winning.",
+    beforeResult: "Neither partner bid nil. Your side bid five and has five books. Clubs were led; Right is winning. Avoid an extra bag.",
     afterResult: "After making the bid, another unnecessary book becomes a bag.",
     emptyExplanation: "Follow clubs without creating an extra bag if you can.",
     legalCardIds: ["4C", "AC"],
@@ -271,7 +271,7 @@ const spadesBagsDiscardDrillStep: DrillStep = {
   title: "Avoid bags",
   trick: {
     title: "Throw away instead of trumping",
-    beforeResult: "Your side has made its bid. You are void in diamonds, and Left is winning.",
+    beforeResult: "Neither partner bid nil and your side has made its bid. You are void in diamonds; Left is winning. Avoid an extra bag.",
     afterResult: "When the contract is safe, discarding can avoid another bag.",
     emptyExplanation: "You are void in diamonds. Avoid taking an extra book.",
     legalCardIds: ["6S", "JS", "4H"],
@@ -310,7 +310,7 @@ const spadesBagsProtectNilDrillStep: DrillStep = {
   title: "Avoid bags",
   trick: {
     title: "Bag pressure versus nil protection",
-    beforeResult: "Barbu bid nil and is currently winning with 9H. You can overtake in hearts.",
+    beforeResult: "Barbu's nil is still intact. Your side already has its positive bid, but Barbu's 9♥ is winning. Overtake in hearts to protect nil.",
     afterResult: "Sometimes you accept a possible extra book to protect partner's nil bonus.",
     emptyExplanation: "Hearts were led. Protect Barbu's nil if you can.",
     legalCardIds: ["KH", "4H"],

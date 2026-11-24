@@ -4,6 +4,8 @@ import { chooseBarbuCard } from "./barbuPolicy";
 import { barbuTrickPoints, isBarbuTrickContract, type BarbuTrickContract } from "./barbuRules";
 import { originalSpadesCards, spadesBidFromId, suggestedSpadesBidForCards } from "./spadesBidding";
 import { spadesBooksForSide, spadesTrickCounts } from "./spadesScoring";
+import { legalSpadesCards, spadesHaveBeenBroken } from "./spadesRules";
+export { spadesHaveBeenBroken } from "./spadesRules";
 import { heartsPoints, legalHeartsCards, heartsHaveBeenBroken } from "./heartsRules";
 import { chooseWhistCard, whistPositionFromHand } from "./whistPolicy";
 import { bridgeBoardConditions } from "./bridgeBoard";
@@ -949,26 +951,11 @@ function legalCardsForState(state: FullHandState, playerIndex: number) {
   const basicLegal = legalCards(state.hands[playerIndex], ledSuit(state));
 
   if (state.contract === "Spades") {
-    return legalSpadesCardsForState(state, basicLegal);
+    return legalSpadesCards(state.hands[playerIndex], ledSuit(state), spadesHaveBeenBroken(state));
   }
 
   if (state.contract !== "Hearts" || !basicLegal.length) return basicLegal;
   return legalHeartsCards(state.hands[playerIndex], ledSuit(state), !state.completedTricks.length, heartsHaveBeenBroken(state));
-}
-
-function legalSpadesCardsForState(state: FullHandState, basicLegal: Card[]) {
-  if (!basicLegal.length || state.currentTrick.length || spadesHaveBeenBroken(state)) {
-    return basicLegal;
-  }
-
-  const nonSpades = basicLegal.filter((card) => card.suit !== "S");
-  return nonSpades.length ? nonSpades : basicLegal;
-}
-
-export function spadesHaveBeenBroken(state: Pick<FullHandState, "completedTricks" | "currentTrick">) {
-  return [...state.completedTricks.flatMap((trick) => trick.cards), ...state.currentTrick].some(
-    (played) => played.card.suit === "S"
-  );
 }
 
 function playerWithCard(hands: Card[][], cardId: string) {

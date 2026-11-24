@@ -15,7 +15,7 @@
   let guidedSeed = $state<number | null>(null);
   $effect(() => { services.onSurfaceChange(guidedSeed !== null || $feature.view === "hand" || learningFixed); });
   function endGuidedHand(tab: "learn" | "play") { guidedSeed = null; learningFixed = false; feature.openTable(tab); }
-  const names: Record<SpadesLearnPathAction, string> = { object: "win your books", follow: "follow suit", trump: "trump or discard", bid: "bid books", bags: "avoid bags", score: "score a hand" };
+  const names: Record<SpadesLearnPathAction, string> = { object: "win your books", follow: "follow suit", trump: "trump or discard", bid: "bid books", bags: "avoid bags", score: "score a hand", lead: "lead spades legally", nil: "play nil", settle: "nil and set bids" };
 </script>
 
 {#if guidedSeed !== null}
@@ -29,7 +29,7 @@
   <GameLearning {...services} definition={spadesDef} gameName="Spades" tab={$feature.tab}
     onGuidedPlay={() => { guidedSeed = services.nextSeed(); }}
     onTab={tab => feature.openTable(tab === "play" ? "play" : "learn")} onSurfaceChange={fixed => { learningFixed = fixed; }}
-    loadExercise={action => ["object", "bid", "score"].includes(action) ? { seed: 0 } : spadesLearningSteps(action as SpadesLearningTopic)}
+    loadExercise={action => ["object", "bid", "score", "settle"].includes(action) ? { seed: 0 } : spadesLearningSteps(action as SpadesLearningTopic)}
     exerciseTitle={action => `Spades practice: ${names[action as SpadesLearnPathAction]}`} drillTitle={() => "Spades lesson"} drillEyebrow="Spades"
     resultMessage={(_clean, action) => spadesTakeaway(action)}>
     {#snippet customExercise(context)}<SpadesChoiceExercise {context} />{/snippet}

@@ -495,11 +495,11 @@ export const referenceCatalog: GameReference[] = [
         id: "app-learning",
         title: "Learning Path",
         body:
-          "Identify a book's winner, partnership and next leader, then estimate bids from thirteen-card hands. Practise following suit, trumping, protecting nil and avoiding bags. Finish by scoring a hand, including failed nil and the ten-bag penalty. Each topic has three short decisions, with a fresh example after a mistake, before a guided hand or full match.",
+          "Identify a book's winner, partnership and next leader. Practise following suit, trumping and choosing legal spade leads, then estimate bids from thirteen-card hands. Learn to play your own nil, protect partner and avoid bags. Score made and missed bids, successful and failed nil, and the ten-bag penalty. Each topic has three short decisions, with a fresh example after a mistake, before a guided hand or full match.",
         facts: [
           { label: "First step", value: "Concept: win your books" },
           { label: "Practice", value: "Three short scripted decisions per topic" },
-          { label: "Topics", value: "Six, including bidding and scoring" },
+          { label: "Topics", value: "Nine, including nil play, legal leads and scoring" },
           { label: "Play", value: "Partnership match to 500 points" }
         ]
       }

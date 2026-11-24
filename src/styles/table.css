@@ -293,6 +293,10 @@
   justify-content: flex-start;
 }
 
+.app-shell.fixed-play-screen .table-play-surface.flow-play.compact-play.table-hidden.learning-copy-surface .table-play-panel .full-hand-cards {
+  margin-top: auto;
+}
+
 .learning-copy-surface .play-board-region { flex-basis: 160px; }
 
 .flow-play .full-hand-summary-row.learning-drill-summary {

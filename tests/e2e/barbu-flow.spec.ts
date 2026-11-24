@@ -1746,7 +1746,7 @@ test("Spades learn path opens course content before scripted practice", async ({
   await page.getByRole("button", { name: /Open Spades/ }).click();
   await page.getByRole("tab", { name: "Learn" }).click();
 
-  await expect(page.getByLabel("Spades course progress")).toContainText("0 / 6 complete");
+  await expect(page.getByLabel("Spades course progress")).toContainText("0 / 9 complete");
   await expect(page.getByLabel("Continue learning")).toContainText("Win your books");
 
   await page.locator('[data-skill="spades-object"] .lesson-topic').click();

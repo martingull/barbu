@@ -42,12 +42,24 @@ deuces-high packs and alternative bag/failed-nil conventions are not included.
 
 ## Learning And Computer Play
 
-Six topics each have three worked/supported/independent decisions and one fresh
-companion per missed decision: foundations, bidding, following suit, trumping,
-nil/bags tactics and scoring. Foundations ask for the winning seat, partnership
+Nine topics each have three worked/supported/independent decisions and one fresh
+companion per missed decision: foundations, following suit, trumping, legal leads,
+bidding, personal nil, bags, hand scoring, and nil/set settlement. There are
+27 base decisions plus 27 bounded follow-ups. Foundations ask for the winning seat, partnership
 and next leader. Bid questions show thirteen actual cards and use the same
-estimate as Play. Scoring questions call the live scorer. The original five
-lesson keys are preserved; `spades-scoring` adds the final topic.
+estimate as Play. Scoring questions call the live scorer, including ordinary set
+contracts and successful nil with both made and missed partner bids. All six
+existing lesson keys remain. New topics use `spades-leading`, `spades-nil` and
+`spades-settlement`; no prior learning evidence or match saves are reset.
+
+Lead questions use `legalSpadesCards`, also used by normal hands. They cover
+unbroken spades, an earlier trump breaking spades, and holding only spades.
+These are hand-only selection questions with no empty board, not completed tricks: no scripted future cards
+are displayed or included in review. All legal alternatives are credited when
+the prompt asks only for permission, rather than a specific tactical plan.
+Nil decisions cover shedding the higher loser, discarding a dangerous ace and
+leaving partner's needed winner ahead after personal nil fails. Existing tactical
+prompts explicitly state when neither partner bid nil or a protected nil is intact.
 
 Guided hands use the normal session without writing a match save. Public bids
 and trick history inform coaching and opponents. Nil-specific ducking, covering
@@ -60,6 +72,7 @@ heuristic, not an expert solver or a model of every club signalling convention.
 
 - `spadesBidding.ts`: one estimate shared by Play and bidding exercises.
 - `spadesScoring.ts`: contract books, nil, bag penalties and match completion.
+- `spadesRules.ts`: shared lead/follow legality and detection of broken spades.
 - `trickTakingHand.ts`: shared hand mechanics, Spades legality and policy.
 - `spadesSession.ts`: bid locking, review, settlement and dealer rotation.
 - `features/spades`: shared table/learning surfaces and presentation adapters.

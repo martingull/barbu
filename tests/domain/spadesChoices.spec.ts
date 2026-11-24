@@ -9,14 +9,14 @@ import { spadesDef } from "../../src/games/spades";
 import type { DrillResult } from "../../src/lessons/drillDecision";
 import type { DecisionReview } from "../../src/lessons/decisionReview";
 
-test("Spades has six distinct learning topics and preserves the five existing progress keys", () => {
-  expect(spadesDef.learnSteps.map(step => step.id)).toEqual(["spades-object", "spades-follow-suit", "spades-trump", "spades-books", "spades-bags", "spades-scoring"]);
-  expect(new Set(spadesCourses.map(course => course.practiceTarget.kind === "practice" && course.practiceTarget.action)).size).toBe(6);
+test("Spades has nine distinct learning topics and preserves the existing progress keys", () => {
+  expect(spadesDef.learnSteps.map(step => step.id)).toEqual(["spades-object", "spades-follow-suit", "spades-trump", "spades-leading", "spades-books", "spades-nil", "spades-bags", "spades-scoring", "spades-settlement"]);
+  expect(new Set(spadesCourses.map(course => course.practiceTarget.kind === "practice" && course.practiceTarget.action)).size).toBe(9);
   expect(spadesCourses.map(course => course.pathStepId)).toEqual(spadesDef.learnSteps.map(step => step.id));
 });
 
 test("foundation, full-hand bidding and scoring questions use the live engines with three bounded companions", () => {
-  for (const topic of ["object", "bid", "score"] as const) {
+  for (const topic of ["object", "bid", "score", "settle"] as const) {
     const steps = spadesChoiceSteps(topic);
     expect(steps.map(step => step.teaching?.stage)).toEqual(["worked", "supported", "independent"]);
     expect(steps[0].teaching?.guidance).toBeTruthy();
@@ -50,6 +50,8 @@ test("foundation, full-hand bidding and scoring questions use the live engines w
   }
   expect(spadesChoiceSteps("bid").map(step => step.correct)).toEqual(["4", "0", "6"]);
   expect(spadesChoiceSteps("score").map(step => step.correct)).toEqual(["51", "-139", "-58"]);
+  expect(spadesChoiceSteps("settle").map(step => step.correct)).toEqual(["-50", "140", "60"]);
+  expect(spadesChoiceSteps("settle").map(step => step.followUp!.correct)).toEqual(["-60", "131", "70"]);
 });
 
 test("a missed numeric answer is locked, inserts one fresh example and keeps original choices in review", () => {

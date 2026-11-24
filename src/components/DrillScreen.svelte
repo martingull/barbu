@@ -23,8 +23,8 @@
   let last = $derived(index >= total - 1);
 </script>
 
-<TablePlaySurface mode="play" flowLayout stableFeedback={!!coach} ariaLabel={title} {title} {eyebrow}
-  surfaceClassName={customTable ? "learning-play-surface domino-play-surface" : "learning-play-surface"}
+<TablePlaySurface mode="play" flowLayout stableFeedback={!!coach} showTable={step.showTable ?? true} ariaLabel={title} {title} {eyebrow}
+  surfaceClassName={customTable ? "learning-play-surface domino-play-surface" : step.showTable === false ? "learning-play-surface learning-copy-surface" : "learning-play-surface"}
   statusLabel={step.contract} statusValue={`Decision ${checked ? results.length : results.length + 1} of ${total}`}
   tableAriaLabel="Drill card table" pendingBySeat={trick.pendingBySeat} {seatLabels}
   useCustomTable={!!customTable} tableCards={customTable ? [] : tableCards} panelAriaLabel="Drill decision" {onBack}>

@@ -6,8 +6,10 @@ import { scoreSeatLabel } from "../../presentation/scorePresentation";
 import { drillTableCards, type DrillStep } from "../drillDecision";
 import { teachingStages } from "../learningPresentation";
 import { spadesFollowSuitDrillPool, spadesTrumpOrDiscardDrillPool, spadesAvoidBagsDrillPool } from "./exercises";
+import { spadesTacticSteps, type SpadesTacticTopic } from "./tactics";
 
-export type SpadesLearningTopic = "follow" | "trump" | "bags";
+export type SpadesLearningTopic = "follow" | "trump" | "bags" | SpadesTacticTopic;
+type ExistingTopic = Exclude<SpadesLearningTopic, SpadesTacticTopic>;
 const pools = { follow: spadesFollowSuitDrillPool, trump: spadesTrumpOrDiscardDrillPool, bags: spadesAvoidBagsDrillPool };
 const principles = {
   follow: "Follow the led suit. If partner is winning, consider saving your high card; if an opponent is winning, check whether your side needs the trick.",
@@ -15,12 +17,15 @@ const principles = {
   bid: "Count likely winners, not every high card. High spades and protected kings matter; nil means taking no tricks.",
   object: "Each trick is one book for the winning partnership. The winner leads next; spades are always trump.",
   score: "Score the bid, bags and nil separately. Failed-nil tricks are bags, not books toward partner's bid. Ten accumulated bags cost 100 points.",
+  settle: "Score nil separately: +100 for no tricks, even if partner is set. A missed positive bid loses ten points per bid book.",
+  nil: "Avoid every trick while nil is intact. Shed dangerous winners when void. After failure, your tricks are bags; leave partner's needed books with partner.",
+  lead: "Before spades break, lead another suit if you have one. After a spade is played, or when only spades remain, a spade lead is legal.",
   bags: "Once the partnership bid is covered, extra tricks become bags. Protecting partner's intact nil can be worth an extra trick."
 };
 export const spadesTakeaway = (action: string) => principles[action as keyof typeof principles] ?? principles.follow;
 
 type Companion = { hand: string; table: string; good: string; prompt: string; explanation: string };
-const companions: Record<SpadesLearningTopic, Companion[]> = {
+const companions: Record<ExistingTopic, Companion[]> = {
   follow: [
     { hand: "2D AD 7S", table: "9D KD 5D", good: "2D", prompt: "Diamonds were led. Barbu, your non-nil partner, is winning. Follow suit and save strength.", explanation: "2♦ follows suit and leaves Barbu's K♦ winning. A♦ is legal but spends another winner; 7♠ cannot be played while you have diamonds." },
     { hand: "3C AC JS", table: "7C KC 4C", good: "3C", prompt: "Barbu is winning with K♣ and did not bid nil. Follow clubs without spending another winner.", explanation: "3♣ keeps the trick with Barbu. A♣ overtakes partner without adding a partnership trick, while J♠ is illegal." },
@@ -42,7 +47,7 @@ const cards = (ids: string) => ids ? ids.split(" ").map(id => {
   if (!card) throw Error(`Unknown teaching card ${id}`);
   return card;
 }) : [];
-function companionStep(spec: Companion, topic: SpadesLearningTopic, index: number): DrillStep {
+function companionStep(spec: Companion, topic: ExistingTopic, index: number): DrillStep {
   const hand = cards(spec.hand);
   const table = cards(spec.table).map((card, i) => ({ card, seat: (["Left", "Tutor", "Right"] as Seat[])[i] }));
   return { scenarioId: `spades-${topic}-follow-up-${index}`, contract: "Spades", title: pools[topic][index].title,
@@ -62,17 +67,21 @@ function withBreakdown(step: DrillStep): DrillStep {
       : winner ? [{ label: "Winner", value: `${scoreSeatLabel(winner.seat)}: ${formatCardLabel(winner.card)}` },
         { label: "Why", value: winner.card.suit === "S" ? "Highest spade (trump)" : "Highest card of the led suit" },
         { label: "Book for", value: winner.seat === "You" || winner.seat === "Tutor" ? "You + Barbu" : "Left + Right" }]
-      : [{ label: "Chosen card", value: formatCardLabel(card) }];
+      : [{ label: "Chosen lead", value: formatCardLabel(card) },
+        { label: "Legal leads", value: formatCardList(step.trick.hand.filter(c => step.trick.legalCardIds.includes(c.id))) },
+        { label: "Later play", value: "Not shown; this is a lead decision, not a completed trick" }];
     return [card.id, { label: "Spades decision breakdown", rows }];
   })) };
 }
 export function spadesLearningSteps(topic: SpadesLearningTopic): DrillStep[] {
-  return pools[topic].map((original, index) => {
+  const source = topic === "nil" || topic === "lead" ? spadesTacticSteps(topic)
+    : pools[topic].map((step, index) => ({ ...step, followUp: companionStep(companions[topic][index], topic, index) }));
+  return source.map((original, index) => {
     const step = withBreakdown(original);
     const answer = step.trick.hand.find(card => step.trick.cardOutcomes?.[card.id] === "good")!;
     return { ...step, teaching: { stage: teachingStages[index], guidance: index === 0
       ? `Try ${formatCardLabel(answer)}. ${step.trick.playedExplanations[answer.id]}`
       : index === 1 ? principles[topic] : undefined },
-      followUp: { ...withBreakdown(companionStep(companions[topic][index], topic, index)), teaching: { stage: "reinforcement" } } };
+      followUp: { ...withBreakdown(original.followUp!), teaching: { stage: "reinforcement" } } };
   });
 }

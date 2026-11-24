@@ -138,6 +138,36 @@ export const spadesCourses: CourseContent[] = [
     }
   },
   {
+    id: "spades-leading", game: "spades", pathStepId: "spades-leading",
+    practiceTarget: { kind: "practice", game: "spades", action: "lead" }, contract: "Spades", title: "Lead spades legally",
+    concept: {
+      heading: "Being trump does not always make spades a legal lead.",
+      body: "Before any spade is played, lead another suit if you have one. Playing a spade on another suit's lead breaks spades. After that, a spade lead is permitted.",
+      points: [{ marker: "1", text: "Unbroken spades: lead a plain suit while you have one." },
+        { marker: "2", text: "Broken spades: any suit may be led." },
+        { marker: "3", text: "Only spades left: you may lead one even if none has been played." }]
+    },
+    example: {
+      heading: "An ace of trumps can still be an illegal lead.",
+      body: "These are your four remaining cards. No spade has appeared yet, so lead 4♣ or 5♦, not A♠ or Q♠. This decides a legal lead, not how the unknown opposing cards will respond.",
+      sequence: [{ label: "Later", text: "Once a spade is used to trump, spade leads become legal. If your whole remaining hand is spades, the exception already permits one." }],
+      ariaLabel: "Spades legal lead example hand",
+      tableCards: [
+        { seat: "You", card: { id: "4C", rank: "4", suit: "C", label: "4C" } },
+        { seat: "You", card: { id: "5D", rank: "5", suit: "D", label: "5D" } },
+        { seat: "You", card: { id: "QS", rank: "Q", suit: "S", label: "QS" } },
+        { seat: "You", card: { id: "AS", rank: "A", suit: "S", label: "AS" } }
+      ], pendingBySeat: {}
+    },
+    review: {
+      heading: "Check permission before choosing the tactic.",
+      body: "You distinguished unbroken spades, broken spades and an all-spade hand. Several cards can be legal; that does not make every card an equally useful lead.",
+      points: [{ marker: "OK", text: "Unbroken spades cannot be led while another suit remains." },
+        { marker: "OK", text: "A spade played on a plain-suit trick breaks spades." },
+        { marker: "OK", text: "Holding only spades permits a spade lead." }]
+    }
+  },
+  {
     id: "spades-bidding",
     game: "spades",
     pathStepId: "spades-books",
@@ -182,6 +212,35 @@ export const spadesCourses: CourseContent[] = [
         { marker: "OK", text: "Protected kings can add books." },
         { marker: "OK", text: "Nil asks whether you can avoid every trick." }
       ]
+    }
+  },
+  {
+    id: "spades-nil", game: "spades", pathStepId: "spades-nil",
+    practiceTarget: { kind: "practice", game: "spades", action: "nil" }, contract: "Spades", title: "Play nil",
+    concept: {
+      heading: "Nil means avoiding every trick, not just winning fewer.",
+      body: "While your nil is intact, follow suit with a card that loses. When possible, shed the highest card that still loses. When void, discard dangerous plain-suit winners instead of trumping.",
+      points: [{ marker: "Duck", text: "Look at every card already played. A high loser may be safer to shed now than later." },
+        { marker: "Discard", text: "An off-suit ace cannot win unless it is a trump. Use a safe discard to remove danger." },
+        { marker: "Failed", text: "One trick loses the nil bonus. Your later tricks are bags, not books toward partner's positive bid; leave partner's needed winners ahead." }]
+    },
+    example: {
+      heading: "Let the king cover your queen.",
+      body: "Your nil is intact and you play last. Clubs were led and Right's K♣ is winning. Your Q♣ stays below that king, so you can shed it without taking a trick. Keeping the queen for later could leave you without a safe escape.",
+      sequence: [{ label: "Compare", text: "Both 3♣ and Q♣ lose here. Shed Q♣, the higher danger; a spade is illegal while clubs remain." }],
+      ariaLabel: "Spades nil example table",
+      tableCards: [
+        { seat: "Left", card: { id: "9C", rank: "9", suit: "C", label: "9C" } },
+        { seat: "Tutor", card: { id: "JC", rank: "J", suit: "C", label: "JC" } },
+        { seat: "Right", card: { id: "KC", rank: "K", suit: "C", label: "KC" } },
+        { seat: "You", card: { id: "QC", rank: "Q", suit: "C", label: "QC" } }
+      ], pendingBySeat: {}
+    },
+    review: {
+      heading: "Protect nil, then adapt if it fails.",
+      body: "You ducked, discarded a dangerous ace and changed plans after failure. Partner's contract still matters even after your nil is lost.",
+      points: [{ marker: "OK", text: "Follow suit even when playing nil." }, { marker: "OK", text: "Discard dangerous winners when safely void." },
+        { marker: "OK", text: "After failure, do not mistake your bags for partner's bid books." }]
     }
   },
   {
@@ -252,6 +311,30 @@ export const spadesCourses: CourseContent[] = [
       body: "Score the contract, add bags and nil, then subtract any ten-bag penalty. Nil tricks never fulfil partner's bid.",
       points: [{ marker: "OK", text: "A made bid is ten points per book; a failed bid loses the same amount." },
         { marker: "OK", text: "Nil is scored separately from the contract." }, { marker: "OK", text: "Keep the remaining bags for the next hand." }]
+    }
+  },
+  {
+    id: "spades-settlement", game: "spades", pathStepId: "spades-settlement",
+    practiceTarget: { kind: "practice", game: "spades", action: "settle" }, contract: "Spades", title: "Nil and set bids",
+    concept: {
+      heading: "Nil and partner's contract are scored independently.",
+      body: "A missed positive bid loses ten points for every book bid, not just the shortfall. A successful nil earns +100 even if partner fails to make the positive bid.",
+      points: [{ marker: "Set", text: "Bid five, take four: -50, not -10 and not +40." },
+        { marker: "Nil", text: "Take no tricks after bidding nil: +100." },
+        { marker: "Together", text: "Add the nil result to the positive contract result, bags and any ten-bag penalty." }]
+    },
+    example: {
+      heading: "Successful nil can accompany a missed contract.",
+      body: "You bid nil and take no tricks: +100. Barbu bids four but takes three: -40. Your side scores +60 for the hand, with no bags. If Barbu instead takes exactly four, the total is +140.",
+      sequence: [{ label: "Separate", text: "Your nil succeeded in both cases. Partner's book count changes only the contract part." }],
+      ariaLabel: "Spades nil and set bid scoring example", tableCards: [], pendingBySeat: {}
+    },
+    review: {
+      heading: "A lost contract does not erase a successful nil.",
+      body: "You scored an ordinary set, nil with a made contract, and nil with a set partner. Apply each promise's result separately.",
+      points: [{ marker: "OK", text: "A set loses ten per bid book, not per missing trick." },
+        { marker: "OK", text: "Nil success earns +100 independently of partner's result." },
+        { marker: "OK", text: "Finish scoring the whole hand before checking the match target." }]
     }
   }
 ];

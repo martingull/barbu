@@ -117,8 +117,11 @@ engine. Hearts practice uses `src/domain/heartsPractice.ts` with structured temp
 in `content/hearts-practice.json`. Its legality and points reuse full-play rules;
 frozen native outputs verify all 18 decisions and both passing patterns.
 Spades uses the same hand, review and save factories, with bidding and settlement
-in domain modules. Its eighteen authored decisions and eighteen bounded follow-ups
-live in `src/lessons/spades/exercises.ts`, `learning.ts` and `choices.ts`.
+in domain modules. Its twenty-seven authored decisions and twenty-seven bounded
+follow-ups live in `src/lessons/spades/exercises.ts`, `learning.ts`, `choices.ts`
+and `tactics.ts`. `spadesRules.ts` supplies the same lead/follow legality to hands
+and lessons; illegal unbroken-spade leads retain an `illegal_lead` reason rather
+than being described as failures to follow suit.
 `spadesBooksForSide` supplies the same positive-bid book count to settlement,
 opponents, score summaries and guidance: failed-nil tricks are bags, not bid books.
 See `docs/spades.md` for the selected rule baseline and remaining limitations.
@@ -210,14 +213,22 @@ Whist, Hearts, Spades, Bridge and Barbu have isolated frontends under their resp
   game adapter. Retrying creates a fresh session, and leaving early cannot mark
   the session complete. Other custom game exercises retain their current controllers
   until migrated; this is not yet a catalog-wide custom-exercise migration.
-- `SpadesGame.svelte` uses that Learn flow for six distinct courses. Three tactical
+- `SpadesGame.svelte` uses that Learn flow for nine distinct courses. Five tactical
   pools use `lessons/spades/learning.ts`; foundations, thirteen-card bid estimates
   and scoring use `choices.ts` through `SpadesChoiceExercise` and `learningSession`.
-  There are eighteen base decisions and eighteen fresh bounded reinforcements,
+  There are twenty-seven base decisions and twenty-seven fresh bounded reinforcements,
   with shared worked/supported/independent stages and decision review. Foundations
   identify winner, partnership and next leader without playing a fictitious fifth
   card. Numeric questions reuse the live bidding estimate and scorer. The five
-  original progress keys remain; `spades-scoring` is an additional sixth topic.
+  original progress keys and `spades-scoring` remain. `spades-leading`, `spades-nil`
+  and `spades-settlement` add legal leads, personal nil play and successful-nil/set
+  scoring. Lead questions use card-selection mode without fabricated later play;
+  shared `DrillStep.showTable` metadata hides an empty board for these hand-only
+  questions without altering other games' drill layouts.
+  every legal plain-suit lead and every permitted all-spades lead receives credit
+  when the question asks only for legality. Personal nil covers ducking, shedding
+  a dangerous ace and leaving partner's needed book ahead after failure. Scoring
+  covers successful nil with both made and missed partner bids, not only failed nil.
   `SpadesHandView.svelte` and `SpadesBids.svelte`
   preserve the deal-first table, bid toggle, player-only adjustment and hand review.
   Its feature controller delegates bid locking, nil, bags and completion to

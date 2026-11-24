@@ -10,7 +10,7 @@ import type { DrillResult } from "../drillDecision";
 import type { DecisionReview } from "../decisionReview";
 import { teachingStages, type Teaching, type FeedbackBreakdown } from "../learningPresentation";
 
-export type SpadesChoiceTopic = "object" | "bid" | "score";
+export type SpadesChoiceTopic = "object" | "bid" | "score" | "settle";
 export type SpadesChoiceStep = {
   id: string; title: string; prompt: string; hand: Card[]; table: TableCard[];
   options: { id: string; label: string }[]; correct: string; explanation: string;
@@ -83,6 +83,10 @@ export function spadesChoiceSteps(topic: SpadesChoiceTopic): SpadesChoiceStep[] 
     bidding("spades-bid-balanced", "AS KS 7S AH 4H KD 8D 3D 2D 9C 6C 4C 2C"),
     bidding("spades-bid-nil", "2S 5S 8S 2H 5H 8H 10H 2D 5D 9D 2C 6C 10C"),
     bidding("spades-bid-length", "AS QS JS 9S 7S 4S AH 2H 3D 6D 4C 8C 10C")
+  ] : topic === "settle" ? [
+    scoring("spades-set-normal", "A missed partnership bid", [3, 2], [2, 2], 0, [40, -40]),
+    scoring("spades-set-nil-made", "Nil and partner both succeed", [0, 4], [0, 4], 0, [40, 100]),
+    scoring("spades-set-partner-missed", "Nil succeeds; partner is set", [0, 4], [0, 3], 0, [-40, 130])
   ] : [
     scoring("spades-score-made", "Make the partnership bid", [3, 2], [4, 2], 0, [50, 60]),
     scoring("spades-score-nil", "Nil and partner's bid", [0, 4], [1, 3], 0, [-59, -140]),
@@ -96,6 +100,10 @@ export function spadesChoiceSteps(topic: SpadesChoiceTopic): SpadesChoiceStep[] 
     bidding("spades-bid-balanced-again", "KS QS 3S AD 7D 9D KH 5H 4H 2C 5C 8C JC"),
     bidding("spades-bid-nil-again", "2S 7S 3H 6H 9H JH 3D 6D 8D 10D 3C 5C 9C"),
     bidding("spades-bid-length-again", "KS QS 10S 8S 6S 2S AD 4D KH 5H 2C 7C JC")
+  ] : topic === "settle" ? [
+    scoring("spades-set-normal-again", "Count the full bid penalty", [2, 4], [2, 3], 0, [50, -50]),
+    scoring("spades-set-nil-made-again", "Nil plus one bag", [0, 3], [0, 4], 0, [130, 140]),
+    scoring("spades-set-partner-missed-again", "Keep nil separate from the contract", [0, 3], [0, 2], 0, [120, -30])
   ] : [
     scoring("spades-score-made-again", "Meet the bid exactly", [2, 4], [3, 3], 2, [62, 66]),
     scoring("spades-score-nil-again", "Separate nil tricks from bid books", [0, 3], [2, 2], 0, [-69, -130]),

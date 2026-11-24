@@ -24,12 +24,13 @@ test("Spades bidding survives other games and every guided lesson", async ({ pag
   await page.getByRole("button", { name: "Games", exact: true }).click();
   await page.getByRole("button", { name: "Open Spades", exact: true }).click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
-  for (const [index, course] of courseCatalog.filter(course => course.game === "spades").entries()) {
+  const courses = courseCatalog.filter(course => course.game === "spades");
+  for (const [index, course] of courses.entries()) {
     await page.locator(`[data-skill="${course.pathStepId}"] .lesson-topic`).click();
     await page.getByRole("button", { name: "See example", exact: true }).click();
     await page.getByRole("button", { name: "Try cards", exact: true }).click();
     const action = (course.practiceTarget as { action: string }).action;
-    const choiceSteps = ["object", "bid", "score"].includes(action) ? spadesChoiceSteps(action as SpadesChoiceTopic) : null;
+    const choiceSteps = ["object", "bid", "score", "settle"].includes(action) ? spadesChoiceSteps(action as SpadesChoiceTopic) : null;
     const steps = choiceSteps ? null : spadesLearningSteps(action as SpadesLearningTopic);
     for (let i = 0; i < 3; i++) {
       if (choiceSteps) {
@@ -42,15 +43,15 @@ test("Spades bidding survives other games and every guided lesson", async ({ pag
       await page.getByRole("button", { name: "Check answer", exact: true }).click();
       await page.getByRole("button", { name: i === 2 ? "Finish topic" : "Next decision", exact: true }).click();
     }
-    await expect(page.getByRole("status")).toHaveText(index === 5 ? "Spades learning path complete." : "Topic complete.");
+    await expect(page.getByRole("status")).toHaveText(index === courses.length - 1 ? "Spades learning path complete." : "Topic complete.");
     await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
-    await expect(page.getByLabel("Spades course progress")).toContainText(`${index + 1} / 6 complete`);
+    await expect(page.getByLabel("Spades course progress")).toContainText(`${index + 1} / ${courses.length} complete`);
     expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), key)).toEqual(saved);
   }
   await page.reload();
   await page.getByRole("button", { name: "Open Spades", exact: true }).click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
-  await expect(page.getByLabel("Spades course progress")).toContainText("6 / 6 complete");
+  await expect(page.getByLabel("Spades course progress")).toContainText(`${courses.length} / ${courses.length} complete`);
   await page.getByRole("tab", { name: "Play", exact: true }).click();
   await page.getByRole("button", { name: "Continue Spades", exact: true }).click();
   await expect(page.getByLabel("Spades bids for this hand")).toBeVisible();

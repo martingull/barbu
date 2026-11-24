@@ -75,8 +75,10 @@ and Tauri dependencies. Hearts, Whist and Spades native full-hand engines, polic
 settlement, and command routes have been removed. Keep the frozen native-save
 fixtures for compatibility tests, not a second production implementation.
 Spades uses one bidding heuristic in `src/domain/spadesBidding.ts`, explicit locked
-bids, and eighteen authored decisions plus bounded follow-ups under
-`src/lessons/spades/{exercises,learning,choices}.ts`. The same positive-bid book
+bids, and twenty-seven authored decisions plus bounded follow-ups under
+`src/lessons/spades/{exercises,learning,choices,tactics}.ts`. Spades lead and
+follow-suit legality is shared with Learn through `domain/spadesRules.ts`.
+The same positive-bid book
 count drives scoring, policy and guidance; failed-nil tricks count as bags,
 not toward the partner's bid. See `docs/spades.md` for the selected baseline.
 Keep opponents from playing opening cards before the player locks the bids.

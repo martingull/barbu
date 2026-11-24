@@ -93,7 +93,7 @@ for (const size of [{ width: 320, height: 568 }, { width: 360, height: 740 }, { 
       await expect(page.getByRole("button", { name: "Continue Spades", exact: true })).toBeVisible();
       await page.getByRole("tab", { name: "Learn", exact: true }).click();
     } else await page.getByRole("button", { name: "Back to Learn", exact: true }).click();
-    await expect(page.getByLabel("Spades course progress")).toContainText("0 / 6 complete");
+    await expect(page.getByLabel("Spades course progress")).toContainText("0 / 9 complete");
     expect(await page.evaluate(key => localStorage.getItem(key), saveKey)).toBe(saved);
     expect(errors).toEqual([]);
   });

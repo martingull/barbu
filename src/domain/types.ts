@@ -21,6 +21,7 @@ export type PracticeReason =
   | "avoided_penalty"
   | "captured_penalty"
   | "won_clean_trick"
+  | "illegal_lead"
   | "off_suit";
 
 export type GuidedTrick = {

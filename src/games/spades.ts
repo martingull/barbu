@@ -2,7 +2,7 @@ import type { GameDefinition } from "./gameRegistry";
 import { createGameTableDefinition, gameRulesCopy } from "./tableFactory";
 
 export type SpadesLearnPathAction = "object" | SpadesPracticeAction;
-export type SpadesPracticeAction = "follow" | "trump" | "bid" | "bags" | "score";
+export type SpadesPracticeAction = "follow" | "trump" | "bid" | "bags" | "score" | "lead" | "nil" | "settle";
 
 export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAction> = {
   table: createGameTableDefinition({
@@ -77,11 +77,19 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
       action: "trump"
     },
     {
+      id: "spades-leading", step: "Rule", title: "Lead spades legally",
+      summary: "Know when spades are unbroken, broken, or your only remaining suit.", action: "lead"
+    },
+    {
       id: "spades-books",
       step: "Scoring",
       title: "Count books",
       summary: "Each trick is a book. Estimate your bid from visible winners and realistic nil chances.",
       action: "bid"
+    },
+    {
+      id: "spades-nil", step: "Tactic", title: "Play nil",
+      summary: "Duck, shed dangerous winners and help partner after a failed nil.", action: "nil"
     },
     {
       id: "spades-bags",
@@ -96,6 +104,10 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
       title: "Score a hand",
       summary: "Separate contract points, nil, bags and the ten-bag penalty.",
       action: "score"
+    },
+    {
+      id: "spades-settlement", step: "Scoring", title: "Nil and set bids",
+      summary: "Score a missed bid and successful nil, including when partner is set.", action: "settle"
     }
   ],
   practiceGroups: [
@@ -127,12 +139,20 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
           group: "fixed-drills"
         },
         {
+          id: "legal-leads", label: "Rule", title: "Lead spades legally",
+          summary: "Try the unbroken-spades rule and its exceptions.", action: "lead", group: "fixed-drills"
+        },
+        {
           id: "bid-books",
           label: "Bidding",
           title: "Bid books",
           summary: "Read three full thirteen-card hands and choose a starter bid or nil.",
           action: "bid",
           group: "fixed-drills"
+        },
+        {
+          id: "play-nil", label: "Nil", title: "Play nil",
+          summary: "Keep nil intact and change plans after it fails.", action: "nil", group: "fixed-drills"
         },
         {
           id: "score-hand", label: "Scoring", title: "Score a hand",
@@ -145,6 +165,10 @@ export const spadesDef: GameDefinition<SpadesLearnPathAction | SpadesPracticeAct
           summary: "Practice ducking extra tricks while still protecting nil when it matters.",
           action: "bags",
           group: "fixed-drills"
+        },
+        {
+          id: "nil-settlement", label: "Scoring", title: "Nil and set bids",
+          summary: "Separate nil success from partner's made or missed contract.", action: "settle", group: "fixed-drills"
         }
       ]
     }
