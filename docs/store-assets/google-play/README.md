@@ -29,9 +29,15 @@ preview and asset fallbacks before submitting. No upload or review cancellation
 is authorised by preparing this draft.
 
 The `en-GB` title and descriptions are maintained in
-[`listing-en-GB.json`](listing-en-GB.json). The positioning is learning and
-single-player practice before playing with people in person, not online
-multiplayer. Club search opens Google Maps; it is not a verified directory.
+[`listing-en-GB.json`](listing-en-GB.json). Marketing positioning centres on
+card clubs and club-style games: learn before joining a table and practise
+between club sessions, with clubs and teachers as recommendation partners.
+Club membership is not required. Game-specific examples and country/language
+tests support discovery without restricting that audience. See the
+[strategy](../../marketing/strategy.md); this direction does not overwrite
+historical listing snapshots or publish store changes.
+Play is single-player, not online multiplayer. Club search opens Google Maps;
+it is not a verified directory.
 
 On November 23, 2026, a read-only API audit confirmed the saved text is still
 the November 3 copy and the saved video is version 2 (`FeuhyBNAAv0`). The local

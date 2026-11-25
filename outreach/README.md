@@ -5,6 +5,23 @@ workflow, Gmail sends and receives, and the existing Google spreadsheet remains
 the visible contact register. This is tooling, not part of Barbu's gameplay,
 native shell, billing, or release pipeline. It does not run on players' phones.
 
+## Audience and Message
+
+The [marketing strategy](../docs/marketing/strategy.md) centres Barbu on card
+clubs and club-style card games. Clubs, teachers and regular-group organisers
+are our primary outreach and recommendation partners; players are the learners.
+Ask an organiser to assess a supported game's learning path as a companion
+between in-person sessions before recommending it to newcomers. Ask which
+local rules or conventions need clearer teaching; do not claim universal club
+rules, endorsements or that Barbu replaces their lessons.
+
+Choose leads by their game and teaching relevance, not a fixed country list.
+Country/language batches are outreach experiments, not product boundaries or
+permission to contact new recipients. Disclose English-language learning and
+the specific game's free/Premium access accurately. Keep existing country-specific
+compliance and footer requirements, approval, duplicate and unsubscribe checks.
+Broader positioning does not change store distribution or subscription markets.
+
 ## Current Scope
 
 - Google user OAuth, verified against the configured sender before operations.

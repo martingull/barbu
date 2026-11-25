@@ -2,7 +2,18 @@
 
 **Learn here. Play together.**
 
-Barbu helps players learn classic card games through short interactive lessons, guided hands and single-player practice, then take that confidence to a real table with friends, family or a local card club. It is designed for phones, with Android and iPhone builds and a browser development runtime.
+Barbu is a learning and practice companion for card clubs and people learning
+club-style card games. Short interactive lessons, guided hands and single-player
+practice help newcomers prepare for the table and existing players practise
+between club sessions or explore another game. Clubs, teachers and organisers
+are our primary outreach and recommendation partners; club membership is not
+required to learn or play with friends and family.
+
+This focus is not restricted to particular countries. Geographical outreach and
+language choices are experiments, separate from actual store and payment
+availability. See the [marketing strategy](docs/marketing/strategy.md).
+Barbu is designed for phones, with Android and iPhone builds and a browser
+development runtime.
 
 Barbu is available on [Google Play](https://play.google.com/store/apps/details?id=com.martin.barbu). Visit the [product website](https://siliciumveritas.com/) for a preview and an introduction to the games; its source lives in [`website/`](website/).
 

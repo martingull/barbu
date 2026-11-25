@@ -2,11 +2,24 @@
 
 ## Current Decision
 
+Card clubs and club-style card games are the central positioning. Barbu helps
+players learn before joining a club table and practise between sessions, and
+gives teachers and organisers a companion to assess and recommend. Club
+membership is not required. See the [marketing strategy](strategy.md).
+
+Game-specific keywords and country/language tests are discovery experiments,
+not a pivot to one game or a fixed geographical market. Keep country breakdowns
+as measurement scopes, not definitions of who Barbu is for. None of these
+experiments changes distribution, checkout countries or lesson language.
+
 Use **Learn Card Games by Barbu**, as requested by Martin. This 25-character
 English listing title leads with the learning offer while keeping Barbu as the
 brand. Keep the in-game name, package identifier and existing video branding
 unchanged. Lead with Gin Rummy, Hearts and Whist in the description, while
 retaining the wider catalog and the optional Canasta subscription distinction.
+Those games are concrete search entry points into the club-learning offer,
+not the entire audience or permanent catalog boundary. This positioning update
+does not itself publish or rewrite the saved listing fields below.
 
 The [single text-only draft](../store-assets/google-play/listing-premium-en-GB.draft.json)
 now proposes:

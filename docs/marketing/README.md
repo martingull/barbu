@@ -13,6 +13,12 @@ That strategy owns audiences, organiser outreach, budgets, measurement and
 monetisation decisions. The videos form the initial organic publishing
 experiment; publication alone is not evidence of audience reach or acquisition.
 
+The central offer is a learning and practice companion for card clubs and
+people learning club-style games. Each video teaches one decision that can
+help a newcomer prepare for the table or practise between club sessions.
+Individual games, languages and countries are discovery experiments, not a
+change to that positioning or a fixed geographical audience.
+
 For Play search visibility, see the [discovery baseline and listing experiment](store-discovery.md).
 It records the public search checks, unpublished copy proposal and Console
 metrics still needed; it does not publish changes or interrupt a release review.
@@ -396,7 +402,10 @@ Earlier prototypes below retain pre-launch wording and must not be posted as-is.
 
 Lead with a card decision, give viewers time to choose, then show the result.
 One useful idea per short, followed by a brief Barbu sign-off. The audience is
-curious beginners and card-club players practicing between in-person games.
+new and returning card-club players, including people learning a club-style
+game before joining a group. Club membership is not required. Keep the teaching
+useful to clubs and their learners rather than turning Barbu into a generic
+casual-game or character-entertainment channel.
 Test this approach before investing in cinematic generated footage.
 
 The first two scripts and platform captions are in `shorts.json`:
