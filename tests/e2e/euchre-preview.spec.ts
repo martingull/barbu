@@ -148,6 +148,7 @@ test("South sitting out a lone hand cannot select cards and can advance all five
 });
 
 test("the free browser catalog does not expose Premium games without preview access", async ({ page }) => {
+  test.skip(process.env.BARBU_PACKAGED_PREVIEW === "1", "Internal iOS intentionally previews Premium games.");
   await page.goto("/");
   await expect(page.getByRole("button", { name: "Open Hearts", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Euchre", exact: true })).toHaveCount(0);

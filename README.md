@@ -10,8 +10,8 @@ The seven free tables are Hearts, Barbu (including Domino), Whist, Spades, Bridg
 
 [Cribbage](docs/cribbage.md) has an initial playable development implementation:
 two players to 121, six shared learning topics, an unsaved guided deal and saved
-independent games. It belongs to the existing Premium pack, but has not been
-included in a store build. Try its browser preview at
+independent games. It belongs to the existing Premium pack and is included in
+the internal TestFlight 1.0.11 (10) candidate, not a public release. Try its browser preview at
 http://localhost:1420/?preview=cribbage&tab=learn.
 
 All gameplay runs locally in TypeScript, shared by browser and installed builds. Svelte owns presentation and interaction; Tauri packages the native application. Rust handles startup and native integrations, not rules or scoring. Saves and learning progress are local; there is no gameplay server or player login. The Android billing test integration uses Google Play and RevenueCat.
@@ -73,8 +73,9 @@ Play Console's **Publishing overview** before announcing those changes. See the
 the [store assets](docs/store-assets/google-play/README.md) for copy, artwork and
 screenshot provenance. iPhone distribution is tracked separately in the
 [App Store runbook](docs/app-store-release.md). Internal iPhone testing now has
-**1.0.9 (9)**, with Canasta unlocked for preview and purchases disabled; install
-it through the existing TestFlight group. This is not an App Store submission.
+**1.0.11 (10)** ready to install through the existing TestFlight group, with
+Canasta, Euchre and Cribbage unlocked for preview and purchases disabled. This is
+not an App Store submission. Android production remains unchanged.
 
 ## Quick Start
 

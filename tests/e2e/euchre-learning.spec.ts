@@ -206,6 +206,7 @@ test("an independent Euchre match ends at ten, emits completion and keeps its se
 });
 
 test("Euchre uses verified Premium access and preserves the match while access is unavailable", async ({ page }) => {
+  test.skip(process.env.BARBU_PACKAGED_PREVIEW === "1", "Internal iOS does not use purchase access.");
   await page.addInitScript(() => {
     const w = window as any;
     w.isTauri = true; w.euchrePremium = true; w.euchreBillingCalls = [];

@@ -171,7 +171,7 @@ export function isGamePreview(id: string): boolean {
   const flags: Record<string, string | undefined> = { canasta: import.meta.env?.VITE_CANASTA_PREVIEW, euchre: import.meta.env?.VITE_EUCHRE_PREVIEW, cribbage: import.meta.env?.VITE_CRIBBAGE_PREVIEW };
   return (import.meta.env?.DEV === true && Object.hasOwn(flags, id)
       && (flags[id] === "1" || typeof location !== "undefined" && new URL(location.href).searchParams.get("preview") === id))
-    || (id === "canasta" && import.meta.env?.MODE === "canasta-internal" && import.meta.env?.TAURI_ENV_PLATFORM === "ios");
+    || (gameAccess(id) === "Premium" && import.meta.env?.MODE === "canasta-internal" && import.meta.env?.TAURI_ENV_PLATFORM === "ios");
 }
 
 export type CatalogCategory = {

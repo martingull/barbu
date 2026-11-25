@@ -69,4 +69,4 @@ writeFileSync(resolve(apple, "appstore-config.json"), JSON.stringify({
     : { build: { beforeBuildCommand: "npm run build:ios-assets" } }),
   bundle: { iOS: { bundleVersion: buildNumber } },
 }, null, 2) + "\n");
-console.log(`Prepared iPhone-only Barbu ${config.version} (${buildNumber}) for ${preview ? "internal Canasta testing only" : "App Store distribution"}.`);
+console.log(`Prepared iPhone-only Barbu ${config.version} (${buildNumber}) for ${preview ? "internal game testing only" : "App Store distribution"}.`);

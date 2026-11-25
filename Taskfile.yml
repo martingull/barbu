@@ -83,7 +83,7 @@ tasks:
       - npm run test:e2e -- --config playwright.canasta.config.ts --project=galaxy-s9 --project=iphone-xr --workers 2
 
   ui:test:ios-preview:
-    desc: Verify packaged Canasta access and public-build isolation in WebKit; do not run during an archive
+    desc: Verify packaged internal-game access and public-build isolation in WebKit; do not run during an archive
     cmds:
       - env TAURI_ENV_PLATFORM=ios npm run build:canasta-preview
       - env BARBU_PACKAGED_PREVIEW=1 npm run test:e2e -- --config playwright.packaged.config.ts --project=iphone-xr --workers=1
@@ -191,7 +191,7 @@ tasks:
       - npm run tauri -- ios build --target aarch64 --export-method app-store-connect --config src-tauri/gen/apple/appstore-config.json
 
   ios:preview:archive:
-    desc: Archive the unlocked Canasta preview; export ONLY with the internal-testing plist
+    desc: Archive the unlocked internal game preview; export ONLY with the internal-testing plist
     requires:
       vars: [IOS_BUILD_NUMBER]
     cmds:
@@ -199,7 +199,7 @@ tasks:
       - npm run tauri -- ios build --target aarch64 --archive-only --config src-tauri/gen/apple/appstore-config.json
 
   ios:preview:export:
-    desc: Export the Canasta archive as TestFlight internal-only (not for App Review)
+    desc: Export the game preview archive as TestFlight internal-only (not for App Review)
     requires:
       vars: [IOS_ARCHIVE_PATH, IOS_EXPORT_PATH]
     cmds:

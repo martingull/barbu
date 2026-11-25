@@ -12,13 +12,15 @@ testing. A future universal/tablet release needs its own layout and windowing
 audit rather than stretching the phone table. Run `task mobile:check`, then
 verify the built application's Info.plist and physical rotation before release.
 
-## Internal Canasta Preview
+## Internal Game Preview
 
-Canasta can be tested without an Apple subscription in a separate internal-only
+Canasta, Euchre and Cribbage can be tested without an Apple subscription in a separate internal-only
 build. This is not a paid entitlement and must not be submitted for App Review.
-The default store build still hides Canasta and uses `dist/`. The preview uses
+The default store build still hides these games and uses `dist/`. The preview uses
 `canasta-internal` Vite mode, requires the iOS build platform, writes to
-`dist-canasta-preview/`, and labels Canasta `Internal preview` in the catalog.
+`dist-canasta-preview/`, and labels each Premium game `Internal preview` in the catalog.
+The channel and task names retain their original Canasta names for compatibility;
+access uses the central Premium catalog and is restricted to internal iOS builds.
 No purchase service is enabled on iOS and no Premium unlock is saved.
 Both store and preview preparation set an iOS-specific build hook that copies
 fresh frontend files into Xcode's `assets/` resource folder. Do not rely on the
@@ -46,7 +48,7 @@ task ui:test:ios-preview
 ```
 
 The second build deliberately retains preview environment variables to check
-that production mode does not unlock Canasta. The crowded-hand component fixture
+that production mode does not unlock Premium games. The crowded-hand component fixture
 requires Vite's module server and remains covered by `task ui:test:canasta`, not
 the packaged suite. On the phone, test all eight Learn topics, a guided hand,
 ordinary play/resume, a large pile pickup, offline startup and rotation. Preview
@@ -54,6 +56,48 @@ progress and matches use the existing save keys; a later public build preserves
 Canasta saves but hides them until access is available.
 
 [Apple's internal testing restrictions](https://developer.apple.com/help/app-store-connect/test-a-beta-version/add-internal-testers).
+
+### November 24 Candidate
+
+Uploaded **1.0.11 (10)** at 19:27 Europe/Oslo for internal-only TestFlight testing.
+Apple finished processing and shows **Ready to Test**. The existing **Barbu
+Internal Testing Group** is assigned (one tester), and build-specific **What to
+Test** notes are saved. No encryption-compliance prompt is currently shown.
+No App Review submission or public availability change was
+made. Purchases remain disabled; Canasta, Euchre and Cribbage are unlocked only
+in the internal iOS channel, without granting or saving a paid entitlement.
+
+Both platforms now use source version `1.0.11`. The next Android version code is
+`1000015`; no Android bundle was built or uploaded as part of this iPhone update.
+The current source includes Cribbage's six learning topics, points sheet, guided
+deal, independent games to 121 and stepwise hand/crib scoring. The source is
+`c2f3615` plus the working-tree changes captured in the private verification receipt.
+
+Preserved artifacts (ignored, not committed):
+
+- `release/app-store/canasta-preview-v1.0.11-build10/Barbu.ipa`
+- `release/app-store/Barbu-canasta-preview-v1.0.11-build10.xcarchive`
+- `release/app-store/canasta-preview-v1.0.11-build10/verification.json`
+- `release/app-store/canasta-preview-v1.0.11-build10/upload-result.json`
+- `release/app-store/canasta-preview-v1.0.11-build10/simulator-smoke.json`
+
+IPA SHA-256: `e1ce01eb1850e0a17cdfa63a5dde7a1a7dc85f2a101a41fdb4d5cdc8c063bc0b`.
+Distribution signature/provisioning, internal-only export, version/build, iPhone
+targeting, portrait orientation, iOS 15 minimum, privacy manifest, dependency
+notices, opaque icons and all 133 frontend assets passed verification.
+
+Verification passed: 380 domain tests, five mobile configuration checks, native
+shell compilation, 40 packaged iPhone WebKit preview tests across Canasta, Euchre
+and Cribbage, and the public-catalog isolation test. Sixteen development-fixture
+or purchase-access tests were intentionally skipped in the internal preview;
+they remain in the appropriate development/public checks. The final Cribbage
+and internal-catalog checks passed again after archiving (eight tests), with
+screenshots preserved in `browser-preview/`. The fresh iOS 26.5 simulator build
+launches with existing saves visible and matches all 133 preview assets.
+Physical installation and acceptance testing remain pending.
+
+Apple returned the same non-blocking SDK warning as build 9: from April 2027,
+uploads require iOS 27 SDK / Xcode 27 or later. The current upload succeeded.
 
 ### November 19 Candidate
 
