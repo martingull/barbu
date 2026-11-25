@@ -21,7 +21,7 @@ test("table metadata gives skill activities one mode without changing game navig
 });
 
 test("every game derives the same rules label and description from the table factory", () => {
-  expect(registry.getAll()).toHaveLength(10);
+  expect(registry.getAll()).toHaveLength(11);
   for (const { table } of registry.getAll()) {
     expect(table.learn.referenceTitle).toBe("Game rules");
     expect(table.learn.referenceSummary).toBe("Read the rules, scoring and variations.");
@@ -34,8 +34,8 @@ test("every game derives the same rules label and description from the table fac
   }
 });
 
-test("the existing seven games remain free without billing or usage limits", () => {
-  expect(freeGameIds).toEqual(["hearts", "barbu", "whist", "spades", "bridge", "gin-rummy", "card-counting"]);
+test("the eight free games need no billing or usage limits", () => {
+  expect(freeGameIds).toEqual(["hearts", "barbu", "whist", "spades", "bridge", "gin-rummy", "card-counting", "belote"]);
   for (const id of freeGameIds) {
     expect(gameAccess(id)).toBe("Free");
     expect(hasReleasedGameAccess(id)).toBe(true);
@@ -56,6 +56,6 @@ test("premium intent does not grant access and unassigned games fail closed", ()
 
 test("released catalog access comes from the shared policy", () => {
   const entries = getCatalogCategories().flatMap(category => category.entries);
-  expect(entries).toHaveLength(7);
+  expect(entries).toHaveLength(8);
   for (const entry of entries) expect(entry.access).toBe(gameAccess(entry.id));
 });

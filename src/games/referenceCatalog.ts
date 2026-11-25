@@ -2,6 +2,7 @@ import { ginRummyReference } from "./ginRummyReference";
 import { canastaReference } from "./canastaReference";
 import { euchreReference } from "./euchreReference";
 import { cribbageReference } from "./cribbageReference";
+import { beloteReference } from "./beloteReference";
 
 export type ReferenceFact = {
   label: string;
@@ -661,5 +662,6 @@ export const referenceCatalog: GameReference[] = [
   ginRummyReference,
   canastaReference,
   euchreReference,
-  cribbageReference
+  cribbageReference,
+  beloteReference
 ];

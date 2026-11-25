@@ -1,5 +1,5 @@
 export const freeGameIds = [
-  "hearts", "barbu", "whist", "spades", "bridge", "gin-rummy", "card-counting"
+  "hearts", "barbu", "whist", "spades", "bridge", "gin-rummy", "card-counting", "belote"
 ] as const;
 
 export type GameAccess = "Free" | "Premium" | "Unassigned";

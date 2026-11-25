@@ -238,6 +238,10 @@ export function getCatalogCategories(context: CatalogAccessContext = {}): Catalo
           summary: "Bid a contract, then play as declarer or defend."
         }),
         createCatalogEntry({
+          id: "belote", family: "Jass", title: "Belote", card: { rank: "J", suit: "H" }, status: "Ready",
+          summary: "Take trump, capture valuable cards and help your partner."
+        }),
+        createCatalogEntry({
           id: "euchre", family: "Euchre", title: "Euchre", card: { rank: "J", suit: "D" },
           status: isGamePreview("euchre") || context.premiumAvailable ? "Ready" : "Planned",
           summary: "Call trump. Win three of five tricks with your partner."

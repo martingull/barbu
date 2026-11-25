@@ -40,14 +40,14 @@ be treated as a quick implementation merely because it uses a reduced deck.
 Added November 23, 2026 after Martin requested a French store listing and more
 French card games. This is an additional catalog direction, not evidence of
 French-language demand or a cancellation of the approved shortlist above.
-Martin subsequently chose Euchre as the next implementation, rather than
-starting Belote now. The French track remains a later candidate direction.
-The first French-game rules profile still needs confirmation. No new table is registered
-or advertised by this roadmap; store localisation does not translate lessons.
+Martin selected Belote as a free game on November 25. Its [Classic profile](belote.md)
+is implemented in source with the shared learning and play structure; native
+acceptance and a new store package remain outstanding. Store localisation does
+not translate lessons.
 
 | Proposed sequence | Game | Fit and additional work |
 | --- | --- | --- |
-| First | Classic four-player Belote | Fixed partnerships, 32 cards and eight-card hands suit the existing deck artwork and compact table. Needs its own taking phase, trump-specific ranks and values, compulsory trump/overtrump legality, declarations and scoring. |
+| First | Classic four-player Belote | Free source implementation: taking, trump ranks/values, compulsory plays, protected belote/rebelote, exact scoring, litige and matches to 1,000. Seven Learn topics and a guided deal; mobile release acceptance remains. |
 | Then | Coinche | A Belote-family extension with contract bidding and coinche/surcoinche. Share reviewed Belote mechanics, not a second copied engine; choose one named profile rather than merging local variants. |
 | Later | French Tarot, initially four players | A substantial club-game destination, but requires a 78-card deck including cavaliers, 21 trumps and the Excuse, 18-card hands, a chien, different scoring and new artwork/layout verification. Not a quick 52-card reskin. |
 

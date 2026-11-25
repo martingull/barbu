@@ -17,7 +17,12 @@ development runtime.
 
 Barbu is available on [Google Play](https://play.google.com/store/apps/details?id=com.martin.barbu). Visit the [product website](https://siliciumveritas.com/) for a preview and an introduction to the games; its source lives in [`website/`](website/).
 
-The seven free tables are Hearts, Barbu (including Domino), Whist, Spades, Bridge, Gin Rummy and Card Counting I. Games use shared **Learn | Play** navigation; short exercises and guided hands belong inside Learn. Card Counting is a skill activity with one Learn screen: a warm-up followed by memory hands, each listed once. [Canasta](docs/canasta.md) adds Premium lessons, guided hands and partnership games. [Euchre](docs/euchre.md) now has the same shared learning and play structure in development, using the existing Premium entitlement; it is not yet included in a store release.
+The seven released free tables are Hearts, Barbu (including Domino), Whist, Spades, Bridge, Gin Rummy and Card Counting I. Games use shared **Learn | Play** navigation; short exercises and guided hands belong inside Learn. Card Counting is a skill activity with one Learn screen: a warm-up followed by memory hands, each listed once. [Canasta](docs/canasta.md) adds Premium lessons, guided hands and partnership games. [Euchre](docs/euchre.md) now has the same shared learning and play structure in development, using the existing Premium entitlement; it is not yet included in a store release.
+
+[Belote](docs/belote.md) adds an eighth free table in the current source: Classic
+four-player partnerships, seven Learn topics, a guided deal and saved matches
+to 1,000. It is available in the browser catalog without a preview flag or
+subscription, but is not yet included in an uploaded mobile build.
 
 [Cribbage](docs/cribbage.md) has an initial playable development implementation:
 two players to 121, six shared learning topics, an unsaved guided deal and saved
@@ -27,7 +32,7 @@ http://localhost:1420/?preview=cribbage&tab=learn.
 
 All gameplay runs locally in TypeScript, shared by browser and installed builds. Svelte owns presentation and interaction; Tauri packages the native application. Rust handles startup and native integrations, not rules or scoring. Saves and learning progress are local; there is no gameplay server or player login. The Android billing test integration uses Google Play and RevenueCat.
 
-The existing seven games remain free. Additional games, starting with Canasta,
+The existing seven games and the new Belote table remain free. Premium additions, starting with Canasta,
 use an optional Premium subscription. The recorded checkout configuration enables
 Norway, the UK and the US; the Netherlands remains disabled. See the
 [premium setup and release gates](docs/premium.md) and

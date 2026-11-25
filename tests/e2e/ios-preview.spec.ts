@@ -7,7 +7,7 @@ test("internal testers can open all Premium games without purchases or a preview
   page.on("pageerror", error => errors.push(error.message));
   for (const game of ["Canasta", "Euchre", "Cribbage"]) {
     await page.goto("/");
-    await expect(page.locator(".catalog-game")).toHaveCount(10);
+    await expect(page.locator(".catalog-game")).toHaveCount(11);
     const open = page.getByRole("button", { name: `Open ${game}`, exact: true });
     await expect(open).toContainText("Internal preview");
     await expect(page.getByRole("button", { name: "Premium", exact: true })).toHaveCount(0);

@@ -9,6 +9,7 @@ import { ginRummyDef } from "./ginRummy";
 import { canastaDef } from "./canasta";
 import { euchreDef } from "./euchre";
 import { cribbageDef } from "./cribbage";
+import { beloteDef } from "./belote";
 
 // Register all core games
 registry.register("barbu", barbuDef);
@@ -21,3 +22,4 @@ registry.register("gin-rummy", ginRummyDef);
 registry.register("canasta", canastaDef);
 registry.register("euchre", euchreDef);
 registry.register("cribbage", cribbageDef);
+registry.register("belote", beloteDef);

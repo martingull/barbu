@@ -18,7 +18,7 @@ test("learning collections contain each ready game once without changing its fam
   const categories = getCatalogCategories();
   expect(categories.map(category => [category.id, category.entries.map(entry => entry.id)])).toEqual([
     ["hearts-contracts", ["hearts", "barbu"]],
-    ["partners-tricks", ["whist", "spades", "bridge"]],
+    ["partners-tricks", ["whist", "spades", "bridge", "belote"]],
     ["rummy", ["gin-rummy"]],
     ["skill-packs", ["card-counting"]]
   ]);

@@ -17,7 +17,7 @@ test("internal games stay hidden in public builds without deleting saved games",
     for (const [key, saved] of saves) localStorage.setItem(key, JSON.stringify(saved));
   }, saves);
   await page.goto("/");
-  await expect(page.locator(".catalog-game")).toHaveCount(7);
+  await expect(page.locator(".catalog-game")).toHaveCount(8);
   for (const game of ["Canasta", "Euchre", "Cribbage"]) {
     await expect(page.locator(".catalog-home")).not.toContainText(game);
     await expect(page.getByRole("button", { name: `Continue ${game}`, exact: true })).toHaveCount(0);

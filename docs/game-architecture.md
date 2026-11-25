@@ -547,6 +547,15 @@ save replays legal actions and derives its summaries. Development preview access
 does not bypass production Premium gating. See [Euchre](euchre.md) for its
 North American profile, heuristic-opponent limits and remaining release checks.
 
+Belote is registered as free through the same metadata and central access policy.
+Its anticlockwise partial deal and compulsory trumping use a dedicated domain
+session, sharing the deck/trick primitives rather than changing the standard
+13-card hand model. Seven topics, guided deals and saved matches reuse the same
+Learn, feedback, card/table and session factories. Public observations exclude
+concealed cards and the seed; save restoration replays validated actions and
+recomputes settlement. See [Belote](belote.md) for the precise Classic profile,
+source differences and mobile release gates.
+
 `LearnPanel` places learning resources before the next lesson and learning path
 for every game, with the rules action first. The table factory supplies one
 shared label, `Game rules`, and description, `Read the rules, scoring and variations.`

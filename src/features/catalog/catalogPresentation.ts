@@ -3,6 +3,7 @@ import type { SavedGinRun } from "../../persistence/ginRummySave";
 import type { SavedCanastaRun } from "../../persistence/canastaSave";
 import type { SavedEuchreRun } from "../../persistence/euchreSave";
 import type { SavedCribbageRun } from "../../persistence/cribbageSave";
+import type { SavedBeloteRun } from "../../persistence/beloteSave";
 import { isCatalogGameAvailable, type CatalogAccessContext } from "../../games/tableFactory";
 import { savedPlayBarbuRunSummary } from "../../persistence/barbuSave";
 import type { SavedHeartsRun } from "../../persistence/heartsSave";
@@ -24,6 +25,7 @@ type SavedGames = {
   canasta?: SavedCanastaRun | null;
   euchre?: SavedEuchreRun | null;
   cribbage?: SavedCribbageRun | null;
+  belote?: SavedBeloteRun | null;
 };
 export type SavedGameId = keyof SavedGames;
 export type ContinueGame = { id: SavedGameId; title: string; summary: string; savedAt: string };
@@ -31,6 +33,10 @@ export type ContinueGame = { id: SavedGameId; title: string; summary: string; sa
 // Use the feature controllers' validated saves, including their in-memory updates.
 export function continueGames(saved: SavedGames, access: CatalogAccessContext = {}): ContinueGame[] {
   const entries: ContinueGame[] = [];
+  if (saved.belote) {
+    const game = saved.belote;
+    entries.push({ id: "belote", title: "Belote", summary: `Deal ${game.handNumber}, Your side ${game.scores[0]} - Opponents ${game.scores[1]}`, savedAt: game.savedAt });
+  }
   if (saved.cribbage) {
     const game = saved.cribbage;
     entries.push({ id: "cribbage", title: "Cribbage", summary: `Hand ${game.handNumber}, You ${game.scores[0]} - Barbu ${game.scores[1]}`, savedAt: game.savedAt });
