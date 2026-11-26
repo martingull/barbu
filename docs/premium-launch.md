@@ -1,13 +1,25 @@
 # Premium Production Preparation
 
-Track the Canasta paid-content launch and its remaining acceptance checks.
-The production update is in review; this checklist does not authorise changing it.
-The public free edition is already live; this is the first paid-content launch,
-not Barbu's first production release. Owner: Martin Gullaksen.
+Track paid-content releases and their remaining acceptance checks.
+This checklist does not authorise changing a release, subscription or price.
+The public edition is already live. Owner: Martin Gullaksen.
 
 ## Release State
 
-The current candidate is **1.0.9** / **1000013**. The November 19 read-only Publisher
+The November 26 read-only Publisher API inspection confirms **1.0.10 / 1000014
+PUBLISHED** in production and closed testing before the new upload. The new Android candidate,
+**1.0.11 / 1000015**, adds Euchre and Cribbage to the existing Canasta Premium
+entitlement, plus free Belote. Martin has since uploaded this exact candidate
+directly to production. Console shows **Changes in review**, with quick checks
+running and managed publishing off; this is not confirmed publication. Closed
+testing remains on `1000014`. See the [release runbook](google-play-release.md#current-status).
+The eight free tables in the new source remain free; no subscription price or
+market setting is changed by preparing the bundle. Native acceptance checks below
+must be repeated for the exact Play-installed candidate.
+
+### Earlier Acceptance Evidence
+
+The earlier candidate was **1.0.9** / **1000013**. The November 19 read-only Publisher
 API audit confirms **PUBLISHED** on closed testing and **IN_REVIEW** on production,
 with SHA-256 matching the signed local bundle. It includes the renewal fix,
 Whist improvements, simpler Premium screen, Gin settlement lessons, fairer Domino

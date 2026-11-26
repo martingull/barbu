@@ -2,6 +2,92 @@
 
 ## Current Status
 
+**November 26 production-submission audit:** Martin uploaded **1.0.11 / 1000015**
+directly to production. The Publisher API confirms the release name and notes,
+and the uploaded AAB's SHA-256 matches the verified local candidate exactly.
+Closed testing (`alpha`) remains on **1.0.10 / 1000014**.
+
+Console Publishing overview shows the production release plus both English
+listing changes under **Changes in review**, with automated quick checks still
+running. No unsent section is shown. The name is **Learn Card Games by Barbu**;
+the short description is **Learn Gin Rummy, Hearts and Whist with short lessons
+and guided hands.** They are separate change rows, not duplicate releases.
+The desired final state is present; the discarded item's history was not verified.
+
+Managed publishing is **off**, with **Start full rollout** requested. This is
+not a manual publishing hold: approval can publish it automatically. The API's
+release-lifecycle endpoint remains quota-blocked, so generic track `completed`
+must not be described as proof that `1000015` is live. The earlier audit below
+is the last confirmed publication state. No release or listing was changed by
+this inspection; its temporary API edit was deleted.
+
+Exact-candidate Play-installed Samsung upgrade, saved-game and native Premium
+restore checks remain unrecorded, and the candidate's pre-launch report is not
+yet verified. Current full-description copy does not list Belote, Euchre or
+Cribbage; that is a later metadata improvement, not a reason to silently cancel
+this review. Evidence is ignored under
+`release/google-play/production-audit-2026-11-26/`.
+
+### Preparation Audit
+
+**November 26 release preparation:** a read-only Publisher API inspection confirms
+**1.0.10 / 1000014 PUBLISHED** on both production and closed testing (`alpha`).
+The highest visible version code is `1000014`. The inspection edit was deleted;
+no upload, rollout, review, price or country setting was changed.
+
+The next Android candidate is **1.0.11 / 1000015**, matching the product version
+already used for the internal iOS preview. It adds free Belote, Premium Euchre
+and Cribbage, selectable Gin Rummy scoring profiles and the expanded Spades
+lessons. Existing free games stay free. The signed local bundle and browser
+checks are complete; [the candidate handoff](#prepared-1011-candidate) records
+the artifacts and outstanding checks. Preparation did not upload it; Martin's
+subsequent production upload is recorded above, with approval still pending.
+No Android device was connected during preparation. Exact-candidate Play upgrade,
+native checkout/restore and pre-launch report checks remain release gates.
+
+### Prepared 1.0.11 Candidate
+
+Prepared November 26 from `f4cf756` and the recorded working tree, with billing
+enabled through the existing local configuration. Production-source fingerprints
+and build-input hashes are preserved in the verification receipt. The unrelated
+marketing and roadmap edits were left intact; this is not a clean-commit claim.
+
+- Release name: **1.0.11 - More games for your table**.
+- Bundle: `release/google-play/barbu-google-play-v1.0.11-code1000015.aab`.
+- Verification: `release/google-play/verification-v1.0.11-code1000015.json`.
+- Notes: `release/google-play/release-notes-v1.0.11-code1000015.txt` (370 characters, excluding the trailing newline).
+- Symbols: `release/google-play/native-debug-symbols-v1.0.11-code1000015.zip`.
+- Mapping: `release/google-play/mapping-v1.0.11-code1000015.txt`.
+- SHA-256: `8d4cfe59ef2d44af29854405967919076a211cd0c99cbca74788da755e4a6b17`.
+
+Verification completed:
+
+- 394 domain tests, frontend build, Tauri shell check, 17 release-tool tests and five mobile-configuration tests passed.
+- Regular browser audit on iPhone XR WebKit and Galaxy S9-sized Chromium: 976 passed initially, 64 failed, 66 skipped. After fixture corrections, all 64 failed cases passed on rerun. The six-project matrix was not run.
+- Corrections cover the eight-game free catalog, native mocks that must allow billing availability while still rejecting gameplay commands, and waiting for Belote images to load. Two initial timing failures also passed on rerun; no production gameplay change was needed.
+- 58 production-built catalog, Belote, Gin scoring and Premium checks passed, plus four new checks proving Euchre/Cribbage learning and saved play open with verified mock Premium access and no preview flags. These do not prove real store checkout.
+- The regular run skips preview-only Canasta/iOS flows and duplicate viewport cases by configuration. The dedicated preview matrices were not rerun for this candidate.
+- Signing certificate matches `1000014`; bundletool validation, R8 mapping, full matching debug symbols, stripped libraries and 16 KB LOAD/RELRO alignment passed for all four ABIs. Physical 16 KB runtime testing is still pending.
+- Public privacy, terms and support links returned HTTP 200; both legal pages matched repository source. Belote play and Cribbage lesson screenshots were visually inspected at narrow phone sizes.
+
+Evidence is ignored under `release/google-play/release-1.0.11/`. The read-only
+upload preview passed local candidate checks but could not complete Play
+inspection: Google's release-listing endpoint returned **HTTP 403: Listing
+releases quota exceeded**. No bundle upload or edit commit was attempted. Repeat
+the normal preview against fresh Play state before approving an upload; do not
+bypass the existing-release safeguards or infer eligibility from the old snapshot.
+
+The intended next gates at preparation were a closed-test upload with approval, Play-installed Samsung upgrade,
+saved-game and lesson smoke tests, native Premium access/restore verification,
+and the candidate's pre-launch report. Current store copy/screenshots must also
+be checked against eight free tables and three Premium games before promotion.
+Martin subsequently uploaded directly to production as recorded above; that does
+not complete the native acceptance checks. Do not change prices or subscription
+markets merely to prepare or inspect a release.
+Apple's internal `1.0.11 (10)` build is unchanged and does not include Belote.
+
+### Earlier Release Evidence
+
 **November 23 recorded audit:** the read-only Publisher API check documented in
 the [discovery baseline](marketing/store-discovery.md) found **1.0.9 / 1000013
 PUBLISHED** and **1.0.10 / 1000014 IN_REVIEW** on production. This supersedes the

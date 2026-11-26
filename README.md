@@ -66,24 +66,31 @@ Google Play production is live. The first production release is:
 The English listing rename to **Learn Card Games by Barbu** and the short description
 "Learn Gin Rummy, Hearts and Whist with short lessons and guided hands." were
 saved to Play Console separately on November 24. These change store presentation,
-not the in-game Barbu name or package identifier. Review submission and public
-visibility are not yet verified.
+not the in-game Barbu name or package identifier. Both changes are now queued
+with the November 26 production submission; public visibility is not yet verified.
 See the [listing update status](docs/marketing/store-discovery.md).
 
-The latest recorded Publisher API audit, **November 24, 2026**, found
+The Publisher API audit before the November 26 upload found
 **1.0.10 / 1000014 published** in production and closed testing.
 The earlier November 19 audit and original bundle verification are retained in
 the [release runbook](docs/google-play-release.md).
 
-The prepared **1.0.10 / 1000014** bundle adds Standard American Foundation/Acol
+The published **1.0.10 / 1000014** bundle adds Standard American Foundation/Acol
 Bridge bidding choices and matched lessons while preserving existing saved
 boards. Canasta retains Premium access. Subsequent Euchre development is **not
 in that signed bundle**: a new version/code and rebuilt, verified candidate are
-required before submitting these source changes. See the
-[1.0.10 handoff](docs/google-play-release.md#prepared-1010-candidate).
+required before submitting these source changes. Martin has now uploaded the
+verified **1.0.11 / 1000015** bundle directly to production, including free Belote,
+Premium Euchre and Cribbage, Gin Rummy scoring choices and expanded Spades lessons.
+Console shows it and both listing text changes under **Changes in review**, with
+quick checks running. It is not yet confirmed published. Managed publishing is
+off, so approval can publish the full rollout automatically. Closed testing
+remains on `1000014`; exact-candidate physical upgrade/restore checks remain
+unrecorded. See the
+[release handoff](docs/google-play-release.md#current-status).
 
 Physical Samsung testing and no blocking pre-launch report errors were confirmed
-by the developer. Later store-listing updates have their own review status; check
+by the developer for earlier releases, not the new `1000015` candidate. Check
 Play Console's **Publishing overview** before announcing those changes. See the
 [Google Play release runbook](docs/google-play-release.md) for dated evidence and
 the [store assets](docs/store-assets/google-play/README.md) for copy, artwork and
