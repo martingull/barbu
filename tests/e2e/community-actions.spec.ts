@@ -23,7 +23,9 @@ test("native club search uses the external opener and allows retry after failure
   await page.addInitScript(() => {
     const calls: string[] = [];
     Object.assign(window, { isTauri: true, clubCalls: calls, __TAURI_INTERNALS__: {
-      invoke: async (command: string) => {
+      invoke: async (command: string, args?: { operation?: string }) => {
+        if (command === "plugin:barbu-purchases|request" && args?.operation === "availability")
+          return { available: false, purchasesEnabled: false };
         calls.push(command);
         if (command !== "open_card_clubs") throw new Error("Unexpected command");
         if (calls.length === 1) throw new Error("No browser");

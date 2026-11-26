@@ -40,7 +40,7 @@ async function fits(page: Page) {
   for (const [i, a] of holders.entries()) for (const b of holders.slice(i + 1)) {
     expect(a.right <= b.left + 1 || b.right <= a.left + 1 || a.bottom <= b.top + 1 || b.bottom <= a.top + 1).toBe(true);
   }
-  expect(await page.locator("img").evaluateAll(imgs => imgs.every(img => (img as HTMLImageElement).complete && (img as HTMLImageElement).naturalWidth > 0))).toBe(true);
+  await expect.poll(() => page.locator("img").evaluateAll(imgs => imgs.every(img => (img as HTMLImageElement).complete && (img as HTMLImageElement).naturalWidth > 0))).toBe(true);
 }
 
 test("free Belote completes seven common Learn topics and records decision review", async ({ page }) => {

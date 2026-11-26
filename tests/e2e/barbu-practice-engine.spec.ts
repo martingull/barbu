@@ -8,7 +8,9 @@ async function openPractice(page: Page, native: boolean) {
   await page.addInitScript(native => {
     localStorage.setItem("barbu.practiceSeed.v1", "42");
     Object.assign(window, { nativeCommands: [] as string[] });
-    if (native) Object.assign(window, { isTauri: true, __TAURI_INTERNALS__: { invoke: async (command: string) => {
+    if (native) Object.assign(window, { isTauri: true, __TAURI_INTERNALS__: { invoke: async (command: string, args?: { operation?: string }) => {
+      if (command === "plugin:barbu-purchases|request" && args?.operation === "availability")
+        return { available: false, purchasesEnabled: false };
       (window as unknown as { nativeCommands: string[] }).nativeCommands.push(command);
       throw Error(`Unexpected native command: ${command}`);
     } } });

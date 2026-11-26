@@ -53,6 +53,30 @@ async function openPurchaseHelp(page: Page) {
   if (!await help.evaluate(element => (element as HTMLDetailsElement).open)) await help.locator("summary").click();
 }
 
+for (const [game, saveKey] of [
+  ["Euchre", "barbu.savedEuchreRun.v1"],
+  ["Cribbage", "barbu.savedCribbageRun.v1"],
+]) {
+  test(`Premium unlocks ${game} learning and saved play without preview flags`, async ({ page }) => {
+    await mockBilling(page, "purchased", { active: true });
+    await page.goto("/");
+    await expect(page.locator(".catalog-footer").getByRole("button", { name: "Manage Premium", exact: true })).toBeVisible();
+    await page.getByRole("button", { name: `Open ${game}`, exact: true }).click();
+    await expect(page.getByRole("button", { name: "Start lesson", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Start guided hand", exact: true })).toBeVisible();
+    await page.getByRole("tab", { name: "Play", exact: true }).click();
+    await page.getByRole("button", { name: `Play ${game}`, exact: true }).click();
+    await expect(page.getByLabel(`Your ${game} hand`, { exact: true })).toBeVisible();
+    const saved = await page.evaluate(key => localStorage.getItem(key), saveKey);
+    expect(saved).not.toBeNull();
+    await page.reload();
+    expect(await page.evaluate(key => localStorage.getItem(key), saveKey)).toBe(saved);
+    await page.getByRole("button", { name: `Continue ${game}`, exact: true }).click();
+    await expect(page.getByLabel(`Your ${game} hand`, { exact: true })).toBeVisible();
+    expect(await page.evaluate(() => (window as any).billingPurchasedIds)).toEqual([]);
+  });
+}
+
 test("Premium offers one checkout with explicit monthly and yearly choices, leaving diagnostics closed", async ({ page }, info) => {
   await mockBilling(page);
   await page.goto("/");
