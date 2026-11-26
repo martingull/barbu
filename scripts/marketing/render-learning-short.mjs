@@ -6,6 +6,7 @@ import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { chromium, expect } from "@playwright/test";
 import sharp from "sharp";
+import { learningSeriesStages, learningSeriesCSS } from "./learning-series.mjs";
 
 // Actual lesson content with a transparent capture backdrop for compositing.
 // The temporary screenshot style never changes game state or production CSS.
@@ -15,12 +16,13 @@ const { values, positionals } = parseArgs({ options: {
 }, allowPositionals: true });
 assert(positionals.length <= 1, "Provide one short id");
 assert(!values.music || values.music === "morning-mood", "Supported music override: morning-mood");
-const campaigns = { christmas: "christmas-shorts.json", "table-talk": "table-talk-shorts.json" };
-assert(!values.campaign || Object.hasOwn(campaigns, values.campaign), "Supported campaigns: christmas, table-talk");
+const campaigns = { christmas: "christmas-shorts.json", "table-talk": "table-talk-shorts.json", "gin-series": "gin-series-shorts.json" };
+assert(!values.campaign || Object.hasOwn(campaigns, values.campaign), `Supported campaigns: ${Object.keys(campaigns).join(", ")}`);
 const lessons = JSON.parse(await readFile(resolve(root, "docs/marketing/learning-shorts.json"), "utf8"));
 const campaign = values.campaign
   ? JSON.parse(await readFile(resolve(root, "docs/marketing", campaigns[values.campaign]), "utf8")) : null;
 const tableTalk = campaign?.format === "table-talk";
+const learningSeries = campaign?.format === "learning-series";
 const shorts = campaign ? campaign.shorts.map(item => {
   const lesson = lessons.find(lesson => lesson.id === item.lessonId);
   assert(lesson, `Unknown campaign lesson: ${item.lessonId}`);
@@ -30,13 +32,13 @@ const short = shorts.find(short => short.id === (positionals[0] ?? shorts[0].id)
 assert(short, "Choose a short id from the selected campaign or learning-shorts.json");
 const pacing = { hook: 3, question: 3, selection: 3.6, feedback: 6.4, outro: 5, ...campaign?.pacing };
 assert(Object.values(pacing).every(value => Number.isFinite(value) && value > 0));
-const largeCards = values["large-cards"];
+const largeCards = values["large-cards"] || Boolean(campaign?.largeCards);
 const outputId = `${short.id}${largeCards ? "-large-cards" : ""}`;
 const output = resolve(root, "release/marketing", outputId);
 const filename = `barbu-${outputId}.mp4`;
 const silentFilename = `barbu-${outputId}-silent.mp4`;
 let music = campaign?.music;
-if (values.music === "morning-mood") {
+if ((values.music ?? campaign?.musicPreset) === "morning-mood") {
   // Reuse the reviewed recording and checksum without coupling the edit to Hearts.
   music = JSON.parse(await readFile(resolve(root, "docs/marketing/table-talk-shorts.json"), "utf8")).music;
   music = { ...music, credit: `Music: ${music.title}, by ${music.composer}. Performed by ${music.performer}. Recording released into the public domain by Musopen. Source: ${music.sourcePage} . Opening excerpt, with loudness adjustment and fades.` };
@@ -97,10 +99,27 @@ try {
   await page.getByRole("button", { name: `Open ${short.game}`, exact: true }).click();
   await page.getByRole("tab", { name: "Learn", exact: true }).click();
   await page.getByRole("button", { name: `Try cards: ${short.topic}`, exact: true }).click();
+  for (const step of short.leadIn ?? []) {
+    await expect(page.locator("h1")).toHaveText(step.heading);
+    await page.getByLabel(short.handLabel, { exact: true }).getByRole("button", { name: step.choice, exact: true }).click();
+    await page.getByRole("button", { name: short.checkLabel, exact: true }).click();
+    for (const text of step.feedbackContains) await expect(page.locator(".coach-feedback")).toContainText(text);
+    await page.getByRole("button", { name: short.nextLabel, exact: true }).click();
+  }
   await expect(page.locator("h1")).toHaveText(short.heading);
   await expect.poll(() => page.locator("img").evaluateAll(images => images.every(img => img.complete && img.naturalWidth > 0))).toBe(true);
   const hand = page.getByLabel(short.handLabel, { exact: true });
   await expect(hand.locator(".card-face")).toHaveCount(short.handCount);
+  if (short.exposedHand) await expect(page.getByLabel(short.exposedHand.label, { exact: true }).locator(".card-face")).toHaveCount(short.exposedHand.count);
+  const focusImages = [];
+  for (const focus of short.focusCards ?? []) {
+    assert(/^[a-z0-9_]+\.png$/.test(focus.artwork), "Use a deck artwork filename");
+    const image = page.getByLabel(focus.handLabel, { exact: true }).locator(`img[src="/cards/cards/${focus.artwork}"]`);
+    await expect(image).toHaveCount(1);
+    const src = await image.getAttribute("src");
+    assert(src.startsWith("/cards/cards/"), "Focus cards must use the actual lesson's deck artwork");
+    focusImages.push(await dataImage(resolve(root, "public", src.slice(1))));
+  }
   await expect(page.getByRole("button", { name: short.checkLabel, exact: true })).toBeInViewport();
   const handBox = await hand.boundingBox();
   const cardBox = await hand.locator(".card-face").first().boundingBox();
@@ -155,7 +174,7 @@ try {
   }
   const handImage = index => `<img class="hand" src="${assets[`hand-${index}`]}" alt="Actual lesson hand">` +
     (!short.choiceFromHand ? `<img class="choice-capture" src="${assets[`choices-${index}`]}" alt="Actual lesson choices">` : "");
-  const stages = tableTalk ? [
+  const stages = learningSeries ? learningSeriesStages(short, pacing, { handImage, focusImages }) : tableTalk ? [
     { id: "question", duration: pacing.question, html: `<h1>${lines(short.question)}</h1><p class="context">${lines(short.context)}</p>${handImage(0)}<p class="bottom small">${lines(short.questionBottom)}</p>` },
     ...short.choices.map((_, index) => ({ id: `select-${index + 1}`, duration: pacing.selection / short.choices.length, html: `<h1>${lines(short.selectionTitle)}<br><em>${lines(short.selectionAccent)}</em></h1><p class="context">${lines(short.selectionContext)}</p>${handImage(index + 1)}<p class="bottom small">${lines(short.selectionBottom)}</p>` })),
     { id: "feedback", duration: pacing.feedback, html: `<h1>${lines(short.answerTitle)}</h1><p class="context">${lines(short.answerContext ?? short.selectionContext)}</p>${handImage(short.choices.length)}<p class="bottom small">${lines(short.answerBottom)}</p>` },
@@ -201,6 +220,7 @@ try {
       footer { position: absolute; left: 78px; top: 1570px; font-size: 24px; color: #a9c2b3; }
       .progress { position: absolute; top: 1640px; left: 78px; height: 4px; width: ${840 * (index + 1) / stages.length}px; background: #efd281; }
       ${tableTalk ? ".brand { font-size: 30px; } .brand img { width: 52px; height: 52px; } .brand span { font-size: 28px; } .hand { top: 660px; } .bottom { top: 1170px; } .small { font-size: 40px; }" : ""}
+      ${learningSeries ? learningSeriesCSS : ""}
     </style></head><body><div class="brand"><img src="${logo}" alt=""><strong>Barbu</strong><span>${escape(tableTalk ? campaign.brandLabel : `${short.game.toUpperCase()} / ${campaign?.brandLabel ?? short.number}`)}</span></div>${stage.html}<footer>${stage.id === "outro" && !tableTalk ? "Single-player practice. Real-world play." : "Actual lesson & card art · Edited for this video"}</footer><div class="progress"></div></body></html>`);
     await expect.poll(() => art.locator("img").evaluateAll(images => images.every(img => img.complete && img.naturalWidth > 0))).toBe(true);
     assert(await art.locator("h1,p,.brand").evaluateAll(elements => elements.every(element => element.scrollWidth <= element.clientWidth)), `${stage.id}: text overflows`);
@@ -276,15 +296,25 @@ video { display:block; width:min(100vw,56.25svh); height:auto; aspect-ratio:9/16
 main { max-width:720px; margin:auto; padding:24px; overflow-wrap:anywhere; } h1 { font-size:24px; } p { line-height:1.5; }
 a { color:#efd281; } nav { display:flex; flex-wrap:wrap; gap:24px; margin:24px 0; }
 </style></head><body><section class="screen" aria-label="Video preview">
-<video controls playsinline preload="metadata" poster="${stages[0].id}.png?v=${previewVersion}" aria-label="${elapsed}-second ${escape(short.game)} ${tableTalk ? "card dilemma" : "promotional"} draft${music ? ` with ${escape(music.title)}` : ", silent"}"><source src="${filename}?v=${previewVersion}" type="video/mp4"></video>
+<video controls playsinline preload="metadata" poster="${stages[0].id}.png?v=${previewVersion}" aria-label="${elapsed}-second ${escape(short.game)} ${tableTalk || learningSeries ? "learning" : "promotional"} draft${music ? ` with ${escape(music.title)}` : ", silent"}"><source src="${filename}?v=${previewVersion}" type="video/mp4"></video>
 </section><main><h1>${escape(short.title)}</h1>
-<p>${elapsed}-second ${music ? `draft with quiet background music: ${escape(music.title)}` : "silent draft"}. Real lesson captures, enlarged card art and editorial captions.${backdrop ? " AI-generated festive backdrop; gameplay is real." : ""} This render has not been published.</p>
+<p>${elapsed}-second ${music ? `local preview with quiet background music: ${escape(music.title)}` : "silent local preview"}. Real lesson captures, enlarged card art and editorial captions.${backdrop ? " AI-generated festive backdrop; gameplay is real." : ""} Publication history is recorded separately in the marketing notes; re-rendering does not update YouTube.</p>
 <nav><a href="${filename}" download>Download MP4</a>${tableTalk ? "" : '<a href="https://play.google.com/store/apps/details?id=com.martin.barbu">Barbu on Google Play</a>'}</nav>
 ${music ? `<p><a href="${silentFilename}" download>Download silent version</a></p><h2>Music credit</h2><p>${escape(music.credit)}</p>` : ""}
 <h2>Draft caption</h2><p>${escape(short.caption)}${music ? `<br><br>${escape(music.credit)}` : ""}</p>
 ${short.conversationPrompt ? `<h2>Discussion starter</h2><p>${escape(short.conversationPrompt)}</p>` : ""}
-${shorts.length > 1 ? `<h2>Other drafts</h2><nav>${shorts.filter(item => item.id !== short.id).map(item => `<a href="../${item.id}/preview.html">${escape(item.title)}</a>`).join("")}</nav>` : ""}
+${shorts.length > 1 ? `<h2>Other drafts</h2><nav>${shorts.filter(item => item.id !== short.id).map(item => `<a href="../${item.id}${largeCards ? "-large-cards" : ""}/preview.html">${escape(item.title)}</a>`).join("")}</nav>` : ""}
 </main></body></html>`);
+  if (learningSeries) {
+    const directory = resolve(root, "release/marketing", campaign.id);
+    await mkdir(directory, { recursive: true });
+    await writeFile(resolve(directory, "index.html"), `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escape(campaign.label)}</title><style>
+      * { box-sizing: border-box; } body { margin: 0; background: ${background}; color: #fafbf7; font: 16px/1.5 system-ui,sans-serif; } main { max-width: 1100px; margin: auto; padding: 24px; } h1 { font-size: 28px; } h2 { font-size: 20px; } .episodes { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,280px),1fr)); gap: 24px; } video { width: 100%; aspect-ratio: 9/16; display: block; background: ${background}; } a { color: #efd281; } nav { display: flex; flex-wrap: wrap; gap: 16px; } .episode { min-width: 0; } .episode h2 { min-height: 90px; margin: 0 0 12px; } </style></head><body><main>
+      <h1>${escape(campaign.label)}</h1><p>Three local previews. Each explains its own answer. Publication history is recorded separately in the marketing notes.</p><div class="episodes">${shorts.map(item => {
+        const id = `${item.id}${largeCards ? "-large-cards" : ""}`;
+        return `<section class="episode"><h2>${escape(item.number)} · ${escape(item.title)}</h2><video controls playsinline preload="metadata" poster="../${id}/${item.joke ? "hook" : "question"}.png?v=${previewVersion}"><source src="../${id}/barbu-${id}.mp4?v=${previewVersion}" type="video/mp4"></video><p>Try: Gin Rummy → Learn → ${escape(item.startLesson)}</p><nav><a href="../${id}/preview.html">Caption and credits</a><a href="../${id}/barbu-${id}.mp4" download>Download MP4</a></nav></section>`;
+      }).join("")}</div><p>The public call to action is: our channel → Google Play. Description and comment URLs are not presented as clickable. Review each caption and the music credit before publication.</p></main></body></html>`);
+  }
   console.log(`Exported ${final} (${elapsed}s, ${metadata.format.size} bytes)`);
 } finally {
   await browser.close();

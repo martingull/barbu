@@ -1,6 +1,6 @@
 # Barbu Marketing Videos
 
-Status: the three evergreen quiz Shorts, Grieg-backed Hearts dilemma and
+Status: the three Gin Rummy learning-series Shorts, three evergreen quiz Shorts, Grieg-backed Hearts dilemma and
 piano-backed store trailer are public on YouTube. The original Christmas adverts
 are now Private; both teaching-first seasonal replacements are public.
 Version 2 was published and its Google Play listing update submitted November 12,
@@ -239,6 +239,70 @@ recording, links to Google Play and asks whether viewers would knock or continue
 Anonymous oEmbed verified the title and Barbu channel. The original remains
 public to preserve its views and comments; no comments were posted or paid
 promotion started.
+
+### Gin Rummy Learning Series
+
+Three Shorts prepared and published November 25, 2026. The series teaches one decision
+per Short before a seven-second invitation to open the channel's Google Play
+link. It does not require viewers to find the website or search the store.
+The earlier public uploads, channel settings and store listing are unchanged.
+
+Recipe: [gin-series-shorts.json](gin-series-shorts.json). It reuses the real
+Gin Rummy exercises, shared capture renderer, enlarged cards and the reviewed
+Grieg/Musopen recording. The source recipe and renderer belong in Git; MP4s,
+captures, soundtrack copies and previews remain ignored render output.
+
+| Episode | Decision | Starting lesson | Published Short |
+| --- | --- | --- | --- |
+| Probably not the gin you came for | Discard K♠, preserve three melds and leave 2♦ unmatched | Sets and runs | [Watch](https://www.youtube.com/shorts/mI6b3JfI20c) |
+| Gin. Hold the tonic. | Two deadwood points allow a knock, not gin; continuing is legal | Knock or keep playing | [Watch](https://www.youtube.com/shorts/GxYjTj7iGy0) |
+| No gin. Still a rough finish. | A different deal: your 8♣ loses to Barbu's 2♥ after any layoffs | Layoffs and undercuts | [Watch](https://www.youtube.com/shorts/-DEuQW-VAMs) |
+
+Each 31-second video stands alone: a three-second gin/tonic wordplay opening,
+eight seconds to inspect the choice, five for the reveal, eight for explanation
+and seven for the next step. The joke adds time rather than taking it away from
+reading the hand. The third
+episode isolates the actual unmatched cards from the exposed lesson hands;
+the capture verifies both complete ten-card hands and the domain checks verify
+that every other card forms a meld. Its 16-point result explicitly uses Classic
+scoring (8 minus 2 plus a 10-point bonus), not a universal club scoring claim.
+
+With Barbu running on port 1420:
+
+```sh
+node scripts/marketing/render-learning-short.mjs gin-series-01-discard --campaign gin-series
+node scripts/marketing/render-learning-short.mjs gin-series-02-knock --campaign gin-series
+node scripts/marketing/render-learning-short.mjs gin-series-03-undercut --campaign gin-series
+```
+
+Review all three at
+http://localhost:1420/release/marketing/gin-series/index.html.
+Each episode links to its MP4, silent alternative, caption, music credit and
+discussion starter. The renderer checks real lesson choices and feedback,
+minimum hand-card size, image loading, editorial overlap, safe margins, audio,
+video dimensions, duration and decoding. `task domain:test` checks the series
+against the authored lessons and actual Gin scoring, including its profile-link
+invitation and the transition to a different deal in episode three.
+
+Studio confirmed all three as Public/Published with copyright checks complete
+and no issues found. Each has its approved caption and full Grieg/Musopen credit,
+English language, Education category, not Made for Kids, no age restriction,
+embedding enabled and comments on with Basic moderation for Anyone. There is no
+third-party paid promotion. The realistic-AI question was answered No for these
+actual-gameplay edits and the existing orchestral recording. Anonymous oEmbed
+checks returned the matching titles and Barbu channel for all three. Receipts,
+file checksums and metadata remain in ignored
+`release/marketing/gin-series/youtube-publication-2026-11-25.json`.
+No discussion comments, paid promotion, scheduled posts or changes to older
+videos were made.
+
+For future versions, approve each preview and caption and check YouTube's music
+results. Use the named channel profile link, not a claim that Shorts description
+or comment URLs are clickable. A related-video link may complement this route
+only if the channel has the required feature access; it is not required here.
+Record new publication URLs after upload; a re-render does not replace a public
+video automatically. No paid promotion, new tracking, scheduled publishing or
+install-attribution claim is part of this series.
 
 ### Website Gin Feature
 

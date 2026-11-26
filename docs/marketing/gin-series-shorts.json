@@ -1,0 +1,98 @@
+{
+  "id": "gin-series",
+  "format": "learning-series",
+  "label": "Gin Rummy: one decision at a time",
+  "largeCards": true,
+  "musicPreset": "morning-mood",
+  "pacing": { "hook": 3, "question": 8, "selection": 5, "feedback": 8, "outro": 7 },
+  "shorts": [
+    {
+      "lessonId": "gin-find-the-discard",
+      "id": "gin-series-01-discard",
+      "number": "1 OF 3",
+      "title": "Gin Rummy: probably not the gin you came for",
+      "joke": {
+        "heading": "Probably not\nthe gin you came for.",
+        "context": "No tonic. Just tactics.",
+        "bottom": "First decision: choose your discard."
+      },
+      "choices": ["K S"],
+      "question": "One card\nhas to go.",
+      "context": "Eleven cards. Which one gets the boot?",
+      "questionBottom": "Keep your sets and runs.\nWhich discard leaves the fewest points?",
+      "selectionTitle": "Keep the melds.",
+      "selectionAccent": "Discard K♠.",
+      "selectionContext": "The king is outside every set and run.",
+      "selectionBottom": "Keep the three sevens\nand both three-card runs.",
+      "answerTitle": "The king goes.",
+      "answerAccent": "Just 2 points stay.",
+      "answerContext": "Only 2♦ is unmatched after your discard.",
+      "answerBottom": "Sets and runs count zero.\nUnmatched cards are called deadwood.",
+      "focusCards": [{ "handLabel": "Your Gin Rummy exercise hand", "card": "2♦", "artwork": "2_of_diamonds.png", "label": "2 deadwood points" }],
+      "startLesson": "Sets and runs",
+      "caption": "Probably not the gin you came for. No tonic. Just tactics. Which card gets the boot? Discarding K♠ keeps three sevens and both runs, leaving only 2♦ unmatched: two deadwood points. This is one complete Gin Rummy decision; you do not need to watch the other episodes first. Try it yourself: tap our channel, then Get Barbu on Google Play. In Barbu choose Gin Rummy → Learn → Sets and runs. Gin Rummy lessons are in English, free and ad-free, with no subscription needed. Android phones. Part 1 of 3: discard, knock, undercut. #GinRummy #LearnCardGames #Barbu",
+      "conversationPrompt": "Be honest: cards or tonic? And which card would you discard? Try it yourself: tap our channel → Get Barbu on Google Play → Gin Rummy → Learn → Sets and runs."
+    },
+    {
+      "lessonId": "gin-knock-or-gin",
+      "id": "gin-series-02-knock",
+      "number": "2 OF 3",
+      "title": "Gin Rummy: hold the tonic",
+      "joke": {
+        "heading": "Gin.\nHold the tonic.",
+        "context": "Zero deadwood. That's the recipe.",
+        "bottom": "Two points left. Is that close enough?"
+      },
+      "question": "Knock, gin,\nor keep playing?",
+      "context": "Ten cards remain after your discard.",
+      "questionBottom": "Only 2♦ is unmatched.\nWhich finish is available?",
+      "selectionTitle": "You may knock.",
+      "selectionAccent": "This isn't gin.",
+      "selectionContext": "Two unmatched points are still two points.",
+      "selectionBottom": "Knock: 10 points or fewer.\nGin: exactly zero.",
+      "answerTitle": "Close enough",
+      "answerAccent": "isn't gin.",
+      "answerContext": "This hand has 2 deadwood points, not zero.",
+      "answerBottom": "Keep playing is legal, too.\nA knock does not guarantee a win.",
+      "focusCards": [{ "handLabel": "Your Gin Rummy exercise hand", "card": "2♦", "artwork": "2_of_diamonds.png", "label": "Not quite zero" }],
+      "startLesson": "Knock or keep playing",
+      "caption": "Gin. Hold the tonic. Zero deadwood is the recipe, and close enough isn't gin. With two deadwood points after discarding, a knock is allowed, but gin needs zero. Continuing is legal too; this question is about which finish is available, not a promise that knocking will win. Try it yourself: tap our channel, then Get Barbu on Google Play. In Barbu choose Gin Rummy → Learn → Knock or keep playing. English-language Gin Rummy lessons are free and ad-free, with no subscription needed. Android phones. Part 2 of 3; each episode explains its own answer. #GinRummy #LearnCardGames #Barbu",
+      "conversationPrompt": "Would you knock with two points or keep chasing gin? Try the decision in Barbu: our channel → Get Barbu on Google Play → Gin Rummy → Learn → Knock or keep playing."
+    },
+    {
+      "lessonId": "gin-knock-or-gin",
+      "id": "gin-series-03-undercut",
+      "number": "3 OF 3",
+      "title": "Gin Rummy: no gin, still a rough finish",
+      "joke": {
+        "heading": "No gin.\nStill a rough finish.",
+        "context": "One knock. Zero guarantees.",
+        "bottom": "Compare the deadwood\nbefore you celebrate."
+      },
+      "topic": "Layoffs and undercuts",
+      "heading": "A knock can lose",
+      "leadIn": [{ "heading": "Lay off a card", "choice": "6 C", "feedbackContains": ["Good", "extends Barbu's exposed meld"] }],
+      "exposedHand": { "label": "Barbu's exposed Gin exercise hand", "count": 10 },
+      "choices": ["Barbu scores 16"],
+      "feedbackContains": ["Good", "2 defending deadwood is below your 8", "8 - 2 + 10 = 16", "Your deadwood", "8 points after layoffs", "Barbu's deadwood", "2 points after layoffs"],
+      "question": "You knocked.\nDid you win?",
+      "context": "A new deal. Compare the unmatched cards.",
+      "questionBottom": "Every other card is in a meld.\nThese totals are after any layoffs.",
+      "selectionTitle": "Barbu has fewer.",
+      "selectionAccent": "Barbu wins.",
+      "selectionContext": "Your legal knock is not a guaranteed win.",
+      "selectionBottom": "8 is within the knock limit of 10.\nBut Barbu has only 2 deadwood points.",
+      "answerTitle": "You knocked.",
+      "answerAccent": "You still lost.",
+      "answerContext": "That's an undercut.",
+      "answerBottom": "Equal or lower defending deadwood wins.\nClassic scoring here: 8 − 2 + 10 = 16.",
+      "focusCards": [
+        { "handLabel": "Your Gin Rummy exercise hand", "card": "8♣", "artwork": "8_of_clubs.png", "label": "You: 8 points" },
+        { "handLabel": "Barbu's exposed Gin exercise hand", "card": "2♥", "artwork": "2_of_hearts.png", "label": "Barbu: 2 points" }
+      ],
+      "startLesson": "Layoffs and undercuts",
+      "caption": "No gin. Still a rough finish. You knocked, but you still lost. In this new deal, your unmatched 8♣ is eight deadwood points and Barbu's unmatched 2♥ is two. All other cards form melds and there are no layoffs in this example. The defender's lower deadwood undercuts your knock. With the Classic scoring profile shown here, Barbu earns 8 − 2 + 10 = 16 hand points; other scoring agreements can use a different bonus. Equal defending deadwood also undercuts. This is a real Barbu exercise, not the previous episode's two-point hand. Try it yourself: our channel → Get Barbu on Google Play → Gin Rummy → Learn → Layoffs and undercuts. English-language Gin Rummy lessons are free and ad-free, with no subscription needed. Android phones. Part 3 of 3. #GinRummy #LearnCardGames #Barbu",
+      "conversationPrompt": "Have you ever knocked and then been undercut? Which bonus does your group use? Try the exercise: our channel → Get Barbu on Google Play → Gin Rummy → Learn → Layoffs and undercuts."
+    }
+  ]
+}
